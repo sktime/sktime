@@ -346,7 +346,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         fixed_start = start
         for split_point in range(start, end, step_length):
             training_window = np.arange(fixed_start - window_length, split_point)
-            test_window = split_point + fh - 1
+            test_window = split_point + fh
             yield training_window, test_window
 
     def split_initial(self, y):
