@@ -714,17 +714,19 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         self.check_is_fitted()
         fitted_params = {}
-        is_broken = False
+        should_brake = False
 
         for param in self._forecaster.parameters:
             if param.name is None:
-                is_broken = True
+                should_brake = True
                 break
             fitted_params[param.name] = "{} +- {}".format(
                 np.mean(self._parameter_samples[param.name], axis=0),
                 np.std(self._parameter_samples[param.name], axis=0),
             )
-        if is_broken:
+
+        # To enforce consistency in notations
+        if should_brake:
             fitted_params = self._forecaster.parameters
 
         return fitted_params
