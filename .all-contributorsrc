@@ -299,6 +299,16 @@
       ]
     },
     {
+      "login": "koralturkk",
+      "name": "Kutay Koralturk",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/18037789?s=400&v=4",
+      "profile": "https://github.com/koralturkk",
+      "contributions": [
+        "code",
+        "bug",
+      ]
+    },
+    {
       "login": "oleskiewicz",
       "name": "oleskiewicz",
       "avatar_url": "https://avatars1.githubusercontent.com/u/5682158?v=4",
@@ -728,6 +738,16 @@
       "name": "Martin Walter",
       "avatar_url": "https://avatars0.githubusercontent.com/u/29627036?v=4",
       "profile": "https://www.linkedin.com/in/martin-walter-1a33b3114/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "koralturkk",
+      "name": "Kutay Koralturk",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/29627036?v=4",
+      "profile": "https://github.com/koralturkk",
       "contributions": [
         "code",
         "bug"
