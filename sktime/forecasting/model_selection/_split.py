@@ -3,12 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = [
+    "ExpandingWindowSplitter",
     "SlidingWindowSplitter",
     "CutoffSplitter",
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning, Kutay Koralturk"]
 
 import numpy as np
 import pandas as pd
