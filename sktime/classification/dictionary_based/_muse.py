@@ -186,6 +186,16 @@ class MUSE(BaseClassifier):
             win_inc = self.compute_window_inc(series_length)
 
             self.max_window = int(min(series_length, self.max_window))
+            if self.min_window > self.max_window:
+                raise ValueError(
+                    f"Error in MUSE, min_window ="
+                    f"{self.min_window} is bigger"
+                    f" than max_window ={self.max_window},"
+                    f" series length is {self.series_length}"
+                    f" try set min_window to be smaller than series length in "
+                    f"the constructor, but the classifier may not work at "
+                    f"all with very short series"
+                )
             self.window_sizes.append(
                 list(range(self.min_window, self.max_window, win_inc))
             )

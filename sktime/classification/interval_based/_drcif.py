@@ -8,6 +8,7 @@ __all__ = ["DrCIF"]
 import numpy as np
 import math
 
+from joblib import Parallel, delayed
 from scipy import signal
 from scipy import stats
 from sklearn.ensemble._forest import ForestClassifier
@@ -22,7 +23,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
 _check_soft_dependencies("catch22")
-from sktime.contrib.transformations.catch22_features import Catch22  # noqa: E402
+from sktime.transformations.panel.catch22_features import Catch22  # noqa: E402
 
 
 class DrCIF(ForestClassifier, BaseClassifier):
@@ -50,12 +51,6 @@ class DrCIF(ForestClassifier, BaseClassifier):
     For the original Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/interval_based/DrCIF.java
-
-    !!!
-    The catch22 package is currently unstable, results will differ between operating
-    systems. MacOS is presumed to be the correct version, with only minor differences
-    for Windows.
-    !!!
 
     Parameters
     ----------
@@ -99,6 +94,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
         n_estimators=500,
         n_intervals=None,
         att_subsample_size=10,
+        n_jobs=1,
         random_state=None,
     ):
         super(DrCIF, self).__init__(
@@ -113,12 +109,15 @@ class DrCIF(ForestClassifier, BaseClassifier):
         self.att_subsample_size = att_subsample_size
 
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
         # The following set in method fit
         self.n_classes = 0
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
+        self.__n_intervals = n_intervals
+        self.__max_interval = max_interval
         self.total_intervals = 0
         self.classifiers = []
         self.atts = []
@@ -147,106 +146,40 @@ class DrCIF(ForestClassifier, BaseClassifier):
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        rng = check_random_state(self.random_state)
-
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.classifiers = []
-        self.atts = []
 
         if self.n_intervals is None:
-            self.n_intervals = 4 + int(
+            self.__n_intervals = 4 + int(
                 (math.sqrt(self.series_length) * math.sqrt(self.n_dims)) / 3
             )
-        if self.n_intervals <= 0:
-            self.n_intervals = 1
+        if self.__n_intervals <= 0:
+            self.__n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
 
         if self.max_interval is None:
-            self.max_interval = self.series_length / 2
-        else:
-            self.max_interval = self.max_interval
-        if self.max_interval < self.min_interval:
-            self.max_interval = self.min_interval
+            self.__max_interval = self.series_length / 2
+        if self.__max_interval < self.min_interval:
+            self.__max_interval = self.min_interval
 
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
-        T = [X, X_p, X_d]
-        self.total_intervals = self.n_intervals * 2 + int(self.n_intervals / 2)
+        self.total_intervals = self.__n_intervals * 2 + int(self.__n_intervals / 2)
 
-        self.intervals = np.zeros(
-            (self.n_estimators, self.att_subsample_size * self.total_intervals, 2),
-            dtype=int,
+        fit = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._fit_estimator)(
+                X,
+                X_p,
+                X_d,
+                y,
+                i,
+            )
+            for i in range(self.n_estimators)
         )
 
-        c22 = Catch22()
-
-        for i in range(0, self.n_estimators):
-            transformed_x = np.empty(
-                shape=(
-                    self.att_subsample_size * self.total_intervals,
-                    self.n_instances,
-                ),
-                dtype=np.float32,
-            )
-
-            self.atts.append(rng.choice(29, self.att_subsample_size, replace=False))
-            self.dims.append([])
-
-            p = 0
-            j = 0
-            for r in range(0, len(T)):
-                transform_length = T[r].shape[2]
-                transform_n_intervals = (
-                    int(self.n_intervals / 2) if r == 1 else self.n_intervals
-                )
-
-                # Find the random intervals for classifier i, transformation r
-                # and concatenate features
-                for _ in range(0, transform_n_intervals):
-                    self.dims[i].append(rng.choice(self.n_dims))
-
-                    if rng.random() < 0.5:
-                        self.intervals[i][j][0] = rng.randint(
-                            0, transform_length - self.min_interval
-                        )
-                        len_range = min(
-                            transform_length - self.intervals[i][j][0],
-                            self.max_interval,
-                        )
-                        length = (
-                            rng.randint(0, len_range - self.min_interval)
-                            + self.min_interval
-                        )
-                        self.intervals[i][j][1] = self.intervals[i][j][0] + length
-                    else:
-                        self.intervals[i][j][1] = (
-                            rng.randint(0, transform_length - self.min_interval)
-                            + self.min_interval
-                        )
-                        len_range = min(self.intervals[i][j][1], self.max_interval)
-                        length = (
-                            rng.randint(0, len_range - self.min_interval)
-                            + self.min_interval
-                            if len_range - self.min_interval > 0
-                            else self.min_interval
-                        )
-                        self.intervals[i][j][0] = self.intervals[i][j][1] - length
-
-                    for a in range(0, self.att_subsample_size):
-                        transformed_x[p] = self.__scif_feature(T[r], i, j, a, c22)
-                        p += 1
-
-                    j += 1
-
-            tree = clone(self.base_estimator)
-            tree.set_params(**{"random_state": self.random_state})
-            transformed_x = transformed_x.T
-            np.nan_to_num(transformed_x, False, 0, 0, 0)
-            tree.fit(transformed_x, y)
-            self.classifiers.append(tree)
+        self.classifiers, self.intervals, self.dims, self.atts = zip(*fit)
 
         self._is_fitted = True
         return self
@@ -307,120 +240,160 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 "ERROR number of attributes in the train does not match "
                 "that in the test data"
             )
-        sums = np.zeros((n_test_instances, self.n_classes), dtype=np.float64)
 
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
-        T = [X, X_p, X_d]
 
-        c22 = Catch22()
-
-        for i in range(0, self.n_estimators):
-            transformed_x = np.empty(
-                shape=(
-                    self.att_subsample_size * self.total_intervals,
-                    n_test_instances,
-                ),
-                dtype=np.float32,
+        y_probas = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._predict_proba_for_estimator)(
+                X,
+                X_p,
+                X_d,
+                self.classifiers[i],
+                self.intervals[i],
+                self.dims[i],
+                self.atts[i],
+                n_test_instances,
             )
+            for i in range(self.n_estimators)
+        )
 
-            p = 0
-            j = 0
-            for r in range(0, len(T)):
-                transform_n_intervals = (
-                    int(self.n_intervals / 2) if r == 1 else self.n_intervals
-                )
-
-                for _ in range(0, transform_n_intervals):
-                    for a in range(0, self.att_subsample_size):
-                        transformed_x[p] = self.__scif_feature(T[r], i, j, a, c22)
-                        p += 1
-                    j += 1
-
-            transformed_x = transformed_x.T
-            np.nan_to_num(transformed_x, False, 0, 0, 0)
-            sums += self.classifiers[i].predict_proba(transformed_x)
-
-        output = sums / (np.ones(self.n_classes) * self.n_estimators)
+        output = np.sum(y_probas, axis=0) / (
+            np.ones(self.n_classes) * self.n_estimators
+        )
         return output
 
-    def __scif_feature(self, X, i, j, a, c22):
-        if self.atts[i][a] == 22:
+    def _fit_estimator(self, X, X_p, X_d, y, idx):
+        c22 = Catch22()
+        T = [X, X_p, X_d]
+        rs = 5465 if self.random_state == 0 else self.random_state
+        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rng = check_random_state(rs)
+
+        transformed_x = np.empty(
+            shape=(self.att_subsample_size * self.total_intervals, self.n_instances),
+            dtype=np.float32,
+        )
+
+        atts = rng.choice(29, self.att_subsample_size, replace=False)
+        dims = rng.choice(self.n_dims, self.total_intervals, replace=True)
+        intervals = np.zeros((self.total_intervals, 2), dtype=int)
+
+        p = 0
+        j = 0
+        for r in range(0, len(T)):
+            transform_length = T[r].shape[2]
+            transform_n_intervals = (
+                int(self.__n_intervals / 2) if r == 1 else self.__n_intervals
+            )
+
+            # Find the random intervals for classifier i, transformation r
+            # and concatenate features
+            for _ in range(0, transform_n_intervals):
+                if rng.random() < 0.5:
+                    intervals[j][0] = rng.randint(
+                        0, transform_length - self.min_interval
+                    )
+                    len_range = min(
+                        transform_length - intervals[j][0],
+                        self.__max_interval,
+                    )
+                    length = (
+                        rng.randint(0, len_range - self.min_interval)
+                        + self.min_interval
+                    )
+                    intervals[j][1] = intervals[j][0] + length
+                else:
+                    intervals[j][1] = (
+                        rng.randint(0, transform_length - self.min_interval)
+                        + self.min_interval
+                    )
+                    len_range = min(intervals[j][1], self.__max_interval)
+                    length = (
+                        rng.randint(0, len_range - self.min_interval)
+                        + self.min_interval
+                        if len_range - self.min_interval > 0
+                        else self.min_interval
+                    )
+                    intervals[j][0] = intervals[j][1] - length
+
+                for a in range(0, self.att_subsample_size):
+                    transformed_x[p] = self.__scif_feature(
+                        T[r], intervals[j], dims[j], atts[a], c22
+                    )
+                    p += 1
+
+                j += 1
+
+        tree = clone(self.base_estimator)
+        tree.set_params(random_state=rs)
+        transformed_x = transformed_x.T
+        np.nan_to_num(transformed_x, False, 0, 0, 0)
+        tree.fit(transformed_x, y)
+
+        return [tree, intervals, dims, atts]
+
+    def _predict_proba_for_estimator(
+        self, X, X_p, X_d, classifier, intervals, dims, atts, test_size
+    ):
+        c22 = Catch22()
+        T = [X, X_p, X_d]
+
+        transformed_x = np.empty(
+            shape=(self.att_subsample_size * self.total_intervals, test_size),
+            dtype=np.float32,
+        )
+
+        p = 0
+        j = 0
+        for r in range(0, len(T)):
+            transform_n_intervals = (
+                int(self.__n_intervals / 2) if r == 1 else self.__n_intervals
+            )
+
+            for _ in range(0, transform_n_intervals):
+                for a in range(0, self.att_subsample_size):
+                    transformed_x[p] = self.__scif_feature(
+                        T[r],
+                        intervals[j],
+                        dims[j],
+                        atts[a],
+                        c22,
+                    )
+                    p += 1
+
+                j += 1
+
+        transformed_x = transformed_x.T
+        np.nan_to_num(transformed_x, False, 0, 0, 0)
+
+        return classifier.predict_proba(transformed_x)
+
+    @staticmethod
+    def __scif_feature(X, intervals, dims, att, c22):
+        if att == 22:
             # mean
-            return np.mean(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
-        if self.atts[i][a] == 23:
+            return np.mean(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        if att == 23:
             # median
-            return np.median(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
-        elif self.atts[i][a] == 24:
+            return np.median(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        elif att == 24:
             # std_dev
-            return np.std(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
-        elif self.atts[i][a] == 25:
+            return np.std(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        elif att == 25:
             # slope
-            return _slope(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
-        elif self.atts[i][a] == 26:
+            return _slope(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        elif att == 26:
             # iqr
-            return stats.iqr(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
-        elif self.atts[i][a] == 27:
+            return stats.iqr(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        elif att == 27:
             # min
-            return np.min(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
-        elif self.atts[i][a] == 28:
+            return np.min(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        elif att == 28:
             # max
-            return np.max(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                axis=1,
-            )
+            return np.max(X[:, dims, intervals[0] : intervals[1]], axis=1)
         else:
             return c22._transform_single_feature(
-                X[
-                    :,
-                    self.dims[i][j],
-                    self.intervals[i][j][0] : self.intervals[i][j][1],
-                ],
-                feature=a,
+                X[:, dims, intervals[0] : intervals[1]],
+                feature=att,
             )

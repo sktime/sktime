@@ -141,6 +141,7 @@ class ROCKETClassifier(BaseClassifier):
                 ]
             )
         else:
+            self.check_is_fitted()
             return self.classifiers[0].predict(X)
 
     def predict_proba(self, X):
