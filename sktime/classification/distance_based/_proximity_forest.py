@@ -838,11 +838,15 @@ class ProximityStump(BaseClassifier):
         :return: 1d numpy array of distances to each exemplar
         """
         distances = []
+        min_distance = np.math.inf
         for exemplar in exemplars:
             if exemplar.name == instance.name:
-                distances.append(0)
+                distance = 0
             else:
-                distances.append(distance_measure(instance, exemplar))
+                distance = distance_measure(instance, exemplar)  # , min_distance)
+            if distance < min_distance:
+                min_distance = distance
+            distances.append(distance)
         return np.array(distances)
 
     def distance_to_exemplars(self, X):
