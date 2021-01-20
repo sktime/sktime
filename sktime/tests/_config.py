@@ -19,8 +19,8 @@ from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.classification.interval_based import DrCIF
+from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.shapelet_based import ROCKETClassifier

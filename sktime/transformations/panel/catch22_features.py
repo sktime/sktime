@@ -94,7 +94,9 @@ class Catch22(_PanelToTabularTransformer):
         -------
         Numpy array containing a catch22 feature for each input series
         """
-        if isinstance(feature, int) or isinstance(feature, np.int32):
+        if isinstance(feature, (int, np.integer)) or isinstance(
+            feature, (float, np.float)
+        ):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")
         elif isinstance(feature, str):
@@ -103,7 +105,7 @@ class Catch22(_PanelToTabularTransformer):
             else:
                 raise ValueError("Invalid catch22 feature name")
         else:
-            raise ValueError("Feature name or ID required")
+            raise ValueError("catch22 feature name or ID required")
 
         if isinstance(X, pd.DataFrame):
             X = from_nested_to_2d_array(X, return_numpy=True)

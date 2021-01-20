@@ -223,10 +223,9 @@ class SFA(_PanelToPanelTransformer):
 
         dim, words = zip(*transform)
         if self.save_words:
-            for i in words:
-                self.words.append(i)
+            self.words = list(words)
         bags = pd.DataFrame() if self.return_pandas_data_series else [None]
-        bags[0] = dim
+        bags[0] = list(dim)
 
         return bags
 

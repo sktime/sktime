@@ -2,7 +2,7 @@
 import numpy as np
 from numpy import testing
 
-from sktime.classification.interval_based import DrCIF
+from sktime.classification.interval_based._drcif import DrCIF
 from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
 
 

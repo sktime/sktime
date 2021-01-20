@@ -356,14 +356,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             )
 
             for n, pred in enumerate(preds):
-                sums[
-                    self.class_dictionary.get(pred, -1)
-                ] += self.weights[cls_idx[n][0]]
+                sums[self.class_dictionary.get(pred, -1)] += self.weights[cls_idx[n][0]]
                 divisor += self.weights[cls_idx[n][0]]
 
-            results[i] = np.ones(self.n_classes) * (
-                        1 / self.n_classes) if divisor == 0 else sums / (
-                        np.ones(self.n_classes) * divisor)
+            results[i] = (
+                np.ones(self.n_classes) * (1 / self.n_classes)
+                if divisor == 0
+                else sums / (np.ones(self.n_classes) * divisor)
+            )
 
         return results
 
@@ -483,7 +483,7 @@ class IndividualTDE(BaseClassifier):
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
                     save_words=False,
-                    n_jobs=self.n_jobs
+                    n_jobs=self.n_jobs,
                 )
             )
             sfa = self.transformers[0].fit_transform(X, y)
@@ -567,7 +567,7 @@ class IndividualTDE(BaseClassifier):
                     remove_repeat_words=True,
                     save_words=False,
                     save_binning_dft=True,
-                    n_jobs=self.n_jobs
+                    n_jobs=self.n_jobs,
                 )
             )
 

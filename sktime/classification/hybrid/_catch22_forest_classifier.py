@@ -8,11 +8,14 @@ __all__ = ["Catch22ForestClassifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from catch22 import catch22_all
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
+
+_check_soft_dependencies("catch22")
+from catch22 import catch22_all  # noqa: E402
 
 
 class Catch22ForestClassifier(BaseClassifier):
