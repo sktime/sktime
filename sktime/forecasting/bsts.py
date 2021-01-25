@@ -13,12 +13,14 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 import tensorflow_probability as tfp
-from tensorflow_probability import sts
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tensorflow_probability")
 
 
 class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """
-    Bayesian Structural Time Series forecaster by wrapping tensorflow-probability.sts.
+    Bayesian Structural Time Series forecaster by wrapping tensorflow_probability.sts.
     Parameters
     ----------
         add_autoregressive:
@@ -38,7 +40,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     optional tfd.Distribution instance specifying
                     a prior on the level_scale parameter.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 initial_state_prior:
                     optional tfd.Distribution instance
@@ -47,7 +49,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     at a set of size order of
                     imagined timesteps before the initial step.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 coefficient_constraining_bijector:
                     optional tfb.Bijector instance representing a
@@ -58,20 +60,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     and tfb.Identity() implies no constraint.
                     If None, the default behavior constrains the coefficients
                     to lie in (-1, 1) using a Tanh bijector.
-                    Default value: None.
-                observed_time_series:
-                    Observed time series must be given in
-                    fit function as a function parameter.
-                    optional float Tensor of shape batch_shape + [T, 1]
-                    (omitting the trailing unit dimension is also supported when T > 1),
-                    specifying an observed time series.
-                    Any priors not explicitly set will be
-                    given default values according to the scale of the observed
-                    time series (or batch of time series).
-                    May optionally be an instance of
-                    tfp.sts.MaskedTimeSeries,
-                    which includes a mask Tensor to specify timesteps
-                    with missing observations.
                     Default value: None.
                 name:
                     the name of this model component.
@@ -108,7 +96,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     a prior on the drift_scale parameter.
                     If None, a heuristic default prior is
                     constructed based on the provided
-                    observed_time_series.
+                    y-data.
                     Default value: None.
                 initial_weights_prior:
                     instance of tfd.MultivariateNormal representing
@@ -117,21 +105,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     Must have event shape [num_features].
                     If None, a weakly-informative
                     Normal(0., 10.) prior is used.
-                    Default value: None.
-                observed_time_series:
-                    Observed time series can be given in fit
-                    function as a function parameter.
-                    optional float Tensor of shape batch_shape + [T, 1]
-                    (omitting the trailing unit dimension is also supported when T > 1),
-                    specifying an observed time series.
-                    Any priors not explicitly set
-                    will be given default values according
-                    to the scale of the observed
-                    time series (or batch of time series).
-                    May optionally be an instance
-                    of tfp.sts.MaskedTimeSeries, which
-                    includes a mask Tensor to specify
-                    timesteps with missing observations.
                     Default value: None.
                 name:
                     Python str for the name of this component.
@@ -164,25 +137,11 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     optional tfd.Distribution instance specifying
                     a prior on the level_scale parameter.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 name:
                     the name of this model component.
                     Default value: 'LocalLevel'
-                observed_time_series:
-                    Observed time series can be given in fit
-                    function as a function parameter.
-                    optional float Tensor of shape batch_shape + [T, 1]
-                    (omitting the trailing unit dimension
-                    is also supported when T > 1),
-                    specifying an observed time series.
-                    Any priors not explicitly set
-                    will be given default values
-                    according to the scale of the observed
-                    time series (or batch of time series). May optionally be an
-                    instance of tfp.sts.MaskedTimeSeries, which includes
-                    a mask Tensor to specify timesteps with missing observations.
-                    Default value: None.
         add_local_linear_trend:
             List of dicts with args for tfp.sts.LocalLinearTrend()
             Dict can have the following keys/values:
@@ -190,43 +149,29 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     optional tfd.Distribution instance specifying
                     a prior on the level_scale parameter.
                     If None, a heuristic default prior is
-                    constructed based on the provided observed_time_series.
+                    constructed based on the provided y-data.
                     Default value: None.
                 slope_scale_prior:
                     optional tfd.Distribution instance specifying
                     a prior on the slope_scale parameter.
                     If None, a heuristic default prior is
-                    constructed based on the provided observed_time_series.
+                    constructed based on the provided y-data.
                     Default value: None.
                 initial_level_prior:
                     optional tfd.Distribution instance
                     specifying a prior on the initial level.
                     If None, a heuristic default prior is
-                    constructed based on the provided observed_time_series.
+                    constructed based on the provided y-data.
                     Default value: None.
                 initial_slope_prior:
                     optional tfd.Distribution instance specifying
                     a prior on the initial slope.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 name:
                     the name of this model component.
                     Default value: 'LocalLevel'
-                observed_time_series:
-                    Observed time series can be given in
-                    fit function as a function parameter.
-                    optional float Tensor of shape batch_shape + [T, 1]
-                    (omitting the trailing unit dimension is
-                    also supported when T > 1),
-                    specifying an observed time series.
-                    Any priors not explicitly set will be given
-                    default values according to the scale of the observed
-                    time series (or batch of time series).
-                    May optionally be an instance of tfp.sts.MaskedTimeSeries,
-                    which includes a mask Tensor to specify
-                    timesteps with missing observations.
-                    Default value: None.
         add_semi_local_linear_trend:
             List of dicts with args for tfp.sts.LocalLinearTrend()
             Dict can have the following keys/values:
@@ -234,19 +179,19 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     optional tfd.Distribution instance specifying a
                     prior on the level_scale parameter.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 slope_mean_prior:
                     optional tfd.Distribution instance specifying a
                     prior on the slope_mean parameter.
                     If None, a heuristic default prior is constructed based
-                    on the provided observed_time_series.
+                    on the provided y-data.
                     Default value: None.
                 slope_scale_prior:
                     optional tfd.Distribution instance specifying a
                     prior on the slope_scale parameter.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 autoregressive_coef_prior:
                     optional tfd.Distribution instance specifying a
@@ -261,13 +206,13 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     prior on the initial level.
                     If None, a heuristic default
                     prior is constructed based on the
-                    provided observed_time_series.
+                    provided y-data.
                     Default value: None.
                 initial_slope_prior:
                     optional tfd.Distribution instance
                     specifying a prior on the initial slope.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 constrain_ar_coef_stationary:
                     if True, perform inference using a
@@ -285,21 +230,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     This will implicitly truncate the support of
                     autoregressive_coef_prior.
                     Default value: False.
-                observed_time_series:
-                    Observed time series can be given in fit
-                    function as a function parameter.
-                    optional float Tensor of shape batch_shape + [T, 1]
-                    (omitting the trailing unit dimension is also supported when T > 1),
-                    specifying an observed time series.
-                    Any priors not explicitly
-                    set will be given default values according
-                    to the scale of the observed
-                    time series (or batch of time series).
-                    May optionally be an instance of
-                    tfp.sts.MaskedTimeSeries, which
-                    includes a mask Tensor to specify
-                    timesteps with missing observations.
-                    Default value: None.
                 name:
                     the name of this model component.
                     Default value: 'SemiLocalLinearTrend'.
@@ -334,7 +264,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     optional tfd.Distribution instance specifying a
                     prior on the drift_scale parameter.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 initial_effect_prior:
                     optional tfd.Distribution instance specifying a
@@ -346,7 +276,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     with event shape [num_seasons], in which case it
                     specifies a joint prior across all seasons.
                     If None, a heuristic default prior is constructed
-                    based on the provided observed_time_series.
+                    based on the provided y-data.
                     Default value: None.
                 constrain_mean_effect_to_zero:
                     if True, use a model parameterization that
@@ -359,21 +289,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     if you plan to directly examine the latent
                     space of the underlying state space model.
                     Default value: True.
-                observed_time_series:
-                    Observed time series can be given in fit
-                    function as a function parameter.
-                    optional float Tensor of shape batch_shape + [T, 1]
-                    (omitting the trailing unit dimension
-                    is also supported when T > 1),
-                    specifying an observed time series.
-                    Any priors not explicitly set
-                    will be given default values according
-                    to the scale of the observed
-                    time series (or batch of time series).
-                    May optionally be an instance of tfp.sts.MaskedTimeSeries,
-                    which includes a mask Tensor to specify
-                    timesteps with missing observations.
-                    Default value: None.
                 name:
                     the name of this model component.
                     Default value: 'Seasonal'.
@@ -410,60 +325,34 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                         optional tfd.Distribution instance specifying a
                         prior on the drift_scale parameter.
                         If None, a heuristic default prior is constructed
-                        based on the provided observed_time_series.
+                        based on the provided y-data.
                         Default value: None.
                     initial_state_prior:
                         instance of tfd.MultivariateNormal representing the
                         prior distribution on the latent states.
                         Must have event shape [2 * len(frequency_multipliers)].
                         If None, a heuristic default prior is constructed based on
-                        the provided observed_time_series.
-                    observed_time_series:
-                        optional float Tensor of shape batch_shape + [T, 1]
-                        (omitting the trailing unit dimension is also
-                        supported when T > 1), specifying an observed time series.
-                        Any priors not explicitly set
-                        will be given default values according
-                        to the scale of the observed time series
-                        (or batch of time series).
-                        May optionally be an instance of tfp.sts.MaskedTimeSeries,
-                        which includes a mask Tensor to specify timesteps
-                        with missing observations.
-                        Default value: None.
+                        the provided y-data.
                     name:
                         the name of this model component.
                         Default value: 'SmoothSeasonal'.
 
             compositional_specifications:
-                    component:
-                        Python list of one or more StructuralTimeSeries instances.
-                        These must have unique names.
                     constant_offset:
                         optional float Tensor of shape broadcasting to
                         concat([batch_shape, [num_timesteps]]) specifying a
                         constant value added to the sum of outputs
                         from the component models.
                         This allows the components to model the shifted
-                        series observed_time_series - constant_offset.
+                        series y - constant_offset.
                         If None, this is set to the mean of the
-                        provided observed_time_series.
+                        provided y-data.
                         Default value: None.
                     observation_noise_scale_prior:
                         optional tfd.Distribution instance specifying a
                         prior on observation_noise_scale.
                         If None, a heuristic default prior is constructed
-                        based on the provided observed_time_series.
-                        Default value: None.
-                    observed_time_series:
-                        optional float Tensor of shape batch_shape + [T, 1]
-                        (omitting the trailing unit dimension is also
-                        supported when T > 1), specifying an observed time series.
-                        Any priors not explicitly set
-                        will be given default values according to the scale of
-                        the observed time series (or batch of time series).
-                        May optionally be an instance of tfp.sts.MaskedTimeSeries,
-                        which includes a mask Tensor to specify timesteps
-                        with missing observations.
+                        based on the provided y-data.
                         Default value: None.
                     name:
                         Python str name of this model component;
@@ -532,75 +421,90 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # Adding Local Linear Trend Components
         if self.add_local_linear_trend is not None:
-            for x in self.add_local_linear_trend:
+            for conf in self.add_local_linear_trend:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.LocalLinearTrend(observed_time_series=y, **x)
+                    tfp.sts.LocalLinearTrend(observed_time_series=y, **conf)
                 )
 
         # Adding Semi Local Linear Trend Components
         if self.add_semi_local_linear_trend is not None:
-            for x in self.add_semi_local_linear_trend:
+            for conf in self.add_semi_local_linear_trend:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.LocalLinearTrend(observed_time_series=y, **x)
+                    tfp.sts.LocalLinearTrend(observed_time_series=y, **conf)
                 )
 
         # Adding Linear Regression Components
         if self.add_linear_regression is not None:
-            for x in self.add_linear_regression:
+            self._check_conf(conf)
+            for conf in self.add_linear_regression:
                 self.time_series_components.append(
-                    tfp.sts.LinearRegression(design_matrix=X, **x)
+                    tfp.sts.LinearRegression(design_matrix=X, **conf)
                 )
 
         # Adding Sparse Linear Regression Components
         if self.add_sparse_linear_regression is not None:
-            for x in self.add_sparse_linear_regression:
+            for conf in self.add_sparse_linear_regression:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.SparseLinearRegression(design_matrix=X, **x)
+                    tfp.sts.SparseLinearRegression(design_matrix=X, **conf)
                 )
 
         # Adding Dynamic Linear Regression Components
         if self.add_dynamic_linear_regression is not None:
-            for x in self.add_dynamic_linear_regression:
+            for conf in self.add_dynamic_linear_regression:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.DynamicLinearRegression(design_matrix=X, **x)
+                    tfp.sts.DynamicLinearRegression(design_matrix=X, **conf)
                 )
 
         # Adding Autoregressive Model
         if self.add_autoregressive is not None:
-            for x in self.add_autoregressive:
+            for conf in self.add_autoregressive:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.Autoregressive(design_matrix=X, **x)
+                    tfp.sts.Autoregressive(design_matrix=X, **conf)
                 )
 
         # Adding Local Level Components
         if self.add_local_level is not None:
-            for x in self.add_local_level:
+            for conf in self.add_local_level:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.LocalLevel(observed_time_series=y, **x)
+                    tfp.sts.LocalLevel(observed_time_series=y, **conf)
                 )
 
         # Adding Seasonal Components
         if self.add_seasonal is not None:
-            for x in self.add_seasonal:
+            for conf in self.add_seasonal:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.Seasonal(observed_time_series=y, **x)
+                    tfp.sts.Seasonal(observed_time_series=y, **conf)
                 )
 
         # Adding Smooth Seasonal Components
         if self.add_smooth_seasonal is not None:
-            for x in self.add_smooth_seasonal:
+            for conf in self.add_smooth_seasonal:
+                self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.SmoothSeasonal(observed_time_series=y, **x)
+                    tfp.sts.SmoothSeasonal(observed_time_series=y, **conf)
                 )
 
         if self.compositional_specifications is not None:
-            self._forecaster = sts.Sum(
+            if "component" in self.compositional_specifications:
+                raise ValueError(
+                    """
+                    Each component has to be given as separate
+                    component in sktime.BSTS()."""
+                )
+            self._forecaster = tfp.sts.Sum(
                 self.time_series_components,
                 observed_time_series=y,
                 **self.compositional_specifications
             )
         else:
-            self._forecaster = sts.Sum(
+            self._forecaster = tfp.sts.Sum(
                 self.time_series_components, observed_time_series=y
             )
 
@@ -683,7 +587,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             y_out_sample = np.array([])
 
         # Insample
-        demand_one_step_dist = sts.one_step_predictive(
+        demand_one_step_dist = tfp.sts.one_step_predictive(
             model=self._forecaster,
             observed_time_series=self._y,
             parameter_samples=self._parameter_samples,
@@ -730,3 +634,18 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             fitted_params = self._forecaster.parameters
 
         return fitted_params
+
+    def _check_conf(self, dictionary):
+        """Raise error when key "observed_time_series" in dictionary
+        to avoid cryptic exceptions. observed_time_series is given in fit()
+        by means of "y".
+
+        :param dictionary: A dictionary to configure a BSTS component.
+        :type dictionary: dict
+        """
+        if "observed_time_series" in dictionary:
+            raise ValueError(
+                """Do not provide "observed_time_series" as a key
+                in a component, it is taken automatically by the \"y\"
+                argument in the sktime.BSTS.fit() function."""
+            )
