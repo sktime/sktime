@@ -11,8 +11,9 @@ __all__ = [
 ]
 __author__ = ["Markus Löning, Kutay Koralturk"]
 
-import numpy as np
 import pandas as pd
+import numpy as np
+
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.utils.validation import check_window_length
@@ -346,7 +347,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         fixed_start = start
         for split_point in range(start, end, step_length):
             training_window = np.arange(fixed_start - window_length, split_point)
-            test_window = split_point + fh
+            test_window = split_point + fh - 1
             yield training_window, test_window
 
     def split_initial(self, y):
