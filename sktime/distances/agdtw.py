@@ -69,9 +69,8 @@ def get_pairwise_distances(first, second):
     @return: np.array containing a matrix with pairwise squared euclidean
     distances
     """
-    # ToDo: try out which one is faster
+    
     return np.power(np.subtract.outer(first, second) ** 2, 2)
-    # return np.asarray([[(x1 - x2) ** 2 for x2 in second] for x1 in first])
 
 
 def warping_matrix(pairwise_distances, window=1.0):
