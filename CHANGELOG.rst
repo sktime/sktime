@@ -3,9 +3,21 @@ Changelog
 
 All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
-[0.5.2] - 2021-xx-xx
+
+[0.5.2] - 2021-01-13
 --------------------
 
+Fixed
+~~~~~
+* Fix ModuleNotFoundError issue (#613) @Hephaest
+* Fixes _fit(X) in KNN (#610) @TonyBagnall
+* UEA TSC module improvements 2 (#599) @TonyBagnall
+* Fix sktime.classification.frequency_based not found error (#606) @Hephaest
+* UEA TSC module improvements 1 (#579) @TonyBagnall
+* Relax numba pinning (#593) @dhirschfeld
+* Fix fh.to_relative() bug for DatetimeIndex (#582) @aiwalter
+
+All contributors: @Hephaest, @MatthewMiddlehurst, @TonyBagnall, @aiwalter and @dhirschfeld
 
 [0.5.1] - 2020-12-29
 --------------------

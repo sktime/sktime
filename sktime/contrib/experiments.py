@@ -28,12 +28,15 @@ from sktime.classification.distance_based import (
     ShapeDTW,
 )
 from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid._catch22_forest_classifier import (
+    Catch22ForestClassifier,
+)
 from sktime.classification.interval_based import (
     TimeSeriesForest,
     RandomIntervalSpectralForest,
 )
-from sktime.contrib.hybrid._catch22_forest_classifier import Catch22ForestClassifier
-from sktime.contrib.interval_based import CanonicalIntervalForest, DrCIF
+from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.shapelet_based import MrSEQLClassifier, ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 

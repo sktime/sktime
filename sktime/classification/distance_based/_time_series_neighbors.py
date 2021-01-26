@@ -114,9 +114,22 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         metric_params=None,
         **kwargs
     ):
+        if algorithm == "kd_tree":
+            raise ValueError(
+                "KNeighborsTimeSeriesClassifier cannot work with kd_tree since kd_tree "
+                "cannot be used with a callable distance metric and we do not support "
+                "precalculated distances as yet."
+            )
+        if algorithm == "ball_tree":
+            raise ValueError(
+                "KNeighborsTimeSeriesClassifier cannot work with ball_tree since "
+                "ball_tree has a list of hard coded distances it can use, and cannot "
+                "work with 3-D arrays"
+            )
 
         self._cv_for_params = False
-
+        # TODO: add in capacity for euclidean
+        # if metric != "euclidean":  # Euclidean will default to the base class distance
         if metric == "dtw":
             metric = dtw_distance
         elif metric == "dtwcv":  # special case to force loocv grid search
@@ -149,28 +162,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             metric = twe_distance
         elif metric == "mpdist":
             metric = mpdist
-        # When mpdist is used, the subsequence length (parameter m) must be set
-        # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-        # metric='mpdist', metric_params={'m':30})
+            # When mpdist is used, the subsequence length (parameter m) must be set
+            # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
+            # metric='mpdist', metric_params={'m':30})
         else:
             if type(metric) is str:
                 raise ValueError(
-                    "Unrecognised distance measure: " + metric + ". Allowed "
-                    "values are "
-                    "names from "
-                    "[dtw,ddtw,"
-                    "wdtw,"
-                    "wddtw,"
-                    "lcss,erp,"
-                    "msm] or "
-                    "please "
-                    "pass a "
-                    "callable "
-                    "distance "
-                    "measure "
-                    "into the "
-                    "constuctor "
-                    "directly."
+                    "Unrecognised distance measure: " + metric + ". Allowed values "
+                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "please pass a callable distance measure into the constuctor"
                 )
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
@@ -200,8 +200,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
         y = np.asarray(y)
         check_classification_targets(y)
-
-        # print(X)
         # if internal cv is desired, the relevant flag forces a grid search
         # to evaluate the possible values,
         # find the best, and then set this classifier's params to match
@@ -248,8 +246,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
-
-        fx = self._fit(X, self._y)
+        #  this not fx = self._fit(X, self_y) in order to maintain backward
+        # compatibility with scikit learn 0.23, where _fit does not take an arg y
+        fx = self._fit(X)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
@@ -258,6 +257,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         self._is_fitted = True
         return fx
+
+    def _more_tags(self):
+        """Removes the need to pass y with _fit
+        Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
+        so we can call fx = self._fit(X) and maintain backward compatibility.
+        """
+        return {"requires_y": False}
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
