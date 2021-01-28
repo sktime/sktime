@@ -452,6 +452,34 @@ class RecursiveTimeSeriesRegressionForecaster(
 ##############################################################################
 # factory methods for easier user interface, but not tunable as it's not an
 # estimator
+def ReducedForecaster(regressor, scitype, strategy, window_length=10, step_length=1):
+    """
+    Forecasting based on reduction
+
+    When fitting, a rolling window approach is used to first transform the
+    target series into panel data which is
+    then used to train a regressor. During prediction, the last
+    available data is used as input to the
+    fitted regressors to make forecasts.
+
+    Parameters
+    ----------
+    scitype: can be 'regressor' or 'ts-regressor'
+    strategy: can be 'direct' or 'recursive'
+    regressor : a regressor of type given by parameter scitype
+
+    References
+    ----------
+    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
+    2013).
+      Machine Learning Strategies for Time Series Forecasting.
+    """
+    Forecaster = _get_forecaster_class(scitype, strategy)
+    return Forecaster(
+        regressor=regressor, window_length=window_length, step_length=step_length
+    )
+
+
 def ReducedTimeSeriesRegressionForecaster(
     ts_regressor, strategy="recursive", window_length=10, step_length=1
 ):
