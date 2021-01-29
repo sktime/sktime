@@ -2,6 +2,18 @@ import numpy as np
 
 __author__ = "Jason Lines"
 
+def euclidean(x, y):
+    return ed(x, y)
+
+def e_distance(x, y):
+    return ed(x, y)
+
+def ed(x, y):
+    # convert to numpy array
+    x = np.array(x, copy=False)
+    y = np.array(y, copy=False)
+    # take the sum of squared diffs
+    return np.power(x - y, 2).sum()
 
 def dtw_distance(first, second, **kwargs):
 
