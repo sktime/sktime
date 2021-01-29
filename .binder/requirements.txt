@@ -13,4 +13,6 @@ seaborn
 statsmodels>=0.12.1
 stumpy>=1.5.1
 tbats>=1.1.0
+tensorflow>=2.4.0
+tensorflow_probability>=0.12.1
 tsfresh>=0.17.0
