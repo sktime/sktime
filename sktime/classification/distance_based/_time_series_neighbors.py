@@ -28,14 +28,17 @@ from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
-from sktime.distances.elastic_cython import ddtw_distance
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.distances.elastic_cython import erp_distance
-from sktime.distances.elastic_cython import lcss_distance
-from sktime.distances.elastic_cython import msm_distance
-from sktime.distances.elastic_cython import twe_distance
-from sktime.distances.elastic_cython import wddtw_distance
-from sktime.distances.elastic_cython import wdtw_distance
+from sktime.distances.elastic import euclidean_distance
+from sktime.distances.elastic_cython import (
+    ddtw_distance,
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wddtw_distance,
+    wdtw_distance,
+)
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
@@ -128,8 +131,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             )
 
         self._cv_for_params = False
-        # TODO: add in capacity for euclidean
-        # if metric != "euclidean":  # Euclidean will default to the base class distance
+        if metric != "euclidean":  # Euclidean will default to the base class distance
+            metric = euclidean_distance
         if metric == "dtw":
             metric = dtw_distance
         elif metric == "dtwcv":  # special case to force loocv grid search
