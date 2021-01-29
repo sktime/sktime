@@ -358,17 +358,17 @@ def erp_distance(first, second, **kwargs):
                             j != 0
                             and (
                                 ((prev[j - 1] + dist12) > (curr[j - 1] + dist2))
-                                and ((curr[ j - 1] + dist2) < (prev[j] + dist1))
+                                and ((curr[j - 1] + dist2) < (prev[j] + dist1))
                             )
                         ):
                             # del
                             cost = curr[j - 1] + dist2
                         elif (j == 0) or (
                             (i != 0)
-                               and(
-                                  ((prev[j - 1] + dist12) > (prev[j] + dist1))
-                                  and ((prev[j] + dist1) < (curr[j - 1] + dist2))
-                               )
+                            and (
+                                ((prev[j - 1] + dist12) > (prev[j] + dist1))
+                                and ((prev[j] + dist1) < (curr[j - 1] + dist2))
+                            )
                         ):
                             # ins
                             cost = prev[j] + dist1
