@@ -1,16 +1,18 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "Kutay Koralturk"]
 __all__ = [
     "CutoffSplitter",
     "SingleWindowSplitter",
     "SlidingWindowSplitter",
     "temporal_train_test_split",
-    "ForecastingGridSearchCV"
+    "ExpandingWindowSplitter",
+    "ForecastingGridSearchCV",
 ]
 
+from sktime.forecasting.model_selection._split import ExpandingWindowSplitter
 from sktime.forecasting.model_selection._split import CutoffSplitter
 from sktime.forecasting.model_selection._split import SingleWindowSplitter
 from sktime.forecasting.model_selection._split import SlidingWindowSplitter
