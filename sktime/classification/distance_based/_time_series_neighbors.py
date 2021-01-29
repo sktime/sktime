@@ -131,7 +131,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             )
 
         self._cv_for_params = False
-        if metric != "euclidean":  # Euclidean will default to the base class distance
+        if metric == "euclidean":  # Euclidean will default to the base class distance
             metric = euclidean_distance
         if metric == "dtw":
             metric = dtw_distance
@@ -172,7 +172,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             if type(metric) is str:
                 raise ValueError(
                     "Unrecognised distance measure: " + metric + ". Allowed values "
-                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
 
