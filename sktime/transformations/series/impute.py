@@ -48,9 +48,9 @@ class Imputer(_SeriesToSeriesTransformer):
         if self.method == "random":
             z = z.apply(lambda x: self._get_random(z) if np.isnan(x) else x)
         elif self.method == "value":
-            z.fillna(value=self.value, inplace=True)
+            z = z.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
-            z.fillna(method=self.method, inplace=True)
+            z = z.fillna(method=self.method)
         elif self.method == "drift":
             forecaster = PolynomialTrendForecaster(degree=1)
             # in-sample forecasting horizon
@@ -60,11 +60,11 @@ class Imputer(_SeriesToSeriesTransformer):
                 z.fillna(method="ffill").fillna(method="backfill")
             ).predict(fh=fh_ins)
             # fill with trend values
-            z.fillna(value=z_pred, inplace=True)
+            z = z.fillna(value=z_pred)
         elif self.method == "mean":
-            z.fillna(value=z.mean(), inplace=True)
+            z = z.fillna(value=z.mean())
         elif self.method == "median":
-            z.fillna(value=z.median(), inplace=True)
+            z = z.fillna(value=z.median())
         else:
             raise ValueError(f"method {self.method} not available")
         return z
@@ -78,7 +78,7 @@ class Imputer(_SeriesToSeriesTransformer):
         ):
             raise ValueError(
                 """Imputing with a value can only be
-                used if method=\"value\" and value is not None"""
+                used if method=\"value\" and if value is not None"""
             )
         else:
             pass
