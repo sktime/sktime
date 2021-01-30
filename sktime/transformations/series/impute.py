@@ -63,7 +63,10 @@ class Imputer(_SeriesToSeriesTransformer):
             z.fillna(value=z_pred, inplace=True)
         elif self.method == "mean":
             z.fillna(value=z.mean(), inplace=True)
-
+        elif self.method == "median":
+            z.fillna(value=z.median(), inplace=True)
+        else:
+            raise ValueError(f"method {self.method} not available")
         return z
 
     def _check_method(self):
