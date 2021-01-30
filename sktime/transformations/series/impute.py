@@ -18,7 +18,7 @@ class Imputer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    method : Method to of filling values.
+    method : Method to fill values.
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
         * "linear" : linear interpolation, by pd.Series.interpolate()
         * "nearest" : use nearest value, by pd.Series.interpolate()
@@ -28,21 +28,34 @@ class Imputer(_SeriesToSeriesTransformer):
         * "backfill"/"bfill" : adapted from pd.Series.fillna()
         * "pad"/"ffill" : adapted from pd.Series.fillna()
         * "random" : random values between pd.Series.min() and .max()
+        * "forecaster" : use an sktime Forecaster, given in arg forecaster
     missing_values : int/float/str, optional
         The placeholder for the missing values. All occurrences of
         missing_values will be imputed. Default, None (np.nan)
-    random_state : int/float/str, optional
-        Value to set random.seed() if method="random", default None
     value : int/float, optional
         Value to fill NaN, by default None
+    forecaster : Any Forecaster based on sktime.BaseForecaster, optinal
+        Use given Forecaster to impute by insample predictions. Before
+        fitting, data missing data is imputed with method="ffill"/"bfill"
+        as heuristic.
+    random_state : int/float/str, optional
+        Value to set random.seed() if method="random", default None
     """
 
-    def __init__(self, method, missing_values=None, random_state=None, value=None):
+    def __init__(
+        self,
+        method,
+        random_state=None,
+        value=None,
+        forecaster=None,
+        missing_values=None,
+    ):
 
         self.method = method
         self.missing_values = missing_values
-        self.random_state = random_state
         self.value = value
+        self.forecaster = forecaster
+        self.random_state = random_state
         super(Imputer, self).__init__()
 
     def transform(self, Z, X=None):
@@ -60,8 +73,11 @@ class Imputer(_SeriesToSeriesTransformer):
             z = z.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
             z = z.fillna(method=self.method)
-        elif self.method == "drift":
-            forecaster = PolynomialTrendForecaster(degree=1)
+        elif self.method in ["drift", "forecaster"]:
+            if self.method == "forecaster":
+                forecaster = self.forecaster
+            else:
+                forecaster = PolynomialTrendForecaster(degree=1)
             # in-sample forecasting horizon
             fh_ins = -np.arange(len(z))
             # fill NaN before fitting with ffill and backfill (heuristic)
@@ -76,6 +92,7 @@ class Imputer(_SeriesToSeriesTransformer):
             z = z.fillna(value=z.median())
         elif self.method in ["nearest", "linear"]:
             z = z.interpolate(method=self.method)
+
         else:
             raise ValueError(f"method {self.method} not available")
         return pd.Series(z)
@@ -89,7 +106,17 @@ class Imputer(_SeriesToSeriesTransformer):
         ):
             raise ValueError(
                 """Imputing with a value can only be
-                used if method=\"value\" and if value is not None"""
+                used if method=\"value\" and if arg value is not None"""
+            )
+        elif (
+            self.forecaster is not None
+            and self.method != "forecaster"
+            or self.method == "forecaster"
+            and self.forecaster is None
+        ):
+            raise ValueError(
+                """Imputing with a forecaster can only be used if
+                method=\"forecaster\" and if arg forecaster is not None"""
             )
         else:
             pass
