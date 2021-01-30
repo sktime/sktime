@@ -16,9 +16,14 @@ from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import SupervisedTimeSeriesForest
+from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
@@ -67,9 +72,11 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 
-# The following estimators currently do not pass all unit tests or fail some of them
-# and are excluded until fixed.
+# The following estimators currently do not pass all unit tests
+# What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
+    "ShapeDTW",
+    "HIVECOTEV1",
     "ElasticEnsemble",
     "KNeighborsTimeSeriesClassifier",
     "ProximityForest",
@@ -170,6 +177,7 @@ ESTIMATOR_TEST_PARAMS = {
         "min_shapelet_length": 3,
         "max_shapelet_length": 4,
     },
+    ROCKETClassifier: {"num_kernels": 100},
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,
@@ -179,14 +187,18 @@ ESTIMATOR_TEST_PARAMS = {
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     SFA: {"return_pandas_data_series": True},
+    ContractableBOSS: {"n_parameter_samples": 25, "max_ensemble_size": 5},
     TemporalDictionaryEnsemble: {
-        "n_parameter_samples": 50,
-        "max_ensemble_size": 10,
-        "randomly_selected_params": 40,
+        "n_parameter_samples": 25,
+        "max_ensemble_size": 5,
+        "randomly_selected_params": 20,
     },
     TimeSeriesForest: {"n_estimators": 3},
     TimeSeriesForestClassifier: {"n_estimators": 3},
     TimeSeriesForestRegressor: {"n_estimators": 3},
+    SupervisedTimeSeriesForest: {"n_estimators": 3},
+    CanonicalIntervalForest: {"n_estimators": 3},
+    DrCIF: {"n_estimators": 3},
     HCrystalBallForecaster: {"model": HoltSmoothingWrapper()},
     BATS: {
         "use_box_cox": False,

@@ -5,6 +5,12 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 from sklearn.base import clone
 from sktime.benchmarking.tasks import TSCTask
 from sktime.benchmarking.tasks import TSRTask
+import pandas as pd
+import logging
+
+log = logging.getLogger()
+console = logging.StreamHandler()
+log.addHandler(console)
 
 
 class Orchestrator:
@@ -63,7 +69,15 @@ class Orchestrator:
     def fit(self, overwrite_fitted_strategies=False, verbose=False):
         """Fit strategies on datasets"""
 
-        for task, dataset, data, strategy, cv_fold, train_idx, _ in self._iter():
+        for (
+            task,
+            dataset,
+            data,
+            strategy,
+            cv_fold,
+            train_idx,
+            _test_idx,
+        ) in self._iter():
 
             # skip strategy, if overwrite is set to False and fitted
             # strategy already exists
@@ -73,7 +87,7 @@ class Orchestrator:
                     strategy, data.dataset_name
                 )
             ):
-                print(  # noqa: T001
+                log.warn(
                     f"Skipping strategy: {strategy.name} on CV-fold: "
                     f"{cv_fold} of dataset: {dataset.name}"
                 )
@@ -143,7 +157,7 @@ class Orchestrator:
                 and not overwrite_fitted_strategies
                 and (fitted_stategy_exists or not save_fitted_strategies)
             ):
-                print(  # noqa: T001
+                log.warn(
                     f"Skipping strategy: {strategy.name} on CV-fold: "
                     f"{cv_fold} of dataset: {dataset.name}"
                 )
@@ -157,7 +171,9 @@ class Orchestrator:
             self._print_progress(
                 dataset.name, strategy.name, cv_fold, "train", "fit", verbose
             )
+            fit_estimator_start_time = pd.Timestamp.now()
             strategy.fit(task, train)
+            fit_estimator_end_time = pd.Timestamp.now()
 
             # save fitted strategy if save fitted strategies is set to True
             # and overwrite is set to True or the
@@ -174,7 +190,10 @@ class Orchestrator:
             # or the predicted values do not already exist
             if predict_on_train and (overwrite_predictions or not train_pred_exist):
                 y_true = train.loc[:, task.target]
+                predict_estimator_start_time = pd.Timestamp.now()
                 y_pred = strategy.predict(train)
+                predict_estimator_end_time = pd.Timestamp.now()
+
                 y_proba = self._predict_proba_one(strategy, task, train, y_true, y_pred)
                 self.results.save_predictions(
                     strategy_name=strategy.name,
@@ -184,6 +203,10 @@ class Orchestrator:
                     y_pred=y_pred,
                     y_proba=y_proba,
                     cv_fold=cv_fold,
+                    fit_estimator_start_time=fit_estimator_start_time,
+                    fit_estimator_end_time=fit_estimator_end_time,
+                    predict_estimator_start_time=predict_estimator_start_time,
+                    predict_estimator_end_time=predict_estimator_end_time,
                     train_or_test="train",
                 )
 
@@ -191,7 +214,10 @@ class Orchestrator:
             # predictions do not already exist
             if overwrite_predictions or not test_pred_exist:
                 y_true = test.loc[:, task.target]
+                predict_estimator_start_time = pd.Timestamp.now()
                 y_pred = strategy.predict(test)
+                predict_estimator_end_time = pd.Timestamp.now()
+
                 y_proba = self._predict_proba_one(strategy, task, test, y_true, y_pred)
                 self.results.save_predictions(
                     dataset_name=dataset.name,
@@ -201,6 +227,10 @@ class Orchestrator:
                     y_pred=y_pred,
                     y_proba=y_proba,
                     cv_fold=cv_fold,
+                    fit_estimator_start_time=fit_estimator_start_time,
+                    fit_estimator_end_time=fit_estimator_end_time,
+                    predict_estimator_start_time=predict_estimator_start_time,
+                    predict_estimator_end_time=predict_estimator_end_time,
                     train_or_test="test",
                 )
 
@@ -313,7 +343,7 @@ class Orchestrator:
 
             n_splits = self.cv.get_n_splits() - 1  # zero indexing
 
-            print(  # noqa: T001
+            log.warn(
                 f"strategy: {self._strategy_counter}/{self.n_strategies} - "
                 f"{strategy_name} "
                 f"on CV-fold: {cv_fold}/{n_splits} "

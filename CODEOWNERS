@@ -20,6 +20,8 @@ sktime/forecasting/tests/test_ets @HYang1996
 sktime/forecasting/fbprophet @aiwalter
 sktime/forecasting/bats @aiwalter
 sktime/forecasting/tbats @aiwalter
+sktime/forecasting/arima @HYang1996
+sktime/forecasting/model_selection/_split @koralturkk
 
 sktime/forecasting/online_learning/ @magittan
 
