@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-""" KNN time series classification built on sklearn KNeighborsClassifier
+""" KNN time series classification built on sklearn KNeighborsClassifier that
+supports a range of distance measure specifically for time series. This distance
+functions are defined in cython in sktime.distances.elastic_cython. Python versions
+are in sktime.distances.elastic, but these are orders of magnitude slower.
 
 """
 
