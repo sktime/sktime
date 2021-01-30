@@ -39,6 +39,7 @@ class Imputer(_SeriesToSeriesTransformer):
         self.method = method
         self.random_state = random_state
         self.value = value
+        super(Imputer, self).__init__()
 
     def transform(self, Z, X=None):
         self.check_is_fitted()
