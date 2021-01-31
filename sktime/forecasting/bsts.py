@@ -16,6 +16,7 @@ import tensorflow_probability as tfp
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tensorflow_probability")
+_check_soft_dependencies("tensorflow")
 
 
 class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
@@ -419,6 +420,10 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
     def _instantiate_model(self, y, X=None):
 
+        y = y.astype("float64")
+        if X is not None:
+            X = X.astype("float64")
+
         # Adding Local Linear Trend Components
         if self.add_local_linear_trend is not None:
             for conf in self.add_local_linear_trend:
@@ -437,8 +442,8 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # Adding Linear Regression Components
         if self.add_linear_regression is not None:
-            self._check_conf(conf)
             for conf in self.add_linear_regression:
+                self._check_conf(conf)
                 self.time_series_components.append(
                     tfp.sts.LinearRegression(design_matrix=X, **conf)
                 )
@@ -464,7 +469,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_autoregressive:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.Autoregressive(design_matrix=X, **conf)
+                    tfp.sts.Autoregressive(observed_time_series=y, **conf)
                 )
 
         # Adding Local Level Components
@@ -498,6 +503,14 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     Each component has to be given as separate
                     component in sktime.BSTS()."""
                 )
+
+            if "observed_time_series" in self.compositional_specifications:
+                raise ValueError(
+                    """Do not provide "observed_time_series" as a key
+                    in a component, it is taken automatically by the \"y\"
+                    argument in the sktime.BSTS.fit() function."""
+                )
+
             self._forecaster = tfp.sts.Sum(
                 self.time_series_components,
                 observed_time_series=y,
@@ -526,6 +539,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         """
 
         self._set_y_X(y, X)
+        self._type_check_y_X(self._y, self._X)
         self._set_fh(fh)
         self._instantiate_model(y=y, X=X)
         self._fitted_forecaster = tfp.sts.build_factored_surrogate_posterior(
@@ -559,6 +573,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             Error when merging data
         """
 
+        self._type_check_y_X(X=X)
         fh = fh.to_relative(cutoff=self.cutoff)
 
         self._parameter_samples = self._fitted_forecaster.sample(self.sample_size)
@@ -566,8 +581,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         # Outsample
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
-            steps = fh_out.to_pandas().max()
-
+            steps = fh_out.to_pandas().max().astype("int32")
             self._forecast_dist = tfp.sts.forecast(
                 model=self._forecaster,
                 observed_time_series=self._y,
@@ -649,3 +663,9 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 in a component, it is taken automatically by the \"y\"
                 argument in the sktime.BSTS.fit() function."""
             )
+
+    def _type_check_y_X(self, y=None, X=None):
+        if y is not None:
+            self._y = y.astype("float64")
+        if X is not None:
+            self._X = X.astype("float64")
