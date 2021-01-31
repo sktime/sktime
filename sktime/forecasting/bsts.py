@@ -444,6 +444,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if self.add_linear_regression is not None:
             for conf in self.add_linear_regression:
                 self._check_conf(conf)
+                self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
                     tfp.sts.LinearRegression(design_matrix=X, **conf)
                 )
@@ -452,6 +453,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if self.add_sparse_linear_regression is not None:
             for conf in self.add_sparse_linear_regression:
                 self._check_conf(conf)
+                self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
                     tfp.sts.SparseLinearRegression(design_matrix=X, **conf)
                 )
@@ -460,6 +462,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if self.add_dynamic_linear_regression is not None:
             for conf in self.add_dynamic_linear_regression:
                 self._check_conf(conf)
+                self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
                     tfp.sts.DynamicLinearRegression(design_matrix=X, **conf)
                 )
@@ -662,6 +665,14 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 """Do not provide "observed_time_series" as a key
                 in a component, it is taken automatically by the \"y\"
                 argument in the sktime.BSTS.fit() function."""
+            )
+
+    def _check_design_matrix(self, design_matrix):
+        if design_matrix is None:
+            raise ValueError(
+                """Design matrix (X) has to be given to add a
+                linear regression/dynamic regression/sparse
+                linear regression component"""
             )
 
     def _type_check_y_X(self, y=None, X=None):
