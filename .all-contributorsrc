@@ -785,6 +785,16 @@
       ]
     },
     {
+      "login": "koralturkk",
+      "name": "Kutay Koralturk",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/18037789?s=460&v=4",
+      "profile": "https://github.com/koralturkk",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
       "login": "vnmabus",
       "name": "Carlos Ramos Carreño",
       "avatar_url": "https://avatars1.githubusercontent.com/u/2364173?v=4",
@@ -875,6 +885,17 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "RNKuhns",
+      "name": "Ryan Kuhns",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/26907244?v=4",
+      "profile": "https://github.com/rnkuhns",
+      "contributions": [
+        "code",
+        "doc",
+        "tutorial"
       ]
     }
   ],

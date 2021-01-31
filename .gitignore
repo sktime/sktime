@@ -75,6 +75,7 @@ instance/
 docs/_build/
 # automatically generated content
 docs/source/modules/auto_generated/
+docs/source/api_reference/modules/auto_generated/
 
 # automatically sym-linked example notebooks
 docs/source/examples
