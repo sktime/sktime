@@ -15,7 +15,7 @@ from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 import tensorflow_probability as tfp
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tensorflow_probability")
+_check_soft_dependencies("tensorflow-probability")
 _check_soft_dependencies("tensorflow")
 
 
