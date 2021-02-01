@@ -12,7 +12,6 @@ import scipy.stats as st
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-import tensorflow_probability as tfp
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tensorflow_probability")
@@ -416,6 +415,11 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._forecaster = None
         self._fitted_forecaster = None
 
+        # import inside method to avoid hard dependency
+        import tensorflow_probability as _tfp
+
+        self._ModelClass = _tfp
+
         super(BSTS, self).__init__()
 
     def _instantiate_model(self, y, X=None):
@@ -429,7 +433,9 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_local_linear_trend:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.LocalLinearTrend(observed_time_series=y, **conf)
+                    self._ModelClass.sts.LocalLinearTrend(
+                        observed_time_series=y, **conf
+                    )
                 )
 
         # Adding Semi Local Linear Trend Components
@@ -437,7 +443,9 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_semi_local_linear_trend:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.LocalLinearTrend(observed_time_series=y, **conf)
+                    self._ModelClass.sts.LocalLinearTrend(
+                        observed_time_series=y, **conf
+                    )
                 )
 
         # Adding Linear Regression Components
@@ -446,7 +454,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 self._check_conf(conf)
                 self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
-                    tfp.sts.LinearRegression(design_matrix=X, **conf)
+                    self._ModelClass.sts.LinearRegression(design_matrix=X, **conf)
                 )
 
         # Adding Sparse Linear Regression Components
@@ -455,7 +463,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 self._check_conf(conf)
                 self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
-                    tfp.sts.SparseLinearRegression(design_matrix=X, **conf)
+                    self._ModelClass.sts.SparseLinearRegression(design_matrix=X, **conf)
                 )
 
         # Adding Dynamic Linear Regression Components
@@ -464,7 +472,9 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 self._check_conf(conf)
                 self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
-                    tfp.sts.DynamicLinearRegression(design_matrix=X, **conf)
+                    self._ModelClass.sts.DynamicLinearRegression(
+                        design_matrix=X, **conf
+                    )
                 )
 
         # Adding Autoregressive Model
@@ -472,7 +482,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_autoregressive:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.Autoregressive(observed_time_series=y, **conf)
+                    self._ModelClass.sts.Autoregressive(observed_time_series=y, **conf)
                 )
 
         # Adding Local Level Components
@@ -480,7 +490,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_local_level:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.LocalLevel(observed_time_series=y, **conf)
+                    self._ModelClass.sts.LocalLevel(observed_time_series=y, **conf)
                 )
 
         # Adding Seasonal Components
@@ -488,7 +498,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_seasonal:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.Seasonal(observed_time_series=y, **conf)
+                    self._ModelClass.sts.Seasonal(observed_time_series=y, **conf)
                 )
 
         # Adding Smooth Seasonal Components
@@ -496,7 +506,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             for conf in self.add_smooth_seasonal:
                 self._check_conf(conf)
                 self.time_series_components.append(
-                    tfp.sts.SmoothSeasonal(observed_time_series=y, **conf)
+                    self._ModelClass.sts.SmoothSeasonal(observed_time_series=y, **conf)
                 )
 
         if self.compositional_specifications is not None:
@@ -514,13 +524,13 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     argument in the sktime.BSTS.fit() function."""
                 )
 
-            self._forecaster = tfp.sts.Sum(
+            self._forecaster = self._ModelClass.sts.Sum(
                 self.time_series_components,
                 observed_time_series=y,
                 **self.compositional_specifications
             )
         else:
-            self._forecaster = tfp.sts.Sum(
+            self._forecaster = self._ModelClass.sts.Sum(
                 self.time_series_components, observed_time_series=y
             )
 
@@ -545,8 +555,10 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._type_check_y_X(self._y, self._X)
         self._set_fh(fh)
         self._instantiate_model(y=y, X=X)
-        self._fitted_forecaster = tfp.sts.build_factored_surrogate_posterior(
-            model=self._forecaster
+        self._fitted_forecaster = (
+            self._ModelClass.sts.build_factored_surrogate_posterior(
+                model=self._forecaster
+            )
         )
         self._is_fitted = True
         return self
@@ -585,7 +597,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             steps = fh_out.to_pandas().max().astype("int32")
-            self._forecast_dist = tfp.sts.forecast(
+            self._forecast_dist = self._ModelClass.sts.forecast(
                 model=self._forecaster,
                 observed_time_series=self._y,
                 parameter_samples=self._parameter_samples,
@@ -604,7 +616,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             y_out_sample = np.array([])
 
         # Insample
-        demand_one_step_dist = tfp.sts.one_step_predictive(
+        demand_one_step_dist = self._ModelClass.sts.one_step_predictive(
             model=self._forecaster,
             observed_time_series=self._y,
             parameter_samples=self._parameter_samples,
