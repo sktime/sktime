@@ -224,6 +224,19 @@ And build sktime from this environment:
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
+Some users have experienced issues when installing NumPy, particuarly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
+
+If you run into a problem installing the development version and are using Anaconda, try:
+
+1. Install Anaconda
+2. Create new environment: :code:`conda create -n sktime-dev python=3.8`
+3. Activate environment: :code:`conda activate sktime-dev`
+4. Install NumPy (pinned to 1.19.3) from pip: :code:`pip install numpy==1.19.3`
+5. Install requirements: :code:`pip install -r build_tools/requirements.txt`
+6. Follow the instructions above to point to "vcvarsall.bat"
+7. Run :code:`pip install --verbose --no-build-isolation --editable .`
+
+In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
 
 Building binary packages and installers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
