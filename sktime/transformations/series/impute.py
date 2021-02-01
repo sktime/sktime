@@ -42,6 +42,8 @@ class Imputer(_SeriesToSeriesTransformer):
         Value to set random.seed() if method="random", default None
     """
 
+    _tags = {"univariate-only": True, "fit-in-transform": True}
+
     def __init__(
         self,
         method,
@@ -59,6 +61,18 @@ class Imputer(_SeriesToSeriesTransformer):
         super(Imputer, self).__init__()
 
     def transform(self, Z, X=None):
+        """Transform data.
+        Returns a transformed version of Z.
+
+        Parameters
+        ----------
+        Z : pd.Series
+
+        Returns
+        -------
+        z : pd.Series
+            Transformed time series.
+        """
         self.check_is_fitted()
         self._check_method()
         z = check_series(Z, enforce_univariate=True)
@@ -92,7 +106,6 @@ class Imputer(_SeriesToSeriesTransformer):
             z = z.fillna(value=z.median())
         elif self.method in ["nearest", "linear"]:
             z = z.interpolate(method=self.method)
-
         else:
             raise ValueError(f"method {self.method} not available")
         return pd.Series(z)
