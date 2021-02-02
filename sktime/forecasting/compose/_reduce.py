@@ -452,7 +452,7 @@ class RecursiveTimeSeriesRegressionForecaster(
 ##############################################################################
 # factory methods for easier user interface, but not tunable as it's not an
 # estimator
-def ReducedForecaster(regressor, scitype, strategy, window_length=10, step_length=1):
+def ReducedForecaster(regressor, scitype, strategy="recursive", window_length=10, step_length=1):
     """
     Forecasting based on reduction
 
