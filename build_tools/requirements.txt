@@ -1,8 +1,9 @@
-catch22
+catch22>=0.2.0
 cython>=0.29.0
 fbprophet>=0.7.1
 hcrystalball>=0.1.9
-numba==0.50.*
+numba>=0.50,<0.53
+numpy==1.19
 pandas==1.1.5
 pmdarima>=1.8.0
 pytest
