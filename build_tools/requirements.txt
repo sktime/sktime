@@ -13,7 +13,7 @@ scikit-posthocs
 statsmodels>=0.12.1
 stumpy>=1.5.1
 tbats>=1.1.0
-tensorflow
-tensorflow_probability
+tensorflow>=2.4.1
+tensorflow_probability>=0.12.1
 tsfresh>=0.17.0
 wheel
