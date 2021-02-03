@@ -7,10 +7,10 @@ __all__ = ["Imputer"]
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sklearn.utils import check_random_state
+
 
 import numpy as np
-import pandas as pd
-import random
 
 
 class Imputer(_SeriesToSeriesTransformer):
@@ -35,8 +35,8 @@ class Imputer(_SeriesToSeriesTransformer):
     value : int/float, optional
         Value to fill NaN, by default None
     forecaster : Any Forecaster based on sktime.BaseForecaster, optinal
-        Use given Forecaster to impute by insample predictions. Before
-        fitting, data missing data is imputed with method="ffill"/"bfill"
+        Use a given Forecaster to impute by insample predictions. Before
+        fitting, missing data is imputed with method="ffill"/"bfill"
         as heuristic.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
@@ -108,7 +108,7 @@ class Imputer(_SeriesToSeriesTransformer):
             z = z.interpolate(method=self.method)
         else:
             raise ValueError(f"method {self.method} not available")
-        return pd.Series(z)
+        return z
 
     def _check_method(self):
         if (
@@ -142,9 +142,9 @@ class Imputer(_SeriesToSeriesTransformer):
         :return: Random int or float between min and max of z
         :rtype: int/float
         """
-        random.seed(self.random_state)
+        rng = check_random_state(self.random_state)
         # check if series contains only int or int-like values (e.g. 3.0)
         if (z.dropna() % 1 == 0).all():
-            return random.randint(z.min(), z.max())
+            return rng.randint(z.min(), z.max())
         else:
-            return random.uniform(z.min(), z.max())
+            return rng.uniform(z.min(), z.max())
