@@ -3,15 +3,17 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = [
+    "ExpandingWindowSplitter",
     "SlidingWindowSplitter",
     "CutoffSplitter",
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning, Kutay Koralturk"]
 
-import numpy as np
 import pandas as pd
+import numpy as np
+
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.utils.validation import check_window_length
@@ -290,6 +292,137 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             return 0
 
 
+class ExpandingWindowSplitter(BaseWindowSplitter):
+    """Expanding window splitter
+
+    Parameters
+    ----------
+    fh : int, list or np.array
+        Forecasting horizon
+    window_length : int
+    step_length : int
+    initial_window : int
+    start_with_window : bool, optional (default=False)
+
+    Examples
+    --------
+    For example for `window_length = 5`, `step_length = 1` and `fh = 3`
+    here is a representation of the folds::
+
+    |-----------------------|
+    | * * * * * x x x - - - |
+    | * * * * * * x x x - - |
+    | * * * * * * * x x x - |
+    | * * * * * * * * x x x |
+
+
+    ``*`` = training fold.
+
+    ``x`` = test fold.
+    """
+
+    def __init__(
+        self,
+        fh=DEFAULT_FH,
+        window_length=DEFAULT_WINDOW_LENGTH,
+        step_length=DEFAULT_STEP_LENGTH,
+        initial_window=None,
+        start_with_window=False,
+    ):
+
+        self.step_length = step_length
+        self.start_with_window = start_with_window
+        self.initial_window = initial_window
+        super(ExpandingWindowSplitter, self).__init__(
+            fh=fh, window_length=window_length
+        )
+
+    def _split_windows(self, y):
+        step_length = check_step_length(self.step_length)
+        window_length = check_window_length(self.window_length)
+        fh = self._check_fh()
+
+        end = self._get_end(y)
+        start = self._get_start()
+        fixed_start = start
+        for split_point in range(start, end, step_length):
+            training_window = np.arange(fixed_start - window_length, split_point)
+            test_window = split_point + fh - 1
+            yield training_window, test_window
+
+    def split_initial(self, y):
+        """Split initial window
+
+        This is useful during forecasting model selection where we want to
+        fit the forecaster on some part of the
+        data first before doing temporal cross-validation
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        intial_training_window : np.array
+        initial_test_window : np.array
+        """
+        if self.initial_window is None:
+            raise ValueError(
+                "Please specify initial window, found: `initial_window`=None"
+            )
+
+        initial = check_window_length(self.initial_window)
+        initial_training_window = np.arange(initial)
+        initial_test_window = np.arange(initial, len(y))
+        return initial_training_window, initial_test_window
+
+    def get_n_splits(self, y=None):
+        """Return number of splits
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+
+        Returns
+        -------
+        n_splits : int
+        """
+        if y is None:
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y` to compute the "
+                f"number of splits."
+            )
+        return len(self.get_cutoffs(y))
+
+    def get_cutoffs(self, y=None):
+        """Get the cutoff time points.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+
+        Returns
+        -------
+        cutoffs : np.array
+        """
+        if y is None:
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y` to compute the " f"cutoffs."
+            )
+        y = self._check_y(y)
+        end = self._get_end(y)
+        start = self._get_start()
+        step_length = check_step_length(self.step_length)
+        return np.arange(start, end, step_length) - 1
+
+    def _get_start(self):
+        window_length = check_window_length(self.window_length)
+        if self.start_with_window:
+            return window_length
+        else:
+            return 0
+
+
 class SingleWindowSplitter(BaseWindowSplitter):
     """Single window splitter
 
@@ -404,7 +537,7 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
                 "If `fh` is given, `test_size` and `train_size` cannot "
                 "also be specified."
             )
-        return _split_by_fh(y, fh, X=X)
+        return _split_y_by_fh(y, fh, X=X)
     else:
         series = (y,) if X is None else (y, X)
         return _train_test_split(
@@ -416,7 +549,9 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
         )
 
 
-def _split_by_fh(y, fh, X=None):
+def _split_y_by_fh(y, fh, X=None):
+    """Helper function to split time series with forecasting horizon handling both
+    relative and absolute horizons"""
     if X is not None:
         check_equal_time_index(y, X)
     fh = check_fh(fh)

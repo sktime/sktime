@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.datasets import load_gunpoint
 
 # expected y_proba

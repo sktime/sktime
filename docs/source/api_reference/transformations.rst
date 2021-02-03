@@ -52,6 +52,16 @@ tsfresh
     TSFreshRelevantFeatureExtractor
     TSFreshFeatureExtractor
 
+Catch22
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.catch22_features
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    Catch22
 
 Compose
 ~~~~~~~
