@@ -6,12 +6,11 @@ __author__ = "Markus Löning"
 __all__ = [
     "ReducedTabularRegressorMixin",
     "ReducedTimeSeriesRegressorMixin",
-    "ReducedTimeSeriesRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
-    "ReducedRegressionForecaster",
     "DirectRegressionForecaster",
     "RecursiveRegressionForecaster",
+    "ReducedForecaster",
 ]
 
 import numpy as np
@@ -476,64 +475,6 @@ def ReducedForecaster(
     2013).
       Machine Learning Strategies for Time Series Forecasting.
     """
-    Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(
-        regressor=regressor, window_length=window_length, step_length=step_length
-    )
-
-
-def ReducedTimeSeriesRegressionForecaster(
-    ts_regressor, strategy="recursive", window_length=10, step_length=1
-):
-    """
-    Forecasting based on reduction to time series regression.
-
-    When fitting, a rolling window approach is used to first transform the
-    target series into panel data which is
-    then used to train a time series regressor. During prediction, the last
-    available data is used as input to the
-    fitted time series regressors to make forecasts.
-
-    Parameters
-    ----------
-    ts_regressor : a time series regressor
-
-    References
-    ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
-    2013).
-      Machine Learning Strategies for Time Series Forecasting.
-    """
-    scitype = "ts_regressor"
-    Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(
-        regressor=ts_regressor, window_length=window_length, step_length=step_length
-    )
-
-
-def ReducedRegressionForecaster(
-    regressor, strategy="recursive", window_length=10, step_length=1
-):
-    """
-    Forecasting based on reduction to tabular regression.
-
-    When fitting, a rolling window approach is used to first transform the
-    target series into panel data which is
-    then used to train a regressor. During prediction, the last available
-    data is used as input to the
-    fitted regressors to make forecasts.
-
-    Parameters
-    ----------
-    regressor : a regressor
-
-    References
-    ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
-    2013).
-      Machine Learning Strategies for Time Series Forecasting.
-    """
-    scitype = "regressor"
     Forecaster = _get_forecaster_class(scitype, strategy)
     return Forecaster(
         regressor=regressor, window_length=window_length, step_length=step_length
