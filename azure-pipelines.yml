@@ -52,7 +52,7 @@ stages:
           - script: pip install -r build_tools/hard_dependencies.txt
             displayName: 'Install hard dependencies'
           # install dm-tree via conda (dependency of tensorflow)
-          - script: conda install dm-tree
+          - script: conda install --channel=conda-forge dm-tree
             displayName: 'Install soft dependency dm-tree'
           - script: pip install -e .
             displayName: 'Build sktime'
