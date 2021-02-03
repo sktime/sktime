@@ -57,7 +57,7 @@ def test_strategy_last_seasonal(fh, sp):
 
     # check values
     fh = check_fh(fh)  # get well formatted fh
-    reps = np.int(np.ceil(max(fh) / sp))
+    reps = int(np.ceil(max(fh) / sp))
     expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - 1]
     np.testing.assert_array_equal(y_pred, expected)
 
@@ -79,8 +79,8 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
 
         # check values
         fh = check_fh(fh)  # get well formatted fh
-        reps = np.int(np.ceil(max(fh) / sp))
-        last_window = y_train.iloc[-window_length:].values
+        reps = int(np.ceil(max(fh) / sp))
+        last_window = y_train.iloc[-window_length:].to_numpy().astype(float)
         last_window = np.pad(
             last_window,
             (0, sp - len(last_window) % sp),
@@ -88,7 +88,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
             constant_values=np.nan,
         )
 
-        last_window = last_window.reshape(np.int(np.ceil(len(last_window) / sp)), sp)
+        last_window = last_window.reshape(int(np.ceil(len(last_window) / sp)), sp)
         expected = np.tile(np.nanmean(last_window, axis=0), reps=reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
 
