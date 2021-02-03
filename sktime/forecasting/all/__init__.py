@@ -20,8 +20,7 @@ __all__ = [
     "PolynomialTrendForecaster",
     "TransformedTargetForecaster",
     "Deseasonalizer",
-    "ReducedRegressionForecaster",
-    "ReducedTimeSeriesRegressionForecaster",
+    "ReducedForecaster",
     "EnsembleForecaster",
     "Detrender",
     "sMAPE",
@@ -46,8 +45,7 @@ from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import ReducedRegressionForecaster
-from sktime.forecasting.compose import ReducedTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import ReducedForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import CutoffSplitter
