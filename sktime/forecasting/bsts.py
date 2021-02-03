@@ -558,6 +558,9 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 model=self._forecaster
             )
         )
+
+        self._parameter_samples = self._fitted_forecaster.sample(self.sample_size)
+
         self._is_fitted = True
         return self
 
@@ -588,8 +591,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         self._type_check_y_X(X=X)
         fh = fh.to_relative(cutoff=self.cutoff)
-
-        self._parameter_samples = self._fitted_forecaster.sample(self.sample_size)
 
         # Outsample
         if not fh.is_all_in_sample(cutoff=self.cutoff):
