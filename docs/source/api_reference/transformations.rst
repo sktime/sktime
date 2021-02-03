@@ -225,3 +225,14 @@ Matrix Profile
     :template: class.rst
 
     MatrixProfileTransformer
+
+Imputer
+~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.impute
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    Imputer

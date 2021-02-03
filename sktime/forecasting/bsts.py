@@ -386,7 +386,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         sample_size=200,
     ):
 
-        #####
         # Level Components
         self.add_local_level = add_local_level
 
@@ -408,7 +407,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # Composition Component
         self.compositional_specifications = compositional_specifications
-        #####
 
         self.sample_size = sample_size
         self.time_series_components = []
