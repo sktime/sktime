@@ -40,7 +40,7 @@ EXTRAS_REQUIRE = {
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
-        "tensorflow_probability>=0.12.1",
+        "tensorflow_probability",
     ],
 }
 
