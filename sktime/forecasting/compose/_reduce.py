@@ -11,6 +11,7 @@ __all__ = [
     "RecursiveTimeSeriesRegressionForecaster",
     "ReducedRegressionForecaster",
     "DirectRegressionForecaster",
+    "MultioutputRegressionForecaster",
     "RecursiveRegressionForecaster",
 ]
 
@@ -265,6 +266,76 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         raise NotImplementedError("in-sample predictions are not implemented")
 
 
+class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
+    strategy = "multioutput"
+
+    def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_y_X(y, X)
+        if X is not None:
+            raise NotImplementedError()
+        self._set_fh(fh)
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
+            raise NotImplementedError("In-sample predictions are not implemented")
+
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
+        # for the multioutput reduction strategy, a single forecaster is fitted
+        # simultaneously to all the future steps in the forecasting horizon
+        # by reducing to a forecaster that can handle multi-dimensional outputs
+        self._cv = SlidingWindowSplitter(
+            fh=self.fh.to_relative(self.cutoff),
+            window_length=self.window_length_,
+            step_length=self.step_length_,
+            start_with_window=True,
+        )
+
+        # transform data using rolling window split
+        X, Y_train = self._transform(y, X)
+
+        # fit regressor to training data
+        self.regressor.fit(X, Y_train)
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        # use last window as new input data for regressor to
+        # make forecasts
+        # get last window from observation horizon
+        last_window, _ = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
+
+        X_last = self._format_windows([last_window])
+
+        y_pred = self.regressor.predict(X_last)
+
+        # preallocate array for forecasted values
+        # y_pred = np.zeros(len(fh))
+
+        return y_pred[0]
+
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        raise NotImplementedError("in-sample predictions are not implemented")
+
+
 class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
@@ -359,6 +430,30 @@ class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     reduction strategy.
     For the direct reduction strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
+
+    pass
+
+
+class MultioutputRegressionForecaster(
+    ReducedTabularRegressorMixin, _MultioutputReducer
+):
+    """
+    Forecasting based on reduction to tabular regression with a multioutput
+    reduction strategy.
+    For the multioutput reduction strategy, a single forecaster is fitted
+    simultaneously to all the future steps in the forecasting horizon
 
     Parameters
     ----------
