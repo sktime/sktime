@@ -10,8 +10,14 @@ import csv
 from scipy import stats
 from sklearn.utils import check_random_state
 import numpy as np
-from sktime.distances.elastic_params import build_dtw_distance_params, build_wdtw_distance_params, \
-    build_msm_distance_params, build_erp_distance_params, build_lcss_distance_params, build_twe_distance_params
+from sktime.distances.elastic_params import(
+    build_dtw_distance_params,
+    build_wdtw_distance_params,
+    build_msm_distance_params,
+    build_erp_distance_params,
+    build_lcss_distance_params,
+    build_twe_distance_params,
+)
 
 from sktime.datasets.base import _load_dataset
 from sktime.distances.elastic import dtw_distance, derivative_dtw_distance
@@ -26,7 +32,8 @@ from sktime.distances.elastic import e_distance
 
 # define several functions importing the cython versions of each distance measure.
 # this is necessary because the python function names and cython function names clash.
-# therefore these functions simply append "_cython" to the function as an alias for the cython based implementations.
+# therefore these functions simply append "_cython" to the function as an alias for
+# the cython based implementations.
 
 from sktime.utils.data_processing import from_nested_to_3d_numpy
 
@@ -159,6 +166,7 @@ def create_distance_measure_test_results(dist_func, param_space, dataset_name,
     print("computed distances for", dist_func_name, "on", dataset_name, "in",
           (datetime.now() - start).total_seconds(), "seconds")
 
+
 def choose_param_set(param_space, rand):
     rand = check_random_state(rand)
     # randomly select a sub param space
@@ -189,6 +197,7 @@ def choose_param_set(param_space, rand):
         # record the mapping of chosen param value
         param_set[key] = choice
     return param_set
+
 
 if __name__ == "__main__":
 
