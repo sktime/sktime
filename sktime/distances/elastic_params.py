@@ -1,16 +1,20 @@
 from scipy import stats
 import numpy as np
 
+
 def build_e_distance_params(X, y = None):
     return {}
 
+
 def build_dtw_distance_params(X, y = None):
     return {"w": stats.uniform(0, 1),}
+
 
 def build_wdtw_distance_params(X, y = None):
     return {
         "g": stats.uniform(0, 1),
     }
+
 
 def build_twe_distance_params(X, y = None):
     return {
@@ -29,6 +33,7 @@ def build_twe_distance_params(X, y = None):
         "stiffness": [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
     }
 
+
 def build_lcss_distance_params(X, y = None):
     stdp = np.std(X)
     instance_length = X[0]
@@ -40,6 +45,7 @@ def build_lcss_distance_params(X, y = None):
         "delta": stats.randint(low=0, high=max_raw_warping_window + 1),
     }
 
+
 def build_erp_distance_params(X, y = None):
     stdp = np.std(X)
     instance_length = X[0]
@@ -50,6 +56,7 @@ def build_erp_distance_params(X, y = None):
         # scipy stats randint is exclusive on the max value, hence + 1
         "band_size": stats.randint(low=0, high=max_raw_warping_window + 1)
     }
+
 
 def build_msm_distance_params(X, y = None):
     return {

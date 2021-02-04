@@ -99,8 +99,10 @@ def dtw_distance(first, second, **kwargs):
 
     return dist
 
+
 def ddtw_distance(a, b, **kwargs):
     return derivative_dtw_distance(a, b, **kwargs)
+
 
 def derivative_dtw_distance(first, second, **kwargs):
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
@@ -113,8 +115,10 @@ def derivative_dtw_distance(first, second, **kwargs):
         )
     return dist
 
+
 def wdtw_distance(a, b, **kwargs):
     return weighted_dtw_distance(a, b, **kwargs)
+
 
 def weighted_dtw_distance(first, second, **kwargs):
     def wdtw_single_channel(first, second, **kwargs):
@@ -174,6 +178,7 @@ def weighted_dtw_distance(first, second, **kwargs):
 
 def wddtw_distance(a, b, **kwargs):
     return weighted_derivative_dtw_distance(a, b, **kwargs)
+
 
 def weighted_derivative_dtw_distance(first, second, **kwargs):
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
