@@ -28,7 +28,7 @@ def dtw_distance(first, second, **kwargs):
     def dtw_single_channel(first, second, **kwargs):
         cutoff = np.inf
         try:
-            window = kwargs["window"]
+            window = kwargs["w"]
         except Exception:
             window = 1.0
         n = len(first)
