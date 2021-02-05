@@ -14,13 +14,15 @@ sktime/classification/dictionary_based/tests @patrickzib
 sktime/transformers/panel/dictionary_based/ @patrickzib
 sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
 sktime/transformations/panel/rocket @angus924
+sktime/transformations/series/impute.py @aiwalter
 
-sktime/forecasting/ets @HYang1996
-sktime/forecasting/tests/test_ets @HYang1996
-sktime/forecasting/fbprophet @aiwalter
-sktime/forecasting/bats @aiwalter
-sktime/forecasting/tbats @aiwalter
-sktime/forecasting/arima @HYang1996
+sktime/forecasting/ets.py @HYang1996
+sktime/forecasting/tests/test_ets.py @HYang1996
+sktime/forecasting/fbprophet.py @aiwalter
+sktime/forecasting/bats.py @aiwalter
+sktime/forecasting/tbats.py @aiwalter
+sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/model_selection/_split @koralturkk
 
 sktime/forecasting/online_learning/ @magittan
 
