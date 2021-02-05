@@ -144,7 +144,51 @@ def mape_loss(y_test, y_pred):
 def evaluate(
     forecaster, cv, y, X=None, strategy="refit", scoring=smape_loss, return_data=False
 ):
-    """Evaluate forecaster using cross-validation"""
+    """Evaluate forecaster using cross-validation
+
+    Parameters
+    ----------
+    forecaster : sktime.forecaster
+        Any forecaster
+    cv : sktime.SlidingWindowSplitter or sktime.ExpandingWindowSplitter
+        Splitter of how to split the data into test data and train data
+    y : pd.Series
+        Target time series to which to fit the forecaster.
+    X : pd.DataFrame, optional (default=None)
+        Exogenous variables (ignored)
+    strategy : str, optional
+        Must be "refit" or "update", by default "refit". The strategy defines
+        whether forecaster is only fitted on the first train window data and
+        then updated or always refitted.
+    scoring : function, optional
+        A score function that takes y_pred and y_test as arguments,
+        by default smape_loss
+    return_data : bool, optional
+        Returns three additional columns in the DataFrame, by default False.
+        The cells of the columns contain each a pd.Series for y_train,
+        y_pred, y_test.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame that contains several columns with information regarding each
+        refit/update and prediction of the forecaster.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.performance_metrics.forecasting import evaluate
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift", sp=12)
+    >>> cv = ExpandingWindowSplitter(
+        initial_window=24,
+        step_length=12,
+        fh=[1,2,3,4,5,6,7,8,9,10,11,12]
+        )
+    >>> evaluate(forecaster=forecaster, y=y, cv=cv)
+    """
     assert cv.initial_window is not None, "cv must have an initial_window"
     assert isinstance(evaluate, types.FunctionType), "scoring must be a function"
     assert strategy in ["refit", "update"], "strategy must be either fit or update"
