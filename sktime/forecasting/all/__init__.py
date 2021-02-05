@@ -10,6 +10,7 @@ __all__ = [
     "load_shampoo_sales",
     "CutoffSplitter",
     "ForecastingGridSearchCV",
+    "ForecastingRandomizedSearchCV",
     "SlidingWindowSplitter",
     "SingleWindowSplitter",
     "temporal_train_test_split",
@@ -51,7 +52,10 @@ from sktime.forecasting.compose import ReducedTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import CutoffSplitter
-from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import (
+    ForecastingGridSearchCV,
+    ForecastingRandomizedSearchCV,
+)
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.model_selection import temporal_train_test_split
