@@ -3,13 +3,17 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import numpy as np
+import pandas as pd
+import time
+from typing import types
+from tqdm.auto import tqdm
 
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_time_index
 from sktime.utils.validation.forecasting import check_y
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski"]
-__all__ = ["mase_loss", "smape_loss", "mape_loss"]
+__author__ = ["Markus Löning", "Tomasz Chodakowski", "Martin Walter"]
+__all__ = ["mase_loss", "smape_loss", "mape_loss", "evaluate"]
 
 
 def mase_loss(y_test, y_pred, y_train, sp=1):
@@ -135,3 +139,65 @@ def mape_loss(y_test, y_pred):
     eps = np.finfo(np.float64).eps
 
     return np.mean(np.abs(y_test - y_pred) / np.maximum(np.abs(y_test), eps))
+
+
+def evaluate(
+    forecaster, cv, y, X=None, strategy="refit", scoring=smape_loss, return_data=False
+):
+    """Evaluate forecaster using cross-validation"""
+    assert cv.initial_window is not None, "cv must have an initial_window"
+    assert isinstance(evaluate, types.FunctionType), "scoring must be a function"
+    assert strategy in ["refit", "update"], "strategy must be either fit or update"
+
+    n_splits = cv.get_n_splits(y)
+    results = pd.DataFrame()
+
+    for i, (train, test) in enumerate(tqdm(cv.split(y), total=n_splits)):
+        # workaroud to avoid training on smaller windows
+        if len(train) >= cv.initial_window:
+            # create train/test data
+            y_train = y.iloc[train]
+            y_test = y.iloc[test]
+            if X:
+                X_train = X.iloc[train]
+                X_test = X.iloc[test]
+            else:
+                X_train = None
+                X_test = None
+
+            # fit/update
+            start_fit = time.time()
+            if strategy == "refit" or i == 0:
+                forecaster.fit(y=y_train, X=X_train)
+            elif strategy == "update" and i != 0:
+                forecaster.update(y=y_train, X=X_train)
+            fit_time = time.time() - start_fit
+
+            # predict
+            start_pred = time.time()
+            y_pred = forecaster.predict(
+                fh=[x + 1 for x in range(len(y_test))], X=X_test
+            )
+            pred_time = time.time() - start_pred
+
+            # save results
+            results = results.append(
+                {
+                    "test_" + scoring.__name__: scoring(y_pred, y_test),
+                    "fit_time": fit_time,
+                    "pred_time": pred_time,
+                    "len_train_window": len(y_train),
+                    "cutoff": forecaster.cutoff,
+                    "y_train": y_train,
+                    "y_test": y_test,
+                    "y_pred": y_pred,
+                },
+                ignore_index=True,
+            )
+
+    # post-processing of results
+    if not return_data:
+        results = results.drop(columns=["y_train", "y_test", "y_pred"])
+    results["len_train_window"] = results["len_train_window"].astype(int)
+
+    return results
