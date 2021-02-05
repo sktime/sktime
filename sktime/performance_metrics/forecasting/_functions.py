@@ -188,9 +188,9 @@ def evaluate(
                     "pred_time": pred_time,
                     "len_train_window": len(y_train),
                     "cutoff": forecaster.cutoff,
-                    "y_train": y_train,
-                    "y_test": y_test,
-                    "y_pred": y_pred,
+                    "y_train": y_train if return_data else np.nan,
+                    "y_test": y_test if return_data else np.nan,
+                    "y_pred": y_pred if return_data else np.nan,
                 },
                 ignore_index=True,
             )
