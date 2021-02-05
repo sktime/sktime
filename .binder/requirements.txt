@@ -14,4 +14,5 @@ seaborn
 statsmodels>=0.12.1
 stumpy>=1.5.1
 tbats>=1.1.0
+tqdm
 tsfresh>=0.17.0
