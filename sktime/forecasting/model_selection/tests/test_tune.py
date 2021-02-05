@@ -116,7 +116,7 @@ def test_gscv_fit(forecaster, param_dict, cv, scoring):
             TransformedTargetForecaster(
                 [  # composite estimator
                     ("t", Detrender(PolynomialTrendForecaster())),
-                    ("f", ReducedRegressionForecaster(LinearRegression())),
+                    ("f", ReducedForecaster(LinearRegression(), "regressor")),
                 ]
             ),
             {
