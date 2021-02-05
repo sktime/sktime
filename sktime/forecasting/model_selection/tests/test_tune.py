@@ -13,7 +13,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_airline
-from sktime.forecasting.compose import ReducedRegressionForecaster
+from sktime.forecasting.compose import ReducedForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
@@ -57,7 +57,7 @@ def compute_expected_gscv_scores(forecaster, cv, param_grid, y, scoring):
             TransformedTargetForecaster(
                 [  # composite estimator
                     ("t", Detrender(PolynomialTrendForecaster())),
-                    ("f", ReducedRegressionForecaster(LinearRegression())),
+                    ("f", ReducedForecaster(LinearRegression(), scitype="regressor")),
                 ]
             ),
             {
