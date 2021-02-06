@@ -185,8 +185,8 @@ def create_distance_measure_test_results(
     # clean up
     f.close()
     # print(
-        # f"computed distances for {dist_func_name}on  {dataset_name} in "
-        # f"{(datetime.now() - start).total_seconds()} seconds"
+    # f"computed distances for {dist_func_name}on  {dataset_name} in "
+    # f"{(datetime.now() - start).total_seconds()} seconds"
     # )
 
 
