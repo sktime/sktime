@@ -371,6 +371,7 @@ class _SktimeForecaster(BaseForecaster):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called."
             )
+            # refit with updated data, not only passed data
             self.fit(self._y, self._X, self.fh)
         return self
 
