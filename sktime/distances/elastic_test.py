@@ -146,7 +146,7 @@ def create_distance_measure_test_results(
     start = datetime.now()
     rand = check_random_state(rand)
     dist_func_name = dist_func.__name__
-    print("computing distances for", dist_func_name, "on", dataset_name)
+    # print("computing distances for", dist_func_name, "on", dataset_name)
     # mkdir on the test results dir and sub folder for dataset
     os.makedirs(__test_results_dir_name + "/" + dataset_name, exist_ok=True)
     test_data_file_path = dataset_name + "/" + dist_func_name + ".csv"
@@ -184,10 +184,10 @@ def create_distance_measure_test_results(
         # print(line)
     # clean up
     f.close()
-    print(
-        f"computed distances for {dist_func_name}on  {dataset_name} in "
-        f"{(datetime.now() - start).total_seconds()} seconds"
-    )
+    # print(
+        # f"computed distances for {dist_func_name}on  {dataset_name} in "
+        # f"{(datetime.now() - start).total_seconds()} seconds"
+    # )
 
 
 def choose_param_set(param_space, rand):
