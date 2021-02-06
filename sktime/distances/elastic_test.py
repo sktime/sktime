@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # content of test_time.py
 import ast
 import os
@@ -20,6 +21,7 @@ from sktime.distances.elastic_params import (
 )
 
 from sktime.datasets.base import _load_dataset
+
 # don't have twed in python form
 from sktime.distances.elastic import (
     dtw_distance,
@@ -141,7 +143,7 @@ __test_results_dir_name = "test_results"
 
 
 def create_distance_measure_test_results(
-        dist_func, param_space, dataset_name, rand=0, n_distances=100
+    dist_func, param_space, dataset_name, rand=0, n_distances=100
 ):
     start = datetime.now()
     rand = check_random_state(rand)
