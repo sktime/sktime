@@ -7,7 +7,9 @@ def build_e_distance_params(X, y=None):
 
 
 def build_dtw_distance_params(X, y=None):
-    return {"w": stats.uniform(0, 1),}
+    return {
+        "w": stats.uniform(0, 1),
+    }
 
 
 def build_wdtw_distance_params(X, y=None):
@@ -54,7 +56,7 @@ def build_erp_distance_params(X, y=None):
     return {
         "g": stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
         # scipy stats randint is exclusive on the max value, hence + 1
-        "band_size": stats.randint(low=0, high=max_raw_warping_window + 1)
+        "band_size": stats.randint(low=0, high=max_raw_warping_window + 1),
     }
 
 
