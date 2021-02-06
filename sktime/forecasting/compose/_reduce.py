@@ -13,6 +13,8 @@ __all__ = [
     "ReducedForecaster",
 ]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -43,23 +45,32 @@ class BaseReducer(_BaseWindowForecaster):
         self.step_length_ = None
         self._cv = None
 
-    def update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
 
         Returns
         -------
         self : an instance of self
         """
-        if X is not None or update_params:
+        if X is not None:
             raise NotImplementedError()
         self.check_is_fitted()
         self._update_y_X(y, X)
+        if update_params:
+            # default to re-fitting if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called."
+            )
+            self.fit(self._y, self._X, self.fh)
         return self
 
     def _transform(self, y, X=None):
