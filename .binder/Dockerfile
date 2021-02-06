@@ -2,7 +2,7 @@
 # Find out more at: https://mybinder.readthedocs.io/en/latest/index.html
 
 # Load pre-existing docker image
-FROM jupyter/scipy-notebook:cf6258237ff9
+FROM python:3.8-slim
 
 # Set up user to avoid running as root
 ARG NB_USER
