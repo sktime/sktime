@@ -243,7 +243,7 @@ def test_score(Forecaster, fh):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("update_params", [False])
+@pytest.mark.parametrize("update_params", [True, False])
 def test_update_predict_single(Forecaster, fh, update_params):
     # Check correct time index of update-predict
     f = _construct_instance(Forecaster)
@@ -265,7 +265,7 @@ def _check_update_predict_y_pred(y_pred, y_test, fh, step_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-@pytest.mark.parametrize("update_params", [False])
+@pytest.mark.parametrize("update_params", [True, False])
 def test_update_predict_predicted_indices(
     Forecaster, fh, window_length, step_length, update_params
 ):
