@@ -43,41 +43,49 @@ from sktime.utils.data_processing import from_nested_to_3d_numpy
 
 def dtw_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import dtw_distance
+
     return dtw_distance(a, b, **kwargs)
 
 
 def ddtw_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import ddtw_distance
+
     return ddtw_distance(a, b, **kwargs)
 
 
 def wdtw_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import wdtw_distance
+
     return wdtw_distance(a, b, **kwargs)
 
 
 def wddtw_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import wddtw_distance
+
     return wddtw_distance(a, b, **kwargs)
 
 
 def msm_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import msm_distance
+
     return msm_distance(a, b, **kwargs)
 
 
 def erp_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import erp_distance
+
     return erp_distance(a, b, **kwargs)
 
 
 def lcss_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import lcss_distance
+
     return lcss_distance(a, b, **kwargs)
 
 
 def twe_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import twe_distance
+    
     return twe_distance(a, b, **kwargs)
 
 
@@ -99,7 +107,7 @@ def test_dist_func(dist_func, dataset_name):
         # assert False, " ".join([path, "does not exist"])
     else:
         with open(path) as csv_file:
-            reader = csv.reader(csv_file, delimiter=',')
+            reader = csv.reader(csv_file, delimiter=",")
             reader.__next__()  # discard header
             for row in reader:
                 # each row contains the inst index x2, the pre-computed distance and
@@ -124,7 +132,7 @@ def test_dist_func(dist_func, dataset_name):
                         "and",
                         str(inst_b_index),
                         "of",
-                        dataset_name
+                        dataset_name,
                     ]
                 )
 
@@ -133,11 +141,7 @@ __test_results_dir_name = "test_results"
 
 
 def create_distance_measure_test_results(
-        dist_func,
-        param_space,
-        dataset_name,
-        rand=0,
-        n_distances=100
+        dist_func, param_space, dataset_name, rand=0, n_distances=100
 ):
     start = datetime.now()
     rand = check_random_state(rand)
@@ -173,14 +177,15 @@ def create_distance_measure_test_results(
         distance = dist_func(inst_a, inst_b, **param_set)
         # write the distance to file with corresponding info about which insts and
         # parameters were used
-        line = ",".join([str(inst_a_index), str(inst_b_index), str(distance),
-                         json.dumps(param_set)])
+        line = ",".join(
+            [str(inst_a_index), str(inst_b_index), str(distance), json.dumps(param_set)]
+        )
         f.write(line + "\n")
         # print(line)
     # clean up
     f.close()
-    print("computed distances for", dist_func_name, "on", dataset_name, "in",
-          (datetime.now() - start).total_seconds(), "seconds")
+    print(f"computed distances for {dist_func_name}on  {dataset_name} in "
+          f"{(datetime.now() - start).total_seconds()} seconds")
 
 
 def choose_param_set(param_space, rand):
@@ -229,51 +234,51 @@ if __name__ == "__main__":
         create_distance_measure_test_results(
             dist_func=dtw_distance,
             param_space=build_dtw_distance_params,
-            dataset_name="GunPoint"
+            dataset_name="GunPoint",
         )
         create_distance_measure_test_results(
             dist_func=dtw_distance_cython,
             param_space=build_dtw_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=ddtw_distance_cython,
             param_space=build_dtw_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=wdtw_distance,
             param_space=build_wdtw_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=wdtw_distance_cython,
             param_space=build_wdtw_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=wddtw_distance,
             param_space=build_wdtw_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=wddtw_distance_cython,
             param_space=build_wdtw_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=msm_distance,
             param_space=build_msm_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         create_distance_measure_test_results(
             dist_func=msm_distance_cython,
             param_space=build_msm_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
         # don't have twed in python form
         create_distance_measure_test_results(
             dist_func=twe_distance_cython,
             param_space=build_twe_distance_params,
-            dataset_name=dataset
+            dataset_name=dataset,
         )
