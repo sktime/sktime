@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 # content of test_time.py
-import ast
+# import ast
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 import pytest
 import csv
 
-from scipy import stats
 from sklearn.utils import check_random_state
-import numpy as np
 from sktime.distances.elastic_params import (
     build_dtw_distance_params,
     build_wdtw_distance_params,
     build_msm_distance_params,
-    build_erp_distance_params,
-    build_lcss_distance_params,
+    # build_erp_distance_params,
+    # build_lcss_distance_params,
     build_twe_distance_params,
 )
 
@@ -25,14 +23,14 @@ from sktime.datasets.base import _load_dataset
 # don't have twed in python form
 from sktime.distances.elastic import (
     dtw_distance,
-    derivative_dtw_distance,
-    ddtw_distance,
+    # derivative_dtw_distance,
+    # ddtw_distance,
     wdtw_distance,
     wddtw_distance,
-    lcss_distance,
+    # lcss_distance,
     msm_distance,
-    erp_distance,
-    e_distance,
+    # erp_distance,
+    # e_distance,
 )
 
 # define several functions importing the cython versions of each distance measure.
@@ -164,7 +162,7 @@ def create_distance_measure_test_results(
     # write the header
     f.write(",".join(["i", "j", "distance", "params", "\n"]))
     # for each distance calculation
-    for k in range(0, n_distances):
+    for _k in range(0, n_distances):
         # pick an inst
         inst_a_index = rand.choice(len(data))
         inst_a = data[inst_a_index]
