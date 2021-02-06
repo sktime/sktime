@@ -2,21 +2,21 @@ from scipy import stats
 import numpy as np
 
 
-def build_e_distance_params(X, y = None):
+def build_e_distance_params(X, y=None):
     return {}
 
 
-def build_dtw_distance_params(X, y = None):
+def build_dtw_distance_params(X, y=None):
     return {"w": stats.uniform(0, 1),}
 
 
-def build_wdtw_distance_params(X, y = None):
+def build_wdtw_distance_params(X, y=None):
     return {
         "g": stats.uniform(0, 1),
     }
 
 
-def build_twe_distance_params(X, y = None):
+def build_twe_distance_params(X, y=None):
     return {
         "penalty": [
             0,
@@ -34,7 +34,7 @@ def build_twe_distance_params(X, y = None):
     }
 
 
-def build_lcss_distance_params(X, y = None):
+def build_lcss_distance_params(X, y=None):
     stdp = np.std(X)
     instance_length = X[0]
     # length for unequal length dataset instances?
@@ -46,7 +46,7 @@ def build_lcss_distance_params(X, y = None):
     }
 
 
-def build_erp_distance_params(X, y = None):
+def build_erp_distance_params(X, y=None):
     stdp = np.std(X)
     instance_length = X[0]
     # length for unequal length dataset instances?
@@ -58,7 +58,7 @@ def build_erp_distance_params(X, y = None):
     }
 
 
-def build_msm_distance_params(X, y = None):
+def build_msm_distance_params(X, y=None):
     return {
         "c": [
             0.01,

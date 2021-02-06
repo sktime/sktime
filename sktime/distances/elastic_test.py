@@ -85,7 +85,7 @@ def lcss_distance_cython(a, b, **kwargs):
 
 def twe_distance_cython(a, b, **kwargs):
     from sktime.distances.elastic_cython import twe_distance
-    
+
     return twe_distance(a, b, **kwargs)
 
 
@@ -184,8 +184,10 @@ def create_distance_measure_test_results(
         # print(line)
     # clean up
     f.close()
-    print(f"computed distances for {dist_func_name}on  {dataset_name} in "
-          f"{(datetime.now() - start).total_seconds()} seconds")
+    print(
+        f"computed distances for {dist_func_name}on  {dataset_name} in "
+        f"{(datetime.now() - start).total_seconds()} seconds"
+    )
 
 
 def choose_param_set(param_space, rand):
@@ -230,7 +232,7 @@ if __name__ == "__main__":
         "ItalyPowerDemand",
         # "BasicMotions",
         # "Beef"
-        ]:
+    ]:
         create_distance_measure_test_results(
             dist_func=dtw_distance,
             param_space=build_dtw_distance_params,
