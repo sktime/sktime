@@ -143,7 +143,7 @@ __test_results_dir_name = "test_results"
 def create_distance_measure_test_results(
     dist_func, param_space, dataset_name, rand=0, n_distances=100
 ):
-    start = datetime.now()
+    # start = datetime.now()
     rand = check_random_state(rand)
     dist_func_name = dist_func.__name__
     # print("computing distances for", dist_func_name, "on", dataset_name)
