@@ -26,6 +26,7 @@ MIN_REQUIREMENTS = {
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.1",
     "numba": "0.50",
+    "tqdm": "4.10.0",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
@@ -40,7 +41,6 @@ EXTRAS_REQUIRE = {
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
-        "tqdm",
     ],
 }
 
