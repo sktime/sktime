@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["ForecastingGridSearchCV"]
+__all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import numbers
 import time
@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection._validation import _aggregate_score_dicts
@@ -576,3 +576,113 @@ class ForecastingGridSearchCV(BaseGridSearch):
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         evaluate_candidates(ParameterGrid(self.param_grid))
+
+
+class ForecastingRandomizedSearchCV(BaseGridSearch):
+    """
+    Performs randomized-search cross-validation to find optimal model parameters.
+    The forecaster is fit on the initial window and then temporal
+    cross-validation is used to find the optimal parameter
+
+    Randomized cross-validation is performed based on a cross-validation
+    iterator encoding the cross-validation scheme, the parameter distributions to
+    search over, and (optionally) the evaluation metric for comparing model
+    performance. As in scikit-learn, tuning works through the common
+    hyper-parameter interface which allows to repeatedly fit and evaluate
+    the same forecaster with different hyper-parameters.
+
+    Parameters
+    ----------
+    forecaster : estimator object
+        The estimator should implement the sktime or scikit-learn estimator
+        interface. Either the estimator must contain a "score" function,
+        or a scoring function must be passed.
+    cv : cross-validation generator or an iterable
+        e.g. SlidingWindowSplitter()
+    param_distributions : dict or list of dicts
+        Dictionary with parameters names (`str`) as keys and distributions
+        or lists of parameters to try. Distributions must provide a ``rvs``
+        method for sampling (such as those from scipy.stats.distributions).
+        If a list is given, it is sampled uniformly.
+        If a list of dicts is given, first a dict is sampled uniformly, and
+        then a parameter is sampled using that dict as above.
+    n_iter : int, default=10
+        Number of parameter settings that are sampled. n_iter trades
+        off runtime vs quality of the solution.
+    scoring: function, optional (default=None)
+        Function to score models for evaluation of optimal parameters
+    n_jobs: int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+    refit: bool, optional (default=True)
+        Refit the forecaster with the best parameters on all the data
+    verbose: int, optional (default=0)
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+        Pass an int for reproducible output across multiple
+        function calls.
+    pre_dispatch: str, optional (default='2*n_jobs')
+    error_score: numeric value or the str 'raise', optional (default=np.nan)
+        The test score returned when a forecaster fails to be fitted.
+    return_train_score: bool, optional (default=False)
+
+    Attributes
+    ----------
+    best_index_ : int
+    best_score_: float
+        Score of the best model
+    best_params_ : dict
+        Best parameter values across the parameter grid
+    best_forecaster_ : estimator
+        Fitted estimator with the best parameters
+    cv_results_ : dict
+        Results from grid search cross validation
+    n_splits_: int
+        Number of splits in the data for cross validation}
+    refit_time_ : float
+        Time (seconds) to refit the best forecaster
+    scorer_ : function
+        Function used to score model
+    """
+
+    _required_parameters = ["forecaster", "cv", "param_distributions"]
+
+    def __init__(
+        self,
+        forecaster,
+        cv,
+        param_distributions,
+        n_iter=10,
+        scoring=None,
+        n_jobs=None,
+        refit=True,
+        verbose=0,
+        random_state=None,
+        pre_dispatch="2*n_jobs",
+        error_score=np.nan,
+        return_train_score=False,
+    ):
+        super(ForecastingRandomizedSearchCV, self).__init__(
+            forecaster=forecaster,
+            scoring=scoring,
+            n_jobs=n_jobs,
+            refit=refit,
+            cv=cv,
+            verbose=verbose,
+            pre_dispatch=pre_dispatch,
+            error_score=error_score,
+            return_train_score=return_train_score,
+        )
+        self.param_distributions = param_distributions
+        self.n_iter = n_iter
+        self.random_state = random_state
+
+    def _run_search(self, evaluate_candidates):
+        """Search n_iter candidates from param_distributions"""
+        evaluate_candidates(
+            ParameterSampler(
+                self.param_distributions, self.n_iter, random_state=self.random_state
+            )
+        )
