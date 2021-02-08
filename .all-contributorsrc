@@ -897,6 +897,16 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "ayan-biswas0412",
+      "name": "Ayan Biswas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52851184?v=4",
+      "profile": "https://github.com/ayan-biswas0412",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "projectName": "sktime",
