@@ -19,4 +19,3 @@ from sktime.performance_metrics.forecasting._classes import sMAPE
 from sktime.performance_metrics.forecasting._functions import mase_loss
 from sktime.performance_metrics.forecasting._functions import smape_loss
 from sktime.performance_metrics.forecasting._functions import mape_loss
-from sktime.performance_metrics.forecasting._functions import evaluate

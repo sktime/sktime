@@ -239,10 +239,10 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             raise ValueError(
                 "Please specify initial window, found: `initial_window`=None"
             )
-
+        fh = self.get_fh()
         initial = check_window_length(self.initial_window)
         initial_training_window = np.arange(initial)
-        initial_test_window = np.arange(initial, len(y))
+        initial_test_window = np.arange(initial, initial + len(fh._values))
         return initial_training_window, initial_test_window
 
     def get_n_splits(self, y=None):
@@ -370,10 +370,10 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             raise ValueError(
                 "Please specify initial window, found: `initial_window`=None"
             )
-
+        fh = self.get_fh()
         initial = check_window_length(self.initial_window)
         initial_training_window = np.arange(initial)
-        initial_test_window = np.arange(initial, len(y))
+        initial_test_window = np.arange(initial, initial + len(fh._values))
         return initial_training_window, initial_test_window
 
     def get_n_splits(self, y=None):
