@@ -6,7 +6,7 @@ Related software
 
 The Python ecosystem contains numerous packages that can be used to store
 and process time series data. The following list is by no means exhaustive.
-If you miss anything, feel free to open a `PR <https://github.com/alan-turing-institute/sktime/edit/master/docs/source/related_software.rst>`_.
+If you miss anything, feel free to open a `PR <https://github.com/alan-turing-institute/sktime/edit/main/docs/source/related_software.rst>`_.
 
 **Table of contents**
 
@@ -128,7 +128,7 @@ Libraries
      - Calculates matrix profile for time series subsequence all-pairs-similarity-search
    * - `tbats <https://pypi.org/project/tbats/>`_
      - Package provides BATS and TBATS time series forecasting methods
-   * - `tensorflow_probability.sts <https://github.com/tensorflow/probability/tree/master/tensorflow_probability/python/sts>`_
+   * - `tensorflow_probability.sts <https://github.com/tensorflow/probability/tree/main/tensorflow_probability/python/sts>`_
      - Bayesian Structural Time Series model in Tensorflow Probability
    * - `timechop <https://github.com/dssg/timechop>`_
      - Toolkit for temporal cross-validation, part of the Data Science for Social Good predictive analytics framework
@@ -207,4 +207,4 @@ Time series databases and frameworks
 Acknowledgements
 ================
 
-Thanks to `Max Christ <https://github.com/MaxBenChrist/>`_ who started the list `here <https://github.com/MaxBenChrist/awesome_time_series_in_python/blob/master/README.md>`_.
+Thanks to `Max Christ <https://github.com/MaxBenChrist/>`_ who started the list `here <https://github.com/MaxBenChrist/awesome_time_series_in_python/blob/main/README.md>`_.

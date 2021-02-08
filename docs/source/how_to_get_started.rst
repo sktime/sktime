@@ -4,7 +4,7 @@ How to get started
 ==================
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples/
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples/
 
 We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
 `getting-started guide`_.
@@ -36,4 +36,4 @@ having to install anything.
 .. _scikit-learn: https://scikit-learn.org/stable/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
 
-The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/master/examples>`_.
+The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/main/examples>`_.
