@@ -38,6 +38,7 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
@@ -143,6 +144,12 @@ ESTIMATOR_TEST_PARAMS = {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
+        "scoring": sMAPE(),
+    },
+    ForecastingRandomizedSearchCV: {
+        "forecaster": NaiveForecaster(strategy="mean"),
+        "cv": SingleWindowSplitter(fh=1),
+        "param_distributions": {"window_length": [2, 5]},
         "scoring": sMAPE(),
     },
     TabularToSeriesAdaptor: {"transformer": StandardScaler()},

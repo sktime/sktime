@@ -160,6 +160,7 @@ Model Selection
     SingleWindowSplitter
     SlidingWindowSplitter
     ForecastingGridSearchCV
+    ForecastingRandomizedSearchCV
 
 .. autosummary::
     :toctree: modules/auto_generated/
