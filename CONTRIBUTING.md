@@ -68,9 +68,9 @@ For a more detailed overview of current and future work, check out our [developm
 Acknowledging contributions
 ---------------------------
 
-We follow the [all-contributors specification](https://allcontributors.org) and recognise various types of contributions. Take a look at our past and current [contributors](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md)!
+We follow the [all-contributors specification](https://allcontributors.org) and recognise various types of contributions. Take a look at our past and current [contributors](https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md)!
 
-If you are a new contributor, please make sure we add you to our list of contributors. All contributions are recorded in [.all-contributorsrc](https://github.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc).
+If you are a new contributor, please make sure we add you to our list of contributors. All contributions are recorded in [.all-contributorsrc](https://github.com/alan-turing-institute/sktime/blob/main/.all-contributorsrc).
 
 If we have missed anything, please [chat with us](https://gitter.im/sktime/community), [raise an issue](https://github.com/alan-turing-institute/sktime/issues/new/choose) or create a PR!
 
@@ -118,22 +118,22 @@ The preferred workflow for contributing to sktime's repository is to fork the [m
     > upstream  https://github.com/alan-turing-institute/sktime.git (push)
     ```
 
-5. [Sync](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork) the `master` branch of your fork with the upstream repository:
+5. [Sync](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork) the `main` branch of your fork with the upstream repository:
 
     ```bash
     git fetch upstream
-    git checkout master --track origin/master
-    git merge upstream/master
+    git checkout main --track origin/main
+    git merge upstream/main
     ```
 
-6. Create a new `feature` branch from the `master` branch to hold your changes:
+6. Create a new `feature` branch from the `main` branch to hold your changes:
 
     ```bash
-    git checkout master
+    git checkout main
     git checkout -b <my-feature-branch>
     ```
 
-   Always use a `feature` branch. It\'s good practice to never work on the `master` branch! Name the `feature` branch after your contribution.
+   Always use a `feature` branch. It\'s good practice to never work on the `main` branch! Name the `feature` branch after your contribution.
 
 7. Develop your contribution on your feature branch. Add changed files using `git add` and then `git commit` files to record your changes in Git:
 
@@ -177,7 +177,7 @@ To check if your code meets our code quality standards, you can automatically ru
 
 Once installed, pre-commit will automatically run our code quality checks on the files you changed whenenver you make a new commit.
 
-You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg).
+You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg).
 
 If you want to exclude some line of code from being checked, you can add a `# noqa` (no quality assurance) comment at the end of that line.
 
@@ -217,9 +217,9 @@ Documentation
 
 We use [sphinx](https://www.sphinx-doc.org/en/master/) and [readthedocs](https://readthedocs.org/projects/sktime/) to build and deploy our online documention. You can find our online documentation [here](https://www.sktime.org/en/latest/).
 
-The source files used to generate the online documentation can be found in [docs/source/](https://github.com/alan-turing-institute/sktime/tree/master/docs/source). For example, the main configuration file for sphinx is [conf.py](https://github.com/alan-turing-institute/sktime/blob/master/docs/source/conf.py) and the main page is [index.rst](https://github.com/alan-turing-institute/sktime/blob/master/docs/source/index.rst). To add new pages, you need to add a new `.rst` file and include it in the `index.rst` file.
+The source files used to generate the online documentation can be found in [docs/source/](https://github.com/alan-turing-institute/sktime/tree/main/docs/source). For example, the main configuration file for sphinx is [conf.py](https://github.com/alan-turing-institute/sktime/blob/main/docs/source/conf.py) and the main page is [index.rst](https://github.com/alan-turing-institute/sktime/blob/main/docs/source/index.rst). To add new pages, you need to add a new `.rst` file and include it in the `index.rst` file.
 
-To build the documentation locally, you need to install a few extra dependencies listed in [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt).
+To build the documentation locally, you need to install a few extra dependencies listed in [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt).
 
 1. Install extra requirements from the root directory, run:
 
@@ -245,14 +245,14 @@ We try to keep the number of core dependencies to a minimum and rely on other pa
 
 If you add a new dependency or change the version of an existing one, you need to update the following files:
 
- - [sktime/setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation and minimum version requirements,
- - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
- - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for building the documentation,
- - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
+ - [sktime/setup.py](https://github.com/alan-turing-institute/sktime/blob/main/setup.py) for package installation and minimum version requirements,
+ - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/main/build_tools/requirements.txt) for continuous integration and distribution,
+ - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt) for building the documentation,
+ - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/main/.binder/requirements.txt) for launching notebooks on Binder.
 
-If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/master/sktime/utils/check_imports.py).
+If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/check_imports.py).
 
-We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it.
+We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it.
 
 
 Coding style
@@ -280,19 +280,19 @@ This section gives an overview of the infrastructure and continuous integration 
 
 | Platform                                                                  | Operation                                                                       | Configuration                                                                                                                                                                  |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Appveyor](https://ci.appveyor.com/project/mloning/sktime)                | Build/test/distribute on Windows                                                | [.appveyor.yml](https://github.com/alan-turing-institute/sktime/blob/master/.appveyor.yml)                                                                                       |
-| [Azure Pipelines](https://dev.azure.com/mloning/sktime)                   | Build/test/distribute on Linux ([manylinux](https://github.com/pypa/manylinux)) | [azure-pipelines.yml](https://github.com/alan-turing-institute/sktime/blob/master/azure-pipelines.yml)                                                                         |
-| [GitHub Actions](https://docs.github.com/en/free-pro-team@latest/actions) | Build/test/distribute on MacOS; Code quality checks                                                           | [.github/workflows/](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/)                                           |
-| [Read the Docs](https://readthedocs.org)                                  | Build/deploy documentation                                                      | [.readthedocs.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml)                                                             |
-| [Codecov](https://codecov.io)                                              | Test coverage                                                                   | [.codecov.yml](https://github.com/alan-turing-institute/sktime/blob/master/.codecov.yml), [.coveragerc](https://github.com/alan-turing-institute/sktime/blob/master/.coveragerc) |
+| [Appveyor](https://ci.appveyor.com/project/mloning/sktime)                | Build/test/distribute on Windows                                                | [.appveyor.yml](https://github.com/alan-turing-institute/sktime/blob/main/.appveyor.yml)                                                                                       |
+| [Azure Pipelines](https://dev.azure.com/mloning/sktime)                   | Build/test/distribute on Linux ([manylinux](https://github.com/pypa/manylinux)) | [azure-pipelines.yml](https://github.com/alan-turing-institute/sktime/blob/main/azure-pipelines.yml)                                                                         |
+| [GitHub Actions](https://docs.github.com/en/free-pro-team@latest/actions) | Build/test/distribute on MacOS; Code quality checks                                                           | [.github/workflows/](https://github.com/alan-turing-institute/sktime/blob/main/.github/workflows/)                                           |
+| [Read the Docs](https://readthedocs.org)                                  | Build/deploy documentation                                                      | [.readthedocs.yml](https://github.com/alan-turing-institute/sktime/blob/main/.github/workflows/code-quality.yml)                                                             |
+| [Codecov](https://codecov.io)                                              | Test coverage                                                                   | [.codecov.yml](https://github.com/alan-turing-institute/sktime/blob/main/.codecov.yml), [.coveragerc](https://github.com/alan-turing-institute/sktime/blob/main/.coveragerc) |
 
-Additional scripts used for building, unit testing and distribution can be found in [build_tools/](https://github.com/alan-turing-institute/sktime/tree/master/build_tools).
+Additional scripts used for building, unit testing and distribution can be found in [build_tools/](https://github.com/alan-turing-institute/sktime/tree/main/build_tools).
 
 
 Release instructions
 --------------------
 
-This section is for core developers. To make a new release, you need push-to-write access on our master branch.
+This section is for core developers. To make a new release, you need push-to-write access on our main branch.
 
 sktime is not a pure Python package and depends on some non-Python code including Cython and C. We distribute compiled files, called wheels, for different operating systems and Python versions. More details can be found here:
 
@@ -307,4 +307,4 @@ To make the release process easier, we have an interactive script that you can f
 make release
 ```
 
-This calls [build_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/make_release.py) and will guide you through the release process.
+This calls [build_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/main/build_tools/make_release.py) and will guide you through the release process.

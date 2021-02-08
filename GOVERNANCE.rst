@@ -6,7 +6,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and anyone who has experienced discrimination in the past. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and anyone who has experienced discrimination in the past. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -36,7 +36,7 @@ is expected to show respect and courtesy to other community members at
 all times.
 
 We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
+Conduct <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
 
 .. _roles:
 
@@ -77,11 +77,11 @@ Contributors
 Contributors are community members who have contributed in concrete ways
 to the project. Anyone can become a contributor, and contributions can
 take many forms – not only code – as detailed in the `contributing
-guide <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst>`__.
+guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__.
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__.
+All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 .. _algorithm-maintainers:
 
@@ -123,7 +123,7 @@ When the maintainer resigns, they can appoint another contributor as the
 new maintainer. No vote is required.
 
 Maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/master/CODEOWNERS>`__ file.
+.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
 
 .. _core-developers:
 
@@ -184,7 +184,7 @@ CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
 The current members of the CoC committee are listed in the
-`CoC <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
+`CoC <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -453,15 +453,15 @@ of contributions and are committed to recognising each of them fairly.
 We follow the `all-contributors <https://allcontributors.org>`__
 specification to recognise all contributors, including those that don’t
 contribute code. Please see `our list of all
-contributors <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__.
+contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 If you think, we’ve missed anything, please let us know or open a PR
 with the appropriate changes to
-`sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc>`__.
+`sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/main/.all-contributorsrc>`__.
 
 Note that contributors do not own their contributions. sktime is an
 open-source project, and all code is contributed under `our open-source
-license <https://github.com/alan-turing-institute/sktime/blob/master/LICENSE>`__.
+license <https://github.com/alan-turing-institute/sktime/blob/main/LICENSE>`__.
 All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 
