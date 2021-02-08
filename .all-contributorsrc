@@ -897,6 +897,16 @@
         "doc",
         "tutorial"
       ]
+    },
+    {
+      "login": "pabworks",
+      "name": "pabworks",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32725127?v=4",
+      "profile": "https://github.com/pabworks",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "projectName": "sktime",
