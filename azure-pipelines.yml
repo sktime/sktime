@@ -51,7 +51,7 @@ stages:
               versionSpec: 3.7
           - script: pip install -r build_tools/hard_dependencies.txt
             displayName: 'Install hard dependencies'
-          # install dm-tree via conda (dependency of tensorflow)
+          # install dm-tree via conda (dependency of tensorflow). Can be removed once dm-tree supports Python 3.8
           - script: conda install --channel=conda-forge dm-tree
             displayName: 'Install soft dependency dm-tree'
           - script: pip install -e .
