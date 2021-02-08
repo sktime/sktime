@@ -195,7 +195,6 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
     ```bash
     pip install -e .
     ```
-    
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 2.  To run all unit tests, run:
@@ -203,7 +202,6 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
     ```bash
     pytest sktime/
     ```
-
 ### Test coverage
 We use [coverage](https://coverage.readthedocs.io/en/coverage-5.3/) via the [pytest-cov](https://github.com/pytest-dev/pytest-cov) plugin and [codecov](https://codecov.io) to measure and compare test coverage of our code.
 
@@ -291,7 +289,6 @@ Additional scripts used for building, unit testing and distribution can be found
 
 Release instructions
 --------------------
-
 This section is for core developers. To make a new release, you need push-to-write access on our main branch.
 
 sktime is not a pure Python package and depends on some non-Python code including Cython and C. We distribute compiled files, called wheels, for different operating systems and Python versions. More details can be found here:
