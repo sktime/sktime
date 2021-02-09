@@ -128,6 +128,7 @@ Composition
     TransformedTargetForecaster
     DirectRegressionForecaster
     DirectTimeSeriesRegressionForecaster
+    MultioutputRegressionForecaster
     RecursiveRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
     ReducedRegressionForecaster
