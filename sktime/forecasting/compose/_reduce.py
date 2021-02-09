@@ -309,7 +309,9 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         X, Y_train = self._transform(y, X)
 
         # fit regressor to training data
-        self.regressor.fit(X, Y_train)
+        regressor = clone(self.regressor)
+        regressor.fit(X, Y_train)
+        self.regressor_ = regressor
 
         self._is_fitted = True
         return self
@@ -326,7 +328,7 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         X_last = self._format_windows([last_window])
 
-        y_pred = self.regressor.predict(X_last)
+        y_pred = self.regressor_.predict(X_last)
 
         # preallocate array for forecasted values
         # y_pred = np.zeros(len(fh))
