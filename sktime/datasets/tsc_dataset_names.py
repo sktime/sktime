@@ -42,7 +42,6 @@ univariate = [
     "BME",
     "Car",
     "CBF",
-    "UnitTest",
     "ChlorineConcentration",
     "CinCECGTorso",
     "Coffee",
