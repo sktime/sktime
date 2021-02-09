@@ -131,8 +131,7 @@ Composition
     MultioutputRegressionForecaster
     RecursiveRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    ReducedRegressionForecaster
-    ReducedTimeSeriesRegressionForecaster
+    ReducedForecaster
     StackingForecaster
 
 Online Forecasting
