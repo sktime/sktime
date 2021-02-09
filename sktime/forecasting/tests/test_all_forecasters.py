@@ -110,7 +110,7 @@ def test_invalid_X_type_raises_error(Forecaster, X):
         with pytest.raises(TypeError, match=r"type"):
             f.fit(y_train, X, fh=FH0)
     except NotImplementedError as e:
-        msg = str(e)
+        msg = str(e).lower()
         assert "exogenous" in msg
 
 
