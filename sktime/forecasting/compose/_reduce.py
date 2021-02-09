@@ -58,7 +58,9 @@ class BaseReducer(_BaseWindowForecaster):
         self : an instance of self
         """
         if X is not None or update_params:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                "Exogenous variables `X` and `update_params` are not yet supported."
+            )
         self.check_is_fitted()
         self._update_y_X(y, X)
         return self
@@ -66,7 +68,7 @@ class BaseReducer(_BaseWindowForecaster):
     def _transform(self, y, X=None):
         """Transform data using rolling window approach"""
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
         y = check_y(y)
 
         # get integer time index
@@ -208,7 +210,7 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         """
         self._set_y_X(y, X)
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
         self._set_fh(fh)
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
@@ -285,7 +287,7 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         """
         self._set_y_X(y, X)
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
         self._set_fh(fh)
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
@@ -355,9 +357,7 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
         """
         # input checks
         if X is not None:
-            raise NotImplementedError(
-                "Support for exogenous variables is not yet implemented"
-            )
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
 
         # set values
         self._set_y_X(y, X)
