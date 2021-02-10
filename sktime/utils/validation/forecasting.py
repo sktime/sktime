@@ -10,6 +10,7 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
+    "check_y_test_pred",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -17,8 +18,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_equal_time_index
-from sktime.utils.validation.series import check_series
+from sktime.utils.validation.series import (
+    check_equal_time_index,
+    check_equal_timeseries_length,
+    check_series,
+)
 
 
 def check_y_X(
@@ -101,16 +105,28 @@ def check_X(
     )
 
 
-def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
+def check_y(
+    y,
+    enforce_univariate=True,
+    allow_empty=False,
+    allow_constant=True,
+    allow_numpy=False,
+    enforce_index_type=None,
+):
     """Validate input data.
 
     Parameters
     ----------
     y : pd.Series
-    allow_empty : bool, optional (default=False)
-        If True, empty `y` raises an error.
-    allow_constant : bool, optional (default=True)
-        If True, constant `y` does not raise an error.
+
+    enforce_univariate : bool, default = True
+
+    allow_empty : bool, default = False
+
+    allow_constant : bool, default = True
+
+    allow_numpy : bool, default = False
+
     enforce_index_type : type, optional (default=None)
         type of time index
 
@@ -125,9 +141,9 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     """
     y = check_series(
         y,
-        enforce_univariate=True,
+        enforce_univariate=enforce_univariate,
         allow_empty=allow_empty,
-        allow_numpy=False,
+        allow_numpy=allow_numpy,
         enforce_index_type=enforce_index_type,
     )
 
@@ -341,3 +357,58 @@ def check_scoring(scoring):
         raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
+
+
+def check_y_test_pred(y_test, y_pred):
+    """Validates the y_test and y_pred input data to forecasting performance
+    metrics.
+
+    Parameters
+    ----------
+    y_test : pandas Series, pandas DataFrame or NumPy ndarray of
+            shape (fh,) or (fh, n_columns) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy ndarray of
+            shape (fh,) or (fh, n_columns) where fh is the forecasting horizon
+        Estimated target values.
+
+    Returns
+    -------
+    actual : NumPy ndarray of shape (fh,) or (fh, n_columns)
+        The actual values of the input series in y_test
+
+    forecast : NumPy ndarray of shape (fh,) or (fh, n_columns)
+        The forecasts in the input y_pred
+
+    Raises
+    ------
+    TypeError
+        The type of y_test and y_pred are not equal
+    ValueError
+        Equal dimension required for y_test and y_pred
+    ValueError
+        Equal numnber of columns required for y_test and y_pred
+    """
+    # Includes pd.Series, pd.DataFrame, np.ndarray
+    y_test = check_y(y_test, enforce_univariate=False, allow_numpy=True)
+    y_pred = check_y(y_pred, enforce_univariate=False, allow_numpy=True)
+
+    if type(y_test) != type(y_pred):
+        raise TypeError("The type of y_test and y_pred are not the same type")
+
+    if y_test.ndim != y_pred.ndim:
+        raise ValueError("Equal dimension required for y_test and y_pred")
+
+    if (y_test.ndim > 1) and (y_test.shape[1] != y_pred.shape[1]):
+        raise ValueError("Equal number of series required for y_test and y_pred")
+
+    # Check indices equal if pandas object else check equal length for NumPy
+    if isinstance(y_test, (pd.Series, pd.DataFrame)):
+        check_equal_time_index(y_test, y_pred)
+        actual, forecast = y_test.values, y_pred.values
+    else:
+        check_equal_timeseries_length(y_test, y_pred)
+        actual, forecast = y_test, y_pred
+
+    return actual, forecast

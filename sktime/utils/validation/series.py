@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
-__all__ = ["check_series", "check_time_index", "check_equal_time_index"]
+__all__ = [
+    "check_series",
+    "check_time_index",
+    "check_equal_time_index",
+    "check_equal_timeseries_length",
+]
 
 import numpy as np
 import pandas as pd
@@ -34,17 +39,19 @@ def check_series(
 
     Parameters
     ----------
-    Z : pd.Series, pd.DataFrame
-        Univariate or multivariate time series
-    enforce_univariate : bool, optional (default=False)
+    Z : pd.Series, pd.DataFrame, np.ndarray
+        Univariate or multivariate time series. NumPy ndarray only allowed
+        if `allow_numpy` = True.
+    enforce_univariate : bool, default = False
         If True, multivariate Z will raise an error.
-    allow_empty : bool
-    enforce_index_type : type, optional (default=None)
+    allow_empty : bool, default = False
+    allow_numpy : bool, default = True
+    enforce_index_type : type, default = None
         type of time index
 
     Returns
     -------
-    y : pd.Series, pd.DataFrame
+    y : pd.Series, pd.DataFrame, np.ndarray
         Validated time series
 
     Raises
@@ -68,10 +75,12 @@ def check_series(
     if enforce_univariate:
         _check_is_univariate(Z)
 
-    # check time index
-    check_time_index(
-        Z.index, allow_empty=allow_empty, enforce_index_type=enforce_index_type
-    )
+    # check time index if input data is not an NumPy ndarray
+    if not isinstance(Z, np.ndarray):
+        check_time_index(
+            Z.index, allow_empty=allow_empty, enforce_index_type=enforce_index_type
+        )
+
     return Z
 
 
@@ -131,7 +140,7 @@ def check_equal_time_index(*ys):
 
     Parameters
     ----------
-    ys : pd.Series or pd.DataFrame
+    ys : pd.Series, pd.DataFrame or np.ndarray
         One or more time series
 
     Raises
@@ -149,3 +158,23 @@ def check_equal_time_index(*ys):
 
         if not first_index.equals(y.index):
             raise ValueError("Some (time) indices are not the same.")
+
+
+def check_equal_timeseries_length(*ts):
+    """Check that time series have the same length.
+
+    Parameters
+    ----------
+    ts : pd.Series, pd.DataFrame or np.ndarray
+        One or more time series
+
+    Raises
+    ------
+    ValueError
+        If (time) indices are not the same length
+    """
+    ts_lengths = [y.shape[0] for y in ts if y is not None]
+    unique_lengths = np.unique(ts_lengths)
+
+    if unique_lengths.shape[0] > 1:
+        raise ValueError("Input timeseries are not the same length")
