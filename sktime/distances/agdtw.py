@@ -50,15 +50,19 @@ def agdtw_distance(first, second, window=1, sigma=1.0):
     if first.shape[0] * second.shape[0] != 1:
         raise ValueError("time series must be univariate!")
 
-    # reduce series to 1D arrays
-    first = first.squeeze()
-    second = second.squeeze()
+    # reduce series to 1D arrays and remove NaNs
+    first = replace_nans(first.squeeze())
+    second = replace_nans(second.squeeze())
     pairwise_distances = get_pairwise_distances(first, second)
     warp_matrix = warping_matrix(pairwise_distances, window)
     warp_path = squared_euclidean_along_warp_path(warp_matrix,
                                                   pairwise_distances)
 
     return kernel_distance(warp_path, sigma)
+
+
+def replace_nans(series):
+    return np.nan_to_num(series)
 
 
 def get_pairwise_distances(first, second):
@@ -248,19 +252,42 @@ def kernel_distance(squared_euclidean_distances, sigma):
 
 
 if __name__ == '__main__':
+    import time
     from sklearn.model_selection import train_test_split
     from sktime.datasets import load_UCR_UEA_dataset
     from sktime.classification.distance_based import \
         KNeighborsTimeSeriesClassifier
-    X, y = load_UCR_UEA_dataset("SwedishLeaf", return_X_y=True)
+
+    from sklearn.metrics import (
+        accuracy_score,
+        recall_score,
+        roc_auc_score,
+        roc_curve,
+        average_precision_score,
+        f1_score,
+        make_scorer,
+    )
+
+    X, y = load_UCR_UEA_dataset("DodgerLoopGame", return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    knn = KNeighborsTimeSeriesClassifier(n_neighbors=1, metric="agdtw",
-                                         metric_params={'window': 1,
-                                                        'sigma': 1})
+    start_time = time.perf_counter()
+
+    knn = KNeighborsTimeSeriesClassifier(n_neighbors=1, metric="agdtw")
     knn.fit(X_train, y_train)
-    knn.score(X_test, y_test)
-    # from numpy import random as rd
-    #
-    # d = agdtw_distance(rd.uniform(50, 100, (1, rd.randint(50, 100))),
-    #                    rd.uniform(50, 100, (1, rd.randint(50, 100))))
-    # print(d)
+    y_test_pred = knn.predict(X_test)
+    print("accuracy: ", accuracy_score(y_test, y_test_pred))
+    print("f1 score: ", f1_score(y_test, y_test_pred, average='macro'))
+    print("recall: ", recall_score(y_test, y_test_pred, average='macro'))
+
+    """
+    Without averaging the similarity value
+    accuracy:  0.425
+    f1 score:  0.3779580797836376
+    recall:  0.45707070707070707
+    Elapsed Time: 6.949e+02 s
+    
+    Process finished with exit code 0
+    """
+
+    end_time = time.perf_counter()
+    print(f"Elapsed Time: {(end_time - start_time):.3e} s")
