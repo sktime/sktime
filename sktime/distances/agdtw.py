@@ -248,7 +248,7 @@ def kernel_distance(squared_euclidean_distances, sigma):
             "since we're using it for a division.")
     normalized_distances = squared_euclidean_distances / (sigma ** 2)
     kernel_distances = np.exp(-normalized_distances).squeeze()
-    return sum(kernel_distances)
+    return sum(kernel_distances) / len(squared_euclidean_distances)
 
 
 if __name__ == '__main__':
@@ -280,11 +280,11 @@ if __name__ == '__main__':
     print("recall: ", recall_score(y_test, y_test_pred, average='macro'))
 
     """
-    Without averaging the similarity value
-    accuracy:  0.425
-    f1 score:  0.3779580797836376
-    recall:  0.45707070707070707
-    Elapsed Time: 6.949e+02 s
+    With averaging the similarity value
+    accuracy:  0.375
+    f1 score:  0.2727272727272727
+    recall:  0.5
+    Elapsed Time: 6.803e+02 s
     
     Process finished with exit code 0
     """
