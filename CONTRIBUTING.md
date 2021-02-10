@@ -208,7 +208,7 @@ We use [coverage](https://coverage.readthedocs.io/en/coverage-5.3/) via the [pyt
 API design
 ----------
 
-The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome! 
+The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome!
 
 Documentation
 -------------
