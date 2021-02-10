@@ -11,7 +11,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 
 
-def plot_series(*series, labels=None):
+def plot_series(*series, labels=None, markers=None):
     """Plot one or more time series
 
     Parameters
@@ -20,6 +20,9 @@ def plot_series(*series, labels=None):
         One or more time series
     labels : list, optional (default=None)
         Names of series, will be displayed in figure legend
+    markers: list, optional (default=None)
+        Markers of data points, if None the marker "o" is used by default.
+        Lenght of list has to match with number of series
 
     Returns
     -------
@@ -65,7 +68,7 @@ def plot_series(*series, labels=None):
     colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
-    for x, y, color, label in zip(xs, series, colors, labels):
+    for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
 
         # scatter if little data is available or index is not complete
         if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
@@ -73,7 +76,9 @@ def plot_series(*series, labels=None):
         else:
             plot_func = sns.lineplot
 
-        plot_func(x=x, y=y, ax=ax, marker="o", label=label, color=color)
+        plot_func(
+            x=x, y=y, ax=ax, marker=marker if markers else "o", label=label, color=color
+        )
 
     # combine data points for all series
     xs_flat = list(flatten(xs))

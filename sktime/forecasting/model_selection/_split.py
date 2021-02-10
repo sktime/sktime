@@ -242,7 +242,10 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         fh = self.get_fh()
         initial = check_window_length(self.initial_window)
         initial_training_window = np.arange(initial)
-        initial_test_window = np.arange(initial, initial + len(fh._values))
+        end = (
+            initial + len(fh._values) if initial + len(fh._values) <= len(y) else len(y)
+        )
+        initial_test_window = np.arange(initial, end)
         return initial_training_window, initial_test_window
 
     def get_n_splits(self, y=None):
