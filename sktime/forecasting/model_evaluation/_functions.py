@@ -74,6 +74,8 @@ def evaluate(
         # get initial window, if required
         if i == 0 and cv.initial_window and strategy == "update":
             train, test = cv.split_initial(y)
+            # this might have to be directly handled in split_initial()
+            test = test[: len(cv.fh)]
 
         # create train/test data
         y_train = y.iloc[train]
