@@ -1221,6 +1221,13 @@ class ProximityForest(BaseClassifier):
 
     """
 
+    # Capability tags
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         random_state=None,

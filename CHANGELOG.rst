@@ -3,9 +3,49 @@ Changelog
 
 All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
-[0.5.2] - 2021-xx-xx
+[0.5.3] - 2021-02-06
 --------------------
 
+Fixed
+~~~~~
+* Fix reduced regression forecaster reference (#658) @mloning
+* Address Bug #640 (#642) @patrickzib
+* Ed knn (#638) @TonyBagnall
+* Euclidean distance for KNNs (#636) @goastler
+
+Changed
+~~~~~~~
+* Pin NumPy 1.19 (#643) @mloning
+* Update CoC committee (#614) @mloning
+* Benchmarking issue141 (#492) @ViktorKaz
+* Catch22 Refactor & Multithreading (#615) @MatthewMiddlehurst
+
+Added
+~~~~~
+* Create new factory method for forecasting via reduction (#635) @Lovkush-A
+* Feature ForecastingRandomizedSearchCV (#634) @pabworks
+* Added Imputer for missing values (#637) @aiwalter
+* Add expanding window splitter (#627) @koralturkk
+* Forecasting User Guide (#595) @Lovkush-A
+* Add data processing functionality to convert between data formats (#553) @RNKuhns
+* Add basic parallel support for `ElasticEnsemble` (#546) @xuyxu
+
+All contributors: @Lovkush-A, @MatthewMiddlehurst, @RNKuhns, @TonyBagnall, @ViktorKaz, @aiwalter, @goastler, @koralturkk, @mloning, @pabworks, @patrickzib and @xuyxu
+
+[0.5.2] - 2021-01-13
+--------------------
+
+Fixed
+~~~~~
+* Fix ModuleNotFoundError issue (#613) @Hephaest
+* Fixes _fit(X) in KNN (#610) @TonyBagnall
+* UEA TSC module improvements 2 (#599) @TonyBagnall
+* Fix sktime.classification.frequency_based not found error (#606) @Hephaest
+* UEA TSC module improvements 1 (#579) @TonyBagnall
+* Relax numba pinning (#593) @dhirschfeld
+* Fix fh.to_relative() bug for DatetimeIndex (#582) @aiwalter
+
+All contributors: @Hephaest, @MatthewMiddlehurst, @TonyBagnall, @aiwalter and @dhirschfeld
 
 [0.5.1] - 2020-12-29
 --------------------

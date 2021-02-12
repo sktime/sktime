@@ -35,8 +35,8 @@ Dictionary-based
     ContractableBOSS
     WEASEL
     MUSE
-    TemporalDictionaryEnsemble
     IndividualTDE
+    TemporalDictionaryEnsemble
 
 Distance-based
 --------------
@@ -53,16 +53,17 @@ Distance-based
     ProximityTree
     ProximityStump
 
-Frequency-based
----------------
+Hybrid
+--------------
 
-.. currentmodule:: sktime.classification.frequency_based
+.. currentmodule:: sktime.classification.hybrid
 
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    RandomIntervalSpectralForest
+    Catch22ForestClassifier
+    HIVECOTEV1
 
 Interval-based
 --------------
@@ -74,7 +75,10 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForest
+    RandomIntervalSpectralForest
+    SupervisedTimeSeriesForest
     CanonicalIntervalForest
+    DrCIF
 
 Shapelet-based
 --------------
@@ -87,3 +91,4 @@ Shapelet-based
 
     ShapeletTransformClassifier
     MrSEQLClassifier
+    ROCKETClassifier
