@@ -25,7 +25,7 @@ MIN_REQUIREMENTS = {
     "pandas": "1.1.0",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.1",
-    "numba": "0.50.*",
+    "numba": "0.50",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
@@ -35,7 +35,7 @@ EXTRAS_REQUIRE = {
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",
         "tsfresh>=0.17.0",
-        "catch22>=0.1.0",
+        "catch22>=0.2.0",
         "hcrystalball>=0.1.9",
         "stumpy>=1.5.1",
         "tbats>=1.1.0",

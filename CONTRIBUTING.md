@@ -22,6 +22,7 @@ Contents
   - [Code quality checks](#code-quality-checks)
   - [Unit testing](#unit-testing)
   - [Test coverage](#test-coverage)
+- [API design](#API-design)
 - [Documentation](#documentation)
 - [Dependencies](#dependencies)
 - [Coding style](#coding-style)
@@ -183,12 +184,18 @@ If you want to exclude some line of code from being checked, you can add a `# no
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
 
-1.  Install the development version with all extra requirements from the root directory of sktime:
+1.  Install all extra requirements from the root directory of sktime:
 
     ```bash
     pip install -r build_tools/requirements.txt
     ```
 
+2. Install the development version of sktime:
+
+    ```bash
+    pip install -e .
+    ```
+    
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 2.  To run all unit tests, run:
@@ -200,6 +207,10 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
 ### Test coverage
 We use [coverage](https://coverage.readthedocs.io/en/coverage-5.3/) via the [pytest-cov](https://github.com/pytest-dev/pytest-cov) plugin and [codecov](https://codecov.io) to measure and compare test coverage of our code.
 
+API design
+----------
+
+The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome! 
 
 Documentation
 -------------

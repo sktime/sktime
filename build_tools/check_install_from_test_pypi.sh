@@ -26,6 +26,7 @@ echo "Successfully installed sktime from Test PyPI."
 
 # Clean up test directory and environment
 echo "Clean up ..."
+conda deactivate
 conda remove -n sktime_testenv --all -y
 rm -r "$HOME"/testdir
 

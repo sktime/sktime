@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.utils.validation.series import check_time_index
 
 
-def _coerce_duration_to_int(duration, unit=None):
+def _coerce_duration_to_int(duration, freq=None):
     """Coerce durations into integer representations for a given unit of
     duration
 
@@ -18,8 +18,8 @@ def _coerce_duration_to_int(duration, unit=None):
     ----------
     duration : pd.DateOffset, pd.Timedelta, pd.TimedeltaIndex, pd.Index, int
         Duration type or collection of duration types
-    unit : str
-        Time unit
+    freq : str
+        Frequency
 
     Returns
     -------
@@ -33,15 +33,15 @@ def _coerce_duration_to_int(duration, unit=None):
     ):
         return pd.Int64Index([d.n for d in duration])
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
-        if unit is None:
+        if freq is None:
             raise ValueError("`unit` missing")
         # integer conversion only works reliably with non-ambiguous units (
         # e.g. days, seconds but not months, years)
         try:
             if isinstance(duration, pd.Timedelta):
-                return int(duration / pd.Timedelta(1, unit))
+                return int(duration / pd.Timedelta(1, freq))
             if isinstance(duration, pd.TimedeltaIndex):
-                return (duration / pd.Timedelta(1, unit)).astype(np.int)
+                return (duration / pd.Timedelta(1, freq)).astype(np.int)
         except ValueError:
             raise ValueError(
                 "Index type not supported. Please consider using pd.PeriodIndex."
@@ -50,7 +50,7 @@ def _coerce_duration_to_int(duration, unit=None):
         raise TypeError("`duration` type not understood.")
 
 
-def _get_unit(x):
+def _get_freq(x):
     """Get unit for conversion of time deltas to integers"""
     if hasattr(x, "freqstr"):
         return x.freqstr
@@ -116,6 +116,6 @@ def _get_duration(x, y=None, coerce_to_int=False, unit=None):
     ):
         if unit is None:
             # try to get the unit from the data if not given
-            unit = _get_unit(x)
-        duration = _coerce_duration_to_int(duration, unit=unit)
+            unit = _get_freq(x)
+        duration = _coerce_duration_to_int(duration, freq=unit)
     return duration
