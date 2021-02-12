@@ -525,7 +525,7 @@ class SFA(_PanelToPanelTransformer):
 
     @staticmethod
     @njit(
-        "(float64[:],float64[:],float64[:],int32,float64[:],float64[:,:],float64)",
+        # "(float64[:],float64[:],float64[:],int32,float64[:],float64[:,:],float64)",
         fastmath=True,
         cache=True,
     )
@@ -643,7 +643,11 @@ class SFA(_PanelToPanelTransformer):
         return word
 
     @staticmethod
-    @njit("float64[:](float64[:],int64,int64,float64[:])", fastmath=True, cache=True)
+    @njit(
+        # "float64[:](float64[:],int64,int64,float64[:])",
+        fastmath=True,
+        cache=True,
+    )
     def _calc_incremental_mean_std(series, end, window_size, stds=None):
         # means = np.zeros(end)
 

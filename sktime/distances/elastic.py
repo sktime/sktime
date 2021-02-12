@@ -6,6 +6,10 @@ __author__ = "Jason Lines"
 def euclidean_distance(x, y):
     return ed(x, y)
 
+def euclidean_distance(x, y):
+    return ed(x, y)
+
+
 def euclidean(x, y):
     return ed(x, y)
 

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-""" KNN time series classification built on sklearn KNeighborsClassifier
+""" KNN time series classification built on sklearn KNeighborsClassifier that
+supports a range of distance measure specifically for time series. This distance
+functions are defined in cython in sktime.distances.elastic_cython. Python versions
+are in sktime.distances.elastic, but these are orders of magnitude slower.
 
 """
 
@@ -149,7 +152,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             if type(metric) is str:
                 raise ValueError(
                     "Unrecognised distance measure: " + metric + ". Allowed values "
-                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
 
