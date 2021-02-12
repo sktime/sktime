@@ -33,7 +33,7 @@ def _transform(X, interval, lag):
     ps_x = np.empty(shape=(n_instances, int(ps_len)))
     for j in range(n_instances):
         acf_x[j] = acf(X[j, interval[0] : interval[1]], lag)
-        ps_x[j] = ps(X[j, interval[0] : interval[1]])
+        ps_x[j] = _ps(X[j, interval[0] : interval[1]])
     transformed_x = np.concatenate((acf_x, ps_x), axis=1)
 
     return transformed_x
@@ -423,3 +423,52 @@ def ps(x):
     fft = fft.real * fft.real + fft.imag * fft.imag
     fft = fft[: int(len(x) / 2)]
     return np.array(fft)
+
+
+def _ps(x, sign=1, n=None, pad="mean"):
+    """
+    Power spectrum transform, currently calculated using np function.
+    It would be worth looking at ff implementation, see difference in speed
+    to java.
+
+    Parameters
+    ----------
+    x : array-like shape = [interval_width]
+    sign : {-1, 1}, default = 1
+    n : int, default=None
+    pad : str or function, default='mean'
+        controls the mode of the pad function
+        see numpy.pad for more details
+        https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+
+    Return
+    ----------
+    y : array-like shape = [len(x)/2]
+    """
+    x_len = x.size
+    # pad or slice series if length is not of power of 2
+    if x_len & (x_len - 1) != 0:
+        # round n (or the length of x) to next power of 2
+        n = _round_to_next_power_of_two(n or x_len)
+        # pad series up to n when n is larger otherwise slice series up to n
+        if n > x_len:
+            pad_length = n - x_len
+            x_in_power_2 = np.pad(x, (0, pad_length), mode=pad)
+        else:
+            x_in_power_2 = x[:n]
+    else:
+        x_in_power_2 = x
+    # use sign to determine inverse or normal fft
+    # using the norm in numpy fft function
+    # backward = normal fft, forward = inverse fft (divide by n after fft)
+    norm = "backward" if sign > 0 else "forward"
+    fft = np.fft.fft(x_in_power_2, norm=norm)
+    # if sign == -1:
+    #     fft /= n
+    fft = fft.real * fft.real + fft.imag * fft.imag
+    fft = fft[: len(x) // 2]
+    return np.array(fft)
+
+
+def _round_to_next_power_of_two(n):
+    return 1 << (n - 1).bit_length()
