@@ -334,8 +334,8 @@ univariate_missing_values = [
     "DodgerLoopGame",
     "DodgerLoopWeekend",
     "MelbournePedestrian",
-
 ]
+
 """26 equal length multivariate time series classification problems [4]"""
 multivariate_equal_length = [
     "ArticularyWordRecognition",
@@ -375,5 +375,4 @@ multivariate_unequal_length = [
     "InsectWingbeat",
     "JapaneseVowels",
     "SpokenArabicDigits",
-
 ]
