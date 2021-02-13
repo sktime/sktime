@@ -215,7 +215,7 @@ class HIVECOTEV1(BaseClassifier):
             print(
                 "cBOSS (estimate included) ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            ) # noqa
+            )  # noqa
             print("cBOSS weight = " + str(self.cboss_weight))  # noqa
 
         self._is_fitted = True
