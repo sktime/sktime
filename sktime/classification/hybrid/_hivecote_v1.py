@@ -145,7 +145,7 @@ class HIVECOTEV1(BaseClassifier):
             print(
                 "STC train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            ) # noqa
+            )  # noqa
             print("STC weight = " + str(self.stc_weight))  # noqa
 
         self.tsf = TimeSeriesForest(
@@ -171,7 +171,7 @@ class HIVECOTEV1(BaseClassifier):
             print(
                 "TSF train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            ) # noqa
+            )  # noqa
             print("TSF weight = " + str(self.tsf_weight))  # noqa
 
         self.rise = RandomIntervalSpectralForest(
@@ -200,7 +200,7 @@ class HIVECOTEV1(BaseClassifier):
             print(
                 "RISE train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            ) # noqa
+            )  # noqa
             print("RISE weight = " + str(self.rise_weight))  # noqa
 
         self.cboss = ContractableBOSS(
