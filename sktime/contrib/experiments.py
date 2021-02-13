@@ -580,13 +580,13 @@ if __name__ == "__main__":
         #         data_dir = "/bench/datasets/Univariate2018/"
         #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         print(" Local Run")
-        data_dir = "D:/CMP Machine Learning/sktime-workshop-boss/sktime/datasets\data/"
-        results_dir = "D:/CMP Machine Learning/tempResults/"
+        data_dir = "C:/Code/sktime/sktime/datasets/data/"
+        results_dir = "C:/Temp/"
         #        results_dir = "Z:/Results/sktime Bakeoff/"
         dataset = "UnitTest"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "hivecotev1"
+        classifier = "KNeighborsTimeSeriesClassifier"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
