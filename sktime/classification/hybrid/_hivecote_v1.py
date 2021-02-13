@@ -48,19 +48,6 @@ class HIVECOTEV1(BaseClassifier):
 
     Notes
     -----
-    [1]
-    @inproceedings{bagnall2020usage,
-      title={On the usage and performance of the Hierarchical Vote Collective of
-      Transformation-based Ensembles version 1.0 (hive-cote v1. 0)},
-      author={Bagnall, Anthony and Flynn, Michael and Large, James and Lines, Jason and
-      Middlehurst, Matthew},
-      booktitle={International Workshop on Advanced Analytics and Learning on Temporal
-      Data},
-      pages={3--18},
-      year={2020},
-      organization={Springer}
-    }
-
     ..[1] Anthony Bagnall, Michael Flynn, James Large, Jason Lines and
     Matthew Middlehurst.
         "On the usage and performance of the Hierarchical Vote Collective of
@@ -92,7 +79,7 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {'time_contract_in_mins': 60}
+            stc_params = {"time_contract_in_mins": 60}
         if tsf_params is None:
             tsf_params = {}
         if rise_params is None:
@@ -150,7 +137,7 @@ class HIVECOTEV1(BaseClassifier):
             X=X,
             y=y,
             cv=cv_size,
-            n_jobs=self.n_jobs
+            n_jobs=self.n_jobs,
         )
         self.stc_weight = accuracy_score(y, train_preds) ** 4
 
@@ -208,9 +195,7 @@ class HIVECOTEV1(BaseClassifier):
             print("RISE weight = " + str(self.rise_weight))
 
         self.cboss = ContractableBOSS(
-            **self.cboss_params,
-            random_state=self.random_state,
-            n_jobs=self.n_jobs
+            **self.cboss_params,  random_state=self.random_state, n_jobs=self.n_jobs
         )
         self.cboss.fit(X, y)
         train_probs = self.cboss._get_train_probs(X)
