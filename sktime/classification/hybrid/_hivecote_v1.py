@@ -195,7 +195,7 @@ class HIVECOTEV1(BaseClassifier):
             print("RISE weight = " + str(self.rise_weight))
 
         self.cboss = ContractableBOSS(
-            **self.cboss_params,  random_state=self.random_state, n_jobs=self.n_jobs
+            **self.cboss_params, random_state=self.random_state, n_jobs=self.n_jobs
         )
         self.cboss.fit(X, y)
         train_probs = self.cboss._get_train_probs(X)
