@@ -127,7 +127,7 @@ class HIVECOTEV1(BaseClassifier):
         self.stc.fit(X, y)
 
         if self.verbose > 0:
-            print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
+            print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y")) # noqa
 
         train_preds = cross_val_predict(
             ShapeletTransformClassifier(
@@ -142,8 +142,11 @@ class HIVECOTEV1(BaseClassifier):
         self.stc_weight = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print("STC train estimate ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
-            print("STC weight = " + str(self.stc_weight))
+            print(
+                "STC train estimate ",
+                datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+            ) # noqa
+            print("STC weight = " + str(self.stc_weight)) # noqa
 
         self.tsf = TimeSeriesForest(
             **self.tsf_params,
@@ -153,7 +156,7 @@ class HIVECOTEV1(BaseClassifier):
         self.tsf.fit(X, y)
 
         if self.verbose > 0:
-            print("TSF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
+            print("TSF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y")) # noqa
 
         train_preds = cross_val_predict(
             TimeSeriesForest(**self.tsf_params, random_state=self.random_state),
@@ -165,8 +168,11 @@ class HIVECOTEV1(BaseClassifier):
         self.tsf_weight = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print("TSF train estimate ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
-            print("TSF weight = " + str(self.tsf_weight))
+            print(
+                "TSF train estimate ",
+                datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+            ) # noqa
+            print("TSF weight = " + str(self.tsf_weight)) # noqa
 
         self.rise = RandomIntervalSpectralForest(
             **self.rise_params,
@@ -176,7 +182,7 @@ class HIVECOTEV1(BaseClassifier):
         self.rise.fit(X, y)
 
         if self.verbose > 0:
-            print("RISE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
+            print("RISE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y")) # noqa
 
         train_preds = cross_val_predict(
             RandomIntervalSpectralForest(
@@ -191,8 +197,11 @@ class HIVECOTEV1(BaseClassifier):
         self.rise_weight = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print("RISE train estimate ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
-            print("RISE weight = " + str(self.rise_weight))
+            print(
+                "RISE train estimate ",
+                datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+            ) # noqa
+            print("RISE weight = " + str(self.rise_weight)) # noqa
 
         self.cboss = ContractableBOSS(
             **self.cboss_params, random_state=self.random_state, n_jobs=self.n_jobs
@@ -206,8 +215,8 @@ class HIVECOTEV1(BaseClassifier):
             print(
                 "cBOSS (estimate included) ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            )
-            print("cBOSS weight = " + str(self.cboss_weight))
+            ) # noqa
+            print("cBOSS weight = " + str(self.cboss_weight)) # noqa
 
         self._is_fitted = True
         return self
