@@ -6,6 +6,7 @@ __author__ = ["Markus Löning", "@big-o"]
 __all__ = ["_SktimeForecaster", "_BaseWindowForecaster"]
 
 from contextlib import contextmanager
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -60,7 +61,7 @@ class _SktimeForecaster(BaseForecaster):
             if X is len(X) > 0:
                 self._X = X.combine_first(self._X)
 
-    def _update_y_X(self, y, X=None, enfore_index_type=None):
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
         """Update training data.
 
         Parameters
@@ -71,7 +72,7 @@ class _SktimeForecaster(BaseForecaster):
             Exogenous time series
         """
         # update only for non-empty data
-        y, X = check_y_X(y, X, allow_empty=True, enforce_index_type=enfore_index_type)
+        y, X = check_y_X(y, X, allow_empty=True, enforce_index_type=enforce_index_type)
 
         if len(y) > 0:
             self._y = y.combine_first(self._y)
@@ -290,7 +291,7 @@ class _SktimeForecaster(BaseForecaster):
         y_new,
         fh=None,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -334,7 +335,7 @@ class _SktimeForecaster(BaseForecaster):
         y,
         fh,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -347,27 +348,39 @@ class _SktimeForecaster(BaseForecaster):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def update(self, y, X=None, update_params=False):
-        """Update fitted parameters
+    def update(self, y, X=None, update_params=True):
+        """Update cutoff value and, optionally, fitted parameters.
+
+        This is useful in an online learning setting where new data is observed as
+        time moves on. Updating the cutoff value allows to generate new predictions
+        from the most recent time point that was observed. Updating the fitted
+        parameters allows to incrementally update the parameters without having to
+        completely refit. However, note that if no estimator-specific update method
+        has been implemented for updating parameters refitting is the default fall-back
+        option.
 
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
 
         Returns
         -------
         self : an instance of self
         """
-        if update_params:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not "
-                f"yet support updating fitted "
-                f"parameters."
-            )
         self.check_is_fitted()
         self._update_y_X(y, X)
+        if update_params:
+            # default to re-fitting if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called."
+            )
+            # refit with updated data, not only passed data
+            self.fit(self._y, self._X, self.fh)
         return self
 
     def update_predict(
@@ -375,7 +388,7 @@ class _SktimeForecaster(BaseForecaster):
         y,
         cv=None,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -386,7 +399,7 @@ class _SktimeForecaster(BaseForecaster):
         y : pd.Series
         cv : temporal cross-validation generator, optional (default=None)
         X : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
 
@@ -416,7 +429,7 @@ class _SktimeForecaster(BaseForecaster):
         y,
         cv,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -582,7 +595,7 @@ class _BaseWindowForecaster(_SktimeForecaster):
         y,
         cv=None,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -593,7 +606,7 @@ class _BaseWindowForecaster(_SktimeForecaster):
         y : pd.Series
         cv : temporal cross-validation generator, optional (default=None)
         X : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
 
@@ -743,7 +756,7 @@ class _BaseWindowForecaster(_SktimeForecaster):
         y,
         fh,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):

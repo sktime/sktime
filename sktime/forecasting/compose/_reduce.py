@@ -23,8 +23,8 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -43,27 +43,6 @@ class BaseReducer(_BaseWindowForecaster):
         self.step_length = step_length
         self.step_length_ = None
         self._cv = None
-
-    def update(self, y, X=None, update_params=False):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=False)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        if X is not None or update_params:
-            raise NotImplementedError(
-                "Exogenous variables `X` and `update_params` are not yet supported."
-            )
-        self.check_is_fitted()
-        self._update_y_X(y, X)
-        return self
 
     def _transform(self, y, X=None):
         """Transform data using rolling window approach"""
@@ -418,10 +397,6 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
-    # def _predict_in_sample(self, fh, X=None, return_pred_int=False,
-    # alpha=None):
-    #     raise NotImplementedError()
-
 
 ##############################################################################
 # reduction to regression
@@ -562,8 +537,12 @@ def ReducedForecaster(
 
     Parameters
     ----------
-    scitype: can be 'regressor' or 'ts-regressor'
-    strategy: can be 'direct' or 'recursive'
+    scitype : str
+        Can be 'regressor' or 'ts-regressor'
+    strategy : str {"direct", "recursive", "multioutput"}, optional
+        Strategy to generate predictions
+    window_length : int, optional (default=10)
+    step_length : int, optional (default=1)
     regressor : a regressor of type given by parameter scitype
 
     References
@@ -583,19 +562,23 @@ def _get_forecaster_class(scitype, strategy):
     scitype)
     and reduction strategy"""
 
-    allowed_strategies = ("direct", "recursive", "dirrec")
+    allowed_strategies = ("direct", "recursive", "multioutput")
     if strategy not in allowed_strategies:
         raise ValueError(
             f"Unknown strategy, please provide one of {allowed_strategies}."
         )
 
-    if strategy == "dirrec":
-        raise NotImplementedError("The `dirrec` strategy is not yet implemented.")
+    if scitype == "ts_regressor" and strategy == "multioutput":
+        raise NotImplementedError(
+            "The `multioutput` strategy is not yet implemented "
+            "for time series regresors."
+        )
 
     lookup_table = {
         "regressor": {
             "direct": DirectRegressionForecaster,
             "recursive": RecursiveRegressionForecaster,
+            "multioutput": MultioutputRegressionForecaster,
         },
         "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
