@@ -349,7 +349,15 @@ class _SktimeForecaster(BaseForecaster):
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update cutoff value and, optionally, fitted parameters.
+
+        This is useful in an online learning setting where new data is observed as
+        time moves on. Updating the cutoff value allows to generate new predictions
+        from the most recent time point that was observed. Updating the fitted
+        parameters allows to incrementally update the parameters without having to
+        completely refit. However, note that if no estimator-specific update method
+        has been implemented for updating parameters refitting is the default fall-back
+        option.
 
         Parameters
         ----------
