@@ -109,8 +109,8 @@ def plot_lags(series, lags=1):
     Returns
     -------
 
-    fig :  plt.Figure
-    ax  :  plt.Axis or ndarray of plt.Axis objects
+    fig   :  plt.Figure
+    axes  :  plt.Axis or ndarray of plt.Axis objects
 
     Example
     -------
