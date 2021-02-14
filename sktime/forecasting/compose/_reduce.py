@@ -22,8 +22,8 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -42,25 +42,6 @@ class BaseReducer(_BaseWindowForecaster):
         self.step_length = step_length
         self.step_length_ = None
         self._cv = None
-
-    def update(self, y, X=None, update_params=False):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=False)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        if X is not None or update_params:
-            raise NotImplementedError()
-        self.check_is_fitted()
-        self._update_y_X(y, X)
-        return self
 
     def _transform(self, y, X=None):
         """Transform data using rolling window approach"""

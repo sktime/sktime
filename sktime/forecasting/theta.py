@@ -214,10 +214,12 @@ class ThetaForecaster(ExponentialSmoothing):
         return errors
 
     def update(self, y, X=None, update_params=True):
-        super(ThetaForecaster, self).update(y, X, update_params=update_params)
+        super(ThetaForecaster, self).update(
+            y, X, update_params=False
+        )  # use custom update_params routine
         if update_params:
             if self.deseasonalize:
-                y = self.deseasonalizer_.transform(y)
+                y = self.deseasonalizer_.transform(self._y)  # use updated y
             self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
