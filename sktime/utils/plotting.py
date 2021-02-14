@@ -110,6 +110,7 @@ def plot_series(*series, labels=None, markers=None):
 
     return fig, ax
 
+
 def plot_lags(series, lags=1):
     """Plot one or more lagged versions of a time series
 
@@ -162,18 +163,16 @@ def plot_lags(series, lags=1):
     else:
         length = len(lags)
 
-    fig = plt.figure(figsize = (8,6*length))
+    fig = plt.figure(figsize=(8, 6 * length))
     axes = np.array([])
 
-    for i,val in enumerate(lags, start=1):
+    for i, val in enumerate(lags, start=1):
 
-        ax = fig.add_subplot(length,1,i)
+        ax = fig.add_subplot(length, 1, i)
         if is_lag_one:
             axes = ax
         else:
             axes = np.append(axes, ax)
-        pd.plotting.lag_plot(series, lag=val, ax = ax)
+        pd.plotting.lag_plot(series, lag=val, ax=ax)
 
-    return fig,axes
-
-
+    return fig, axes
