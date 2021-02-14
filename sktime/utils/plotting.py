@@ -93,3 +93,71 @@ def plot_series(*series, labels=None):
         ax.legend()
 
     return fig, ax
+
+def plot_lags(series, lags=1):
+    """Plot one or more lagged versions of a time series
+
+    Parameters
+    ----------
+    series : pd.Series
+        Time series for plotting lags
+    lags : int or array-like
+        Number of lags to plot.
+        int         - plot the specified lag
+        array-like  - plot specified lags in the array/list
+
+    Returns
+    -------
+
+    fig :  plt.Figure
+    ax  :  plt.Axis or ndarray of plt.Axis objects
+
+    Example
+    -------
+
+    Given the following time series
+
+        >>> np.random.seed(5)
+        >>> x = np.cumsum(np.random.normal(loc=1, scale=5, size=50))
+        >>> s = pd.Series(x)
+
+     If lags is an int, plot a single lagged time series with the
+     specified lag
+
+        >>> plot_lags(s, lags=2) #plot of y(t) with y(t+2)
+
+     If lags is an array-like , plot several lagged time series according to
+     the lags specified in the
+
+        >>> plot_lags(s, lags=[1,2,3]) #plots of y(t) with y(t+1),y(t+2)..
+
+    """
+    _check_soft_dependencies("matplotlib")
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    length = 0
+    is_lag_one = isinstance(lags, int)
+
+    if is_lag_one:
+        length = 1
+        lags = [lags]
+    else:
+        length = len(lags)
+
+    fig = plt.figure(figsize = (8,6*length))
+    axes = np.array([])
+
+    for i,val in enumerate(lags, start=1):
+
+        ax = fig.add_subplot(length,1,i)
+        if is_lag_one:
+            axes = ax
+        else:
+            axes = np.append(axes, ax)
+        pd.plotting.lag_plot(series, lag=val, ax = ax)
+
+    return fig,axes
+
+
