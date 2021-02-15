@@ -897,6 +897,16 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "Lovkush-A",
+      "name": "Lovkush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25344832?v=4",
+      "profile": "https://github.com/Lovkush-A",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "projectName": "sktime",

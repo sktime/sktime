@@ -31,6 +31,7 @@ from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import MultioutputRegressionForecaster
 from sktime.forecasting.compose import RecursiveRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
@@ -128,6 +129,7 @@ ESTIMATOR_TEST_PARAMS = {
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectRegressionForecaster: {"regressor": REGRESSOR},
+    MultioutputRegressionForecaster: {"regressor": REGRESSOR},
     RecursiveRegressionForecaster: {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
         "regressor": make_pipeline(Tabularizer(), REGRESSOR)
