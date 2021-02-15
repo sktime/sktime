@@ -365,6 +365,8 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 param.prior.event_shape]) for param in model.parameters].
                 This may optionally also be a map (Python dict)
                 of parameter names to Tensor values.
+            seed:
+                Python integer to seed the random number generator.
 
     References
     ----------
@@ -384,6 +386,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         add_autoregressive=None,
         compositional_specifications=None,
         sample_size=200,
+        seed=0,
     ):
 
         # Level Components
@@ -412,9 +415,13 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.time_series_components = []
         self._forecaster = None
         self._fitted_forecaster = None
+        self.seed = seed
 
         # import inside method to avoid hard dependency
         import tensorflow_probability as _tfp
+        import tensorflow as tf
+
+        tf.random.set_seed(seed)
 
         self._ModelClass = _tfp
 
@@ -560,11 +567,10 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         )
 
         self._parameter_samples = self._fitted_forecaster.sample(self.sample_size)
-
         self._is_fitted = True
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict
 
         Parameters
