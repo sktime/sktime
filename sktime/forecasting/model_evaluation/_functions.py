@@ -2,19 +2,18 @@
 import numpy as np
 import pandas as pd
 import time
-from typing import types
 from tqdm.auto import tqdm
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_cv
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.performance_metrics.forecasting import smape_loss
+from sktime.utils.validation.forecasting import check_scoring
 
 __author__ = ["Martin Walter"]
 __all__ = ["evaluate"]
 
 
 def evaluate(
-    forecaster, cv, y, X=None, strategy="refit", scoring=smape_loss, return_data=False
+    forecaster, cv, y, X=None, strategy="refit", scoring=None, return_data=False
 ):
     """Evaluate forecaster using cross-validation
 
@@ -32,9 +31,10 @@ def evaluate(
         Must be "refit" or "update", by default "refit". The strategy defines
         whether forecaster is only fitted on the first train window data and
         then updated or always refitted.
-    scoring : function, optional
-        A score function that takes y_pred and y_test as arguments,
-        by default smape_loss
+    scoring : object of class MetricFunctionWrapper from
+        sktime.performance_metrics, optional. Example scoring=sMAPE().
+        Used to get a score function that takes y_pred and y_test as arguments,
+        by default None (if None, uses sMAPE)
     return_data : bool, optional
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
@@ -64,7 +64,7 @@ def evaluate(
     cv = check_cv(cv)
     y = check_y(y)
     _check_strategies(strategy)
-    assert isinstance(evaluate, types.FunctionType), "scoring must be a function"
+    scoring = check_scoring(scoring)
 
     n_splits = cv.get_n_splits(y)
     results = pd.DataFrame()
@@ -107,7 +107,7 @@ def evaluate(
         # save results
         results = results.append(
             {
-                "test_" + scoring.__name__: scoring(y_pred, y_test),
+                "test_" + scoring.__class__.__name__: scoring(y_pred, y_test),
                 "fit_time": fit_time,
                 "pred_time": pred_time,
                 "len_train_window": len(y_train),
