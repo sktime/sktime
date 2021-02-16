@@ -364,13 +364,13 @@ at any point during the discussion.
    changes.
 -  Votes are casts as comments: +1 (approval) or -1 (rejection).
 
-For all types of changes, except appointments, votes take place on public
-issue or pull request. The winning condition is a 2/3 majority of the votes
-casts by core developers including CC members. If the proposed change cannot
-gather a 2/3 majority of the votes cast by core developers, the decision is
-escalated to the :ref:`stage-3`.
+For all types of changes, except appointments, votes take place on the
+related public issue or pull request. The winning condition is a 2/3
+majority of the votes casts by core developers including CC members. If the
+proposed change cannot gather a 2/3 majority of the votes cast by core
+developers, the decision is escalated to the :ref:`stage-3`.
 
-For appointments, votes take place in private communiation channels
+For appointments, votes take place in private communication channels
 and are anonymous. The winning conditions vary depending on the role as
 described in :ref:`roles` above. Appointment decisions are not escalated to
 the CC. If a nomination cannot gather sufficient support, the nomination is
