@@ -119,7 +119,7 @@ class Detrender(_SeriesToSeriesTransformer):
         z_pred = self.forecaster_.predict(fh, X)
         return z + z_pred
 
-    def update(self, Z, X=None, update_params=False):
+    def update(self, Z, X=None, update_params=True):
         """
         Update the parameters of the detrending estimator with new data
 
@@ -127,7 +127,7 @@ class Detrender(_SeriesToSeriesTransformer):
         ----------
         y_new : pd.Series
             New time series
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
             Update the parameters of the detrender model with
 
         Returns

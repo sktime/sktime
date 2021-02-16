@@ -734,10 +734,10 @@
       ]
     },
     {
-      "login": "Afzal-Ind",
-      "name": "Afzal",
+      "login": "afzal442",
+      "name": "Afzal Ansari",
       "avatar_url": "https://avatars0.githubusercontent.com/u/11625672?v=4",
-      "profile": "https://github.com/Afzal-Ind",
+      "profile": "https://github.com/afzal442",
       "contributions": [
         "code",
         "doc"
@@ -841,15 +841,6 @@
       ]
     },
     {
-      "login": "afzal442",
-      "name": "Afzal",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/11625672?v=4",
-      "profile": "https://github.com/afzal442",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "vincent-nich12",
       "name": "vincent-nich12",
       "avatar_url": "https://avatars3.githubusercontent.com/u/36476633?v=4",
@@ -893,6 +884,16 @@
       "name": "pabworks",
       "avatar_url": "https://avatars.githubusercontent.com/u/32725127?v=4",
       "profile": "https://github.com/pabworks",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Lovkush-A",
+      "name": "Lovkush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25344832?v=4",
+      "profile": "https://github.com/Lovkush-A",
       "contributions": [
         "code",
         "test"
