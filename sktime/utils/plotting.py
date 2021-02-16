@@ -35,21 +35,34 @@ def plot_series(*series, labels=None, markers=None):
     from matplotlib.cbook import flatten
     import seaborn as sns
 
+    for y in series:
+        check_y(y)
+
     n_series = len(series)
+
+    # labels
     if labels is not None:
         if n_series != len(labels):
             raise ValueError(
-                "There must be one label for each time series, "
-                "but found inconsistent numbers of series and "
-                "labels."
+                """There must be one label for each time series,
+                but found inconsistent numbers of series and
+                labels."""
             )
         legend = True
     else:
         labels = ["" for _ in range(n_series)]
         legend = False
 
-    for y in series:
-        check_y(y)
+    # markers
+    if markers is not None:
+        if n_series != len(markers):
+            raise ValueError(
+                """There must be one marker for each time series,
+                but found inconsistent numbers of series and
+                markers."""
+            )
+    else:
+        markers = ["o" for _ in range(n_series)]
 
     # create combined index
     index = series[0].index
@@ -76,9 +89,7 @@ def plot_series(*series, labels=None, markers=None):
         else:
             plot_func = sns.lineplot
 
-        plot_func(
-            x=x, y=y, ax=ax, marker=marker if markers else "o", label=label, color=color
-        )
+        plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
 
     # combine data points for all series
     xs_flat = list(flatten(xs))
