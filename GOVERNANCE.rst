@@ -206,26 +206,26 @@ Appointment
 ^^^^^^^^^^^
 
 Membership of the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which cannot
-take more than 5 days excluding weekends and then a vote by the core
-developers which will stay open for 5 days excluding weekends. CoC
+all core developers. A nomination will result in discussion which will stay
+open for 5 days excluding weekends and then a vote by the core
+developers which will stay open for 5 days excluding weekends. CoC committee
 membership votes are subject to:
 
 * a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CoC members.
+* a simple majority approval of all the current CoC committee members.
 
 The vote will take place in private communication channels and will be
 anonymous.
 
-To avoid deadlocks if there is an even number of CoC members, one of
-them will have a tie breaking privilege.
+To avoid deadlocks if there is an even number of CoC committee members, one
+of them will have a tie breaking privilege.
 
 .. _cc-members:
 
 CC members
 ~~~~~~~~~~
 
-CC members are core developers with additional rights and
+CC (community council) members are core developers with additional rights and
 responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
@@ -257,10 +257,9 @@ Appointment
 ^^^^^^^^^^^
 
 Membership of the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which cannot
-take more than 5 days excluding weekends and then a vote by the core
-developers which will stay open for 5 days excluding weekends. CC membership
-votes are subject to:
+all core developers. A nomination will result in discussion which stay open
+for 5 days excluding weekends and then a vote by core developers which will
+stay open for 5 days excluding weekends. CC membership votes are subject to:
 
 * a 2/3 majority of all cast votes, and
 * a simple majority approval of all the current CC members.
