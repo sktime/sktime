@@ -226,7 +226,11 @@ ESTIMATOR_TEST_PARAMS = {
         "use_arma_errors": False,
         "n_jobs": 1,
     },
-    BSTS: {"add_local_linear_trend": [{"name": "local_linear_trend"}]},
+    BSTS: {
+        "name__LocalLevel": "LocalLevel",
+        "name__Seasonal": "Seasonal",
+        "num_seasons__Seasonal": 12,
+    },
     Prophet: {
         "n_changepoints": 0,
         "yearly_seasonality": False,

@@ -8,7 +8,7 @@ __all__ = ["BSTS"]
 import numpy as np
 import pandas as pd
 import scipy.stats as st
-
+import operator
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
@@ -20,396 +20,392 @@ _check_soft_dependencies("tensorflow_probability")
 
 class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """
-    Bayesian Structural Time Series forecaster by wrapping tensorflow_probability.sts.
-    Parameters
-    ----------
-        add_autoregressive:
-            List of dicts with args for tfp.sts.Autoregressive()
-            Dict can have the following keys/values:
-                order:
-                    scalar Python positive int specifying the
-                    number of past timesteps to regress on.
-                coefficients_prior:
-                    optional tfd.Distribution instance specifying
-                    a prior on the coefficients parameter.
-                    If None, a default standard normal
-                    (tfd.MultivariateNormalDiag(scale_diag=tf.ones([order])))
-                    prior is used.
-                    Default value: None.
-                level_scale_prior:
-                    optional tfd.Distribution instance specifying
-                    a prior on the level_scale parameter.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                initial_state_prior:
-                    optional tfd.Distribution instance
-                    specifying a prior on the initial state,
-                    corresponding to the values of the process
-                    at a set of size order of
-                    imagined timesteps before the initial step.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                coefficient_constraining_bijector:
-                    optional tfb.Bijector instance representing a
-                    constraining mapping for the autoregressive
-                    coefficients. For example, tfb.Tanh() constrains
-                    the coefficients to lie in (-1, 1),
-                    while tfb.Softplus() constrains them to be positive,
-                    and tfb.Identity() implies no constraint.
-                    If None, the default behavior constrains the coefficients
-                    to lie in (-1, 1) using a Tanh bijector.
-                    Default value: None.
-                name:
-                    the name of this model component.
-                    Default value: 'Autoregressive'.
-        add_linear_regression:
-            List of dicts with args for tfp.sts.LinearRegression()
-            Dict can have the following keys/values:
-                design_matrix:
-                    float Tensor of shape concat([batch_shape,
-                    [num_timesteps, num_features]]).This may also
-                    optionally be an instance of tf.linalg.LinearOperator.
-                weights_prior:
-                    tfd.Distribution representing a prior
-                    over the regression weights.
-                    Must have event shape [num_features]
-                    and batch shape broadcastable
-                    to the design matrix's batch_shape.
-                    If None, defaults to
-                    Sample(StudentT(df=5, loc=0., scale=10.), num_features]),
-                    a weakly-informative prior loosely inspired
-                    by the Stan prior choice recommendations.
-                    Default value: None.
-                name:
-                    the name of this model component.
-                    Default value: 'LinearRegression'.
-        add_dynamic_linear_regression:
-            List of dicts with args for tfp.sts.DynamicLinearRegression()
-            Dict can have the following keys/values:
-                design_matrix:
-                    float Tensor of shape
-                    concat([batch_shape,[num_timesteps, num_features]]).
-                drift_scale_prior:
-                    instance of tfd.Distribution specifying
-                    a prior on the drift_scale parameter.
-                    If None, a heuristic default prior is
-                    constructed based on the provided
-                    y-data.
-                    Default value: None.
-                initial_weights_prior:
-                    instance of tfd.MultivariateNormal representing
-                    the prior distribution on the
-                    latent states (the regression weights).
-                    Must have event shape [num_features].
-                    If None, a weakly-informative
-                    Normal(0., 10.) prior is used.
-                    Default value: None.
-                name:
-                    Python str for the name of this component.
-                    Default value: 'DynamicLinearRegression'.
-        add_sparse_linear_regression:
-            List of dicts with args for tfp.sts.SparseLinearRegression()
-            Dict can have the following keys/values:
-                    design_matrix:
-                        float Tensor of shape
-                        concat([batch_shape,[num_timesteps, num_features]]).
-                        This may also optionally be an
-                        instance of tf.linalg.LinearOperator.
-                    weights_prior_scale:
-                        float Tensor defining the scale of the
-                        Horseshoe prior on regression weights.
-                        Small values encourage the weights to be sparse.
-                        The shape must broadcast with weights_batch_shape.
-                        Default value: 0.1.
-                    weights_batch_shape:
-                        if None, defaults to design_matrix.batch_shape_tensor().
-                        Must broadcast with the batch shape of design_matrix.
-                        Default value: None.
-                    name:
-                        the name of this model component.
-                        Default value: 'SparseLinearRegression'.
-        add_local_level:
-            Dict with args for tfp.sts.LocalLevel()
-            Dict can have the following keys/values:
-                level_scale_prior:
-                    optional tfd.Distribution instance specifying
-                    a prior on the level_scale parameter.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                name:
-                    the name of this model component.
-                    Default value: 'LocalLevel'
-        add_local_linear_trend:
-            List of dicts with args for tfp.sts.LocalLinearTrend()
-            Dict can have the following keys/values:
-                level_scale_prior:
-                    optional tfd.Distribution instance specifying
-                    a prior on the level_scale parameter.
-                    If None, a heuristic default prior is
-                    constructed based on the provided y-data.
-                    Default value: None.
-                slope_scale_prior:
-                    optional tfd.Distribution instance specifying
-                    a prior on the slope_scale parameter.
-                    If None, a heuristic default prior is
-                    constructed based on the provided y-data.
-                    Default value: None.
-                initial_level_prior:
-                    optional tfd.Distribution instance
-                    specifying a prior on the initial level.
-                    If None, a heuristic default prior is
-                    constructed based on the provided y-data.
-                    Default value: None.
-                initial_slope_prior:
-                    optional tfd.Distribution instance specifying
-                    a prior on the initial slope.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                name:
-                    the name of this model component.
-                    Default value: 'LocalLevel'
-        add_semi_local_linear_trend:
-            List of dicts with args for tfp.sts.LocalLinearTrend()
-            Dict can have the following keys/values:
-                level_scale_prior:
-                    optional tfd.Distribution instance specifying a
-                    prior on the level_scale parameter.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                slope_mean_prior:
-                    optional tfd.Distribution instance specifying a
-                    prior on the slope_mean parameter.
-                    If None, a heuristic default prior is constructed based
-                    on the provided y-data.
-                    Default value: None.
-                slope_scale_prior:
-                    optional tfd.Distribution instance specifying a
-                    prior on the slope_scale parameter.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                autoregressive_coef_prior:
-                    optional tfd.Distribution instance specifying a
-                    prior on the autoregressive_coef parameter.
-                    If None, the default prior is a standard Normal(0., 1.).
-                    Note that the prior may be implicitly truncated
-                    by constrain_ar_coef_stationary and/or
-                    constrain_ar_coef_positive.
-                    Default value: None.
-                initial_level_prior:
-                    optional tfd.Distribution instance specifying a
-                    prior on the initial level.
-                    If None, a heuristic default
-                    prior is constructed based on the
-                    provided y-data.
-                    Default value: None.
-                initial_slope_prior:
-                    optional tfd.Distribution instance
-                    specifying a prior on the initial slope.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                constrain_ar_coef_stationary:
-                    if True, perform inference using a
-                    parameterization that restricts
-                    autoregressive_coef to the interval (-1, 1), or (0, 1)
-                    if force_positive_ar_coef is also True,
-                    corresponding to stationary processes.
-                    This will implicitly truncates the
-                    support of autoregressive_coef_prior.
-                    Default value: True.
-                constrain_ar_coef_positive:
-                    if True, perform inference using a parameterization
-                    that restricts autoregressive_coef to be positive,
-                    or in (0, 1) if constrain_ar_coef_stationary is also True.
-                    This will implicitly truncate the support of
-                    autoregressive_coef_prior.
-                    Default value: False.
-                name:
-                    the name of this model component.
-                    Default value: 'SemiLocalLinearTrend'.
-        add_seasonal:
-            List of dicts with args for tfp.sts.Seasonal()
-            Dict can have the following keys/values:
-                num_seasons:
-                    Scalar Python int number of seasons.
-                num_steps_per_season:
-                    Python int number of steps in each season.
-                    This may be either a scalar (shape []),
-                    in which case all seasons have the same length, or
-                    a NumPy array of shape [num_seasons],
-                    in which seasons have different length, but remain
-                    constant around different cycles,
-                    or a NumPy array of shape [num_cycles, num_seasons],
-                    in which num_steps_per_season
-                    for each season also varies in different cycle
-                    (e.g., a 4 years cycle with leap day).
-                    Default value: 1.
-                allow_drift:
-                    optional Python bool specifying whether the seasonal
-                    effects can drift over time.
-                    Setting this to False removes the drift_scale
-                    parameter from the model.
-                    This is mathematically equivalent to
-                    drift_scale_prior = tfd.Deterministic(0.),
-                    but removing drift directly is preferred
-                    because it avoids the use of a degenerate prior.
-                    Default value: True.
-                drift_scale_prior:
-                    optional tfd.Distribution instance specifying a
-                    prior on the drift_scale parameter.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                initial_effect_prior:
-                    optional tfd.Distribution instance specifying a
-                    normal prior on the initial effect of each season.
-                    This may be either a scalar tfd.Normal prior,
-                    in which case it applies
-                    independently to every season, or it may be
-                    multivariate normal (e.g., tfd.MultivariateNormalDiag)
-                    with event shape [num_seasons], in which case it
-                    specifies a joint prior across all seasons.
-                    If None, a heuristic default prior is constructed
-                    based on the provided y-data.
-                    Default value: None.
-                constrain_mean_effect_to_zero:
-                    if True, use a model parameterization that
-                    constrains the mean effect across all seasons to be zero.
-                    This constraint is generally helpful in identifying the
-                    contributions of different model
-                    components and can lead to more
-                    interpretable posterior decompositions.
-                    It may be undesirable
-                    if you plan to directly examine the latent
-                    space of the underlying state space model.
-                    Default value: True.
-                name:
-                    the name of this model component.
-                    Default value: 'Seasonal'.
-        add_smooth_seasonal:
-            List of dicts with args for tfp.sts.SmoothSeasonal()
-            Dict can have the following keys/values:
-                    period:
-                        positive scalar float Tensor giving the number of timesteps
-                        required for the longest cyclic effect to repeat.
-                    frequency_multipliers:
-                        One-dimensional float Tensor listing the frequencies
-                        (cyclic components) included in the model,
-                        as multipliers of the base/fundamental frequency 2.
-                        * pi / period. Each component is specified by the number
-                        of times it repeats per period, and
-                        adds two latent dimensions to the model.
-                        A smooth seasonal model that can represent
-                        any periodic function is given
-                        by frequency_multipliers = [1,2, ..., floor(period / 2)].
-                        However, it is often desirable to enforce a smoothness
-                        assumption (and reduce the computational burden)
-                        by dropping some of the higher frequencies.
-                    allow_drift:
-                        optional Python bool specifying whether the seasonal
-                        effects can drift over time.
-                        Setting this to False removes the
-                        drift_scale parameter from the model.
-                        This is mathematically equivalent to
-                        drift_scale_prior = tfd.Deterministic(0.),
-                        but removing drift directly is preferred because
-                        it avoids the use of a degenerate prior.
-                        Default value: True.
-                    drift_scale_prior:
-                        optional tfd.Distribution instance specifying a
-                        prior on the drift_scale parameter.
-                        If None, a heuristic default prior is constructed
-                        based on the provided y-data.
-                        Default value: None.
-                    initial_state_prior:
-                        instance of tfd.MultivariateNormal representing the
-                        prior distribution on the latent states.
-                        Must have event shape [2 * len(frequency_multipliers)].
-                        If None, a heuristic default prior is constructed based on
-                        the provided y-data.
-                    name:
-                        the name of this model component.
-                        Default value: 'SmoothSeasonal'.
+     Bayesian Structural Time Series forecaster by wrapping tensorflow_probability.sts.
+     Parameters
+     ----------
+     Args for tfp.sts.Sum()
+     ------------------------------------------
+         constant_offset:
+             optional float Tensor of shape broadcasting to
+             concat([batch_shape, [num_timesteps]]) specifying a
+             constant value added to the sum of outputs
+             from the component models.
+             This allows the components to model the shifted
+             series y - constant_offset.
+             If None, this is set to the mean of the
+             provided y-data.
+             Default value: None.
+         observation_noise_scale_prior:
+             optional tfd.Distribution instance specifying a
+             prior on observation_noise_scale.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         name:
+             Python str name of this model component;
+             used as name_scope for ops created by this class.
+             Default value: 'Sum'.
+         sample_size:
+             Python list of Tensors representing posterior samples of
+             model parameters, with shapes
+             [concat([[num_posterior_draws],param.prior.batch_shape,
+             param.prior.event_shape]) for param in model.parameters].
+             This may optionally also be a map (Python dict)
+             of parameter names to Tensor values.
+         seed:
+             Python integer to seed the random number generator.
 
-            compositional_specifications:
-                    constant_offset:
-                        optional float Tensor of shape broadcasting to
-                        concat([batch_shape, [num_timesteps]]) specifying a
-                        constant value added to the sum of outputs
-                        from the component models.
-                        This allows the components to model the shifted
-                        series y - constant_offset.
-                        If None, this is set to the mean of the
-                        provided y-data.
-                        Default value: None.
-                    observation_noise_scale_prior:
-                        optional tfd.Distribution instance specifying a
-                        prior on observation_noise_scale.
-                        If None, a heuristic default prior is constructed
-                        based on the provided y-data.
-                        Default value: None.
-                    name:
-                        Python str name of this model component;
-                        used as name_scope for ops created by this class.
-                        Default value: 'Sum'.
-            sample_size:
-                Python list of Tensors representing posterior samples of
-                model parameters, with shapes
-                [concat([[num_posterior_draws],param.prior.batch_shape,
-                param.prior.event_shape]) for param in model.parameters].
-                This may optionally also be a map (Python dict)
-                of parameter names to Tensor values.
-            seed:
-                Python integer to seed the random number generator.
 
-    References
-    ----------
-    https://www.tensorflow.org/probability/api_docs/python/tfp/sts
+     Args for tfp.sts.Autoregressive()
+     ------------------------------------------
+         order__Autoregressive:
+             scalar Python positive int specifying the
+             number of past timesteps to regress on.
+         coefficients_prior__Autoregressive:
+             optional tfd.Distribution instance specifying
+             a prior on the coefficients parameter.
+             If None, a default standard normal
+             (tfd.MultivariateNormalDiag(scale_diag=tf.ones([order])))
+             prior is used.
+             Default value: None.
+         level_scale_prior__Autoregressive:
+             optional tfd.Distribution instance specifying
+             a prior on the level_scale parameter.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         initial_state_prior__Autoregressive:
+             optional tfd.Distribution instance
+             specifying a prior on the initial state,
+             corresponding to the values of the process
+             at a set of size order of
+             imagined timesteps before the initial step.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         coefficient_constraining_bijector__Autoregressive:
+             optional tfb.Bijector instance representing a
+             constraining mapping for the autoregressive
+             coefficients. For example, tfb.Tanh() constrains
+             the coefficients to lie in (-1, 1),
+             while tfb.Softplus() constrains them to be positive,
+             and tfb.Identity() implies no constraint.
+             If None, the default behavior constrains the coefficients
+             to lie in (-1, 1) using a Tanh bijector.
+             Default value: None.
+         name__Autoregressive:
+             the name of this model component.
+             Default value: 'Autoregressive'.
+     Args for tfp.sts.LinearRegression()
+     ------------------------------------------
+
+         design_matrix__LinearRegression:
+             float Tensor of shape concat([batch_shape,
+             [num_timesteps, num_features]]).This may also
+             optionally be an instance of tf.linalg.LinearOperator.
+         weights_prior__LinearRegression:
+             tfd.Distribution representing a prior
+             over the regression weights.
+             Must have event shape [num_features]
+             and batch shape broadcastable
+             to the design matrix's batch_shape.
+             If None, defaults to
+             Sample(StudentT(df=5, loc=0., scale=10.), num_features]),
+             a weakly-informative prior loosely inspired
+             by the Stan prior choice recommendations.
+             Default value: None.
+         name__LinearRegression:
+             the name of this model component.
+             Default value: 'LinearRegression'.
+     Args for tfp.sts.DynamicLinearRegression()
+     ------------------------------------------
+         design_matrix__DynamicLinearRegression:
+             float Tensor of shape
+             concat([batch_shape,[num_timesteps, num_features]]).
+         drift_scale_prior__DynamicLinearRegression:
+             instance of tfd.Distribution specifying
+             a prior on the drift_scale parameter.
+             If None, a heuristic default prior is
+             constructed based on the provided
+             y-data.
+             Default value: None.
+         initial_weights_prior__DynamicLinearRegression:
+             instance of tfd.MultivariateNormal representing
+             the prior distribution on the
+             latent states (the regression weights).
+             Must have event shape [num_features].
+             If None, a weakly-informative
+             Normal(0., 10.) prior is used.
+             Default value: None.
+         name__DynamicLinearRegression:
+             Python str for the name of this component.
+             Default value: 'DynamicLinearRegression'.
+
+     Args for tfp.sts.SparseLinearRegression()
+     ------------------------------------------
+         design_matrix__SparseLinearRegression:
+             float Tensor of shape
+             concat([batch_shape,[num_timesteps, num_features]]).
+             This may also optionally be an
+             instance of tf.linalg.LinearOperator.
+         weights_prior_scale__SparseLinearRegression:
+             float Tensor defining the scale of the
+             Horseshoe prior on regression weights.
+             Small values encourage the weights to be sparse.
+             The shape must broadcast with weights_batch_shape.
+             Default value: 0.1.
+         weights_batch_shape__SparseLinearRegression:
+             if None, defaults to design_matrix.batch_shape_tensor().
+             Must broadcast with the batch shape of design_matrix.
+             Default value: None.
+         name__SparseLinearRegression:
+             the name of this model component.
+             Default value: 'SparseLinearRegression'.
+
+     Args for tfp.sts.LocalLevel()
+     ------------------------------------------
+
+         level_scale_prior__LocalLevel:
+             optional tfd.Distribution instance specifying
+             a prior on the level_scale parameter.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         name__LocalLevel:
+             the name of this model component.
+             Default value: 'LocalLevel'
+
+     Args for tfp.sts.LocalLinearTrend()
+     ------------------------------------------
+         level_scale_prior__LocalLinearTrend:
+             optional tfd.Distribution instance specifying
+             a prior on the level_scale parameter.
+             If None, a heuristic default prior is
+             constructed based on the provided y-data.
+             Default value: None.
+         slope_scale_prior__LocalLinearTrend:
+             optional tfd.Distribution instance specifying
+             a prior on the slope_scale parameter.
+             If None, a heuristic default prior is
+             constructed based on the provided y-data.
+             Default value: None.
+         initial_level_prior__LocalLinearTrend:
+             optional tfd.Distribution instance
+             specifying a prior on the initial level.
+             If None, a heuristic default prior is
+             constructed based on the provided y-data.
+             Default value: None.
+         initial_slope_prior__LocalLinearTrend:
+             optional tfd.Distribution instance specifying
+             a prior on the initial slope.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         name__LocalLinearTrend:
+             the name of this model component.
+             Default value: 'LocalLevel'
+
+     Args for tfp.sts.LocalLinearTrend()
+     ------------------------------------------
+         level_scale_prior__SemiLocalLinearTrend:
+             optional tfd.Distribution instance specifying a
+             prior on the level_scale parameter.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         slope_mean_prior__SemiLocalLinearTrend:
+             optional tfd.Distribution instance specifying a
+             prior on the slope_mean parameter.
+             If None, a heuristic default prior is constructed based
+             on the provided y-data.
+             Default value: None.
+         slope_scale_prior__SemiLocalLinearTrend:
+             optional tfd.Distribution instance specifying a
+             prior on the slope_scale parameter.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         autoregressive_coef_prior__SemiLocalLinearTrend:
+             optional tfd.Distribution instance specifying a
+             prior on the autoregressive_coef parameter.
+             If None, the default prior is a standard Normal(0., 1.).
+             Note that the prior may be implicitly truncated
+             by constrain_ar_coef_stationary and/or
+             constrain_ar_coef_positive.
+             Default value: None.
+         initial_level_prior__SemiLocalLinearTrend:
+             optional tfd.Distribution instance specifying a
+             prior on the initial level.
+             If None, a heuristic default
+             prior is constructed based on the
+             provided y-data.
+             Default value: None.
+         initial_slope_prior__SemiLocalLinearTrend:
+             optional tfd.Distribution instance
+             specifying a prior on the initial slope.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         constrain_ar_coef_stationary__SemiLocalLinearTrend:
+             if True, perform inference using a
+             parameterization that restricts
+             autoregressive_coef to the interval (-1, 1), or (0, 1)
+             if force_positive_ar_coef is also True,
+             corresponding to stationary processes.
+             This will implicitly truncates the
+             support of autoregressive_coef_prior.
+             Default value: True.
+         constrain_ar_coef_positive__SemiLocalLinearTrend:
+             if True, perform inference using a parameterization
+             that restricts autoregressive_coef to be positive,
+             or in (0, 1) if constrain_ar_coef_stationary is also True.
+             This will implicitly truncate the support of
+             autoregressive_coef_prior.
+             Default value: False.
+         name__SemiLocalLinearTrend:
+             the name of this model component.
+             Default value: 'SemiLocalLinearTrend'.
+
+    Args for tfp.sts.Seasonal()
+     ------------------------------------------
+         num_seasons__Seasonal:
+             Scalar Python int number of seasons.
+         num_steps_per_season__Seasonal:
+             Python int number of steps in each season.
+             This may be either a scalar (shape []),
+             in which case all seasons have the same length, or
+             a NumPy array of shape [num_seasons],
+             in which seasons have different length, but remain
+             constant around different cycles,
+             or a NumPy array of shape [num_cycles, num_seasons],
+             in which num_steps_per_season
+             for each season also varies in different cycle
+             (e.g., a 4 years cycle with leap day).
+             Default value: 1.
+         allow_drift__Seasonal:
+             optional Python bool specifying whether the seasonal
+             effects can drift over time.
+             Setting this to False removes the drift_scale
+             parameter from the model.
+             This is mathematically equivalent to
+             drift_scale_prior = tfd.Deterministic(0.),
+             but removing drift directly is preferred
+             because it avoids the use of a degenerate prior.
+             Default value: True.
+         drift_scale_prior__Seasonal:
+             optional tfd.Distribution instance specifying a
+             prior on the drift_scale parameter.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         initial_effect_prior__Seasonal:
+             optional tfd.Distribution instance specifying a
+             normal prior on the initial effect of each season.
+             This may be either a scalar tfd.Normal prior,
+             in which case it applies
+             independently to every season, or it may be
+             multivariate normal (e.g., tfd.MultivariateNormalDiag)
+             with event shape [num_seasons], in which case it
+             specifies a joint prior across all seasons.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         constrain_mean_effect_to_zero__Seasonal:
+             if True, use a model parameterization that
+             constrains the mean effect across all seasons to be zero.
+             This constraint is generally helpful in identifying the
+             contributions of different model
+             components and can lead to more
+             interpretable posterior decompositions.
+             It may be undesirable
+             if you plan to directly examine the latent
+             space of the underlying state space model.
+             Default value: True.
+         name__Seasonal:
+             the name of this model component.
+             Default value: 'Seasonal'.
+
+     Args for tfp.sts.SmoothSeasonal()
+     ------------------------------------------
+         period__SmoothSeasonal:
+             positive scalar float Tensor giving the number of timesteps
+             required for the longest cyclic effect to repeat.
+         frequency_multipliers__SmoothSeasonal:
+             One-dimensional float Tensor listing the frequencies
+             (cyclic components) included in the model,
+             as multipliers of the base/fundamental frequency 2.
+             * pi / period. Each component is specified by the number
+             of times it repeats per period, and
+             adds two latent dimensions to the model.
+             A smooth seasonal model that can represent
+             any periodic function is given
+             by frequency_multipliers = [1,2, ..., floor(period / 2)].
+             However, it is often desirable to enforce a smoothness
+             assumption (and reduce the computational burden)
+             by dropping some of the higher frequencies.
+         allow_drift__SmoothSeasonal:
+             optional Python bool specifying whether the seasonal
+             effects can drift over time.
+             Setting this to False removes the
+             drift_scale parameter from the model.
+             This is mathematically equivalent to
+             drift_scale_prior = tfd.Deterministic(0.),
+             but removing drift directly is preferred because
+             it avoids the use of a degenerate prior.
+             Default value: True.
+         drift_scale_prior__SmoothSeasonal:
+             optional tfd.Distribution instance specifying a
+             prior on the drift_scale parameter.
+             If None, a heuristic default prior is constructed
+             based on the provided y-data.
+             Default value: None.
+         initial_state_prior__SmoothSeasonal:
+             instance of tfd.MultivariateNormal representing the
+             prior distribution on the latent states.
+             Must have event shape [2 * len(frequency_multipliers)].
+             If None, a heuristic default prior is constructed based on
+             the provided y-data.
+         name__SmoothSeasonal:
+             the name of this model component.
+             Default value: 'SmoothSeasonal'.
+
+
+     References
+     ----------
+     https://www.tensorflow.org/probability/api_docs/python/tfp/sts
     """
 
     def __init__(
         self,
-        add_local_level=None,
-        add_local_linear_trend=None,
-        add_semi_local_linear_trend=None,
-        add_seasonal=None,
-        add_smooth_seasonal=None,
-        add_linear_regression=None,
-        add_dynamic_linear_regression=None,
-        add_sparse_linear_regression=None,
-        add_autoregressive=None,
-        compositional_specifications=None,
         sample_size=200,
+        constant_offset=None,
+        observation_noise_scale_prior=None,
+        name="Sum",
         seed=0,
+        **kwargs
     ):
 
-        # Level Components
-        self.add_local_level = add_local_level
+        self.sample_size = sample_size
+        self.constant_offset = constant_offset
+        self.observation_noise_scale_prior = observation_noise_scale_prior
+        self.name = name
+        self.seed = seed
+        self.__dict__.update(kwargs)
 
-        # Trend Components
-        self.add_local_linear_trend = add_local_linear_trend
-        self.add_semi_local_linear_trend = add_semi_local_linear_trend
+        self._time_series_components = {}
+        self.time_series_components = []
 
-        # Seasonal Components
-        self.add_seasonal = add_seasonal
-        self.add_smooth_seasonal = add_smooth_seasonal
-
-        # Regression Components
-        self.add_linear_regression = add_linear_regression
-        self.add_dynamic_linear_regression = add_dynamic_linear_regression
-        self.add_sparse_linear_regression = add_sparse_linear_regression
-
-        # Autoregression Components
-        self.add_autoregressive = add_autoregressive
-
-        # Composition Component
-        self.compositional_specifications = compositional_specifications
+        self.valid_components = [
+            "Autoregressive",
+            "DynamicLinearRegression",
+            "LinearRegression",
+            "SparseLinearRegression",
+            "LocalLevel",
+            "LocalLinearTrend",
+            "SemiLocalLinearTrend",
+            "Seasonal",
+            "SmoothSeasonal",
+        ]
 
         self.sample_size = sample_size
         self.time_series_components = []
@@ -421,123 +417,80 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         import tensorflow_probability as _tfp
         import tensorflow as tf
 
-        tf.random.set_seed(seed)
+        tf.random.set_seed(self.seed)
 
         self._ModelClass = _tfp
 
         super(BSTS, self).__init__()
 
+        self.process_kwargs()
+
+    def _check_components(self, component_name):
+        if component_name not in self.valid_components:
+            raise Exception(
+                "Please provide a valid component name.  \
+                Valid component names are: {}".format(
+                    self.valid_components
+                )
+            )
+
+    def process_kwargs(self):
+        for key, value in self.__dict__.items():
+            splitted_key = key.split("__")
+
+            if len(splitted_key) > 1:
+                if len(splitted_key) > 3:
+                    raise Exception(
+                        "Component arguments in `{}` is provided in a wrong way.  \
+                        Please try to follow the `__` convention to denote different  \
+                        arguments of different components.".format(
+                            key
+                        )
+                    )
+
+                self._check_components(splitted_key[1])
+                identifier = "__".join(splitted_key[1:])
+                if identifier not in self._time_series_components:
+                    self._time_series_components[str(identifier)] = {}
+
+                self._time_series_components[str(identifier)][splitted_key[0]] = value
+
     def _instantiate_model(self, y, X=None):
 
         y = y.astype("float64")
+
         if X is not None:
             X = X.astype("float64")
 
-        # Adding Local Linear Trend Components
-        if self.add_local_linear_trend is not None:
-            for conf in self.add_local_linear_trend:
-                self._check_conf(conf)
-                self.time_series_components.append(
-                    self._ModelClass.sts.LocalLinearTrend(
-                        observed_time_series=y, **conf
-                    )
-                )
+        for key, conf in self._time_series_components.items():
+            splitted_key = key.split("__")
 
-        # Adding Semi Local Linear Trend Components
-        if self.add_semi_local_linear_trend is not None:
-            for conf in self.add_semi_local_linear_trend:
-                self._check_conf(conf)
-                self.time_series_components.append(
-                    self._ModelClass.sts.LocalLinearTrend(
-                        observed_time_series=y, **conf
-                    )
-                )
+            class_name = splitted_key[0]
 
-        # Adding Linear Regression Components
-        if self.add_linear_regression is not None:
-            for conf in self.add_linear_regression:
-                self._check_conf(conf)
+            if "name" not in conf:
+                conf["name"] = key
+
+            if "Regression" in class_name:
                 self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
-                    self._ModelClass.sts.LinearRegression(design_matrix=X, **conf)
-                )
-
-        # Adding Sparse Linear Regression Components
-        if self.add_sparse_linear_regression is not None:
-            for conf in self.add_sparse_linear_regression:
-                self._check_conf(conf)
-                self._check_design_matrix(design_matrix=X)
-                self.time_series_components.append(
-                    self._ModelClass.sts.SparseLinearRegression(design_matrix=X, **conf)
-                )
-
-        # Adding Dynamic Linear Regression Components
-        if self.add_dynamic_linear_regression is not None:
-            for conf in self.add_dynamic_linear_regression:
-                self._check_conf(conf)
-                self._check_design_matrix(design_matrix=X)
-                self.time_series_components.append(
-                    self._ModelClass.sts.DynamicLinearRegression(
+                    operator.attrgetter(class_name)(self._ModelClass.sts)(
                         design_matrix=X, **conf
                     )
                 )
-
-        # Adding Autoregressive Model
-        if self.add_autoregressive is not None:
-            for conf in self.add_autoregressive:
-                self._check_conf(conf)
+            else:
                 self.time_series_components.append(
-                    self._ModelClass.sts.Autoregressive(observed_time_series=y, **conf)
+                    operator.attrgetter(class_name)(self._ModelClass.sts)(
+                        observed_time_series=y, **conf
+                    )
                 )
 
-        # Adding Local Level Components
-        if self.add_local_level is not None:
-            for conf in self.add_local_level:
-                self._check_conf(conf)
-                self.time_series_components.append(
-                    self._ModelClass.sts.LocalLevel(observed_time_series=y, **conf)
-                )
-
-        # Adding Seasonal Components
-        if self.add_seasonal is not None:
-            for conf in self.add_seasonal:
-                self._check_conf(conf)
-                self.time_series_components.append(
-                    self._ModelClass.sts.Seasonal(observed_time_series=y, **conf)
-                )
-
-        # Adding Smooth Seasonal Components
-        if self.add_smooth_seasonal is not None:
-            for conf in self.add_smooth_seasonal:
-                self._check_conf(conf)
-                self.time_series_components.append(
-                    self._ModelClass.sts.SmoothSeasonal(observed_time_series=y, **conf)
-                )
-
-        if self.compositional_specifications is not None:
-            if "component" in self.compositional_specifications:
-                raise ValueError(
-                    """
-                    Each component has to be given as separate
-                    component in sktime.BSTS()."""
-                )
-
-            if "observed_time_series" in self.compositional_specifications:
-                raise ValueError(
-                    """Do not provide "observed_time_series" as a key
-                    in a component, it is taken automatically by the \"y\"
-                    argument in the sktime.BSTS.fit() function."""
-                )
-
-            self._forecaster = self._ModelClass.sts.Sum(
-                self.time_series_components,
-                observed_time_series=y,
-                **self.compositional_specifications
-            )
-        else:
-            self._forecaster = self._ModelClass.sts.Sum(
-                self.time_series_components, observed_time_series=y
-            )
+        self._forecaster = self._ModelClass.sts.Sum(
+            self.time_series_components,
+            observed_time_series=y,
+            constant_offset=self.constant_offset,
+            observation_noise_scale_prior=self.observation_noise_scale_prior,
+            name=self.name,
+        )
 
         return self
 
