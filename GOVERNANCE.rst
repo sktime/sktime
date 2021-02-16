@@ -185,6 +185,7 @@ again, they can retake their role without having to be appointed.
 CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
+CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
 `CoC <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
 
