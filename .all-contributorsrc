@@ -898,6 +898,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "luiszugasti",
+      "name": "Luis Zugasti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11198457?s=460&u=0645b72683e491824aca16db9702f1d3eb990389&v=4",
+      "profile": "https://github.com/luiszugasti",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",
