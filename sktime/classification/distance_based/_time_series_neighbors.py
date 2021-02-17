@@ -183,7 +183,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=not self.capabilities["multivariate"], coerce_to_numpy=True)
+        X, y = check_X_y(X, y, enforce_univariate=not self.capabilities["multivariate"],
+                         coerce_to_numpy=True)
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
 
@@ -283,7 +284,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X,  enforce_univariate=not self.capabilities["multivariate"], coerce_to_numpy=True)
+        X = check_X(X,  enforce_univariate=not self.capabilities["multivariate"], 
+                    coerce_to_numpy=True)
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
 
