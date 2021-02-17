@@ -128,10 +128,10 @@ Composition
     TransformedTargetForecaster
     DirectRegressionForecaster
     DirectTimeSeriesRegressionForecaster
+    MultioutputRegressionForecaster
     RecursiveRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    ReducedRegressionForecaster
-    ReducedTimeSeriesRegressionForecaster
+    ReducedForecaster
     StackingForecaster
 
 Online Forecasting

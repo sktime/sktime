@@ -17,6 +17,7 @@ from sktime.transformations.panel.reduce import Tabularizer
 from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectRegressionForecaster
+from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
 
@@ -83,3 +84,21 @@ def test_factory_method_ts_direct():
     expected = f2.fit(y_train, fh=fh).predict(fh)
 
     np.testing.assert_array_equal(actual, expected)
+
+
+def test_multioutput_direct_tabular():
+    # multioutput and direct strategies with linear regression
+    # regressor should produce same predictions
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=24)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    regressor = LinearRegression()
+    f1 = MultioutputRegressionForecaster(regressor)
+    f2 = DirectRegressionForecaster(regressor)
+
+    preds1 = f1.fit(y_train, fh=fh).predict(fh)
+    preds2 = f2.fit(y_train, fh=fh).predict(fh)
+
+    # assert_almost_equal does not seem to work with pd.Series objects
+    np.testing.assert_almost_equal(preds1.to_numpy(), preds2.to_numpy(), decimal=5)

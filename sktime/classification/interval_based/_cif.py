@@ -27,14 +27,6 @@ from sktime.transformations.panel.catch22_features import Catch22  # noqa: E402
 class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     """Canonical Interval Forest Classifier.
 
-    @article{middlehurst2020canonical,
-      title={The Canonical Interval Forest {(CIF)} Classifier for Time Series
-      Classification},
-      author={Middlehurst, Matthew and Large, James and Bagnall, Anthony},
-      journal={IEEE International Conference on Big Data},
-      year={2020}
-    }
-
     Interval based forest making use of the catch22 feature set on randomly
     selected intervals.
 
@@ -53,22 +45,21 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     and it does not use the splitting criteria tiny refinement described in
     deng13forest.
 
-    For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/interval_based/CIF.java
-
     Parameters
     ----------
     n_estimators       : int, ensemble size, optional (default to 500)
     n_intervals         : int, number of intervals to extract, optional (default to
     sqrt(series_length)*sqrt(n_dims))
-    random_state       : int, seed for random, optional (default to no seed)
     att_subsample_size : int, number of catch22/tsf attributes to subsample
     per classifier, optional (default to 8)
     min_interval       : int, minimum width of an interval, optional (default
     to 3)
     max_interval       : int, maximum width of an interval, optional (default
     to series_length/2)
+    n_jobs             : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
+    random_state       : int, seed for random, optional (default to no seed)
 
     Attributes
     ----------
@@ -83,6 +74,17 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     indexes of all start and end points for all classifiers
     dims           : array of shape = [n_estimators][n_intervals] stores
     the dimension to extract from for each interval
+
+    Notes
+    -----
+    ..[1] Matthew Middlehurst and James Large and Anthony Bagnall. "The Canonical
+    Interval Forest (CIF) Classifier for Time Series Classification."
+        IEEE International Conference on Big Data 2020
+
+    For the original Java version, see
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    /tsml/classifiers/interval_based/CIF.java
+
     """
 
     # Capability tags
