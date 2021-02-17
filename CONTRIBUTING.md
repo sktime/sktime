@@ -195,7 +195,7 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
     ```bash
     pip install -e .
     ```
-    
+
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 2.  To run all unit tests, run:
@@ -210,7 +210,7 @@ We use [coverage](https://coverage.readthedocs.io/en/coverage-5.3/) via the [pyt
 API design
 ----------
 
-The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome! 
+The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome!
 
 Documentation
 -------------
