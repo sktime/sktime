@@ -112,7 +112,11 @@ def set_classifier(cls, resampleId=None):
     elif name == "ps" or name == "proximityStump":
         return ProximityStump(random_state=resampleId)
     elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
+        return KNeighborsTimeSeriesClassifier(metric="dtwcv")
+    elif name == "dtw" or name == "1nn-dtw":
         return KNeighborsTimeSeriesClassifier(metric="dtw")
+    elif name == "msm" or name == "1nn-msm":
+        return KNeighborsTimeSeriesClassifier(metric="msm")
     elif name == "ee" or name == "elasticensemble":
         return ElasticEnsemble()
     elif name == "shapedtw":
@@ -575,18 +579,13 @@ if __name__ == "__main__":
             train_file=tf,
         )
     else:  # Local run
-        #        data_dir = "/scratch/univariate_datasets/"
-        #        results_dir = "/scratch/results"
-        #         data_dir = "/bench/datasets/Univariate2018/"
-        #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         print(" Local Run")
-        data_dir = "C:/Code/sktime/sktime/datasets/data/"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "C:/Temp/"
-        #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "UnitTest"
+        dataset = "ArrowHead"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "KNeighborsTimeSeriesClassifier"
+        classifier = "1NN-MSM"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
