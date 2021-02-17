@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from sktime.classification.distance_based._time_series_neighbors \
-    import KNeighborsTimeSeriesClassifier
+from sktime.classification.distance_based._time_series_neighbors import(
+    KNeighborsTimeSeriesClassifier,
+)
 from sktime.datasets import load_arrow_head
 
 distance_functions = [
@@ -30,4 +31,4 @@ def test_knn_on_arrowhead():
         for j in range(0, len(pred)):
             if pred[j] == y_test[j]:
                 correct = correct + 1
-        assert(correct == expected_correct[distance_functions[i]])
+        assert correct == expected_correct[distance_functions[i]]
