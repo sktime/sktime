@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-from sktime.performance_metrics.forecasting._functions import mase_loss
-from sktime.performance_metrics.forecasting._functions import smape_loss, mape_loss
+from sktime.performance_metrics.forecasting._functions import (
+    mase_loss,
+    smape_loss,
+    mape_loss,
+)
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski"]
 __all__ = ["MetricFunctionWrapper", "make_forecasting_scorer", "MASE", "sMAPE", "MAPE"]
