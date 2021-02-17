@@ -106,7 +106,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     # Capabilities: data types this classifier can handle
     capabilities = {
-        "multivariate": False,
+        "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
     }
@@ -115,28 +115,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
-        algorithm="brute",
         metric="dtw",
         metric_params=None,
         **kwargs
     ):
-        if algorithm == "kd_tree":
-            raise ValueError(
-                "KNeighborsTimeSeriesClassifier cannot work with kd_tree since kd_tree "
-                "cannot be used with a callable distance metric and we do not support "
-                "precalculated distances as yet."
-            )
-        if algorithm == "ball_tree":
-            raise ValueError(
-                "KNeighborsTimeSeriesClassifier cannot work with ball_tree since "
-                "ball_tree has a list of hard coded distances it can use, and cannot "
-                "work with 3-D arrays"
-            )
-
         self._cv_for_params = False
         if metric == "euclidean":  # Euclidean will default to the base class distance
             metric = euclidean_distance
-        if metric == "dtw":
+        elif metric == "dtw":
             metric = dtw_distance
         elif metric == "dtwcv":  # special case to force loocv grid search
             # cv in training
@@ -181,7 +167,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
-            algorithm=algorithm,
+            algorithm="brute",
             metric=metric,
             metric_params=metric_params,
             **kwargs
@@ -203,7 +189,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
+        X, y = check_X_y(X, y, enforce_univariate=not self.capabilities["multivariate"], coerce_to_numpy=True)
+        # Transpose to work correctly with distance functions
+        X = X.transpose((0, 2, 1))
+
         y = np.asarray(y)
         check_classification_targets(y)
         # if internal cv is desired, the relevant flag forces a grid search
@@ -300,7 +289,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X = check_X(X,  enforce_univariate=not self.capabilities["multivariate"], coerce_to_numpy=True)
+        # Transpose to work correctly with distance functions
+        X = X.transpose((0, 2, 1))
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -355,24 +346,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 metric=self.effective_metric_,
                 n_jobs=n_jobs,
                 **kwds
-            )
-
-        elif self._fit_method in ["ball_tree", "kd_tree"]:
-            if issparse(X):
-                raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
-                )
-            if LooseVersion(joblib_version) < LooseVersion("0.12"):
-                # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query, check_pickle=False)
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                delayed_query = delayed(self._tree.query)
-                parallel_kwargs = {"prefer": "threads"}
-            result = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(X[s], n_neighbors, return_distance)
-                for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
             raise ValueError("internal: _fit_method not recognized")
