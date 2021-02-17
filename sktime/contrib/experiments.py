@@ -560,8 +560,8 @@ def test_loading():
 
 
 benchmark_datasets = [
-#    "ACSF1",
-#    "Adiac",
+    "ACSF1",
+    "Adiac",
     "ArrowHead",
     "Beef",
     "BeetleFly",
