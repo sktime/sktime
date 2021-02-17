@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from sktime.classification.distance_based._time_series_neighbors import(
+from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datasets import load_arrow_head
