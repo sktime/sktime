@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-from numpy import testing
 
 from sktime.classification.distance_based._time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_arrow_head
@@ -25,7 +23,7 @@ def test_knn_on_arrowhead():
         knn = KNeighborsTimeSeriesClassifier(
             metric=distance_functions[i],
         )
-        knn.fit(metric = distance_functions[i])
+        knn.fit(X_train, y_train)
         pred = knn.predict(X_test)
         correct = 0
         for j in range(0, len(pred)):
