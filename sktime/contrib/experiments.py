@@ -558,6 +558,107 @@ def test_loading():
         print(testY.shape)
 
 
+
+benchmark_datasets = [
+#    "ACSF1",
+#    "Adiac",
+    "ArrowHead",
+    "Beef",
+    "BeetleFly",
+    "BirdChicken",
+    "BME",
+    "Car",
+    "CBF",
+    "ChlorineConcentration",
+    "CinCECGTorso",
+    "Coffee",
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
+    "DiatomSizeReduction",
+    "DistalPhalanxOutlineCorrect",
+    "DistalPhalanxOutlineAgeGroup",
+    "DistalPhalanxTW",
+    "Earthquakes",
+    "ECG200",
+    "ECG5000",
+    "ECGFiveDays",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
+    "FaceAll",
+    "FaceFour",
+    "FacesUCR",
+    "FiftyWords",
+    "Fish",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Ham",
+    "Haptics",
+    "Herring",
+    "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
+    "ItalyPowerDemand",
+    "LargeKitchenAppliances",
+    "Lightning2",
+    "Lightning7",
+    "Mallat",
+    "Meat",
+    "MedicalImages",
+    "MiddlePhalanxOutlineCorrect",
+    "MiddlePhalanxOutlineAgeGroup",
+    "MiddlePhalanxTW",
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
+    "MoteStrain",
+    "OliveOil",
+    "OSULeaf",
+    "PhalangesOutlinesCorrect",
+    "Phoneme",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "Plane",
+    "PowerCons",
+    "ProximalPhalanxOutlineCorrect",
+    "ProximalPhalanxOutlineAgeGroup",
+    "ProximalPhalanxTW",
+    "RefrigerationDevices",
+    "Rock",
+    "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShapeletSim",
+    "SmallKitchenAppliances",
+    "SmoothSubspace",
+    "SonyAIBORobotSurface1",
+    "SonyAIBORobotSurface2",
+    "Strawberry",
+    "SwedishLeaf",
+    "Symbols",
+    "SyntheticControl",
+    "ToeSegmentation1",
+    "ToeSegmentation2",
+    "Trace",
+    "TwoLeadECG",
+    "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryX",
+    "UWaveGestureLibraryY",
+    "UWaveGestureLibraryZ",
+    "Wafer",
+    "Wine",
+    "WordSynonyms",
+    "Worms",
+    "WormsTwoClass",
+    "Yoga",
+]
+
+
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
@@ -581,7 +682,7 @@ if __name__ == "__main__":
     else:  # Local run
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "C:/Temp/"
+        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
         dataset = "ArrowHead"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
@@ -592,12 +693,14 @@ if __name__ == "__main__":
         # #            print(i)
         # #            print(" problem = "+dataset)
         tf = False
-        run_experiment(
-            overwrite=True,
-            problem_path=data_dir,
-            results_path=results_dir,
-            cls_name=classifier,
-            dataset=dataset,
-            resampleID=resample,
-            train_file=tf,
-        )
+        for i in range(0, len(benchmark_datasets)):
+            dataset = benchmark_datasets[i]
+            run_experiment(
+                overwrite=True,
+                problem_path=data_dir,
+                results_path=results_dir,
+                cls_name=classifier,
+                dataset=dataset,
+                resampleID=resample,
+                train_file=tf,
+            )
