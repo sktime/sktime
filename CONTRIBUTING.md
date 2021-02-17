@@ -17,6 +17,7 @@ Contents
   - [Roadmap](#roadmap)
 - [Acknowledging contributions](#acknowledging-contributions)
 - [Reporting bugs](#reporting-bugs)
+- [Installation](#installation)
 - [Git and GitHub workflow](#git-and-github-workflow)
 - [Continuous integration](#continuous-integration)
   - [Code quality checks](#code-quality-checks)
@@ -86,6 +87,9 @@ It is recommended to check that your issue complies with the following rules bef
 - Please ensure all code snippets and error messages are formatted in appropriate code blocks. See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 - Please be specific about what estimators and/or functions are involved and the shape of the data, as appropriate; please include a [reproducible](https://stackoverflow.com/help/mcve) code snippet or link to a [gist](https://gist.github.com). If an exception is raised, please provide the traceback.
 
+Installation 
+------------
+Please visit our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html) to resolve any package issues and dependency errors before they occur in the following steps. OS specific instruction is available at the prior link. 
 
 Git and GitHub workflow
 -----------------------
