@@ -175,3 +175,14 @@ Model Selection
     :template: function.rst
 
     temporal_train_test_split
+
+Model Evaluation
+----------------
+
+.. currentmodule:: sktime.forecasting.model_evaluation
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: function.rst
+
+    evaluate
