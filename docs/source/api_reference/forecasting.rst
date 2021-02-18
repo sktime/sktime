@@ -65,6 +65,14 @@ Exponential Smoothing
 ARIMA
 -----
 
+.. currentmodule:: sktime.forecasting.ar
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    AutoAR
+
 .. currentmodule:: sktime.forecasting.arima
 
 .. autosummary::

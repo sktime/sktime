@@ -55,7 +55,7 @@ class AutoAR(_StatsModelsAdapter):
         hold_back=None,
         sp=None,
         missing="none",
-        ic="bic",
+        ic="aic",
         glob=False,
         old_names=True,
     ):
