@@ -234,8 +234,7 @@ def msm_distance(first, second, **kwargs):
         try:
             c = kwargs["c"]
         except KeyError:
-            c = 0.1
-
+            c = 1
         m = len(first)
         n = len(second)
 

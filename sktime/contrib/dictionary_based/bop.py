@@ -21,7 +21,7 @@ class BagOfPatterns(BaseEstimator):
             (
                 "clf",
                 KNeighborsTimeSeriesClassifier(
-                    n_neighbors=1, metric=euclidean_distance
+                    n_neighbors=1, distance=euclidean_distance
                 ),
             ),
         ]
