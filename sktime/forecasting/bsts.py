@@ -418,6 +418,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         tf.random.set_seed(self.random_state)
 
         self._ModelClass = _sts
+        self._process_kwargs()
 
         super(BSTS, self).__init__()
 
@@ -457,8 +458,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         if X is not None:
             X = X.astype("float64")
-
-        self.process_kwargs()
 
         self.time_series_components = []
 
