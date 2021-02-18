@@ -23,6 +23,10 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
      Bayesian Structural Time Series forecaster by wrapping tensorflow_probability.sts.
      Parameters
      ----------
+    IMPORTANT:
+        If a component is wanted to be added to structural
+        time series, at least a name has to be provided.
+
      Args for tfp.sts.Sum()
      ------------------------------------------
          constant_offset:
@@ -412,10 +416,6 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # import inside method to avoid hard dependency
         from tensorflow_probability import sts as _sts
-        import tensorflow as tf
-
-        self.tf = tf
-        tf.random.set_seed(self.random_state)
 
         self._ModelClass = _sts
         self._process_kwargs()
@@ -467,7 +467,10 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             class_name = splitted_key[0]
 
             if "name" not in conf:
-                conf["name"] = key
+                raise Exception(
+                    "Names have to be provided to add \
+                a component to STS. Please provide a unique name"
+                )
 
             if "Regression" in class_name:
                 self._check_design_matrix(design_matrix=X)
@@ -507,16 +510,19 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        self.tf.random.set_seed(self.random_state)
+        import tensorflow as tf
+
+        tf.random.set_seed(self.random_state)
+
         self._set_y_X(y, X)
         self._type_check_y_X(self._y, self._X)
         self._set_fh(fh)
         self._instantiate_model(y=y, X=X)
-        self._fitted_forecaster = self._ModelClass.build_factored_surrogate_posterior(
+        surrogate_posterior = self._ModelClass.build_factored_surrogate_posterior(
             model=self._forecaster
         )
 
-        self._parameter_samples = self._fitted_forecaster.sample(self.sample_size)
+        self._parameter_samples = surrogate_posterior.sample(self.sample_size)
         self._is_fitted = True
         return self
 
