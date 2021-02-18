@@ -37,7 +37,7 @@ We are particularly motivated to support new and/or anxious contributors and peo
 
 * **The Turing Way**. A great [handbook](https://the-turing-way.netlify.app/welcome) and [community](https://github.com/alan-turing-institute/the-turing-way) for open science to find lots of useful resources. Check out their [Guide for Reproducible Research](https://the-turing-way.netlify.app/reproducible-research/reproducible-research.html) to get started and learn more about open-source collaboration.
 * **GitHub's Open Source Guides.** Take a look at their [How to Contribute Guide](https://opensource.guide/how-to-contribute/) to find out more about what it means to contribute.
-* **scikit-learn's developer guide.** sktime follows [scikit-learn](https://scikit-learn.or/stable/)'s API whenever possible. We assume basic familiarity with scikit-learn. If you're new to scikit-learn, take a look at their [getting-started guide](https://scikit-learn.org/stable/getting_started.html). If you're already familiar with scikit-learn, you may still learn something new from their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
+* **scikit-learn's developer guide.** sktime follows [scikit-learn](https://scikit-learn.org/stable/)'s API whenever possible. We assume basic familiarity with scikit-learn. If you're new to scikit-learn, take a look at their [getting-started guide](https://scikit-learn.org/stable/getting_started.html). If you're already familiar with scikit-learn, you may still learn something new from their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
 * **Good-first issues.** A good place for starting to contribute to sktime is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, please comment on the issue or [chat to us](https://gitter.im/sktime/community).
 * **Mentorship programme.** We have also launched sktime's own mentorship programme. You can find out more and apply on our [website](https://www.sktime.org/en/latest/mentoring.html)!
 
@@ -195,7 +195,7 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
     ```bash
     pip install -e .
     ```
-    
+
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 2.  To run all unit tests, run:
@@ -210,7 +210,7 @@ We use [coverage](https://coverage.readthedocs.io/en/coverage-5.3/) via the [pyt
 API design
 ----------
 
-The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome! 
+The general design approach we follow in sktime is described in the paper ["Designing Machine Learning Toolboxes: Concepts, Principles and Patterns"](https://arxiv.org/abs/2101.04938). This is a first draft of the paper, feedback and improvement suggestions are very welcome!
 
 Documentation
 -------------
