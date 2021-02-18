@@ -411,13 +411,13 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._fitted_forecaster = None
 
         # import inside method to avoid hard dependency
-        import tensorflow_probability as _tfp
+        from tensorflow_probability import sts as _sts
         import tensorflow as tf
 
         self.tf = tf
         tf.random.set_seed(self.random_state)
 
-        self._ModelClass = _tfp
+        self._ModelClass = _sts
 
         super(BSTS, self).__init__()
 
@@ -430,7 +430,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 )
             )
 
-    def process_kwargs(self):
+    def _process_kwargs(self):
         for key, value in self.__dict__.items():
             splitted_key = key.split("__")
 
@@ -473,18 +473,18 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             if "Regression" in class_name:
                 self._check_design_matrix(design_matrix=X)
                 self.time_series_components.append(
-                    operator.attrgetter(class_name)(self._ModelClass.sts)(
+                    operator.attrgetter(class_name)(self._ModelClass)(
                         design_matrix=X, **conf
                     )
                 )
             else:
                 self.time_series_components.append(
-                    operator.attrgetter(class_name)(self._ModelClass.sts)(
+                    operator.attrgetter(class_name)(self._ModelClass)(
                         observed_time_series=y, **conf
                     )
                 )
 
-        self._forecaster = self._ModelClass.sts.Sum(
+        self._forecaster = self._ModelClass.Sum(
             self.time_series_components,
             observed_time_series=y,
             constant_offset=self.constant_offset,
@@ -513,10 +513,8 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._type_check_y_X(self._y, self._X)
         self._set_fh(fh)
         self._instantiate_model(y=y, X=X)
-        self._fitted_forecaster = (
-            self._ModelClass.sts.build_factored_surrogate_posterior(
-                model=self._forecaster
-            )
+        self._fitted_forecaster = self._ModelClass.build_factored_surrogate_posterior(
+            model=self._forecaster
         )
 
         self._parameter_samples = self._fitted_forecaster.sample(self.sample_size)
@@ -555,15 +553,15 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             steps = fh_out.to_pandas().max().astype("int32")
-            _forecast_dist = self._ModelClass.sts.forecast(
+            self._forecast_dist = self._ModelClass.forecast(
                 model=self._forecaster,
                 observed_time_series=self._y,
                 parameter_samples=self._parameter_samples,
                 num_steps_forecast=steps,
             )
 
-            y_out_sample = _forecast_dist.mean().numpy()[..., 0]
-            standard_deviation = _forecast_dist.stddev().numpy()[..., 0]
+            y_out_sample = self._forecast_dist.mean().numpy()[..., 0]
+            standard_deviation = self._forecast_dist.stddev().numpy()[..., 0]
             p_value = alpha / 2
             z_score = st.norm.ppf(1 - p_value)
             lower = y_out_sample - standard_deviation * z_score
@@ -574,7 +572,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             y_out_sample = np.array([])
 
         # Insample
-        demand_one_step_dist = self._ModelClass.sts.one_step_predictive(
+        demand_one_step_dist = self._ModelClass.one_step_predictive(
             model=self._forecaster,
             observed_time_series=self._y,
             parameter_samples=self._parameter_samples,
