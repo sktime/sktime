@@ -152,7 +152,7 @@ def stomp_ab(ts1, ts2, m):
     return mp, ip
 
 
-def mpdist(ts1, ts2, m):
+def mpdist(ts1, ts2, m=0):
     """
         MPDist implementation.
 
@@ -173,6 +173,12 @@ def mpdist(ts1, ts2, m):
 
     len1 = len(ts1)
     len2 = len(ts2)
+
+    if m == 0:
+        if len1 > len2:
+            m = len1/4
+        else:
+            m = len2/4
 
     threshold = 0.05
     mp_ab, ip_ab = stomp_ab(ts1, ts2, m)  # compute the AB matrix profile
