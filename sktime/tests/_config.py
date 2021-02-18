@@ -82,7 +82,7 @@ EXCLUDE_ESTIMATORS = [
     "ShapeDTW",
     "HIVECOTEV1",
     "ElasticEnsemble",
-    "KNeighborsTimeSeriesClassifier",
+    # "KNeighborsTimeSeriesClassifier",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",

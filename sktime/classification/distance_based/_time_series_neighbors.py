@@ -92,9 +92,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     or a callable function: default ==' uniform'
     algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
     ‘kd_tree’, ‘brute’}: default = 'brute'
-    metric          : distance measure for time series: {'dtw','ddtw',
+    distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
-    metric_params   : dictionary for metric parameters: default = None
+    distance_params   : dictionary for metric parameters: default = None
 
     """
 
@@ -109,52 +109,55 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
-        metric="dtw",
-        metric_params=None,
+        distance="dtw",
+        distance_params=None,
         **kwargs
     ):
         self._cv_for_params = False
-        if metric == "euclidean":  # Euclidean will default to the base class distance
-            metric = euclidean_distance
-        elif metric == "dtw":
-            metric = dtw_distance
-        elif metric == "dtwcv":  # special case to force loocv grid search
+        self.distance = distance
+        self.distance_params = distance_params
+
+        if distance == "euclidean":  # Euclidean will default to the base class distance
+            distance = euclidean_distance
+        elif distance == "dtw":
+            distance = dtw_distance
+        elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
-            if metric_params is not None:
+            if distance_params is not None:
                 warnings.warn(
                     "Warning: measure parameters have been specified for "
                     "dtwcv. "
                     "These will be ignored and parameter values will be "
                     "found using LOOCV."
                 )
-            metric = dtw_distance
+            distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
                 "metric_params": [{"w": x / 100} for x in range(0, 100)]
             }
-        elif metric == "ddtw":
-            metric = ddtw_distance
-        elif metric == "wdtw":
-            metric = wdtw_distance
-        elif metric == "wddtw":
-            metric = wddtw_distance
-        elif metric == "lcss":
-            metric = lcss_distance
-        elif metric == "erp":
-            metric = erp_distance
-        elif metric == "msm":
-            metric = msm_distance
-        elif metric == "twe":
-            metric = twe_distance
-        elif metric == "mpdist":
-            metric = mpdist
+        elif distance == "ddtw":
+            distance = ddtw_distance
+        elif distance == "wdtw":
+            distance = wdtw_distance
+        elif distance == "wddtw":
+            distance = wddtw_distance
+        elif distance == "lcss":
+            distance = lcss_distance
+        elif distance == "erp":
+            distance = erp_distance
+        elif distance == "msm":
+            distance = msm_distance
+        elif distance == "twe":
+            distance = twe_distance
+        elif distance == "mpdist":
+            distance = mpdist
             # When mpdist is used, the subsequence length (parameter m) must be set
             # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
             # metric='mpdist', metric_params={'m':30})
         else:
-            if type(metric) is str:
+            if type(distance) is str:
                 raise ValueError(
-                    "Unrecognised distance measure: " + metric + ". Allowed values "
+                    "Unrecognised distance measure: " + distance + ". Allowed values "
                     "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
@@ -162,8 +165,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm="brute",
-            metric=metric,
-            metric_params=metric_params,
+            metric=distance,
+            metric_params=distance_params,
             **kwargs
         )
         self.weights = _check_weights(weights)
@@ -200,7 +203,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if self._cv_for_params:
             grid = GridSearchCV(
                 estimator=KNeighborsTimeSeriesClassifier(
-                    metric=self.metric, n_neighbors=1, algorithm="brute"
+                    distance=self.metric, n_neighbors=1, algorithm="brute"
                 ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
