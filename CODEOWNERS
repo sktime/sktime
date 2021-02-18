@@ -27,5 +27,7 @@ sktime/forecasting/bsts.py @koralturkk @aiwalter
 
 sktime/forecasting/online_learning/ @magittan
 
+sktime/performance_metrics/forecasting/_functions.py @aiwalter
+
 sktime/forecasting/hcrystalball.py @MichalChromcak
 sktime/forecasting/test/test_hcrystalball.py @MichalChromcak

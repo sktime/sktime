@@ -132,14 +132,14 @@ class TransformedTargetForecaster(
 
         return y_pred
 
-    def update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
 
         Returns
         -------

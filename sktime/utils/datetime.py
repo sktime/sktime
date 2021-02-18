@@ -75,7 +75,7 @@ def _shift(x, by=1):
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
     assert isinstance(by, (int, np.integer, pd.Int64Index)), type(by)
     if isinstance(x, pd.Timestamp):
-        if not hasattr(x, "freq"):
+        if not hasattr(x, "freq") or x.freq is None:
             raise ValueError("No `freq` information available")
         by *= x.freq
     return x + by

@@ -312,11 +312,11 @@ def check_scoring(scoring):
 
     Parameters
     ----------
-    scoring : object of class MetricFunctionWrapper from sktime.permormance_metrics.
+    scoring : object of class MetricFunctionWrapper from sktime.performance_metrics.
 
     Returns
     ----------
-    scoring : object of class MetricFunctionWrapper of sktime.permormance_metrics.
+    scoring : object of class MetricFunctionWrapper of sktime.performance_metrics.
     sMAPE(mean percentage error)
         if the object is None.
 
@@ -325,7 +325,7 @@ def check_scoring(scoring):
     TypeError
         if object is not callable from current scope.
         if object is not an instance of class MetricFunctionWrapper of
-        sktime.permormance_metrics.
+        sktime.performance_metrics.
     """
     from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
     from sktime.performance_metrics.forecasting import sMAPE
