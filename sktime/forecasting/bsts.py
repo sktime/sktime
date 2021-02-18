@@ -553,15 +553,15 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             steps = fh_out.to_pandas().max().astype("int32")
-            self._forecast_dist = self._ModelClass.forecast(
+            _forecast_dist = self._ModelClass.forecast(
                 model=self._forecaster,
                 observed_time_series=self._y,
                 parameter_samples=self._parameter_samples,
                 num_steps_forecast=steps,
             )
 
-            y_out_sample = self._forecast_dist.mean().numpy()[..., 0]
-            standard_deviation = self._forecast_dist.stddev().numpy()[..., 0]
+            y_out_sample = _forecast_dist.mean().numpy()[..., 0]
+            standard_deviation = _forecast_dist.stddev().numpy()[..., 0]
             p_value = alpha / 2
             z_score = st.norm.ppf(1 - p_value)
             lower = y_out_sample - standard_deviation * z_score
