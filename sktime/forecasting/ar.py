@@ -1,4 +1,9 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+
+__author__ = ["Markus Löning"]
+__all__ = ["AutoAR"]
+
 from statsmodels.tsa.ar_model import ar_select_order
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
