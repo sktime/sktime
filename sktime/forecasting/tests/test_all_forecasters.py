@@ -43,6 +43,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
 
+
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
 FH0 = 1

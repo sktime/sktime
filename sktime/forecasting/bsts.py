@@ -380,8 +380,8 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         sample_size=200,
         constant_offset=None,
         observation_noise_scale_prior=None,
-        name="Sum",
-        seed=0,
+        name="STS",
+        random_state=0,
         **kwargs
     ):
 
@@ -389,7 +389,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.constant_offset = constant_offset
         self.observation_noise_scale_prior = observation_noise_scale_prior
         self.name = name
-        self.seed = seed
+        self.random_state = random_state
         self.__dict__.update(kwargs)
 
         self._time_series_components = {}
@@ -407,23 +407,19 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             "SmoothSeasonal",
         ]
 
-        self.sample_size = sample_size
-        self.time_series_components = []
         self._forecaster = None
         self._fitted_forecaster = None
-        self.seed = seed
 
         # import inside method to avoid hard dependency
         import tensorflow_probability as _tfp
         import tensorflow as tf
 
-        tf.random.set_seed(self.seed)
+        self.tf = tf
+        tf.random.set_seed(self.random_state)
 
         self._ModelClass = _tfp
 
         super(BSTS, self).__init__()
-
-        self.process_kwargs()
 
     def _check_components(self, component_name):
         if component_name not in self.valid_components:
@@ -461,6 +457,10 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         if X is not None:
             X = X.astype("float64")
+
+        self.process_kwargs()
+
+        self.time_series_components = []
 
         for key, conf in self._time_series_components.items():
             splitted_key = key.split("__")
@@ -508,7 +508,7 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-
+        self.tf.random.set_seed(self.random_state)
         self._set_y_X(y, X)
         self._type_check_y_X(self._y, self._X)
         self._set_fh(fh)
@@ -555,15 +555,15 @@ class BSTS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             steps = fh_out.to_pandas().max().astype("int32")
-            self._forecast_dist = self._ModelClass.sts.forecast(
+            _forecast_dist = self._ModelClass.sts.forecast(
                 model=self._forecaster,
                 observed_time_series=self._y,
                 parameter_samples=self._parameter_samples,
                 num_steps_forecast=steps,
             )
 
-            y_out_sample = self._forecast_dist.mean().numpy()[..., 0]
-            standard_deviation = self._forecast_dist.stddev().numpy()[..., 0]
+            y_out_sample = _forecast_dist.mean().numpy()[..., 0]
+            standard_deviation = _forecast_dist.stddev().numpy()[..., 0]
             p_value = alpha / 2
             z_score = st.norm.ppf(1 - p_value)
             lower = y_out_sample - standard_deviation * z_score
