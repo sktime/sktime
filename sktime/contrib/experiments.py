@@ -112,11 +112,11 @@ def set_classifier(cls, resampleId=None):
     elif name == "ps" or name == "proximityStump":
         return ProximityStump(random_state=resampleId)
     elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(metric="dtwcv")
+        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
     elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(metric="dtw")
+        return KNeighborsTimeSeriesClassifier(distance="dtw")
     elif name == "msm" or name == "1nn-msm":
-        return KNeighborsTimeSeriesClassifier(metric="msm")
+        return KNeighborsTimeSeriesClassifier(distance="msm")
     elif name == "ee" or name == "elasticensemble":
         return ElasticEnsemble()
     elif name == "shapedtw":

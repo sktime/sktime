@@ -23,7 +23,7 @@ def test_knn_on_arrowhead():
     X_test, y_test = load_arrow_head(split="test", return_X_y=True)
     for i in range(0, len(distance_functions)):
         knn = KNeighborsTimeSeriesClassifier(
-            metric=distance_functions[i],
+            distance=distance_functions[i],
         )
         knn.fit(X_train, y_train)
         pred = knn.predict(X_test)
