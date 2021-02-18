@@ -1,9 +1,4 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
-__author__ = ["Markus Löning"]
-__all__ = ["AutoAR"]
-
 from statsmodels.tsa.ar_model import ar_select_order
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -56,12 +51,13 @@ class AutoAR(_StatsModelsAdapter):
         self,
         maxlag=10,
         trend="c",
-        seasonal=False,
+        seasonal=None,
         hold_back=None,
         sp=None,
         missing="none",
-        ic="aic",
+        ic="bic",
         glob=False,
+        old_names=True,
     ):
         self.maxlag = maxlag
         self.trend = trend
@@ -71,10 +67,12 @@ class AutoAR(_StatsModelsAdapter):
         self.missing = missing
         self.glob = glob
         self.ic = ic
+        self.old_names = old_names
+
         super(AutoAR, self).__init__()
 
     def _fit_forecaster(self, y_train, X_train=None):
-        self._fitted_estimator = ar_select_order(
+        self._fitted_forecaster = ar_select_order(
             y_train,
             maxlag=self.maxlag,
             ic=self.ic,
@@ -85,5 +83,6 @@ class AutoAR(_StatsModelsAdapter):
             hold_back=self.hold_back,
             period=self.sp,
             missing=self.missing,
+            old_names=self.old_names,
         ).model.fit()
         return self
