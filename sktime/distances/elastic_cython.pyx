@@ -154,12 +154,11 @@ def wddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , 
     return wdtw_distance(np.diff(x.T).T,np.diff(y.T).T,g)
 
 
-def msm_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double c = 0, int dim_to_use = 0):
+def msm_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double c = 1, int dim_to_use = 0):
 
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
     cdef np.ndarray[double, ndim=2] temp
-
     if len(first) > len(second):
         temp = first
         first = second
