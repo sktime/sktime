@@ -32,4 +32,3 @@ def test_knn_on_arrowhead():
             if pred[j] == y_test[j]:
                 correct = correct + 1
         assert correct == expected_correct[distance_functions[i]]
-
