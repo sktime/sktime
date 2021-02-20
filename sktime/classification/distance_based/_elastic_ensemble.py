@@ -11,6 +11,7 @@ import time
 from itertools import product
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import LeaveOneOut
@@ -156,14 +157,16 @@ class ElasticEnsemble(BaseClassifier):
         ) or self.distance_measures.__contains__(wddtw_c):
             der_X = DerivativeSlopeTransformer().fit_transform(X)
             # reshape X for use with the efficient cython distance measures
-            der_X = np.array(
-                [np.asarray([x]).reshape(1, len(x)) for x in der_X.iloc[:, 0]]
-            )
+            if isinstance(X, pd.DataFrame):
+                der_X = np.array(
+                    [np.asarray([x]).reshape(1, len(x)) for x in der_X.iloc[:, 0]]
+                )
         else:
             der_X = None
 
         # reshape X for use with the efficient cython distance measures
-        X = np.array([np.asarray([x]).reshape(1, len(x)) for x in X.iloc[:, 0]])
+        if isinstance(X, pd.DataFrame):
+            X = np.array([np.asarray([x]).reshape(1, len(x)) for x in X.iloc[:, 0]])
 
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.train_preds_by_classifier = [None] * len(self.distance_measures)
@@ -367,14 +370,16 @@ class ElasticEnsemble(BaseClassifier):
             ddtw_c
         ) or self.distance_measures.__contains__(wddtw_c):
             der_X = DerivativeSlopeTransformer().fit_transform(X)
-            der_X = np.array(
-                [np.asarray([x]).reshape(1, len(x)) for x in der_X.iloc[:, 0]]
-            )
+            if isinstance(X, pd.DataFrame):
+                der_X = np.array(
+                    [np.asarray([x]).reshape(1, len(x)) for x in der_X.iloc[:, 0]]
+                )
         else:
             der_X = None
 
         # reshape X for use with the efficient cython distance measures
-        X = np.array([np.asarray([x]).reshape(1, len(x)) for x in X.iloc[:, 0]])
+        if isinstance(X, pd.DataFrame):
+            X = np.array([np.asarray([x]).reshape(1, len(x)) for x in X.iloc[:, 0]])
 
         output_probas = []
         train_sum = 0
