@@ -203,7 +203,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if self._cv_for_params:
             grid = GridSearchCV(
                 estimator=KNeighborsTimeSeriesClassifier(
-                    distance=self.metric, n_neighbors=1
+                    distance=self.metric, n_neighbors=1, algorithm="brute"
                 ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
