@@ -275,7 +275,7 @@ class ElasticEnsemble(BaseClassifier):
 
                 grid = GridSearchCV(
                     estimator=KNeighborsTimeSeriesClassifier(
-                        metric=this_measure, n_neighbors=1, algorithm="brute"
+                        distance=this_measure, n_neighbors=1, algorithm="brute"
                     ),
                     param_grid=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X
@@ -292,7 +292,7 @@ class ElasticEnsemble(BaseClassifier):
             else:
                 grid = RandomizedSearchCV(
                     estimator=KNeighborsTimeSeriesClassifier(
-                        metric=this_measure, n_neighbors=1, algorithm="brute"
+                        distance=this_measure, n_neighbors=1, algorithm="brute"
                     ),
                     param_distributions=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X
@@ -315,8 +315,8 @@ class ElasticEnsemble(BaseClassifier):
             best_model = KNeighborsTimeSeriesClassifier(
                 algorithm="brute",
                 n_neighbors=1,
-                metric=this_measure,
-                metric_params=grid.best_params_["metric_params"],
+                distance=this_measure,
+                distance_params=grid.best_params_["metric_params"],
             )
             preds = cross_val_predict(
                 best_model, full_train_to_use, y, cv=LeaveOneOut()
@@ -339,8 +339,8 @@ class ElasticEnsemble(BaseClassifier):
             best_model = KNeighborsTimeSeriesClassifier(
                 algorithm="brute",
                 n_neighbors=1,
-                metric=this_measure,
-                metric_params=grid.best_params_["metric_params"],
+                distance=this_measure,
+                distance_params=grid.best_params_["metric_params"],
             )
             best_model.fit(full_train_to_use, y)
             end_build_time = time.time()
