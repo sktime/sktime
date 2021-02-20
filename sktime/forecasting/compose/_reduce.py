@@ -26,10 +26,52 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_X
 
 
 ##############################################################################
 # base classes for reduction from forecasting to regression
+
+
+class NewBaseReducer(_BaseWindowForecaster):
+    """New base class that is compatible with exogeneous variables"""
+
+    _required_parameters = ["regressor"]
+
+    def __init__(self, regressor, window_length=10, step_length=1):
+        super(BaseReducer, self).__init__(window_length=window_length)
+        self.regressor = regressor
+        self.step_length = step_length
+        self.step_length_ = None
+        self._transformer = None
+
+    def _transform(self, y, X=None):
+        """Transform data using rolling window approach"""
+        y = check_y(y)
+        X = check_X(X)
+
+        # get transformer
+        transformer = self._transformer
+
+        # Transform target series and exogenous variables
+        reduction_features, reduction_target = transformer(y, X)
+
+        return reduction_features, reduction_target
+
+    def _transformer(self, y, X=None):
+        """Template method for transforming target series and exogenous variables
+        into reduction features and reduction target
+        """
+        raise NotImplementedError("abstract method")
+
+    def _is_predictable(self, last_window):
+        """Helper function to check if we can make predictions from last
+        window"""
+        return (
+            len(last_window) == self.window_length_
+            and np.sum(np.isnan(last_window)) == 0
+            and np.sum(np.isinf(last_window)) == 0
+        )
 
 
 class BaseReducer(_BaseWindowForecaster):
