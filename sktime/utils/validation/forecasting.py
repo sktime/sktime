@@ -10,7 +10,7 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "check_y_test_pred",
+    "check_y_true_pred",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -359,13 +359,13 @@ def check_scoring(scoring):
     return scoring
 
 
-def check_y_test_pred(y_test, y_pred):
-    """Validates the y_test and y_pred input data to forecasting performance
+def check_y_true_pred(y_true, y_pred):
+    """Validates the y_true and y_pred input data to forecasting performance
     metrics.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy ndarray of
+    y_true : pandas Series, pandas DataFrame or NumPy ndarray of
             shape (fh,) or (fh, n_columns) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -376,7 +376,7 @@ def check_y_test_pred(y_test, y_pred):
     Returns
     -------
     actual : NumPy ndarray of shape (fh,) or (fh, n_columns)
-        The actual values of the input series in y_test
+        The actual values of the input series in y_true
 
     forecast : NumPy ndarray of shape (fh,) or (fh, n_columns)
         The forecasts in the input y_pred
@@ -384,31 +384,31 @@ def check_y_test_pred(y_test, y_pred):
     Raises
     ------
     TypeError
-        The type of y_test and y_pred are not equal
+        The type of y_true and y_pred are not equal
     ValueError
-        Equal dimension required for y_test and y_pred
+        Equal dimension required for y_true and y_pred
     ValueError
-        Equal numnber of columns required for y_test and y_pred
+        Equal numnber of columns required for y_true and y_pred
     """
     # Includes pd.Series, pd.DataFrame, np.ndarray
-    y_test = check_y(y_test, enforce_univariate=False, allow_numpy=True)
+    y_true = check_y(y_true, enforce_univariate=False, allow_numpy=True)
     y_pred = check_y(y_pred, enforce_univariate=False, allow_numpy=True)
 
-    if type(y_test) != type(y_pred):
-        raise TypeError("The type of y_test and y_pred are not the same type")
+    if type(y_true) != type(y_pred):
+        raise TypeError("The type of y_true and y_pred are not the same type")
 
-    if y_test.ndim != y_pred.ndim:
-        raise ValueError("Equal dimension required for y_test and y_pred")
+    if y_true.ndim != y_pred.ndim:
+        raise ValueError("Equal dimension required for y_true and y_pred")
 
-    if (y_test.ndim > 1) and (y_test.shape[1] != y_pred.shape[1]):
-        raise ValueError("Equal number of series required for y_test and y_pred")
+    if (y_true.ndim > 1) and (y_true.shape[1] != y_pred.shape[1]):
+        raise ValueError("Equal number of series required for y_true and y_pred")
 
     # Check indices equal if pandas object else check equal length for NumPy
-    if isinstance(y_test, (pd.Series, pd.DataFrame)):
-        check_equal_time_index(y_test, y_pred)
-        actual, forecast = y_test.values, y_pred.values
+    if isinstance(y_true, (pd.Series, pd.DataFrame)):
+        check_equal_time_index(y_true, y_pred)
+        actual, forecast = y_true.values, y_pred.values
     else:
-        check_equal_timeseries_length(y_test, y_pred)
-        actual, forecast = y_test, y_pred
+        check_equal_timeseries_length(y_true, y_pred)
+        actual, forecast = y_true, y_pred
 
     return actual, forecast
