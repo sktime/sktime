@@ -74,20 +74,20 @@ def check_X(
     ----------
     X : pd.Series, pd.DataFrame, np.ndarray
     allow_empty : bool, optional (default=False)
-        If True, empty `y` raises an error.
+        If False, empty `X` raises an error.
     enforce_index_type : type, optional (default=None)
         type of time index
     enforce_univariate : bool, optional (default=False)
-        If True, multivariate Z will raise an error.
+        If True, multivariate X will raise an error.
     Returns
     -------
-    y : pd.Series, pd.DataFrame
+    X : pd.Series, pd.DataFrame
         Validated input data.
 
     Raises
     ------
     ValueError, TypeError
-        If y is an invalid input
+        If X is an invalid input
     UserWarning
         Warning that X is given and model can't use it
     """
@@ -108,7 +108,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     ----------
     y : pd.Series
     allow_empty : bool, optional (default=False)
-        If True, empty `y` raises an error.
+        If False, empty `y` raises an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
     enforce_index_type : type, optional (default=None)
