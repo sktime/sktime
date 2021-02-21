@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from sktime.performance_metrics.forecasting._functions import (
-    relative_loss,
-    asymmetric_error,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
     root_mean_squared_scaled_error,
+    root_median_squared_scaled_error,
     mean_absolute_error,
     mean_squared_error,
     root_mean_squared_error,
@@ -29,11 +28,10 @@ __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
     "MetricFunctionWrapper",
     "make_forecasting_scorer",
-    "RelativeLoss",
-    "AsymmetricError",
     "MeanAbsoluteScaledError",
     "MedianAbsoluteScaledError",
     "RootMeanSquaredScaledError",
+    "RootMedianSquaredScaledError",
     "MeanAbsoluteError",
     "MeanSquaredError",
     "RootMeanSquaredError",
@@ -61,8 +59,8 @@ class MetricFunctionWrapper:
         self.name = name if name is not None else fn.__name__
         self.greater_is_better = greater_is_better
 
-    def __call__(self, y_test, y_pred, *args, **kwargs):
-        return self.fn(y_test, y_pred, *args, **kwargs)
+    def __call__(self, y_true, y_pred, *args, **kwargs):
+        return self.fn(y_true, y_pred, *args, **kwargs)
 
 
 def make_forecasting_scorer(fn, name=None, greater_is_better=False):
@@ -70,32 +68,12 @@ def make_forecasting_scorer(fn, name=None, greater_is_better=False):
     return MetricFunctionWrapper(fn, name=name, greater_is_better=greater_is_better)
 
 
-class RelativeLoss(MetricFunctionWrapper):
-    def __init__(self):
-        name = "RelativeLoss"
-        fn = relative_loss
-        greater_is_better = False
-        super(RelativeLoss, self).__init__(
-            fn=fn, name=name, greater_is_better=greater_is_better
-        )
-
-
-class AsymmetricError(MetricFunctionWrapper):
-    def __init__(self):
-        name = "AsymmetricError"
-        fn = asymmetric_error
-        greater_is_better = False
-        super(AsymmetricError, self).__init__(
-            fn=fn, name=name, greater_is_better=greater_is_better
-        )
-
-
 class MeanAbsoluteScaledError(MetricFunctionWrapper):
     def __init__(self):
         name = "MeanAbsoluteScaledError"
         fn = mean_absolute_scaled_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MeanAbsoluteScaledError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -105,7 +83,7 @@ class MedianAbsoluteScaledError(MetricFunctionWrapper):
         name = "MedianAbsoluteScaledError"
         fn = median_absolute_scaled_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MedianAbsoluteScaledError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -115,7 +93,17 @@ class RootMeanSquaredScaledError(MetricFunctionWrapper):
         name = "RootMeanSquaredScaledError"
         fn = root_mean_squared_scaled_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(RootMeanSquaredScaledError, self).__init__(
+            fn=fn, name=name, greater_is_better=greater_is_better
+        )
+
+
+class RootMedianSquaredScaledError(MetricFunctionWrapper):
+    def __init__(self):
+        name = "RootMedianSquaredScaledError"
+        fn = root_median_squared_scaled_error
+        greater_is_better = False
+        super(RootMedianSquaredScaledError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -125,7 +113,7 @@ class MeanAbsoluteError(MetricFunctionWrapper):
         name = "MeanAbsoluteError"
         fn = mean_absolute_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MeanAbsoluteError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -135,7 +123,7 @@ class MeanSquaredError(MetricFunctionWrapper):
         name = "MeanSquaredError"
         fn = mean_squared_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MeanSquaredError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -145,7 +133,7 @@ class RootMeanSquaredError(MetricFunctionWrapper):
         name = "RootMeanSquaredError"
         fn = root_mean_squared_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(RootMeanSquaredError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -155,7 +143,7 @@ class MedianAbsoluteError(MetricFunctionWrapper):
         name = "MedianAbsoluteError"
         fn = median_absolute_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MedianAbsoluteError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -165,7 +153,7 @@ class MedianSquaredError(MetricFunctionWrapper):
         name = "MedianSquaredError"
         fn = median_squared_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MedianSquaredError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -175,7 +163,7 @@ class RootMedianSquaredError(MetricFunctionWrapper):
         name = "RootMedianSquaredError"
         fn = root_median_squared_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(RootMedianSquaredError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -185,7 +173,7 @@ class SymmetricMeanAbsolutePercentageError(MetricFunctionWrapper):
         name = "SymmetricMeanAbsolutePercentageError"
         fn = symmetric_mean_absolute_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(SymmetricMeanAbsolutePercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -195,7 +183,7 @@ class SymmetricMedianAbsolutePercentageError(MetricFunctionWrapper):
         name = "SymmetricMedianAbsolutePercentageError"
         fn = symmetric_median_absolute_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(SymmetricMedianAbsolutePercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -205,7 +193,7 @@ class MeanAbsolutePercentageError(MetricFunctionWrapper):
         name = "MeanAbsolutePercentageError"
         fn = mean_absolute_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MeanAbsolutePercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -215,7 +203,7 @@ class MedianAbsolutePercentageError(MetricFunctionWrapper):
         name = "MedianAbsolutePercentageError"
         fn = median_absolute_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MedianAbsolutePercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -225,7 +213,7 @@ class MeanSquaredPercentageError(MetricFunctionWrapper):
         name = "MeanSquaredPercentageError"
         fn = mean_squared_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MeanSquaredPercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -235,7 +223,7 @@ class MedianSquaredPercentageError(MetricFunctionWrapper):
         name = "MedianSquaredPercentageError"
         fn = median_squared_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MedianSquaredPercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -245,7 +233,7 @@ class RootMeanSquaredPercentageError(MetricFunctionWrapper):
         name = "RootMeanSquaredPercentageError"
         fn = root_mean_squared_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(RootMeanSquaredPercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -255,7 +243,7 @@ class RootMedianSquaredPercentageError(MetricFunctionWrapper):
         name = "RootMedianSquaredPercentageError"
         fn = root_median_squared_percentage_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(RootMedianSquaredPercentageError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -265,7 +253,7 @@ class MeanRelativeAbsoluteError(MetricFunctionWrapper):
         name = "MeanRelativeAbsoluteError"
         fn = mean_relative_absolute_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MeanRelativeAbsoluteError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -275,7 +263,7 @@ class MedianRelativeAbsoluteError(MetricFunctionWrapper):
         name = "MedianRelativeAbsoluteError"
         fn = median_relative_absolute_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(MedianRelativeAbsoluteError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -285,7 +273,7 @@ class GeometricMeanRelativeAbsoluteError(MetricFunctionWrapper):
         name = "GeometricMeanRelativeAbsoluteError"
         fn = geometric_mean_relative_absolute_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(GeometricMeanRelativeAbsoluteError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
@@ -295,6 +283,6 @@ class GeometricMeanRelativeSquaredError(MetricFunctionWrapper):
         name = "GeometricMeanRelativeSquaredError"
         fn = geometric_mean_relative_squared_error
         greater_is_better = False
-        super(AsymmetricError, self).__init__(
+        super(GeometricMeanRelativeSquaredError, self).__init__(
             fn=fn, name=name, greater_is_better=greater_is_better
         )
