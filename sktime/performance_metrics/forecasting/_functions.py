@@ -243,7 +243,9 @@ def mean_absolute_scaled_error(
             International Journal of Forecasting, Volume 3
     """
     # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)):
+    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
+        y_true, (pd.Series, pd.DataFrame)
+    ):
         check_time_index(y_train.index)
         if y_train.index.max() >= y_true.index.min():
             raise ValueError(
@@ -342,7 +344,9 @@ def median_absolute_scaled_error(
             International Journal of Forecasting, Volume 3
     """
     # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)):
+    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
+        y_true, (pd.Series, pd.DataFrame)
+    ):
         check_time_index(y_train.index)
         if y_train.index.max() >= y_true.index.min():
             raise ValueError(
@@ -436,7 +440,9 @@ def root_mean_squared_scaled_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)):
+    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
+        y_true, (pd.Series, pd.DataFrame)
+    ):
         check_time_index(y_train.index)
         if y_train.index.max() >= y_true.index.min():
             raise ValueError(
@@ -528,7 +534,9 @@ def root_median_squared_scaled_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)):
+    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
+        y_true, (pd.Series, pd.DataFrame)
+    ):
         check_time_index(y_train.index)
         if y_train.index.max() >= y_true.index.min():
             raise ValueError(
@@ -1672,6 +1680,7 @@ def mean_relative_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_pred_benchmark = check_y(y_pred_benchmark, allow_numpy=True)
     if horizon_weight is None:
         output_errors = np.mean(
             np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
@@ -1741,6 +1750,7 @@ def median_relative_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_pred_benchmark = check_y(y_pred_benchmark, allow_numpy=True)
     if horizon_weight is None:
         output_errors = np.median(
             np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
@@ -1810,6 +1820,7 @@ def geometric_mean_relative_absolute_error(
     """
 
     y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_pred_benchmark = check_y(y_pred_benchmark, allow_numpy=True)
     relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
@@ -1881,6 +1892,7 @@ def geometric_mean_relative_squared_error(
     """
 
     y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_pred_benchmark = check_y(y_pred_benchmark, allow_numpy=True)
     relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
