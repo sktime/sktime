@@ -33,6 +33,7 @@ __all__ = [
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
     "root_mean_squared_scaled_error",
+    "root_median_squared_scaled_error",
     "mean_absolute_error",
     "mean_squared_error",
     "root_mean_squared_error",
