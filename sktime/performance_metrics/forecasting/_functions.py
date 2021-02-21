@@ -13,10 +13,7 @@ the lower the better.
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
-from sklearn.utils.validation import (
-    # _check_sample_weight, check_array, check_consistent_length,
-    _weighted_percentile,
-)
+from sklearn.utils.stats import _weighted_percentile
 
 # from sklearn.metrics import (
 # mean_absolute_error, mean_squared_error, median_absolute_error,
@@ -26,14 +23,13 @@ from sktime.utils.validation.series import (
     check_time_index,
     check_equal_timeseries_length,
     check_series,
-    # check_equal_time_index
 )
-from sktime.utils.validation.forecasting import check_y, check_y_test_pred
+from sktime.utils.validation.forecasting import check_y, check_y_true_pred
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
     "relative_loss",
-    "asymmetric_error",
+    "mean_asymmetric_error",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
     "root_mean_squared_scaled_error",
@@ -60,7 +56,7 @@ __all__ = [
 eps = np.finfo(np.float64).eps
 
 
-def geometric_mean(x, sample_weights=None, axis=None):
+def weighted_geometric_mean(x, sample_weights=None, axis=None):
     """
     Parameters
     ----------
@@ -101,8 +97,8 @@ def _check_horizon_weights(horizon_weight, y_pred):
     return horizon_weight
 
 
-def asymmetric_error(
-    y_test,
+def mean_asymmetric_error(
+    y_true,
     y_pred,
     asymmetric_threshold=0.0,
     left_error_function="squared",
@@ -114,7 +110,7 @@ def asymmetric_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -149,22 +145,23 @@ def asymmetric_error(
 
     Returns
     -------
-    relative_loss : float
-        Loss for a method relative to loss for a benchmark method for a given
-        loss metric.
+    asymmetric_loss : float
+        Loss using asymmetric penalty of on errors.
 
     References
     ----------
     ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
+    ..[2]   Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)" ,
+            Thomson, South-Western: Ohio, US.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is not None:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
 
     asymmetric_errors = _asymmetric_error(
-        y_test,
+        y_true,
         y_pred,
         asymmetric_threshold=asymmetric_threshold,
         left_error_function=left_error_function,
@@ -182,7 +179,7 @@ def asymmetric_error(
 
 
 def mean_absolute_scaled_error(
-    y_test, y_pred, y_train, sp=1, multioutput="uniform_average"
+    y_true, y_pred, y_train, sp=1, multioutput="uniform_average"
 ):
     """Mean absolute scaled error (MASE). MASE output is non-negative floating
     point. The best value is 0.0.
@@ -200,7 +197,7 @@ def mean_absolute_scaled_error(
 
     Parameters
     ----------
-    y_test : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -244,25 +241,25 @@ def mean_absolute_scaled_error(
             "The M4 Competition: 100,000 time series and 61 forecasting methods",
             International Journal of Forecasting, Volume 3
     """
-    # input checks
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
-    y_train = check_y(y_train)
-
-    # Check test and train have same dimensions
-    if y_test.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_test and y_train")
-
-    if (y_test.ndim > 1) and (y_test.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_test and y_train")
-
-    # check if training set is prior to test set
+    # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)):
         check_time_index(y_train.index)
-        if y_train.index.max() >= y_test.index.min():
+        if y_train.index.max() >= y_true.index.min():
             raise ValueError(
                 "Found `y_train` with time index which is not "
-                "before time index of `y_test`"
+                "before time index of `y_true`"
             )
+
+    # Other input checks
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_train = check_y(y_train, allow_numpy=True)
+
+    # Check test and train have same dimensions
+    if y_true.ndim != y_train.ndim:
+        raise ValueError("Equal dimension required for y_true and y_train")
+
+    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
+        raise ValueError("Equal number of columns required for y_true and y_train")
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
@@ -271,12 +268,12 @@ def mean_absolute_scaled_error(
     # mean absolute error of naive seasonal prediction
     mae_naive = mean_absolute_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
 
-    mae_pred = mean_absolute_error(y_test, y_pred, multioutput=multioutput)
+    mae_pred = mean_absolute_error(y_true, y_pred, multioutput=multioutput)
     return mae_pred / np.maximum(mae_naive, eps)
 
 
 def median_absolute_scaled_error(
-    y_test, y_pred, y_train, sp=1, multioutput="uniform_average"
+    y_true, y_pred, y_train, sp=1, multioutput="uniform_average"
 ):
     """Median absolute scaled error (MdASE). MdASE output is non-negative
     floating point. The best value is 0.0.
@@ -299,7 +296,7 @@ def median_absolute_scaled_error(
 
     Parameters
     ----------
-    y_test : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -343,25 +340,25 @@ def median_absolute_scaled_error(
             "The M4 Competition: 100,000 time series and 61 forecasting methods",
             International Journal of Forecasting, Volume 3
     """
-    # input checks
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
-    y_train = check_y(y_train)
-
-    # Check test and train have same dimensions
-    if y_test.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_test and y_train")
-
-    if (y_test.ndim > 1) and (y_test.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_test and y_train")
-
-    # check if training set is prior to test set
+    # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)):
         check_time_index(y_train.index)
-        if y_train.index.max() >= y_test.index.min():
+        if y_train.index.max() >= y_true.index.min():
             raise ValueError(
                 "Found `y_train` with time index which is not "
-                "before time index of `y_test`"
+                "before time index of `y_true`"
             )
+
+    # Other input checks
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_train = check_y(y_train, allow_numpy=True)
+
+    # Check test and train have same dimensions
+    if y_true.ndim != y_train.ndim:
+        raise ValueError("Equal dimension required for y_true and y_train")
+
+    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
+        raise ValueError("Equal number of columns required for y_true and y_train")
 
     #  naive seasonal prediction
     y_train = np.asarray(y_train)
@@ -372,108 +369,198 @@ def median_absolute_scaled_error(
         y_train[sp:], y_pred_naive, multioutput=multioutput
     )
 
-    mdae_pred = median_absolute_error(y_test, y_pred, multioutput=multioutput)
+    mdae_pred = median_absolute_error(y_true, y_pred, multioutput=multioutput)
     return mdae_pred / np.maximum(mdae_naive, eps)
 
 
 def root_mean_squared_scaled_error(
-    y_test, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
 ):
     """Root mean squared scaled error (RMSSE). RMSSE output is non-negative
         floating point. The best value is 0.0.
 
-        This is a squared varient of the MASE loss metric. Like MASE this
-        scale-free metric can be used to copmare forecast methods on a single
-        series or between series.
+    This is a squared varient of the MASE loss metric. Like MASE this
+    scale-free metric can be used to copmare forecast methods on a single
+    series or between series.
 
-        This metric is also suited for intermittent-demand series because it
-        will not give infinite or undefined values unless the training data
-        is a flat timeseries. In this case the function returns a large value
-        instead of inf.
+    This metric is also suited for intermittent-demand series because it
+    will not give infinite or undefined values unless the training data
+    is a flat timeseries. In this case the function returns a large value
+    instead of inf.
 
-        Works with multioutput (multivariate) timeseries data
-        with homogeneous seasonal periodicity.
+    Works with multioutput (multivariate) timeseries data
+    with homogeneous seasonal periodicity.
 
-        Parameters
-        ----------
-        y_test : pandas Series of shape (fh,) or (fh, n_outputs)
-                where fh is the forecasting horizon
-            Ground truth (correct) target values.
+    Parameters
+    ----------
+    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
+            where fh is the forecasting horizon
+        Ground truth (correct) target values.
 
-        y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
-                where fh is the forecasting horizon
-            Estimated target values.
+    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
+            where fh is the forecasting horizon
+        Estimated target values.
 
-        y_train : pandas Series of shape (fh,) or (fh, n_outputs)
-                where fh is the forecasting horizon
-            Observed training values.
+    y_train : pandas Series of shape (fh,) or (fh, n_outputs)
+            where fh is the forecasting horizon
+        Observed training values.
 
-        sp : int
-            Seasonal periodicity of training data.
+    sp : int
+        Seasonal periodicity of training data.
 
-        multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-                (n_outputs,), default='uniform_average'
-            Defines aggregating of multiple output values.
-            Array-like value defines weights used to average errors.
-            'raw_values' :
-                Returns a full set of errors in case of multioutput input.
-            'uniform_average' :
-                Errors of all outputs are averaged with uniform weight.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
 
-        Returns
-        -------
-        loss : float
-            RMSSE loss.
-            If multioutput is 'raw_values', then RMSSE is returned for each
-            output separately.
-            If multioutput is 'uniform_average' or an ndarray of weights, then the
-            weighted average RMSSE of all output errors is returned.
+    Returns
+    -------
+    loss : float
+        RMSSE loss.
+        If multioutput is 'raw_values', then RMSSE is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average RMSSE of all output errors is returned.
 
-        References
-        ----------
-        ..[1]   M5 Competition Guidelines.
-                https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-        ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
-                "Another look at measures of forecast accuracy", International
-                Journal of Forecasting, Volume 22, Issue 4.
-        """
-    # input checks
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
-    y_train = check_y(y_train)
-
-    # Check test and train have same dimensions
-    if y_test.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_test and y_train")
-
-    if (y_test.ndim > 1) and (y_test.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_test and y_train")
-
-    # check if training set is prior to test set
-    if (isinstance(y_train, (pd.Series, pd.DataFrame))) and (y_train is not None):
+    References
+    ----------
+    ..[1]   M5 Competition Guidelines.
+            https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+    ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
+            "Another look at measures of forecast accuracy", International
+            Journal of Forecasting, Volume 22, Issue 4.
+    """
+    # Check if training set is prior to test set
+    if isinstance(y_train, (pd.Series, pd.DataFrame)):
         check_time_index(y_train.index)
-        if y_train.index.max() >= y_test.index.min():
+        if y_train.index.max() >= y_true.index.min():
             raise ValueError(
                 "Found `y_train` with time index which is not "
-                "before time index of `y_test`"
+                "before time index of `y_true`"
             )
+    # Other input checks
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_train = check_y(y_train, allow_numpy=True)
+
+    # Check test and train have same dimensions
+    if y_true.ndim != y_train.ndim:
+        raise ValueError("Equal dimension required for y_true and y_train")
+
+    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
+        raise ValueError("Equal number of columns required for y_true and y_train")
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
     y_pred_naive = y_train[:-sp]
 
-    # mean absolute error of naive seasonal prediction
+    # mean squared error of naive seasonal prediction
     mse_naive = mean_squared_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
 
-    # if training data is flat, mae may be zero,
-    # return np.nan to avoid divide by zero error
-    # and np.inf values
-    mse = mean_squared_error(y_test, y_pred, multioutput=multioutput)
+    mse = mean_squared_error(y_true, y_pred, multioutput=multioutput)
 
     return np.sqrt(mse / np.maximum(mse_naive, eps))
 
 
+def root_median_squared_scaled_error(
+    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
+):
+    """Root median squared scaled error (RMdSSE). RMdSSE output is non-negative
+        floating point. The best value is 0.0.
+
+    This is a squared varient of the MdASE loss metric. Like MASE, MdASE and
+    RMSSE this scale-free metric can be used to copmare forecast methods on a
+    single series or between series.
+
+    This metric is also suited for intermittent-demand series because it
+    will not give infinite or undefined values unless the training data
+    is a flat timeseries. In this case the function returns a large value
+    instead of inf.
+
+    Works with multioutput (multivariate) timeseries data
+    with homogeneous seasonal periodicity.
+
+    Parameters
+    ----------
+    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
+            where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
+            where fh is the forecasting horizon
+        Estimated target values.
+
+    y_train : pandas Series of shape (fh,) or (fh, n_outputs)
+            where fh is the forecasting horizon
+        Observed training values.
+
+    sp : int
+        Seasonal periodicity of training data.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float
+        RMdSSE loss.
+        If multioutput is 'raw_values', then RMdSSE is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average RMdSSE of all output errors is returned.
+
+    References
+    ----------
+    ..[1]   M5 Competition Guidelines.
+            https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+    ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
+            "Another look at measures of forecast accuracy", International
+            Journal of Forecasting, Volume 22, Issue 4.
+    """
+    # Check if training set is prior to test set
+    if isinstance(y_train, (pd.Series, pd.DataFrame)):
+        check_time_index(y_train.index)
+        if y_train.index.max() >= y_true.index.min():
+            raise ValueError(
+                "Found `y_train` with time index which is not "
+                "before time index of `y_true`"
+            )
+    # Other input checks
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    y_train = check_y(y_train, allow_numpy=True)
+
+    # Check test and train have same dimensions
+    if y_true.ndim != y_train.ndim:
+        raise ValueError("Equal dimension required for y_true and y_train")
+
+    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
+        raise ValueError("Equal number of columns required for y_true and y_train")
+
+    # naive seasonal prediction
+    y_train = np.asarray(y_train)
+    y_pred_naive = y_train[:-sp]
+
+    # median squared error of naive seasonal prediction
+    mdse_naive = median_squared_error(
+        y_train[sp:], y_pred_naive, multioutput=multioutput
+    )
+
+    mdse = median_squared_error(y_true, y_pred, multioutput=multioutput)
+
+    return np.sqrt(mdse / np.maximum(mdse_naive, eps))
+
+
 def mean_absolute_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Mean absolute error (MAE). MAE output is non-negative floating point.
     The best value is 0.0.
@@ -484,7 +571,7 @@ def mean_absolute_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -516,17 +603,17 @@ def mean_absolute_error(
     Examples
     --------
     >>> from sktime.performance_metrics import mean_absolute_errror
-    >>> y_test = [3, -0.5, 2, 7]
+    >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_absolute_errror(y_test, y_pred)
+    >>> mean_absolute_errror(y_true, y_pred)
     0.5
-    >>> y_test = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> mean_absolute_errror(y_test, y_pred)
+    >>> mean_absolute_errror(y_true, y_pred)
     0.75
-    >>> mean_absolute_errror(y_test, y_pred, multioutput='raw_values')
+    >>> mean_absolute_errror(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
-    >>> mean_absolute_errror(y_test, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_absolute_errror(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
 
     References
@@ -536,16 +623,16 @@ def mean_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is not None:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
     # Once Scikit-learn 0.24 is widely available through Conda then switch
     # to importing Scikit's function, which I used the code from below in the
     # interim
     # return mean_absolute_error(
-    # y_test, y_pred, sample_weight=horizon_weight,multioutput=multioutput
+    # y_true, y_pred, sample_weight=horizon_weight,multioutput=multioutput
     # )
-    output_errors = np.average(np.abs(y_test - y_pred), weights=horizon_weight, axis=0)
+    output_errors = np.average(np.abs(y_true - y_pred), weights=horizon_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -557,7 +644,7 @@ def mean_absolute_error(
 
 
 def root_mean_squared_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Root mean squared error (RMSE). RMSE output is non-negative floating
     point. The best value is 0.0.
@@ -568,7 +655,7 @@ def root_mean_squared_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -604,13 +691,13 @@ def root_mean_squared_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     mse = mean_squared_error(
-        y_test, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
     return np.sqrt(mse)
 
 
 def mean_squared_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Mean squared error (MSE). MSE output is non-negative floating point.
     The best value is 0.0.
@@ -621,7 +708,7 @@ def mean_squared_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -654,23 +741,23 @@ def mean_squared_error(
     Examples
     --------
     >>> from sktime.performance_metrics import mean_squared_error
-    >>> y_test = [3, -0.5, 2, 7]
+    >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_squared_error(y_test, y_pred)
+    >>> mean_squared_error(y_true, y_pred)
     0.375
-    >>> y_test = [3, -0.5, 2, 7]
+    >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_squared_error(y_test, y_pred, squared=False)
+    >>> mean_squared_error(y_true, y_pred, squared=False)
     0.612...
-    >>> y_test = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-    >>> mean_squared_error(y_test, y_pred)
+    >>> mean_squared_error(y_true, y_pred)
     0.708...
-    >>> mean_squared_error(y_test, y_pred, squared=False)
+    >>> mean_squared_error(y_true, y_pred, squared=False)
     0.822...
-    >>> mean_squared_error(y_test, y_pred, multioutput='raw_values')
+    >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
-    >>> mean_squared_error(y_test, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
 
     References
@@ -679,17 +766,17 @@ def mean_squared_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is not None:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
     # Once Scikit-learn 0.24 is widely available through Conda then switch
     # to importing Scikit's function, which I used the code from below in the
     # interim
     # return mean_squared_error(
-    # y_test, y_pred, sample_weight=sample_weight,multioutput=multioutput
+    # y_true, y_pred, sample_weight=sample_weight,multioutput=multioutput
     # )
     output_errors = np.average(
-        np.square(y_test - y_pred), weights=horizon_weight, axis=0
+        np.square(y_true - y_pred), weights=horizon_weight, axis=0
     )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -702,7 +789,7 @@ def mean_squared_error(
 
 
 def median_absolute_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Median absolute error (MdAE).  MdAE output is non-negative floating
     point. The best value is 0.0.
@@ -717,7 +804,7 @@ def median_absolute_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -746,13 +833,13 @@ def median_absolute_error(
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average MdAE of all output errors is returned.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is None:
-        output_errors = np.median(np.abs(y_pred - y_test), axis=0)
+        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
         output_errors = _weighted_percentile(
-            np.abs(y_pred - y_test), sample_weight=horizon_weight
+            np.abs(y_pred - y_true), sample_weight=horizon_weight
         )
 
     if isinstance(multioutput, str):
@@ -766,7 +853,7 @@ def median_absolute_error(
 
 
 def root_median_squared_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Root median squared error (RMdSE). RMdSE output is non-negative floating
     point. The best value is 0.0.
@@ -781,7 +868,7 @@ def root_median_squared_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -817,13 +904,13 @@ def root_median_squared_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     mdse = median_squared_error(
-        y_test, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
     return np.sqrt(mdse)
 
 
 def median_squared_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Median squared error (MdSE). MdSE output is non-negative floating
     point. The best value is 0.0.
@@ -838,7 +925,7 @@ def median_squared_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -873,13 +960,13 @@ def median_squared_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is None:
-        output_errors = np.median(np.square(y_pred - y_test), axis=0)
+        output_errors = np.median(np.square(y_pred - y_true), axis=0)
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
         output_errors = _weighted_percentile(
-            np.square(y_pred - y_test), sample_weight=horizon_weight
+            np.square(y_pred - y_true), sample_weight=horizon_weight
         )
 
     if isinstance(multioutput, str):
@@ -893,7 +980,7 @@ def median_squared_error(
 
 
 def symmetric_mean_absolute_percentage_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Symmetric mean absolute percentage error (sMAPE). sMAPE output is
     non-negative floating point. The best value is 0.0.
@@ -902,13 +989,13 @@ def symmetric_mean_absolute_percentage_error(
     takes the absolute value rather than square the percentage forecast
     error, it is less sensitive to outliers than RMSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -940,14 +1027,14 @@ def symmetric_mean_absolute_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import mean_absolute_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> mean_absolute_percentage_error(y_test, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred)
     1.0
 
     Parameters
     ----------
-    y_test : pandas Series of shape = (fh,) where fh is the forecasting horizon
+    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
         Ground truth (correct) target values.
     y_pred : pandas Series of shape = (fh,)
         Estimated target values.
@@ -965,7 +1052,7 @@ def symmetric_mean_absolute_percentage_error(
     """
 
     return mean_absolute_percentage_error(
-        y_test,
+        y_true,
         y_pred,
         symmetric=True,
         horizon_weight=horizon_weight,
@@ -974,7 +1061,7 @@ def symmetric_mean_absolute_percentage_error(
 
 
 def symmetric_median_absolute_percentage_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Symmetric median absolute percentage error (sMdAPE). sMdAPE output is
     non-negative floating point. The best value is 0.0.
@@ -983,13 +1070,13 @@ def symmetric_median_absolute_percentage_error(
     takes the absolute value rather than square the percentage forecast
     error, it is less sensitive to outliers than RMSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1021,14 +1108,14 @@ def symmetric_median_absolute_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import mean_absolute_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> mean_absolute_percentage_error(y_test, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred)
     1.0
 
     Parameters
     ----------
-    y_test : pandas Series of shape = (fh,) where fh is the forecasting horizon
+    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
         Ground truth (correct) target values.
     y_pred : pandas Series of shape = (fh,)
         Estimated target values.
@@ -1046,7 +1133,7 @@ def symmetric_median_absolute_percentage_error(
     """
 
     return median_absolute_percentage_error(
-        y_test,
+        y_true,
         y_pred,
         symmetric=True,
         horizon_weight=horizon_weight,
@@ -1055,7 +1142,7 @@ def symmetric_median_absolute_percentage_error(
 
 
 def mean_absolute_percentage_error(
-    y_test,
+    y_true,
     y_pred,
     symmetric=False,
     horizon_weight=None,
@@ -1070,13 +1157,13 @@ def mean_absolute_percentage_error(
     Because they take the absolute value rather than square the percentage
     forecast error, they is less sensitive to outliers than RMSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1111,9 +1198,9 @@ def mean_absolute_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import mean_absolute_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> mean_absolute_percentage_error(y_test, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred)
     1.0
 
     References
@@ -1123,12 +1210,12 @@ def mean_absolute_percentage_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is not None:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
 
     output_errors = np.average(
-        np.abs(_percentage_error(y_test, y_pred, symmetric=symmetric)),
+        np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)),
         weights=horizon_weight,
         axis=0,
     )
@@ -1144,7 +1231,7 @@ def mean_absolute_percentage_error(
 
 
 def root_mean_squared_percentage_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Root mean squared percentage error (RMSPE). RMSPE output is non-negative
     floating point. The best value is 0.0.
@@ -1153,13 +1240,13 @@ def root_mean_squared_percentage_error(
     takes the square rather than absolute value of the percentage forecast
     error, it is more sensitive to outliers than MAPE or MdAPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1191,9 +1278,9 @@ def root_mean_squared_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import root_mean_squared_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> root_mean_square_percentage_error(y_test, y_pred)
+    >>> root_mean_square_percentage_error(y_true, y_pred)
     1.0
 
     References
@@ -1203,14 +1290,16 @@ def root_mean_squared_percentage_error(
             Journal of Forecasting, Volume 22, Issue 4.s
     """
     mspe = mean_squared_percentage_error(
-        y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+        y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
     )
-
-    return np.sqrt(mspe)
+    # Here we are multipying by 10 b/c mspe is already converted to "percentage"
+    # units by multiplying by 100. Multipylying by 10 reverses the square root
+    # of this multiplicative factor
+    return 10 * np.sqrt(mspe)
 
 
 def mean_squared_percentage_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Mean squared percentage error (MSPE). MSPE output is non-negative
     floating point. The best value is 0.0.
@@ -1219,13 +1308,13 @@ def mean_squared_percentage_error(
     Because it takes the square rather than absolute value of the percentage
     forecast error, it is more sensitive to outliers than MAPE or MdAPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1257,9 +1346,9 @@ def mean_squared_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import root_mean_squared_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> root_mean_square_percentage_error(y_test, y_pred)
+    >>> root_mean_square_percentage_error(y_true, y_pred)
     1.0
 
     References
@@ -1268,12 +1357,16 @@ def mean_squared_percentage_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.s
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is not None:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
 
+    # Divide by 100 b/c _percentage_error multiplies by 100 to convert to
+    # percentage units and we don't want to square that part
     output_errors = np.average(
-        np.square(_percentage_error(y_test, y_pred)), weights=horizon_weight, axis=0
+        np.square(_percentage_error(y_true, y_pred)) / 100,
+        weights=horizon_weight,
+        axis=0,
     )
 
     if isinstance(multioutput, str):
@@ -1287,7 +1380,7 @@ def mean_squared_percentage_error(
 
 
 def median_absolute_percentage_error(
-    y_test, y_pred, symmetric=False, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, symmetric=False, horizon_weight=None, multioutput="uniform_average"
 ):
     """Median absolute percentage error (MdAPE). MdAPE output is non-negative
     floating point. The best value is 0.0.
@@ -1302,13 +1395,13 @@ def median_absolute_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1340,9 +1433,9 @@ def median_absolute_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import median_absolute_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> mean_absolute_percentage_error(y_test, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred)
     1.0
 
     References
@@ -1351,15 +1444,15 @@ def median_absolute_percentage_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is None:
         output_errors = np.median(
-            np.abs(_percentage_error(y_pred, y_test, symmetric=symmetric)), axis=0
+            np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)), axis=0
         )
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
         output_errors = _weighted_percentile(
-            np.abs(_percentage_error(y_pred, y_test, symmetric=symmetric)),
+            np.abs(_percentage_error(y_pred, y_true, symmetric=symmetric)),
             sample_weight=horizon_weight,
         )
 
@@ -1373,88 +1466,8 @@ def median_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
-def median_squared_percentage_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Median squared percentage error (MdSPE). MdSPE output is non-negative
-    floating point. The best value is 0.0.
-
-    MdSPE is measured in squared percentage error relative to the test data.
-    Because it takes the square rather than absolute value of the percentage
-    forecast error, it is more sensitive to outliers than MAPE or MdAPE.
-
-    There is no limit on how large the error can be, particulalrly when `y_test`
-    values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
-
-    Parameters
-    ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        MdSPE loss.
-        If multioutput is 'raw_values', then MdSPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average MdSPE of all output errors is returned.
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics import median_squared_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
-    >>> y_pred = pd.Series([2, -2, 4])
-    >>> median_squared_percentage_error(y_test, y_pred)
-    1.0
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.s
-    """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
-    if horizon_weight is not None:
-        horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
-        output_errors = _weighted_percentile(
-            np.square(_percentage_error(y_pred, y_test)), sample_weight=horizon_weight
-        )
-    else:
-        output_errors = np.median(
-            np.square(_percentage_error(y_test, y_pred)), weights=horizon_weight, axis=0
-        )
-
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-
-    return np.average(output_errors, weights=multioutput)
-
-
 def root_median_squared_percentage_error(
-    y_test, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
 ):
     """Root median squared percentage error (RMdSPE). RMdSPE output is
     non-negative floating point. The best value is 0.0.
@@ -1467,13 +1480,13 @@ def root_median_squared_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_test`
+    There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1505,9 +1518,9 @@ def root_median_squared_percentage_error(
     Examples
     --------
     >>> from sktime.performance_metrics import root_median_squared_percentage_error
-    >>> y_test = pd.Series([1, -1, 2])
+    >>> y_true = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
-    >>> root_median_squared_percentage_error(y_test, y_pred)
+    >>> root_median_squared_percentage_error(y_true, y_pred)
     1.0
 
     References
@@ -1516,16 +1529,90 @@ def root_median_squared_percentage_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
-    if horizon_weight is None:
-        output_errors = np.median(np.square(_percentage_error(y_pred, y_test)), axis=0)
-    else:
-        horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
-        output_errors = _weighted_percentile(
-            np.square(_percentage_error(y_pred, y_test)), sample_weight=horizon_weight
-        )
 
-    output_errors = np.sqrt(output_errors)
+    mdspe = median_squared_percentage_error(
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    )
+    # Here we are multipying by 10 b/c mspe is already converted to "percentage"
+    # units by multiplying by 100. Multipylying by 10 reverses the square root
+    # of this multiplicative factor
+    return 10 * np.sqrt(mdspe)
+
+
+def median_squared_percentage_error(
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+):
+    """Median squared percentage error (MdSPE). MdSPE output is non-negative
+    floating point. The best value is 0.0.
+
+    MdSPE is measured in squared percentage error relative to the test data.
+    Because it takes the square rather than absolute value of the percentage
+    forecast error, it is more sensitive to outliers than MAPE or MdAPE.
+
+    There is no limit on how large the error can be, particulalrly when `y_true`
+    values are close to zero. In such cases the function returns a large value
+    instead of `inf`.
+
+    Parameters
+    ----------
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float
+        MdSPE loss.
+        If multioutput is 'raw_values', then MdSPE is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average MdSPE of all output errors is returned.
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics import median_squared_percentage_error
+    >>> y_true = pd.Series([1, -1, 2])
+    >>> y_pred = pd.Series([2, -2, 4])
+    >>> median_squared_percentage_error(y_true, y_pred)
+    1.0
+
+    References
+    ----------
+    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
+            "Another look at measures of forecast accuracy", International
+            Journal of Forecasting, Volume 22, Issue 4.s
+    """
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    if horizon_weight is not None:
+        horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
+        # Divide by 100 b/c _percentage_error multiplies by 100 to convert to
+        # percentage units and we don't want to square that part
+        output_errors = _weighted_percentile(
+            np.square(_percentage_error(y_true, y_pred)) / 100,
+            sample_weight=horizon_weight,
+        )
+    else:
+        # Divide by 100 b/c _percentage_error multiplies by 100 to convert to
+        # percentage units and we don't want to square that part
+        output_errors = np.median(
+            np.square(_percentage_error(y_true, y_pred)) / 100, axis=0
+        )
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -1538,13 +1625,13 @@ def root_median_squared_percentage_error(
 
 
 def mean_relative_absolute_error(
-    y_test, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
 ):
     """Mean relative absolute error (MRAE).
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1583,15 +1670,15 @@ def mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is None:
         output_errors = np.mean(
-            np.abs(_relative_error(y_test, y_pred, y_pred_benchmark)), axis=0
+            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
         )
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
         output_errors = np.average(
-            np.abs(_relative_error(y_test, y_pred, y_pred_benchmark)),
+            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)),
             weights=horizon_weight,
             axis=0,
         )
@@ -1607,13 +1694,13 @@ def mean_relative_absolute_error(
 
 
 def median_relative_absolute_error(
-    y_test, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
 ):
     """Median relative absolute error
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1652,15 +1739,15 @@ def median_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
     if horizon_weight is None:
         output_errors = np.median(
-            np.abs(_relative_error(y_test, y_pred, y_pred_benchmark)), axis=0
+            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
         )
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
         output_errors = _weighted_percentile(
-            np.abs(_relative_error(y_test, y_pred, y_pred_benchmark)),
+            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)),
             sample_weight=horizon_weight,
         )
 
@@ -1675,13 +1762,13 @@ def median_relative_absolute_error(
 
 
 def geometric_mean_relative_absolute_error(
-    y_test, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
 ):
     """Geometric mean relative absolute error (GMRAE).
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1721,15 +1808,16 @@ def geometric_mean_relative_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
-            np.abs(_relative_error(y_test, y_pred, y_pred_benchmark)), axis=0
+            np.where(relative_errors == 0.0, eps, relative_errors), axis=0
         )
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
-        output_errors = geometric_mean(
-            np.abs(_relative_error(y_test, y_pred, y_pred_benchmark)),
+        output_errors = weighted_geometric_mean(
+            np.where(relative_errors == 0.0, eps, relative_errors),
             sample_weight=horizon_weight,
             axis=0,
         )
@@ -1745,13 +1833,13 @@ def geometric_mean_relative_absolute_error(
 
 
 def geometric_mean_relative_squared_error(
-    y_test, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
 ):
     """Geometric mean relative squared error (GMRSE).
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1791,15 +1879,16 @@ def geometric_mean_relative_squared_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
-            np.square(_relative_error(y_test, y_pred, y_pred_benchmark)), axis=0
+            np.where(relative_errors == 0.0, eps, relative_errors), axis=0
         )
     else:
         horizon_weight = _check_horizon_weights(horizon_weight, y_pred)
-        output_errors = geometric_mean(
-            np.square(_relative_error(y_test, y_pred, y_pred_benchmark)),
+        output_errors = weighted_geometric_mean(
+            np.where(relative_errors == 0.0, eps, relative_errors),
             sample_weight=horizon_weight,
             axis=0,
         )
@@ -1815,7 +1904,7 @@ def geometric_mean_relative_squared_error(
 
 
 def relative_loss(
-    y_test,
+    y_true,
     y_pred,
     y_pred_benchmark,
     loss_function=mean_absolute_error,
@@ -1827,7 +1916,7 @@ def relative_loss(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1865,10 +1954,10 @@ def relative_loss(
     """
     return np.divide(
         loss_function(
-            y_test, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+            y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
         ),
         loss_function(
-            y_test,
+            y_true,
             y_pred_benchmark,
             horizon_weight=horizon_weight,
             multioutput=multioutput,
@@ -1877,7 +1966,7 @@ def relative_loss(
 
 
 def _asymmetric_error(
-    y_test,
+    y_true,
     y_pred,
     asymmetric_threshold=0.0,
     left_error_function="squared",
@@ -1887,7 +1976,7 @@ def _asymmetric_error(
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1919,7 +2008,7 @@ def _asymmetric_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_test, y_pred = check_y_test_pred(y_test, y_pred)
+    y_true, y_pred = check_y_true_pred(y_true, y_pred)
 
     functions = {"squared": np.square, "absolute": np.abs}
     left_func, right_func = (
@@ -1928,20 +2017,20 @@ def _asymmetric_error(
     )
 
     errors = np.where(
-        y_test - y_pred < asymmetric_threshold,
-        left_func(y_test - y_pred),
-        right_func(y_test - y_pred),
+        y_true - y_pred < asymmetric_threshold,
+        left_func(y_true - y_pred),
+        right_func(y_true - y_pred),
     )
     return errors
 
 
-def _relative_error(y_test, y_pred, y_pred_benchmark):
+def _relative_error(y_true, y_pred, y_pred_benchmark):
     """Relative error for each observations compared to  the error for that
     observation from a benchmark method.
 
     Parameters
     ----------
-    y_test : pandas Series, pandas DataFrame or NumPy array of
+    y_true : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1964,15 +2053,15 @@ def _relative_error(y_test, y_pred, y_pred_benchmark):
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    return (y_test - y_pred) / (y_test - y_pred_benchmark)
+    return (y_true - y_pred) / np.maximum((y_true - y_pred_benchmark), eps)
 
 
-def _percentage_error(y_test, y_pred, symmetric=False):
+def _percentage_error(y_true, y_pred, symmetric=False):
     """Percentage error.
 
     Parameters
     ----------
-    y_test : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
@@ -1994,10 +2083,13 @@ def _percentage_error(y_test, y_pred, symmetric=False):
             Journal of Forecasting, Volume 22, Issue 4.
     """
     if symmetric:
-        # Alternatively could use np.abs(y_test) + np.abs(y_pred) in denom
+        # Alternatively could use np.abs(y_true + y_pred) in denom
+        # Results will be different if y_true and y_pred have different signs
         percentage_error = (
-            200 * np.abs(y_test - y_pred) / np.maximum(y_test + y_pred, eps)
+            200
+            * np.abs(y_true - y_pred)
+            / np.maximum(np.abs(y_true) + np.abs(y_pred), eps)
         )
     else:
-        percentage_error = 100 * (y_test - y_pred) / np.maximum(y_test, eps)
+        percentage_error = 100 * (y_true - y_pred) / np.maximum(np.abs(y_true), eps)
     return percentage_error
