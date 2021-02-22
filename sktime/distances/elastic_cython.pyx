@@ -88,7 +88,7 @@ def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , do
     return D[lx,ly]
 
 
-def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0):
+def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0.05):
 
     # make sure x is shorter than y
     # if not permute
