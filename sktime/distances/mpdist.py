@@ -78,8 +78,7 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
         * q_len
         * (
             1
-            - ((dot_prod[i] - q_len * q_mean * t_mean[i]) / (
-                q_len * q_std * t_std[i]))
+            - ((dot_prod[i] - q_len * q_mean * t_mean[i]) / (q_len * q_std * t_std[i]))
         )
         for i in range(0, n_t_subs)
     ]
