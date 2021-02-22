@@ -12,7 +12,6 @@ distance_functions = [
     "msm",
     "erp",
     # "lcss",
-
 ]
 
 # expected correct on test set using default parameters. Verified in tsml
@@ -28,10 +27,9 @@ expected_correct = {
     "euclidean": 140,
     "dtw": 123,
     "wdtw": 130,
-    "msm": 139, # needs further debugging, it has reverted to the old version
+    "msm": 139,  # needs further debugging, it has reverted to the old version
     "erp": 138,
     # "lcss": 100,
-
 }
 
 
