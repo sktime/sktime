@@ -75,14 +75,14 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
 
     d = [
         2
-        *
-        q_len
+        * q_len
         * (
             1
             - ((dot_prod[i] - q_len * q_mean * t_mean[i]) / (
                 q_len * q_std * t_std[i]))
         )
-        for i in range(0, n_t_subs)]
+        for i in range(0, n_t_subs)
+    ]
     d = np.absolute(d)
     d = np.sqrt(d)
 
