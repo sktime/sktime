@@ -32,7 +32,7 @@ can simply write:
     from sktime.forecasting.compose import ReducedRegressionForecaster
     from sklearn.ensemble import RandomForestRegressor
     from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.performance_metrics.forecasting import smape_loss
+    from sktime.performance_metrics.forecasting import SymmetricMeanAbsolutePercentageError
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -41,8 +41,8 @@ can simply write:
     forecaster = ReducedRegressionForecaster(regressor, window_length=12)
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    smape_loss(y_test, y_pred)
-    >>> 0.12726230426056875
+    SymmetricMeanAbsolutePercentageError(y_test, y_pred)
+    >>> 12.574429324402637
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.

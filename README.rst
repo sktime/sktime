@@ -118,8 +118,8 @@ Forecasting
     forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    smape_loss(y_test, y_pred)
-    >>> 0.08661468139978168
+    symmetric_mean_absolute_percentage_error(y_test, y_pred)
+    >>> 8.661467738190659
 
 For more, check out the `forecasting tutorial <https://github
 .com/alan-turing-institute/sktime/blob/master/examples/01_forecasting
