@@ -11,7 +11,7 @@ distance_functions = [
     "wdtw",
     "msm",
     "erp",
-    # "lcss",
+    "lcss",
 ]
 
 # expected correct on test set using default parameters. Verified in tsml
@@ -21,20 +21,21 @@ distance_functions = [
 # Distance measure  WDTWDistance -g "0.05" gets 130 correct out of 175
 # Distance measure  MSMDistance -c "1.0" gets 139 correct out of 175
 # Distance measure  ERPDistance -g "0.0" -ws "-1" gets 138 correct out of 175
-# Distance measure  LCSSDistance -e "0.01" -ws "-1" gets 100 correct out of 175
+# Distance measure  LCSSDistance -e "0.05" -ws "3" gets 137 correct out of 175,
+# but one tie, so expect 136 since sktime picks the first
 
 expected_correct = {
     "euclidean": 140,
     "dtw": 123,
     "wdtw": 130,
-    "msm": 139,  # needs further debugging, it has reverted to the old version
+    "msm": 139,
     "erp": 138,
-    # "lcss": 100,
+    "lcss": 136,
 }
 
 
 def test_knn_on_arrowhead():
-    # load gunpoint data
+    # load arrowhead data for unit tests
     X_train, y_train = load_arrow_head(split="train", return_X_y=True)
     X_test, y_test = load_arrow_head(split="test", return_X_y=True)
     for i in range(0, len(distance_functions)):
@@ -45,6 +46,7 @@ def test_knn_on_arrowhead():
         pred = knn.predict(X_test)
         correct = 0
         for j in range(0, len(pred)):
+            print(j,",",pred[j])
             if pred[j] == y_test[j]:
                 correct = correct + 1
         assert correct == expected_correct[distance_functions[i]]

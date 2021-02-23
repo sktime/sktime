@@ -190,7 +190,7 @@ def lcss_distance(first, second, **kwargs):
         try:
             epsilon = kwargs["epsilon"]
         except KeyError:
-            epsilon = 1
+            epsilon = 0.05
 
         m = len(first)
         n = len(second)
