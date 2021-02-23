@@ -46,7 +46,6 @@ def test_knn_on_arrowhead():
         pred = knn.predict(X_test)
         correct = 0
         for j in range(0, len(pred)):
-            print(j,",",pred[j])
             if pred[j] == y_test[j]:
                 correct = correct + 1
         assert correct == expected_correct[distance_functions[i]]
