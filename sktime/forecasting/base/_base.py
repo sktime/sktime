@@ -169,13 +169,15 @@ class BaseForecaster(BaseEstimator):
 
         See Also
         --------
-        :meth:`sktime.performance_metrics.forecasting.smape_loss`.`
+        :meth:`sktime.performance_metrics.forecasting.symmetric_mean_absolute_percentage_error`.`
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        from sktime.performance_metrics.forecasting import smape_loss
+        from sktime.performance_metrics.forecasting import (
+            symmetric_mean_absolute_percentage_error,
+        )
 
-        return smape_loss(y, self.predict(fh, X))
+        return symmetric_mean_absolute_percentage_error(y, self.predict(fh, X))
 
     def get_fitted_params(self):
         """Get fitted parameters

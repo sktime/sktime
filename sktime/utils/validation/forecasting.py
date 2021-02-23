@@ -333,8 +333,7 @@ def check_scoring(scoring):
     Returns
     ----------
     scoring : object of class MetricFunctionWrapper of sktime.permormance_metrics.
-    sMAPE(mean percentage error)
-        if the object is None.
+        SymmetricMeanAbsolutePercentageError if the object is None.
 
     Raises
     ----------
@@ -344,10 +343,12 @@ def check_scoring(scoring):
         sktime.permormance_metrics.
     """
     from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
-    from sktime.performance_metrics.forecasting import sMAPE
+    from sktime.performance_metrics.forecasting import (
+        SymmetricMeanAbsolutePercentageError,
+    )
 
     if scoring is None:
-        return sMAPE()
+        return SymmetricMeanAbsolutePercentageError()
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
@@ -388,6 +389,8 @@ def check_y_true_pred(y_true, y_pred):
     ValueError
         Equal dimension required for y_true and y_pred
     ValueError
+        Equal number of observations required of y_true and y_pred
+    ValueError
         Equal numnber of columns required for y_true and y_pred
     """
     # Includes pd.Series, pd.DataFrame, np.ndarray
@@ -399,6 +402,9 @@ def check_y_true_pred(y_true, y_pred):
 
     if y_true.ndim != y_pred.ndim:
         raise ValueError("Equal dimension required for y_true and y_pred")
+
+    if y_true.shape[0] != y_pred.shape[0]:
+        raise ValueError("Equal number of observations required of y_true and y_pred")
 
     if (y_true.ndim > 1) and (y_true.shape[1] != y_pred.shape[1]):
         raise ValueError("Equal number of series required for y_true and y_pred")

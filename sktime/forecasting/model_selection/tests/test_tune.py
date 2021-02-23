@@ -9,7 +9,8 @@ import numpy as np
 import pytest
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+
+# from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ParameterGrid
 
 from sktime.datasets import load_airline
@@ -23,8 +24,10 @@ from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.performance_metrics.forecasting import make_forecasting_scorer
-from sktime.performance_metrics.forecasting import sMAPE
+from sktime.performance_metrics.forecasting import (
+    SymmetricMeanAbsolutePercentageError,
+    MeanSquaredError,
+)
 from sktime.transformations.series.detrend import Detrender
 
 
@@ -66,7 +69,7 @@ def compute_expected_gscv_scores(forecaster, cv, param_grid, y, scoring):
 )
 @pytest.mark.parametrize(
     "scoring",
-    [sMAPE(), make_forecasting_scorer(mean_squared_error, greater_is_better=False)],
+    [SymmetricMeanAbsolutePercentageError(), MeanSquaredError()],
 )
 @pytest.mark.parametrize(
     "cv",
