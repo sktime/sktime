@@ -51,7 +51,7 @@ def check_series(
 
     Returns
     -------
-    y : pd.Series, pd.DataFrame, np.ndarray
+    Z : pd.Series, pd.DataFrame, np.ndarray
         Validated time series
 
     Raises
@@ -92,7 +92,7 @@ def check_time_index(index, allow_empty=False, enforce_index_type=None):
     index : pd.Index or np.array
         Time index
     allow_empty : bool, optional (default=False)
-        If True, empty `index` raises an error.
+        If False, empty `index` raises an error.
     enforce_index_type : type, optional (default=None)
         type of time index
 

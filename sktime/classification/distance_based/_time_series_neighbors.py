@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
-""" KNN time series classification built on sklearn KNeighborsClassifier
+""" KNN time series classification built on sklearn KNeighborsClassifier that
+supports a range of distance measure specifically for time series. This distance
+functions are defined in cython in sktime.distances.elastic_cython. Python versions
+are in sktime.distances.elastic, but these are orders of magnitude slower.
 
 """
 
-__author__ = "Jason Lines"
+__author__ = ["Jason Lines", "TonyBagnall"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 import warnings
-from distutils.version import LooseVersion
 from functools import partial
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
 from joblib import effective_n_jobs
 from scipy import stats
-from scipy.sparse import issparse
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
 from sklearn.model_selection import GridSearchCV
@@ -23,19 +22,20 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 from sklearn.neighbors._base import _get_weights
-from sklearn.utils import gen_even_slices
-from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
-from sktime.distances.elastic_cython import ddtw_distance
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.distances.elastic_cython import erp_distance
-from sktime.distances.elastic_cython import lcss_distance
-from sktime.distances.elastic_cython import msm_distance
-from sktime.distances.elastic_cython import twe_distance
-from sktime.distances.elastic_cython import wddtw_distance
-from sktime.distances.elastic_cython import wdtw_distance
+from sktime.distances.elastic import euclidean_distance
+from sktime.distances.elastic_cython import (
+    ddtw_distance,
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wddtw_distance,
+    wdtw_distance,
+)
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
@@ -92,15 +92,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     or a callable function: default ==' uniform'
     algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
     ‘kd_tree’, ‘brute’}: default = 'brute'
-    metric          : distance measure for time series: {'dtw','ddtw',
+    distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
-    metric_params   : dictionary for metric parameters: default = None
+    distance_params   : dictionary for metric parameters: default = None
 
     """
 
     # Capabilities: data types this classifier can handle
     capabilities = {
-        "multivariate": False,
+        "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
     }
@@ -109,75 +109,64 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
-        algorithm="brute",
-        metric="dtw",
-        metric_params=None,
+        distance="dtw",
+        distance_params=None,
         **kwargs
     ):
-        if algorithm == "kd_tree":
-            raise ValueError(
-                "KNeighborsTimeSeriesClassifier cannot work with kd_tree since kd_tree "
-                "cannot be used with a callable distance metric and we do not support "
-                "precalculated distances as yet."
-            )
-        if algorithm == "ball_tree":
-            raise ValueError(
-                "KNeighborsTimeSeriesClassifier cannot work with ball_tree since "
-                "ball_tree has a list of hard coded distances it can use, and cannot "
-                "work with 3-D arrays"
-            )
-
         self._cv_for_params = False
-        # TODO: add in capacity for euclidean
-        # if metric != "euclidean":  # Euclidean will default to the base class distance
-        if metric == "dtw":
-            metric = dtw_distance
-        elif metric == "dtwcv":  # special case to force loocv grid search
+        self.distance = distance
+        self.distance_params = distance_params
+
+        if distance == "euclidean":  # Euclidean will default to the base class distance
+            distance = euclidean_distance
+        elif distance == "dtw":
+            distance = dtw_distance
+        elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
-            if metric_params is not None:
+            if distance_params is not None:
                 warnings.warn(
                     "Warning: measure parameters have been specified for "
                     "dtwcv. "
                     "These will be ignored and parameter values will be "
                     "found using LOOCV."
                 )
-            metric = dtw_distance
+            distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
-                "metric_params": [{"w": x / 100} for x in range(0, 100)]
+                "distance_params": [{"w": x / 100} for x in range(0, 100)]
             }
-        elif metric == "ddtw":
-            metric = ddtw_distance
-        elif metric == "wdtw":
-            metric = wdtw_distance
-        elif metric == "wddtw":
-            metric = wddtw_distance
-        elif metric == "lcss":
-            metric = lcss_distance
-        elif metric == "erp":
-            metric = erp_distance
-        elif metric == "msm":
-            metric = msm_distance
-        elif metric == "twe":
-            metric = twe_distance
-        elif metric == "mpdist":
-            metric = mpdist
+        elif distance == "ddtw":
+            distance = ddtw_distance
+        elif distance == "wdtw":
+            distance = wdtw_distance
+        elif distance == "wddtw":
+            distance = wddtw_distance
+        elif distance == "lcss":
+            distance = lcss_distance
+        elif distance == "erp":
+            distance = erp_distance
+        elif distance == "msm":
+            distance = msm_distance
+        elif distance == "twe":
+            distance = twe_distance
+        elif distance == "mpdist":
+            distance = mpdist
             # When mpdist is used, the subsequence length (parameter m) must be set
             # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
             # metric='mpdist', metric_params={'m':30})
         else:
-            if type(metric) is str:
+            if type(distance) is str:
                 raise ValueError(
-                    "Unrecognised distance measure: " + metric + ". Allowed values "
-                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "Unrecognised distance measure: " + distance + ". Allowed values "
+                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            metric=metric,
-            metric_params=metric_params,
+            algorithm="brute",
+            metric=distance,
+            metric_params=distance_params,
             **kwargs
         )
         self.weights = _check_weights(weights)
@@ -197,7 +186,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
+        X, y = check_X_y(
+            X,
+            y,
+            enforce_univariate=not self.capabilities["multivariate"],
+            coerce_to_numpy=True,
+        )
+        # Transpose to work correctly with distance functions
+        X = X.transpose((0, 2, 1))
+
         y = np.asarray(y)
         check_classification_targets(y)
         # if internal cv is desired, the relevant flag forces a grid search
@@ -206,14 +203,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if self._cv_for_params:
             grid = GridSearchCV(
                 estimator=KNeighborsTimeSeriesClassifier(
-                    metric=self.metric, n_neighbors=1, algorithm="brute"
+                    distance=self.metric, n_neighbors=1
                 ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
                 scoring="accuracy",
             )
             grid.fit(X, y)
-            self.metric_params = grid.best_params_["metric_params"]
+            self.distance_params = grid.best_params_["distance_params"]
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -294,7 +291,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X = check_X(
+            X,
+            enforce_univariate=not self.capabilities["multivariate"],
+            coerce_to_numpy=True,
+        )
+        # Transpose to work correctly with distance functions
+        X = X.transpose((0, 2, 1))
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -349,24 +352,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 metric=self.effective_metric_,
                 n_jobs=n_jobs,
                 **kwds
-            )
-
-        elif self._fit_method in ["ball_tree", "kd_tree"]:
-            if issparse(X):
-                raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
-                )
-            if LooseVersion(joblib_version) < LooseVersion("0.12"):
-                # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query, check_pickle=False)
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                delayed_query = delayed(self._tree.query)
-                parallel_kwargs = {"prefer": "threads"}
-            result = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(X[s], n_neighbors, return_distance)
-                for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
             raise ValueError("internal: _fit_method not recognized")

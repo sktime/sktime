@@ -128,10 +128,10 @@ Composition
     TransformedTargetForecaster
     DirectRegressionForecaster
     DirectTimeSeriesRegressionForecaster
+    MultioutputRegressionForecaster
     RecursiveRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    ReducedRegressionForecaster
-    ReducedTimeSeriesRegressionForecaster
+    ReducedForecaster
     StackingForecaster
 
 Online Forecasting
@@ -160,9 +160,21 @@ Model Selection
     SingleWindowSplitter
     SlidingWindowSplitter
     ForecastingGridSearchCV
+    ForecastingRandomizedSearchCV
 
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: function.rst
 
     temporal_train_test_split
+
+Model Evaluation
+----------------
+
+.. currentmodule:: sktime.forecasting.model_evaluation
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: function.rst
+
+    evaluate

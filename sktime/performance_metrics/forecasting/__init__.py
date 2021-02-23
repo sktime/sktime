@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski"]
+__author__ = ["Markus Löning", "Tomasz Chodakowski", "Martin Walter"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -51,6 +51,7 @@ __all__ = [
     "median_relative_absolute_error",
     "geometric_mean_relative_absolute_error",
     "geometric_mean_relative_squared_error",
+    "evaluate",
 ]
 
 from sktime.performance_metrics.forecasting._classes import (
