@@ -30,48 +30,169 @@ from sktime.utils.validation.forecasting import check_X
 
 
 ##############################################################################
-# base classes for reduction from forecasting to regression
+# Lovkush's new classes
+# rather than creating various base classes and mixins, i am going to create
+# each final class using only _BaseWindowForecaster and ForecastingHorizonMixins
+# The intended benefits:
+# - help me better understand exactly what goes into each reductionforecaster by
+#   making  it explicit
+# - reveal explicitly what different reducers do and do not have in common.
+# - make it easier to change one forecaster without having to worry about whether
+#   it will break other forecasting. e.g. if one wanted to add in-sample predictions,
+#   can get it to work on one forecaster first, rather than having to make it work
+#   on all of them at once.
+# - make it more user-friendly for future contributors.
+# - ensure new classes are consistent with old ones
+# Possible downside:
+# - goes against design principle of avoiding copying and pasting.
+#   however, current system requires a lot of copying and pasting already,
+#   so this is only downside against some hypothetical perfect code
 
 
-class NewBaseReducer(_BaseWindowForecaster):
-    """New base class that is compatible with exogeneous variables"""
+class NewDirectRegressionForecaster(
+    _BaseWindowForecaster, _RequiredForecastingHorizonMixin
+):
+    """
+    Forecasting based on reduction to tabular regression with a direct
+    reduction strategy.
+    For the direct reduction strategy, a separate forecaster is fitted
+    for each step ahead of the forecasting horizon
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
 
     _required_parameters = ["regressor"]
+    strategy = "direct"
 
     def __init__(self, regressor, window_length=10, step_length=1):
-        super(BaseReducer, self).__init__(window_length=window_length)
+        super(NewDirectRegressionForecaster, self).__init__(window_length=window_length)
         self.regressor = regressor
         self.step_length = step_length
-        self.step_length_ = None
-        self._transformer = None
 
-    def _transform(self, y, X=None):
-        """Transform data using rolling window approach"""
-        y = check_y(y)
-        X = check_X(X)
-
-        # get transformer
-        transformer = self._transformer
-
-        # Transform target series and exogenous variables
-        reduction_features, reduction_target = transformer(y, X)
-
-        return reduction_features, reduction_target
-
-    def _transformer(self, y, X=None):
-        """Template method for transforming target series and exogenous variables
-        into reduction features and reduction target
+    def _transform(self, y, X=None, fit_or_predict=None):
+        """Transform data using rolling window approach
+        Parameters
+        ----------
+        fit_or_predict : string 'fit' or 'predict'
+            Determines whether transform is taking place fit or predict step
         """
-        raise NotImplementedError("abstract method")
+        # check inputs and combine into single numpy array
+        y = check_y(y)
+        y_ = np.asarray(y).reshape(-1, 1)
 
-    def _is_predictable(self, last_window):
-        """Helper function to check if we can make predictions from last
-        window"""
-        return (
-            len(last_window) == self.window_length_
-            and np.sum(np.isnan(last_window)) == 0
-            and np.sum(np.isinf(last_window)) == 0
+        if X is None:
+            yX_ = y_
+        else:
+            X = check_X(X)
+            yX_ = np.asarray(pd.concat([y, X], axis=1))
+
+        # define variables to help with transformation
+        fh_length = len(self.fh)
+        w_length = self.window_length
+        n_timepoints, _ = yX_.shape
+
+        if self.step_length > 1:
+            raise NotImplementedError(
+                "Only step-length equal to 1 has been implemented"
+            )
+
+        # Transform target series and exogenous variables using rolling window
+        if fit_or_predict == "fit":
+            reduction_X = np.hstack(
+                [
+                    yX_[i : i + n_timepoints + 1 - fh_length - w_length]
+                    for i in range(w_length)
+                ]
+            )
+
+            reduction_Y = np.hstack(
+                [
+                    y_[i + w_length : i + n_timepoints + 1 - fh_length]
+                    for i in range(fh_length)
+                ]
+            )
+
+            return reduction_X, reduction_Y
+
+        elif fit_or_predict == "predict":
+            reduction_X = np.hstack(
+                [yX_[n_timepoints - w_length + i] for i in range(w_length)]
+            )
+
+            return reduction_X
+
+    def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_y_X(y, X)
+        self._set_fh(fh)
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
+            raise NotImplementedError("In-sample predictions are not implemented")
+
+        self.step_length = check_step_length(self.step_length)
+        self.window_length = check_window_length(self.window_length)
+
+        # transform data
+        reduction_X, reduction_Y = self._transform(
+            self._y, self._X, fit_or_predict="fit"
         )
+
+        # iterate over forecasting horizon
+        self.regressors_ = []
+        for i in range(len(self.fh)):
+            reduction_y = reduction_Y[:, i]
+            regressor = clone(self.regressor)
+            regressor.fit(reduction_X, reduction_y)
+            self.regressors_.append(regressor)
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        # get last window from self._transform
+        reduction_X_last = self._transform(
+            self._y, self._X, fit_or_predict="prediction"
+        )
+
+        # preallocate array for forecasted values
+        y_pred = np.zeros(len(fh))
+
+        # Iterate over estimators/forecast horizon
+        for i, regressor in enumerate(self.regressors_):
+            y_pred[i] = regressor.predict(reduction_X_last)
+        return y_pred
+
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        # it's not clear how the direct reducer would generate in-sample
+        # predictions
+        raise NotImplementedError("in-sample predictions are not implemented")
+
+
+##############################################################################
+# base classes for reduction from forecasting to regression
 
 
 class BaseReducer(_BaseWindowForecaster):
