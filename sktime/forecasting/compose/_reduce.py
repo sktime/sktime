@@ -6,12 +6,12 @@ __author__ = "Markus Löning"
 __all__ = [
     "ReducedTabularRegressorMixin",
     "ReducedTimeSeriesRegressorMixin",
-    "ReducedTimeSeriesRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
-    "ReducedRegressionForecaster",
     "DirectRegressionForecaster",
+    "MultioutputRegressionForecaster",
     "RecursiveRegressionForecaster",
+    "ReducedForecaster",
 ]
 
 import numpy as np
@@ -23,8 +23,8 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -44,29 +44,10 @@ class BaseReducer(_BaseWindowForecaster):
         self.step_length_ = None
         self._cv = None
 
-    def update(self, y, X=None, update_params=False):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=False)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        if X is not None or update_params:
-            raise NotImplementedError()
-        self.check_is_fitted()
-        self._update_y_X(y, X)
-        return self
-
     def _transform(self, y, X=None):
         """Transform data using rolling window approach"""
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
         y = check_y(y)
 
         # get integer time index
@@ -208,7 +189,7 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         """
         self._set_y_X(y, X)
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
         self._set_fh(fh)
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
@@ -265,6 +246,78 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         raise NotImplementedError("in-sample predictions are not implemented")
 
 
+class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
+    strategy = "multioutput"
+
+    def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_y_X(y, X)
+        if X is not None:
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
+        self._set_fh(fh)
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
+            raise NotImplementedError("In-sample predictions are not implemented")
+
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
+        # for the multioutput reduction strategy, a single forecaster is fitted
+        # simultaneously to all the future steps in the forecasting horizon
+        # by reducing to a forecaster that can handle multi-dimensional outputs
+        self._cv = SlidingWindowSplitter(
+            fh=self.fh.to_relative(self.cutoff),
+            window_length=self.window_length_,
+            step_length=self.step_length_,
+            start_with_window=True,
+        )
+
+        # transform data using rolling window split
+        X, Y_train = self._transform(y, X)
+
+        # fit regressor to training data
+        regressor = clone(self.regressor)
+        regressor.fit(X, Y_train)
+        self.regressor_ = regressor
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        # use last window as new input data for regressor to
+        # make forecasts
+        # get last window from observation horizon
+        last_window, _ = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
+
+        X_last = self._format_windows([last_window])
+
+        y_pred = self.regressor_.predict(X_last)
+
+        # preallocate array for forecasted values
+        # y_pred = np.zeros(len(fh))
+
+        return y_pred[0]
+
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        raise NotImplementedError("in-sample predictions are not implemented")
+
+
 class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
@@ -285,9 +338,7 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
         """
         # input checks
         if X is not None:
-            raise NotImplementedError(
-                "Support for exogenous variables is not yet implemented"
-            )
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
 
         # set values
         self._set_y_X(y, X)
@@ -346,10 +397,6 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
-    # def _predict_in_sample(self, fh, X=None, return_pred_int=False,
-    # alpha=None):
-    #     raise NotImplementedError()
-
 
 ##############################################################################
 # reduction to regression
@@ -359,6 +406,30 @@ class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     reduction strategy.
     For the direct reduction strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
+
+    pass
+
+
+class MultioutputRegressionForecaster(
+    ReducedTabularRegressorMixin, _MultioutputReducer
+):
+    """
+    Forecasting based on reduction to tabular regression with a multioutput
+    reduction strategy.
+    For the multioutput reduction strategy, a single forecaster is fitted
+    simultaneously to all the future steps in the forecasting horizon
 
     Parameters
     ----------
@@ -452,50 +523,27 @@ class RecursiveTimeSeriesRegressionForecaster(
 ##############################################################################
 # factory methods for easier user interface, but not tunable as it's not an
 # estimator
-def ReducedTimeSeriesRegressionForecaster(
-    ts_regressor, strategy="recursive", window_length=10, step_length=1
+def ReducedForecaster(
+    regressor, scitype, strategy="recursive", window_length=10, step_length=1
 ):
     """
-    Forecasting based on reduction to time series regression.
+    Forecasting based on reduction
 
     When fitting, a rolling window approach is used to first transform the
     target series into panel data which is
-    then used to train a time series regressor. During prediction, the last
+    then used to train a regressor. During prediction, the last
     available data is used as input to the
-    fitted time series regressors to make forecasts.
-
-    Parameters
-    ----------
-    ts_regressor : a time series regressor
-
-    References
-    ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
-    2013).
-      Machine Learning Strategies for Time Series Forecasting.
-    """
-    scitype = "ts_regressor"
-    Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(
-        regressor=ts_regressor, window_length=window_length, step_length=step_length
-    )
-
-
-def ReducedRegressionForecaster(
-    regressor, strategy="recursive", window_length=10, step_length=1
-):
-    """
-    Forecasting based on reduction to tabular regression.
-
-    When fitting, a rolling window approach is used to first transform the
-    target series into panel data which is
-    then used to train a regressor. During prediction, the last available
-    data is used as input to the
     fitted regressors to make forecasts.
 
     Parameters
     ----------
-    regressor : a regressor
+    scitype : str
+        Can be 'regressor' or 'ts-regressor'
+    strategy : str {"direct", "recursive", "multioutput"}, optional
+        Strategy to generate predictions
+    window_length : int, optional (default=10)
+    step_length : int, optional (default=1)
+    regressor : a regressor of type given by parameter scitype
 
     References
     ----------
@@ -503,7 +551,6 @@ def ReducedRegressionForecaster(
     2013).
       Machine Learning Strategies for Time Series Forecasting.
     """
-    scitype = "regressor"
     Forecaster = _get_forecaster_class(scitype, strategy)
     return Forecaster(
         regressor=regressor, window_length=window_length, step_length=step_length
@@ -515,19 +562,23 @@ def _get_forecaster_class(scitype, strategy):
     scitype)
     and reduction strategy"""
 
-    allowed_strategies = ("direct", "recursive", "dirrec")
+    allowed_strategies = ("direct", "recursive", "multioutput")
     if strategy not in allowed_strategies:
         raise ValueError(
             f"Unknown strategy, please provide one of {allowed_strategies}."
         )
 
-    if strategy == "dirrec":
-        raise NotImplementedError("The `dirrec` strategy is not yet implemented.")
+    if scitype == "ts_regressor" and strategy == "multioutput":
+        raise NotImplementedError(
+            "The `multioutput` strategy is not yet implemented "
+            "for time series regresors."
+        )
 
     lookup_table = {
         "regressor": {
             "direct": DirectRegressionForecaster,
             "recursive": RecursiveRegressionForecaster,
+            "multioutput": MultioutputRegressionForecaster,
         },
         "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,

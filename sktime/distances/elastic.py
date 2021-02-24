@@ -4,6 +4,10 @@ import numpy as np
 __author__ = "Jason Lines"
 
 
+def euclidean_distance(x, y):
+    return ed(x, y)
+
+
 def euclidean(x, y):
     return ed(x, y)
 
@@ -230,8 +234,7 @@ def msm_distance(first, second, **kwargs):
         try:
             c = kwargs["c"]
         except KeyError:
-            c = 0.1
-
+            c = 1
         m = len(first)
         n = len(second)
 

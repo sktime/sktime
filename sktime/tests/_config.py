@@ -31,6 +31,7 @@ from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import MultioutputRegressionForecaster
 from sktime.forecasting.compose import RecursiveRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
@@ -38,6 +39,7 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
@@ -71,6 +73,8 @@ from sktime.transformations.series.acf import AutoCorrelationTransformer
 from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.impute import Imputer
+
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -78,7 +82,6 @@ EXCLUDE_ESTIMATORS = [
     "ShapeDTW",
     "HIVECOTEV1",
     "ElasticEnsemble",
-    "KNeighborsTimeSeriesClassifier",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
@@ -125,6 +128,7 @@ ESTIMATOR_TEST_PARAMS = {
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectRegressionForecaster: {"regressor": REGRESSOR},
+    MultioutputRegressionForecaster: {"regressor": REGRESSOR},
     RecursiveRegressionForecaster: {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
         "regressor": make_pipeline(Tabularizer(), REGRESSOR)
@@ -140,6 +144,12 @@ ESTIMATOR_TEST_PARAMS = {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
+        "scoring": sMAPE(),
+    },
+    ForecastingRandomizedSearchCV: {
+        "forecaster": NaiveForecaster(strategy="mean"),
+        "cv": SingleWindowSplitter(fh=1),
+        "param_distributions": {"window_length": [2, 5]},
         "scoring": sMAPE(),
     },
     TabularToSeriesAdaptor: {"transformer": StandardScaler()},
@@ -226,6 +236,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     PartialAutoCorrelationTransformer: {"n_lags": 1},
     AutoCorrelationTransformer: {"n_lags": 1},
+    Imputer: {"method": "mean"},
 }
 
 # These methods should not change the state of the estimator, that is, they should
