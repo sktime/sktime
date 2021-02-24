@@ -50,7 +50,7 @@ from sktime.utils.validation.forecasting import check_X
 
 
 class NewDirectRegressionForecaster(
-    _BaseWindowForecaster, _RequiredForecastingHorizonMixin
+    _RequiredForecastingHorizonMixin, _BaseWindowForecaster
 ):
     """
     Forecasting based on reduction to tabular regression with a direct
@@ -126,7 +126,7 @@ class NewDirectRegressionForecaster(
         elif fit_or_predict == "predict":
             reduction_X = np.hstack(
                 [yX_[n_timepoints - w_length + i] for i in range(w_length)]
-            )
+            ).reshape((1, -1))
 
             return reduction_X
 
@@ -173,9 +173,7 @@ class NewDirectRegressionForecaster(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         # get last window from self._transform
-        reduction_X_last = self._transform(
-            self._y, self._X, fit_or_predict="prediction"
-        )
+        reduction_X_last = self._transform(self._y, self._X, fit_or_predict="predict")
 
         # preallocate array for forecasted values
         y_pred = np.zeros(len(fh))
