@@ -51,8 +51,6 @@ stages:
               versionSpec: 3.7
           - script: pip install -r build_tools/hard_dependencies.txt
             displayName: 'Install hard dependencies'
-          - script: conda install -c conda-forge dm-tree
-            displayName: 'Install dm-tree via conda'
           - script: pip install -e .
             displayName: 'Build sktime'
           - task: PythonScript@0
