@@ -9,15 +9,16 @@ __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
     "test_predict_time_index",
-    "test_update_predict_predicted_indices",
+    "test_update_predict_predicted_index",
+    "test_update_predict_predicted_index_update_params",
     "test_y_multivariate_raises_error",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
     "test_predict_pred_interval",
     "test_update_predict_single",
-    "test_invalid_y_type_raises_error",
+    "test_y_invalid_type_raises_error",
     "test_predict_time_index_with_X",
-    "test_invalid_X_type_raises_error",
+    "test_X_invalid_type_raises_error",
 ]
 
 import numpy as np
@@ -96,7 +97,7 @@ def test_y_multivariate_raises_error(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("y", INVALID_INPUT_TYPES)
-def test_invalid_y_type_raises_error(Forecaster, y):
+def test_y_invalid_type_raises_error(Forecaster, y):
     f = _construct_instance(Forecaster)
     with pytest.raises(TypeError, match=r"type"):
         f.fit(y, fh=FH0)
@@ -104,13 +105,13 @@ def test_invalid_y_type_raises_error(Forecaster, y):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("X", INVALID_INPUT_TYPES)
-def test_invalid_X_type_raises_error(Forecaster, X):
+def test_X_invalid_type_raises_error(Forecaster, X):
     f = _construct_instance(Forecaster)
     try:
         with pytest.raises(TypeError, match=r"type"):
             f.fit(y_train, X, fh=FH0)
     except NotImplementedError as e:
-        msg = str(e)
+        msg = str(e).lower()
         assert "exogenous" in msg
 
 
@@ -243,15 +244,25 @@ def test_score(Forecaster, fh):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-def test_update_predict_single(Forecaster, fh):
+@pytest.mark.parametrize("update_params", [True, False])
+def test_update_predict_single(Forecaster, fh, update_params):
     # Check correct time index of update-predict
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
-    y_pred = f.update_predict_single(y_test)
+    y_pred = f.update_predict_single(y_test, update_params=update_params)
     _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
 
-def _check_update_predict_y_pred(y_pred, y_test, fh, step_length):
+def _check_update_predict_predicted_index(
+    Forecaster, fh, window_length, step_length, update_params
+):
+    y = make_forecasting_problem(all_positive=True, index_type="datetime")
+    y_train, y_test = temporal_train_test_split(y)
+    cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh=fh)
+    y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
+
     assert isinstance(y_pred, (pd.Series, pd.DataFrame))
     if isinstance(y_pred, pd.DataFrame):
         assert y_pred.shape[1] > 1
@@ -260,18 +271,29 @@ def _check_update_predict_y_pred(y_pred, y_test, fh, step_length):
     np.testing.assert_array_equal(actual, expected)
 
 
+# test with update_params=False and different values for steps_length
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_length):
-    y = make_forecasting_problem(all_positive=True, index_type="datetime")
-    y_train, y_test = temporal_train_test_split(y)
-    cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=fh)
-    try:
-        y_pred = f.update_predict(y_test, cv=cv)
-        _check_update_predict_y_pred(y_pred, y_test, fh, step_length)
-    except NotImplementedError:
-        pass
+@pytest.mark.parametrize("update_params", [False])
+def test_update_predict_predicted_index(
+    Forecaster, fh, window_length, step_length, update_params
+):
+    _check_update_predict_predicted_index(
+        Forecaster, fh, window_length, step_length, update_params
+    )
+
+
+# test with update_params=True and step_length=1
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", [1])
+@pytest.mark.parametrize("update_params", [True])
+def test_update_predict_predicted_index_update_params(
+    Forecaster, fh, window_length, step_length, update_params
+):
+    _check_update_predict_predicted_index(
+        Forecaster, fh, window_length, step_length, update_params
+    )

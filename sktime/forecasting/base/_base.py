@@ -87,14 +87,14 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
 
         Returns
         -------
@@ -107,7 +107,7 @@ class BaseForecaster(BaseEstimator):
         y,
         cv=None,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -118,7 +118,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series
         cv : cross-validation generator, optional (default=None)
         X : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
 
@@ -136,7 +136,7 @@ class BaseForecaster(BaseEstimator):
         y_new,
         fh=None,
         X=None,
-        update_params=False,
+        update_params=True,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):

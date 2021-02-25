@@ -734,10 +734,10 @@
       ]
     },
     {
-      "login": "Afzal-Ind",
-      "name": "Afzal",
+      "login": "afzal442",
+      "name": "Afzal Ansari",
       "avatar_url": "https://avatars0.githubusercontent.com/u/11625672?v=4",
-      "profile": "https://github.com/Afzal-Ind",
+      "profile": "https://github.com/afzal442",
       "contributions": [
         "code",
         "doc"
@@ -841,15 +841,6 @@
       ]
     },
     {
-      "login": "afzal442",
-      "name": "Afzal",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/11625672?v=4",
-      "profile": "https://github.com/afzal442",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "vincent-nich12",
       "name": "vincent-nich12",
       "avatar_url": "https://avatars3.githubusercontent.com/u/36476633?v=4",
@@ -896,6 +887,25 @@
       "contributions": [
         "code",
         "test"
+      ]
+    },
+    {
+      "login": "Lovkush-A",
+      "name": "Lovkush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25344832?v=4",
+      "profile": "https://github.com/Lovkush-A",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "luiszugasti",
+      "name": "Luis Zugasti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11198457?s=460&u=0645b72683e491824aca16db9702f1d3eb990389&v=4",
+      "profile": "https://github.com/luiszugasti",
+      "contributions": [
+        "doc"
       ]
     }
   ],

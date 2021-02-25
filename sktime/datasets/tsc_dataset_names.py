@@ -196,7 +196,7 @@ multivariate = [
     "UWaveGestureLibrary",
 ]
 
-"""112 equal length univariate time series classification problems [3]"""
+"""113 equal length/no missing univariate time series classification problems [3]"""
 univariate_equal_length = [
     "ACSF1",
     "Adiac",
@@ -220,9 +220,6 @@ univariate_equal_length = [
     "DistalPhalanxOutlineCorrect",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxTW",
-    "DodgerLoopDay",
-    "DodgerLoopGame",
-    "DodgerLoopWeekend",
     "Earthquakes",
     "ECG200",
     "ECG5000",
@@ -261,7 +258,6 @@ univariate_equal_length = [
     "Mallat",
     "Meat",
     "MedicalImages",
-    "MelbournePedestrian",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxTW",
@@ -317,6 +313,29 @@ univariate_equal_length = [
     "Yoga",
 ]
 
+"""11 variable length univariate time series classification problems [3]"""
+univariate_variable_length = [
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
+    "GestureMidAirD1",
+    "GestureMidAirD2",
+    "GestureMidAirD3",
+    "GesturePebbleZ1",
+    "GesturePebbleZ2",
+    "PickupGestureWiimoteZ",
+    "PLAID",
+    "ShakeGestureWiimoteZ",
+]
+
+"""4 fixed length univariate time series classification problems with missing values"""
+univariate_missing_values = [
+    "DodgerLoopDay",
+    "DodgerLoopGame",
+    "DodgerLoopWeekend",
+    "MelbournePedestrian",
+]
+
 """26 equal length multivariate time series classification problems [4]"""
 multivariate_equal_length = [
     "ArticularyWordRecognition",
@@ -345,4 +364,15 @@ multivariate_equal_length = [
     "SelfRegulationSCP2",
     "StandWalkJump",
     "UWaveGestureLibrary",
+]
+
+"""7 variable length multivariate time series classification problems [4]"""
+multivariate_unequal_length = [
+    "AsphaltObstaclesCoordinates",
+    "AsphaltPavementTypeCoordinates",
+    "AsphaltRegularityCoordinates",
+    "CharacterTrajectories",
+    "InsectWingbeat",
+    "JapaneseVowels",
+    "SpokenArabicDigits",
 ]
