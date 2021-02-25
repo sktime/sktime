@@ -69,7 +69,6 @@ class HampelFilter(_SeriesToSeriesTransformer):
             cv_window = i[0]
             cv_median = np.nanmedian(z[cv_window])
             cv_sigma = self.k * np.nanmedian(np.abs(z[cv_window] - cv_median))
-            # cv_middle = cv_window[0] + half_window_length
 
             # find outliers at start and end of z
             if (
@@ -97,6 +96,8 @@ class HampelFilter(_SeriesToSeriesTransformer):
                     cv_median=cv_median,
                     cv_sigma=cv_sigma,
                 )
+
+        # data post-processing
         if self.return_bool:
             z = z.apply(lambda x: True if np.isnan(x) else False)
         return z
