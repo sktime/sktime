@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-""" Time Series Forest Classifier (TSF).
-Implementation of Deng's Time Series Forest, with minor changes
+""" Time Series Forest *Regressor* (TSF).
+Currently a copy paste implementation of:
+"/sktime/classification/interval_based/_tsf.py"
 """
 
 __author__ = ["Tony Bagnall", "kkoziara"]
@@ -12,7 +13,7 @@ import numpy as np
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
+from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -23,8 +24,9 @@ from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-class TimeSeriesForest(ForestClassifier, BaseRegressor):
-    """Time series forest classifier.
+class TimeSeriesForest(ForestRegressor, BaseRegressor):
+    """Time series forest _regressor_.
+    TO DO: Check if it's necessary to review this documentation.
 
     A time series forest is an ensemble of decision trees built on random intervals.
      Overview: Input n series length m
