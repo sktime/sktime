@@ -38,12 +38,15 @@ class HampelFilter(_SeriesToSeriesTransformer):
     https://github.com/MichaelisTrofficus/hampel_filter
     """
 
+    _tags = {"univariate-only": True, "fit-in-transform": True}
+
     def __init__(self, window_length, n_sigma=3, k=1.4826, return_bool=False):
 
         self.window_length = window_length
         self.n_sigma = n_sigma
         self.k = k
         self.return_bool = return_bool
+        super(HampelFilter, self).__init__()
 
     def transform(self, Z, X=None):
         self.check_is_fitted()
