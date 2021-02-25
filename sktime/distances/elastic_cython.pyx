@@ -88,7 +88,7 @@ def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , do
     return D[lx,ly]
 
 
-def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0):
+def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0.05):
 
     # make sure x is shorter than y
     # if not permute
@@ -204,7 +204,8 @@ cdef _msm_calc_cost(double new_point, double x, double y, double c):
     else:
         return c + min_c(fabs(new_point - x), fabs(new_point - y))
 
-def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int delta = 3, double epsilon = 1,
+def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int delta
+= 3, double epsilon = 0.05,
                   int dim_to_use = 0):
 
     cdef np.ndarray[double, ndim=2] first = x
