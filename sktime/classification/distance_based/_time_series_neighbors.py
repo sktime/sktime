@@ -133,7 +133,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
-                "metric_params": [{"w": x / 100} for x in range(0, 100)]
+                "distance_params": [{"w": x / 100} for x in range(0, 100)]
             }
         elif distance == "ddtw":
             distance = ddtw_distance
@@ -203,14 +203,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if self._cv_for_params:
             grid = GridSearchCV(
                 estimator=KNeighborsTimeSeriesClassifier(
-                    distance=self.metric, n_neighbors=1, algorithm="brute"
+                    distance=self.metric, n_neighbors=1
                 ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
                 scoring="accuracy",
             )
             grid.fit(X, y)
-            self.metric_params = grid.best_params_["metric_params"]
+            self.distance_params = grid.best_params_["distance_params"]
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
