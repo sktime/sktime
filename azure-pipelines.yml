@@ -51,8 +51,6 @@ stages:
               versionSpec: 3.7
           - script: pip install -r build_tools/hard_dependencies.txt
             displayName: 'Install hard dependencies'
-          - script: pip install https://files.pythonhosted.org/packages/a8/cc/63ecd7ce85f998c11ae0ea2909ebc0f53751ce379099c10f887b4e6554ee/dm_tree-0.1.5-cp38-cp38-manylinux2014_x86_64.whl
-            displayName: 'Install dm-tree via wheel'
           - script: pip install -e .
             displayName: 'Build sktime'
           - task: PythonScript@0
