@@ -11,6 +11,7 @@ __all__ = [
     "check_scoring",
     "check_sp",
     "check_y_true_pred",
+    "check_horizon_weights",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -418,3 +419,27 @@ def check_y_true_pred(y_true, y_pred):
         actual, forecast = y_true, y_pred
 
     return actual, forecast
+
+
+def check_horizon_weights(horizon_weight, y_pred):
+    """Validate forecasting horizon weights
+
+    Parameters
+    ----------
+    horizon_weight : array-like of shape (fh,)
+        Forecast horizon weights.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
+    """
+    horizon_weight = check_series(
+        horizon_weight,
+        enforce_univariate=True,
+        allow_empty=False,
+        allow_numpy=True,
+        enforce_index_type=None,
+    )
+    check_equal_timeseries_length(horizon_weight, y_pred)
+
+    return horizon_weight
