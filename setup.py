@@ -26,7 +26,6 @@ MIN_REQUIREMENTS = {
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.1",
     "numba": "0.50",
-    "tqdm": "4.10.0",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
