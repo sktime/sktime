@@ -13,7 +13,7 @@ from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
@@ -92,7 +92,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         random_state=None,
     ):
         super(TimeSeriesForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(criterion="entropy"),
+            base_estimator=DecisionTreeRegressor(criterion="entropy"),
             n_estimators=n_estimators,
         )
 
