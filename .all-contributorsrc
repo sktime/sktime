@@ -908,6 +908,15 @@
         "doc"
       ]
     }
+    {
+      "login": "kanand77",
+      "name": "Kavin Anand",
+      "avatar_url": "https://avatars.githubusercontent.com/kanand77",
+      "profile": "https://github.com/kanand77",
+      "contributions": [
+        "doc"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
