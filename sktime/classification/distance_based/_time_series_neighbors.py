@@ -513,15 +513,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     @staticmethod
     def default_param_values(distance):
         if distance == dtw_distance or distance == ddtw_distance:
-            return {"w": -1}
+            return {"w": 1}
         elif distance == wdtw_distance or distance == wddtw_distance:
             return {"g": 0}
         elif distance == lcss_distance:
             return {"epsilon": 0.05, "delta": 3}
         elif distance == twe_distance:
             return {"penalty": 1, "stiffness": 1}
-        # elif distance == msm_distance:
-        #    return {"c":1}
+        elif distance == msm_distance:
+            return {"c": 1}
         elif distance == erp_distance:
             return {"band_size": 5, "g": 0}
 
