@@ -515,7 +515,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if distance == dtw_distance or distance == ddtw_distance:
             return {"w": 1}
         elif distance == wdtw_distance or distance == wddtw_distance:
-            return {"g": 0}
+            return {"g": 0.05}
         elif distance == lcss_distance:
             return {"epsilon": 0.05, "delta": 3}
         elif distance == twe_distance:
