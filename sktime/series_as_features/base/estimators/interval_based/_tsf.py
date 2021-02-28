@@ -1,25 +1,207 @@
 # -*- coding: utf-8 -*-
 """
-    TODO: Currently a work in progress!
     Base Time Series Forest Class.
     An implementation of Deng's Time Series Forest, with minor changes.
 """
 
 __author__ = ["Tony Badnall", "kkoziara", "luiszugasti"]
 __all__ = [
+    "BaseTimeSeriesForest",
     "_transform",
     "_get_intervals",
     "_fit_estimator",
     "_predict_proba_for_estimator",
 ]
 
+from abc import ABC, abstractmethod
+import math
+
 import numpy as np
 from sklearn.base import clone
+from joblib import Parallel
+from joblib import delayed
+from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.validation import check_random_state
 
 from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
-# TODO: Determine what names need to be hidden and what names don't
+class BaseTimeSeriesForest(ABC):
+    """Base Time series forest classifier.
+
+    A time series forest is an ensemble of decision trees built on random intervals.
+     Overview: Input n series length m
+     for each tree
+         sample sqrt(m) intervals
+         find mean, std and slope for each interval, concatenate to form new
+         data set
+         build decision tree on new data set
+     ensemble the trees with averaged probability estimates
+
+     This implementation deviates from the original in minor ways. It samples
+     intervals with replacement and does not use the splitting criteria tiny
+     refinement described in [1]. This is an intentionally stripped down, non
+     configurable version for use as a hive-cote component. For a configurable
+     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+
+     TO DO: handle missing values, unequal length series and multivariate
+     problems
+
+     Parameters
+     ----------
+     n_estimators    : int, ensemble size, optional (default = 200)
+     min_interval    : int, minimum width of an interval, optional (default
+     to 3)
+     n_jobs          : int, optional (default=1)
+         The number of jobs to run in parallel for both `fit` and `predict`.
+         ``-1`` means using all processors.
+     random_state    : int, seed for random, optional (default = none)
+
+     Attributes
+     ----------
+     n_classes    : int, extracted from the data
+     num_atts     : int, extracted from the data
+     n_intervals  : int, sqrt(num_atts)
+     classifiers  : array of shape = [n_estimators] of DecisionTree
+     classifiers
+     intervals    : array of shape = [n_estimators][n_intervals][2] stores
+     indexes of all start and end points for all classifiers
+     dim_to_use   : int, the column of the panda passed to use (can be
+     passed a multidimensional problem, but will only use one)
+     classes_    : List of classes for a given problem
+
+     References
+     ----------
+     .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+     classification and feature extraction",Information Sciences, 239, 2013
+     Java implementation
+     https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+     java/tsml/classifiers/interval_based/TSF.java
+     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
+    """
+
+    @property
+    @abstractmethod
+    def capabilities(self):
+        pass
+
+    def fit(self, X, y):
+        """Build a forest of trees from the training set (X, y) using random
+        intervals and summary features
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances,
+        series_length] or shape = [n_instances,n_columns]
+            The training input samples.  If a Pandas data frame is passed it
+            must have a single column (i.e. univariate
+            classification. TSF has no bespoke method for multivariate
+            classification as yet.
+        y : array-like, shape =  [n_instances]    The class labels.
+
+        Returns
+        -------
+        self : object
+        """
+        X, y = check_X_y(
+            X,
+            y,
+            enforce_univariate=not self.capabilities["multivariate"],
+            coerce_to_numpy=True,
+        )
+        X = X.squeeze(1)
+        n_instances, self.series_length = X.shape
+
+        rng = check_random_state(self.random_state)
+
+        self.n_classes = np.unique(y).shape[0]
+
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        self.n_intervals = int(math.sqrt(self.series_length))
+        if self.n_intervals == 0:
+            self.n_intervals = 1
+        if self.series_length < self.min_interval:
+            self.min_interval = self.series_length
+
+        self.intervals_ = [
+            _get_intervals(self.n_intervals, self.min_interval, self.series_length, rng)
+            for _ in range(self.n_estimators)
+        ]
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_estimator)(
+                X,
+                y,
+                self.base_estimator,
+                self.intervals_[i],
+                self.random_state,
+            )
+            for i in range(self.n_estimators)
+        )
+
+        self._is_fitted = True
+        return self
+
+    def predict(self, X):
+        """
+        Find predictions for all cases in X. Built on top of predict_proba
+        Parameters
+        ----------
+        X : The training input samples. array-like or pandas data frame.
+        If a Pandas data frame is passed, a check is performed that it only
+        has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
+        proba = self.predict_proba(X)
+        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
+
+    def predict_proba(self, X):
+        """
+        Find probability estimates for each class for all cases in X.
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is
+            performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        output : nd.array of shape = (n_instances, n_classes)
+            Predicted probabilities
+        """
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
+
+        _, series_length = X.shape
+        if series_length != self.series_length:
+            raise TypeError(
+                " ERROR number of attributes in the train does not match "
+                "that in the test data"
+            )
+        y_probas = Parallel(n_jobs=self.n_jobs)(
+            delayed(_predict_proba_for_estimator)(
+                X, self.estimators_[i], self.intervals_[i]
+            )
+            for i in range(self.n_estimators)
+        )
+
+        output = np.sum(y_probas, axis=0) / (
+            np.ones(self.n_classes) * self.n_estimators
+        )
+        return output
+
+
 def _transform(X, intervals):
     """Compute the mean, standard deviation and slope for given intervals
     of input data X.
