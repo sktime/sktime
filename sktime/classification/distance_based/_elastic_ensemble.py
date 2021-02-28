@@ -318,7 +318,7 @@ class ElasticEnsemble(BaseClassifier):
             best_model = KNeighborsTimeSeriesClassifier(
                 n_neighbors=1,
                 distance=this_measure,
-                distance_params=grid.best_params_["distance_params"],
+                metric_params=grid.best_params_["metric_params"],
             )
             preds = cross_val_predict(
                 best_model, full_train_to_use, y, cv=LeaveOneOut()
@@ -332,7 +332,7 @@ class ElasticEnsemble(BaseClassifier):
                     + ": "
                     + str(acc)
                     + " (with parameter setting: "
-                    + str(grid.best_params_["distance_params"])
+                    + str(grid.best_params_["metric_params"])
                     + ")"
                 )
 
@@ -341,7 +341,7 @@ class ElasticEnsemble(BaseClassifier):
             best_model = KNeighborsTimeSeriesClassifier(
                 n_neighbors=1,
                 distance=this_measure,
-                distance_params=grid.best_params_["distance_params"],
+                metric_params=grid.best_params_["metric_params"],
             )
             best_model.fit(full_train_to_use, y)
             end_build_time = time.time()
@@ -506,9 +506,9 @@ class ElasticEnsemble(BaseClassifier):
             return np.arange(min_val, max_val + inc / 2, inc)
 
         if distance_measure == dtw_c or distance_measure == ddtw_c:
-            return {"distance_params": [{"w": x / 100} for x in range(0, 100)]}
+            return {"metric_params": [{"w": x / 100} for x in range(0, 100)]}
         elif distance_measure == wdtw_c or distance_measure == wddtw_c:
-            return {"distance_params": [{"g": x / 100} for x in range(0, 100)]}
+            return {"metric_params": [{"g": x / 100} for x in range(0, 100)]}
         elif distance_measure == lcss_c:
             train_std = np.std(train_x)
             epsilons = get_inclusive(train_std * 0.2, train_std, 10)
@@ -516,7 +516,7 @@ class ElasticEnsemble(BaseClassifier):
             deltas = [int(d) for d in deltas]
             a = list(product(epsilons, deltas))
             return {
-                "distance_params": [
+                "metric_params": [
                     {"epsilon": a[x][0], "delta": a[x][1]} for x in range(0, len(a))
                 ]
             }
@@ -526,7 +526,7 @@ class ElasticEnsemble(BaseClassifier):
             g_vals = get_inclusive(train_std * 0.2, train_std, 10)
             b_and_g = list(product(band_sizes, g_vals))
             return {
-                "distance_params": [
+                "metric_params": [
                     {"band_size": b_and_g[x][0], "g": b_and_g[x][1]}
                     for x in range(0, len(b_and_g))
                 ]
@@ -537,7 +537,7 @@ class ElasticEnsemble(BaseClassifier):
             c = get_inclusive(1, 10, 26)
             d = get_inclusive(10, 100, 26)
             return {
-                "distance_params": [
+                "metric_params": [
                     {"c": x} for x in np.concatenate([a, b[1:], c[1:], d[1:]])
                 ]
             }

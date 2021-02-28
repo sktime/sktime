@@ -110,20 +110,18 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         n_neighbors=1,
         weights="uniform",
         distance="dtw",
-        distance_params=None,
+        metric_params=None,
         **kwargs
     ):
         self._cv_for_params = False
         self.distance = distance
-        self.distance_params = distance_params
-
         if distance == "euclidean":  # Euclidean will default to the base class distance
             distance = euclidean_distance
         elif distance == "dtw":
             distance = dtw_distance
         elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
-            if distance_params is not None:
+            if metric_params is not None:
                 warnings.warn(
                     "Warning: measure parameters have been specified for "
                     "dtwcv. "
@@ -133,7 +131,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
-                "distance_params": [{"w": x / 100} for x in range(0, 100)]
+                "metric_params": [{"w": x / 100} for x in range(0, 100)]
             }
         elif distance == "ddtw":
             distance = ddtw_distance
@@ -161,12 +159,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                     "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
-
+        if metric_params is None and not self._cv_for_params:
+            metric_params = self.default_param_values(distance)
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm="brute",
             metric=distance,
-            metric_params=distance_params,
+            metric_params=metric_params,
             **kwargs
         )
         self.weights = _check_weights(weights)
@@ -210,7 +209,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 scoring="accuracy",
             )
             grid.fit(X, y)
-            self.distance_params = grid.best_params_["distance_params"]
+            self.metric_params = grid.best_params_["metric_params"]
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -510,6 +509,21 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             check_array.__code__ = temp
         return probabilities
+
+    @staticmethod
+    def default_param_values(distance):
+        if distance == dtw_distance or distance == ddtw_distance:
+            return {"w": -1}
+        elif distance == wdtw_distance or distance == wddtw_distance:
+            return {"g": 0}
+        elif distance == lcss_distance:
+            return {"epsilon": 0.05, "delta": 3}
+        elif distance == twe_distance:
+            return {"penalty": 1, "stiffness": 1}
+        # elif distance == msm_distance:
+        #    return {"c":1}
+        elif distance == erp_distance:
+            return {"band_size": 5, "g": 0}
 
 
 # overwrite sklearn internal checks, this is really hacky
