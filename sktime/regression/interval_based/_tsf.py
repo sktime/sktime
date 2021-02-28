@@ -12,16 +12,19 @@ import math
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
-from sklearn.base import clone
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseRegressor
-from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
+from sktime.series_as_features.base.estimators.interval_based._tsf import (
+    _get_intervals,
+    _fit_estimator,
+    _predict_proba_for_estimator,
+)
 
 
 class TimeSeriesForest(ForestRegressor, BaseRegressor):
@@ -226,59 +229,3 @@ class TimeSeriesForest(ForestRegressor, BaseRegressor):
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
-
-
-def _transform(X, intervals):
-    """
-    Compute the mean, standard deviation and slope for given intervals
-    of input data X.
-    """
-    n_instances, _ = X.shape
-    n_intervals, _ = intervals.shape
-    transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
-    for j in range(n_intervals):
-        X_slice = X[:, intervals[j][0] : intervals[j][1]]
-        means = np.mean(X_slice, axis=1)
-        std_dev = np.std(X_slice, axis=1)
-        slope = _slope(X_slice, axis=1)
-        transformed_x[3 * j] = means
-        transformed_x[3 * j + 1] = std_dev
-        transformed_x[3 * j + 2] = slope
-
-    return transformed_x.T
-
-
-def _get_intervals(n_intervals, min_interval, series_length, rng):
-    """
-    Generate random intervals for given parameters.
-    """
-    intervals = np.zeros((n_intervals, 2), dtype=int)
-    for j in range(n_intervals):
-        intervals[j][0] = rng.randint(series_length - min_interval)
-        length = rng.randint(series_length - intervals[j][0] - 1)
-        if length < min_interval:
-            length = min_interval
-        intervals[j][1] = intervals[j][0] + length
-    return intervals
-
-
-def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
-    """
-    Fit an estimator - a clone of base_estimator - on input data (X, y)
-    transformed using the randomly generated intervals.
-    """
-
-    estimator = clone(base_estimator)
-    estimator.set_params(random_state=random_state)
-
-    transformed_x = _transform(X, intervals)
-    return estimator.fit(transformed_x, y)
-
-
-def _predict_proba_for_estimator(X, estimator, intervals):
-    """
-    Find probability estimates for each class for all cases in X using
-    given estimator and intervals.
-    """
-    transformed_x = _transform(X, intervals)
-    return estimator.predict_proba(transformed_x)
