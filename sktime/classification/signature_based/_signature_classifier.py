@@ -16,10 +16,10 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.signature_based._checks import (
+from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.transformers.panel.signature_based._signature_method import (
+from sktime.transformations.panel.signature_based._signature_method import (
     GeneralisedSignatureMethod,
 )
 

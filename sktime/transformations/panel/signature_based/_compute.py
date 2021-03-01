@@ -5,13 +5,13 @@ compute.py
 Class for signature computation over windows.
 """
 import numpy as np
-from sktime.transformers.base import _SeriesToPrimitivesTransformer
-from sktime.transformers.panel.signature_based._window import _window_getter
-from sktime.transformers.panel.signature_based._rescaling import (
+from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.panel.signature_based._window import _window_getter
+from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_path,
     _rescale_signature,
 )
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
 import esig  # noqa: E402

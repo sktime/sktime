@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.pipeline import Pipeline
-from sktime.transformers.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import _SeriesToSeriesTransformer
 
 
 def _make_augmentation_pipeline(aug_list):

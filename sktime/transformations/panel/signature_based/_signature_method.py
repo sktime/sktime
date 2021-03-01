@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 from sklearn.pipeline import Pipeline
-from sktime.transformers.base import _PanelToTabularTransformer
-from sktime.transformers.panel.signature_based._compute import (
+from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.transformers.panel.signature_based._augmentations import (
+from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
-from sktime.transformers.panel.signature_based._checks import (
+from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 
 _check_soft_dependencies("esig")
 
