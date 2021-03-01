@@ -104,6 +104,17 @@ BATS/TBATS
 
     TBATS
 
+Multiplexer
+----------
+
+.. currentmodule:: sktime.forecasting.bats
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    Multiplexer
+
 Prophet
 -------
 
@@ -159,6 +170,7 @@ Model Selection
     CutoffSplitter
     SingleWindowSplitter
     SlidingWindowSplitter
+    ExpandingWindowSplitter
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
 
