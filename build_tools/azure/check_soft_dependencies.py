@@ -26,6 +26,8 @@ SOFT_DEPENDENCIES = {
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.panel.catch22_features": ["catch22"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
+    "sktime.classification.signature_based": ["esig"],
+    "sktime.transformations.panel.signature_based": ["esig"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 
