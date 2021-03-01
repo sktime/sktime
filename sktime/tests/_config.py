@@ -74,6 +74,7 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
+from sktime.forecasting.model_selection.multiplexer import Multiplexer
 
 
 # The following estimators currently do not pass all unit tests
@@ -179,6 +180,12 @@ ESTIMATOR_TEST_PARAMS = {
         "max_p": 2,
         "max_q": 2,
         "seasonal": False,
+    },
+    Multiplexer: {
+        "components": {
+            "TBATS": TBATS(sp=12, use_trend=True, use_box_cox=False),
+            "ETS": ExponentialSmoothing(trend="add", seasonal="multiplicative", sp=12),
+        }
     },
     ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
