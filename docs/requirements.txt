@@ -1,3 +1,4 @@
+esig<=0.6.31
 jupyter
 m2r2
 matplotlib
