@@ -209,7 +209,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             grid.fit(X, y)
             self.metric_params = grid.best_params_["metric_params"]
         elif self.metric_params is None and not self._cv_for_params:
-            self.metric_params = self.default_param_values(self.distance)
+            self.metric_params = self.default_param_values(self.metric)
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
                 warnings.warn(
