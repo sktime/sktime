@@ -159,8 +159,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                     "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
-        if metric_params is None and not self._cv_for_params:
-            metric_params = self.default_param_values(distance)
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm="brute",
@@ -210,7 +208,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             )
             grid.fit(X, y)
             self.metric_params = grid.best_params_["metric_params"]
-
+        elif self.metric_params is None and not self._cv_for_params:
+            self.metric_params = self.default_param_values(self.distance)
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
                 warnings.warn(
