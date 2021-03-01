@@ -185,7 +185,8 @@ ESTIMATOR_TEST_PARAMS = {
         "components": {
             "TBATS": TBATS(sp=12, use_trend=True, use_box_cox=False),
             "ETS": ExponentialSmoothing(trend="add", seasonal="multiplicative", sp=12),
-        }
+        },
+        "select": "ETS",
     },
     ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
