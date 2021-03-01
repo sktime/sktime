@@ -74,7 +74,7 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
-from sktime.forecasting.model_selection.multiplexer import Multiplexer
+from sktime.forecasting.multiplexer import Multiplexer
 
 
 # The following estimators currently do not pass all unit tests
