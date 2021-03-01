@@ -5,6 +5,7 @@
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
+import copy
 
 __author__ = ["Kutay Koralturk"]
 __all__ = ["Multiplexer"]
@@ -64,11 +65,10 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         self.components = components
         self.component_fit_params = component_fit_params
-        self._forecaster = None
-        self._forecaster_fit_params = None
         self.select = select
         self._check_components()
         self._check_component_fit_params()
+        self._forecaster_fit_params = None
 
         super(Multiplexer, self).__init__()
 
@@ -119,7 +119,7 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def _update_forecaster(self):
         self._check_select_argument()
         if self.select is not None:
-            self._forecaster = self.components[self.select]
+            self._forecaster = copy.deepcopy(self.components[self.select])
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -139,9 +139,8 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._set_y_X(y, X)
         self._set_fh(fh)
         self._check_select_argument()
-        self._update_forecaster()
         self._update_component_fit_params()
-
+        self._update_forecaster()
         if self._forecaster_fit_params:
             self._forecaster.fit(y, X=X, fh=fh, **self._forecaster_fit_params)
         else:
