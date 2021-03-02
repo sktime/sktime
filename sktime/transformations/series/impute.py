@@ -42,7 +42,11 @@ class Imputer(_SeriesToSeriesTransformer):
         Value to set random.seed() if method="random", default None
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {
+        "univariate-only": True,
+        "fit-in-transform": True,
+        "handles_missing_data": True,
+    }
 
     def __init__(
         self,
