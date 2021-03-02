@@ -259,6 +259,7 @@ VALID_ESTIMATOR_TAGS = (
     "fit-in-transform",  # fitted in transform or non-fittable
     "univariate-only",
     "transform-returns-same-time-index",
+    "handles-missing-data",
 )
 
 # The following gives a list of valid estimator base classes.

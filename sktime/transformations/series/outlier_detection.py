@@ -41,7 +41,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
     _tags = {
         "univariate-only": True,
         "fit-in-transform": True,
-        "handles_missing_data": True,
+        "handles-missing-data": True,
     }
 
     def __init__(self, window_length, n_sigma=3, k=1.4826, return_bool=False):

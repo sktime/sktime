@@ -45,7 +45,7 @@ class Imputer(_SeriesToSeriesTransformer):
     _tags = {
         "univariate-only": True,
         "fit-in-transform": True,
-        "handles_missing_data": True,
+        "handles-missing-data": True,
     }
 
     def __init__(

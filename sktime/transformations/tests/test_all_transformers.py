@@ -82,7 +82,7 @@ def check_series_to_series_transform_univariate(Estimator):
     out = _construct_fit_transform(
         Estimator,
         n_timepoints=n_timepoints,
-        add_nan=_has_tag(Estimator, "handles_missing_data"),
+        add_nan=_has_tag(Estimator, "handles-missing-data"),
     )
     assert isinstance(out, (pd.Series, np.ndarray))
 
