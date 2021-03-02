@@ -115,6 +115,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     ):
         self._cv_for_params = False
         self.distance = distance
+        self.metric_params = metric_params
         if distance == "euclidean":  # Euclidean will default to the base class distance
             distance = euclidean_distance
         elif distance == "dtw":
@@ -159,13 +160,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                     "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
-        if metric_params is None and not self._cv_for_params:
-            metric_params = self.default_param_values(distance)
+        if self.metric_params is None and not self._cv_for_params:
+            self.metric_params = self.default_param_values(distance)
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm="brute",
             metric=distance,
-            metric_params=metric_params,
+            metric_params=self.metric_params,
             **kwargs
         )
         self.weights = _check_weights(weights)
