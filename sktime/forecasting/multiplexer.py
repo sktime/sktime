@@ -121,7 +121,7 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if self.select is not None:
             self._forecaster = copy.deepcopy(self.components[self.select])
 
-    def _fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -154,7 +154,9 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
-    def _update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
+        self.check_is_fitted()
+        self._update_y_X(y, X)
         self._forecaster.update(y, X, update_params=update_params)
         return self
