@@ -15,7 +15,6 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def __init__(
         self,
         components: dict,
-        component_fit_params: dict = None,
         select=None,
     ):
 
@@ -42,10 +41,6 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         components : dict
             A dictionary composed of key-value pairs
             of forecaster names and forecaster objects.
-        component_fit_params : dict
-            A dictionary composed of key-value pairs
-            of forecaster names and fit params to be
-            used for each forecaster.
         select: str
             An argument to make a selection among components.
             Multiplexer uses select to choose which component to fit.
@@ -64,7 +59,6 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         """
 
         self.components = components
-        self.component_fit_params = component_fit_params
         self.select = select
         self._check_components()
         self._check_component_fit_params()
@@ -83,13 +77,11 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     )
                 )
 
-    def _check_component_fit_params(self):
-        if self.component_fit_params is None:
+    def _check__fit_params(self, fit_params):
+        if self.fit_params is None:
             return
 
-        if not (
-            all(x in self.components.keys() for x in self.component_fit_params.keys())
-        ):
+        if not (all(x in self.components.keys() for x in self.fit_params.keys())):
             raise KeyError(
                 "If you provide fit_params for models \
                             dictionary key of fit params need to \
@@ -105,13 +97,13 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 )
             )
 
-    def _update_component_fit_params(self):
-        self._check_component_fit_params()
+    def _update_forecaster_fit_params(self, fit_params):
+        self._check_component_fit_params(fit_params)
 
-        if self.select is None or self.component_fit_params is None:
+        if self.select is None or self.fit_params is None:
             return
 
-        if self.select in self.component_fit_params:
+        if self.select in self.fit_params:
             self._forecaster_fit_params = self.component_fit_params[self.select]
         else:
             self._forecaster_fit_params = None
@@ -121,7 +113,7 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if self.select is not None:
             self._forecaster = copy.deepcopy(self.components[self.select])
 
-    def fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
@@ -132,16 +124,21 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+        fit_params : dict
+            A dictionary composed of key-value pairs
+            of forecaster names and fit params to be
+            used for each forecaster.
+            Example: {"ARIMA": ..., "ETS": ...}
         Returns
         -------
         self : returns an instance of self.
         """
         self._set_y_X(y, X)
         self._set_fh(fh)
-        self._check_select_argument()
-        self._update_component_fit_params()
         self._update_forecaster()
-        if self._forecaster_fit_params:
+        self._update_forecaster_fit_params(fit_params=fit_params)
+
+        if fit_params:
             self._forecaster.fit(y, X=X, fh=fh, **self._forecaster_fit_params)
         else:
             self._forecaster.fit(y, X=X, fh=fh)
