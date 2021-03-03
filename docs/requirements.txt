@@ -1,4 +1,4 @@
-esig<=0.6.31
+esig<=0.6.31 --prefer-binary
 jupyter
 m2r2
 matplotlib
