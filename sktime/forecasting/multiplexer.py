@@ -52,7 +52,7 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         _forecaster : Sktime forecaster
             forecaster that multiplexer will currently
             forecast with.
-        _forecaster_fit_params: float
+        _forecaster_fit_params: dict
             Fit params for the forecaster that is
             going to be used by the forecaster in the
             _forecaster
