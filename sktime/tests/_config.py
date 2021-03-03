@@ -183,7 +183,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     Multiplexer: {
         "components": {
-            "TBATS": TBATS(sp=12, use_trend=True, use_box_cox=False),
+            "Naive": NaiveForecaster(strategy="mean"),
             "ETS": ExponentialSmoothing(trend="add", seasonal="multiplicative", sp=12),
         },
         "select": "ETS",
