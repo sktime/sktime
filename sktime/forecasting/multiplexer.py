@@ -61,7 +61,6 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.components = components
         self.select = select
         self._check_components()
-        self._check_component_fit_params()
         self._forecaster_fit_params = None
 
         super(Multiplexer, self).__init__()
@@ -77,11 +76,11 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                     )
                 )
 
-    def _check__fit_params(self, fit_params):
-        if self.fit_params is None:
+    def _check_fit_params(self, fit_params):
+        if fit_params is None:
             return
 
-        if not (all(x in self.components.keys() for x in self.fit_params.keys())):
+        if not (all(x in self.components.keys() for x in fit_params.keys())):
             raise KeyError(
                 "If you provide fit_params for models \
                             dictionary key of fit params need to \
@@ -98,12 +97,12 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             )
 
     def _update_forecaster_fit_params(self, fit_params):
-        self._check_component_fit_params(fit_params)
+        self._check_fit_params(fit_params)
 
-        if self.select is None or self.fit_params is None:
+        if self.select is None or fit_params is None:
             return
 
-        if self.select in self.fit_params:
+        if self.select in fit_params:
             self._forecaster_fit_params = self.component_fit_params[self.select]
         else:
             self._forecaster_fit_params = None
