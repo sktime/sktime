@@ -15,7 +15,7 @@ __all__ = [
     "ProximityTree",
     "ProximityForest",
     "ElasticEnsemble",
-    "TimeSeriesForest",
+    "TSFC",
     "RandomIntervalSpectralForest",
     "SupervisedTimeSeriesForest",
     "TimeSeriesForestClassifier",
@@ -44,7 +44,7 @@ from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import ProximityTree
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier

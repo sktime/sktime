@@ -13,7 +13,7 @@ __all__ = [
     "_predict_proba_for_estimator",
 ]
 
-from abc import ABC, abstractmethod
+from abc import ABC
 import math
 
 import numpy as np
@@ -115,11 +115,6 @@ class BaseTimeSeriesForest(ABC):
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
-
-    @property
-    @abstractmethod
-    def capabilities(self):
-        pass
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random

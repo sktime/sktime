@@ -21,7 +21,7 @@ from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -113,7 +113,7 @@ TRANSFORMERS = [
     ),
 ]
 REGRESSOR = LinearRegression()
-TIME_SERIES_CLASSIFIER = TimeSeriesForest(n_estimators=3)
+TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
@@ -203,7 +203,7 @@ ESTIMATOR_TEST_PARAMS = {
         "max_ensemble_size": 5,
         "randomly_selected_params": 20,
     },
-    TimeSeriesForest: {"n_estimators": 3},
+    TSFC: {"n_estimators": 3},
     TimeSeriesForestClassifier: {"n_estimators": 3},
     TimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
