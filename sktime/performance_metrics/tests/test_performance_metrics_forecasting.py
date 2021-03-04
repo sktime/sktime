@@ -152,15 +152,15 @@ LOSS_RESULTS = {
         "class": MedianAbsolutePercentageError(),
     },
     mean_squared_percentage_error: {
-        "test_case_1": 3.203423,
-        "test_case_2": 3.4274868,
-        "test_case_3": 507.06e30,
+        "test_case_1": 320.34230364470864,
+        "test_case_2": 342.74868218036704,
+        "test_case_3": 5.070602400912918e34,
         "class": MeanSquaredPercentageError(),
     },
     median_squared_percentage_error: {
-        "test_case_1": 2.9589709,
-        "test_case_2": 2.3172298,
-        "test_case_3": 100.0,
+        "test_case_1": 295.89708748632586,
+        "test_case_2": 231.72298452886963,
+        "test_case_3": 10000.0,
         "class": MedianSquaredPercentageError(),
     },
     root_mean_squared_percentage_error: {
@@ -178,7 +178,7 @@ LOSS_RESULTS = {
     mean_relative_absolute_error: {
         "test_case_1": 0.485695805,
         "test_case_2": 0.477896036,
-        "test_case_3": 1.8765e15,
+        "test_case_3": 0.875,
         "class": MeanRelativeAbsoluteError(),
     },
     median_relative_absolute_error: {
@@ -190,13 +190,13 @@ LOSS_RESULTS = {
     geometric_mean_relative_absolute_error: {
         "test_case_1": 0.363521894,
         "test_case_2": 0.402438951,
-        "test_case_3": 0.052556026,
+        "test_case_3": 3.6839e-07,
         "class": GeometricMeanRelativeAbsoluteError(),
     },
     geometric_mean_relative_squared_error: {
         "test_case_1": 0.132148167,
         "test_case_2": 0.161957109,
-        "test_case_3": 9195.2091,
+        "test_case_3": 4.517843023201426e-07,
         "class": GeometricMeanRelativeSquaredError(),
     },
 }
