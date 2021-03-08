@@ -26,7 +26,8 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.forecasting import check_X
+
+#  from sktime.utils.validation.forecasting import check_X
 
 
 ##############################################################################
@@ -77,6 +78,7 @@ class NewDirectRegressionForecaster(
         super(NewDirectRegressionForecaster, self).__init__(window_length=window_length)
         self.regressor = regressor
         self.step_length = step_length
+        self._step_length = None
 
     def _transform(self, y, X=None, fit_or_predict=None):
         """Transform data using rolling window approach
@@ -85,19 +87,17 @@ class NewDirectRegressionForecaster(
         fit_or_predict : string 'fit' or 'predict'
             Determines whether transform is taking place fit or predict step
         """
-        # check inputs and combine into single numpy array
-        y = check_y(y)
+        # turn y and X into numpy arrays, and combine into single array yX_
         y_ = np.asarray(y).reshape(-1, 1)
 
         if X is None:
             yX_ = y_
         else:
-            X = check_X(X)
             yX_ = np.asarray(pd.concat([y, X], axis=1))
 
         # define variables to help with transformation
-        fh_length = len(self.fh)
-        w_length = self.window_length
+        fh_length = len(self._fh)
+        w_length = self._window_length
         n_timepoints, _ = yX_.shape
 
         if self.step_length > 1:
@@ -150,8 +150,8 @@ class NewDirectRegressionForecaster(
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
 
-        self.step_length = check_step_length(self.step_length)
-        self.window_length = check_window_length(self.window_length)
+        self._step_length = check_step_length(self.step_length)
+        self._window_length = check_window_length(self.window_length)
 
         # transform data
         reduction_X, reduction_Y = self._transform(
