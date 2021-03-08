@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 import time
-from tqdm.auto import tqdm
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_cv
 from sktime.forecasting.base import ForecastingHorizon
@@ -66,11 +65,10 @@ def evaluate(
     _check_strategies(strategy)
     scoring = check_scoring(scoring)
 
-    n_splits = cv.get_n_splits(y)
     results = pd.DataFrame()
     cv.start_with_window = True
 
-    for i, (train, test) in enumerate(tqdm(cv.split(y), total=n_splits)):
+    for i, (train, test) in enumerate(cv.split(y)):
         # get initial window, if required
         if i == 0 and cv.initial_window and strategy == "update":
             train, test = cv.split_initial(y)
