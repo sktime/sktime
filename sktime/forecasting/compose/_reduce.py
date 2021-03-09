@@ -182,6 +182,7 @@ class DirectRegressionForecaster(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         # get last window from self._transform
+        # TO DO: this approach to creating last window is causing two tests to fail
         reduction_X_last = self._transform(self._y, self._X, fit_or_predict="predict")
 
         # preallocate array for forecasted values
