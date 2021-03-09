@@ -50,7 +50,7 @@ from sktime.utils.validation.forecasting import check_y
 #   so this is only downside against some hypothetical perfect code
 
 
-class NewDirectRegressionForecaster(
+class DirectRegressionForecaster(
     _RequiredForecastingHorizonMixin, _BaseWindowForecaster
 ):
     """
@@ -75,7 +75,7 @@ class NewDirectRegressionForecaster(
     strategy = "direct"
 
     def __init__(self, regressor, window_length=10, step_length=1):
-        super(NewDirectRegressionForecaster, self).__init__(window_length=window_length)
+        super(DirectRegressionForecaster, self).__init__(window_length=window_length)
         self.regressor = regressor
         self.step_length = step_length
         self._step_length = None
@@ -85,8 +85,17 @@ class NewDirectRegressionForecaster(
         Parameters
         ----------
         fit_or_predict : string 'fit' or 'predict'
-            Determines whether transform is taking place fit or predict step
+            Determines whether transform is taking place in fit or predict step
+
+        Returns
+        -------
+        reduction_X : np.array
+            The feature variables in the reduced tabular regression
+        reduction_Y : np.array
+            The target variables in the reduced tabular regression
+            This only gets returned if fit_or_predict is 'fit'
         """
+
         # turn y and X into numpy arrays, and combine into single array yX_
         y_ = np.asarray(y).reshape(-1, 1)
 
@@ -561,26 +570,26 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
 
 ##############################################################################
 # reduction to regression
-class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
-    """
-    Forecasting based on reduction to tabular regression with a direct
-    reduction strategy.
-    For the direct reduction strategy, a separate forecaster is fitted
-    for each step ahead of the forecasting horizon
+# class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
+#     """
+#     Forecasting based on reduction to tabular regression with a direct
+#     reduction strategy.
+#     For the direct reduction strategy, a separate forecaster is fitted
+#     for each step ahead of the forecasting horizon
 
-    Parameters
-    ----------
-    regressor : sklearn estimator object
-        Define the regression model type.
-    window_length : int, optional (default=10)
-        The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
-    """
+#     Parameters
+#     ----------
+#     regressor : sklearn estimator object
+#         Define the regression model type.
+#     window_length : int, optional (default=10)
+#         The length of the sliding window used to transform the series into
+#         a tabular matrix
+#     step_length : int, optional (default=1)
+#         The number of time steps taken at each step of the sliding window
+#         used to transform the series into a tabular matrix.
+#     """
 
-    pass
+#     pass
 
 
 class MultioutputRegressionForecaster(

@@ -17,7 +17,6 @@ from sktime.transformations.panel.reduce import Tabularizer
 from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectRegressionForecaster
-from sktime.forecasting.compose._reduce import NewDirectRegressionForecaster
 from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
@@ -105,16 +104,40 @@ def test_multioutput_direct_tabular():
     np.testing.assert_almost_equal(preds1.to_numpy(), preds2.to_numpy(), decimal=5)
 
 
-def test_new_direct_tabular():
+def test_direct_tabular():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     regressor = LinearRegression()
-    f1 = NewDirectRegressionForecaster(regressor)
-    f2 = DirectRegressionForecaster(regressor)
+    f1 = DirectRegressionForecaster(regressor)
 
     actual = f1.fit(y_train, fh=fh).predict(fh)
-    expected = f2.fit(y_train, fh=fh).predict(fh)
+    expected = [
+        388.7894742436609,
+        385.4311737990922,
+        404.66760376792183,
+        389.3921653574014,
+        413.5415037170552,
+        491.27471550855756,
+        560.5985060880608,
+        564.1354313250545,
+        462.8049467298484,
+        396.8247623180332,
+        352.5416937680942,
+        369.3915756974357,
+        430.12889943026323,
+        417.13419789042484,
+        434.8091175980315,
+        415.33997516059355,
+        446.97711875155846,
+        539.6761098618977,
+        619.7204673400846,
+        624.3153932803112,
+        499.686252475341,
+        422.0658526180952,
+        373.3847171492921,
+        388.8020135264563,
+    ]
 
     np.testing.assert_array_equal(actual, expected)
