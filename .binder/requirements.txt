@@ -2,7 +2,7 @@ catch22
 cython>=0.29.0
 fbprophet>=0.7.1
 hcrystalball>=0.1.9
-llvmlite==0.16.0
+llvmlite>=0.16.0
 matplotlib
 notebook
 numba>=0.50,<0.53
