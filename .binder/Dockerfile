@@ -20,7 +20,7 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${USERR}
 WORKDIR ${HOME}
 
-RUN LLVM_CONFIG=/home/local/opt/llvm/bin/llvm-config pip install llvm-lite==0.36.0
+RUN LLVM_CONFIG=/home/local/opt/llvm/bin/llvm-config pip install llvmlite==0.36.0
 
 # Install extra requirements and sktime based on master branch
 #RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
