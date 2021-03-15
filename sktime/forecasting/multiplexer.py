@@ -11,7 +11,7 @@ __author__ = ["Kutay Koralturk"]
 __all__ = ["Multiplexer"]
 
 
-class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def __init__(
         self,
         components: dict,
