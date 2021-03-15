@@ -20,8 +20,7 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${USERR}
 WORKDIR ${HOME}
 
-RUN conda install llvmlite==0.36.0
-
 # Install extra requirements and sktime based on master branch
-#RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
-#RUN pip install --no-cache-dir .
+RUN conda install llvmlite==0.36.0
+RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
+RUN pip install --no-cache-dir .
