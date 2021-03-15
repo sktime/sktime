@@ -2,10 +2,11 @@ catch22
 cython>=0.29.0
 fbprophet>=0.7.1
 hcrystalball>=0.1.9
+llvmlite==0.16.0
 matplotlib
 notebook
-numba>=0.50,<0.53
 numpy==1.19
+numba>=0.50,<0.53
 pandas==1.1.5
 pmdarima>=1.8.0
 scikit-learn==0.23.*
@@ -14,4 +15,4 @@ seaborn
 statsmodels>=0.12.1
 stumpy>=1.5.1
 tbats>=1.1.0
-tsfresh>=0.17.0
+tsfresh==0.17.0
