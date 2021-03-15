@@ -20,7 +20,7 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${USERR}
 WORKDIR ${HOME}
 
-RUN LLVM_CONFIG=/opt/llvm/bin/llvm-config pip install llvmlite==0.36.0
+RUN conda update llvmlite
 
 # Install extra requirements and sktime based on master branch
 #RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
