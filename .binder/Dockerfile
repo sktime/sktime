@@ -21,5 +21,5 @@ USER ${USERR}
 WORKDIR ${HOME}
 
 # Install extra requirements and sktime based on master branch
-RUN pip install --upgrade pip>=19.0 --no-cache-dir -r .binder/requirements.txt
+RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
 RUN pip install --no-cache-dir .
