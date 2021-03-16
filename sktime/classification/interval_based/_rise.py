@@ -7,6 +7,7 @@ __author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 import math
+import random
 
 import numpy as np
 from joblib import Parallel
@@ -29,11 +30,11 @@ def _transform(X, interval, lag):
     """
     n_instances, _ = X.shape
     acf_x = np.empty(shape=(n_instances, lag))
-    ps_len = (interval[1] - interval[0]) / 2
-    ps_x = np.empty(shape=(n_instances, int(ps_len)))
+    ps_len = _round_to_next_power_of_two(interval[1] - interval[0]) // 2
+    ps_x = np.empty(shape=(n_instances, ps_len))
     for j in range(n_instances):
-        acf_x[j] = acf(X[j, interval[0] : interval[1]], lag)
-        ps_x[j] = _ps(X[j, interval[0] : interval[1]])
+        acf_x[j] = acf(X[j, interval[0]: interval[1]], lag)
+        ps_x[j] = _ps(X[j, interval[0]: interval[1]])
     transformed_x = np.concatenate((acf_x, ps_x), axis=1)
 
     return transformed_x
@@ -73,6 +74,31 @@ def _make_estimator(base_estimator, random_state=None):
     estimator = clone(base_estimator)
     estimator.set_params(**{"random_state": random_state})
     return estimator
+
+
+def _select_interval(min_interval, max_interval, series_length, method=3):
+    """
+    private function used to select an interval for a single tree
+    """
+    interval = []
+    if method == 0:
+        interval[0] = np.random.randint(series_length - min_interval)
+        interval[1] = np.random.randint(
+            interval[0] + min_interval, series_length
+        )
+    else:
+        if random.getrandbits(1):
+            interval[0] = np.random.randint(0, series_length - min_interval)
+            interval_range = min(series_length - interval[0], max_interval)
+            length = np.random.randint(min_interval, interval_range)
+            interval[1] = interval[0] + length
+        else:
+            interval[1] = np.random.randint(min_interval, series_length)
+            interval_range = min(series_length - interval[1], max_interval)
+            length = 3 if interval_range == min_interval else \
+                np.random.randint(min_interval, interval_range)
+            interval[0] = interval[1] - length
+    return interval
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
@@ -147,13 +173,13 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     # problems
 
     def __init__(
-        self,
-        n_estimators=200,
-        min_interval=16,
-        acf_lag=100,
-        acf_min_values=4,
-        n_jobs=None,
-        random_state=None,
+            self,
+            n_estimators=200,
+            min_interval=16,
+            acf_lag=100,
+            acf_min_values=4,
+            n_jobs=None,
+            random_state=None,
     ):
         super(RandomIntervalSpectralForest, self).__init__(
             base_estimator=DecisionTreeClassifier(random_state=random_state),
@@ -206,13 +232,24 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.intervals = np.zeros((self.n_estimators, 2), dtype=int)
-        self.intervals[0][0] = 0
-        self.intervals[0][1] = self.series_length
-        for i in range(1, self.n_estimators):
-            self.intervals[i][0] = rng.randint(self.series_length - self.min_interval)
-            self.intervals[i][1] = rng.randint(
-                self.intervals[i][0] + self.min_interval, self.series_length
-            )
+        self.intervals[0] = 0, self.series_length
+        self.intervals[1:] = [
+                _select_interval(
+                  self.min_interval,
+                  self.acf_lag,
+                  self.series_length,
+                  3
+                )
+                for _ in range(self.n_estimators)
+        ]
+        # self.intervals[0][0] = 0
+        # self.intervals[0][1] = self.series_length
+        # for i in range(1, self.n_estimators):
+        #     # self.intervals[i] = _select_interval(self.min_interval, self.acf_lag, self.series_length, 0)
+        #     self.intervals[i][0] = rng.randint(self.series_length - self.min_interval)
+        #     self.intervals[i][1] = rng.randint(
+        #         self.intervals[i][0] + self.min_interval, self.series_length
+        #     )
 
         # Check lag against global properties
         self.acf_lag_ = self.acf_lag
@@ -466,9 +503,10 @@ def _ps(x, sign=1, n=None, pad="mean"):
     # if sign == -1:
     #     fft /= n
     fft = fft.real * fft.real + fft.imag * fft.imag
-    fft = fft[: len(x) // 2]
+    fft = fft[: len(x_in_power_2) // 2]
     return np.array(fft)
 
 
 def _round_to_next_power_of_two(n):
-    return 1 << (n - 1).bit_length()
+    return 1 << (n - 1).bit_length() - (bin(n)[2:4] == '10')
+    # return 1 << round(np.log2(n))
