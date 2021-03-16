@@ -74,6 +74,7 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.outlier_detection import HampelFilter
 
 
 # The following estimators currently do not pass all unit tests
@@ -237,6 +238,7 @@ ESTIMATOR_TEST_PARAMS = {
     PartialAutoCorrelationTransformer: {"n_lags": 1},
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
+    HampelFilter: {"window_length": 3},
 }
 
 # These methods should not change the state of the estimator, that is, they should
@@ -257,6 +259,7 @@ VALID_ESTIMATOR_TAGS = (
     "fit-in-transform",  # fitted in transform or non-fittable
     "univariate-only",
     "transform-returns-same-time-index",
+    "handles-missing-data",
 )
 
 # The following gives a list of valid estimator base classes.
