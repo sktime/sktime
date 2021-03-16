@@ -119,7 +119,7 @@ def weighted_dtw_distance(first, second, **kwargs):
         try:
             g = kwargs["g"]
         except Exception:
-            g = 0.0
+            g = 0.05
 
         m = len(first)
         n = len(second)
@@ -192,7 +192,7 @@ def lcss_distance(first, second, **kwargs):
         try:
             epsilon = kwargs["epsilon"]
         except KeyError:
-            epsilon = 1
+            epsilon = 0.05
 
         m = len(first)
         n = len(second)
@@ -236,11 +236,9 @@ def msm_distance(first, second, **kwargs):
         try:
             c = kwargs["c"]
         except KeyError:
-            c = 0.1
-
+            c = 1
         m = len(first)
         n = len(second)
-
         cost = np.zeros([m, n])
 
         def calc_cost(new_point, x, y):

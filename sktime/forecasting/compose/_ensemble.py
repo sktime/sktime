@@ -53,14 +53,14 @@ class EnsembleForecaster(
         self._is_fitted = True
         return self
 
-    def update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
-        update_params : bool, optional (default=False)
+        update_params : bool, optional (default=True)
 
         Returns
         -------

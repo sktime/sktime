@@ -6,7 +6,7 @@ are in sktime.distances.elastic, but these are orders of magnitude slower.
 
 """
 
-__author__ = "Jason Lines"
+__author__ = ["Jason Lines", "TonyBagnall"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 import warnings
@@ -26,14 +26,16 @@ from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
 from sktime.distances.elastic import euclidean_distance
-from sktime.distances.elastic_cython import ddtw_distance
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.distances.elastic_cython import erp_distance
-from sktime.distances.elastic_cython import lcss_distance
-from sktime.distances.elastic_cython import msm_distance
-from sktime.distances.elastic_cython import twe_distance
-from sktime.distances.elastic_cython import wddtw_distance
-from sktime.distances.elastic_cython import wdtw_distance
+from sktime.distances.elastic_cython import (
+    ddtw_distance,
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wddtw_distance,
+    wdtw_distance,
+)
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
@@ -88,15 +90,17 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     n_neighbors     : int, set k for knn (default =1)
     weights         : mechanism for weighting a vote: 'uniform', 'distance'
     or a callable function: default ==' uniform'
-    metric          : distance measure for time series: {'dtw','ddtw',
+    algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
+    ‘kd_tree’, ‘brute’}: default = 'brute'
+    distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
-    metric_params   : dictionary for metric parameters: default = None
+    distance_params   : dictionary for metric parameters: default = None
 
     """
 
     # Capabilities: data types this classifier can handle
     capabilities = {
-        "multivariate": False,
+        "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
     }
@@ -105,53 +109,55 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
-        metric="dtw",
-        metric_params=None,
+        distance="dtw",
+        distance_params=None,
         **kwargs
     ):
-
         self._cv_for_params = False
-        if metric == "euclidean":  # Euclidean will default to the base class distance
-            metric = euclidean_distance
-        if metric == "dtw":
-            metric = dtw_distance
-        elif metric == "dtwcv":  # special case to force loocv grid search
+        self.distance = distance
+        self.distance_params = distance_params
+
+        if distance == "euclidean":  # Euclidean will default to the base class distance
+            distance = euclidean_distance
+        elif distance == "dtw":
+            distance = dtw_distance
+        elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
-            if metric_params is not None:
+            if distance_params is not None:
                 warnings.warn(
                     "Warning: measure parameters have been specified for "
                     "dtwcv. "
                     "These will be ignored and parameter values will be "
                     "found using LOOCV."
                 )
-            metric = dtw_distance
+            distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
-                "metric_params": [{"w": x / 100} for x in range(0, 100)]
+                "distance_params": [{"w": x / 100} for x in range(0, 100)]
             }
-        elif metric == "ddtw":
-            metric = ddtw_distance
-        elif metric == "wdtw":
-            metric = wdtw_distance
-        elif metric == "wddtw":
-            metric = wddtw_distance
-        elif metric == "lcss":
-            metric = lcss_distance
-        elif metric == "erp":
-            metric = erp_distance
-        elif metric == "msm":
-            metric = msm_distance
-        elif metric == "twe":
-            metric = twe_distance
-        elif metric == "mpdist":
-            metric = mpdist
+        elif distance == "ddtw":
+            distance = ddtw_distance
+        elif distance == "wdtw":
+            distance = wdtw_distance
+        elif distance == "wddtw":
+            distance = wddtw_distance
+        elif distance == "lcss":
+            distance = lcss_distance
+        elif distance == "erp":
+            distance = erp_distance
+        elif distance == "msm":
+            distance = msm_distance
+        elif distance == "twe":
+            distance = twe_distance
+        elif distance == "mpdist":
+            distance = mpdist
             # When mpdist is used, the subsequence length (parameter m) must be set
             # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
             # metric='mpdist', metric_params={'m':30})
         else:
-            if type(metric) is str:
+            if type(distance) is str:
                 raise ValueError(
-                    "Unrecognised distance measure: " + metric + ". Allowed values "
+                    "Unrecognised distance measure: " + distance + ". Allowed values "
                     "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
@@ -159,8 +165,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm="brute",  # We cannot support the other options yet
-            metric=metric,
-            metric_params=metric_params,
+            metric=distance,
+            metric_params=distance_params,
             **kwargs
         )
         self.weights = _check_weights(weights)
@@ -180,7 +186,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
+        X, y = check_X_y(
+            X,
+            y,
+            enforce_univariate=not self.capabilities["multivariate"],
+            coerce_to_numpy=True,
+        )
+        # Transpose to work correctly with distance functions
+        X = X.transpose((0, 2, 1))
+
         y = np.asarray(y)
         check_classification_targets(y)
         # if internal cv is desired, the relevant flag forces a grid search
@@ -189,14 +203,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if self._cv_for_params:
             grid = GridSearchCV(
                 estimator=KNeighborsTimeSeriesClassifier(
-                    metric=self.metric, n_neighbors=1,
+                    distance=self.metric, n_neighbors=1
                 ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
                 scoring="accuracy",
             )
             grid.fit(X, y)
-            self.metric_params = grid.best_params_["metric_params"]
+            self.distance_params = grid.best_params_["distance_params"]
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -277,7 +291,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X = check_X(
+            X,
+            enforce_univariate=not self.capabilities["multivariate"],
+            coerce_to_numpy=True,
+        )
+        # Transpose to work correctly with distance functions
+        X = X.transpose((0, 2, 1))
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors

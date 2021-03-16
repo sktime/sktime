@@ -39,7 +39,7 @@ def compute_expected_gscv_scores(forecaster, cv, param_grid, y, scoring):
     for i, params in enumerate(param_grid):
         f = clone(forecaster)
         f.set_params(**params)
-        f.fit(y_train)
+        f.fit(y_train, fh=cv.fh)
         y_pred = f.update_predict(y_test, cv)
         y_test_subset = y_test.loc[
             y_pred.index

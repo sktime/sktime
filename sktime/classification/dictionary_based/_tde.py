@@ -75,6 +75,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     threshold for multivariate (default=0.85)
     max_dims                : int, max number of dimensions for multivariate
     (default=20)
+    n_jobs                  : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
@@ -99,7 +102,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Classification",
             in proceedings of the European Conference on Machine Learning and
             Principles and Practice of Knowledge Discovery in Databases, 2020
-    https://ueaeprints.uea.ac.uk/id/eprint/75490/
+        https://ueaeprints.uea.ac.uk/id/eprint/75490/
+
     Java version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/TDE.java
