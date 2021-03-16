@@ -4,7 +4,7 @@
     An implementation of Deng's Time Series Forest, with minor changes.
 """
 
-__author__ = ["Tony Badnall", "kkoziara", "luiszugasti", "kanand77"]
+__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
 __all__ = [
     "BaseTimeSeriesForest",
     "_transform",
