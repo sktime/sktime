@@ -56,22 +56,27 @@ class AutoAR(_StatsModelsAdapter):
         self,
         maxlag=10,
         trend="c",
-        seasonal=None,
+        seasonal=False,
+        exog=None,
         hold_back=None,
         sp=None,
         missing="none",
+        *,
         ic="aic",
         glob=False,
+        deterministic=None,
         old_names=True,
     ):
         self.maxlag = maxlag
         self.trend = trend
+        self.exog = exog
         self.seasonal = seasonal
         self.hold_back = hold_back
         self.sp = sp
         self.missing = missing
         self.glob = glob
         self.ic = ic
+        self.deterministic = deterministic
         self.old_names = old_names
 
         super(AutoAR, self).__init__()
@@ -84,7 +89,7 @@ class AutoAR(_StatsModelsAdapter):
             glob=self.glob,
             trend=self.trend,
             seasonal=self.seasonal,
-            exog=X_train,
+            exog=self.exog,
             hold_back=self.hold_back,
             period=self.sp,
             missing=self.missing,
