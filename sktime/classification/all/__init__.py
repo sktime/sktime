@@ -18,7 +18,7 @@ __all__ = [
     "TSFC",
     "RandomIntervalSpectralForest",
     "SupervisedTimeSeriesForest",
-    "TimeSeriesForestClassifier",
+    "ComposableTimeSeriesForestClassifier",
     "ColumnEnsembleClassifier",
     "pd",
     "np",
@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import BOSSEnsemble
 from sktime.classification.dictionary_based import IndividualBOSS
 from sktime.classification.dictionary_based import IndividualTDE

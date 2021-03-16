@@ -15,7 +15,7 @@ from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based import RandomIntervalSpectralForest
@@ -47,7 +47,7 @@ from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
-from sktime.regression.compose import TimeSeriesForestRegressor
+from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -204,8 +204,8 @@ ESTIMATOR_TEST_PARAMS = {
         "randomly_selected_params": 20,
     },
     TSFC: {"n_estimators": 3},
-    TimeSeriesForestClassifier: {"n_estimators": 3},
-    TimeSeriesForestRegressor: {"n_estimators": 3},
+    ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
+    ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
     CanonicalIntervalForest: {"n_estimators": 3},
     DrCIF: {"n_estimators": 3},

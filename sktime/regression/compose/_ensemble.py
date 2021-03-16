@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
-__all__ = ["TimeSeriesForestRegressor"]
+__all__ = ["ComposableTimeSeriesForestRegressor"]
 
 from warnings import warn
 
@@ -23,7 +23,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
-class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
+class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -203,7 +203,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self.max_samples = max_samples
 
         # Pass on params.
-        super(TimeSeriesForestRegressor, self).__init__(
+        super(ComposableTimeSeriesForestRegressor, self).__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,

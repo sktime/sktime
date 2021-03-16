@@ -13,13 +13,12 @@ __all__ = [
     "_predict_proba_for_estimator",
 ]
 
-from abc import ABC
 import math
 
 import numpy as np
-from sklearn.base import clone
 from joblib import Parallel
 from joblib import delayed
+from sklearn.base import clone
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
@@ -28,59 +27,8 @@ from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-class BaseTimeSeriesForest(ABC):
-    """Base Time series forest classifier.
-
-    A time series forest is an ensemble of decision trees built on random intervals.
-     Overview: Input n series length m
-     for each tree
-         sample sqrt(m) intervals
-         find mean, std and slope for each interval, concatenate to form new
-         data set
-         build decision tree on new data set
-     ensemble the trees with averaged probability estimates
-
-     This implementation deviates from the original in minor ways. It samples
-     intervals with replacement and does not use the splitting criteria tiny
-     refinement described in [1]. This is an intentionally stripped down, non
-     configurable version for use as a hive-cote component. For a configurable
-     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
-
-     TO DO: handle missing values, unequal length series and multivariate
-     problems
-
-     Parameters
-     ----------
-     n_estimators    : int, ensemble size, optional (default = 200)
-     min_interval    : int, minimum width of an interval, optional (default
-     to 3)
-     n_jobs          : int, optional (default=1)
-         The number of jobs to run in parallel for both `fit` and `predict`.
-         ``-1`` means using all processors.
-     random_state    : int, seed for random, optional (default = none)
-
-     Attributes
-     ----------
-     n_classes    : int, extracted from the data
-     num_atts     : int, extracted from the data
-     n_intervals  : int, sqrt(num_atts)
-     classifiers  : array of shape = [n_estimators] of DecisionTree
-     classifiers
-     intervals    : array of shape = [n_estimators][n_intervals][2] stores
-     indexes of all start and end points for all classifiers
-     dim_to_use   : int, the column of the panda passed to use (can be
-     passed a multidimensional problem, but will only use one)
-     classes_    : List of classes for a given problem
-
-     References
-     ----------
-     .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
-     classification and feature extraction",Information Sciences, 239, 2013
-     Java implementation
-     https://github.com/uea-machine-learning/tsml/blob/master/src/main/
-     java/tsml/classifiers/interval_based/TSF.java
-     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
-    """
+class BaseTimeSeriesForest:
+    """Base Time series forest classifier."""
 
     # Capabilities: data types this classifier can handle
     capabilities = {
@@ -97,7 +45,7 @@ class BaseTimeSeriesForest(ABC):
         random_state=None,
     ):
         super(BaseTimeSeriesForest, self).__init__(
-            base_estimator=self.base_estimator,
+            base_estimator=self._base_estimator,
             n_estimators=n_estimators,
         )
 
