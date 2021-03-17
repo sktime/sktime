@@ -14,8 +14,8 @@ __all__ = ["Multiplexer"]
 class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def __init__(
         self,
-        components: dict,
-        select=None,
+        components: list,
+        selected_estimator=None,
     ):
 
         """
@@ -24,7 +24,7 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         It should be used in conjunction with ForecastingGridSearchCV
         to get full utilization.
 
-        Single use of Multiplexer with components and select
+        Single use of Multiplexer with components and selected_estimator
         parameter specified, works just like the selected component.
         It does not provide any further use in that case.
 
@@ -32,18 +32,20 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         provides an ability to compare different model class
         performances with each other, just like a model tournament.
         When ForecastingGridSearchCV is fitted with a multiplexer,
-        returned value for the select argument of best_params_
+        returned value for the selected_estimator argument of best_params_
         attribute of ForecastingGridSearchCV, gives the best
         performing model class among given models provided in components.
 
         Parameters
         ----------
-        components : dict
-            A dictionary composed of key-value pairs
-            of forecaster names and forecaster objects.
-        select: str
+        components : list
+            List of (forecaster names, forecaster objects)
+            Multiplexer switches between these forecasters
+            objects when used with ForecastingGridSearchCV to
+            find the optimal model
+        selected_estimator: str
             An argument to make a selection among components.
-            Multiplexer uses select to choose which component to fit.
+            Multiplexer uses selected_estimator to choose which component to fit.
             Important for using with ForecastingGridSearchCV as a
             hyperparameter.
 
@@ -59,58 +61,68 @@ class Multiplexer(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         """
 
         self.components = components
-        self.select = select
+        self.selected_estimator = selected_estimator
         self._check_components()
         self._forecaster_fit_params = None
 
         super(Multiplexer, self).__init__()
 
     def _check_components(self):
-        for key, value in self.components.items():
-            if not isinstance(value, _SktimeForecaster):
+        if not isinstance(self.components, list):
+            raise Exception(
+                "Please provide a list " "for components composed of tuples"
+            )
+
+        for component in self.components:
+            name, estimator = component
+            if not isinstance(estimator, _SktimeForecaster):
                 raise Exception(
-                    "Each component has to be an \
-                                sktime forecaster object. \
-                                Please check {} value in {} key".format(
-                        value, key
-                    )
+                    "Each component has to be an "
+                    "sktime forecaster object. "
+                    "Please check {} with name:{}".format(estimator, name)
                 )
 
     def _check_fit_params(self, fit_params):
-        if fit_params is None:
+        if fit_params is None or fit_params == {}:
             return
 
-        if not (all(x in self.components.keys() for x in fit_params.keys())):
-            raise KeyError(
-                "If you provide fit_params for models \
-                            dictionary key of fit params need to \
-                            match the associated component key"
-            )
+        for component in self.components:
+            name, _ = component
 
-    def _check_select_argument(self):
-        if self.select not in self.components.keys():
-            raise Exception(
-                "Please check the select argument provided  \
-                            Valid select parameters: {}".format(
-                    self.components.keys()
+            if name not in fit_params.keys():
+                raise KeyError(
+                    "If you provide fit_params for models "
+                    "dictionary key of fit params need to "
+                    " match the associated component key."
                 )
+
+    def _check_selected_estimator(self):
+        component_names = [name for name, _ in self.components]
+        if self.selected_estimator not in component_names:
+            raise Exception(
+                "Please check the selected_estimator argument provided "
+                "Valid selected_estimator parameters: {}".format(component_names)
             )
 
     def _update_forecaster_fit_params(self, fit_params):
         self._check_fit_params(fit_params)
 
-        if self.select is None or fit_params is None:
+        if self.selected_estimator is None or fit_params is None:
             return
 
-        if self.select in fit_params:
-            self._forecaster_fit_params = self.component_fit_params[self.select]
+        if self.selected_estimator in fit_params.keys():
+            self._forecaster_fit_params = self.component_fit_params[
+                self.selected_estimator
+            ]
         else:
             self._forecaster_fit_params = None
 
     def _update_forecaster(self):
-        self._check_select_argument()
-        if self.select is not None:
-            self._forecaster = copy.deepcopy(self.components[self.select])
+        self._check_selected_estimator()
+        if self.selected_estimator is not None:
+            for name, estimator in self.components:
+                if self.selected_estimator == name:
+                    self._forecaster = copy.deepcopy(estimator)
 
     def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.

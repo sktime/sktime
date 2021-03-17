@@ -495,64 +495,6 @@ class _SktimeForecaster(BaseForecaster):
         raise NotImplementedError("abstract method")
 
 
-class _OptionalDictParamsMixin:
-    """
-    Mixin class for providing flexibility to set_params
-    and get_params methods of forecastors which have
-    constructor arguments as dict
-    """
-
-    # self._set_params("forecasters", **params)
-
-    # def _set_params(self, attr, **params):
-    #     # Ensure strict ordering of parameter setting:
-    #     # 1. All steps
-    #     if attr in params:
-    #         setattr(self, attr, params.pop(attr))
-    #     # 2. Step replacement
-    #     items = getattr(self, attr)
-    #     names = []
-    #     if items:
-    #         names, _ = zip(*items)
-    #     for name in list(params.keys()):
-    #         if "__" not in name and name in names:
-    #             self._replace_estimator(attr, name, params.pop(name))
-    #     # 3. Step parameters and other initialisation arguments
-    #     super().set_params(**params)
-    #     return self
-
-    # def set_params(self, fh):
-    #     """Set params for dictionaries
-
-    #     Parameters
-    #     ----------
-    #     fh : None, int, list or np.ndarray
-    #     """
-    #     if fh is None:
-    #         if self.is_fitted:
-    #             # if no fh passed and there is none already, raise error
-    #             if self._fh is None:
-    #                 raise ValueError(
-    #                     "The forecasting horizon `fh` must be passed "
-    #                     "either to `fit` or `predict`, "
-    #                     "but was found in neither."
-    #                 )
-    #             # otherwise if no fh passed, but there is one already,
-    #             # we can simply use that one
-    #     else:
-    #         # If fh is passed, validate first, then check if there is one
-    #         # already,
-    #         # and overwrite
-
-    #         # A warning should only be raised if fh passed to fit is
-    #         # overwritten, but no warning is required when no fh has been provided in
-    #         # fit, and different fhs are passed to predict, but this requires
-    #         # to keep track of whether fh has been passed to fit or not, hence not
-    #         # implemented for cutoff.
-    #         fh = check_fh(fh)
-    #         self._fh = fh
-
-
 class _OptionalForecastingHorizonMixin:
     """Mixin class for forecasters which can take the forecasting horizon
     either

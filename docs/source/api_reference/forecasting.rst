@@ -107,7 +107,7 @@ BATS/TBATS
 Multiplexer
 ----------
 
-.. currentmodule:: sktime.forecasting.bats
+.. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
     :toctree: modules/auto_generated/
