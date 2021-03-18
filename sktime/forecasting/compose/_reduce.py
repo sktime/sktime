@@ -106,7 +106,7 @@ class DirectRegressionForecaster(
 
         # define variables to help with transformation
         fh_length = len(self._fh)
-        w_length = self._window_length
+        w_length = self.window_length_
         n_timepoints, _ = yX_.shape
 
         if self.step_length > 1:
@@ -159,8 +159,8 @@ class DirectRegressionForecaster(
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
 
-        self._step_length = check_step_length(self.step_length)
-        self._window_length = check_window_length(self.window_length)
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
 
         # transform data
         reduction_X, reduction_Y = self._transform(
