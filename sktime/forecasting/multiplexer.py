@@ -102,7 +102,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         if self.selected_estimator not in component_names:
             raise Exception(
                 "Please check the selected_estimator argument provided "
-                "Valid selected_estimator parameters: {}".format(component_names)
+                " Valid selected_estimator parameters: {}".format(component_names)
             )
 
     def _update_forecaster_fit_params(self, fit_params):
@@ -164,7 +164,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         )
 
     def update(self, y, X=None, update_params=False):
-        """Call predict on the forecaster with the best found parameters."""
+        """Call predict on the forecaster with the best found parameters. """
         self.check_is_fitted()
         self._update_y_X(y, X)
         self._forecaster.update(y, X, update_params=update_params)
