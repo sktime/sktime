@@ -110,6 +110,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         self._check_fit_params(fit_params)
 
         if self.selected_estimator is None or fit_params is None:
+            self._forecaster_fit_params = None
             return
 
         if self.selected_estimator in fit_params.keys():
