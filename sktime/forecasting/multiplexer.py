@@ -14,7 +14,7 @@ __all__ = ["MultiplexerForecaster"]
 class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def __init__(
         self,
-        components: list,
+        component_estimators: list,
         selected_estimator=None,
     ):
 
@@ -24,8 +24,9 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         It should be used in conjunction with ForecastingGridSearchCV
         to get full utilization.
 
-        Single use of MultiplexerForecaster with components and selected_estimator
-        parameter specified, works just like the selected component.
+        Single use of MultiplexerForecaster with component_estimators
+        and selected_estimator parameter specified,
+        works just like the selected component.
         It does not provide any further use in that case.
 
         When used with ForecastingGridSearchCV, MultiplexerForecaster
@@ -34,17 +35,17 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         When ForecastingGridSearchCV is fitted with a MultiplexerForecaster,
         returned value for the selected_estimator argument of best_params_
         attribute of ForecastingGridSearchCV, gives the best
-        performing model class among given models provided in components.
+        performing model class among given models provided in component_estimators.
 
         Parameters
         ----------
-        components : list
+        component_estimators : list
             List of (forecaster names, forecaster objects)
             MultiplexerForecaster switches between these forecasters
             objects when used with ForecastingGridSearchCV to
             find the optimal model
         selected_estimator: str
-            An argument to make a selection among components.
+            An argument to make a selection among component_estimators.
             MultiplexerForecaster uses selected_estimator
             to choose which component to fit.
             Important for using with ForecastingGridSearchCV as a
@@ -61,7 +62,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
             _forecaster
         """
 
-        self.components = components
+        self.component_estimators = component_estimators
         self.selected_estimator = selected_estimator
         self._check_components()
         self._forecaster_fit_params = None
@@ -69,12 +70,12 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         super(MultiplexerForecaster, self).__init__()
 
     def _check_components(self):
-        if not isinstance(self.components, list):
+        if not isinstance(self.component_estimators, list):
             raise Exception(
-                "Please provide a list " "for components composed of tuples"
+                "Please provide a list " "for component_estimators composed of tuples"
             )
 
-        for component in self.components:
+        for component in self.component_estimators:
             name, estimator = component
             if not isinstance(estimator, _SktimeForecaster):
                 raise Exception(
@@ -87,7 +88,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         if fit_params is None or fit_params == {}:
             return
 
-        for component in self.components:
+        for component in self.component_estimators:
             name, _ = component
 
             if name not in fit_params.keys():
@@ -98,7 +99,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
                 )
 
     def _check_selected_estimator(self):
-        component_names = [name for name, _ in self.components]
+        component_names = [name for name, _ in self.component_estimators]
         if self.selected_estimator not in component_names:
             raise Exception(
                 "Please check the selected_estimator argument provided "
@@ -121,7 +122,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
     def _update_forecaster(self):
         self._check_selected_estimator()
         if self.selected_estimator is not None:
-            for name, estimator in self.components:
+            for name, estimator in self.component_estimators:
                 if self.selected_estimator == name:
                     self._forecaster = copy.deepcopy(estimator)
 

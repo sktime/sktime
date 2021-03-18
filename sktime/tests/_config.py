@@ -184,13 +184,11 @@ ESTIMATOR_TEST_PARAMS = {
     },
     MultiplexerForecaster: {
         "components": [
-            ("Naive", NaiveForecaster(strategy="mean")),
-            (
-                "ETS",
-                ExponentialSmoothing(trend="add", seasonal="multiplicative", sp=12),
-            ),
+            ("Naive_mean", NaiveForecaster(strategy="mean")),
+            ("Naive_last", NaiveForecaster(strategy="last")),
+            ("Naive_drift", NaiveForecaster(strategy="drift")),
         ],
-        "selected_estimator": "ETS",
+        "selected_estimator": "Naive_mean",
     },
     ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
