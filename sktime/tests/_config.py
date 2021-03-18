@@ -15,13 +15,13 @@ from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -47,7 +47,7 @@ from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
-from sktime.regression.compose import TimeSeriesForestRegressor
+from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -115,7 +115,7 @@ TRANSFORMERS = [
     ),
 ]
 REGRESSOR = LinearRegression()
-TIME_SERIES_CLASSIFIER = TimeSeriesForest(n_estimators=3)
+TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
@@ -215,9 +215,9 @@ ESTIMATOR_TEST_PARAMS = {
         "max_ensemble_size": 5,
         "randomly_selected_params": 20,
     },
-    TimeSeriesForest: {"n_estimators": 3},
-    TimeSeriesForestClassifier: {"n_estimators": 3},
-    TimeSeriesForestRegressor: {"n_estimators": 3},
+    TSFC: {"n_estimators": 3},
+    ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
+    ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
     CanonicalIntervalForest: {"n_estimators": 3},
     DrCIF: {"n_estimators": 3},
