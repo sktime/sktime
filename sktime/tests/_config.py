@@ -74,7 +74,7 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
-from sktime.forecasting.multiplexer import Multiplexer
+from sktime.forecasting.MultiplexerForecaster import MultiplexerForecaster
 from sktime.transformations.series.outlier_detection import HampelFilter
 
 
@@ -182,7 +182,7 @@ ESTIMATOR_TEST_PARAMS = {
         "max_q": 2,
         "seasonal": False,
     },
-    Multiplexer: {
+    MultiplexerForecaster: {
         "components": [
             ("Naive", NaiveForecaster(strategy="mean")),
             (

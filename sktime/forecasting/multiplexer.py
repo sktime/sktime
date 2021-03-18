@@ -8,7 +8,7 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 import copy
 
 __author__ = ["Kutay Koralturk"]
-__all__ = ["Multiplexer"]
+__all__ = ["MultiplexerForecaster"]
 
 
 class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):
@@ -19,19 +19,19 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
     ):
 
         """
-        Multiplexer facilitates a framework for performing
+        MultiplexerForecaster facilitates a framework for performing
         model selection process over different model classes.
         It should be used in conjunction with ForecastingGridSearchCV
         to get full utilization.
 
-        Single use of Multiplexer with components and selected_estimator
+        Single use of MultiplexerForecaster with components and selected_estimator
         parameter specified, works just like the selected component.
         It does not provide any further use in that case.
 
-        When used with ForecastingGridSearchCV, multiplexer
+        When used with ForecastingGridSearchCV, MultiplexerForecaster
         provides an ability to compare different model class
         performances with each other, just like a model tournament.
-        When ForecastingGridSearchCV is fitted with a multiplexer,
+        When ForecastingGridSearchCV is fitted with a MultiplexerForecaster,
         returned value for the selected_estimator argument of best_params_
         attribute of ForecastingGridSearchCV, gives the best
         performing model class among given models provided in components.
@@ -40,19 +40,20 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         ----------
         components : list
             List of (forecaster names, forecaster objects)
-            Multiplexer switches between these forecasters
+            MultiplexerForecaster switches between these forecasters
             objects when used with ForecastingGridSearchCV to
             find the optimal model
         selected_estimator: str
             An argument to make a selection among components.
-            Multiplexer uses selected_estimator to choose which component to fit.
+            MultiplexerForecaster uses selected_estimator
+            to choose which component to fit.
             Important for using with ForecastingGridSearchCV as a
             hyperparameter.
 
         Attributes
         ----------
         _forecaster : Sktime forecaster
-            forecaster that multiplexer will currently
+            forecaster that MultiplexerForecaster will currently
             forecast with.
         _forecaster_fit_params: dict
             Fit params for the forecaster that is
@@ -65,7 +66,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         self._check_components()
         self._forecaster_fit_params = None
 
-        super(Multiplexer, self).__init__()
+        super(MultiplexerForecaster, self).__init__()
 
     def _check_components(self):
         if not isinstance(self.components, list):

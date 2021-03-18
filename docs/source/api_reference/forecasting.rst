@@ -104,7 +104,7 @@ BATS/TBATS
 
     TBATS
 
-Multiplexer
+MultiplexerForecaster
 ----------
 
 .. currentmodule:: sktime.forecasting.compose
@@ -113,7 +113,7 @@ Multiplexer
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    Multiplexer
+    MultiplexerForecaster
 
 Prophet
 -------
