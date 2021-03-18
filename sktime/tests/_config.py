@@ -74,7 +74,7 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
-from sktime.forecasting.MultiplexerForecaster import MultiplexerForecaster
+from sktime.forecasting.multiplexer import MultiplexerForecaster
 from sktime.transformations.series.outlier_detection import HampelFilter
 
 
