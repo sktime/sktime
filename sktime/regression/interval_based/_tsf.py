@@ -4,21 +4,19 @@
 """
 
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
-__all__ = ["TimeSeriesForestClassifier"]
+__all__ = ["TimeSeriesForestRegressor"]
 
-from sklearn.ensemble._forest import ForestClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble._forest import ForestRegressor
+from sklearn.tree import DecisionTreeRegressor
 
-from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators.interval_based._tsf import (
     BaseTimeSeriesForest,
 )
 
 
-class TimeSeriesForestClassifier(
-    BaseTimeSeriesForest, ForestClassifier, BaseClassifier
-):
-    """Time series forest classifier.
+class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
+    """Time series forest regressor.
 
     A time series forest is an ensemble of decision trees built on random intervals.
      Overview: Input n series length m.
@@ -61,4 +59,4 @@ class TimeSeriesForestClassifier(
      Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
 
-    _base_estimator = DecisionTreeClassifier(criterion="entropy")
+    _base_estimator = DecisionTreeRegressor(criterion="entropy")

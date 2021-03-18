@@ -166,7 +166,7 @@ def set_classifier(cls, resampleId):
         )
     elif cls.lower() == "tsfcomposite":
         # It defaults to TSF
-        return ensemble.TimeSeriesForestClassifier()
+        return ensemble.ComposableTimeSeriesForestClassifier()
     elif cls.lower() == "risecomposite":
         steps = [
             ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
@@ -193,7 +193,7 @@ def set_classifier(cls, resampleId):
             ("clf", DecisionTreeClassifier()),
         ]
         base_estimator = Pipeline(steps)
-        return ensemble.TimeSeriesForestClassifier(
+        return ensemble.ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
     else:
