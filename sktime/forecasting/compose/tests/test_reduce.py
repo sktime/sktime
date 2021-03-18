@@ -140,4 +140,4 @@ def test_direct_tabular():
         388.8020135264563,
     ]
 
-    np.testing.assert_array_equal(actual, expected)
+    np.testing.assert_almost_equal(actual, expected, decimal=5)
