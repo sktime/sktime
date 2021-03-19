@@ -183,7 +183,7 @@ ESTIMATOR_TEST_PARAMS = {
         "seasonal": False,
     },
     MultiplexerForecaster: {
-        "components": [
+        "component_estimators": [
             ("Naive_mean", NaiveForecaster(strategy="mean")),
             ("Naive_last", NaiveForecaster(strategy="last")),
             ("Naive_drift", NaiveForecaster(strategy="drift")),
