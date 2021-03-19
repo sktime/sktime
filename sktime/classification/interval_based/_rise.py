@@ -76,27 +76,27 @@ def _make_estimator(base_estimator, random_state=None):
     return estimator
 
 
-def _select_interval(min_interval, max_interval, series_length, method=3):
+def _select_interval(min_interval, max_interval, series_length, rng, method=3):
     """
     private function used to select an interval for a single tree
     """
-    interval = []
+    interval = np.empty(2)
     if method == 0:
-        interval[0] = np.random.randint(series_length - min_interval)
-        interval[1] = np.random.randint(
+        interval[0] = rng.randint(series_length - min_interval)
+        interval[1] = rng.randint(
             interval[0] + min_interval, series_length
         )
     else:
         if random.getrandbits(1):
-            interval[0] = np.random.randint(0, series_length - min_interval)
+            interval[0] = rng.randint(series_length - min_interval)
             interval_range = min(series_length - interval[0], max_interval)
-            length = np.random.randint(min_interval, interval_range)
+            length = rng.randint(min_interval, interval_range)
             interval[1] = interval[0] + length
         else:
-            interval[1] = np.random.randint(min_interval, series_length)
-            interval_range = min(series_length - interval[1], max_interval)
+            interval[1] = rng.randint(min_interval, series_length)
+            interval_range = min(interval[1], max_interval)
             length = 3 if interval_range == min_interval else \
-                np.random.randint(min_interval, interval_range)
+                rng.randint(min_interval, interval_range)
             interval[0] = interval[1] - length
     return interval
 
@@ -174,7 +174,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     def __init__(
             self,
-            n_estimators=200,
+            n_estimators=500,
+            max_interval=0,
             min_interval=16,
             acf_lag=100,
             acf_min_values=4,
@@ -186,6 +187,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             n_estimators=n_estimators,
         )
         self.n_estimators = n_estimators
+        self.max_interval = max_interval
         self.min_interval = min_interval
         self.acf_lag = acf_lag
         self.acf_min_values = acf_min_values
@@ -225,22 +227,24 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         X = X.squeeze(1)
 
         n_instances, self.series_length = X.shape
+        self.max_interval = self.series_length
+        self.min_interval = self.series_length // 2
 
         rng = check_random_state(self.random_state)
 
         self.estimators_ = []
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.intervals = np.zeros((self.n_estimators, 2), dtype=int)
+        self.intervals = np.empty((self.n_estimators, 2), dtype=int)
         self.intervals[0] = 0, self.series_length
         self.intervals[1:] = [
                 _select_interval(
                   self.min_interval,
-                  self.acf_lag,
+                  self.max_interval,
                   self.series_length,
-                  3
+                  rng
                 )
-                for _ in range(self.n_estimators)
+                for _ in range(1, self.n_estimators)
         ]
         # self.intervals[0][0] = 0
         # self.intervals[0][1] = self.series_length
@@ -502,11 +506,11 @@ def _ps(x, sign=1, n=None, pad="mean"):
     fft = np.fft.fft(x_in_power_2, norm=norm)
     # if sign == -1:
     #     fft /= n
-    fft = fft.real * fft.real + fft.imag * fft.imag
+    fft = np.sqrt(fft.real * fft.real + fft.imag * fft.imag)
     fft = fft[: len(x_in_power_2) // 2]
     return np.array(fft)
 
 
 def _round_to_next_power_of_two(n):
-    return 1 << (n - 1).bit_length() - (bin(n)[2:4] == '10')
-    # return 1 << round(np.log2(n))
+    #return 1 << (int(n) - 1).bit_length() - (bin(n)[2:4] == '10')
+    return 1 << round(np.log2(n))

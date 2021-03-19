@@ -12,33 +12,33 @@ import os
 import sklearn.preprocessing
 import sklearn.utils
 
-from sktime.classification.dictionary_based import (
-    BOSSEnsemble,
-    ContractableBOSS,
-    TemporalDictionaryEnsemble,
-    WEASEL,
-    MUSE,
-)
-from sktime.classification.distance_based import (
-    ElasticEnsemble,
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
-    ShapeDTW,
-)
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier,
-)
+# from sktime.classification.dictionary_based import (
+#     BOSSEnsemble,
+#     ContractableBOSS,
+#     TemporalDictionaryEnsemble,
+#     WEASEL,
+#     MUSE,
+# )
+# from sktime.classification.distance_based import (
+#     ElasticEnsemble,
+#     ProximityForest,
+#     ProximityTree,
+#     ProximityStump,
+#     KNeighborsTimeSeriesClassifier,
+#     ShapeDTW,
+# )
+# from sktime.classification.hybrid import HIVECOTEV1
+# from sktime.classification.hybrid._catch22_forest_classifier import (
+#     Catch22ForestClassifier,
+# )
 from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
 )
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.shapelet_based import MrSEQLClassifier, ROCKETClassifier
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
+# from sktime.classification.interval_based._cif import CanonicalIntervalForest
+# from sktime.classification.interval_based._drcif import DrCIF
+# from sktime.classification.shapelet_based import MrSEQLClassifier, ROCKETClassifier
+# from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -134,7 +134,7 @@ def set_classifier(cls, resampleId=None):
         return MUSE(random_state=resampleId)
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resampleId)
+        return RandomIntervalSpectralForest(random_state=resampleId, n_jobs=-1)
     elif name == "tsf" or name == "timeseriesforestclassifier":
         return TimeSeriesForestClassifier(random_state=resampleId)
     elif name == "cif" or name == "canonicalintervalforest":
@@ -680,26 +680,35 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
+        data_dir = "../datasets/Univariate_ts/"
+        results_dir = "C:/Users/valkyrie/OneDrive/桌面/result/"
         dataset = "ArrowHead"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "1NN-MSM"
+        classifier = "rise"
         resample = 0
-        #         for i in range(0, len(univariate_datasets)):
-        #             dataset = univariate_datasets[i]
-        # #            print(i)
-        # #            print(" problem = "+dataset)
         tf = False
-        for i in range(0, len(benchmark_datasets)):
-            dataset = benchmark_datasets[i]
-            run_experiment(
-                overwrite=True,
-                problem_path=data_dir,
-                results_path=results_dir,
-                cls_name=classifier,
-                dataset=dataset,
-                resampleID=resample,
-                train_file=tf,
-            )
+        # for i in range(0, len(benchmark_datasets)):
+        #     dataset = benchmark_datasets[i]
+        #     run_experiment(
+        #         overwrite=True,
+        #         problem_path=data_dir,
+        #         results_path=results_dir,
+        #         cls_name=classifier,
+        #         dataset=dataset,
+        #         resampleID=resample,
+        #         train_file=tf,
+        #     )
+        for dataset in dataset_lists.univariate_equal_length:
+            try:
+                run_experiment(
+                    overwrite=True,
+                    problem_path=data_dir,
+                    results_path=results_dir,
+                    cls_name=classifier,
+                    dataset=dataset,
+                    resampleID=resample,
+                    train_file=tf,
+                )
+            except Exception as e:
+                print(dataset, 'raised exception: ', str(e))
