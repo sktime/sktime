@@ -914,4 +914,14 @@
   "repoType": "github",
   "repoHost": "https://github.com",
   "commitConvention": "none"
-}
+},
+{
+      "login": "hassan-jvd90",
+      "name": "hassan-javed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78046034?v=4",
+      "profile": "https://www.linkedin.com/in/hassan-javed-610/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    }
