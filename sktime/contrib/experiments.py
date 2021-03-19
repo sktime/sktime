@@ -32,7 +32,7 @@ from sktime.classification.hybrid._catch22_forest_classifier import (
     Catch22ForestClassifier,
 )
 from sktime.classification.interval_based import (
-    TimeSeriesForest,
+    TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
 )
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
@@ -82,7 +82,7 @@ classifier_list = [
     "MUSE",
     # Interval based
     "RandomIntervalSpectralForest",
-    "TimeSeriesForest",
+    "TimeSeriesForestClassifier",
     "CanonicalIntervalForest",
     # Shapelet based
     "ShapeletTransformClassifier",
@@ -135,8 +135,8 @@ def set_classifier(cls, resampleId=None):
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
         return RandomIntervalSpectralForest(random_state=resampleId)
-    elif name == "tsf" or name == "timeseriesforest":
-        return TimeSeriesForest(random_state=resampleId)
+    elif name == "tsf" or name == "timeseriesforestclassifier":
+        return TimeSeriesForestClassifier(random_state=resampleId)
     elif name == "cif" or name == "canonicalintervalforest":
         return CanonicalIntervalForest(random_state=resampleId)
     elif name == "drcif":
