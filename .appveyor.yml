@@ -6,7 +6,7 @@
 
 branches:
   only:
-    - master
+    - main
 
 environment:
   global:
@@ -50,7 +50,7 @@ install:
   # If there is a newer build queued for the same PR, cancel this one.
   # The AppVeyor 'rolling builds' option is supposed to serve the same
   # purpose but is problematic because it tends to cancel builds pushed
-  # directly to master instead of just PR builds.
+  # directly to main instead of just PR builds.
   # credits: JuliaLang developers.
   - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
       https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
@@ -116,7 +116,7 @@ artifacts:
 deploy_script:
   - ps: ls dist
   - ps: >-
-      if ( ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
+      if ( ($env:APPVEYOR_REPO_BRANCH -eq 'main') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
       ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]+\.[0-9]+\.[0-9]+') ) {
         Write-Output ("Deploying tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
         pip install --upgrade twine
