@@ -125,7 +125,7 @@ class MultiplexerForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster)
         if self.selected_estimator is not None:
             for name, estimator in self.component_estimators:
                 if self.selected_estimator == name:
-                    self._forecaster = copy.deepcopy(estimator)
+                    self._forecaster = clone(estimator)
 
     def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
