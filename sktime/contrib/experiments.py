@@ -32,7 +32,7 @@ from sktime.classification.hybrid._catch22_forest_classifier import (
     Catch22ForestClassifier,
 )
 from sktime.classification.interval_based import (
-    TimeSeriesForest,
+    TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
 )
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
@@ -82,7 +82,7 @@ classifier_list = [
     "MUSE",
     # Interval based
     "RandomIntervalSpectralForest",
-    "TimeSeriesForest",
+    "TimeSeriesForestClassifier",
     "CanonicalIntervalForest",
     # Shapelet based
     "ShapeletTransformClassifier",
@@ -112,7 +112,11 @@ def set_classifier(cls, resampleId=None):
     elif name == "ps" or name == "proximityStump":
         return ProximityStump(random_state=resampleId)
     elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(metric="dtw")
+        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
+    elif name == "dtw" or name == "1nn-dtw":
+        return KNeighborsTimeSeriesClassifier(distance="dtw")
+    elif name == "msm" or name == "1nn-msm":
+        return KNeighborsTimeSeriesClassifier(distance="msm")
     elif name == "ee" or name == "elasticensemble":
         return ElasticEnsemble()
     elif name == "shapedtw":
@@ -131,8 +135,8 @@ def set_classifier(cls, resampleId=None):
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
         return RandomIntervalSpectralForest(random_state=resampleId)
-    elif name == "tsf" or name == "timeseriesforest":
-        return TimeSeriesForest(random_state=resampleId)
+    elif name == "tsf" or name == "timeseriesforestclassifier":
+        return TimeSeriesForestClassifier(random_state=resampleId)
     elif name == "cif" or name == "canonicalintervalforest":
         return CanonicalIntervalForest(random_state=resampleId)
     elif name == "drcif":
@@ -554,6 +558,106 @@ def test_loading():
         print(testY.shape)
 
 
+benchmark_datasets = [
+    "ACSF1",
+    "Adiac",
+    "ArrowHead",
+    "Beef",
+    "BeetleFly",
+    "BirdChicken",
+    "BME",
+    "Car",
+    "CBF",
+    "ChlorineConcentration",
+    "CinCECGTorso",
+    "Coffee",
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
+    "DiatomSizeReduction",
+    "DistalPhalanxOutlineCorrect",
+    "DistalPhalanxOutlineAgeGroup",
+    "DistalPhalanxTW",
+    "Earthquakes",
+    "ECG200",
+    "ECG5000",
+    "ECGFiveDays",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
+    "FaceAll",
+    "FaceFour",
+    "FacesUCR",
+    "FiftyWords",
+    "Fish",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Ham",
+    "Haptics",
+    "Herring",
+    "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
+    "ItalyPowerDemand",
+    "LargeKitchenAppliances",
+    "Lightning2",
+    "Lightning7",
+    "Mallat",
+    "Meat",
+    "MedicalImages",
+    "MiddlePhalanxOutlineCorrect",
+    "MiddlePhalanxOutlineAgeGroup",
+    "MiddlePhalanxTW",
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
+    "MoteStrain",
+    "OliveOil",
+    "OSULeaf",
+    "PhalangesOutlinesCorrect",
+    "Phoneme",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "Plane",
+    "PowerCons",
+    "ProximalPhalanxOutlineCorrect",
+    "ProximalPhalanxOutlineAgeGroup",
+    "ProximalPhalanxTW",
+    "RefrigerationDevices",
+    "Rock",
+    "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShapeletSim",
+    "SmallKitchenAppliances",
+    "SmoothSubspace",
+    "SonyAIBORobotSurface1",
+    "SonyAIBORobotSurface2",
+    "Strawberry",
+    "SwedishLeaf",
+    "Symbols",
+    "SyntheticControl",
+    "ToeSegmentation1",
+    "ToeSegmentation2",
+    "Trace",
+    "TwoLeadECG",
+    "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryX",
+    "UWaveGestureLibraryY",
+    "UWaveGestureLibraryZ",
+    "Wafer",
+    "Wine",
+    "WordSynonyms",
+    "Worms",
+    "WormsTwoClass",
+    "Yoga",
+]
+
+
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
@@ -575,30 +679,27 @@ if __name__ == "__main__":
             train_file=tf,
         )
     else:  # Local run
-        #        data_dir = "/scratch/univariate_datasets/"
-        #        results_dir = "/scratch/results"
-        #         data_dir = "/bench/datasets/Univariate2018/"
-        #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         print(" Local Run")
-        data_dir = "C:/Code/sktime/sktime/datasets/data/"
-        results_dir = "C:/Temp/"
-        #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "UnitTest"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
+        dataset = "ArrowHead"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "KNeighborsTimeSeriesClassifier"
+        classifier = "1NN-MSM"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
         # #            print(i)
         # #            print(" problem = "+dataset)
         tf = False
-        run_experiment(
-            overwrite=True,
-            problem_path=data_dir,
-            results_path=results_dir,
-            cls_name=classifier,
-            dataset=dataset,
-            resampleID=resample,
-            train_file=tf,
-        )
+        for i in range(0, len(benchmark_datasets)):
+            dataset = benchmark_datasets[i]
+            run_experiment(
+                overwrite=True,
+                problem_path=data_dir,
+                results_path=results_dir,
+                cls_name=classifier,
+                dataset=dataset,
+                resampleID=resample,
+                train_file=tf,
+            )

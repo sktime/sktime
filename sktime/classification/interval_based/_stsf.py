@@ -25,9 +25,10 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
-    """Supervised time series forest classifier.
+    """Supervised Time Series Forest (STSF) classifier as described in [1].
 
-    A time series forest is an ensemble of decision trees built on random intervals.
+    A time series forest is an ensemble of decision trees built on intervals selected
+    through a supervised process.
      Overview: Input n series length m
      for each tree
          sample X using class-balanced bagging
@@ -42,8 +43,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
      ----------
      n_estimators    : int, ensemble size, optional (default = 200)
      n_jobs          : int, optional (default=1)
-         The number of jobs to run in parallel for both `fit` and `predict`.
-         ``-1`` means using all processors.
+     The number of jobs to run in parallel for both `fit` and `predict`.
+     ``-1`` means using all processors.
      random_state    : int, seed for random, optional (default = none)
 
      Attributes
@@ -55,14 +56,15 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
      indexes of all start and end points for all classifiers for each representaion
      and feature
 
-     References
-     ----------
-     .. [1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
+     Notes
+     -----
+     ..[1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
      Through Supervised Interval Search." IEEE ICDM 2020
 
      Java implementation
      https://github.com/uea-machine-learning/tsml/blob/master/src/main/
      java/tsml/classifiers/interval_based/STSF.java
+
     """
 
     # Capabilities: data types this classifier can handle

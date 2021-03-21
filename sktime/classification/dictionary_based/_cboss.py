@@ -55,6 +55,9 @@ class ContractableBOSS(BaseClassifier):
     time_limit              : time contract to limit build time in minutes
     (default = 0, no limit)
     min_window              : minimum window size, (default = 10)
+    n_jobs                  : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
@@ -73,7 +76,7 @@ class ContractableBOSS(BaseClassifier):
     BOSSEnsemble
 
     Notes
-    __________
+    -----
     ..[1] Patrick Schäfer, "The BOSS is concerned with time series
     classification in the presence of noise",
     Data Mining and Knowledge Discovery, 29(6): 2015
@@ -83,10 +86,10 @@ class ContractableBOSS(BaseClassifier):
     in proc 20th International Conference on Intelligent Data Engineering
     and Automated Learning,LNCS, volume 11871
             https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
+
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/cBOSS.java
-
 
     """
 

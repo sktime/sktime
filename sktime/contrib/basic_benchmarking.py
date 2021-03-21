@@ -16,7 +16,7 @@ from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.utils.slope_and_trend import _slope
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.interval_based._rise as fb
@@ -187,7 +187,9 @@ def tsf_benchmarking():
             ("clf", DecisionTreeClassifier()),
         ]
         base_estimator = Pipeline(steps)
-        tsf = TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
+        tsf = ComposableTimeSeriesForestClassifier(
+            estimator=base_estimator, n_estimators=100
+        )
         exp.run_experiment(
             overwrite=False,
             problem_path=data_dir,
@@ -238,7 +240,9 @@ def rise_benchmarking():
             ("clf", DecisionTreeClassifier()),
         ]
         base_estimator = Pipeline(steps)
-        rise = TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
+        rise = ComposableTimeSeriesForestClassifier(
+            estimator=base_estimator, n_estimators=100
+        )
         exp.run_experiment(
             overwrite=True,
             problem_path=data_dir,
@@ -278,7 +282,7 @@ def elastic_distance_benchmarking():
     for i in range(0, int(len(distance_test))):
         dataset = distance_test[i]
         print(str(i) + " problem = " + dataset + " writing to " + results_dir + "/DTW/")
-        dtw = dist.KNeighborsTimeSeriesClassifier(metric="dtw")
+        dtw = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
         exp.run_experiment(
             overwrite=False,
             problem_path=data_dir,
@@ -288,7 +292,7 @@ def elastic_distance_benchmarking():
             dataset=dataset,
             train_file=False,
         )
-        twe = dist.KNeighborsTimeSeriesClassifier(metric="dtw")
+        twe = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
         exp.run_experiment(
             overwrite=False,
             problem_path=data_dir,
