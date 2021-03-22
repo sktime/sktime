@@ -1,4 +1,4 @@
-.. _forecasting:
+.. _user_guide_forecasting:
 
 Forecasting
 ===========

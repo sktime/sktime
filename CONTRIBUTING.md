@@ -1,4 +1,4 @@
-How to contribute
+How to Contribute
 =================
 
 Welcome to our contributing guidelines!
