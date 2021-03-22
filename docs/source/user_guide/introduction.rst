@@ -55,6 +55,6 @@ Currently, sktime provides:
 * Tuning,
 * Ensembling, such as a fully customisable random forest for time-series classification and regression, as well as ensembling for multivariate problems,
 
-For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md>`_.
+For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/main/ESTIMATOR_OVERVIEW.md>`_.
 
 In addition, sktime includes an experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.

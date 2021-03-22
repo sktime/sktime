@@ -31,7 +31,7 @@ Examples.
 
 Example
 -------
-Predicting flights. See the `Tutorial on Forecasting <https://github.com/alan-turing-institute/sktime/blob/master/examples/01_forecasting.ipynb>`_.
+Predicting flights. See the `Tutorial on Forecasting <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting.ipynb>`_.
 
 Algorithms included in sktime
 -----------------------------
