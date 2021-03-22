@@ -22,20 +22,20 @@ class MultiplexForecaster(
     ):
 
         """
-        MultiplexerForecaster facilitates a framework for performing
+        MultiplexForecaster facilitates a framework for performing
         model selection process over different model classes.
         It should be used in conjunction with ForecastingGridSearchCV
         to get full utilization.
 
-        Single use of MultiplexerForecaster with forecasters
+        Single use of MultiplexForecaster with forecasters
         and selected_forecaster parameter specified,
         works just like the selected component.
         It does not provide any further use in that case.
 
-        When used with ForecastingGridSearchCV, MultiplexerForecaster
+        When used with ForecastingGridSearchCV, MultiplexForecaster
         provides an ability to compare different model class
         performances with each other, just like a model tournament.
-        When ForecastingGridSearchCV is fitted with a MultiplexerForecaster,
+        When ForecastingGridSearchCV is fitted with a MultiplexForecaster,
         returned value for the selected_forecaster argument of best_params_
         attribute of ForecastingGridSearchCV, gives the best
         performing model class among given models provided in forecasters.
@@ -44,12 +44,12 @@ class MultiplexForecaster(
         ----------
         forecasters : list
             List of (forecaster names, forecaster objects)
-            MultiplexerForecaster switches between these forecasters
+            MultiplexForecaster switches between these forecasters
             objects when used with ForecastingGridSearchCV to
             find the optimal model
         selected_forecaster: str
             An argument to make a selection among forecasters.
-            MultiplexerForecaster uses selected_forecaster
+            MultiplexForecaster uses selected_forecaster
             to choose which component to fit.
             Important for using with ForecastingGridSearchCV as a
             hyperparameter.
@@ -57,7 +57,7 @@ class MultiplexForecaster(
         Attributes
         ----------
         _forecaster : Sktime forecaster
-            forecaster that MultiplexerForecaster will currently
+            forecaster that MultiplexForecaster will currently
             forecast with.
         _forecaster_fit_params: dict
             Fit params for the forecaster that is
