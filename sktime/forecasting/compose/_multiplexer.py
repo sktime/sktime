@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from sktime.base import _HeterogenousMetaEstimator
+from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
 from sklearn.base import clone
 
 __author__ = ["Kutay Koralturk"]
@@ -13,7 +12,7 @@ __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(
-    _OptionalForecastingHorizonMixin, _SktimeForecaster, _HeterogenousMetaEstimator
+    _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
 ):
     def __init__(
         self,
@@ -65,26 +64,9 @@ class MultiplexForecaster(
             _forecaster
         """
 
-        self.forecasters = forecasters
+        super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
-        self._check_components()
-
-        super(MultiplexForecaster, self).__init__()
-
-    def _check_components(self):
-        if not isinstance(self.forecasters, list):
-            raise Exception(
-                "Please provide a list " "for forecasters composed of tuples"
-            )
-
-        for component in self.forecasters:
-            name, forecaster = component
-            if not isinstance(forecaster, _SktimeForecaster):
-                raise Exception(
-                    "Each component has to be an "
-                    "sktime forecaster object. "
-                    "Please check {} with name:{}".format(forecaster, name)
-                )
+        self._check_forecasters()
 
     def _check_fit_params(self, fit_params):
         forecaster_fit_params = {}
@@ -115,7 +97,7 @@ class MultiplexForecaster(
                 " Valid selected_forecaster parameters: {}".format(component_names)
             )
 
-    def _update_forecaster(self):
+    def _set_forecaster(self):
         self._check_selected_forecaster()
         if self.selected_forecaster is not None:
             for name, forecaster in self.forecasters:
@@ -145,34 +127,10 @@ class MultiplexForecaster(
 
         self._set_y_X(y, X)
         self._set_fh(fh)
-        self._update_forecaster()
+        self._set_forecaster()
         forecaster_fit_params = self._check_fit_params(fit_params=fit_params)
         self._forecaster.fit(y, X=X, fh=fh, **forecaster_fit_params)
         self._is_fitted = True
-        return self
-
-    def get_params(self, deep=True):
-        """Get parameters for the forecaster.
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this forecaster and
-            contained subobjects that are forecaster.
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-        Valid parameter keys can be listed with ``get_params()``.
-        Returns
-        -------
-        self
-        """
-        self._set_params("forecasters", **kwargs)
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
