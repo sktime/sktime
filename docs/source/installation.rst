@@ -18,7 +18,7 @@ To install the latest development version of sktime, follow these steps:
 
 1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
 2. Move into the root directory of the repository: :code:`cd sktime`
-3. Make sure you are on the master branch: :code:`git checkout master`
+3. Make sure you are on the main branch: :code:`git checkout main`
 4. Make sure your local version is up-to-date: :code:`git pull`
 5. Build package from source using: :code:`pip install --editable .` Please read below for more detailed instructions for specific operating systems.
 
