@@ -3,7 +3,7 @@
 .. |github| image:: https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github
 .. _github: https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test
 
-.. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/main?logo=appveyor
 .. _appveyor: https://ci.appveyor.com/project/mloning/sktime
 
 .. |pypi| image:: https://img.shields.io/pypi/v/sktime?color=orange
@@ -19,12 +19,12 @@
 .. _gitter: https://gitter.im/sktime/community
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
+.. _binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg
 .. _zenodo: https://doi.org/10.5281/zenodo.3749000
 
-.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/master?logo=azure-pipelines
+.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/main?logo=azure-pipelines
 .. _azure: https://dev.azure.com/mloning/sktime/_build
 
 .. |codecov| image:: https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov
@@ -43,7 +43,7 @@
 .. _codestyle: https://github.com/psf/black
 
 .. |contributors| image:: https://img.shields.io/github/contributors/alan-turing-institute/sktime?color=pink&label=all-contributors
-.. _contributors: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md
+.. _contributors: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md
 
 .. |tutorial| image:: https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social
 .. _tutorial: https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s
@@ -121,8 +121,7 @@ Forecasting
     smape_loss(y_test, y_pred)
     >>> 0.08661468139978168
 
-For more, check out the `forecasting tutorial <https://github
-.com/alan-turing-institute/sktime/blob/master/examples/01_forecasting
+For more, check out the `forecasting tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting
 .ipynb>`__.
 
 Time Series Classification
@@ -142,15 +141,13 @@ Time Series Classification
     accuracy_score(y_test, y_pred)
     >>> 0.8679245283018868
 
-For more, check out the `time series classification tutorial <https://github
-.com/alan-turing-institute/sktime/blob/master/examples
-/02_classification_univariate.ipynb>`__.
+For more, check out the `time series classification tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification_univariate.ipynb>`__.
 
 Documentation
 -------------
 
 * PyData Amsterdam 2020 tutorial: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[notebooks] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
-* `Tutorial notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
+* `Tutorial notebooks <https://github.com/alan-turing-institute/sktime/tree/main/examples>`__ - you can run them on Binder_ without having to install anything!
 * `User guide <https://www.sktime.org/en/latest/user_guide.html>`__
 * `API reference <https://www.sktime.org/en/latest/api_reference.html>`__
 
@@ -158,7 +155,7 @@ Documentation
 How to contribute
 -----------------
 
-We follow the `all-contributors specification <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__ - and all kinds of contributions are welcome!
+We follow the `all-contributors specification <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__ - and all kinds of contributions are welcome!
 
 * `Contributing guide <https://www.sktime.org/en/latest/contributing.html>`__
 * `Enhancement proposals <https://github.com/sktime/enhancement-proposals>`__ (design discussions)
