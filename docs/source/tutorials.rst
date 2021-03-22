@@ -1,18 +1,18 @@
-.. _how_to_get_started:
+.. _tutorials:
 
-How to get started
-==================
+Tutorials
+=========
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples/
-
-We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
-`getting-started guide`_.
 
 We have a number of tutorial notebooks. If you like to run them interactively, you can launch them on Binder without
 having to install anything.
 
 |Binder|_
+
+We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
+`getting-started guide`_.
 
 .. toctree::
     :maxdepth: 1
