@@ -180,7 +180,7 @@ class MultiplexForecaster(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
-    def update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=True):
         """Call predict on the forecaster with the best found parameters. """
         self.check_is_fitted()
         self._update_y_X(y, X)
