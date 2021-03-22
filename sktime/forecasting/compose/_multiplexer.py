@@ -58,14 +58,11 @@ class MultiplexForecaster(
         _forecaster : Sktime forecaster
             forecaster that MultiplexForecaster will currently
             forecast with.
-        _forecaster_fit_params: dict
-            Fit params for the forecaster that is
-            going to be used by the forecaster in the
-            _forecaster
         """
 
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
+        self._forecaster = None
         self._check_forecasters()
 
     def _check_fit_params(self, fit_params):
