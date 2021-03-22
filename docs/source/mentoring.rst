@@ -1,7 +1,7 @@
 .. _mentoring:
 
-Mentorship programme
-====================
+Mentorship Program
+==================
 
 Our goal, apart from improving sktime, is to onboard new contributors and we would really like you to stay around after your first visit to our project. Your help is extremely welcome!
 
@@ -19,6 +19,8 @@ What we offer
 We have an active community of researchers and students who work on sktime. We will onboard you and you will have time to socialize with other contributors and mentees in the community.
 
 You can find our mentors in our `list of contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`_ by looking for the mentorship emoji: 🧑‍🏫.
+
+To find out what current mentees are working, take a look at their `projects <https://github.com/sktime/mentoring/issues?q=is%3Aopen+is%3Aissue+label%3Amentoring>`__.
 
 What we expect
 --------------

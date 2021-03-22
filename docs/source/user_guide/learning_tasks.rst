@@ -1,4 +1,4 @@
-.. _learning_tasks:
+.. _user_guide_learning_tasks:
 
 Overview of Learning Tasks
 ==========================
