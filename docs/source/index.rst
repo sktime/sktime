@@ -16,7 +16,7 @@ From here, you can navigate to:
    :maxdepth: 1
 
    installation
-   how_to_get_started
+   tutorials
    user_guide
    api_reference
    changelog
@@ -26,6 +26,7 @@ From here, you can navigate to:
    :maxdepth: 1
 
    contributing
+   developer_guide
    roadmap
    mentoring
    code_of_conduct
