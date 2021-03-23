@@ -588,3 +588,116 @@ def _get_forecaster_class(scitype, strategy):
     # look up and return forecaster class
     Forecaster = lookup_table.get(scitype).get(strategy)
     return Forecaster
+
+
+class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
+    strategy = "dirrec"
+
+    def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if X_train is not None:
+            raise NotImplementedError()
+
+        self._set_y_X(y_train)
+        self._set_fh(fh)
+        if np.any(self.fh <= 0):
+            raise NotImplementedError("in-sample predictions are not implemented")
+
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
+        # for the direct reduction strategy, a separate forecaster is fitted
+        # for each step ahead of the forecasting horizon
+        self._cv = SlidingWindowSplitter(
+            fh=self.fh,
+            window_length=self.window_length_,
+            step_length=self.step_length_,
+            start_with_window=True,
+        )
+
+        # transform data using rolling window split
+        X_train, Y_train = self._transform(y_train, X_train)
+
+        # iterate over forecasting horizon
+        self.regressors_ = []
+
+        for i in range(len(self.fh)):
+            y_train = Y_train[:, i]
+            regressor = clone(self.regressor)
+            regressor.fit(X_train, y_train)
+            self.regressors_.append(regressor)
+            X_train = np.column_stack([X_train, y_train.reshape(-1, 1)])
+            X_train = self._format_windows(X_train)
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        """Predict"""
+        # compute prediction
+        # prepare recursive predictions
+        fh_max = fh[-1]
+        y_pred = np.zeros(fh_max)
+        y_pred = np.zeros(fh_max)
+
+        # get last window from observation horizon
+        last_window, _ = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
+
+        # recursively predict iterating over forecasting horizon
+        for i in range(fh_max):
+            X_last = self._format_windows(
+                [last_window]
+            )  # convert data into required input format
+
+            # make forecast using specific fitted regressor
+            y_pred[i] = self.regressors_[i].predict(X_last)
+
+            # update last window with previous prediction
+            # use full window adopting from DirectReducer
+
+            last_window = np.append(last_window, y_pred[i])
+
+        fh_idx = fh.index_like(self.cutoff)
+        return y_pred[fh_idx]
+
+
+class DirRecTimeSeriesForecaster(ReducedTimeSeriesRegressorMixin, _DirRecReducer):
+    """
+    Forecasting based on reduction to time series regression with a DirRec
+    (hybrid) reduction strategy.
+    For the direct strategy,  a separate forecaster is fitted
+    for each step ahead of the forecasting horizon and then
+    the previous forecasting horizon is added as an input
+    for training the next forecaster, following the recusrive
+    strategy.
+
+    Parameters
+    ----------
+    regressor : sktime estimator object
+        Define the type of time series regression model.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
+
+    pass
