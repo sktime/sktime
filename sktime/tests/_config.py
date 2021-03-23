@@ -36,6 +36,8 @@ from sktime.forecasting.compose import RecursiveRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import DirRecRegressionForecaster
+from sktime.forecasting.compose import DirRecTimeSeriesForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -137,6 +139,8 @@ ESTIMATOR_TEST_PARAMS = {
     RecursiveTimeSeriesRegressionForecaster: {
         "regressor": make_pipeline(Tabularizer(), REGRESSOR)
     },
+    DirRecTimeSeriesForecaster: {"regressor": make_pipeline(Tabularizer(), REGRESSOR)},
+    DirRecRegressionForecaster: {"regressor": make_pipeline(Tabularizer(), REGRESSOR)},
     TransformedTargetForecaster: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
