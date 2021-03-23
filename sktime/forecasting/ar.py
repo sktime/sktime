@@ -47,6 +47,10 @@ class AutoAR(_StatsModelsAdapter):
         If 'raise', an error is raised. Default is 'none'.
     ic : {'aic','bic','hqic','t-stat'}
         Criterion used for selecting the optimal lag length.
+    old_names : bool
+        Flag indicating whether to use the v0.11 names or the v0.12+ names.
+        After v0.12 is released, the default names will change to the new
+        names.
     References
     ----------
     ..[1] https://www.statsmodels.org/stable/_modules/statsmodels/tsa/ar_model.html
@@ -57,26 +61,21 @@ class AutoAR(_StatsModelsAdapter):
         maxlag=10,
         trend="c",
         seasonal=False,
-        exog=None,
         hold_back=None,
         sp=None,
         missing="none",
-        *,
         ic="aic",
         glob=False,
-        deterministic=None,
         old_names=True,
     ):
         self.maxlag = maxlag
         self.trend = trend
-        self.exog = exog
         self.seasonal = seasonal
         self.hold_back = hold_back
         self.sp = sp
         self.missing = missing
         self.glob = glob
         self.ic = ic
-        self.deterministic = deterministic
         self.old_names = old_names
 
         super(AutoAR, self).__init__()
@@ -89,7 +88,7 @@ class AutoAR(_StatsModelsAdapter):
             glob=self.glob,
             trend=self.trend,
             seasonal=self.seasonal,
-            exog=self.exog,
+            exog=X_train,
             hold_back=self.hold_back,
             period=self.sp,
             missing=self.missing,
