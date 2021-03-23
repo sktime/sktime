@@ -1,19 +1,127 @@
 # -*- coding: utf-8 -*-
-__all__ = ["ThetaForecaster"]
-__author__ = ["@big-o", "Markus Löning"]
+__all__ = ["ThetaForecaster", "AutoThetaForcaster"]
+__author__ = ["@big-o", "Markus Löning", "Aditya"]
 
 from warnings import warn
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
+from scipy.stats import norm, linregress
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.series.detrend import Deseasonalizer
+from statsmodels.tsa.stattools import acf
+from statsmodels.tsa.seasonal import seasonal_decompose
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_y_X
+
+
+class AutoThetaForcaster:
+    """
+    This is a test description.
+    inpt : pandas DataFrame
+    ppy : int
+    """
+
+    def SeasonalityTest(self, inpt, ppy):
+        tcrit = 1.645
+        if len(inpt) < 3 * ppy:
+            test_seasonal = False
+
+        else:
+            xcaf = acf(inpt)[acf[-1, 1, 1]]
+            clim = tcrit / np.sqrt(len(inpt)) * np.sqrt(np.cumsum([1, 2 * xcaf ** 2]))
+            test_seasonal = abs(xcaf[ppy]) > clim[ppy]
+
+            if test_seasonal is None:
+                test_seasonal = False
+
+        return test_seasonal
+
+    def Theta_models_fit(
+        self, inpt, fh, theta, curve, model, seasonality, plot=False, positive=True
+    ):
+        """
+        inpt : Pandas dataframe
+        fh : int
+        theta : float
+        seasonality : "N", "A", or anything else
+        """
+
+        # Check if the inputs are valid
+        if theta < 1:
+            theta = 1
+        if fh < 1:
+            fh = 1
+
+        # Estimate theta line weights
+        # Implementation of simple naive forcaster
+
+        ##### This part needs to be replaced        ######
+        outtest = np.array([inpt[-1] for i in range(fh)])
+        #####                                       ######
+
+        wses = 1 / theta
+        wlrl = 1 - wses
+
+        # Estimate seasonaly adjusted time series
+        ppy = len(inpt.columns)
+
+        if seasonality == "N":
+            des_inpt = inpt
+            SIout = np.ones(fh)
+            SIin = np.ones(len(inpt))
+        elif seasonality == "A":
+            Dec = seasonal_decompose(inpt, model="additive")
+            des_inpt = inpt - Dec.seasonal
+            SIin = Dec.seasonal
+            Dec_values = Dec.seasonal[(len(Dec.seasonal) - ppy + 1) : len(Dec.seasonal)]
+            SIout = pd.Series(
+                np.tile(Dec_values, fh), index=list(Dec_values.index) * fh
+            ).head(n=fh)
+        else:
+            Dec = seasonal_decompose(inpt, model="multiplicative")
+            des_inpt = inpt / Dec.seasonal
+            SIin = Dec.seasonal
+            Dec_values = Dec.seasonal[(len(Dec.seasonal) - ppy + 1) : len(Dec.seasonal)]
+            SIout = pd.Series(
+                np.tile(Dec_values, fh), index=list(Dec_values.index) * fh
+            ).head(n=fh)
+
+        # Estimate theta line zero
+        observations = len(des_inpt.values.reshape(-1, 1))
+        xs = list(range(1, observations + 1))
+        xf = xff = list(range((observations + 1), (observations + fh + 1)))
+
+        # Add all the values of Des_inpt to a list
+        des_inpt_lst = []
+        for indx in range(len(des_inpt)):
+            des_inpt_lst.extend(des_inpt.iloc[indx].values)
+
+        dta = pd.DataFrame(data={"des_inpt": des_inpt_lst, "xs": xs})
+        newdf = pd.Series(data={"xs": xff})
+
+        if curve == "Exp":
+            estimate = linregress(xs, np.log(des_inpt))
+            thetalineIn = np.exp(
+                [elmnt * estimate.slope + estimate.intercept for elmnt in xs]
+            ).reshape(inpt.shape)
+            # Reshape thetalineIn in the dataframe like inpt
+            thetaline0In = pd.DataFrame(
+                data=thetalineIn, index=list(inpt.index), columns=list(inpt.columns)
+            )
+            thetaline0Out = (
+                np.exp(
+                    [
+                        elmnt * estimate.slope + estimate.intercept
+                        for elmnt in newdf.values[0]
+                    ]
+                )
+                + outtest
+                - outtest
+            )
 
 
 class ThetaForecaster(ExponentialSmoothing):
