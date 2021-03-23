@@ -24,4 +24,7 @@ from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import ReducedForecaster
+
+# from sktime.forecasting.compose._reduce import DirRecTimeSeriesForecaster
+# from sktime.forecasting.compose._reduce import DirRecRegressionForecaster
 from sktime.forecasting.compose._stack import StackingForecaster
