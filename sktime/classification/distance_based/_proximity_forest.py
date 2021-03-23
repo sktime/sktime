@@ -768,6 +768,7 @@ class ProximityStump(BaseClassifier):
                  verbosity=0,
                  n_stumps=5,
                  n_jobs=1):
+
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
         self.n_stumps = n_stumps
@@ -1125,6 +1126,19 @@ class ProximityTree(BaseClassifier):
     Proximity Tree class to model a decision tree which uses distance
     measures to partition data.
 
+    @article{lucas19proximity,
+        title={Proximity Forest: an effective and scalable distance-based
+        classifier for time series},
+        author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
+        Zaidi and B. Goethals and F. Petitjean and G. Webb},
+        journal={Data Mining and Knowledge Discovery},
+        volume={33},
+        number={3},
+        pages={607--635},
+        year={2019}
+    }
+    https://arxiv.org/abs/1808.10594
+
     Attributes:
         label_encoder: label encoder to change string labels to numeric indices
         classes_: unique list of classes
@@ -1278,6 +1292,14 @@ class ProximityForest(BaseClassifier):
          trees: list of trees in the forest
      """
 
+
+    # Capability tags
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
             self,
             random_state=None,
@@ -1293,6 +1315,7 @@ class ProximityForest(BaseClassifier):
             n_stump_evaluations=5,
             find_stump=None,
             setup_distance_measure_getter=setup_all_distance_measure_getter,
+
     ):
         """
         build a Proximity Forest object
@@ -1478,4 +1501,5 @@ class ProximityForest(BaseClassifier):
             prediction_counts_to_array = np.array(prediction_counts)
             sub_distribution = prediction_counts_to_array[np.argsort(prediction_counts_to_array[:, 0])][:, 1]
             np.add.at(distributions, index, sub_distribution)
+
         return distributions

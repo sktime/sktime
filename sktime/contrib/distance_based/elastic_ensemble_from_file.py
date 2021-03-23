@@ -13,12 +13,12 @@ class ElasticEnsemblePostProcess:
         Args:
             results_path: String - path to folder storing the results to be read into the ensemble
             dataset_name: String - the name of the dataset that this ensemble will post process results for
-            distance_measures: 'all' or list of Strings - default 'all'. 'all' sets classifier to use all default constiuent classifiers,
+            distance_measures: 'all' or list of Strings - default 'all'. 'all' sets classifier to use all default constituent classifiers,
                                 else a list is provided of classifiers to include. Note these names must match the names of
                                 the subdirs in the folder located at results_parh
-            resample_id: default = 0 - to identify the determanistic seed used for resamplign experiments.
+            resample_id: default = 0 - to identify the deterministic seed used for resampling experiments.
                          A resampled_id of 0 demonstrates default train/test split were used to create results
-            alpha: float/double - default=1.0. Used to exponetiate the confidence of constituent classifiers when making test predictions
+            alpha: float/double - default=1.0. Used to exponentiate the confidence of constituent classifiers when making test predictions
         """
         self.results_path = results_path
         self.dataset_name = dataset_name
@@ -128,7 +128,7 @@ class ElasticEnsemblePostProcess:
 
         Args:
             output_results_path: String - path to where output results will be written
-            output_classifier_name: String - the name of the composite ensmeble classifier in the output files
+            output_classifier_name: String - the name of the composite ensemble classifier in the output files
             write_train: boolean - true will write train files for the ensemble, false will skip training files
             write_test: boolean - true will write test files for the ensemble, false will skip test files
             overwrite: boolean - if true, any existing train/test files will be over-written. False prevents file overwriting

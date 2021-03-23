@@ -1,20 +1,17 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
-__all__ = [
-    "AutoARIMA"
-]
+__author__ = ["Markus Löning", "Hongyi Yang"]
+__all__ = ["AutoARIMA", "ARIMA"]
 
-import numpy as np
-import pandas as pd
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("pmdarima")
 
 
-class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class AutoARIMA(_PmdArimaAdapter):
     """Automatically discover the optimal order for an ARIMA model.
 
     The auto-ARIMA process seeks to identify the most optimal parameters
@@ -181,7 +178,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         only n_fits ARIMA models will be fit (stepwise must be False for this
         option to do anything).
     random_state : int, long or numpy RandomState, optional (default=None)
-        The PRNG for when random=True. Ensures replicable testingand results.
+        The PRNG for when random=True. Ensures replicable testing and results.
     n_fits : int, optional (default=10)
         If random is True and a “random search” is going to be performed,
         n_iter is the number of ARIMA models to be fit.
@@ -209,20 +206,54 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         A dictionary of key-word arguments to be passed to the scoring metric.
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
+
+    References
+    ----------
+    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
     """
 
-    def __init__(self, start_p=2, d=None, start_q=2, max_p=5,
-                 max_d=2, max_q=5, start_P=1, D=None, start_Q=1, max_P=2,
-                 max_D=1, max_Q=2, max_order=5, sp=1, seasonal=True,
-                 stationary=False, information_criterion='aic', alpha=0.05,
-                 test='kpss', seasonal_test='ocsb', stepwise=True, n_jobs=1,
-                 start_params=None, trend=None, method='lbfgs', maxiter=50,
-                 offset_test_args=None, seasonal_test_args=None,
-                 suppress_warnings=False, error_action='warn', trace=False,
-                 random=False, random_state=None, n_fits=10,
-                 out_of_sample_size=0, scoring='mse',
-                 scoring_args=None, with_intercept=True,
-                 **kwargs):
+    def __init__(
+        self,
+        start_p=2,
+        d=None,
+        start_q=2,
+        max_p=5,
+        max_d=2,
+        max_q=5,
+        start_P=1,
+        D=None,
+        start_Q=1,
+        max_P=2,
+        max_D=1,
+        max_Q=2,
+        max_order=5,
+        sp=1,
+        seasonal=True,
+        stationary=False,
+        information_criterion="aic",
+        alpha=0.05,
+        test="kpss",
+        seasonal_test="ocsb",
+        stepwise=True,
+        n_jobs=1,
+        start_params=None,
+        trend=None,
+        method="lbfgs",
+        maxiter=50,
+        offset_test_args=None,
+        seasonal_test_args=None,
+        suppress_warnings=False,
+        error_action="warn",
+        trace=False,
+        random=False,
+        random_state=None,
+        n_fits=10,
+        out_of_sample_size=0,
+        scoring="mse",
+        scoring_args=None,
+        with_intercept=True,
+        **kwargs
+    ):
 
         self.start_p = start_p
         self.d = d
@@ -262,149 +293,261 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         self.scoring = scoring
         self.scoring_args = scoring_args
         self.with_intercept = with_intercept
+        self.model_kwargs = kwargs
 
         super(AutoARIMA, self).__init__()
 
+    def _instantiate_model(self):
         # import inside method to avoid hard dependency
-        from pmdarima.arima import AutoARIMA as _AutoARIMA
-        self._forecaster = _AutoARIMA(
-            start_p=start_p, d=d, start_q=start_q, max_p=max_p,
-            max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q,
-            max_P=max_P,
-            max_D=max_D, max_Q=max_Q, max_order=max_order, m=sp,
-            seasonal=seasonal,
-            stationary=stationary, information_criterion=information_criterion,
-            alpha=alpha,
-            test=test, seasonal_test=seasonal_test, stepwise=stepwise,
-            n_jobs=n_jobs,
-            start_params=None, trend=trend, method=method, maxiter=maxiter,
-            offset_test_args=offset_test_args,
-            seasonal_test_args=seasonal_test_args,
-            suppress_warnings=suppress_warnings, error_action=error_action,
-            trace=trace,
-            random=random, random_state=random_state, n_fits=n_fits,
-            out_of_sample_size=out_of_sample_size, scoring=scoring,
-            scoring_args=scoring_args, with_intercept=with_intercept,
-            **kwargs
+        from pmdarima.arima import AutoARIMA as _AutoARIMA  # type: ignore
+
+        return _AutoARIMA(
+            start_p=self.start_p,
+            d=self.d,
+            start_q=self.start_q,
+            max_p=self.max_p,
+            max_d=self.max_d,
+            max_q=self.max_q,
+            start_P=self.start_P,
+            D=self.D,
+            start_Q=self.start_Q,
+            max_P=self.max_P,
+            max_D=self.max_D,
+            max_Q=self.max_Q,
+            max_order=self.max_order,
+            m=self.sp,
+            seasonal=self.seasonal,
+            stationary=self.stationary,
+            information_criterion=self.information_criterion,
+            alpha=self.alpha,
+            test=self.test,
+            seasonal_test=self.seasonal_test,
+            stepwise=self.stepwise,
+            n_jobs=self.n_jobs,
+            start_params=None,
+            trend=self.trend,
+            method=self.method,
+            maxiter=self.maxiter,
+            offset_test_args=self.offset_test_args,
+            seasonal_test_args=self.seasonal_test_args,
+            suppress_warnings=self.suppress_warnings,
+            error_action=self.error_action,
+            trace=self.trace,
+            random=self.random,
+            random_state=self.random_state,
+            n_fits=self.n_fits,
+            out_of_sample_size=self.out_of_sample_size,
+            scoring=self.scoring,
+            scoring_args=self.scoring_args,
+            with_intercept=self.with_intercept,
+            **self.model_kwargs
         )
 
-    def fit(self, y_train, fh=None, X_train=None, **fit_args):
-        """Fit to training data.
 
-        Parameters
-        ----------
-        y_train : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_y_X(y_train, X_train)
-        self._set_fh(fh)
-        self._forecaster.fit(y_train, exogenous=X_train, **fit_args)
-        self._is_fitted = True
-        return self
+class ARIMA(_PmdArimaAdapter):
+    """An ARIMA estimator.
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        # distinguish between in-sample and out-of-sample prediction
-        is_in_sample = fh <= 0
-        is_out_of_sample = np.logical_not(is_in_sample)
+    An ARIMA, or autoregressive integrated moving average, is a
+    generalization of an autoregressive moving average (ARMA) and is fitted to
+    time-series data in an effort to forecast future points. ARIMA models can
+    be especially efficacious in cases where data shows evidence of
+    non-stationarity.
 
-        # pure out-of-sample prediction
-        if np.all(is_out_of_sample):
-            return self._predict_out_of_sample(fh, X=X,
-                                               return_pred_int=return_pred_int,
-                                               alpha=DEFAULT_ALPHA)
+    The "AR" part of ARIMA indicates that the evolving variable of interest is
+    regressed on its own lagged (i.e., prior observed) values. The "MA" part
+    indicates that the regression error is actually a linear combination of
+    error terms whose values occurred contemporaneously and at various times
+    in the past. The "I" (for "integrated") indicates that the data values
+    have been replaced with the difference between their values and the
+    previous values (and this differencing process may have been performed
+    more than once). The purpose of each of these features is to make the model
+    fit the data as well as possible.
 
-        # pure in-sample prediction
-        elif np.all(is_in_sample):
-            return self._predict_in_sample(fh, X=X,
-                                           return_pred_int=return_pred_int,
-                                           alpha=DEFAULT_ALPHA)
+    Non-seasonal ARIMA models are generally denoted ``ARIMA(p,d,q)`` where
+    parameters ``p``, ``d``, and ``q`` are non-negative integers, ``p`` is the
+    order (number of time lags) of the autoregressive model, ``d`` is the
+    degree of differencing (the number of times the data have had past values
+    subtracted), and ``q`` is the order of the moving-average model. Seasonal
+    ARIMA models are usually denoted ``ARIMA(p,d,q)(P,D,Q)m``, where ``m``
+    refers to the number of periods in each season, and the uppercase ``P``,
+    ``D``, ``Q`` refer to the autoregressive, differencing, and moving average
+    terms for the seasonal part of the ARIMA model.
 
-        # mixed in-sample and out-of-sample prediction
-        else:
-            fh_in_sample = fh[is_in_sample]
-            fh_out_of_sample = fh[is_out_of_sample]
+    When two out of the three terms are zeros, the model may be referred to
+    based on the non-zero parameter, dropping "AR", "I" or "MA" from the
+    acronym describing the model. For example, ``ARIMA(1,0,0)`` is ``AR(1)``,
+    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]
+    See notes for more practical information on the ``ARIMA`` class.
 
-            y_pred_in = self._predict_in_sample(
-                fh_in_sample, X=X,
-                return_pred_int=return_pred_int,
-                alpha=DEFAULT_ALPHA)
-            y_pred_out = self._predict_out_of_sample(
-                fh_out_of_sample, X=X,
-                return_pred_int=return_pred_int,
-                alpha=DEFAULT_ALPHA)
-            return y_pred_in.append(y_pred_out)
+    Parameters
+    ----------
+    order : iterable or array-like, shape=(3,), optional (default=(1, 0, 0))
+        The (p,d,q) order of the model for the number of AR parameters,
+        differences, and MA parameters to use. ``p`` is the order (number of
+        time lags) of the auto-regressive model, and is a non-negative integer.
+        ``d`` is the degree of differencing (the number of times the data have
+        had past values subtracted), and is a non-negative integer. ``q`` is
+        the order of the moving-average model, and is a non-negative integer.
+        Default is an AR(1) model: (1,0,0).
+    seasonal_order : array-like, shape=(4,), optional (default=(0, 0, 0, 0))
+        The (P,D,Q,s) order of the seasonal component of the model for the
+        AR parameters, differences, MA parameters, and periodicity. ``D`` must
+        be an integer indicating the integration order of the process, while
+        ``P`` and ``Q`` may either be an integers indicating the AR and MA
+        orders (so that all lags up to those orders are included) or else
+        iterables giving specific AR and / or MA lags to include. ``S`` is an
+        integer giving the periodicity (number of periods in season), often it
+        is 4 for quarterly data or 12 for monthly data. Default is no seasonal
+        effect.
+    start_params : array-like, optional (default=None)
+        Starting parameters for ``ARMA(p,q)``.  If None, the default is given
+        by ``ARMA._fit_start_params``.
+    method : str, optional (default='lbfgs')
+        The ``method`` determines which solver from ``scipy.optimize``
+        is used, and it can be chosen from among the following strings:
+        - 'newton' for Newton-Raphson
+        - 'nm' for Nelder-Mead
+        - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+        - 'lbfgs' for limited-memory BFGS with optional box constraints
+        - 'powell' for modified Powell's method
+        - 'cg' for conjugate gradient
+        - 'ncg' for Newton-conjugate gradient
+        - 'basinhopping' for global basin-hopping solver
+        The explicit arguments in ``fit`` are passed to the solver,
+        with the exception of the basin-hopping solver. Each
+        solver has several optional arguments that are not the same across
+        solvers. These can be passed as **fit_kwargs
+    maxiter : int, optional (default=50)
+        The maximum number of function evaluations. Default is 50
+    suppress_warnings : bool, optional (default=False)
+        Many warnings might be thrown inside of statsmodels. If
+        ``suppress_warnings`` is True, all of these warnings will be squelched.
+    out_of_sample_size : int, optional (default=0)
+        The number of examples from the tail of the time series to hold out
+        and use as validation examples. The model will not be fit on these
+        samples, but the observations will be added into the model's ``endog``
+        and ``exog`` arrays so that future forecast values originate from the
+        end of the endogenous vector. See :func:`update`.
+        For instance::
+            y = [0, 1, 2, 3, 4, 5, 6]
+            out_of_sample_size = 2
+            > Fit on: [0, 1, 2, 3, 4]
+            > Score on: [5, 6]
+            > Append [5, 6] to end of self.arima_res_.data.endog values
+    scoring : str or callable, optional (default='mse')
+        If performing validation (i.e., if ``out_of_sample_size`` > 0), the
+        metric to use for scoring the out-of-sample data:
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False,
-                           alpha=DEFAULT_ALPHA):
-        fh_abs = fh.absolute(self.cutoff)
-        fh_idx = fh_abs - np.min(fh_abs)
-        start = fh_abs[0]
-        end = fh_abs[-1]
+            * If a string, must be a valid metric name importable from
+              ``sklearn.metrics``.
+            * If a callable, must adhere to the function signature::
 
-        if return_pred_int:
+                def foo_loss(y_true, y_pred)
 
-            if isinstance(alpha, (list, tuple)):
-                raise NotImplementedError()
-            y_pred, pred_int = self._forecaster.predict_in_sample(
-                start=start,
-                end=end,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha)
-            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
-                                    columns=["lower", "upper"])
-            return y_pred, pred_int
+        Note that models are selected by *minimizing* loss. If using a
+        maximizing metric (such as ``sklearn.metrics.r2_score``), it is the
+        user's responsibility to wrap the function such that it returns a
+        negative value for minimizing.
+    scoring_args : dict, optional (default=None)
+        A dictionary of key-word arguments to be passed to the
+        ``scoring`` metric.
+    trend : str or None, optional (default=None)
+        The trend parameter. If ``with_intercept`` is True, ``trend`` will be
+        used. If ``with_intercept`` is False, the trend will be set to a no-
+        intercept value. If None and ``with_intercept``, 'c' will be used as
+        a default.
+    with_intercept : bool, optional (default=True)
+        Whether to include an intercept term. Default is True.
+    **sarimax_kwargs : keyword args, optional
+        Optional arguments to pass to the SARIMAX constructor.
+        Examples of potentially valuable kwargs:
+          - time_varying_regression : boolean
+            Whether or not coefficients on the exogenous regressors are allowed
+            to vary over time.
+          - enforce_stationarity : boolean
+            Whether or not to transform the AR parameters to enforce
+            stationarity in the auto-regressive component of the model.
+          - enforce_invertibility : boolean
+            Whether or not to transform the MA parameters to enforce
+            invertibility in the moving average component of the model.
+          - simple_differencing : boolean
+            Whether or not to use partially conditional maximum likelihood
+            estimation for seasonal ARIMA models. If True, differencing is
+            performed prior to estimation, which discards the first
+            :math:`s D + d` initial rows but results in a smaller
+            state-space formulation. If False, the full SARIMAX model is
+            put in state-space form so that all datapoints can be used in
+            estimation. Default is False.
+          - measurement_error: boolean
+            Whether or not to assume the endogenous observations endog were
+            measured with error. Default is False.
+          - mle_regression : boolean
+            Whether or not to use estimate the regression coefficients for the
+            exogenous variables as part of maximum likelihood estimation or
+            through the Kalman filter (i.e. recursive least squares). If
+            time_varying_regression is True, this must be set to False.
+            Default is True.
+          - hamilton_representation : boolean
+            Whether or not to use the Hamilton representation of an ARMA
+            process (if True) or the Harvey representation (if False).
+            Default is False.
+          - concentrate_scale : boolean
+            Whether or not to concentrate the scale (variance of the error
+            term) out of the likelihood. This reduces the number of parameters
+            estimated by maximum likelihood by one, but standard errors will
+            then not be available for the scale parameter.
 
-        else:
-            y_pred = self._forecaster.predict_in_sample(
-                start=start, end=end,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=fh_abs)
+    References
+    ----------
+    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
+    https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
+    """
 
-    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False,
-                               alpha=DEFAULT_ALPHA):
-        # make prediction
-        n_periods = int(fh[-1])
-        index = fh.absolute(self.cutoff)
-        fh_idx = fh.index_like(self.cutoff)
+    def __init__(
+        self,
+        order=(1, 0, 0),
+        seasonal_order=(0, 0, 0, 0),
+        start_params=None,
+        method="lbfgs",
+        maxiter=50,
+        suppress_warnings=False,
+        out_of_sample_size=0,
+        scoring="mse",
+        scoring_args=None,
+        trend=None,
+        with_intercept=True,
+        **sarimax_kwargs
+    ):
+        self.order = order
+        self.seasonal_order = seasonal_order
+        self.start_params = start_params
+        self.method = method
+        self.maxiter = maxiter
+        self.suppress_warnings = suppress_warnings
+        self.out_of_sample_size = out_of_sample_size
+        self.scoring = scoring
+        self.scoring_args = scoring_args
+        self.trend = trend
+        self.with_intercept = with_intercept
+        self.sarimax_kwargs = sarimax_kwargs
 
-        if return_pred_int:
-            y_pred, pred_int = self._forecaster.model_.predict(
-                n_periods=n_periods, exogenous=X,
-                return_conf_int=return_pred_int, alpha=alpha)
-            y_pred = pd.Series(y_pred[fh_idx], index=index)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=index,
-                                    columns=["lower", "upper"])
-            return y_pred, pred_int
-        else:
-            y_pred = self._forecaster.model_.predict(
-                n_periods=n_periods,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=index)
+        super(ARIMA, self).__init__()
 
-    def get_fitted_params(self):
-        """Get fitted parameters
+    def _instantiate_model(self):
+        # import inside method to avoid hard dependency
+        from pmdarima.arima.arima import ARIMA as _ARIMA
 
-        Returns
-        -------
-        fitted_params : dict
-        """
-        self.check_is_fitted()
-        names = self._get_fitted_param_names()
-        params = self._forecaster.model_.arima_res_._results.params
-        return {name: param for name, param in zip(names, params)}
-
-    def _get_fitted_param_names(self):
-        return self._forecaster.model_.arima_res_._results.param_names
+        return _ARIMA(
+            order=self.order,
+            seasonal_order=self.seasonal_order,
+            start_params=self.start_params,
+            method=self.method,
+            maxiter=self.maxiter,
+            suppress_warnings=self.suppress_warnings,
+            out_of_sample_size=self.out_of_sample_size,
+            scoring=self.scoring,
+            scoring_args=self.scoring_args,
+            trend=self.trend,
+            with_intercept=self.with_intercept,
+            sarimax_kwargs=self.sarimax_kwargs,
+        )

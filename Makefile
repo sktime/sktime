@@ -4,8 +4,8 @@
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 
 PACKAGE=sktime
-DOC_DIR='./docs'
-MAINT_DIR='./maint_tools'
+DOC_DIR=./docs
+BUILD_TOOLS=./build_tools
 
 .PHONY: help release install test lint clean dist doc docs
 
@@ -17,10 +17,10 @@ help:
 		 %s\n", $$1, $$2}'
 
 release: ## Make a release
-	python $(MAINT_DIR)/make_release.py
+	python3 $(BUILD_TOOLS)/make_release.py
 
 install: ## Install for the current user using the default python command
-	python setup.py build_ext --inplace && python setup.py install --user
+	python3 setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
 	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
@@ -28,7 +28,7 @@ test: ## Run unit tests
 tests: test
 
 lint:  ## Run linting
-	$(MAINT_DIR)/linting.sh
+	$(BUILD_TOOLS)/linting.sh
 
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
@@ -38,17 +38,16 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./junit
 	rm -rf ./$(PACKAGE).egg-info
 	rm -rf ./cover
-	rm -rf $(VENV_DIR)
+	rm -rf coverage.xml
 	rm -f MANIFEST
 	rm -f ./$(PACKAGE)/*.so
 	find . -type f -iname '*.pyc' -delete
 	find . -type d -name '__pycache__' -empty -delete
 
 dist: ## Make Python source distribution
-	python setup.py sdist bdist_wheel
+	python3 setup.py sdist bdist_wheel
 
 docs: doc
 
 doc: ## Build documentation with Sphinx
 	$(MAKE) -C $(DOC_DIR) html
-

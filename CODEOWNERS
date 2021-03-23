@@ -1,3 +1,33 @@
 # The file lists sktime's algorithm maintainers as specified in GOVERNANCE.md.
 # Each line is a file pattern followed by one or more owners.
 
+* @mloning
+
+sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
+sktime/classification/frequency_based/ @MJFlynn @TonyBagnall
+sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
+sktime/classification/dictionary_based/tests @patrickzib
+
+sktime/transformers/panel/dictionary_based/ @patrickzib
+sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
+sktime/transformations/panel/rocket @angus924
+sktime/transformations/series/impute.py @aiwalter
+sktime/transformations/series/outlier_detection.py @aiwalter
+
+sktime/forecasting/ets.py @HYang1996
+sktime/forecasting/tests/test_ets.py @HYang1996
+sktime/forecasting/fbprophet.py @aiwalter
+sktime/forecasting/bats.py @aiwalter
+sktime/forecasting/tbats.py @aiwalter
+sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/model_selection/_split @koralturkk
+
+sktime/forecasting/online_learning/ @magittan
+
+sktime/performance_metrics/forecasting/_functions.py @aiwalter
+
+sktime/forecasting/hcrystalball.py @MichalChromcak
+sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
