@@ -16,7 +16,7 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.interval_based import (
-    TimeSeriesForest,
+    TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -148,7 +148,7 @@ class HIVECOTEV1(BaseClassifier):
             )
             print("STC weight = " + str(self.stc_weight))  # noqa
 
-        self.tsf = TimeSeriesForest(
+        self.tsf = TimeSeriesForestClassifier(
             **self.tsf_params,
             random_state=self.random_state,
             n_jobs=self.n_jobs,
@@ -159,7 +159,9 @@ class HIVECOTEV1(BaseClassifier):
             print("TSF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
         train_preds = cross_val_predict(
-            TimeSeriesForest(**self.tsf_params, random_state=self.random_state),
+            TimeSeriesForestClassifier(
+                **self.tsf_params, random_state=self.random_state
+            ),
             X=X,
             y=y,
             cv=cv_size,
