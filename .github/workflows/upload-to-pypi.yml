@@ -54,6 +54,7 @@ jobs:
           python -m pip install --upgrade twine
           python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*.whl
       - name: Upload source tarball to PyPI
+        env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         # for simplicity only do the upload once
