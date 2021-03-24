@@ -52,7 +52,7 @@ jobs:
         run: |
           ls -l dist/*
           python -m pip install --upgrade twine
-          python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*.whl
+          python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*
       - name: Upload source tarball to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
