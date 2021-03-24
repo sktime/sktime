@@ -925,7 +925,15 @@
       "contributions": [
         "doc"
       ]
-    }
+    },
+    {
+      "login": "freddyaboulton"
+      "name": "Freddy Boulton",
+      "profile": "https://github.com/freddyaboulton",
+      "contributions": [
+        "test"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
