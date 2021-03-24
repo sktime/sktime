@@ -45,7 +45,7 @@ jobs:
           cp setup.cfg testdir/
           cd testdir/
           pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
-      - name: Upload wheel to PyPI
+      - name: Upload wheel and source tarball to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
@@ -53,11 +53,3 @@ jobs:
           ls -l dist/*
           python -m pip install --upgrade twine
           python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*
-      - name: Upload source tarball to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        # for simplicity only do the upload once
-        if: ${{ matrix.python_version == "3.8"}}
-        run: |
-          python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*.tar.gz
