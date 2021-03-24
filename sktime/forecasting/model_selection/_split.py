@@ -11,8 +11,15 @@ __all__ = [
 ]
 __author__ = ["Markus Löning", "Kutay Koralturk"]
 
+import warnings
+from inspect import signature
+import inspect
+from sklearn.base import BaseEstimator
+import numbers
+
 import numpy as np
 import pandas as pd
+from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.utils.validation import check_window_length
@@ -25,6 +32,69 @@ from sktime.utils.validation.series import check_time_index
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
+
+
+def _repr(self):
+    # This is copied from scikit-learn's BaseEstimator get_params method
+    cls = self.__class__
+    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+    # Ignore varargs, kw and default values and pop self
+    init_signature = signature(init)
+    # Consider the constructor parameters excluding 'self'
+    if init is object.__init__:
+        args = []
+    else:
+        args = sorted(
+            [
+                p.name
+                for p in init_signature.parameters.values()
+                if p.name != "self" and p.kind != p.VAR_KEYWORD
+            ]
+        )
+    class_name = self.__class__.__name__
+    params = dict()
+    for key in args:
+        # We need deprecation warnings to always be on in order to
+        # catch deprecated param values.
+        # This is set in utils/__init__.py but it gets overwritten
+        # when running under python3 somehow.
+        warnings.simplefilter("always", FutureWarning)
+        try:
+            with warnings.catch_warnings(record=True) as w:
+                value = getattr(self, key, None)
+                if value is None and hasattr(self, "cvargs"):
+                    value = self.cvargs.get(key, None)
+            if len(w) and w[0].category == FutureWarning:
+                # if the parameter is deprecated, don't show it
+                continue
+        finally:
+            warnings.filters.pop(0)
+        params[key] = value
+
+    def is_scalar_nan(x):
+        return bool(isinstance(x, numbers.Real) and np.isnan(x))
+
+    def has_changed(k, v):
+        init_params = init_signature.parameters
+        init_params = {name: param.default for name, param in init_params.items()}
+
+        if k not in init_params:  # happens if k is part of a **kwargs
+            return True
+        if init_params[k] == inspect._empty:  # k has no default value
+            return True
+        # try to avoid calling repr on nested estimators
+        if isinstance(v, BaseEstimator) and v.__class__ != init_params[k].__class__:
+            return True
+        # Use repr as a last resort. It may be expensive.
+        if repr(v) != repr(init_params[k]) and not (
+            is_scalar_nan(init_params[k]) and init_params(v)
+        ):
+            return True
+        return False
+
+    params = {k: v for k, v in params.items() if has_changed(k, v)}
+
+    return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
 
 
 def _check_y(y):
@@ -57,14 +127,25 @@ def _get_end(y, fh, window_length):
         fh_max = fh[-1]
         end = n_timepoints - fh_max + 1  # non-inclusive end indexing
 
-        # check if computed values are feasible with the provided index
-        if window_length is not None:
-            if window_length + fh_max > n_timepoints:
-                raise ValueError(
-                    "The window length and forecasting horizon are "
-                    "incompatible with the length of `y`"
-                )
     return end
+
+
+def _check_window_lengths(y, fh, window_length, initial_window):
+    n_timepoints = len(y)
+    fh_max = fh[-1]
+
+    if window_length + fh_max > n_timepoints:
+        raise ValueError(
+            "The `window_length` and the forecasting horizon are "
+            "incompatible with the length of `y`."
+        )
+
+    if initial_window is not None:
+        if initial_window + fh_max > n_timepoints:
+            raise ValueError(
+                "The `initial_window` and the forecasting horizon are "
+                "incompatible with the length of `y`."
+            )
 
 
 class BaseSplitter:
@@ -145,6 +226,9 @@ class BaseSplitter:
         """
         return check_fh(self.fh)
 
+    def __repr__(self):
+        return _repr(self)
+
 
 class CutoffSplitter(BaseSplitter):
     """Manual window splitter to split time series at given cutoff points.
@@ -196,21 +280,21 @@ class BaseWindowSplitter(BaseSplitter):
         fh=DEFAULT_FH,
         window_length=DEFAULT_WINDOW_LENGTH,
         step_length=DEFAULT_STEP_LENGTH,
-        initial_window=None,
         start_with_window=True,
     ):
         self.step_length = step_length
         self.start_with_window = start_with_window
-        self.initial_window = initial_window
+        self.initial_window = None
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split(self, y):
         step_length = check_step_length(self.step_length)
-        window_length = check_window_length(self.window_length)
+        window_length = check_window_length(self.window_length, "window_length")
+        initial_window = check_window_length(self.initial_window, "initial_window")
         fh = _check_fh(self.fh)
+        _check_window_lengths(y, fh, window_length, initial_window)
 
         if self.initial_window is not None:
-            initial_window = check_window_length(self.initial_window)
             train = np.arange(initial_window)
             test = initial_window + fh - 1
             yield train, test
@@ -331,6 +415,22 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         - If False, starts with empty window.
     """
 
+    def __init__(
+        self,
+        fh=DEFAULT_FH,
+        window_length=DEFAULT_WINDOW_LENGTH,
+        step_length=DEFAULT_STEP_LENGTH,
+        start_with_window=True,
+        initial_window=None,
+    ):
+        super(SlidingWindowSplitter, self).__init__(
+            fh=fh,
+            window_length=window_length,
+            step_length=step_length,
+            start_with_window=start_with_window,
+        )
+        self.initial_window = initial_window
+
     @staticmethod
     def _split_windows(start, end, step_length, window_length, fh):
         """Sliding windows"""
@@ -365,8 +465,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         Window length
     step_length : int, optional (default=1)
         Step length between windows
-    initial_window : int, optional (default=None)
-        Window length of first window
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
         - If False, starts with empty window.
