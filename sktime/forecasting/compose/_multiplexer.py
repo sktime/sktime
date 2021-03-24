@@ -63,7 +63,6 @@ class MultiplexForecaster(
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
         self._forecaster = None
-        self._check_forecasters()
 
     def _check_fit_params(self, fit_params):
         forecaster_fit_params = {}
@@ -124,6 +123,7 @@ class MultiplexForecaster(
 
         self._set_y_X(y, X)
         self._set_fh(fh)
+        self._check_forecasters()
         self._set_forecaster()
         forecaster_fit_params = self._check_fit_params(fit_params=fit_params)
         self._forecaster.fit(y, X=X, fh=fh, **forecaster_fit_params)
