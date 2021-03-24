@@ -22,7 +22,7 @@ from sktime.utils.validation.series import check_series
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
-    """A transformer that removes a seasonal and trend components from time
+    """A transformer that removes seasonal components from time
     series
 
     Parameters
@@ -162,7 +162,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
-    """A transformer that removes a seasonal and trend components from time
+    """A transformer that removes seasonal components from time
     series, conditional on seasonality test.
 
     Parameters
