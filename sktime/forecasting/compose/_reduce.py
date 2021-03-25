@@ -14,6 +14,7 @@ __all__ = [
     "ReducedForecaster",
     "DirRecRegressionForecaster",
     "DirRecTimeSeriesForecaster",
+    "ReducedRegressionForecaster",
 ]
 
 import numpy as np
@@ -693,6 +694,35 @@ def ReducedForecaster(
     2013).
       Machine Learning Strategies for Time Series Forecasting.
     """
+    Forecaster = _get_forecaster_class(scitype, strategy)
+    return Forecaster(
+        regressor=regressor, window_length=window_length, step_length=step_length
+    )
+
+
+def ReducedRegressionForecaster(
+    regressor, strategy="recursive", window_length=10, step_length=1
+):
+    """
+    Forecasting based on reduction to tabular regression.
+
+    When fitting, a rolling window approach is used to first transform the
+    target series into panel data which is
+    then used to train a regressor. During prediction, the last available
+    data is used as input to the
+    fitted regressors to make forecasts.
+
+    Parameters
+    ----------
+    regressor : a regressor
+
+    References
+    ----------
+    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
+    2013).
+      Machine Learning Strategies for Time Series Forecasting.
+    """
+    scitype = "regressor"
     Forecaster = _get_forecaster_class(scitype, strategy)
     return Forecaster(
         regressor=regressor, window_length=window_length, step_length=step_length
