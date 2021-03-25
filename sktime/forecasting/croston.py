@@ -1,36 +1,37 @@
 # -*- coding: utf-8 -*-
-"""
-Implementation of Croston's Method
-----------------------------------
-Useful for Forecasting Intermittent Demand Time Series.
-The Croston() function produces forecasts using Croston’s method.
-It simply uses α = 0.1 by default,
-and p = 0 is set to be equal to the first observation in each of the series.
-This is consistent with the way Croston envisaged the method being used.
-
-Parameters:
------------
-    demand: array-like
-        Historical data
-    future_periods: int
-        Time period for which predictions are required
-    alpha: float, optional(default=0.1)
-        Smoothing parameter
-
-Returns:
---------
-    forecast: array-like
-        Forecasted demand (on average per period) diff
-"""
-
 import numpy as np
-from sktime.forecasting.base._base import BaseForecaster as _BaseForecaster
-from sklearn.base import BaseEstimator as _BaseEstimator
+import pandas as pd
+from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+
 
 DEFAULT_ALPHA = 0.05
 
 
-class Croston(_BaseForecaster, _BaseEstimator):
+class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+    """
+    Implementation of Croston's Method
+    ----------------------------------
+    Useful for Forecasting Intermittent Demand Time Series.
+    The Croston() function produces forecasts using Croston’s method.
+    It simply uses α = 0.1 by default,
+    and p = 0 is set to be equal to the first observation in each of the series.
+    This is consistent with the way Croston envisaged the method being used.
+
+    Parameters:
+    -----------
+        demand: array-like
+            Historical data
+        future_periods: int
+            Time period for which predictions are required
+        alpha: float, optional(default=0.1)
+            Smoothing parameter
+
+    Returns:
+    --------
+        forecast: array-like
+            Forecasted demand (on average per period) diff."""
+
     def __init__(self, alpha=DEFAULT_ALPHA):
         # hyperparameter
         self.alpha = alpha
@@ -41,25 +42,32 @@ class Croston(_BaseForecaster, _BaseEstimator):
 
         # forecasting horizon
         self._fh = None
-        self.cutoff = None  # reference point for relative fh
+        # self.cutoff = None  # reference point for relative fh
 
         # set _is_fitted to False
         self._is_fitted = False
-        super(_BaseForecaster, self).__init__()
+        super(Croston, self).__init__()
 
     def fit(self, y, X=None, fh=None):
+        if X is not None:
+            raise NotImplementedError(
+                "Support for exogenous variables is not yet implemented"
+            )
+        self._set_y_X(y, X)
+        self._set_fh(fh)
         self._is_fitted = True
-        self._y = y
-        self._X = X
-        self._fh = fh
-        self.cutoff = y.index[-1]
+
         return self
 
-    def predict(self, fh=None, X=None):
-        self._fh = fh
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        if return_pred_int or X is not None:
+            raise NotImplementedError()
+        self.check_is_fitted()
+        self._set_fh(fh)
+
+        future_periods = len(self._fh.to_numpy())
         alpha = self.alpha
-        d = np.array(self._y)  # Transform the input into a numpy array
-        future_periods = self._fh
+        d = self._y.to_numpy()  # Transform the input into a numpy array
 
         cols = len(d)  # Historical period: i.e the demand array's length
         d = np.append(
@@ -94,26 +102,6 @@ class Croston(_BaseForecaster, _BaseEstimator):
         a[cols + 1 : cols + future_periods] = a[cols]
         f[cols + 1 : cols + future_periods] = f[cols]
 
-        return np.array(f[cols:])
+        index = self.fh.to_absolute(self._cutoff)
 
-    def update(self, y, X=None, update_params=True):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        if update_params is True:
-            self._y = y
-            self._X = X
-            self.cutoff = y.index[-1]
-
-        elif update_params is False:
-            self.cutoff = y.index[-1]
-        return self
+        return pd.Series(np.array(f[cols:]), index=index)
