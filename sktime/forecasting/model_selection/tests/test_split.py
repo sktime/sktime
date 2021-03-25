@@ -50,7 +50,7 @@ def _check_windows(windows, allow_empty_window=False):
     assert isinstance(windows, list)
     for window in windows:
         assert isinstance(window, np.ndarray)
-        assert window.dtype == np.int64
+        assert window.dtype == np.int
         assert window.ndim == 1
         if not allow_empty_window:
             assert len(window) > 0
@@ -58,7 +58,7 @@ def _check_windows(windows, allow_empty_window=False):
 
 def _check_cutoffs(cutoffs):
     assert isinstance(cutoffs, np.ndarray)
-    assert cutoffs.dtype == np.int64
+    assert cutoffs.dtype == np.int
     assert cutoffs.ndim == 1
     assert len(cutoffs) > 0
 
