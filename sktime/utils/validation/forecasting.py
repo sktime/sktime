@@ -242,7 +242,7 @@ def check_fh(fh, enforce_relative=False):
     # can be empty in some cases, but users should not create forecasting horizons
     # with no values
     if len(fh) == 0:
-        raise ValueError(f"`fh` must not be empty, but found: {fh}")
+        raise ValueError("`fh` must not be empty")
 
     if enforce_relative and not fh.is_relative:
         raise ValueError("`fh` must be relative, but found absolute `fh`")

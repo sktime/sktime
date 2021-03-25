@@ -12,20 +12,6 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import check_scoring
 
 
-def _split(y, X, train, test):
-    # create train/test data
-    y_train = y.iloc[train]
-    y_test = y.iloc[test]
-
-    if X is not None:
-        X_train = X.iloc[train, :]
-        X_test = X.iloc[test, :]
-    else:
-        X_train = None
-        X_test = None
-    return y_train, y_test, X_train, X_test
-
-
 def evaluate(
     forecaster,
     cv,
@@ -55,6 +41,8 @@ def evaluate(
         sktime.performance_metrics, optional. Example scoring=sMAPE().
         Used to get a score function that takes y_pred and y_test as arguments,
         by default None (if None, uses sMAPE)
+    fit_params : dict, optional (default=None)
+        Parameters passed to the `fit` call of the forecaster.
     return_data : bool, optional
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
@@ -85,6 +73,7 @@ def evaluate(
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
     y, X = check_y_X(y, X)
+    fit_params = {} if fit_params is None else fit_params
 
     # Define score name.
     score_name = "test_" + scoring.name
@@ -138,6 +127,21 @@ def evaluate(
     results["len_train_window"] = results["len_train_window"].astype(int)
 
     return results
+
+
+def _split(y, X, train, test):
+    """Split y and X for given train and test set indices"""
+    y_train = y.iloc[train]
+    y_test = y.iloc[test]
+
+    if X is not None:
+        X_train = X.iloc[train, :]
+        X_test = X.iloc[test, :]
+    else:
+        X_train = None
+        X_test = None
+
+    return y_train, y_test, X_train, X_test
 
 
 def _check_strategy(strategy):
