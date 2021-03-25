@@ -1,7 +1,7 @@
 .. _related_software:
 
 ================
-Related software
+Related Software
 ================
 
 The Python ecosystem contains numerous packages that can be used to store

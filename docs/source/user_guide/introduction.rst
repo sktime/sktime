@@ -1,4 +1,4 @@
-.. _introduction:
+.. _user_guide_introduction:
 
 Introduction
 ============
