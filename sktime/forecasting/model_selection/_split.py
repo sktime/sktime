@@ -35,6 +35,7 @@ DEFAULT_FH = 1
 
 
 def _repr(self):
+    """Helper function to build repr for splitters similar to estimator objects"""
     # This is copied from scikit-learn's BaseEstimator get_params method
     cls = self.__class__
     init = getattr(cls.__init__, "deprecated_original", cls.__init__)
@@ -106,26 +107,26 @@ def _check_y(y):
 
 def _check_fh(fh):
     """Check and convert fh to format expected by CV splitters"""
-    return check_fh(fh, enforce_relative=True).to_numpy()
+    return check_fh(fh, enforce_relative=True)
 
 
-def _get_end(y, fh, window_length):
+def _get_end(y, fh):
     """Compute the end of the last training window for a given window length and
     forecasting horizon.
     """
-    # `fh` is assumed to be checked by `_check_fh`; `window_length` by
+    # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
     n_timepoints = len(y)
 
-    # For purely in-sample forecasting horizons, the end point is the end of the
+    # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
-    is_in_sample = np.all(fh <= 0)
-    if is_in_sample:
+    if fh.is_all_in_sample():
         end = n_timepoints + 1
 
+    # Otherwise, the last point must ensure that the last horizon is within the data.
     else:
         fh_max = fh[-1]
-        end = n_timepoints - fh_max + 1  # non-inclusive end indexing
+        end = n_timepoints - fh_max + 1
 
     return end
 
@@ -149,7 +150,7 @@ def _check_window_lengths(y, fh, window_length, initial_window):
 
 
 class BaseSplitter:
-    """Base class for splitting time series during temporal cross-validation
+    """Base class for temporal cross-validation splitters.
 
     Parameters
     ----------
@@ -164,7 +165,7 @@ class BaseSplitter:
         self.fh = fh
 
     def split(self, y):
-        """Split y into windows.
+        """Split `y` into training and test windows.
 
         Parameters
         ----------
@@ -173,9 +174,9 @@ class BaseSplitter:
 
         Yields
         ------
-        training_window : np.array
+        train : np.array
             Training window indices
-        test_window : np.array
+        test : np.array
             Test window indices
         """
         y = _check_y(y)
@@ -231,7 +232,9 @@ class BaseSplitter:
 
 
 class CutoffSplitter(BaseSplitter):
-    """Manual window splitter to split time series at given cutoff points.
+    """Cutoff window splitter.
+
+    Split time series at given cutoff points into a fixed-length training and test set.
 
     Parameters
     ----------
@@ -273,7 +276,7 @@ class CutoffSplitter(BaseSplitter):
 
 
 class BaseWindowSplitter(BaseSplitter):
-    """Base class for window splits"""
+    """Base class for sliding and expanding window splitter"""
 
     def __init__(
         self,
@@ -295,14 +298,31 @@ class BaseWindowSplitter(BaseSplitter):
         _check_window_lengths(y, fh, window_length, initial_window)
 
         if self.initial_window is not None:
-            train = np.arange(initial_window)
-            test = initial_window + fh - 1
+            if not self.start_with_window:
+                raise ValueError(
+                    "`start_with_window` must be True if `initial_window` is given"
+                )
+
+            if not self.initial_window > self.window_length:
+                raise ValueError("`initial_window` must greater than `window_length`")
+
+            # For in-sample forecasting horizons, the first split must ensure that
+            # in-sample test set is still within the data.
+            if not fh.is_all_out_of_sample() and abs(fh[0]) >= self.initial_window:
+                initial_start = abs(fh[0]) - self.initial_window + 1
+            else:
+                initial_start = 0
+
+            initial_end = initial_start + initial_window
+            train = np.arange(initial_start, initial_end)
+            test = initial_end + fh.to_numpy() - 1
             yield train, test
 
-        start = self._get_start()
-        end = _get_end(y, fh, window_length)
+        start = self._get_start(fh)
+        end = _get_end(y, fh)
+
         for train, test in self._split_windows(
-            start, end, step_length, window_length, fh
+            start, end, step_length, window_length, fh.to_numpy()
         ):
             yield train, test
 
@@ -312,9 +332,10 @@ class BaseWindowSplitter(BaseSplitter):
         windows"""
         raise NotImplementedError("abstract method")
 
-    def _get_start(self):
+    def _get_start(self, fh):
         """Get the first split point"""
-        # By default, the first split is the index zero, the first observation in
+        # By default, the first split point is the index zero, the first
+        # observation in
         # the data.
         start = 0
 
@@ -332,6 +353,13 @@ class BaseWindowSplitter(BaseSplitter):
                 start += self.initial_window + step_length
             else:
                 start += self.window_length
+
+        # For in-sample forecasting horizons, the first split must ensure that
+        # in-sample test set is still within the data.
+        if not fh.is_all_out_of_sample():
+            fh_min = abs(fh[0])
+            if fh_min >= start:
+                start = fh_min + 1
 
         return start
 
@@ -369,22 +397,23 @@ class BaseWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         y = _check_y(y)
-        window_length = check_window_length(self.window_length)
         fh = _check_fh(self.fh)
         step_length = check_step_length(self.step_length)
 
         if hasattr(self, "initial_window") and self.initial_window is not None:
             start = self.initial_window
         else:
-            start = self._get_start()
+            start = self._get_start(fh)
 
-        end = _get_end(y, fh, window_length)
+        end = _get_end(y, fh)
 
         return np.arange(start, end, step_length) - 1
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
-    """Sliding window splitter
+    """Sliding window splitter.
+
+    Split time series repeatedly into a fixed-length training and test set.
 
     For example for `window_length = 5`, `step_length = 1` and `fh = 3`
     here is a representation of the folds::
@@ -441,7 +470,9 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
 
 class ExpandingWindowSplitter(BaseWindowSplitter):
-    """Expanding window splitter
+    """Expanding window splitter.
+
+    Split time series repeatedly into an growing training set and a fixed-size test set.
 
     For example for `window_length = 5`, `step_length = 1` and `fh = 3`
     here is a representation of the folds::
@@ -480,9 +511,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
 
 class SingleWindowSplitter(BaseSplitter):
-    """Single window splitter
+    """Single window splitter.
 
-    Split time series once into a training and test window.
+    Split time series once into a training and test set.
 
     Parameters
     ----------
@@ -492,21 +523,21 @@ class SingleWindowSplitter(BaseSplitter):
         Window length
     """
 
-    def __init__(self, fh, window_length=None):
+    def __init__(self, fh, window_length=DEFAULT_WINDOW_LENGTH):
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y):
         window_length = check_window_length(self.window_length)
         fh = _check_fh(self.fh)
 
-        end = _get_end(y, fh, window_length) - 1
+        end = _get_end(y, fh) - 1
         start = 0 if window_length is None else end - window_length
         train = np.arange(start, end)
-        test = end + fh - 1
+        test = end + fh.to_numpy() - 1
         yield train, test
 
     def get_n_splits(self, y=None):
-        """Return number of splits
+        """Return the number of splits.
 
         Parameters
         ----------
@@ -519,7 +550,7 @@ class SingleWindowSplitter(BaseSplitter):
         return 1
 
     def get_cutoffs(self, y=None):
-        """Get the cutoff time points.
+        """Return the cutoff time points.
 
         Parameters
         ----------
@@ -533,21 +564,25 @@ class SingleWindowSplitter(BaseSplitter):
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
-        window_length = check_window_length(self.window_length)
         fh = _check_fh(self.fh)
-        cutoff = _get_end(y, fh, window_length) - 2
+        cutoff = _get_end(y, fh) - 2
         return np.array([cutoff])
 
 
 def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=None):
     """Split arrays or matrices into sequential train and test subsets
     Creates train/test splits over endogenous arrays an optional exogenous
-    arrays. This is a wrapper of scikit-learn's ``train_test_split`` that
-    does not shuffle.
+    arrays.
+
+    This is a wrapper of scikit-learn's ``train_test_split`` that
+    does not shuffle the data.
 
     Parameters
     ----------
-    *series : sequence of pd.Series with same length / shape[0]
+    y : pd.Series
+        Target series
+    X : pd.DataFrame, optional (default=None)
+        Exogenous data
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
@@ -563,8 +598,8 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
 
     Returns
     -------
-    splitting : list, length=2 * len(arrays)
-        List containing train-test split of inputs.
+    splitting : tuple
+        List containing train-test split of `y` and `X` if given.
 
     References
     ----------
