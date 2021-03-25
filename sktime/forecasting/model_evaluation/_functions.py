@@ -71,7 +71,6 @@ def evaluate(
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    fh = check_fh(cv.fh)
     scoring = check_scoring(scoring)
     y, X = check_y_X(y, X)
     fit_params = {} if fit_params is None else fit_params
@@ -85,7 +84,7 @@ def evaluate(
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
         # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test, fh)
+        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
         # create forecasting horizon
         fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -134,6 +133,10 @@ def _split(y, X, train, test, fh):
     """Split y and X for given train and test set indices"""
     y_train = y.iloc[train]
     y_test = y.iloc[test]
+
+    cutoff = y_train.index[-1]
+    fh = check_fh(fh)
+    fh = fh.to_relative(cutoff)
 
     if X is not None:
         X_train = X.iloc[train, :]

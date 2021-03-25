@@ -5,8 +5,6 @@
 __author__ = ["Markus Löning"]
 __all__ = ["StackingForecaster"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -54,8 +52,8 @@ class StackingForecaster(
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
         cv = SingleWindowSplitter(fh=self.fh.to_relative(self.cutoff))
-        training_window, test_window = next(cv.split(y))
-        y_fcst = y.iloc[training_window]
+        train_window, test_window = next(cv.split(y))
+        y_fcst = y.iloc[train_window]
         y_meta = y.iloc[test_window].values
 
         # fit forecasters on training window
@@ -87,8 +85,6 @@ class StackingForecaster(
         """
         self.check_is_fitted()
         self._update_y_X(y, X)
-        if update_params:
-            warn("Updating `final regressor is not implemented")
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
