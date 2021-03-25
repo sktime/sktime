@@ -9,7 +9,7 @@ import time
 from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.forecasting import check_cv
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import check_scoring
+from sktime.utils.validation.forecasting import check_scoring, check_fh
 
 
 def evaluate(
@@ -57,7 +57,7 @@ def evaluate(
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.performance_metrics.forecasting import evaluate
+    >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
@@ -71,6 +71,7 @@ def evaluate(
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
+    fh = check_fh(cv.fh)
     scoring = check_scoring(scoring)
     y, X = check_y_X(y, X)
     fit_params = {} if fit_params is None else fit_params
@@ -84,7 +85,7 @@ def evaluate(
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
         # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test)
+        y_train, y_test, X_train, X_test = _split(y, X, train, test, fh)
 
         # create forecasting horizon
         fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -129,13 +130,17 @@ def evaluate(
     return results
 
 
-def _split(y, X, train, test):
+def _split(y, X, train, test, fh):
     """Split y and X for given train and test set indices"""
     y_train = y.iloc[train]
     y_test = y.iloc[test]
 
     if X is not None:
         X_train = X.iloc[train, :]
+
+        # We need to expand test indices to a full range, since some forecasters
+        # require the full range of exogenous values.
+        test = np.arange(test[0] - fh.min(), test[-1]) + 1
         X_test = X.iloc[test, :]
     else:
         X_train = None

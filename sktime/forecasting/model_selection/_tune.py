@@ -23,22 +23,6 @@ from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.validation.forecasting import check_y_X
 
 
-def _split(y, X, cv):
-    """Split data into training and validation window"""
-    training_window, validation_window = cv.split_initial(y)
-    y_train = y.iloc[training_window]
-    y_val = y.iloc[validation_window]
-
-    if X is not None:
-        X_train = X.iloc[training_window, :]
-        X_val = X.iloc[validation_window, :]
-    else:
-        X_train = None
-        X_val = None
-
-    return y_train, y_val, X_train, X_val
-
-
 class BaseGridSearch(BaseForecaster):
     def __init__(
         self,
@@ -188,7 +172,7 @@ class BaseGridSearch(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def check_is_fitted(self, method_name=None):
-        """Has the forecast been fitted?
+        """Has `fit` been called?
 
         Parameters
         ----------
@@ -306,9 +290,9 @@ class BaseGridSearch(BaseForecaster):
         self.cv_results_ = results
 
         # Select best parameters.
-        best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
-        self.best_score_ = results.loc[best_index_, f"mean_{scoring_name}"]
-        self.best_params_ = results.loc[best_index_, "params"]
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = clone(self.forecaster).set_params(**self.best_params_)
 
         # Refit model with best parameters.
@@ -453,9 +437,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     pre_dispatch: str, optional (default='2*n_jobs')
-    error_score: numeric value or the str 'raise', optional (default=np.nan)
-        The test score returned when a forecaster fails to be fitted.
-    return_train_score: bool, optional (default=False)
 
     Attributes
     ----------
@@ -468,12 +449,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Fitted estimator with the best parameters
     cv_results_ : dict
         Results from grid search cross validation
-    n_splits_: int
-        Number of splits in the data for cross validation}
-    refit_time_ : float
-        Time (seconds) to refit the best forecaster
-    scorer_ : function
-        Function used to score model
     """
 
     _required_parameters = ["forecaster", "cv", "param_distributions"]
