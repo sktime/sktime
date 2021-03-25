@@ -934,6 +934,15 @@
         "test"
       ]
     },
+    {
+      "login": "dsherry",
+      "name": "Dylan Sherry",
+      "avatar_url": "https://avatars.githubusercontent.com/dsherry",
+      "profile": "https://github.com/dsherry",
+      "contributions": [
+        "infra"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
