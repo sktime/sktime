@@ -523,7 +523,7 @@ class SingleWindowSplitter(BaseSplitter):
         Window length
     """
 
-    def __init__(self, fh, window_length=DEFAULT_WINDOW_LENGTH):
+    def __init__(self, fh, window_length=None):
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y):

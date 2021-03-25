@@ -122,6 +122,27 @@ def test_single_window_splitter(y, fh, window_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+def test_single_window_splitter_default_window_length(y, fh):
+    cv = SingleWindowSplitter(fh=fh)
+    train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
+
+    train_window = train_windows[0]
+    test_window = test_windows[0]
+
+    assert n_splits == 1
+    assert test_window.shape[0] == len(check_fh(fh))
+
+    fh = cv.get_fh()
+    if fh.is_all_in_sample():
+        assert train_window.shape[0] == len(y)
+    else:
+        assert train_window.shape[0] == len(y) - fh.max()
+
+    np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+
+
+@pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("cutoffs", CUTOFFS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
