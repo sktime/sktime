@@ -3,8 +3,6 @@ name: upload-to-pypi
 on:
   release:
     types: [published]
-  pull_request:
-    types: [opened, synchronize]
 
 jobs:
   deploy:
@@ -50,3 +48,11 @@ jobs:
           cp setup.cfg testdir/
           cd testdir/
           pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+      - name: Upload to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          ls -l dist/*
+          python -m pip install --upgrade twine
+          python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*.whl

@@ -54,6 +54,9 @@ jobs:
       matrix:
         os: [macos-latest]
         python-version: [3.6, 3.7, 3.8]
+        osx-deployment: [10.14, 10.15]
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{matrix.osx-deployment}}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
