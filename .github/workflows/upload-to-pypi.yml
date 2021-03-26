@@ -10,16 +10,13 @@ jobs:
     strategy:
       matrix:
         os: [ macos-latest ]
-        python-version: [ 3.6, 3.7, 3.8 ]
-        osx-deployment: [10.14, 10.15]
-    env:
-      MACOSX_DEPLOYMENT_TARGET: ${{matrix.osx-deployment}}
+        python-version: [ 3.6.9, 3.7.9, 3.8.8 ]
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Get Python
+        run: curl https://www.python.org/ftp/python/${{matrix.python-version}}/python-${{matrix.python-version}}-macosx10.9.pkg -o "python.pkg"
+      - name: Install Python
+        run: sudo installer -pkg python.pkg -target /
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Install OS packages
