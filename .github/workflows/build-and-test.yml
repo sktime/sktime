@@ -79,7 +79,7 @@ jobs:
         export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
         export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
         export PATH="/usr/local/opt/ccache/libexec:$PATH"
-        python setup.py sdist bdist_wheel
+        python3 setup.py sdist bdist_wheel
     - name: Install from wheel
       run: pip3 install --pre --no-index --no-deps --find-links dist/ sktime
     - name: Run tests
