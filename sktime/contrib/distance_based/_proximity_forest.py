@@ -28,15 +28,12 @@ from sktime.distances.elastic_cython import lcss_distance
 from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wdtw_distance
-from sktime.classification.distance_based._proximity_forest_utils import max as _max, arg_mins
 from sktime.classification.distance_based._proximity_forest_utils import (
     arg_min as _arg_min,
 )
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._proximity_forest_utils import (
-    positive_dataframe_indices,
     max_instance_length,
-    negative_dataframe_indices,
 )
 from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -762,17 +759,17 @@ class ProximityStump(BaseClassifier):
     np.random.seed(1234)
 
     def __init__(
-            self,
-            random_state=0,
-            setup_distance_measure=setup_all_distance_measure_getter,
-            get_distance_measure=None,
-            distance_measure=None,
-            X=None,
-            y=None,
-            label=None,
-            verbosity=0,
-            n_stumps=5,
-            n_jobs=1
+        self,
+        random_state=0,
+        setup_distance_measure=setup_all_distance_measure_getter,
+        get_distance_measure=None,
+        distance_measure=None,
+        X=None,
+        y=None,
+        label=None,
+        verbosity=0,
+        n_stumps=5,
+        n_jobs=1
     ):
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
@@ -996,9 +993,7 @@ class ProximityStump(BaseClassifier):
                 sub_X = dataset_per_class[
                     label
                 ]  # sub_X is a list of series/arrays who belong to a label
-                r = np.random.randint(
-                    0, len(sub_X)
-                )  # select a random element in sub_X
+                r = np.random.randint(0, len(sub_X))  # select a random element in sub_X
                 splits_x[label_branch] = list()
                 splits_y[label_branch] = list()
                 self.temp_exemplar[label_branch] = sub_X[r]  # sub_X[r] is a serie
@@ -1167,21 +1162,21 @@ class ProximityTree(BaseClassifier):
     """
 
     def __init__(
-            self,
-            # note: any changes of these params must be reflected in
-            # the fit method for building trees / clones
-            random_state=0,
-            get_exemplars=get_one_exemplar_per_class_proximity,
-            distance_measure=None,
-            get_distance_measure=None,
-            setup_distance_measure=setup_all_distance_measure_getter,
-            get_gain=gini_gain,
-            max_depth=np.math.inf,
-            is_leaf=pure,
-            verbosity=0,
-            n_jobs=1,
-            n_stump_evaluations=5,
-            find_stump=None
+        self,
+        # note: any changes of these params must be reflected in
+        # the fit method for building trees / clones
+        random_state=0,
+        get_exemplars=get_one_exemplar_per_class_proximity,
+        distance_measure=None,
+        get_distance_measure=None,
+        setup_distance_measure=setup_all_distance_measure_getter,
+        get_gain=gini_gain,
+        max_depth=np.math.inf,
+        is_leaf=pure,
+        verbosity=0,
+        n_jobs=1,
+        n_stump_evaluations=5,
+        find_stump=None
     ):
         """
         build a Proximity Tree object
@@ -1227,7 +1222,9 @@ class ProximityTree(BaseClassifier):
 
     def fit(self, X, y, random_state=0):
         self.classes_ = np.unique(y)
-        self.root_stump = ProximityStump(X=X, y=y, n_stumps=self.n_stump_evaluations, random_state=random_state)
+        self.root_stump = ProximityStump(
+            X=X, y=y, n_stumps=self.n_stump_evaluations, random_state=random_state
+        )
         self.root_stump.fit()
         self._is_fitted = True
 
@@ -1297,20 +1294,20 @@ class ProximityForest(BaseClassifier):
      """
 
     def __init__(
-            self,
-            random_state=0,
-            n_estimators=100,
-            distance_measure=None,
-            get_distance_measure=None,
-            get_exemplars=get_one_exemplar_per_class_proximity,
-            get_gain=gini_gain,
-            verbosity=0,
-            max_depth=np.math.inf,
-            is_leaf=pure,
-            n_jobs=1,
-            n_stump_evaluations=5,
-            find_stump=None,
-            setup_distance_measure_getter=setup_all_distance_measure_getter,
+        self,
+        random_state=0,
+        n_estimators=100,
+        distance_measure=None,
+        get_distance_measure=None,
+        get_exemplars=get_one_exemplar_per_class_proximity,
+        get_gain=gini_gain,
+        verbosity=0,
+        max_depth=np.math.inf,
+        is_leaf=pure,
+        n_jobs=1,
+        n_stump_evaluations=5,
+        find_stump=None,
+        setup_distance_measure_getter=setup_all_distance_measure_getter,
     ):
         """
         build a Proximity Forest object
@@ -1400,7 +1397,6 @@ class ProximityForest(BaseClassifier):
     def fit(self, X, y):
         X, y = check_X_y(X, y, enforce_univariate=True)
         X = from_nested_to_3d_numpy(X)
-        #self.X = positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
         if self.label_encoder is None:
@@ -1450,7 +1446,6 @@ class ProximityForest(BaseClassifier):
         """
         X = from_nested_to_3d_numpy(X)
         X = check_X(X, enforce_univariate=True)
-#        X = negative_dataframe_indices(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
             predictions_per_tree = parallel(
@@ -1499,7 +1494,7 @@ class ProximityForest(BaseClassifier):
             prediction_counts = list(prediction_counts.items())
             prediction_counts_to_array = np.array(prediction_counts)
             sub_distribution = prediction_counts_to_array[
-                                   np.argsort(prediction_counts_to_array[:, 0])
-                               ][:, 1]
+                np.argsort(prediction_counts_to_array[:, 0])
+             ][:, 1]
             np.add.at(distributions, index, sub_distribution)
         return distributions
