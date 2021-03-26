@@ -74,6 +74,7 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
+from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.transformations.series.outlier_detection import HampelFilter
 
 
@@ -180,6 +181,14 @@ ESTIMATOR_TEST_PARAMS = {
         "max_p": 2,
         "max_q": 2,
         "seasonal": False,
+    },
+    MultiplexForecaster: {
+        "forecasters": [
+            ("Naive_mean", NaiveForecaster(strategy="mean")),
+            ("Naive_last", NaiveForecaster(strategy="last")),
+            ("Naive_drift", NaiveForecaster(strategy="drift")),
+        ],
+        "selected_forecaster": "Naive_mean",
     },
     ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
