@@ -48,17 +48,14 @@ def evaluate(
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.performance_metrics.forecasting import evaluate
+    >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift", sp=12)
-    >>> cv = ExpandingWindowSplitter(
-        initial_window=24,
-        step_length=12,
-        fh=[1,2,3,4,5,6,7,8,9,10,11,12]
-        )
-    >>> evaluate(forecaster=forecaster, y=y, cv=cv)
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
+    >>> cv = ExpandingWindowSplitter(initial_window=24, step_length=12,
+    ...                              fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
     """
     cv = check_cv(cv)
     y = check_y(y)
