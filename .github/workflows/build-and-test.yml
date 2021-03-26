@@ -40,7 +40,7 @@ jobs:
       - name: List changed files
         run: echo '${{ steps.file_changes.outputs.files}}'
       - name: Check doc-quality
-        run: pydocstyle sktime/ --config=setup.cfg
+        run: pydocstyle ${{ steps.file_changes.outputs.files}} --config=setup.cfg
 
   test-examples:
     needs: code-quality
