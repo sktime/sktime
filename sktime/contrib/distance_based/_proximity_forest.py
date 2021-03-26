@@ -38,7 +38,9 @@ from sktime.classification.distance_based._proximity_forest_utils import (
 from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.utils.data_processing import from_nested_to_2d_array, from_nested_to_3d_numpy
+from sktime.utils.data_processing import (
+    from_nested_to_2d_array, from_nested_to_3d_numpy
+)
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -769,7 +771,7 @@ class ProximityStump(BaseClassifier):
         label=None,
         verbosity=0,
         n_stumps=5,
-        n_jobs=1
+        n_jobs=1,
     ):
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
@@ -1176,7 +1178,7 @@ class ProximityTree(BaseClassifier):
         verbosity=0,
         n_jobs=1,
         n_stump_evaluations=5,
-        find_stump=None
+        find_stump=None,
     ):
         """
         build a Proximity Tree object
@@ -1291,7 +1293,7 @@ class ProximityForest(BaseClassifier):
          X: train data
          y: train data labels
          trees: list of trees in the forest
-     """
+    """
 
     def __init__(
         self,
@@ -1495,6 +1497,6 @@ class ProximityForest(BaseClassifier):
             prediction_counts_to_array = np.array(prediction_counts)
             sub_distribution = prediction_counts_to_array[
                 np.argsort(prediction_counts_to_array[:, 0])
-             ][:, 1]
+            ][:, 1]
             np.add.at(distributions, index, sub_distribution)
         return distributions
