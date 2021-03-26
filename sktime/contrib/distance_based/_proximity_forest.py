@@ -39,7 +39,8 @@ from sktime.classification.distance_based._proximity_forest_utils import stdp as
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.data_processing import (
-    from_nested_to_2d_array, from_nested_to_3d_numpy
+    from_nested_to_2d_array,
+    from_nested_to_3d_numpy
 )
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
