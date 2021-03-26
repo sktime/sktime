@@ -53,10 +53,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest]
-        python-version: [3.6, 3.7, 3.8]
-        osx-deployment: [10.14, 10.15]
-    env:
-      MACOSX_DEPLOYMENT_TARGET: ${{matrix.osx-deployment}}
+        python-version: [ 3.6.9, 3.7.9, 3.8.8 ]
     steps:
     - uses: actions/checkout@v2
     - name: Get Python
