@@ -45,7 +45,7 @@ def _check_evaluate_output(out, cv, y, scoring):
     assert out.shape[0] == n_splits
 
     # Check if all timings are positive.
-    assert np.all(out.filter(like="_time") > 0)
+    assert np.all(out.filter(like="_time") >= 0)
 
     # Check cutoffs.
     np.testing.assert_array_equal(
