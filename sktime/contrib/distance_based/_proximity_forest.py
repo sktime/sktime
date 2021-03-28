@@ -40,7 +40,7 @@ from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.data_processing import (
     from_nested_to_2d_array,
-    from_nested_to_3d_numpy
+    from_nested_to_3d_numpy,
 )
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
@@ -766,7 +766,7 @@ class ProximityStump(BaseClassifier):
         random_state=0,
         setup_distance_measure=setup_all_distance_measure_getter,
         get_distance_measure=None,
-        distance_measure=None,
+        distance_measure=dtw_distance,
         X=None,
         y=None,
         label=None,
@@ -1093,7 +1093,7 @@ class ProximityStump(BaseClassifier):
         self.find_best_stumps(X, y)
         if len(self.X_best_splits) > 0:
             for i in range(0, len(self.X_best_splits.values())):
-                self.children.append(ProximityStump(X=X, y=y, label=y[i]))
+                self.children.append(ProximityStump(X=X, y=y, label=y[i], distance_measure=self.distance_measure))
             counter = 0
             for index in self.X_best_splits.keys():
                 x_branches = self.X_best_splits[index]
@@ -1170,7 +1170,7 @@ class ProximityTree(BaseClassifier):
         # the fit method for building trees / clones
         random_state=0,
         get_exemplars=get_one_exemplar_per_class_proximity,
-        distance_measure=None,
+        distance_measure=dtw_distance,
         get_distance_measure=None,
         setup_distance_measure=setup_all_distance_measure_getter,
         get_gain=gini_gain,
@@ -1215,7 +1215,7 @@ class ProximityTree(BaseClassifier):
         self.depth = 0
         # below set in fit method
         self.label_encoder = None
-        self.distance_measure = None
+        self.distance_measure = distance_measure
         self.root_stump = None
         self.branches = None
         self.X = None
@@ -1226,7 +1226,11 @@ class ProximityTree(BaseClassifier):
     def fit(self, X, y, random_state=0):
         self.classes_ = np.unique(y)
         self.root_stump = ProximityStump(
-            X=X, y=y, n_stumps=self.n_stump_evaluations, random_state=random_state
+            X=X,
+            y=y,
+            n_stumps=self.n_stump_evaluations,
+            distance_measure=self.distance_measure,
+            random_state=self.random_state
         )
         self.root_stump.fit()
         self._is_fitted = True
@@ -1239,7 +1243,7 @@ class ProximityTree(BaseClassifier):
         """
         stump = self.root_stump
         while not stump.is_leaf:
-            child_index = stump.find_closest_distance_(query, dtw_distance)[1]
+            child_index = stump.find_closest_distance_(query, self.distance_measure)[1]
             if child_index == -1:
                 stump.is_leaf = True
                 continue
@@ -1300,7 +1304,7 @@ class ProximityForest(BaseClassifier):
         self,
         random_state=0,
         n_estimators=100,
-        distance_measure=None,
+        distance_measure=dtw_distance,
         get_distance_measure=None,
         get_exemplars=get_one_exemplar_per_class_proximity,
         get_gain=gini_gain,
@@ -1355,7 +1359,7 @@ class ProximityForest(BaseClassifier):
 
         for _ in range(self.n_estimators):
             self.trees.append(
-                ProximityTree(n_stump_evaluations=self.n_stump_evaluations)
+                ProximityTree(n_stump_evaluations=self.n_stump_evaluations, distance_measure=self.distance_measure)
             )
         super(ProximityForest, self).__init__()
 
