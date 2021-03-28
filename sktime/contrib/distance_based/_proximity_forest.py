@@ -1093,7 +1093,11 @@ class ProximityStump(BaseClassifier):
         self.find_best_stumps(X, y)
         if len(self.X_best_splits) > 0:
             for i in range(0, len(self.X_best_splits.values())):
-                self.children.append(ProximityStump(X=X, y=y, label=y[i], distance_measure=self.distance_measure))
+                self.children.append(
+                    ProximityStump(
+                        X=X, y=y, label=y[i], distance_measure=self.distance_measure
+                    )
+                )
             counter = 0
             for index in self.X_best_splits.keys():
                 x_branches = self.X_best_splits[index]
@@ -1230,7 +1234,7 @@ class ProximityTree(BaseClassifier):
             y=y,
             n_stumps=self.n_stump_evaluations,
             distance_measure=self.distance_measure,
-            random_state=self.random_state
+            random_state=self.random_state,
         )
         self.root_stump.fit()
         self._is_fitted = True
@@ -1359,7 +1363,10 @@ class ProximityForest(BaseClassifier):
 
         for _ in range(self.n_estimators):
             self.trees.append(
-                ProximityTree(n_stump_evaluations=self.n_stump_evaluations, distance_measure=self.distance_measure)
+                ProximityTree(
+                    n_stump_evaluations=self.n_stump_evaluations,
+                    distance_measure=self.distance_measure,
+                )
             )
         super(ProximityForest, self).__init__()
 
