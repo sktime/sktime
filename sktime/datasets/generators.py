@@ -254,7 +254,7 @@ class ShapeletGenerator:
 
     def generate_random_shapes(self):
         self.shapes = []
-        for i in range(self.n_shapelets):
+        for _ in range(self.n_shapelets):
             new_shape = self.Shape(length=self.shapelet_length)
             self.shapes.append(new_shape)
 
