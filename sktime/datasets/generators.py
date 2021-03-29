@@ -13,12 +13,7 @@ from numpy.random import RandomState, normal
 from pandas import Series
 from statsmodels.tsa.arima_process import arma_generate_sample
 
-__all__ = [
-    "ArmaGenerator",
-    "LinearGenerator",
-    "NoiseGenerator",
-    "ShapeletGenerator"
-]
+__all__ = ["ArmaGenerator", "LinearGenerator", "NoiseGenerator", "ShapeletGenerator"]
 
 
 class Generator(ABC):
@@ -52,16 +47,14 @@ class NoiseGenerator(Generator):
     >>> sample = arma_generator.sample()
     """
 
-    def __init__(self,
-                 random_state: Union[int, RandomState] = None) -> None:
+    def __init__(self, random_state: Union[int, RandomState] = None) -> None:
         # use random state generation
         if isinstance(random_state, RandomState):
             self.random_state = random_state
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self,
-               n_sample: int = 100) -> Series:
+    def sample(self, n_sample: int = 100) -> Series:
         """
         Generate a sample from the generator.
         Parameters
@@ -74,9 +67,7 @@ class NoiseGenerator(Generator):
             A sample from a standard normal random process.
         """
 
-        return pd.Series(
-            self.random_state.normal(size=n_sample)
-        )
+        return pd.Series(self.random_state.normal(size=n_sample))
 
 
 class ArmaGenerator(Generator):
@@ -103,20 +94,22 @@ class ArmaGenerator(Generator):
     >>> sample = arma_generator.sample()
     """
 
-    def __init__(self,
-                 ar: ndarray = None,
-                 ma: ndarray = None,
-                 random_state: Union[int, RandomState] = None) -> None:
+    def __init__(
+        self,
+        ar: ndarray = None,
+        ma: ndarray = None,
+        random_state: Union[int, RandomState] = None,
+    ) -> None:
 
         # if either set of coef is missing, set to 1
         # set to coef sets to ndarrays (if not)
         # convert from coef to ar/ma polynomials
         if ar is None:
-            ar = np.array([1.])
+            ar = np.array([1.0])
         else:
             self.arparams = np.r_[1, -np.asarray(ar)]
         if ma is None:
-            ma = np.array([1.])
+            ma = np.array([1.0])
         else:
             self.maparams = np.r_[1, np.asarray(ma)]
 
@@ -126,9 +119,7 @@ class ArmaGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self,
-               n_sample: int = 100,
-               burnin: int = 0) -> Series:
+    def sample(self, n_sample: int = 100, burnin: int = 0) -> Series:
         """
         Generate a sample from the generator.
         Parameters
@@ -144,11 +135,14 @@ class ArmaGenerator(Generator):
             Sample from an ARMA process.
         """
         return pd.Series(
-            arma_generate_sample(self.arparams,
-                                 self.maparams,
-                                 n_sample,
-                                 distrvs=self.random_state.normal,
-                                 burnin=burnin))
+            arma_generate_sample(
+                self.arparams,
+                self.maparams,
+                n_sample,
+                distrvs=self.random_state.normal,
+                burnin=burnin,
+            )
+        )
 
 
 class LinearGenerator(Generator):
@@ -182,17 +176,14 @@ class LinearGenerator(Generator):
     >>> sample = linear_generator.sample()
     """
 
-    def __init__(self,
-                 slope: float,
-                 intercept: float,
-                 noise_generator: Generator = None
-                 ) -> None:
+    def __init__(
+        self, slope: float, intercept: float, noise_generator: Generator = None
+    ) -> None:
         self.slope = slope
         self.intercept = intercept
         self.noise_generator = noise_generator
 
-    def sample(self,
-               n_sample: int = 100) -> Series:
+    def sample(self, n_sample: int = 100) -> Series:
         """
         Generate a sample from the generator.
         Parameters
@@ -214,33 +205,35 @@ class LinearGenerator(Generator):
 
 class ShapeletGenerator:
     """
-        Generator of shapelets for Shapelet Based classifiers.
-        Parameters
-        ----------
-        series_length : int
-            Length of series to be generated
+    Generator of shapelets for Shapelet Based classifiers.
+    Parameters
+    ----------
+    series_length : int
+        Length of series to be generated
 
-        n_shapelets : int
-            Number of shapelets
+    n_shapelets : int
+        Number of shapelets
 
-        shapelet_length : int
-            Length of each shapelet
+    shapelet_length : int
+        Length of each shapelet
 
-        shapes : List[Shape]
-            List of shapes to generate values for.
-            Unless specified, shapes will be randomly generated.
+    shapes : List[Shape]
+        List of shapes to generate values for.
+        Unless specified, shapes will be randomly generated.
 
-        """
+    """
 
     DEFAULT_NUM_SHAPELETS = 5
     DEFAULT_SERIES_LENGTH = 500
     DEFAULT_SHAPELET_LENGTH = 29
 
-    def __init__(self,
-                 series_length=DEFAULT_SERIES_LENGTH,
-                 n_shapelets=DEFAULT_NUM_SHAPELETS,
-                 shapelet_length=DEFAULT_SHAPELET_LENGTH,
-                 shapes=None):
+    def __init__(
+        self,
+        series_length=DEFAULT_SERIES_LENGTH,
+        n_shapelets=DEFAULT_NUM_SHAPELETS,
+        shapelet_length=DEFAULT_SHAPELET_LENGTH,
+        shapes=None,
+    ):
         self.series_length = series_length
         self.n_shapelets = n_shapelets
         self.shapelet_length = shapelet_length
@@ -302,11 +295,9 @@ class ShapeletGenerator:
         DEFAULT_BASE = -1
         DEFAULT_AMP = 4
 
-        def __init__(self,
-                     length,
-                     shape_type="HEADSHOULDERS",
-                     base=DEFAULT_BASE,
-                     amp=DEFAULT_AMP):
+        def __init__(
+            self, length, shape_type="HEADSHOULDERS", base=DEFAULT_BASE, amp=DEFAULT_AMP
+        ):
             self.type = shape_type
             self.length = length
             self.base = base
@@ -331,7 +322,9 @@ class ShapeletGenerator:
                     if offset >= self.length:
                         value = self.base
                     elif self.length % 2 == 1:
-                        value = (((self.length - offset - 1) / mid) * self.amp) + self.base
+                        value = (
+                            ((self.length - offset - 1) / mid) * self.amp
+                        ) + self.base
                     else:
                         value = (((self.length - offset) / mid) * self.amp) + self.base
 
@@ -341,20 +334,37 @@ class ShapeletGenerator:
                 if self.length % 3 == 2:
                     upper += 2
                 if offset < lower:
-                    value = ((self.amp // 2) * math.sin(((2 * math.pi) //
-                                                         ((self.length // 3 - 1) * 2)) * offset)) + self.base
+                    value = (
+                        (self.amp // 2)
+                        * math.sin(
+                            ((2 * math.pi) // ((self.length // 3 - 1) * 2)) * offset
+                        )
+                    ) + self.base
                 elif offset >= upper:
-                    value = ((self.amp // 2) * math.sin(((2 * math.pi) //
-                                                         ((self.length // 3 - 1) * 2)) * (offset - upper))) + self.base
+                    value = (
+                        (self.amp // 2)
+                        * math.sin(
+                            ((2 * math.pi) // ((self.length // 3 - 1) * 2))
+                            * (offset - upper)
+                        )
+                    ) + self.base
                 else:
-                    value = (self.amp * math.sin(((2 * math.pi) //
-                                                  (((upper - lower) - 1) * 2)) * (
-                                                         offset - self.length // 3))) + self.base
+                    value = (
+                        self.amp
+                        * math.sin(
+                            ((2 * math.pi) // (((upper - lower) - 1) * 2))
+                            * (offset - self.length // 3)
+                        )
+                    ) + self.base
                 if value < self.base:
                     value = self.base
 
             elif self.type == "SINE":
-                value = self.amp * math.sin(((2 * math.pi) // (self.length - 1)) * offset) // 2
+                value = (
+                    self.amp
+                    * math.sin(((2 * math.pi) // (self.length - 1)) * offset)
+                    // 2
+                )
 
             elif self.type == "STEP":
                 if offset < self.length // 2:
@@ -371,9 +381,13 @@ class ShapeletGenerator:
                     else:
                         value = (-self.amp // 2) * (offset / lower)
                 elif lower < offset < upper:
-                    value = -self.amp // 2 + self.amp * ((offset - lower) / (upper - lower - 1))
+                    value = -self.amp // 2 + self.amp * (
+                        (offset - lower) / (upper - lower - 1)
+                    )
                 else:
-                    value = self.amp // 2 - self.amp // 2 * ((offset - upper + 1) / (self.length - upper))
+                    value = self.amp // 2 - self.amp // 2 * (
+                        (offset - upper + 1) / (self.length - upper)
+                    )
 
             return value
 
@@ -383,7 +397,7 @@ class ShapeletGenerator:
         def set_type(self, new_type):
             self.type = new_type
             if new_type == "HEADSHOULDERS":
-                self.base = - self.amp // 4
+                self.base = -self.amp // 4
             else:
                 self.base = -self.amp // 2
 
