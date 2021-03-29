@@ -24,6 +24,7 @@ sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
 sktime/forecasting/model_selection/_split @koralturkk
+sktime/forecasting/compose/_multiplexer.py @koralturkk
 
 sktime/forecasting/online_learning/ @magittan
 
