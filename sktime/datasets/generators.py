@@ -267,7 +267,6 @@ class ShapeletGenerator:
         self.reset()
         for shape in self.shapes:
             shape.randomise_location(self.series_length)
-            print(shape.type, shape.location)
         d = np.arange(n, dtype=float)
         for i in range(n):
             d[i] = self.generate_next()
