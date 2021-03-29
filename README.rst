@@ -110,7 +110,11 @@ Forecasting
 
 .. code-block:: python
 
-    from sktime.forecasting.all import *
+    from sktime.datasets import load_airline
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.performance_metrics.forecasting import smape_loss
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)

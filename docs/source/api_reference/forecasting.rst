@@ -104,6 +104,17 @@ BATS/TBATS
 
     TBATS
 
+MultiplexForecaster
+----------
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    MultiplexForecaster
+
 Prophet
 -------
 
@@ -159,6 +170,7 @@ Model Selection
     CutoffSplitter
     SingleWindowSplitter
     SlidingWindowSplitter
+    ExpandingWindowSplitter
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
 
