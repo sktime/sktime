@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Generators for time series simulation
 """
