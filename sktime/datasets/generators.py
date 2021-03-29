@@ -4,7 +4,7 @@ Generators for time series simulation
 import math
 import random
 from abc import ABC, abstractmethod
-from typing import Union, List
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from statsmodels.tsa.arima_process import arma_generate_sample
 __all__ = [
     "ArmaGenerator",
     "LinearGenerator",
-    "NoiseGenerator"
+    "NoiseGenerator",
     "ShapeletGenerator"
 ]
 
@@ -213,51 +213,85 @@ class LinearGenerator(Generator):
 
 
 class ShapeletGenerator:
-    ShapeTypes = ["TRIANGLE", "HEADSHOULDERS", "SINE", "STEP", "SPIKE"]
+    """
+        Generator of shapelets for Shapelet Based classifiers.
+        Parameters
+        ----------
+        series_length : int
+            Length of series to be generated
 
-    DEFAULT_NUM_SHAPELETS = 1
+        n_shapelets : int
+            Number of shapelets
+
+        shapelet_length : int
+            Length of each shapelet
+
+        shapes : List[Shape]
+            List of shapes to generate values for.
+            Unless specified, shapes will be randomly generated.
+
+        """
+
+    DEFAULT_NUM_SHAPELETS = 5
     DEFAULT_SERIES_LENGTH = 500
     DEFAULT_SHAPELET_LENGTH = 29
-    DEFAULT_BASE = -1
-    DEFAULT_AMP = 4
 
     def __init__(self,
                  series_length=DEFAULT_SERIES_LENGTH,
                  n_shapelets=DEFAULT_NUM_SHAPELETS,
-                 shapelet_length=DEFAULT_SHAPELET_LENGTH):
+                 shapelet_length=DEFAULT_SHAPELET_LENGTH,
+                 shapes=None):
         self.series_length = series_length
         self.n_shapelets = n_shapelets
         self.shapelet_length = shapelet_length
-        self.shapes = []
-        for i in range(n_shapelets):
-            new_shape = self.Shape(length=shapelet_length)
-            self.shapes.append(new_shape)
+
+        if shapes is None:
+            self.generate_random_shapes()
+        else:
+            self.shapes = shapes
+
         self.t = 0
+
+    def generate_random_shapes(self):
+        self.shapes = []
+        for i in range(self.n_shapelets):
+            new_shape = self.Shape(length=self.shapelet_length)
+            self.shapes.append(new_shape)
 
     def set_shapelet_length(self, new_length):
         self.shapelet_length = new_length
         for shape in self.shapes:
             shape.set_length(new_length)
 
-    def generate_series(self, n: int) -> List[float]:
+    def generate_series(self, n):
         self.reset()
         for shape in self.shapes:
-            shape.randomise_location()
-        d = []
+            shape.randomise_location(self.series_length)
+            print(shape.type, shape.location)
+        d = np.arange(n, dtype=float)
         for i in range(n):
             d[i] = self.generate_next()
-        return d
+        return pd.Series(d)
 
-    def generate_next(self) -> int:
+    def generate_next(self) -> float:
         value = self.generate(self.t)
         self.t += 1
         return value
 
-    def generate(self, x) -> int:
+    def generate(self, x) -> float:
         value = normal()
         for shape in self.shapes:
             value += shape.generate(int(x))
         return value
+
+    def set_series_length(self, new_len):
+        self.series_length = new_len
+
+    def set_n_shapelets(self, new_n_shapelets):
+        self.n_shapelets = new_n_shapelets
+
+    def set_shapes(self, new_shapes):
+        self.shapes = new_shapes
 
     def reset(self):
         self.t = 0
@@ -265,15 +299,13 @@ class ShapeletGenerator:
     class Shape:
 
         ShapeTypes = ["TRIANGLE", "HEADSHOULDERS", "SINE", "STEP", "SPIKE"]
-        DEFAULT_NUM_SHAPELETS = 1
-        DEFAULT_SERIES_LENGTH = 500
-        DEFAULT_SHAPELET_LENGTH = 29
+
         DEFAULT_BASE = -1
         DEFAULT_AMP = 4
 
         def __init__(self,
+                     length,
                      shape_type="HEADSHOULDERS",
-                     length=DEFAULT_SHAPELET_LENGTH,
                      base=DEFAULT_BASE,
                      amp=DEFAULT_AMP):
             self.type = shape_type
@@ -282,7 +314,7 @@ class ShapeletGenerator:
             self.amp = amp
             self.location = 0
 
-        def generate(self, t) -> int:
+        def generate(self, t) -> float:
             if (t < self.location) or (t > self.location + self.length - 1):
                 return 0
             offset = t - self.location
@@ -359,10 +391,10 @@ class ShapeletGenerator:
         def set_length(self, new_length):
             self.length = new_length
 
-        def randomise_location(self):
+        def randomise_location(self, series_length):
             start = 0
-            if self.DEFAULT_SERIES_LENGTH > self.length:
-                start = random.randint(0, self.DEFAULT_SERIES_LENGTH - self.length)
+            if series_length > self.length:
+                start = random.randint(0, series_length - self.length)
             self.set_location(start)
 
         def randomise_shape(self):
