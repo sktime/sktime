@@ -1,8 +1,10 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-__author__ = ["Markus Löning"]
-__all__ = []
+__author__ = [
+    "Markus Löning",
+    "Kutay Koralturk",
+]
 
 import numpy as np
 import pandas as pd

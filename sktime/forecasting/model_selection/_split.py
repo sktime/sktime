@@ -11,14 +11,14 @@ __all__ = [
 ]
 __author__ = ["Markus Löning", "Kutay Koralturk"]
 
+import inspect
+import numbers
 import warnings
 from inspect import signature
-import inspect
-from sklearn.base import BaseEstimator
-import numbers
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
@@ -111,12 +111,11 @@ def _check_fh(fh):
 
 
 def _get_end(y, fh):
-    """Compute the end of the last training window for a given window length and
-    forecasting horizon.
-    """
+    """Compute the end of the last training window for a given and forecasting
+    horizon."""
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
-    n_timepoints = len(y)
+    n_timepoints = y.shape[0]
 
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
@@ -132,7 +131,7 @@ def _get_end(y, fh):
 
 
 def _check_window_lengths(y, fh, window_length, initial_window):
-    n_timepoints = len(y)
+    n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
     if window_length + fh_max > n_timepoints:
@@ -252,13 +251,13 @@ class CutoffSplitter(BaseSplitter):
     def _split(self, y):
         # cutoffs
         cutoffs = check_cutoffs(self.cutoffs)
-        if not np.max(cutoffs) < len(y):
-            raise ValueError("`cutoffs` are out-of-bounds for given `y`.")
+        if np.max(cutoffs) >= y.shape[0]:
+            raise ValueError("`cutoffs` are in compatible with given `y`.")
 
         fh = _check_fh(self.fh)
 
-        if np.max(cutoffs) + np.max(fh) > len(y):
-            raise ValueError("`fh` is out-of-bounds for given `cutoffs` and `y`.")
+        if np.max(cutoffs) + np.max(fh) > y.shape[0]:
+            raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length)
 
         for cutoff in cutoffs:

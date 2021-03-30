@@ -15,6 +15,8 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SingleWindowSplitter
 
+from warnings import warn
+
 
 class StackingForecaster(
     _RequiredForecastingHorizonMixin, _HeterogenousEnsembleForecaster
@@ -85,6 +87,8 @@ class StackingForecaster(
         """
         self.check_is_fitted()
         self._update_y_X(y, X)
+        if update_params:
+            warn("Updating `final regressor is not implemented")
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
