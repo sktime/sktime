@@ -27,7 +27,11 @@ class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstima
         super(_HeterogenousEnsembleForecaster, self).__init__()
 
     def _check_forecasters(self):
-        if self.forecasters is None or len(self.forecasters) == 0:
+        if (
+            self.forecasters is None
+            or len(self.forecasters) == 0
+            or not isinstance(self.forecasters, list)
+        ):
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
