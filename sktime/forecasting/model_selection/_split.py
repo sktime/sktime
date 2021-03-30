@@ -18,7 +18,6 @@ from inspect import signature
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
@@ -83,9 +82,7 @@ def _repr(self):
             return True
         if init_params[k] == inspect._empty:  # k has no default value
             return True
-        # try to avoid calling repr on nested estimators
-        if isinstance(v, BaseEstimator) and v.__class__ != init_params[k].__class__:
-            return True
+
         # Use repr as a last resort. It may be expensive.
         if repr(v) != repr(init_params[k]) and not (
             is_scalar_nan(init_params[k]) and init_params(v)
@@ -252,7 +249,7 @@ class CutoffSplitter(BaseSplitter):
         # cutoffs
         cutoffs = check_cutoffs(self.cutoffs)
         if np.max(cutoffs) >= y.shape[0]:
-            raise ValueError("`cutoffs` are in compatible with given `y`.")
+            raise ValueError("`cutoffs` are incompatible with given `y`.")
 
         fh = _check_fh(self.fh)
 
