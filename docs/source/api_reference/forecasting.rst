@@ -104,17 +104,6 @@ BATS/TBATS
 
     TBATS
 
-MultiplexForecaster
-----------
-
-.. currentmodule:: sktime.forecasting.compose
-
-.. autosummary::
-    :toctree: modules/auto_generated/
-    :template: class.rst
-
-    MultiplexForecaster
-
 Prophet
 -------
 
@@ -144,6 +133,7 @@ Composition
     RecursiveTimeSeriesRegressionForecaster
     ReducedForecaster
     StackingForecaster
+    MultiplexForecaster
 
 Online Forecasting
 ------------------
