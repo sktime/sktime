@@ -77,6 +77,7 @@ from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
 # The following estimators currently do not pass all unit tests
@@ -249,7 +250,7 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": Detrender(), "passthrough": False},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
 }
 
 # These methods should not change the state of the estimator, that is, they should
