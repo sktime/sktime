@@ -276,14 +276,15 @@ class BaseWindowSplitter(BaseSplitter):
 
     def __init__(
         self,
-        fh=DEFAULT_FH,
-        window_length=DEFAULT_WINDOW_LENGTH,
-        step_length=DEFAULT_STEP_LENGTH,
-        start_with_window=True,
+        fh,
+        initial_window,
+        window_length,
+        step_length,
+        start_with_window,
     ):
         self.step_length = step_length
         self.start_with_window = start_with_window
-        self.initial_window = None
+        self.initial_window = initial_window
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split(self, y):
@@ -299,7 +300,7 @@ class BaseWindowSplitter(BaseSplitter):
                     "`start_with_window` must be True if `initial_window` is given"
                 )
 
-            if not self.initial_window > self.window_length:
+            if self.initial_window <= self.window_length:
                 raise ValueError("`initial_window` must greater than `window_length`")
 
             # For in-sample forecasting horizons, the first split must ensure that
@@ -445,16 +446,16 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         fh=DEFAULT_FH,
         window_length=DEFAULT_WINDOW_LENGTH,
         step_length=DEFAULT_STEP_LENGTH,
-        start_with_window=True,
         initial_window=None,
+        start_with_window=True,
     ):
         super(SlidingWindowSplitter, self).__init__(
             fh=fh,
             window_length=window_length,
+            initial_window=initial_window,
             step_length=step_length,
             start_with_window=start_with_window,
         )
-        self.initial_window = initial_window
 
     @staticmethod
     def _split_windows(start, end, step_length, window_length, fh):
@@ -486,9 +487,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     Parameters
     ----------
-    fh : int, list or np.array
+    fh : int, list or np.array, optional (default=1)
         Forecasting horizon
-    window_length : int
+    initial_window : int, optional (default=10)
         Window length
     step_length : int, optional (default=1)
         Step length between windows
@@ -496,6 +497,24 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         - If True, starts with full window.
         - If False, starts with empty window.
     """
+
+    def __init__(
+        self,
+        fh=DEFAULT_FH,
+        initial_window=DEFAULT_WINDOW_LENGTH,
+        step_length=DEFAULT_STEP_LENGTH,
+        start_with_window=True,
+    ):
+        # Note that we pass the initial window as the window_length below. This
+        # allows us to use the common logic from the parent class, while at the same
+        # time expose the more intuitive name for the ExpandingWindowSplitter.
+        super(ExpandingWindowSplitter, self).__init__(
+            fh=fh,
+            window_length=initial_window,
+            initial_window=None,
+            step_length=step_length,
+            start_with_window=start_with_window,
+        )
 
     @staticmethod
     def _split_windows(start, end, step_length, window_length, fh):
