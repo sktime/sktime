@@ -75,10 +75,7 @@ class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstima
         """Collect results from forecaster.predict() calls."""
         if return_pred_int:
             raise NotImplementedError()
-        # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(
-        # fh, X)
-        #                                     for forecaster in
-        #                                     self.forecasters_)
+
         return [
             forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
             for forecaster in self.forecasters_
