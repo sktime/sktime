@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
+
+__author__ = ["Martin Walter", "Markus Löning"]
+__all__ = ["evaluate"]
+
 import numpy as np
 import pandas as pd
 import time
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.forecasting import check_cv
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import check_scoring
-
-__author__ = ["Martin Walter"]
-__all__ = ["evaluate"]
+from sktime.utils.validation.forecasting import check_scoring, check_fh
 
 
 def evaluate(
-    forecaster, cv, y, X=None, strategy="refit", scoring=None, return_data=False
+    forecaster,
+    cv,
+    y,
+    X=None,
+    strategy="refit",
+    scoring=None,
+    fit_params=None,
+    return_data=False,
 ):
     """Evaluate forecaster using cross-validation
 
@@ -20,20 +28,21 @@ def evaluate(
     ----------
     forecaster : sktime.forecaster
         Any forecaster
-    cv : sktime.SlidingWindowSplitter or sktime.ExpandingWindowSplitter
-        Splitter of how to split the data into test data and train data
     y : pd.Series
         Target time series to which to fit the forecaster.
     X : pd.DataFrame, optional (default=None)
         Exogenous variables
-    strategy : str, optional
-        Must be "refit" or "update", by default "refit". The strategy defines
-        whether forecaster is only fitted on the first train window data and
-        then updated or always refitted.
+    cv : Temporal cross-validation splitter
+        Splitter of how to split the data into test data and train data
+    strategy : str, optional (default="refit")
+        Must be "refit" or "update". The strategy defines whether the `forecaster` is
+        only fitted on the first train window data and then updated, or always refitted.
     scoring : object of class MetricFunctionWrapper from
         sktime.performance_metrics, optional. Example scoring=sMAPE().
         Used to get a score function that takes y_pred and y_test as arguments,
         by default None (if None, uses sMAPE)
+    fit_params : dict, optional (default=None)
+        Parameters passed to the `fit` call of the forecaster.
     return_data : bool, optional
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
@@ -57,52 +66,47 @@ def evaluate(
     ...                              fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
     """
-    cv = check_cv(cv)
-    y = check_y(y)
-    _check_strategies(strategy)
+    _check_strategy(strategy)
+    cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
+    y, X = check_y_X(y, X)
+    fit_params = {} if fit_params is None else fit_params
 
+    # Define score name.
+    score_name = "test_" + scoring.name
+
+    # Initialize dataframe.
     results = pd.DataFrame()
-    cv.start_with_window = True
 
+    # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
-        # get initial window, if required
-        if i == 0 and cv.initial_window and strategy == "update":
-            train, test = cv.split_initial(y)
-            # this might have to be directly handled in split_initial()
-            test = test[: len(cv.fh)]
+        # split data
+        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
-        # create train/test data
-        y_train = y.iloc[train]
-        y_test = y.iloc[test]
-
-        X_train = X.iloc[train] if X else None
-        X_test = X.iloc[test] if X else None
+        # create forecasting horizon
+        fh = ForecastingHorizon(y_test.index, is_relative=False)
 
         # fit/update
         start_fit = time.time()
-        if strategy == "refit" or i == 0:
-            forecaster.fit(
-                y=y_train,
-                X=X_train,
-                fh=ForecastingHorizon(y_test.index, is_relative=False),
-            )
-        else:
-            # strategy == "update" and i != 0:
-            forecaster.update(y=y_train, X=X_train)
+        if i == 0 or strategy == "refit":
+            forecaster.fit(y_train, X_train, fh=fh, **fit_params)
+
+        else:  # if strategy == "update":
+            forecaster.update(y_train, X_train)
         fit_time = time.time() - start_fit
 
         # predict
         start_pred = time.time()
-        y_pred = forecaster.predict(
-            fh=ForecastingHorizon(y_test.index, is_relative=False), X=X_test
-        )
+        y_pred = forecaster.predict(fh, X=X_test)
         pred_time = time.time() - start_pred
+
+        # score
+        score = scoring(y_pred, y_test)
 
         # save results
         results = results.append(
             {
-                "test_" + scoring.__class__.__name__: scoring(y_pred, y_test),
+                score_name: score,
                 "fit_time": fit_time,
                 "pred_time": pred_time,
                 "len_train_window": len(y_train),
@@ -122,7 +126,30 @@ def evaluate(
     return results
 
 
-def _check_strategies(strategy):
+def _split(y, X, train, test, fh):
+    """Split y and X for given train and test set indices"""
+    y_train = y.iloc[train]
+    y_test = y.iloc[test]
+
+    cutoff = y_train.index[-1]
+    fh = check_fh(fh)
+    fh = fh.to_relative(cutoff)
+
+    if X is not None:
+        X_train = X.iloc[train, :]
+
+        # We need to expand test indices to a full range, since some forecasters
+        # require the full range of exogenous values.
+        test = np.arange(test[0] - fh.min(), test[-1]) + 1
+        X_test = X.iloc[test, :]
+    else:
+        X_train = None
+        X_test = None
+
+    return y_train, y_test, X_train, X_test
+
+
+def _check_strategy(strategy):
     """Assert strategy value
 
     Parameters
@@ -135,5 +162,6 @@ def _check_strategies(strategy):
     ValueError
         If strategy value is not in expected values, raise error.
     """
-    if strategy not in ["refit", "update"]:
-        raise ValueError('strategy must be either "refit" or "update"')
+    valid_strategies = ("refit", "update")
+    if strategy not in valid_strategies:
+        raise ValueError(f"`strategy` must be one of {valid_strategies}")
