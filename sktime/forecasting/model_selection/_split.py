@@ -299,7 +299,7 @@ class BaseWindowSplitter(BaseSplitter):
                     "`start_with_window` must be True if `initial_window` is given"
                 )
 
-            if not self.initial_window > self.window_length:
+            if self.initial_window <= self.window_length:
                 raise ValueError("`initial_window` must greater than `window_length`")
 
             # For in-sample forecasting horizons, the first split must ensure that
