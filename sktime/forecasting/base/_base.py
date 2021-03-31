@@ -185,3 +185,19 @@ class BaseForecaster(BaseEstimator):
         fitted_params : dict
         """
         raise NotImplementedError("abstract method")
+
+
+def is_forecaster(estimator):
+    """Return True if the given estimator is a forecaster.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a forecaster and False otherwise.
+    """
+    return isinstance(estimator, BaseForecaster)

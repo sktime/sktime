@@ -2,6 +2,7 @@
 __all__ = [
     "BaseClassifier",
     "classifier_list",
+    "is_classifier",
 ]
 __author__ = ["Markus Löning"]
 
@@ -77,3 +78,19 @@ class BaseClassifier(BaseEstimator):
         from sklearn.metrics import accuracy_score
 
         return accuracy_score(y, self.predict(X), normalize=True)
+
+
+def is_classifier(estimator):
+    """Return True if the given estimator is (probably) a classifier.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a classifier and False otherwise.
+    """
+    return isinstance(estimator, BaseClassifier)
