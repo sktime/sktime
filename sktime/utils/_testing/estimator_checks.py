@@ -586,7 +586,7 @@ def _make_transform_args(estimator, **kwargs):
     if isinstance(
         estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
     ):
-        X = _make_series(add_nan=_has_tag(estimator, "handles_missing_data"), **kwargs)
+        X = _make_series(**kwargs)
         return (X,)
     elif isinstance(
         estimator,

@@ -34,9 +34,8 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.model_selection import (
-        ForecastingGridSearchCV,
-        SlidingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.model_selection import SlidingWindowSplitter
     >>> from sklearn.preprocessing import StandardScaler
 
     >>> # create pipeline
@@ -57,10 +56,10 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
             "scaler__passthrough" : [True, False],
             'forecaster__strategy': ["drift", "mean", "last"]}
     >>> gscv = ForecastingGridSearchCV(
-        forecaster=pipe,
-        param_grid=param_grid,
-        cv=cv,
-        n_jobs=-1)
+            forecaster=pipe,
+            param_grid=param_grid,
+            cv=cv,
+            n_jobs=-1)
     """
 
     _required_parameters = ["transformer"]
