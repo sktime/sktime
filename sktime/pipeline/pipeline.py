@@ -147,14 +147,16 @@ class Estimator:
         self,
         estimator,
         param_grid,
-        col_name,
+        samples_col_name,
+        labels_col_name,
         scoring="neg_log_loss",
         shuffle=False,
         test_size=0.25,
         n_splits=5,
         pct_embargo=0.01,
     ):
-        self._col_name = col_name
+        self._samples_col_name = samples_col_name
+        self._labels_col_name = labels_col_name
         self._n_splits = n_splits
         self._pct_embargo = pct_embargo
         self._shuffle = shuffle
@@ -168,7 +170,7 @@ class Estimator:
             np.arange(X.shape[0]), shuffle=self._shuffle, test_size=self._test_size
         )
         cv_gen = ml.cross_validation.PurgedKFold(
-            samples_info_sets=samples[self._col_name].iloc[train_idx],
+            samples_info_sets=samples[self._samples_col_name].iloc[train_idx],
             n_splits=self._n_splits,
             pct_embargo=self._pct_embargo,
         )
@@ -180,7 +182,7 @@ class Estimator:
         )
 
         X_train = X.iloc[train_idx]
-        y_train = y.iloc[train_idx]
+        y_train = y.iloc[train_idx][self._labels_col_name]
 
         trained_estimator = gs.fit(X_train, y_train)
         self._fit_result = trained_estimator
@@ -283,10 +285,15 @@ if __name__ == "__main__":
                     param_grid={
                         "n_estimators": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 25]
                     },
-                    col_name="t1",
+                    samples_col_name="t1",
+                    labels_col_name="bin",
                 ),
+                {
+                    "X": "build_dataset",
+                    "y": "labels",
+                    "samples": "triple_barrier_events",
+                },
             ),
-            {"X": "build_dataset", "y": "labels", "samples": "triple_barrier_events"},
         ]
     )
-    pipe.fit(X="sktime/online_unsupervised_pipeline/curated_tick_data.csv")
+    pipe.fit(X="sktime/pipeline/curated_tick_data.csv")
