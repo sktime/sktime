@@ -98,6 +98,8 @@ class BaseTimeSeriesForest(BaseForest):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        normalise_option=False,
+        normalise_type=None,
     ):
         super(BaseTimeSeriesForest, self).__init__(
             base_estimator, n_estimators=n_estimators, estimator_params=estimator_params
@@ -110,6 +112,7 @@ class BaseTimeSeriesForest(BaseForest):
         self.warm_start = warm_start
         self.class_weight = class_weight
         self.max_samples = max_samples
+        self.normalise_option = normalise_option
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `estimator_` attribute.
@@ -287,7 +290,7 @@ class BaseTimeSeriesForest(BaseForest):
         return X
 
     @property
-    def feature_importances_(self):
+    def feature_importances_(self,normalise_option=False):
         """Compute feature importances for time series forest"""
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
@@ -324,6 +327,7 @@ class BaseTimeSeriesForest(BaseForest):
 
         # preallocate array for feature importances
         fis = np.zeros((n_timepoints, n_features))
+        fis_count = np.zeros((n_timepoints, n_features))
 
         for i in range(n_estimators):
             # select tree
@@ -349,13 +353,25 @@ class BaseTimeSeriesForest(BaseForest):
                     # assuming particular order of features
 
                     column_index = (k * n_intervals) + j
+                    fis_count[interval_time_points, k] += 1
 
                     # add feature importance for all time points of interval
                     fis[interval_time_points, k] += fi[column_index]
 
-        # normalise by number of estimators and number of intervals
-        fis = fis / n_estimators / n_intervals
+        if(normalise_option):
+            # normalise by number of estimators and number of intervals
+            fis = fis / n_estimators / n_intervals
+            fis_count =  fis_count / n_estimators / n_intervals
+            # format output
+            fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+            fis_count = pd.DataFrame(fis_count, columns=feature_names, index=time_index)
+            fis_norm = fis/fis_count
+            return fis_norm
 
-        # format output
-        fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
-        return fis
+        else:
+            # normalise by number of estimators and number of intervals
+            fis = fis / n_estimators / n_intervals
+            # format output
+            fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+            return fis
+
