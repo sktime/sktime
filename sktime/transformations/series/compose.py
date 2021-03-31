@@ -1,4 +1,10 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+__author__ = ["Martin Walter"]
+__all__ = ["OptionalPassthrough"]
+
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
@@ -7,10 +13,10 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 
 class OptionalPassthrough(_SeriesToSeriesTransformer):
-    """A transformer to tune the implicite hyperparameter whether to use a
+    """A transformer to tune the implicit hyperparameter whether or not to use a
     particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
-    or not.This is achived by having the additional hyperparameter
-    \"passthrough\" which can be added to a grid then (see example).
+    or not. This is achived by having the additional hyperparameter
+    "passthrough" which can be added to a grid then (see example).
 
     Parameters
     ----------
@@ -20,7 +26,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         This arg decides whether to apply the given transformer or to just
         passthrough the data (identity transformation)
 
-    Examples
+    Example
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -72,8 +78,8 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         super(OptionalPassthrough, self).__init__()
 
     def fit(self, Z, X=None):
-        self.transformer_ = clone(self.transformer)
         if not self.passthrough:
+            self.transformer_ = clone(self.transformer)
             self.transformer_.fit(Z, X)
         self._is_fitted = True
         return self
@@ -90,5 +96,5 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         if not self.passthrough:
-            z = self.transformer_.inverse_transform(Z, X=None)
+            z = self.transformer_.inverse_transform(z, X=None)
         return z
