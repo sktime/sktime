@@ -10,6 +10,7 @@ __all__ = [
     "_make_series",
     "_get_expected_index_for_update_predict",
     "make_forecasting_problem",
+    "generate_time_series",
 ]
 
 import numpy as np
@@ -100,6 +101,16 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     fh = check_fh(fh)
     expected = fh.to_absolute(cutoff).to_pandas()
     y_pred_index.equals(expected)
+
+
+def generate_time_series(n_timepoints=75, positive=True, non_zero_index=False):
+    a = np.random.normal(size=n_timepoints)
+    if positive:
+        a -= np.min(a) - 1
+    index = np.arange(n_timepoints)
+    if non_zero_index:
+        index += 30
+    return pd.Series(a, index=pd.Int64Index(index))
 
 
 def _make_fh(cutoff, steps, fh_type, is_relative):
