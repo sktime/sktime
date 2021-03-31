@@ -10,7 +10,6 @@ __all__ = [
     "smape_loss",
     "mape_loss",
     "make_forecasting_scorer",
-    "evaluate",
 ]
 
 from sktime.performance_metrics.forecasting._classes import MASE
