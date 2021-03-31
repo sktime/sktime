@@ -12,6 +12,7 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.transformations.base import BaseTransformer
 
 from sktime.transformations.base import Series
+import logging
 
 
 class _ComplexToSeriesTransformer(BaseTransformer):
@@ -42,6 +43,13 @@ class DollarBars:
         self._fit_result = dollar_bars
 
         return self
+
+    def transform(self):
+        logging.warning("testing")
+        # raise NotImplementedError
+
+    def update(self):
+        raise NotImplementedError
 
 
 class CUSUM(_SeriesToSeriesTransformer):
@@ -254,19 +262,37 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
             1. name of step (string),
             2. algorithm (object),
             3. input (dictionary) key value paris for fit() method of algorithm
+    interface: sting
+        `simple`(default) or `advanced`.
+            If `simple` `fit` method of the object is called.
+            If `advanced` name of method can be specified like this:
+            (`name of step`, `algorithm`, `input`), where input:
+        input_dict = [
+            {
+                function: name of function to be called (fit, transform, predict ...),
+                arguments: key value pairs(value is name of step) ,
+            },
+            {
+                function: name of function to be called,
+                arguments: key value pairs(value is name of step),
+            },
+            ......
+        ]
+
     """
 
-    def __init__(self, steps):
+    def __init__(self, steps, interface="simple"):
         self._steps = steps
         self._results_dict = {}
+        self._interface = interface
 
     def _iter(self):
-        for name, alg, inputs in self._steps:
-            yield name, alg, inputs
+        for name, alg, arguments in self._steps:
+            yield name, alg, arguments
 
-    def _check_inputs(self, inputs):
+    def _check_arguments(self, arguments):
         """
-        Checks inputs for consistency.
+        Checks arguments for consistency.
 
         Replace key word 'original' with X
 
@@ -274,25 +300,37 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
 
         Parameters
         ----------
-        inputs : dictionary
+        arguments : dictionary
             key-value for fit() method of algorithm
         """
-
-        for key, value in inputs.items():
+        if arguments is None:
+            return arguments
+        for key, value in arguments.items():
             if value == "original":
-                inputs[key] = self._X
+                arguments[key] = self._X
 
             if value in self._results_dict:
-                inputs[key] = self._results_dict[value]._fit_result
+                arguments[key] = self._results_dict[value]._fit_result
 
-        return inputs
+        return arguments
 
     def fit(self, X):
         self._X = X
-        for name, alg, inputs in self._iter():
-            inputs = self._check_inputs(inputs)
-            self._results_dict[name] = alg.fit(**inputs)
-            # print(f"{name} fitted")
+        for name, alg, arguments in self._iter():
+            if self._interface == "simple":
+                arguments = self._check_arguments(arguments)
+                self._results_dict[name] = alg.fit(**arguments)
+                # print(f"{name} fitted")
+            if self._interface == "advanced":
+                for arg in arguments:
+                    func_name = arg["function"]
+                    arguments = self._check_arguments(arg["arguments"])
+                    # execute function
+                    if arguments is not None:
+                        self._results_dict[name] = getattr(alg, func_name)(**arguments)
+                    else:
+                        self._results_dict[name] = getattr(alg, func_name)()
+
         return self
 
 
@@ -352,3 +390,66 @@ if __name__ == "__main__":
         ]
     )
     pipe.fit(X="sktime/pipeline/curated_tick_data.csv")
+
+    pipeAdvanced = OnlineUnsupervisedPipeline(
+        steps=[
+            (
+                "dollar_bars",
+                DollarBars(),
+                [
+                    {"function": "fit", "arguments": {"X": "original"}},
+                    {"function": "transform", "arguments": None},
+                ],
+            )
+            # ("cusum", CUSUM(price_col="close"), {"input_series": "dollar_bars"}),
+            # (
+            #     "daily_vol",
+            #     DailyVol(price_col="close", lookback=5),
+            #     {"input_series": "dollar_bars"},
+            # ),
+            # (
+            #     "triple_barrier_events",
+            #     TrippleBarrierEvents(price_col="close", num_days=5),
+            #     {
+            #         "prices": "dollar_bars",
+            #         "change_points": "cusum",
+            #         "daily_vol": "daily_vol",
+            #     },
+            # ),
+            # (
+            #     "labels",
+            #     TrippleBarrierLabels(price_col="close"),
+            #     {
+            #         "triple_barrier_events": "triple_barrier_events",
+            #         "prices": "dollar_bars",
+            #     },
+            # ),
+            # (
+            #     "build_dataset",
+            #     BuildDataset(price_col="close", labels_col="bin", lookback=20),
+            #     {"input_dataset": "dollar_bars", "labels": "labels"},
+            # ),
+            # (
+            #     "estimator",
+            #     Estimator(
+            #         estimator=BaggingClassifier(
+            #             base_estimator=DecisionTreeClassifier(
+            #                 max_depth=5, random_state=1
+            #             )
+            #         ),
+            #         param_grid={
+            #             "n_estimators": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 25]
+            #         },
+            #         samples_col_name="t1",
+            #         labels_col_name="bin",
+            #     ),
+            #     {
+            #         "X": "build_dataset",
+            #         "y": "labels",
+            #         "samples": "triple_barrier_events",
+            #     },
+            # ),
+        ],
+        interface="advanced",
+    )
+    pipeAdvanced.fit(X="sktime/pipeline/curated_tick_data.csv")
