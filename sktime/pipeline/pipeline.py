@@ -8,6 +8,25 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
+
+from sktime.transformations.base import Series
+
+
+class _ComplexToSeriesTransformer(BaseTransformer):
+    """Transformer base class for series to series transforms"""
+
+    def transform(self, Z: Series, X=None) -> Series:
+        raise NotImplementedError("abstract method")
+
+
+class _ComplexToTabular(BaseTransformer):
+    """Transformer base class for series to series transforms"""
+
+    def transform(self, Z: Series, X=None) -> Series:
+        raise NotImplementedError("abstract method")
+
 
 class DollarBars:
     def fit(self, X):
@@ -25,7 +44,7 @@ class DollarBars:
         return self
 
 
-class CUSUM:
+class CUSUM(_SeriesToSeriesTransformer):
     def __init__(self, price_col, threshold=-0.1):
         """
         Paramters
@@ -43,8 +62,14 @@ class CUSUM:
         self._fit_result = cusum_events
         return self
 
+    def transform(self):
+        raise NotImplementedError
 
-class DailyVol:
+    def update(self):
+        raise NotImplementedError
+
+
+class DailyVol(_SeriesToSeriesTransformer):
     def __init__(self, price_col, lookback):
         self._lookback = lookback
         self._price_col = price_col
@@ -56,8 +81,14 @@ class DailyVol:
         self._fit_result = daily_vol
         return self
 
+    def transform(self):
+        raise NotImplementedError
 
-class TrippleBarrierEvents:
+    def update(self):
+        raise NotImplementedError
+
+
+class TrippleBarrierEvents(_ComplexToSeriesTransformer):
     def __init__(
         self,
         price_col,
@@ -98,8 +129,14 @@ class TrippleBarrierEvents:
 
         return self
 
+    def transform(self):
+        raise NotImplementedError
 
-class TrippleBarrierLabels:
+    def update(self):
+        raise NotImplementedError
+
+
+class TrippleBarrierLabels(_ComplexToSeriesTransformer):
     def __init__(self, price_col):
         self._price_col = price_col
 
@@ -113,8 +150,14 @@ class TrippleBarrierLabels:
 
         return self
 
+    def transform(self):
+        raise NotImplementedError
 
-class BuildDataset:
+    def update(self):
+        raise NotImplementedError
+
+
+class BuildDataset(_ComplexToTabular):
     def __init__(self, price_col, labels_col, lookback):
         self._lookback = lookback
         self._price_col = price_col
@@ -141,8 +184,14 @@ class BuildDataset:
 
         return self
 
+    def transform(self):
+        raise NotImplementedError
 
-class Estimator:
+    def update(self):
+        raise NotImplementedError
+
+
+class Estimator(BaseEstimator):
     def __init__(
         self,
         estimator,
@@ -188,6 +237,12 @@ class Estimator:
         self._fit_result = trained_estimator
 
         return self
+
+    def predict(self):
+        raise NotImplementedError
+
+    def update(self):
+        raise NotImplementedError
 
 
 class OnlineUnsupervisedPipeline(BaseEstimator):
