@@ -36,6 +36,7 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def __init__(self, smoothing=DEFAULT_SMOOTHING):
         # hyperparameter
         self.smoothing = smoothing
+        self.f = None
         super(Croston, self).__init__()
 
     def fit(self, y, X=None, fh=None):
@@ -95,7 +96,6 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # Predicting future forecasts:
         y_pred = np.full(len_fh, f[-1])
-        self.f = np.append(self.f, y_pred)
 
         index = self.fh.to_absolute(self._cutoff)
         return pd.Series(y_pred, index=index)
