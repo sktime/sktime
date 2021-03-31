@@ -31,32 +31,31 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.compose import OptionalPassthrough
-    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.model_selection import (
         ForecastingGridSearchCV,
         SlidingWindowSplitter)
+    >>> from sklearn.preprocessing import StandardScaler
 
     >>> # create pipeline
     >>> pipe = TransformedTargetForecaster(steps=[
-        ("boxcox", OptionalPassthrough(BoxCoxTransformer())),
-        ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
-        ("forecaster", NaiveForecaster())
-        ]
-    )
+            ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
+            ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
+            ("forecaster", NaiveForecaster())])
 
     >>> # putting it all together in a grid search
     >>> cv = SlidingWindowSplitter(
-        initial_window=60, window_length=24,
-        start_with_window=True,
-        step_length=24)
+            initial_window=60,
+            window_length=24,
+            start_with_window=True,
+            step_length=24)
     >>> param_grid = {
-        "boxcox__transformer__method": ["pearsonr", "mle"],
-        "boxcox__passthrough" : [True, False],
-        "deseasonalizer__passthrough" : [True, False],
-        'forecaster__strategy': ["drift", "mean", "last"],
-    }
+            "deseasonalizer__passthrough" : [True, False],
+            "scaler__transformer__transformer__with_mean": [True, False],
+            "scaler__passthrough" : [True, False],
+            'forecaster__strategy': ["drift", "mean", "last"]}
     >>> gscv = ForecastingGridSearchCV(
         forecaster=pipe,
         param_grid=param_grid,
