@@ -28,6 +28,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     Example
     ----------
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.compose import OptionalPassthrough
     >>> from sktime.transformations.series.detrend import Deseasonalizer
@@ -49,7 +50,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     ...     initial_window=60,
     ...     window_length=24,
     ...     start_with_window=True,
-    ...     step_length=24)
+    ...     step_length=48)
     >>> param_grid = {
     ...     "deseasonalizer__passthrough" : [True, False],
     ...     "scaler__transformer__transformer__with_mean": [True, False],
@@ -60,6 +61,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     ...     param_grid=param_grid,
     ...     cv=cv,
     ...     n_jobs=-1)
+    >>> gscv_fitted = gscv.fit(load_airline())
     """
 
     _required_parameters = ["transformer"]
