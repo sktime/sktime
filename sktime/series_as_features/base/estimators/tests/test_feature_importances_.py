@@ -7,7 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
+from sktime.classification.compose._ensemble import ComposableTimeSeriesForestClassifier
 from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )
@@ -37,7 +37,7 @@ def test_feature_importances_single_feature_interval_and_estimator():
         ("clf", DecisionTreeClassifier()),
     ]
     base_estimator = Pipeline(steps)
-    clf1 = TimeSeriesForestClassifier(
+    clf1 = ComposableTimeSeriesForestClassifier(
         estimator=base_estimator, random_state=random_state, n_estimators=1
     )
     clf1.fit(X_train, y_train)
@@ -94,7 +94,7 @@ def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimator
         ("clf", DecisionTreeClassifier()),
     ]
     base_estimator = Pipeline(steps)
-    clf1 = TimeSeriesForestClassifier(
+    clf1 = ComposableTimeSeriesForestClassifier(
         estimator=base_estimator, random_state=random_state, n_estimators=n_estimators
     )
     clf1.fit(X_train, y_train)

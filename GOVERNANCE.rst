@@ -6,7 +6,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and anyone who has experienced discrimination in the past. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and anyone who has experienced discrimination in the past. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -36,7 +36,7 @@ is expected to show respect and courtesy to other community members at
 all times.
 
 We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
+Conduct <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
 
 .. _roles:
 
@@ -77,11 +77,11 @@ Contributors
 Contributors are community members who have contributed in concrete ways
 to the project. Anyone can become a contributor, and contributions can
 take many forms – not only code – as detailed in the `contributing
-guide <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst>`__.
+guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__.
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__.
+All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 .. _algorithm-maintainers:
 
@@ -123,7 +123,7 @@ When the maintainer resigns, they can appoint another contributor as the
 new maintainer. No vote is required.
 
 Maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/master/CODEOWNERS>`__ file.
+.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
 
 .. _core-developers:
 
@@ -167,24 +167,27 @@ New core developers can be nominated by any current core developer. Once
 they have been nominated, there will be a vote by the current core
 developers.
 
-Voting on new core developers is one of the few activities that takes
-place on the project’s private chat. While it is expected that most
-votes will be unanimous, a 2/3 majority of the cast votes is enough. The
-vote needs to be open for at least five working days.
+Voting on appointments is one of the few activities that takes
+place on the project’s private communication channels. The vote will be
+anonymous.
+
+While it is expected that most votes will be unanimous, a 2/3 majority of
+the cast votes is enough. The vote needs to be open for five days excluding
+weekends.
 
 Core developers that have not contributed to the project (commits or
-GitHub comments) in the past 12 months will be asked if they want to
-become *emeritus core developers* and give up their rights and
-responsibilities. When they become active again, emeritus developers can
-retake their role without having to be appointed.
+GitHub comments) in the past 12 months will automatically become *inactive*
+and give up their rights and responsibilities. When they become active
+again, they can retake their role without having to be appointed.
 
 .. _coc-committee-members:
 
 CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
+CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
-`CoC <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
+`CoC <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -203,22 +206,26 @@ Appointment
 ^^^^^^^^^^^
 
 Membership of the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which cannot
-take more than a week and then a vote by the core developers which will
-stay open for a week. CoC membership votes are subject to:
+all core developers. A nomination will result in discussion which will stay
+open for 5 days excluding weekends and then a vote by the core
+developers which will stay open for 5 days excluding weekends. CoC committee
+membership votes are subject to:
 
 * a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CoC members.
+* a simple majority approval of all the current CoC committee members.
 
-To avoid deadlocks if there is an even number of CoC members, one of
-them will have a tie breaking privilege.
+The vote will take place in private communication channels and will be
+anonymous.
+
+To avoid deadlocks if there is an even number of CoC committee members, one
+of them will have a tie breaking privilege.
 
 .. _cc-members:
 
 CC members
 ~~~~~~~~~~
 
-CC members are core developers with additional rights and
+CC (community council) members are core developers with additional rights and
 responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
@@ -250,12 +257,15 @@ Appointment
 ^^^^^^^^^^^
 
 Membership of the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which cannot
-take more than a week and then a vote by the core developers which will
-stay open for a week. CC membership votes are subject to:
+all core developers. A nomination will result in discussion which stay open
+for 5 days excluding weekends and then a vote by core developers which will
+stay open for 5 days excluding weekends. CC membership votes are subject to:
 
 * a 2/3 majority of all cast votes, and
 * a simple majority approval of all the current CC members.
+
+The vote will take place in private communication channels and will be
+anonymous.
 
 To avoid deadlocks if there is an even number of CC members, one of them
 will have a tie breaking privilege.
@@ -278,9 +288,11 @@ Decision making
 ---------------
 
 The purpose of this section is to formalize the decision-making process
-used by the sktime project. We clarify \* what types of changes we make
-decision on, \* how decisions are made, and \* who participates in the
-decision making.
+used by the sktime project. We clarify:
+
+* what types of changes we make decision on,
+* how decisions are made, and
+* who participates in the decision making.
 
 sktime’s decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
@@ -344,22 +356,24 @@ Stage 2: voting
 When no consensus can be found, any core developer can call for a vote
 at any point during the discussion.
 
--  The vote will conclude 10 working days from the call for the vote.
--  Votes are public and voluntary. Abstentions are allowed. You can
+-  The vote will conclude 5 days excluding weekends from the call for the vote.
+-  Votes are voluntary. Abstentions are allowed. You can
    abstain by simply not casting a vote.
 -  All votes are a binary vote: for or against accepting the proposed
    changes.
 -  Votes are casts as comments: +1 (approval) or -1 (rejection).
 
-For all types of changes, except appointments, the winning condition is
-a 2/3 majority of the votes casts by core developers including CC
-members. If the proposed change cannot gather a 2/3 majority of the
-votes cast by core developers, the decision is escalated to the :ref:`stage-3`.
+For all types of changes, except appointments, votes take place on the
+related public issue or pull request. The winning condition is a 2/3
+majority of the votes casts by core developers including CC members. If the
+proposed change cannot gather a 2/3 majority of the votes cast by core
+developers, the decision is escalated to the :ref:`stage-3`.
 
-For appointments, winning conditions vary depending on the role as
-described in :ref:`roles` above. Appointment
-decisions are not escalated to the CC. If a nomination cannot gather
-sufficient support, the nomination is rejected.
+For appointments, votes take place in private communication channels
+and are anonymous. The winning conditions vary depending on the role as
+described in :ref:`roles` above. Appointment decisions are not escalated to
+the CC. If a nomination cannot gather sufficient support, the nomination is
+rejected.
 
 .. _stage-3:
 
@@ -453,15 +467,15 @@ of contributions and are committed to recognising each of them fairly.
 We follow the `all-contributors <https://allcontributors.org>`__
 specification to recognise all contributors, including those that don’t
 contribute code. Please see `our list of all
-contributors <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__.
+contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 If you think, we’ve missed anything, please let us know or open a PR
 with the appropriate changes to
-`sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc>`__.
+`sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/main/.all-contributorsrc>`__.
 
 Note that contributors do not own their contributions. sktime is an
 open-source project, and all code is contributed under `our open-source
-license <https://github.com/alan-turing-institute/sktime/blob/master/LICENSE>`__.
+license <https://github.com/alan-turing-institute/sktime/blob/main/LICENSE>`__.
 All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 

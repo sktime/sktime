@@ -414,7 +414,11 @@ class _SktimeForecaster(BaseForecaster):
         if return_pred_int:
             raise NotImplementedError()
         y = check_y(y)
-        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(fh=self.fh)
+        cv = (
+            check_cv(cv)
+            if cv is not None
+            else SlidingWindowSplitter(fh=self.fh, start_with_window=False)
+        )
         return self._predict_moving_cutoff(
             y,
             cv,
@@ -618,7 +622,9 @@ class _BaseWindowForecaster(_SktimeForecaster):
             cv = check_cv(cv)
         else:
             cv = SlidingWindowSplitter(
-                self.fh.to_relative(self.cutoff), window_length=self.window_length_
+                self.fh.to_relative(self.cutoff),
+                window_length=self.window_length_,
+                start_with_window=False,
             )
         return self._predict_moving_cutoff(
             y,

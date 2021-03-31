@@ -15,13 +15,13 @@ from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -47,7 +47,7 @@ from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
-from sktime.regression.compose import TimeSeriesForestRegressor
+from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -74,6 +74,8 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
+from sktime.forecasting.compose._multiplexer import MultiplexForecaster
+from sktime.transformations.series.outlier_detection import HampelFilter
 
 
 # The following estimators currently do not pass all unit tests
@@ -113,7 +115,7 @@ TRANSFORMERS = [
     ),
 ]
 REGRESSOR = LinearRegression()
-TIME_SERIES_CLASSIFIER = TimeSeriesForest(n_estimators=3)
+TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
@@ -180,6 +182,14 @@ ESTIMATOR_TEST_PARAMS = {
         "max_q": 2,
         "seasonal": False,
     },
+    MultiplexForecaster: {
+        "forecasters": [
+            ("Naive_mean", NaiveForecaster(strategy="mean")),
+            ("Naive_last", NaiveForecaster(strategy="last")),
+            ("Naive_drift", NaiveForecaster(strategy="drift")),
+        ],
+        "selected_forecaster": "Naive_mean",
+    },
     ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
     ShapeletTransform: {
@@ -203,9 +213,9 @@ ESTIMATOR_TEST_PARAMS = {
         "max_ensemble_size": 5,
         "randomly_selected_params": 20,
     },
-    TimeSeriesForest: {"n_estimators": 3},
-    TimeSeriesForestClassifier: {"n_estimators": 3},
-    TimeSeriesForestRegressor: {"n_estimators": 3},
+    TSFC: {"n_estimators": 3},
+    ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
+    ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
     CanonicalIntervalForest: {"n_estimators": 3},
     DrCIF: {"n_estimators": 3},
@@ -237,6 +247,7 @@ ESTIMATOR_TEST_PARAMS = {
     PartialAutoCorrelationTransformer: {"n_lags": 1},
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
+    HampelFilter: {"window_length": 3},
 }
 
 # These methods should not change the state of the estimator, that is, they should
@@ -257,6 +268,7 @@ VALID_ESTIMATOR_TAGS = (
     "fit-in-transform",  # fitted in transform or non-fittable
     "univariate-only",
     "transform-returns-same-time-index",
+    "handles-missing-data",
 )
 
 # The following gives a list of valid estimator base classes.

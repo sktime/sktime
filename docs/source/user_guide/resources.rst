@@ -1,4 +1,4 @@
-.. _resources:
+.. _user_guide_resources:
 
 Extra Resources
 ===============

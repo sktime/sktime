@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.datasets import load_gunpoint
 
 # expected y_proba
@@ -37,7 +37,7 @@ def test_y_proba_on_gunpoint():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.1, random_state=42
     )
-    estimator = TimeSeriesForest(random_state=42, n_estimators=20)
+    estimator = TimeSeriesForestClassifier(random_state=42, n_estimators=20)
     estimator.fit(X_train, y_train)
     actual = estimator.predict_proba(X_test)
     np.testing.assert_array_equal(actual, expected)

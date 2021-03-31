@@ -14,34 +14,36 @@ def is_int(x):
 
 
 def check_n_jobs(n_jobs):
-    """Check n_jobs parameter according to scikit-learn convention.
+    """Check `n_jobs` parameter according to the scikit-learn convention.
 
     Parameters
     ----------
     n_jobs : int, positive or -1
+        The number of jobs for parallelization.
 
     Returns
     -------
     n_jobs : int
+        Checked number of jobs.
     """
     # scikit-learn convention
     # https://scikit-learn.org/stable/glossary.html#term-n-jobs
     if n_jobs is None:
         return 1
-    if not is_int(n_jobs):
+    elif not is_int(n_jobs):
         raise ValueError(f"`n_jobs` must be None or an integer, but found: {n_jobs}")
-    if n_jobs < 0:
+    elif n_jobs < 0:
         return os.cpu_count() - n_jobs + 1
     else:
         return n_jobs
 
 
-def check_window_length(window_length, name="`window_length`"):
+def check_window_length(window_length, name="window_length"):
     """Validate window length"""
     if window_length is not None:
         if not is_int(window_length) or window_length < 1:
             raise ValueError(
-                f"{name} must be a positive integer >= 1 or None, "
+                f"`{name}` must be a positive integer >= 1 or None, "
                 f"but found: {window_length}"
             )
     return window_length

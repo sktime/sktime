@@ -15,6 +15,7 @@ sktime/transformers/panel/dictionary_based/ @patrickzib
 sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
 sktime/transformations/panel/rocket @angus924
 sktime/transformations/series/impute.py @aiwalter
+sktime/transformations/series/outlier_detection.py @aiwalter
 
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
@@ -23,6 +24,7 @@ sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
 sktime/forecasting/model_selection/_split @koralturkk
+sktime/forecasting/compose/_multiplexer.py @koralturkk
 
 sktime/forecasting/online_learning/ @magittan
 
