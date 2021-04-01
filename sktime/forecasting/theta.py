@@ -94,13 +94,17 @@ class ThetaForecaster(ExponentialSmoothing):
 
         self.sp = sp
         self.deseasonalize = deseasonalize
-
+        self.initialization_method_ = "known" if initial_level else "estimated"
         self.deseasonalizer_ = None
         self.trend_ = None
         self.initial_level_ = None
         self.drift_ = None
         self.se_ = None
-        super(ThetaForecaster, self).__init__(initial_level=initial_level, sp=sp)
+        super(ThetaForecaster, self).__init__(
+            initial_level=initial_level,
+            initialization_method=self.initialization_method_,
+            sp=sp,
+        )
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.

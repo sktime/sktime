@@ -43,3 +43,15 @@ def test_pred_errors_against_y_test(fh):
     for ints in intervals:
         assert np.all(y_test > ints["lower"])
         assert np.all(y_test < ints["upper"])
+
+
+def test_forecaster_with_initial_level():
+    y = np.log1p(load_airline())
+    y_train, y_test = temporal_train_test_split(y)
+    fh = np.arange(len(y_test)) + 1
+
+    f = ThetaForecaster(initial_level=0.1, sp=12)
+    f.fit(y_train)
+    y_pred = f.predict(fh=fh)
+
+    np.testing.assert_allclose(y_pred, y_test, rtol=0.05)
