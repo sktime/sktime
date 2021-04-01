@@ -31,7 +31,7 @@ class EnsembleForecaster(
 
     def __init__(self, forecasters, n_jobs=None, agg="mean"):
         super(EnsembleForecaster, self).__init__(
-            forecasters=forecasters, n_jobs=n_jobs, agg=agg
+            forecasters=forecasters, n_jobs=n_jobs, agg
         )
 
     def fit(self, y, X=None, fh=None):
@@ -91,14 +91,14 @@ class EnsembleForecaster(
         """
         if return_pred_int:
             raise NotImplementedError()
-        if agg not in ("mean", "median", "min", "max"):
+        if self.agg not in ("mean", "median", "min", "max"):
             raise ValueError(
                 "Invalid aggregate passed. Valid choices are: 'mean', 'median', 'min', 'max'"
             )
-        if agg == "median":
+        if self.agg == "median":
             return pd.concat(self._predict_forecasters(fh, X), axis=1).median(axis=1)
-        if agg == "min":
+        if self.agg == "min":
             return pd.concat(self._predict_forecasters(fh, X), axis=1).min(axis=1)
-        if agg == "max":
+        if self.agg == "max":
             return pd.concat(self._predict_forecasters(fh, X), axis=1).max(axis=1)
         return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
