@@ -7,7 +7,7 @@ repos:
     # args: [--line-length 79]
 
 - repo: https://github.com/pycqa/flake8
-  rev: 3.8.3
+  rev: 3.9.0
   hooks:
   - id: flake8
     exclude: docs/conf.py
