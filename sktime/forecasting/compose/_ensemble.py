@@ -72,8 +72,7 @@ class EnsembleForecaster(
             forecaster.update(y, X, update_params=update_params)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA,\
-        aggregate='mean'):
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, agg='mean'):
         """reduce the prediction
 
         Parameters
@@ -92,11 +91,12 @@ class EnsembleForecaster(
             raise NotImplementedError()
         if aggregate not in ('mean', 'median', 'min', 'max'):
             raise ValueError(
-                "Invalid aggregate passed. Valid choices are: 'mean', 'median', 'min', 'max' ")
-        if aggregate == 'median':
+                "Invalid aggregate passed. Valid choices are: 'mean', 'median', 'min', 'max'"
+                            )
+        if agg == 'median':
             return pd.concat(self._predict_forecasters(fh, X), axis=1).median(axis=1)
-        elif aggregate == 'min':
+        elif agg == 'min':
             return pd.concat(self._predict_forecasters(fh, X), axis=1).min(axis=1)
-        elif aggregate== 'max':
+        elif agg== 'max':
             return pd.concat(self._predict_forecasters(fh, X), axis=1).max(axis=1)
         return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
