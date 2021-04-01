@@ -28,7 +28,7 @@ class EnsembleForecaster(
 
     _required_parameters = ["forecasters"]
 
-    def __init__(self, forecasters, n_jobs=None):
+    def __init__(self, forecasters, n_jobs=None, agg="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
     def fit(self, y, X=None, fh=None):
@@ -72,11 +72,7 @@ class EnsembleForecaster(
             forecaster.update(y, X, update_params=update_params)
         return self
 
-    def _predict(
-        self, fh, X=None,
-return_pred_int=False, alpha=DEFAULT_ALPHA,
-agg="mean"
-    ):
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """reduce the prediction
 
         Parameters
