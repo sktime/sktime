@@ -47,6 +47,16 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(self, strategy="last", window_length=None, sp=1):
