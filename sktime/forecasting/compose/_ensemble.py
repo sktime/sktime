@@ -26,13 +26,18 @@ class EnsembleForecaster(
         -1 means using all processors.
     agg : {'mean', 'median', 'min', 'max'} (default='mean')
     """
-
+    import textwrap
+    wrapper = textwrap.TextWrapper(width=50)
     _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters, n_jobs=None, agg="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.agg = agg
-
+        self.err_msg = textwrap.dedent(
+            """
+            Invalid aggregate passed. Valid choices are: 'mean', 'median', 'min', 'max'
+            """
+            )
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -91,9 +96,7 @@ class EnsembleForecaster(
         if return_pred_int:
             raise NotImplementedError()
         if self.agg not in ("mean", "median", "min", "max"):
-            raise ValueError(
-                "Invalid aggregate passed. Valid choices are: 'mean', 'median', 'min', 'max'"
-            )
+            raise ValueError(self.err_msg)
         if self.agg == "median":
             return pd.concat(self._predict_forecasters(fh, X), axis=1).median(axis=1)
         if self.agg == "min":
