@@ -93,9 +93,7 @@ class Prophet(_ProphetAdapter):
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=int(len(y) / 12),
     ...     add_country_holidays={'country_name': 'Germany'},
-    ...     yearly_seasonality=True,
-    ...     weekly_seasonality=True,
-    ...     daily_seasonality=True)
+    ...     yearly_seasonality=True)
     >>> forecaster.fit(y)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
