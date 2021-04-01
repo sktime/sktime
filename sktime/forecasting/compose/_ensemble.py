@@ -72,7 +72,13 @@ class EnsembleForecaster(
             forecaster.update(y, X, update_params=update_params)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA\
+        aggregate='mean'):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
+        if aggregate == 'median':
+            return pd.concat(self._predict_forecasters(fh, X), axis=1).median(axis=1)
+        elif aggregate == 'mode':
+            return pd.concat(self._predict_forecasters(fh, X), axis=1).mode(axis=1)
+        else:
+            return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
