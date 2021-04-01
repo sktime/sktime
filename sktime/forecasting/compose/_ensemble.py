@@ -72,7 +72,8 @@ class EnsembleForecaster(
             forecaster.update(y, X, update_params=update_params)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, agg="mean"):
+    def _predict(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, agg="mean"):
         """reduce the prediction
 
         Parameters
