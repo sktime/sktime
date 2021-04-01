@@ -73,7 +73,9 @@ class EnsembleForecaster(
         return self
 
     def _predict(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, agg="mean"):
+        self, fh, X=None,
+return_pred_int=False, alpha=DEFAULT_ALPHA, agg="mean"
+    ):
         """reduce the prediction
 
         Parameters
