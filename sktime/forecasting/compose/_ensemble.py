@@ -39,7 +39,7 @@ class EnsembleForecaster(
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
@@ -74,6 +74,20 @@ class EnsembleForecaster(
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA,\
         aggregate='mean'):
+        """reduce the prediction
+
+        Parameters
+        ----------
+        fh : int, list or np.array
+        X : pd.DataFrame, optional (default=None)
+        return_pred_int : boolean (default= False)
+        alpha : float (default= DEFAULT_ALPHA)
+        aggregate : {'mean', 'median', 'min', 'max'} (default='mean')
+
+        Returns
+        -------
+        reduction : concatenated dataframe of aggregate values
+        """
         if return_pred_int:
             raise NotImplementedError()
         if aggregate not in ('mean', 'median', 'min', 'max'):
@@ -85,3 +99,4 @@ class EnsembleForecaster(
             return pd.concat(self._predict_forecasters(fh, X), axis=1).min(axis=1)
         elif aggregate== 'max':
             return pd.concat(self._predict_forecasters(fh, X), axis=1).max(axis=1)
+        return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
