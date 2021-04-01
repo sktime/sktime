@@ -31,8 +31,7 @@ class EnsembleForecaster(
 
     def __init__(self, forecasters, n_jobs=None, agg="mean"):
         super(EnsembleForecaster, self).__init__(
-            forecasters=forecasters, n_jobs=n_jobs, agg
-        )
+            forecasters=forecasters, n_jobs=n_jobs, agg)
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
