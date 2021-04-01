@@ -97,6 +97,6 @@ class EnsembleForecaster(
             return pd.concat(self._predict_forecasters(fh, X), axis=1).median(axis=1)
         if agg == "min":
             return pd.concat(self._predict_forecasters(fh, X), axis=1).min(axis=1)
-        if agg== "max":
+        if agg == "max":
             return pd.concat(self._predict_forecasters(fh, X), axis=1).max(axis=1)
         return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
