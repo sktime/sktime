@@ -24,12 +24,15 @@ class EnsembleForecaster(
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+    agg : {'mean', 'median', 'min', 'max'} (default='mean')
     """
 
     _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters, n_jobs=None, agg="mean"):
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs, agg=agg)
+        super(EnsembleForecaster, self).__init__(
+            forecasters=forecasters, n_jobs=n_jobs, agg=agg
+        )
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -81,7 +84,6 @@ class EnsembleForecaster(
         X : pd.DataFrame, optional (default=None)
         return_pred_int : boolean (default= False)
         alpha : float (default= DEFAULT_ALPHA)
-        aggregate : {'mean', 'median', 'min', 'max'} (default='mean')
 
         Returns
         -------
