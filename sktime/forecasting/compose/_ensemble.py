@@ -91,7 +91,7 @@ class EnsembleForecaster(
         """
         if return_pred_int:
             raise NotImplementedError()
-        if aggregate not in ("mean", "median", "min", "max"):
+        if agg not in ("mean", "median", "min", "max"):
             raise ValueError(
                 "Invalid aggregate passed. Valid choices are: 'mean', 'median', 'min', 'max'"
             )
