@@ -226,3 +226,26 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                     # linear extrapolation
                     y_pred = last_window[-1] + (fh_idx + 1) * slope
                     return y_pred
+
+    def _predict_intervals(self, fh, alpha=None):
+        data = np.array(self.data)
+        T = len(data)  # T of the equation
+        K = 1
+
+        actual = data[0: T - 1]
+        predicted = data[1: T]
+        errors = (actual - predicted) ** 2
+        print(np.sum(errors))
+        sigma_hat = np.sqrt(np.sum(errors) / (T - K))
+        print(sigma_hat)
+        sigma_hat_h = sigma_hat*np.sqrt(fh)
+
+        predicted_val = data[T - 1]
+
+        # find C from alpha using Gaussian equation
+        C = 1.28  # for 80%
+
+        lower_bound = predicted_val - (C * sigma_hat_h)
+        upper_bound = predicted_val + (C * sigma_hat_h)
+
+        return lower_bound, upper_bound
