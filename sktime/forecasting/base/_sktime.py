@@ -662,7 +662,7 @@ class _BaseWindowForecaster(_SktimeForecaster):
             )
             predictions = y_ins.append(y_oos)
 
-        if return_pred_int:  # If predict interval requested then  it will return pridictions with intervals else only the predictions to not to make errors.
+        if return_pred_int:  # If predict interval requested then it will return pridictions with intervals else only the predictions to avoid errors.
             return predictions, intervals
         else:
             return predictions
