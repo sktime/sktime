@@ -638,19 +638,21 @@ class _BaseWindowForecaster(_SktimeForecaster):
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal predict"""
         if return_pred_int:
-            raise NotImplementedError()
+            # assuming alpha means the prediction coverage probability
+            intervals = self._predict_intervals(fh=fh, alpha=alpha)
 
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(
+            predictions = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
+            predictions = self._predict_in_sample(
+                fh.to_in_sample(self.cutoff), **kwargs)
 
         # both in-sample and out-of-sample values
         else:
@@ -658,7 +660,12 @@ class _BaseWindowForecaster(_SktimeForecaster):
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
-            return y_ins.append(y_oos)
+            predictions = y_ins.append(y_oos)
+
+        if return_pred_int:  # If predict interval requested then  it will return pridictions with intervals else only the predictions to not to make errors.
+            return predictions, intervals
+        else:
+            return predictions
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
