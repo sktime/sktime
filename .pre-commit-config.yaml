@@ -26,7 +26,7 @@ repos:
   - id: end-of-file-fixer
   - id: fix-encoding-pragma
   - id: requirements-txt-fixer
-  - id: trailing-whitespace # noqa
+  - id: trailing-whitespace
 
 - repo: https://github.com/mgedmin/check-manifest
   rev: "0.42"

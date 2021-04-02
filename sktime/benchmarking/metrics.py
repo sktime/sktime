@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 

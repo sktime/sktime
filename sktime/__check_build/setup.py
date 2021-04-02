@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 # License: BSD 3 clause
 

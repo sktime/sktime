@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import os
 from sklearn.metrics.scorer import accuracy_score
