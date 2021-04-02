@@ -89,7 +89,9 @@ def plot_series(*series, labels=None, markers=None):
         else:
             plot_func = sns.lineplot
 
-        plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
+        # changing the confidence Interval to a measure of the standard
+        # deviation of the distribution.
+        plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color, ci="sd")
 
     # combine data points for all series
     xs_flat = list(flatten(xs))
