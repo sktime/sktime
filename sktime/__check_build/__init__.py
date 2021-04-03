@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Module to give helpful messages to the user that did not
 compile sktime properly.
 """

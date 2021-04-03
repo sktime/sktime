@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble._forest import _generate_sample_indices, compute_sample_weight
