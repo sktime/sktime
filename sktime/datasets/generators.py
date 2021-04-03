@@ -57,15 +57,13 @@ class NoiseGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(
-        self, n_sample: Union[int, Tuple[int]] = 100
-    ) -> Union[Series, DataFrame]:
+    def sample(self, n_sample: Union[int, Tuple[int]]) -> Union[Series, DataFrame]:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int or tuple of int, default=100
+        n_sample : int or tuple of int
             Number of sample to generate.
 
         Returns
@@ -138,14 +136,14 @@ class ArmaGenerator(Generator):
             self.random_state = RandomState(random_state)
 
     def sample(
-        self, n_sample: Union[int, Tuple[int]] = 100, burnin: int = 0
+        self, n_sample: Union[int, Tuple[int]], burnin: int = 0
     ) -> Union[Series, DataFrame]:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int or tuple of int, default=100
+        n_sample : int or tuple of int
             Number of sample to generate.
         burnin : int, default=0
             Number of sample at the beginning to drop.
@@ -225,13 +223,13 @@ class LinearGenerator(Generator):
         self.intercept = intercept
         self.noise_generator = noise_generator
 
-    def sample(self, n_sample: int = 100) -> Series:
+    def sample(self, n_sample) -> Series:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int, default=100
+        n_sample : int
             Number of sample to generate.
 
         Returns
