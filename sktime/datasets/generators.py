@@ -22,7 +22,7 @@ class Generator(ABC):
     """
 
     @abstractmethod
-    def sample(self, n_sample: Union[int, Tuple[int]]) -> Series:
+    def sample(self, n_sample):
         """
         Sample from the generator.
         """
