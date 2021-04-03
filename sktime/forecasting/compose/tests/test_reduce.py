@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Lovkush Agarwal"]
+__author__ = ["Lovkush Agarwal", "luiszugasti"]
 __all__ = []
 
 import numpy as np
@@ -18,6 +18,7 @@ from sktime.transformations.panel.reduce import Tabularizer
 from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectRegressionForecaster
+from sktime.forecasting.compose._reduce import DirRecRegressionForecaster
 from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
@@ -104,11 +105,13 @@ def test_multioutput_direct_tabular(test_data):
 
 
 def test_factory_method_dirrec(test_data):
-    y, y_train, y_test, fh = test_data
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=1)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     regressor = LinearRegression()
-    f1 = ReducedForecaster(regressor, scitype="regressor", strategy="direct")
-    f2 = DirectRegressionForecaster(regressor)
+    f1 = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
+    f2 = DirRecRegressionForecaster(regressor)
 
     actual = f1.fit(y_train, fh=fh).predict(fh)
     expected = f2.fit(y_train, fh=fh).predict(fh)

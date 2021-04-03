@@ -496,7 +496,9 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         self._set_y_X(y_train)
         self._set_fh(fh)
-        if np.any(self.fh <= 0):
+        if np.any(
+            self.fh <= 0
+        ):  # Probably a fail due to comparing a period[*] to a numerical value.
             raise NotImplementedError("in-sample predictions are not implemented")
 
         self.step_length_ = check_step_length(self.step_length)
@@ -705,7 +707,7 @@ def _get_forecaster_class(scitype, strategy):
     scitype)
     and reduction strategy"""
 
-    allowed_strategies = ("direct", "recursive", "multioutput")
+    allowed_strategies = ("direct", "recursive", "multioutput", "dirrec")
     if strategy not in allowed_strategies:
         raise ValueError(
             f"Unknown strategy, please provide one of {allowed_strategies}."
@@ -717,11 +719,18 @@ def _get_forecaster_class(scitype, strategy):
             "for time series regresors."
         )
 
+    if scitype == "ts_regressor" and strategy == "dirrec":
+        raise NotImplementedError(
+            "The `dirrec` strategy is not yet implemented "
+            "for time series regressors."
+        )
+
     lookup_table = {
         "regressor": {
             "direct": DirectRegressionForecaster,
             "recursive": RecursiveRegressionForecaster,
             "multioutput": MultioutputRegressionForecaster,
+            "dirrec": DirRecRegressionForecaster,
         },
         "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
