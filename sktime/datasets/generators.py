@@ -11,7 +11,7 @@ import pandas as pd
 from statsmodels.tsa.arima_process import arma_generate_sample
 
 from numpy import ndarray
-from pandas import Series
+from pandas import Series, DataFrame
 
 __all__ = ["ArmaGenerator", "LinearGenerator", "NoiseGenerator"]
 
@@ -57,22 +57,32 @@ class NoiseGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self, n_sample: int = 100) -> Series:
+    def sample(
+        self, n_sample: Union[int, Tuple[int]] = 100
+    ) -> Union[Series, DataFrame]:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int, default=100
+        n_sample : int or tuple of int, default=100
             Number of sample to generate.
 
         Returns
         -------
-        Series
+        sample : Series or DataFrame
             A sample from a standard normal random process.
         """
 
-        return pd.Series(self.random_state.normal(size=n_sample))
+        if isinstance(n_sample, int):
+            return pd.Series(self.random_state.normal(size=n_sample))
+        elif isinstance(n_sample, tuple):
+            return pd.DataFrame(self.random_state.normal(size=n_sample))
+        else:
+            raise TypeError(
+                f"Unsupported type {type(n_sample).__name__}"
+                + " for n_sample, must be int or tuple of int"
+            )
 
 
 class ArmaGenerator(Generator):
@@ -127,13 +137,15 @@ class ArmaGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self, n_sample: int = 100, burnin: int = 0) -> Series:
+    def sample(
+        self, n_sample: Union[int, Tuple[int]] = 100, burnin: int = 0
+    ) -> Union[Series, DataFrame]:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int, default=100
+        n_sample : int or tuple of int, default=100
             Number of sample to generate.
         burnin : int, default=0
             Number of sample at the beginning to drop.
@@ -141,18 +153,34 @@ class ArmaGenerator(Generator):
 
         Returns
         -------
-        Series
+        sample : Series or DataFrame
             Sample from an ARMA process.
         """
-        return pd.Series(
-            arma_generate_sample(
-                self.arparams,
-                self.maparams,
-                n_sample,
-                distrvs=self.random_state.normal,
-                burnin=burnin,
+        if isinstance(n_sample, int):
+            return pd.Series(
+                arma_generate_sample(
+                    self.arparams,
+                    self.maparams,
+                    n_sample,
+                    distrvs=self.random_state.normal,
+                    burnin=burnin,
+                )
             )
-        )
+        elif isinstance(n_sample, tuple):
+            pd.DataFrame(
+                arma_generate_sample(
+                    self.arparams,
+                    self.maparams,
+                    n_sample,
+                    distrvs=self.random_state.normal,
+                    burnin=burnin,
+                )
+            )
+        else:
+            raise TypeError(
+                f"Unsupported type {type(n_sample).__name__}"
+                + " for n_sample, must be int or tuple of int"
+            )
 
 
 class LinearGenerator(Generator):
@@ -211,7 +239,9 @@ class LinearGenerator(Generator):
         Series
             A sample from a linear process.
         """
+
         signal = np.arange(n_sample) * self.slope + self.intercept
+
         if self.noise_generator is not None:
             noise = self.noise_generator.sample(n_sample)
             signal = signal + noise
