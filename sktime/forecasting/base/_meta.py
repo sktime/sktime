@@ -1,40 +1,37 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "MetaForecasterMixin",
-    "BaseHeterogenousEnsembleForecaster"
-]
+__all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
-from sktime.base import BaseHeterogenousMetaEstimator
+
+from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import is_forecaster
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._sktime import _SktimeForecaster
 
 
-class MetaForecasterMixin:
-    """Mixin class for all meta forecasters in sktime."""
-    _required_parameters = ["forecaster"]
-
-
-class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster,
-                                         BaseHeterogenousMetaEstimator):
+class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstimator):
     """Base class for heterogenous ensemble forecasters"""
+
     _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = n_jobs
-        super(BaseHeterogenousEnsembleForecaster, self).__init__()
+        super(_HeterogenousEnsembleForecaster, self).__init__()
 
     def _check_forecasters(self):
-        if self.forecasters is None or len(self.forecasters) == 0:
+        if (
+            self.forecasters is None
+            or len(self.forecasters) == 0
+            or not isinstance(self.forecasters, list)
+        ):
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
@@ -43,7 +40,7 @@ class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster,
         # defined by MetaEstimatorMixin
         self._check_names(names)
 
-        has_estimator = any(est not in (None, 'drop') for est in forecasters)
+        has_estimator = any(est not in (None, "drop") for est in forecasters)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
@@ -51,39 +48,38 @@ class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster,
             )
 
         for forecaster in forecasters:
-            if forecaster not in (None, 'drop') and not is_forecaster(
-                    forecaster):
+            if forecaster not in (None, "drop") and not isinstance(
+                forecaster, BaseForecaster
+            ):
                 raise ValueError(
-                    "The estimator {} should be a {}.".format(
-                        forecaster.__class__.__name__,
-                        is_forecaster.__name__[3:]
-                    )
+                    f"The estimator {forecaster.__class__.__name__} should be a "
+                    f"Forecaster."
                 )
         return names, forecasters
 
-    def _fit_forecasters(self, forecasters, y_train, fh=None, X_train=None):
+    def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel"""
 
-        def _fit_forecaster(forecaster, y_train, fh, X_train):
+        def _fit_forecaster(forecaster, y, X, fh):
             """Fit single forecaster"""
-            return forecaster.fit(y_train, fh=fh, X_train=X_train)
+            return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(clone(forecaster), y_train, fh, X_train)
-            for forecaster in forecasters)
+            delayed(_fit_forecaster)(clone(forecaster), y, X, fh)
+            for forecaster in forecasters
+        )
 
-    def _predict_forecasters(self, fh=None, X=None, return_pred_int=False,
-                             alpha=DEFAULT_ALPHA):
+    def _predict_forecasters(
+        self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
         """Collect results from forecaster.predict() calls."""
         if return_pred_int:
             raise NotImplementedError()
-        # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(
-        # fh, X=X)
-        #                                     for forecaster in
-        #                                     self.forecasters_)
-        return [forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int,
-                                   alpha=alpha)
-                for forecaster in self.forecasters_]
+
+        return [
+            forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+            for forecaster in self.forecasters_
+        ]
 
     def get_params(self, deep=True):
         return self._get_params("forecasters", deep=deep)

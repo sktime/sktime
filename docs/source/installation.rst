@@ -14,16 +14,13 @@ But note that the package is actively being developed and currently not feature 
 
 Development version
 -------------------
-To install the development version of sktime, follow these steps:
+To install the latest development version of sktime, follow these steps:
 
 1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
 2. Move into the root directory of the repository: :code:`cd sktime`
-3. Switch to development branch: :code:`git checkout dev`
+3. Make sure you are on the main branch: :code:`git checkout main`
 4. Make sure your local version is up-to-date: :code:`git pull`
-5. Build package from source using: :code:`pip install --editable .`
-
-Please read below for more detailed instrcutions for specific operating
-systems.
+5. Build package from source using: :code:`pip install --editable .` Please read below for more detailed instructions for specific operating systems.
 
 Building sktime from source also requires
 
@@ -37,40 +34,20 @@ Building sktime from source also requires
    not recommended since it will force some estimators to run in sequential
    mode and their ``n_jobs`` parameter will be ignored.
 
-Running tests requires
+To run our tests and generate our documentation, you need to follow a few extra steps as described in our section on :ref:`contributing`.
 
-.. |PytestMinVersion| replace:: 3.3.0
+Retrieving other stable versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- pytest >=\ |PytestMinVersion|
-
-and a few soft dependencies which are required for running certain modules,
-but not necessary for most of sktime's functionality.
-
-Generating the documentation and website requires a few extra dependencies
-too.
-
-You can install all extra dependencies for running tests and generating
-the documentation by running:
+If you want to build a previous version, you can run:
 
 .. code-block:: bash
 
-    pip install --editable .[docs]
+ ``git checkout <VERSION>``
 
-Retrieving the latest code
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+This will checkout the code for that particular version. To see which versions are available, run ``git tag``.
 
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
-
-You can check out the latest sources with the command:
-
-.. code-block:: bash
-
-    git clone git://github.com/alan-turing-institute/sktime.git
-
-If you want to build a stable version, you can ``git checkout <VERSION>``
-to get the code for that particular version, or download an zip archive of
-the version from github. To see which versions are available, run ``git tag``.
+You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
 
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
@@ -136,12 +113,6 @@ Then you need to set the following environment variables:
 
 Finally you can build the package using the standard command.
 
-Alternatively, if you have other compilers, such as gcc, installed, the following one-liner will do the job:
-
-.. code-block:: 
-
-   env CC=$(which gcc-9) CXX=$(which g++-9) pip install --editable .
-
 FreeBSD
 *******
 
@@ -166,7 +137,7 @@ can set the environment variables to these locations:
 
 Finally you can build the package using the standard command.
 
-For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 
@@ -190,7 +161,6 @@ and then:
 .. code-block:: bash
 
     pip3 install numpy scipy cython
-
 
 When precompiled wheels are not avalaible for your architecture, you can
 install the system versions:
@@ -254,6 +224,19 @@ And build sktime from this environment:
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
+Some users have experienced issues when installing NumPy, particuarly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
+
+If you run into a problem installing the development version and are using Anaconda, try:
+
+1. Install Anaconda
+2. Create new environment: :code:`conda create -n sktime-dev python=3.8`
+3. Activate environment: :code:`conda activate sktime-dev`
+4. Install NumPy (pinned to 1.19.3) from pip: :code:`pip install numpy==1.19.3`
+5. Install requirements: :code:`pip install -r build_tools/requirements.txt`
+6. Follow the instructions above to point to "vcvarsall.bat"
+7. Run :code:`pip install --verbose --no-build-isolation --editable .`
+
+In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
 
 Building binary packages and installers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

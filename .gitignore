@@ -75,6 +75,7 @@ instance/
 docs/_build/
 # automatically generated content
 docs/source/modules/auto_generated/
+docs/source/api_reference/modules/auto_generated/
 
 # automatically sym-linked example notebooks
 docs/source/examples
@@ -158,3 +159,4 @@ sktime/contrib/distance_based/tempy.py
 sktime/contrib/nothing_to_see_here.py
 sktime/distances/elastic_cython.html
 *.html
+sktime/contrib/distance_based/old_time_series_neighbors.py

@@ -1,22 +1,21 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = ["BaseEstimator"]
 
+import inspect
+
 from sklearn.base import BaseEstimator as _BaseEstimator
+
 from sktime.exceptions import NotFittedError
 
 
 class BaseEstimator(_BaseEstimator):
-
-    # def __init__(self, *args, **kwargs):
-    #     # Including args and kwargs make the class cooperative, so that args
-    #     # and kwargs are passed on to other parent classes when using
-    #     # multiple inheritance
-    #     self._is_fitted = False
-    #     super(BaseEstimator, self).__init__(*args, **kwargs)
+    """Base class for defining estimators in sktime. Extends scikit-learn's
+    BaseEstimator.
+    """
 
     def __init__(self):
         self._is_fitted = False
@@ -37,4 +36,26 @@ class BaseEstimator(_BaseEstimator):
         if not self.is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first.")
+                f"been fitted yet; please call `fit` first."
+            )
+
+    @classmethod
+    def _all_tags(cls):
+        """Get tags from estimator class and all its parent classes"""
+        # We here create a separate estimator tag interface in addition to the one in
+        # scikit-learn to make sure we do not interfere with scikit-learn's one
+        # when we inherit from scikit-learn classes. We also make estimator tags a
+        # class rather than object attribute.
+        collected_tags = dict()
+
+        # We exclude the last two parent classes; sklearn.base.BaseEstimator and
+        # the basic Python object.
+        for parent_class in reversed(inspect.getmro(cls)[:-2]):
+            if hasattr(parent_class, "_tags"):
+                # Need the if here because mixins might not have _more_tags
+                # but might do redundant work in estimators
+                # (i.e. calling more tags on BaseEstimator multiple times)
+                more_tags = parent_class._tags
+                collected_tags.update(more_tags)
+
+        return collected_tags
