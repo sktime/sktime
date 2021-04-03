@@ -59,4 +59,4 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
      Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
 
-    _base_estimator = DecisionTreeRegressor(criterion="entropy")
+    _base_estimator = DecisionTreeRegressor()
