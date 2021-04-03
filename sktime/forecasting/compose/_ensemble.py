@@ -88,15 +88,15 @@ class EnsembleForecaster(
         DataFrame : aggregate dataframe reduction.
         """
         valid_agg_funcs = ("median", "mean", "min", "max")
-        d_frame = pd.concat(self._predict_forecasters(fh, X), axis=1)
+        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
         if return_pred_int:
             raise NotImplementedError()
         if self.aggfunc not in valid_agg_funcs:
             raise ValueError(f"Invalid agg value. Valid values are {valid_agg_funcs}")
         if self.aggfunc == "median":
-            return d_frame.median(axis=1)
+            return y_pred.median(axis=1)
         if self.aggfunc == "min":
-            return d_frame.min(axis=1)
+            return y_pred.min(axis=1)
         if self.aggfunc == "max":
-            return d_frame.max(axis=1)
-        return d_frame.mean(axis=1)
+            return y_pred.max(axis=1)
+        return y_pred.mean(axis=1)
