@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
@@ -8,6 +7,7 @@ from sktime.benchmarking.base import BaseMetric
 
 
 class PairwiseMetric(BaseMetric):
+
     def __init__(self, func, name=None, **kwargs):
         name = func.__name__ if name is None else name
         self.func = func
@@ -20,23 +20,21 @@ class PairwiseMetric(BaseMetric):
         # compute stderr based on pairwise metrics
         n_instances = len(y_true)
         pointwise_metrics = np.array(
-            [self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)]
-        )
+            [self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)])
         stderr = np.std(pointwise_metrics) / np.sqrt(
-            n_instances - 1
-        )  # sample standard error of the mean
+            n_instances - 1)  # sample standard error of the mean
 
         return mean, stderr
 
 
 class AggregateMetric(BaseMetric):
+
     def __init__(self, func, method="jackknife", name=None, **kwargs):
         allowed_methods = ("jackknife",)
         if method not in allowed_methods:
             raise NotImplementedError(
                 f"Provided method is not implemented yet. "
-                f"Currently only: {allowed_methods} are implemented"
-            )
+                f"Currently only: {allowed_methods} are implemented")
         self.method = method
 
         name = func.__name__ if name is None else name
@@ -46,19 +44,15 @@ class AggregateMetric(BaseMetric):
 
     def compute(self, y_true, y_pred):
         """Compute metric and standard error
-
         References:
         -----------
         .. [1] Efron and Stein, (1981), "The jackknife estimate of variance."
-
         .. [2] McIntosh, Avery. "The Jackknife Estimation Method".
             <http://people.bu.edu/aimcinto/jackknife.pdf>
-
         .. [3] Efron, Bradley. "The Jackknife, the Bootstrap, and other
             Resampling Plans". Technical Report No. 63, Division of
             Biostatistics,
             Stanford University, December, 1980.
-
         .. [4] Jackknife resampling
         <https://en.wikipedia.org/wiki/Jackknife_resampling>
         """
@@ -74,8 +68,8 @@ class AggregateMetric(BaseMetric):
 
         # compute metrics on jackknife samples
         jack_pointwise_metric = np.array(
-            [self.func(y_true[idx], y_pred[idx], **self.kwargs) for idx in jack_idx]
-        )
+            [self.func(y_true[idx], y_pred[idx], **self.kwargs)
+             for idx in jack_idx])
 
         # compute standard error over jackknifed metrics
         jack_stderr = self._compute_jackknife_stderr(jack_pointwise_metric)
@@ -84,7 +78,6 @@ class AggregateMetric(BaseMetric):
     @staticmethod
     def _compute_jackknife_stderr(x):
         """Compute standard error of jacknife samples
-
         References
         ----------
         .. [1] Efron and Stein, (1981), "The jackknife estimate of variance.
@@ -96,7 +89,6 @@ class AggregateMetric(BaseMetric):
     @staticmethod
     def _jackknife_resampling(x):
         """Performs jackknife resampling on numpy arrays.
-
         Jackknife resampling is a technique to generate 'n' deterministic
         samples
         of size 'n-1' from a measured sample of size 'n'. Basically, the i-th
@@ -106,21 +98,18 @@ class AggregateMetric(BaseMetric):
         technique finds applications in estimating variance, bias,
         and confidence
         intervals.
-
         Parameters
         ----------
         x : numpy.ndarray
             Original sample (1-D array) from which the jackknife resamples
             will be
             generated.
-
         Returns
         -------
         resamples : numpy.ndarray
             The i-th row is the i-th jackknife sample, i.e., the original
             sample
             with the i-th measurement deleted.
-
         References
         ----------
         .. [1] modified version of
