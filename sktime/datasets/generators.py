@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 Generators for time series simulation
 """
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 from numpy.random import RandomState
@@ -12,23 +13,20 @@ from statsmodels.tsa.arima_process import arma_generate_sample
 from numpy import ndarray
 from pandas import Series
 
-__all__ = [
-    "ArmaGenerator",
-    "LinearGenerator",
-    "NoiseGenerator"
-]
+__all__ = ["ArmaGenerator", "LinearGenerator", "NoiseGenerator"]
 
 
 class Generator(ABC):
     """
     Abstrct class for generators.
     """
+
     @abstractmethod
-    def sample(self, n_sample: int) -> Series:
+    def sample(self, n_sample: Union[int, Tuple[int]]) -> Series:
         """
         Sample from the generator.
         """
-        pass
+        NotImplementedError
 
 
 class NoiseGenerator(Generator):
@@ -52,16 +50,14 @@ class NoiseGenerator(Generator):
     >>> sample = arma_generator.sample()
     """
 
-    def __init__(self,
-                 random_state: Union[int, RandomState] = None) -> None:
+    def __init__(self, random_state: Union[int, RandomState] = None) -> None:
         # use random state generation
         if isinstance(random_state, RandomState):
             self.random_state = random_state
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self,
-               n_sample: int = 100) -> Series:
+    def sample(self, n_sample: int = 100) -> Series:
         """
         Generate a sample from the generator.
 
@@ -76,9 +72,7 @@ class NoiseGenerator(Generator):
             A sample from a standard normal random process.
         """
 
-        return pd.Series(
-            self.random_state.normal(size=n_sample)
-        )
+        return pd.Series(self.random_state.normal(size=n_sample))
 
 
 class ArmaGenerator(Generator):
@@ -108,20 +102,22 @@ class ArmaGenerator(Generator):
     >>> sample = arma_generator.sample()
     """
 
-    def __init__(self,
-                 ar: ndarray = None,
-                 ma: ndarray = None,
-                 random_state: Union[int, RandomState] = None) -> None:
+    def __init__(
+        self,
+        ar: ndarray = None,
+        ma: ndarray = None,
+        random_state: Union[int, RandomState] = None,
+    ) -> None:
 
         # if either set of coef is missing, set to 1
         # set to coef sets to ndarrays (if not)
         # convert from coef to ar/ma polynomials
         if ar is None:
-            ar = np.array([1.])
+            ar = np.array([1.0])
         else:
             self.arparams = np.r_[1, -np.asarray(ar)]
         if ma is None:
-            ma = np.array([1.])
+            ma = np.array([1.0])
         else:
             self.maparams = np.r_[1, np.asarray(ma)]
 
@@ -131,9 +127,7 @@ class ArmaGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self,
-               n_sample: int = 100,
-               burnin: int = 0) -> Series:
+    def sample(self, n_sample: int = 100, burnin: int = 0) -> Series:
         """
         Generate a sample from the generator.
 
@@ -151,11 +145,14 @@ class ArmaGenerator(Generator):
             Sample from an ARMA process.
         """
         return pd.Series(
-                    arma_generate_sample(self.arparams,
-                                         self.maparams,
-                                         n_sample,
-                                         distrvs=self.random_state.normal,
-                                         burnin=burnin))
+            arma_generate_sample(
+                self.arparams,
+                self.maparams,
+                n_sample,
+                distrvs=self.random_state.normal,
+                burnin=burnin,
+            )
+        )
 
 
 class LinearGenerator(Generator):
@@ -191,18 +188,16 @@ class LinearGenerator(Generator):
     >>> # generator sample from linear process with arma noise
     >>> sample = linear_generator.sample()
     """
-    def __init__(self,
-                 slope: float,
-                 intercept: float,
-                 noise_generator: Generator = None
-                 ) -> None:
+
+    def __init__(
+        self, slope: float, intercept: float, noise_generator: Generator = None
+    ) -> None:
 
         self.slope = slope
         self.intercept = intercept
         self.noise_generator = noise_generator
 
-    def sample(self,
-               n_sample: int = 100) -> Series:
+    def sample(self, n_sample: int = 100) -> Series:
         """
         Generate a sample from the generator.
 
