@@ -92,9 +92,7 @@ class EnsembleForecaster(
         if return_pred_int:
             raise NotImplementedError()
         if self.aggfunc not in valid_agg_funcs:
-            raise ValueError(
-                f"Invalid agg value. Valid values are {valid_agg_funcs}"
-            )
+            raise ValueError(f"Invalid agg value. Valid values are {valid_agg_funcs}")
         if self.aggfunc == "median":
             return d_frame.median(axis=1)
         if self.aggfunc == "min":
