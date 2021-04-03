@@ -24,6 +24,7 @@ class EnsembleForecaster(
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+    aggfunc : string,{'mean', 'median', 'min', 'max'}(default='mean')
     """
 
     _required_parameters = ["forecasters"]
