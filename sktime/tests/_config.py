@@ -6,6 +6,8 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
+
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -131,14 +133,17 @@ STEPS = [
 ESTIMATOR_TEST_PARAMS = {
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
-    DirectTabularRegressionForecaster: {"regressor": REGRESSOR},
-    MultioutputTabularRegressionForecaster: {"regressor": REGRESSOR},
-    RecursiveTabularRegressionForecaster: {"regressor": REGRESSOR},
+    DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
+    MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
+    RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
-        "regressor": make_pipeline(Tabularizer(), REGRESSOR)
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     RecursiveTimeSeriesRegressionForecaster: {
-        "regressor": make_pipeline(Tabularizer(), REGRESSOR)
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
+    },
+    MultioutputTimeSeriesRegressionForecaster: {
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     TransformedTargetForecaster: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},

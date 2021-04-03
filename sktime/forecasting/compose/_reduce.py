@@ -28,7 +28,6 @@ from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_step_length
-from sktime.utils.validation.forecasting import check_y
 
 
 def _prepare_y_X(y, X):
@@ -124,6 +123,21 @@ class _Reducer(_BaseWindowForecaster):
         self._cv = None
 
     def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self._set_y_X(y, X)
         self._set_fh(fh)
 
@@ -137,68 +151,6 @@ class _Reducer(_BaseWindowForecaster):
     def _fit(self, y, X):
         raise NotImplementedError("abstract method")
 
-    def _transform(self, y, X=None):
-        """Transform data using rolling window approach"""
-        if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
-        y = check_y(y)
-
-        # get integer time index
-        cv = self._cv
-
-        # Transform target series into tabular format using
-        # rolling window tabularisation
-        x_windows = []
-        y_windows = []
-        for x_index, y_index in cv.split(y):
-            x_window = y.iloc[x_index]
-            y_window = y.iloc[y_index]
-
-            x_windows.append(x_window)
-            y_windows.append(y_window)
-
-        # Put into required input format for regression
-        X, y = self._format_windows(x_windows, y_windows)
-        return X, y
-
-    def _format_windows(self, x_windows, y_windows=None):
-        """Helper function to combine windows from temporal cross-validation
-        into nested
-        pd.DataFrame for reduction to time series regression or tabular
-        np.array for
-        tabular regression.
-
-        Parameters
-        ----------
-        x_windows : list of pd.Series or np.array
-        y_windows : list of pd.Series or np.array, optional (default=None)
-
-        Returns
-        -------
-        X : pd.DataFrame or np.array
-            Nested time series data frame.
-        y : np.array
-            Array of target values.
-        """
-        X = self._format_x_windows(x_windows)
-
-        # during prediction, y=None, so only return X
-        if y_windows is None:
-            return X
-
-        y = self._format_y_windows(y_windows)
-        return X, y
-
-    @staticmethod
-    def _format_y_windows(y_windows):
-        """Template method for formatting y windows"""
-        raise NotImplementedError("abstract method")
-
-    @staticmethod
-    def _format_x_windows(x_windows):
-        """Template method for formatting x windows"""
-        raise NotImplementedError("abstract method")
-
     def _is_predictable(self, last_window):
         """Helper function to check if we can make predictions from last
         window"""
@@ -209,6 +161,9 @@ class _Reducer(_BaseWindowForecaster):
         )
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        # Note that we currently only support out-of-sample predictions. For the
+        # direct and multioutput strategy, we need to check this already during fit,
+        # as the fh is required for fitting.
         raise NotImplementedError(
             f"Generating in-sample predictions is not yet "
             f"implemented for {self.__class__.__name__}."
@@ -255,7 +210,7 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         self.estimators_ = []
         for i in range(len(self.fh)):
             estimator = clone(self.estimator)
-            estimator.fit(Xt, yt[:, i])
+            estimator.fit(Xt, yt[:, [i]])
             self.estimators_.append(estimator)
         return self
 
@@ -264,6 +219,10 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
     ):
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
+
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
+            return self._predict_nan(fh)
 
         if self._X is None:
             n_columns = 1
@@ -343,6 +302,10 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
 
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
+            return self._predict_nan(fh)
+
         if self._X is None:
             n_columns = 1
         else:
@@ -390,14 +353,17 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        # We currently only support out-of-sample predictions. For the recursive
-        # strategy, we need to check this at the beginning of predict, as the fh is
-        # not required for fitting and may not be available yet during fit.
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
+        if self._X is not None and X is None:
+            raise ValueError(
+                "`X` must be passed to `predict` if `X` is given in `fit`."
+            )
 
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
+
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
+            return self._predict_nan(fh)
 
         # Pre-allocate arrays.
         if X is None:
@@ -439,8 +405,6 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
         return y_pred[fh_idx]
 
 
-##############################################################################
-# reduction to regression
 class DirectTabularRegressionForecaster(_DirectReducer):
     """
     Forecasting based on reduction to tabular regression with a direct
@@ -508,8 +472,6 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     _estimator_scitype = "tabular-regressor"
 
 
-##############################################################################
-# reduction to time series regression
 class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     """
     Forecasting based on reduction to time series regression with a direct
@@ -710,6 +672,8 @@ def _check_scitype(scitype):
 
 
 def _infer_scitype(estimator):
+    # We can check if estimator is an instance of scikit-learn's RegressorMixin or
+    # of sktime's BaseRegressor, otherwise we raise an error.
     if isinstance(estimator, RegressorMixin):
         return "tabular-regressor"
     elif isinstance(estimator, BaseRegressor):

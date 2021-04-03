@@ -69,7 +69,8 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         Returns
         -------
         self : returns an instance of self.
-        """  # X_train is ignored
+        """
+        # X_train is ignored
         self._set_y_X(y, X)
         self._set_fh(fh)
 

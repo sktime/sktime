@@ -744,7 +744,7 @@ class _BaseWindowForecaster(_SktimeForecaster):
         # Get the last window of the endogenous variable.
         y = self._y.loc[start:cutoff].to_numpy()
 
-        # If X is given, also get the last window of X.
+        # If X is given, also get the last window of the exogenous variables.
         X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
 
         return y, X

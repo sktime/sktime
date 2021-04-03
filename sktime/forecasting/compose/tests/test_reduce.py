@@ -7,16 +7,17 @@ __author__ = ["Lovkush Agarwal", "Markus Löning"]
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.base import BaseEstimator
+from sklearn.base import RegressorMixin
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_pipeline
 
-from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
+from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import make_reduction
@@ -26,6 +27,8 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.model_selection.tests.test_split import _get_windows
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.regression.base import BaseRegressor
+from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
@@ -39,7 +42,7 @@ FH = ForecastingHorizon(1)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("scitype", ["tabular-regressor", "time-series-regressor"])
-def test_against_sliding_window_cv(n_timepoints, window_length, fh, scitype):
+def test_sliding_window_transform_against_cv(n_timepoints, window_length, fh, scitype):
     fh = check_fh(fh)
     y = pd.Series(_make_y(0, n_timepoints))
     cv = SlidingWindowSplitter(fh=fh, window_length=window_length)
@@ -206,87 +209,125 @@ def test_dummy_regressor_mean_prediction(fh, window_length, strategy, scitype):
     np.testing.assert_array_almost_equal(actual, expected)
 
 
-def test_factory_method_recursive():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-
-    regressor = LinearRegression()
-    f1 = make_reduction(regressor, scitype="tabular-regressor", strategy="recursive")
-    f2 = RecursiveTabularRegressionForecaster(regressor)
-
-    actual = f1.fit(y_train).predict(fh)
-    expected = f2.fit(y_train).predict(fh)
-
-    np.testing.assert_array_equal(actual, expected)
+_REGISTRY = [
+    ("tabular-regressor", "direct", DirectTabularRegressionForecaster),
+    ("tabular-regressor", "recursive", RecursiveTabularRegressionForecaster),
+    ("tabular-regressor", "multioutput", MultioutputTabularRegressionForecaster),
+    ("time-series-regressor", "direct", DirectTimeSeriesRegressionForecaster),
+    ("time-series-regressor", "recursive", RecursiveTimeSeriesRegressionForecaster),
+    ("time-series-regressor", "multioutput", MultioutputTimeSeriesRegressionForecaster),
+]
 
 
-def test_factory_method_direct():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+class _Recorder:
+    # Helper class to record pass data.
+    def fit(self, X, y):
+        self.X_fit = X
+        self.y_fit = y
+        return self
 
-    regressor = LinearRegression()
-    f1 = make_reduction(regressor, scitype="tabular-regressor", strategy="direct")
-    f2 = DirectTabularRegressionForecaster(regressor)
-
-    actual = f1.fit(y_train, fh=fh).predict(fh)
-    expected = f2.fit(y_train, fh=fh).predict(fh)
-
-    np.testing.assert_array_equal(actual, expected)
+    def predict(self, X):
+        self.X_pred = X
+        return np.ones(1)
 
 
-def test_factory_method_ts_recursive():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+class _TestTabularRegressor(BaseEstimator, RegressorMixin, _Recorder):
+    pass
 
-    ts_regressor = Pipeline(
-        [("tabularize", Tabularizer()), ("model", LinearRegression())]
+
+class _TestTimeSeriesRegressor(_Recorder, BaseRegressor):
+    pass
+
+
+@pytest.mark.parametrize(
+    "estimator", [_TestTabularRegressor(), _TestTabularRegressor()]
+)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
+def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
+    estimator, window_length, strategy
+):
+    # We generate data that represents time points in its values, i.e. an array of
+    # values that increase in unit steps for each time point.
+    n_variables = 3
+    n_timepoints = 10
+    y, X = _make_y_X(n_timepoints, n_variables)
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=FH)
+
+    forecaster = make_reduction(
+        estimator, strategy=strategy, window_length=window_length
     )
-    f1 = make_reduction(
-        ts_regressor, scitype="time-series-regressor", strategy="recursive"
+    forecaster.fit(y_train, X_train, FH)
+    forecaster.predict(X=X_test)
+
+    # Get recorded data.
+    if strategy == "direct":
+        estimator_ = forecaster.estimators_[0]
+    else:
+        estimator_ = forecaster.estimator_
+
+    X_fit = estimator_.X_fit
+    y_fit = estimator_.y_fit
+    X_pred = estimator_.X_pred
+
+    # Format data into 3d array if the data is not in that format already.
+    X_fit = X_fit.reshape(X_fit.shape[0], n_variables, -1)
+    X_pred = X_pred.reshape(X_pred.shape[0], n_variables, -1)
+
+    # Check that both fit and predict data have unit steps between them.
+    assert np.allclose(np.diff(X_fit), 1)
+    assert np.allclose(np.diff(X_pred), 1)
+
+    # Check that predict data is a step ahead from last row in fit data.
+    np.testing.assert_array_equal(X_pred, X_fit[[-1]] + 1)
+
+    # Check that y values are further ahead than X values.
+    assert np.all(X_fit < y_fit[:, np.newaxis, :])
+
+
+@pytest.mark.parametrize("scitype, strategy, klass", _REGISTRY)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+def test_make_reduction_constructed_instance(scitype, strategy, klass, window_length):
+    estimator = DummyRegressor()
+    forecaster = make_reduction(
+        estimator, window_length=window_length, scitype=scitype, strategy=strategy
     )
-    f2 = RecursiveTimeSeriesRegressionForecaster(ts_regressor)
-
-    actual = f1.fit(y_train).predict(fh)
-    expected = f2.fit(y_train).predict(fh)
-
-    np.testing.assert_array_equal(actual, expected)
+    assert isinstance(forecaster, klass)
+    assert forecaster.get_params()["window_length"] == window_length
 
 
-def test_factory_method_ts_direct():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-
-    ts_regressor = Pipeline(
-        [("tabularize", Tabularizer()), ("model", LinearRegression())]
-    )
-    f1 = make_reduction(
-        ts_regressor, scitype="time-series-regressor", strategy="direct"
-    )
-    f2 = DirectTimeSeriesRegressionForecaster(ts_regressor)
-
-    actual = f1.fit(y_train, fh=fh).predict(fh)
-    expected = f2.fit(y_train, fh=fh).predict(fh)
-
-    np.testing.assert_array_equal(actual, expected)
+@pytest.mark.parametrize(
+    "estimator, scitype",
+    [
+        (LinearRegression(), "tabular-regressor"),
+        (TimeSeriesForestRegressor(), "tabular-regressor"),
+    ],
+)
+def test_make_reduction_infer_scitype(estimator, scitype):
+    forecaster = make_reduction(estimator, scitype="infer")
+    assert forecaster._estimator_scitype == scitype
 
 
-def test_multioutput_direct_tabular():
+def test_make_reduction_infer_scitype_raises_error():
+    estimator = make_pipeline(Tabularizer(), LinearRegression())
+    with pytest.raises(ValueError):
+        make_reduction(estimator, scitype="infer")
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
     # multioutput and direct strategies with linear regression
     # regressor should produce same predictions
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    y, X = make_forecasting_problem(make_X=True)
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
-    regressor = LinearRegression()
-    f1 = MultioutputTabularRegressionForecaster(regressor)
-    f2 = DirectTabularRegressionForecaster(regressor)
+    estimator = LinearRegression()
+    direct = make_reduction(estimator, strategy="direct")
+    multioutput = make_reduction(estimator, strategy="multioutput")
 
-    preds1 = f1.fit(y_train, fh=fh).predict(fh)
-    preds2 = f2.fit(y_train, fh=fh).predict(fh)
+    y_pred_direct = direct.fit(y_train, X_train, fh=fh).predict(fh, X_test)
+    y_pred_multioutput = multioutput.fit(y_train, X_train, fh=fh).predict(fh, X_test)
 
-    # assert_almost_equal does not seem to work with pd.Series objects
-    np.testing.assert_almost_equal(preds1.to_numpy(), preds2.to_numpy(), decimal=5)
+    np.testing.assert_array_equal(
+        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy()
+    )
