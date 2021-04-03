@@ -47,7 +47,8 @@ class NoiseGenerator(Generator):
     >>> arma_generator = ArmaGenerator(ar=np.array([0.9]),
     ...                                ma=np.array([0.7, 0.3]),
     ...                                random_state=42)
-    >>> sample = arma_generator.sample()
+    >>> # generate 100 samples
+    >>> sample = arma_generator.sample(100)
     """
 
     def __init__(self, random_state: Union[int, RandomState] = None) -> None:
@@ -107,7 +108,8 @@ class ArmaGenerator(Generator):
     >>> arma_generator = ArmaGenerator(ar=np.array([0.9]),
     ...                                ma=np.array([0.7, 0.3]),
     ...                                random_state=42)
-    >>> sample = arma_generator.sample()
+    >>> # generate 100 samples
+    >>> sample = arma_generator.sample(100)
     """
 
     def __init__(
@@ -212,7 +214,8 @@ class LinearGenerator(Generator):
     >>> linear_generator = LinearGenerator(0.01, 0,
     ...                                    arma_generator)
     >>> # generator sample from linear process with arma noise
-    >>> sample = linear_generator.sample()
+    >>> # generate 100 samples
+    >>> sample = linear_generator.sample(100)
     """
 
     def __init__(
