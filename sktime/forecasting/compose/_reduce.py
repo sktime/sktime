@@ -404,30 +404,28 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "dirrec"
 
     # todo: refactor naming, very confusing
-    def fit(self, y_train, X_train=None, fh=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
-        if X_train is not None:
-            raise NotImplementedError()
+        if X is not None:
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
 
-        self._set_y_X(y_train)
+        self._set_y_X(y)
         self._set_fh(fh)
 
-        # do not support if y_train indices and fh indices overlap
-        # we have an absolute forecasting horizon. WHY not allow absolute?
-        if y_train.index.max() > self.fh.to_pandas().min():
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("in-sample predictions are not implemented")
 
         self.step_length_ = check_step_length(self.step_length)
@@ -445,7 +443,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         )
 
         # transform data using rolling window split
-        X_train, Y_train = self._transform(y_train, X_train)
+        X, Y_train = self._transform(y, X)
 
         # iterate over forecasting horizon
         self.regressors_ = []
@@ -454,12 +452,14 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         # i feel this is incorrect, the predictors
         # have to use a combination of original and predicted data.
         for i in range(len(self.fh)):
-            y_train = Y_train[:, i]
+            y = Y_train[:, i]
             regressor = clone(self.regressor)
-            regressor.fit(X_train, y_train)
+            regressor.fit(X, y)
             self.regressors_.append(regressor)
-            X_train = np.column_stack([X_train, y_train.reshape(-1, 1)])
-            X_train = self._format_windows(X_train)
+
+            # this is where the additional magic happens.
+            X = np.column_stack([X, y.reshape(-1, 1)])
+            X = self._format_windows(X)
 
         self._is_fitted = True
         return self
