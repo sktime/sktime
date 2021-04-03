@@ -504,6 +504,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
+        # note: This might be wrong?
         self._cv = SlidingWindowSplitter(
             fh=self.fh,
             window_length=self.window_length_,
@@ -517,6 +518,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         # iterate over forecasting horizon
         self.regressors_ = []
 
+        # train over the whole range of provided predictors
         for i in range(len(self.fh)):
             y_train = Y_train[:, i]
             regressor = clone(self.regressor)
@@ -535,7 +537,6 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         # compute prediction
         # prepare recursive predictions
         fh_max = fh[-1]
-        y_pred = np.zeros(fh_max)
         y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon
@@ -589,11 +590,11 @@ class DirRecTimeSeriesForecaster(ReducedTimeSeriesRegressorMixin, _DirRecReducer
 class DirRecRegressionForecaster(ReducedTabularRegressorMixin, _DirRecReducer):
     """
     Forecasting based on reduction to tabular regression with the
-    DirRec (hybrid) strategy
-    For the direct strategy,  a separate forecaster is fitted
+    DirRec (hybrid) strategy.
+    For the DirRec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the Recusrive
     strategy.
 
     Parameters

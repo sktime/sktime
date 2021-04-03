@@ -6,6 +6,7 @@ __author__ = ["Lovkush Agarwal"]
 __all__ = []
 
 import numpy as np
+import pytest
 
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
@@ -22,10 +23,16 @@ from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionFore
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
 
 
-def test_factory_method_recursive():
+@pytest.fixture
+def test_data():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
+    return y, y_train, y_test, fh
+
+
+def test_factory_method_recursive(test_data):
+    (y, y_train, y_test, fh) = test_data
 
     regressor = LinearRegression()
     f1 = ReducedForecaster(regressor, scitype="regressor", strategy="recursive")
@@ -37,10 +44,8 @@ def test_factory_method_recursive():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_direct():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+def test_factory_method_direct(test_data):
+    y, y_train, y_test, fh = test_data
 
     regressor = LinearRegression()
     f1 = ReducedForecaster(regressor, scitype="regressor", strategy="direct")
@@ -52,10 +57,8 @@ def test_factory_method_direct():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_ts_recursive():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+def test_factory_method_ts_recursive(test_data):
+    y, y_train, y_test, fh = test_data
 
     ts_regressor = Pipeline(
         [("tabularize", Tabularizer()), ("model", LinearRegression())]
@@ -69,10 +72,8 @@ def test_factory_method_ts_recursive():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_ts_direct():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+def test_factory_method_ts_direct(test_data):
+    y, y_train, y_test, fh = test_data
 
     ts_regressor = Pipeline(
         [("tabularize", Tabularizer()), ("model", LinearRegression())]
@@ -86,12 +87,10 @@ def test_factory_method_ts_direct():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_multioutput_direct_tabular():
+def test_multioutput_direct_tabular(test_data):
     # multioutput and direct strategies with linear regression
     # regressor should produce same predictions
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    y, y_train, y_test, fh = test_data
 
     regressor = LinearRegression()
     f1 = MultioutputRegressionForecaster(regressor)
@@ -102,3 +101,16 @@ def test_multioutput_direct_tabular():
 
     # assert_almost_equal does not seem to work with pd.Series objects
     np.testing.assert_almost_equal(preds1.to_numpy(), preds2.to_numpy(), decimal=5)
+
+
+def test_factory_method_dirrec(test_data):
+    y, y_train, y_test, fh = test_data
+
+    regressor = LinearRegression()
+    f1 = ReducedForecaster(regressor, scitype="regressor", strategy="direct")
+    f2 = DirectRegressionForecaster(regressor)
+
+    actual = f1.fit(y_train, fh=fh).predict(fh)
+    expected = f2.fit(y_train, fh=fh).predict(fh)
+
+    np.testing.assert_array_equal(actual, expected)
