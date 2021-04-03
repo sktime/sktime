@@ -28,8 +28,9 @@ class EnsembleForecaster(
 
     _required_parameters = ["forecasters"]
 
-    def __init__(self, forecasters, n_jobs=None):
+    def __init__(self, forecasters, n_jobs=None, agg="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        self.agg = agg
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -73,6 +74,29 @@ class EnsembleForecaster(
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """return the predicted reduction
+
+        Parameters
+        ----------
+        fh : int, list or np.array, optional (default=None)
+        X : pd.DataFrame
+        return_pred_int : boolean, optional (default=False)
+        alpha : fh : float, (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        DataFrame : aggregate dataframe reduction.
+        """
         if return_pred_int:
             raise NotImplementedError()
+        if self.agg not in ("median", "mean", "min", "max"):
+            raise ValueError(
+                "Invalid agg value. Valid values are 'median', 'mean', 'min', 'max'"
+            )
+        if self.agg == "median":
+            return pd.concat(self._predict_forecasters(fh, X), axis=1).median(axis=1)
+        if self.agg == "min":
+            return pd.concat(self._predict_forecasters(fh, X), axis=1).min(axis=1)
+        if self.agg == "max":
+            return pd.concat(self._predict_forecasters(fh, X), axis=1).max(axis=1)
         return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
