@@ -179,7 +179,7 @@ def test_return_pred_int(fh):
     f = NaiveForecaster(strategy="last")
     f.fit(y_train)
     alpha = 0.8
-    y_pred, pred_intervals = f.predict(fh, alpha=alpha, return_pred_int=True), y_pred = f.predict(fh, alpha=alpha, return_pred_int=True)
+    y_pred, pred_intervals = f.predict(fh, alpha=alpha, return_pred_int=True)
     # this line needs to change in the next PR according to the dataset.
     expected = np.repeat(0, len(f.fh))
     np.testing.assert_array_equal(pred_intervals, expected)
