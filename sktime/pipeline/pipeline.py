@@ -29,8 +29,20 @@ class _ComplexToTabular(BaseTransformer):
         raise NotImplementedError("abstract method")
 
 
-class DollarBars:
+class DollarBars(_SeriesToSeriesTransformer):
+    def __repr__(self):
+        return repr(
+            "Calculates Dollar Bars. Inputs: closing price and traded volume as pd dataframe \
+             Output pd dataframe"
+        )
+
     def fit(self, X):
+        """
+        Parameters:
+        -----------
+        X : pandas dataframe
+            Index (datetime), price, volume
+        """
         dollar_bars = ml.data_structures.get_dollar_bars(
             file_path_or_df=X, threshold=1e10
         )
@@ -53,6 +65,12 @@ class DollarBars:
 
 
 class CUSUM(_SeriesToSeriesTransformer):
+    def __repr__(self):
+        return repr(
+            "CUSUM Fulter. Inputs closing price (pd Series). \
+            Outputs: Timestamps of events (Datetime Index)"
+        )
+
     def __init__(self, price_col, threshold=-0.1):
         """
         Paramters
@@ -78,6 +96,12 @@ class CUSUM(_SeriesToSeriesTransformer):
 
 
 class DailyVol(_SeriesToSeriesTransformer):
+    def __repr__(self):
+        return repr(
+            "Calculates daily volatility. Inputs: closing prices (pd Series). \
+            Output: daily volatility (pd Series)"
+        )
+
     def __init__(self, price_col, lookback):
         self._lookback = lookback
         self._price_col = price_col
@@ -97,6 +121,14 @@ class DailyVol(_SeriesToSeriesTransformer):
 
 
 class TrippleBarrierEvents(_ComplexToSeriesTransformer):
+    def __repr__(self):
+        return repr(
+            "Calculates Triple Barrier Events. \
+        Inputs: 1. closing prices (dollar bars output, pd series) \
+            2. change points (CUSUM or other, datetime index) \
+                Output: pd DataFrame with annotations"
+        )
+
     def __init__(
         self,
         price_col,
@@ -145,6 +177,13 @@ class TrippleBarrierEvents(_ComplexToSeriesTransformer):
 
 
 class TrippleBarrierLabels(_ComplexToSeriesTransformer):
+    def __repr__(self):
+        return repr(
+            "Calculates labels from triple barrier events. \
+            Inputs: Triple Barrier Events (pd dataframe) \
+                Output: pd Dataframe"
+        )
+
     def __init__(self, price_col):
         self._price_col = price_col
 
@@ -166,6 +205,12 @@ class TrippleBarrierLabels(_ComplexToSeriesTransformer):
 
 
 class BuildDataset(_ComplexToTabular):
+    def __repr__(self):
+        return repr(
+            "Compiles dataset. Inputs: Triple Barier Events and closing prices \
+            Outputs: features dataset used for training"
+        )
+
     def __init__(self, price_col, labels_col, lookback):
         self._lookback = lookback
         self._price_col = price_col
@@ -179,7 +224,7 @@ class BuildDataset(_ComplexToTabular):
                 input_dataset[self._price_col]
                 .iloc[
                     input_dataset.index.get_loc(labels.index[i])
-                    - 20 : input_dataset.index.get_loc(labels.index[i])
+                    - self._lookback : input_dataset.index.get_loc(labels.index[i])
                 ]
                 .values
             )
