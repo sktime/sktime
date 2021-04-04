@@ -232,20 +232,34 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         T = len(data)  # T of the equation
         K = 1
 
-        actual = data[0: T - 1]
-        predicted = data[1: T]
+        actual = data[0:T-1]
+        predicted = data[1:T]
         errors = (actual - predicted) ** 2
         sigma_hat = np.sqrt(np.sum(errors) / (T - K))
-        sigma_hat_h = sigma_hat*np.sqrt(fh)
+        sigma_hat_h = sigma_hat * np.sqrt(fh)
 
         predicted_val = data[T - 1]
 
         # find C from alpha using Gaussian equation
         # For now I will take multiplier using this Dictionary (values taken from the book tabel 5.1)
-        # In my next PR I'll do it with the equation for normal distribution OR
-        # If there is anyother way(Package currently using in sktime) please let me know
-        multipliers = {0.50: 0.67, 0.55: 0.76, 0.60: 0.84, 0.65: 0.93, 0.70: 1.04, 0.75: 1.15,
-                       0.80: 1.28, 0.85: 1.44, 0.90: 1.64, 0.95: 1.96, 0.96: 2.05, 0.97: 2.17, 0.98: 2.33, 0.99: 2.58}
+        # In a future Commit I'll do it with the equation for normal distribution OR
+        # If there is anyother way (A Package currently using in sktime) please let me know
+        multipliers = {
+            0.50: 0.67,
+            0.55: 0.76,
+            0.60: 0.84,
+            0.65: 0.93,
+            0.70: 1.04,
+            0.75: 1.15,
+            0.80: 1.28,
+            0.85: 1.44,
+            0.90: 1.64,
+            0.95: 1.96,
+            0.96: 2.05,
+            0.97: 2.17,
+            0.98: 2.33,
+            0.99: 2.58,
+        }
         C = multipliers[alpha]
 
         lower_bound = predicted_val - (C * sigma_hat_h)

@@ -652,7 +652,8 @@ class _BaseWindowForecaster(_SktimeForecaster):
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
             predictions = self._predict_in_sample(
-                fh.to_in_sample(self.cutoff), **kwargs)
+                fh.to_in_sample(self.cutoff), **kwargs
+            )
 
         # both in-sample and out-of-sample values
         else:
@@ -662,7 +663,8 @@ class _BaseWindowForecaster(_SktimeForecaster):
             )
             predictions = y_ins.append(y_oos)
 
-        if return_pred_int:  # If predict interval requested then it will return pridictions with intervals else only the predictions to avoid errors.
+        if return_pred_int:
+            # If predict interval requested then it will return pridictions with intervals else only the predictions to avoid errors.
             return predictions, intervals
         else:
             return predictions
