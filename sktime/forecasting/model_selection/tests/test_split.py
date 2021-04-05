@@ -256,39 +256,39 @@ def _check_expanding_windows(windows):
 
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter_start_with_empty_window(
-    y, fh, window_length, step_length
+    y, fh, initial_window, step_length
 ):
     cv = ExpandingWindowSplitter(
         fh=fh,
-        window_length=window_length,
+        initial_window=initial_window,
         step_length=step_length,
         start_with_window=True,
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
-    n_incomplete = _get_n_incomplete_windows(window_length, step_length)
+    n_incomplete = _get_n_incomplete_windows(initial_window, step_length)
     train_windows = train_windows[n_incomplete:]
     _check_expanding_windows(train_windows)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-def test_expanding_window_splitter(y, fh, window_length, step_length):
+def test_expanding_window_splitter(y, fh, initial_window, step_length):
     cv = ExpandingWindowSplitter(
         fh=fh,
-        window_length=window_length,
+        initial_window=initial_window,
         step_length=step_length,
         start_with_window=True,
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-    assert train_windows[0].shape[0] == window_length
+    assert train_windows[0].shape[0] == initial_window
     _check_expanding_windows(train_windows)
 
 
@@ -297,7 +297,7 @@ def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
     y = np.arange(10)
     fh = ForecastingHorizon([-2, 0])
     window_length = 3
-    cv = CV(fh=fh, window_length=window_length)
+    cv = CV(fh, window_length)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
     np.testing.assert_array_equal(test_windows[0], np.array([0, 2]))
     np.testing.assert_array_equal(train_windows[0], np.array([0, 1, 2]))
@@ -308,7 +308,7 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     y = np.arange(10)
     fh = ForecastingHorizon([-5, -3])
     window_length = 3
-    cv = CV(fh=fh, window_length=window_length)
+    cv = CV(fh, window_length)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
     np.testing.assert_array_equal(test_windows[0], np.array([0, 2]))
     np.testing.assert_array_equal(train_windows[0], np.array([3, 4, 5]))
