@@ -403,7 +403,6 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
 class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "dirrec"
 
-    # todo: refactor naming, very confusing
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -447,6 +446,12 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         # iterate over forecasting horizon
         self.regressors_ = []
+
+        # TODO: Have to:
+        # enforce that we use ONE regressor per forecasting point
+        # enforce that we use A list of regressors, not just ONE regressor
+        # have to allow the regressors to have their fitting windows re-adjusted.
+        # --> It's not up to the algorithm for us to have fit, then perform regression.
 
         # train over the whole range of provided predictors
         # i feel this is incorrect, the predictors
@@ -495,7 +500,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
             last_window = np.append(last_window, y_pred[i])
 
         # fh_idx = fh.index_like(self.cutoff)
-        # Not sure why it assumes "index like" if we're using absolute foreasting
+        # Not sure why it assumes "index like" if we're using absolute forecasting
         return y_pred
 
 
