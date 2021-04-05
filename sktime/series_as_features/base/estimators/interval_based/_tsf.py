@@ -4,13 +4,12 @@
     An implementation of Deng's Time Series Forest, with minor changes.
 """
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
+__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
 __all__ = [
     "BaseTimeSeriesForest",
     "_transform",
     "_get_intervals",
     "_fit_estimator",
-    "_predict_proba_for_estimator",
 ]
 
 import math
@@ -23,7 +22,6 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -120,64 +118,6 @@ class BaseTimeSeriesForest:
         self._is_fitted = True
         return self
 
-    def predict(self, X):
-        """
-        Find predictions for all cases in X. Built on top of predict_proba
-        Parameters
-        ----------
-        X : The training input samples. array-like or pandas data frame.
-        If a Pandas data frame is passed, a check is performed that it only
-        has one column.
-        If not, an exception is thrown, since this classifier does not yet have
-        multivariate capability.
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances]
-        """
-        proba = self.predict_proba(X)
-        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
-
-    def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances, series_length]
-            If a Pandas data frame is passed (sktime format) a check is
-            performed that it only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
-
-        Returns
-        -------
-        output : nd.array of shape = (n_instances, n_classes)
-            Predicted probabilities
-        """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-        X = X.squeeze(1)
-
-        _, series_length = X.shape
-        if series_length != self.series_length:
-            raise TypeError(
-                " ERROR number of attributes in the train does not match "
-                "that in the test data"
-            )
-        y_probas = Parallel(n_jobs=self.n_jobs)(
-            delayed(_predict_proba_for_estimator)(
-                X, self.estimators_[i], self.intervals_[i]
-            )
-            for i in range(self.n_estimators)
-        )
-
-        output = np.sum(y_probas, axis=0) / (
-            np.ones(self.n_classes) * self.n_estimators
-        )
-        return output
-
 
 def _transform(X, intervals):
     """Compute the mean, standard deviation and slope for given intervals
@@ -230,12 +170,3 @@ def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
 
     transformed_x = _transform(X, intervals)
     return estimator.fit(transformed_x, y)
-
-
-def _predict_proba_for_estimator(X, estimator, intervals):
-    """
-    Find probability estimates for each class for all cases in X using
-    given estimator and intervals.
-    """
-    transformed_x = _transform(X, intervals)
-    return estimator.predict_proba(transformed_x)
