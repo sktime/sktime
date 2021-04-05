@@ -94,17 +94,12 @@ class ThetaForecaster(ExponentialSmoothing):
 
         self.sp = sp
         self.deseasonalize = deseasonalize
-        self.initialization_method_ = "known" if initial_level else "estimated"
         self.deseasonalizer_ = None
         self.trend_ = None
         self.initial_level_ = None
         self.drift_ = None
         self.se_ = None
-        super(ThetaForecaster, self).__init__(
-            initial_level=initial_level,
-            initialization_method=self.initialization_method_,
-            sp=sp,
-        )
+        super(ThetaForecaster, self).__init__(initial_level=initial_level, sp=sp)
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -130,6 +125,7 @@ class ThetaForecaster(ExponentialSmoothing):
             self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
             y = self.deseasonalizer_.fit_transform(y)
 
+        self.initialization_method = "known" if self.initial_level else "estimated"
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super(ThetaForecaster, self).fit(y, fh=fh)
