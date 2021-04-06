@@ -94,6 +94,7 @@ class ThetaForecaster(ExponentialSmoothing):
     >>> y = load_airline()
     >>> forecaster = ThetaForecaster(sp=12)
     >>> forecaster.fit(y)
+    ThetaForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 

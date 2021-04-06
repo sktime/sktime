@@ -56,7 +56,7 @@ class BATS(_TbatsAdapter):
     Example
     ----------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.tbats import BATS
+    >>> from sktime.forecasting.bats import BATS
     >>> y = load_airline()
     >>> forecaster = BATS(
     ...     use_box_cox=False,
@@ -66,6 +66,7 @@ class BATS(_TbatsAdapter):
     ...     use_arma_errors=False,
     ...     n_jobs=1)
     >>> forecaster.fit(y)
+    BATS(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 

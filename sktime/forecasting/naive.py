@@ -55,6 +55,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y)
+    NaiveForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
