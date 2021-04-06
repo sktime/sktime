@@ -24,12 +24,15 @@ class EnsembleForecaster(
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+    aggfunc : str, {'mean', 'median', 'min', 'max'}, (default='mean')
+        The function to aggregate prediction from individual forecasters.
     """
 
     _required_parameters = ["forecasters"]
 
-    def __init__(self, forecasters, n_jobs=None):
+    def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        self.aggfunc = aggfunc
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -73,6 +76,34 @@ class EnsembleForecaster(
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """return the predicted reduction
+
+        Parameters
+        ----------
+        fh : int, list or np.array, optional (default=None)
+        X : pd.DataFrame
+        return_pred_int : boolean, optional (default=False)
+        alpha : fh : float, (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Aggregated predictions.
+        """
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
+
+        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
+
+        valid_aggfuncs = ("median", "mean", "min", "max")
+        if self.aggfunc not in valid_aggfuncs:
+            raise ValueError(f"Invalid `aggfunc`. Please use one of {valid_aggfuncs}")
+
+        if self.aggfunc == "median":
+            return y_pred.median(axis=1)
+        elif self.aggfunc == "min":
+            return y_pred.min(axis=1)
+        elif self.aggfunc == "max":
+            return y_pred.max(axis=1)
+        else:
+            return y_pred.mean(axis=1)
