@@ -64,7 +64,7 @@ class TBATS(_TbatsAdapter):
     ...     use_damped_trend=False,
     ...     sp=12,
     ...     use_arma_errors=False,
-    ...     n_jobs)
+    ...     n_jobs=1)
     >>> forecaster.fit(y)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
