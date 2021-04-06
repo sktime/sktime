@@ -220,7 +220,7 @@ _REGISTRY = [
 
 
 class _Recorder:
-    # Helper class to record pass data.
+    # Helper class to record given data for later inspection.
     def fit(self, X, y):
         self.X_fit = X
         self.y_fit = y
@@ -240,7 +240,7 @@ class _TestTimeSeriesRegressor(_Recorder, BaseRegressor):
 
 
 @pytest.mark.parametrize(
-    "estimator", [_TestTabularRegressor(), _TestTabularRegressor()]
+    "estimator", [_TestTabularRegressor(), _TestTimeSeriesRegressor()]
 )
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
@@ -287,7 +287,7 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
 
 @pytest.mark.parametrize("scitype, strategy, klass", _REGISTRY)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-def test_make_reduction_constructed_instance(scitype, strategy, klass, window_length):
+def test_make_reduction_construct_instance(scitype, strategy, klass, window_length):
     estimator = DummyRegressor()
     forecaster = make_reduction(
         estimator, window_length=window_length, scitype=scitype, strategy=strategy
@@ -309,6 +309,8 @@ def test_make_reduction_infer_scitype(estimator, scitype):
 
 
 def test_make_reduction_infer_scitype_raises_error():
+    # The scitype of pipeline cannot be inferred here, as it may be used together
+    # with a tabular or time series regressor.
     estimator = make_pipeline(Tabularizer(), LinearRegression())
     with pytest.raises(ValueError):
         make_reduction(estimator, scitype="infer")
