@@ -2,12 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "check_series",
-    "check_time_index",
-    "check_equal_time_index",
-    "check_equal_timeseries_length",
-]
+__all__ = ["check_series", "check_time_index", "check_equal_time_index"]
 
 import numpy as np
 import pandas as pd
@@ -158,23 +153,3 @@ def check_equal_time_index(*ys):
 
         if not first_index.equals(y.index):
             raise ValueError("Some (time) indices are not the same.")
-
-
-def check_equal_timeseries_length(*ts):
-    """Check that time series have the same length.
-
-    Parameters
-    ----------
-    ts : pd.Series, pd.DataFrame or np.ndarray
-        One or more time series
-
-    Raises
-    ------
-    ValueError
-        If (time) indices are not the same length
-    """
-    ts_lengths = [y.shape[0] for y in ts if y is not None]
-    unique_lengths = np.unique(ts_lengths)
-
-    if unique_lengths.shape[0] > 1:
-        raise ValueError("Input timeseries are not the same length")

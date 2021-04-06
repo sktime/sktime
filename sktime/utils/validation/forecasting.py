@@ -10,8 +10,6 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "check_y_true_pred",
-    "check_horizon_weights",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -19,11 +17,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import (
-    check_equal_time_index,
-    check_equal_timeseries_length,
-    check_series,
-)
+from sktime.utils.validation.series import check_equal_time_index, check_series
 
 
 def check_y_X(
@@ -111,7 +105,6 @@ def check_y(
     enforce_univariate=True,
     allow_empty=False,
     allow_constant=True,
-    allow_numpy=False,
     enforce_index_type=None,
 ):
     """Validate input data.
@@ -125,15 +118,14 @@ def check_y(
     allow_empty : bool, default = False
 
     allow_constant : bool, default = True
+        If True, constant `y` does not raise an error.
 
-    allow_numpy : bool, default = False
-
-    enforce_index_type : type, optional (default=None)
+    enforce_index_type : type, default=None
         type of time index
 
     Returns
     -------
-    y : pd.Series
+    y : pd.Series or pd.DataFrame
 
     Raises
     ------
@@ -144,7 +136,7 @@ def check_y(
         y,
         enforce_univariate=enforce_univariate,
         allow_empty=allow_empty,
-        allow_numpy=allow_numpy,
+        allow_numpy=False,
         enforce_index_type=enforce_index_type,
     )
 
@@ -359,87 +351,3 @@ def check_scoring(scoring):
         raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
-
-
-def check_y_true_pred(y_true, y_pred):
-    """Validates the y_true and y_pred input data to forecasting performance
-    metrics.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy ndarray of
-            shape (fh,) or (fh, n_columns) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy ndarray of
-            shape (fh,) or (fh, n_columns) where fh is the forecasting horizon
-        Estimated target values.
-
-    Returns
-    -------
-    actual : NumPy ndarray of shape (fh,) or (fh, n_columns)
-        The actual values of the input series in y_true
-
-    forecast : NumPy ndarray of shape (fh,) or (fh, n_columns)
-        The forecasts in the input y_pred
-
-    Raises
-    ------
-    TypeError
-        The type of y_true and y_pred are not equal
-    ValueError
-        Equal dimension required for y_true and y_pred
-    ValueError
-        Equal number of observations required of y_true and y_pred
-    ValueError
-        Equal numnber of columns required for y_true and y_pred
-    """
-    # Includes pd.Series, pd.DataFrame, np.ndarray
-    y_true = check_y(y_true, enforce_univariate=False, allow_numpy=True)
-    y_pred = check_y(y_pred, enforce_univariate=False, allow_numpy=True)
-
-    if type(y_true) != type(y_pred):
-        raise TypeError("The type of y_true and y_pred are not the same type")
-
-    if y_true.ndim != y_pred.ndim:
-        raise ValueError("Equal dimension required for y_true and y_pred")
-
-    if y_true.shape[0] != y_pred.shape[0]:
-        raise ValueError("Equal number of observations required of y_true and y_pred")
-
-    if (y_true.ndim > 1) and (y_true.shape[1] != y_pred.shape[1]):
-        raise ValueError("Equal number of series required for y_true and y_pred")
-
-    # Check indices equal if pandas object else check equal length for NumPy
-    if isinstance(y_true, (pd.Series, pd.DataFrame)):
-        check_equal_time_index(y_true, y_pred)
-        actual, forecast = y_true.values, y_pred.values
-    else:
-        check_equal_timeseries_length(y_true, y_pred)
-        actual, forecast = y_true, y_pred
-
-    return actual, forecast
-
-
-def check_horizon_weights(horizon_weight, y_pred):
-    """Validate forecasting horizon weights
-
-    Parameters
-    ----------
-    horizon_weight : array-like of shape (fh,)
-        Forecast horizon weights.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-    """
-    horizon_weight = check_series(
-        horizon_weight,
-        enforce_univariate=True,
-        allow_empty=False,
-        allow_numpy=True,
-        enforce_index_type=None,
-    )
-    check_equal_timeseries_length(horizon_weight, y_pred)
-
-    return horizon_weight
