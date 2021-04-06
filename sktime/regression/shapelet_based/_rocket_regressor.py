@@ -2,26 +2,26 @@
 """ RandOm Convolutional KErnel Transform (ROCKET)
 """
 
-__author__ = "Matthew Middlehurst"
-__all__ = ["ROCKETClassifier"]
+__author__ = "RavenRudi"
+__all__ = ["ROCKETRegressor"]
 
 import numpy as np
-from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 from sktime.transformations.panel.rocket import Rocket
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-class ROCKETClassifier(BaseClassifier):
+class ROCKETRegressor(BaseRegressor):
     """
-    Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
-    base classifier.
-    Allows the creation of an ensemble of ROCKET classifiers to allow for
+    Regressor wrapped for the ROCKET transformer using RidgeCV as the
+    base regressor.
+    Allows the creation of an ensemble of ROCKET regressors to allow for
     generation of probabilities as the expense of scalability.
 
     Parameters
@@ -35,7 +35,7 @@ class ROCKETClassifier(BaseClassifier):
 
     Attributes
     ----------
-    classifiers             : array of IndividualTDE classifiers
+    regressors             : array of IndividualTDE regressors
     weights                 : weight of each classifier in the ensemble
     weight_sum              : sum of all weights
     n_classes               : extracted from the data
@@ -53,7 +53,7 @@ class ROCKETClassifier(BaseClassifier):
 
     Java version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/classifiers/hybrids/ROCKETClassifier.java
+    tsml/regressors/hybrids/ROCKETRegressor.java
 
     """
 
@@ -76,7 +76,7 @@ class ROCKETClassifier(BaseClassifier):
         self.ensemble_size = ensemble_size
         self.random_state = random_state
 
-        self.classifiers = []
+        self.regressors = []
         self.weights = []
         self.weight_sum = 0
 
@@ -84,12 +84,12 @@ class ROCKETClassifier(BaseClassifier):
         self.classes_ = []
         self.class_dictionary = {}
 
-        super(ROCKETClassifier, self).__init__()
+        super(ROCKETRegressor, self).__init__()
 
     def fit(self, X, y):
         """
         Build a single or ensemble of pipelines containing the ROCKET transformer and
-        RidgeClassifierCV classifier.
+        RidgeCV regressor.
 
         Parameters
         ----------
@@ -114,19 +114,19 @@ class ROCKETClassifier(BaseClassifier):
                     Rocket(
                         num_kernels=self.num_kernels, random_state=self.random_state
                     ),
-                    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+                    RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True),
                 )
                 rocket_pipeline.fit(X, y)
-                self.classifiers.append(rocket_pipeline)
+                self.regressors.append(rocket_pipeline)
                 self.weights.append(rocket_pipeline.steps[1][1].best_score_)
                 self.weight_sum = self.weight_sum + self.weights[i]
         else:
             rocket_pipeline = make_pipeline(
                 Rocket(num_kernels=self.num_kernels, random_state=self.random_state),
-                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+                RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True),
             )
             rocket_pipeline.fit(X, y)
-            self.classifiers.append(rocket_pipeline)
+            self.regressors.append(rocket_pipeline)
 
         self._is_fitted = True
         return self
@@ -142,7 +142,7 @@ class ROCKETClassifier(BaseClassifier):
             )
         else:
             self.check_is_fitted()
-            return self.classifiers[0].predict(X)
+            return self.regressors[0].predict(X)
 
     def predict_proba(self, X):
         self.check_is_fitted()
@@ -151,7 +151,7 @@ class ROCKETClassifier(BaseClassifier):
         if self.ensemble:
             sums = np.zeros((X.shape[0], self.n_classes))
 
-            for n, clf in enumerate(self.classifiers):
+            for n, clf in enumerate(self.regressors):
                 preds = clf.predict(X)
                 for i in range(0, X.shape[0]):
                     sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
@@ -159,7 +159,7 @@ class ROCKETClassifier(BaseClassifier):
             dists = sums / (np.ones(self.n_classes) * self.weight_sum)
         else:
             dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self.classifiers[0].predict(X)
+            preds = self.regressors[0].predict(X)
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
 
