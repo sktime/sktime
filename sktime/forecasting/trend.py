@@ -39,7 +39,6 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-
     >>> y = load_airline()
     >>> forecaster = PolynomialTrendForecaster(degree=1)
     >>> forecaster.fit(y)

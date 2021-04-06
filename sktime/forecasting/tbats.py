@@ -57,9 +57,14 @@ class TBATS(_TbatsAdapter):
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.tbats import TBATS
-
     >>> y = load_airline()
-    >>> forecaster = TBATS(sp=12)
+    >>> forecaster = TBATS(
+    ...     use_box_cox=False,
+    ...     use_trend=False,
+    ...     use_damped_trend=False,
+    ...     sp=12,
+    ...     use_arma_errors=False,
+    ...     n_jobs)
     >>> forecaster.fit(y)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """

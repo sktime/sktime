@@ -215,7 +215,6 @@ class AutoARIMA(_PmdArimaAdapter):
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
-
     >>> y = load_airline()
     >>> forecaster = AutoARIMA(sp=12, suppress_warnings=True)
     >>> forecaster.fit(y)
@@ -516,7 +515,6 @@ class ARIMA(_PmdArimaAdapter):
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
-
     >>> y = load_airline()
     >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),

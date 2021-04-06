@@ -91,7 +91,6 @@ class ThetaForecaster(ExponentialSmoothing):
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
-
     >>> y = load_airline()
     >>> forecaster = ThetaForecaster(sp=12)
     >>> forecaster.fit(y)

@@ -52,7 +52,6 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y)

@@ -86,9 +86,8 @@ class Prophet(_ProphetAdapter):
     ----------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.fbprophet import Prophet
-
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
-    >>> y = load_airline().to_timestamp()
+    >>> y = load_airline().to_timestamp(freq='M')
     >>> forecaster = Prophet(
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=int(len(y) / 12),
