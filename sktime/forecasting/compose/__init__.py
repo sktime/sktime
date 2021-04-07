@@ -15,6 +15,7 @@ __all__ = [
     "ReducedForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
+    "make_reduction",
 ]
 
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
