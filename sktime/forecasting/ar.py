@@ -58,13 +58,13 @@ class AutoAR(_StatsModelsAdapter):
 
     def __init__(
         self,
-        maxlag=10,
+        maxlag,
         trend="c",
         seasonal=False,
         hold_back=None,
         sp=None,
         missing="none",
-        ic="aic",
+        ic="bic",
         glob=False,
         old_names=True,
     ):
