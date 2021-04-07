@@ -92,11 +92,11 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
             plot_func = sns.lineplot
 
         plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
-    
+
     # plot prediction intervals if present
     if pred_int is not None:
         # check same conditions as for earlier indices
-        if not type(index) is type(pred_int.index):
+        if not type(index) is type(pred_int.index): # noqa
             raise TypeError("Found series with different index types.")
         elif all([x in index for x in pred_int.index]):
             ax.fill_between(
@@ -111,7 +111,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
             raise ValueError(
                 "pred_int has index values for which no other index values supplied"
             )
-    
+
     # combine data points for all series
     xs_flat = list(flatten(xs))
 
