@@ -95,18 +95,14 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     
     # plot prediction intervals if present
     if pred_int is not None:
-        pred_ys = np.ravel(np.argwhere(index.isin(pred_int.index)))
-        pred_ymin = pred_int.min()
-        pred_ymax = pred_int.max()
-
         # check same conditions as for earlier indices
         if not type(index) is type(pred_int.index):
             raise TypeError("Found series with different index types.")
         elif all([x in index for x in pred_int.index]):
             ax.fill_between(
-                pred_ys,
-                pred_ymin,
-                pred_ymax,
+                ax.get_lines()[-1].get_xdata(),
+                pred_int.lower,
+                pred_int.upper,
                 alpha=0.3,
                 color=ax.get_lines()[-1].get_c(),
                 label="prediction intervals",
