@@ -614,7 +614,7 @@ def make_reduction(
         scitype = _infer_scitype(estimator)
 
     Forecaster = _get_forecaster(scitype, strategy)
-    return Forecaster(estimator=estimator, window_length=window_length)
+    return Forecaster(regressor=estimator, window_length=window_length)
 
 
 def _check_strategy(strategy):
