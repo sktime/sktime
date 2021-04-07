@@ -92,12 +92,14 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
             plot_func = sns.lineplot
 
         plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
-        
+    
+    
     # plot prediction intervals if present
     if pred_int is not None:
         pred_ys = np.ravel(np.argwhere(index.isin(pred_int.index)))
         pred_ymin = pred_int.min()
         pred_ymax = pred_int.max()
+
         
         # check same conditions as for earlier indices
         if not type(index) is type(pred_int.index):  # noqa
@@ -115,6 +117,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
             raise ValueError(
                 "pred_int has index values for which no other index values supplied"
             )
+
             
     # combine data points for all series
     xs_flat = list(flatten(xs))
