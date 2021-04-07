@@ -15,9 +15,9 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.forecasting.compose._reduce import ReducedForecaster
-from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
-from sktime.forecasting.compose._reduce import DirectRegressionForecaster
-from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
+from sktime.forecasting.compose._reduce import RecursiveTabularRegressionForecaster
+from sktime.forecasting.compose._reduce import DirectTabularRegressionForecaster
+from sktime.forecasting.compose._reduce import MultioutputTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
 
@@ -28,8 +28,8 @@ def test_factory_method_recursive():
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     regressor = LinearRegression()
-    f1 = ReducedForecaster(regressor, scitype="regressor", strategy="recursive")
-    f2 = RecursiveRegressionForecaster(regressor)
+    f1 = ReducedForecaster(regressor, scitype="tabular-regressor", strategy="recursive")
+    f2 = RecursiveTabularRegressionForecaster(regressor)
 
     actual = f1.fit(y_train).predict(fh)
     expected = f2.fit(y_train).predict(fh)
@@ -43,8 +43,8 @@ def test_factory_method_direct():
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     regressor = LinearRegression()
-    f1 = ReducedForecaster(regressor, scitype="regressor", strategy="direct")
-    f2 = DirectRegressionForecaster(regressor)
+    f1 = ReducedForecaster(regressor, scitype="tabular-regressor", strategy="direct")
+    f2 = DirectTabularRegressionForecaster(regressor)
 
     actual = f1.fit(y_train, fh=fh).predict(fh)
     expected = f2.fit(y_train, fh=fh).predict(fh)
@@ -60,7 +60,9 @@ def test_factory_method_ts_recursive():
     ts_regressor = Pipeline(
         [("tabularize", Tabularizer()), ("model", LinearRegression())]
     )
-    f1 = ReducedForecaster(ts_regressor, scitype="ts_regressor", strategy="recursive")
+    f1 = ReducedForecaster(
+        ts_regressor, scitype="time-series-regressor", strategy="recursive"
+    )
     f2 = RecursiveTimeSeriesRegressionForecaster(ts_regressor)
 
     actual = f1.fit(y_train).predict(fh)
@@ -77,7 +79,9 @@ def test_factory_method_ts_direct():
     ts_regressor = Pipeline(
         [("tabularize", Tabularizer()), ("model", LinearRegression())]
     )
-    f1 = ReducedForecaster(ts_regressor, scitype="ts_regressor", strategy="direct")
+    f1 = ReducedForecaster(
+        ts_regressor, scitype="time-series-regressor", strategy="direct"
+    )
     f2 = DirectTimeSeriesRegressionForecaster(ts_regressor)
 
     actual = f1.fit(y_train, fh=fh).predict(fh)
@@ -94,8 +98,8 @@ def test_multioutput_direct_tabular():
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     regressor = LinearRegression()
-    f1 = MultioutputRegressionForecaster(regressor)
-    f2 = DirectRegressionForecaster(regressor)
+    f1 = MultioutputTabularRegressionForecaster(regressor)
+    f2 = DirectTabularRegressionForecaster(regressor)
 
     preds1 = f1.fit(y_train, fh=fh).predict(fh)
     preds2 = f2.fit(y_train, fh=fh).predict(fh)
