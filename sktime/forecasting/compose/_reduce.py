@@ -4,18 +4,20 @@
 
 __author__ = "Markus Löning"
 __all__ = [
+    "make_reduction",
     "ReducedTabularRegressorMixin",
     "ReducedTimeSeriesRegressorMixin",
     "DirectTimeSeriesRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
     "DirectTabularRegressionForecaster",
-    "MultioutputTabularRegressionForecaster",
     "RecursiveTabularRegressionForecaster",
+    "MultioutputTabularRegressionForecaster",
     "ReducedForecaster",
 ]
 
 import numpy as np
 import pandas as pd
+from sklearn.base import RegressorMixin
 from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -23,6 +25,8 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.regression.base import BaseRegressor
+from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
@@ -525,27 +529,30 @@ class RecursiveTimeSeriesRegressionForecaster(
 ##############################################################################
 # factory methods for easier user interface, but not tunable as it's not an
 # estimator
+
+
+@deprecated("Please use `make_reduction` from `sktime.forecasting.compose` instead.")
 def ReducedForecaster(
-    regressor, scitype, strategy="recursive", window_length=10, step_length=1
+    estimator, scitype, strategy="recursive", window_length=10, step_length=1
 ):
     """
     Forecasting based on reduction
 
     When fitting, a rolling window approach is used to first transform the
     target series into panel data which is
-    then used to train a regressor. During prediction, the last
+    then used to train a estimator. During prediction, the last
     available data is used as input to the
-    fitted regressors to make forecasts.
+    fitted estimators to make forecasts.
 
     Parameters
     ----------
+    estimator : a estimator of type given by parameter scitype
     scitype : str
         Can be 'regressor' or 'ts-regressor'
     strategy : str {"direct", "recursive", "multioutput"}, optional
         Strategy to generate predictions
     window_length : int, optional (default=10)
     step_length : int, optional (default=1)
-    regressor : a regressor of type given by parameter scitype
 
     References
     ----------
@@ -553,40 +560,108 @@ def ReducedForecaster(
     2013).
       Machine Learning Strategies for Time Series Forecasting.
     """
-    Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(
-        regressor=regressor, window_length=window_length, step_length=step_length
+    if step_length != 1:
+        raise ValueError("`step_length` is no longer supported.")
+    return make_reduction(
+        estimator, strategy=strategy, window_length=window_length, scitype=scitype
     )
 
 
-def _get_forecaster_class(scitype, strategy):
+def make_reduction(
+    estimator,
+    strategy="recursive",
+    window_length=10,
+    scitype="infer",
+):
+    """
+    Create a reduction forecaster based on a tabular or time series
+    regression estimator.
+
+    When fitting, a sliding window approach is used to first transform the
+    target series into tabular or panel data, which is then used to train a
+    estimator. During prediction, the last available data is used as input to the
+    fitted estimators to generate forecasts.
+
+    Parameters
+    ----------
+    estimator : an estimator instance
+        Either a tabular regressor from scikit-learn or a time series regressor from
+        sktime.
+    strategy : str, optional (default="recursive")
+        Must be one of "direct", "recursive", "multioutput". The strategy to apply
+        estimator to forecasting task.
+    window_length : int, optional (default=10)
+        Window length used in sliding window transformation.
+    scitype : str, optional (default="inferred")
+        Must be one of "inferred", "tabular-regressor" or "time-series-regressor". If
+        the scitype cannot be inferred, please specify it explicitly.
+
+    Returns
+    -------
+    estimator : an Estimator instance
+        A reduction forecaster
+
+    References
+    ----------
+    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
+      Machine Learning Strategies for Time Series Forecasting.
+    """
+    # We provide this function as a factory method for easier usage.
+    strategy = _check_strategy(strategy)
+    scitype = _check_scitype(scitype)
+
+    if scitype == "infer":
+        scitype = _infer_scitype(estimator)
+
+    Forecaster = _get_forecaster(scitype, strategy)
+    return Forecaster(estimator=estimator, window_length=window_length)
+
+
+def _check_strategy(strategy):
+    valid_strategies = ("direct", "recursive", "multioutput")
+    if strategy not in valid_strategies:
+        raise ValueError(f"Unknown `strategy`, please use one of {valid_strategies}.")
+    return strategy
+
+
+def _check_scitype(scitype):
+    valid_scitypes = ("infer", "tabular-regressor", "time-series-regressor")
+    if scitype not in valid_scitypes:
+        raise ValueError(f"Unknown `scitype`, please use one of {valid_scitypes}.")
+
+    return scitype
+
+
+def _infer_scitype(estimator):
+    # We can check if estimator is an instance of scikit-learn's RegressorMixin or
+    # of sktime's BaseRegressor, otherwise we raise an error.
+
+    if isinstance(estimator, RegressorMixin):
+        return "tabular-regressor"
+    elif isinstance(estimator, BaseRegressor):
+        return "time-series-regressor"
+    else:
+        raise ValueError(
+            "The `scitype` of the given `estimator` cannot be inferred. "
+            "Please specify the `scitype` explicitly."
+        )
+
+
+def _get_forecaster(scitype, strategy):
     """Helper function to select forecaster for a given scientific type (
     scitype)
     and reduction strategy"""
 
-    allowed_strategies = ("direct", "recursive", "multioutput")
-    if strategy not in allowed_strategies:
-        raise ValueError(
-            f"Unknown strategy, please provide one of {allowed_strategies}."
-        )
-
-    if scitype == "ts_regressor" and strategy == "multioutput":
-        raise NotImplementedError(
-            "The `multioutput` strategy is not yet implemented "
-            "for time series regresors."
-        )
-
-    lookup_table = {
-        "regressor": {
+    registry = {
+        "tabular-regressor": {
             "direct": DirectTabularRegressionForecaster,
             "recursive": RecursiveTabularRegressionForecaster,
             "multioutput": MultioutputTabularRegressionForecaster,
         },
-        "ts_regressor": {
+        "time-series-regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster,
+            # "multioutput": MultioutputTimeSeriesRegressionForecaster,
         },
     }
-    # look up and return forecaster class
-    Forecaster = lookup_table.get(scitype).get(strategy)
-    return Forecaster
+    return registry.get(scitype).get(strategy)
