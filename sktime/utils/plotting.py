@@ -96,7 +96,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     # plot prediction intervals if present
     if pred_int is not None:
         # check same conditions as for earlier indices
-        if not type(index) is type(pred_int.index): # noqa
+        if not type(index) is type(pred_int.index):  # noqa
             raise TypeError("Found series with different index types.")
         elif all([x in index for x in pred_int.index]):
             ax.fill_between(
