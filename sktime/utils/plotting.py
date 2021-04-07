@@ -116,6 +116,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
                 "pred_int has index values for which no other index values supplied"
             )
     
+    
     # combine data points for all series
     xs_flat = list(flatten(xs))
 
