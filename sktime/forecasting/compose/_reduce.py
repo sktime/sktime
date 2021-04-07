@@ -8,9 +8,9 @@ __all__ = [
     "ReducedTimeSeriesRegressorMixin",
     "DirectTimeSeriesRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
-    "DirectRegressionForecaster",
-    "MultioutputRegressionForecaster",
-    "RecursiveRegressionForecaster",
+    "DirectTabularRegressionForecaster",
+    "MultioutputTabularRegressionForecaster",
+    "RecursiveTabularRegressionForecaster",
     "ReducedForecaster",
 ]
 
@@ -400,7 +400,7 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
 
 ##############################################################################
 # reduction to regression
-class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
+class DirectTabularRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     """
     Forecasting based on reduction to tabular regression with a direct
     reduction strategy.
@@ -422,7 +422,7 @@ class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     pass
 
 
-class MultioutputRegressionForecaster(
+class MultioutputTabularRegressionForecaster(
     ReducedTabularRegressorMixin, _MultioutputReducer
 ):
     """
@@ -446,7 +446,9 @@ class MultioutputRegressionForecaster(
     pass
 
 
-class RecursiveRegressionForecaster(ReducedTabularRegressorMixin, _RecursiveReducer):
+class RecursiveTabularRegressionForecaster(
+    ReducedTabularRegressorMixin, _RecursiveReducer
+):
     """
     Forecasting based on reduction to tabular regression with a recursive
     reduction strategy.
@@ -576,9 +578,9 @@ def _get_forecaster_class(scitype, strategy):
 
     lookup_table = {
         "regressor": {
-            "direct": DirectRegressionForecaster,
-            "recursive": RecursiveRegressionForecaster,
-            "multioutput": MultioutputRegressionForecaster,
+            "direct": DirectTabularRegressionForecaster,
+            "recursive": RecursiveTabularRegressionForecaster,
+            "multioutput": MultioutputTabularRegressionForecaster,
         },
         "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
