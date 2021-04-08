@@ -126,12 +126,11 @@ Composition
 
     EnsembleForecaster
     TransformedTargetForecaster
-    DirectRegressionForecaster
+    DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
-    MultioutputRegressionForecaster
-    RecursiveRegressionForecaster
+    MultioutputTabularRegressionForecaster
+    RecursiveTabularRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    ReducedForecaster
     StackingForecaster
     MultiplexForecaster
 
