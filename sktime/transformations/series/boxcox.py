@@ -14,6 +14,7 @@ from scipy.special import boxcox
 from scipy.special import inv_boxcox
 from scipy.stats import boxcox_llf
 from scipy.stats import distributions
+from scipy.stats import variation
 from scipy.stats.morestats import _boxcox_conf_interval
 from scipy.stats.morestats import _calc_uniform_order_statistic_medians
 
@@ -121,7 +122,31 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         maxlog[1] = _mle(x)
         return maxlog
 
-    methods = {"pearsonr": _pearsonr, "mle": _mle, "all": _all}
+    def _guerrero(x, sp=5):
+        # function _guerrero uses the Guerrero method
+        # for a time series x with seasonal periodicity sp
+        # and lambda parameter lmb
+        # returns the x_ratio_cv coefficient of variation
+
+        x = np.asarray(x)
+        num_obs = len(x)
+        len_prefix = num_obs % sp
+
+        x_trimmed = x[len_prefix:]
+        x_mat = x_trimmed.reshape((-1, sp))
+        x_mean = np.mean(x_mat, axis=1)
+
+        # [Guerrero, Eq.(5)] uses an unbiased estimation for the standard deviation
+        x_std = np.std(x_mat, axis=1, ddof=1)
+
+        def _eval_guerrero(lmb, x_std, x_mean):
+            x_ratio = x_std / x_mean ** (1 - lmb)
+            x_ratio_cv = variation(x_ratio)
+            return x_ratio_cv
+
+        return optimizer(_eval_guerrero, args=(x_std, x_mean))
+
+    methods = {"pearsonr": _pearsonr, "mle": _mle, "all": _all, "guerrero": _guerrero}
     if method not in methods.keys():
         raise ValueError("Method %s not recognized." % method)
 
