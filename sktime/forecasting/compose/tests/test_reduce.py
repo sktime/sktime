@@ -130,6 +130,48 @@ def test_sliding_window_tranform_panel(n_timepoints, window_length, n_variables,
     assert np.all(Xt < yt[:, np.newaxis, [0]])
 
 
+def test_sliding_window_transform_explicit():
+    """
+    testing with explicitly written down expected outputs
+    intended to help future contributors understand the transformation
+    """
+    y = pd.Series(np.arange(9))
+    X = pd.concat([y + 100, y + 200], axis=1)
+    fh = ForecastingHorizon([1, 3], is_relative=True)
+    window_length = 2
+
+    yt_actual, Xt_tabular_actual = _sliding_window_transform(y, window_length, fh, X)
+    _, Xt_time_series_actual = _sliding_window_transform(
+        y, window_length, fh, X, scitype="time-series-regressor"
+    )
+
+    yt_expected = np.array([[2.0, 4.0], [3.0, 5.0], [4.0, 6.0], [5.0, 7.0], [6.0, 8.0]])
+
+    Xt_tabular_expected = np.array(
+        [
+            [0.0, 1.0, 100.0, 101.0, 200.0, 201.0],
+            [1.0, 2.0, 101.0, 102.0, 201.0, 202.0],
+            [2.0, 3.0, 102.0, 103.0, 202.0, 203.0],
+            [3.0, 4.0, 103.0, 104.0, 203.0, 204.0],
+            [4.0, 5.0, 104.0, 105.0, 204.0, 205.0],
+        ]
+    )
+
+    Xt_time_series_expected = np.array(
+        [
+            [[0.0, 1.0], [100.0, 101.0], [200.0, 201.0]],
+            [[1.0, 2.0], [101.0, 102.0], [201.0, 202.0]],
+            [[2.0, 3.0], [102.0, 103.0], [202.0, 203.0]],
+            [[3.0, 4.0], [103.0, 104.0], [203.0, 204.0]],
+            [[4.0, 5.0], [104.0, 105.0], [204.0, 205.0]],
+        ]
+    )
+
+    assert (yt_actual == yt_expected).all()
+    assert (Xt_tabular_actual == Xt_tabular_expected).all()
+    assert (Xt_time_series_actual == Xt_time_series_expected).all()
+
+
 def _make_y(start, end, method="linear-trend", slope=1):
     # generate test data
     if method == "linear-trend":

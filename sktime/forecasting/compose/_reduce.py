@@ -54,6 +54,9 @@ def _sliding_window_transform(
     See section 2.1 of this hackmd file for intended design:
     * https://hackmd.io/wElp3UjRSYyMX2dRjZpU5w?both
 
+    See `test_sliding_window_transform_explicit` in test_reduce.py for explicit
+    example
+
     Returns
     -------
     yt : np.ndarray, shape = (n_timepoints - window_length, 1)
