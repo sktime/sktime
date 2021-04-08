@@ -567,6 +567,42 @@ def ReducedForecaster(
     )
 
 
+@deprecated("Please use `make_reduction` from `sktime.forecasting.compose` instead.")
+def ReducedRegressionForecaster(
+    estimator, scitype, strategy="recursive", window_length=10, step_length=1
+):
+    """
+    Forecasting based on reduction
+
+    When fitting, a rolling window approach is used to first transform the
+    target series into panel data which is
+    then used to train a estimator. During prediction, the last
+    available data is used as input to the
+    fitted estimators to make forecasts.
+
+    Parameters
+    ----------
+    estimator : a estimator of type given by parameter scitype
+    scitype : str
+        Can be 'regressor' or 'ts-regressor'
+    strategy : str {"direct", "recursive", "multioutput"}, optional
+        Strategy to generate predictions
+    window_length : int, optional (default=10)
+    step_length : int, optional (default=1)
+
+    References
+    ----------
+    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
+    2013).
+      Machine Learning Strategies for Time Series Forecasting.
+    """
+    if step_length != 1:
+        raise ValueError("`step_length` is no longer supported.")
+    return make_reduction(
+        estimator, strategy=strategy, window_length=window_length, scitype=scitype
+    )
+
+
 def make_reduction(
     estimator,
     strategy="recursive",
