@@ -51,6 +51,9 @@ def _sliding_window_transform(
     """Transform time series data `z` with shape (n_timepoints, n_variables) into
     a 3d panel array via a sliding window of fixed length `window_length`.
 
+    See section 2.1 of this hackmd file for intended design:
+    * https://hackmd.io/wElp3UjRSYyMX2dRjZpU5w?both
+
     Returns
     -------
     yt : np.ndarray, shape = (n_timepoints - window_length, 1)
