@@ -6,7 +6,6 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
 
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
@@ -34,6 +33,7 @@ from sktime.forecasting.compose import DirectTabularRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
+from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
