@@ -105,7 +105,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
                 pred_int.upper,
                 alpha=0.3,
                 color=ax.get_lines()[-1].get_c(),
-                label="prediction intervals"
+                label="prediction intervals",
             )
         else:
             raise ValueError(
