@@ -109,7 +109,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
             )
         else:
             raise ValueError(
-                "pred_int has index values for which no other index values supplied"
+                "pred_int index does not match the index of the other passed series"
             )
 
     # combine data points for all series
