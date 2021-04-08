@@ -272,6 +272,7 @@ VALID_ESTIMATOR_TAGS = (
     "univariate-only",
     "transform-returns-same-time-index",
     "handles-missing-data",
+    "skip-inverse-transform",
 )
 
 # The following gives a list of valid estimator base classes.
