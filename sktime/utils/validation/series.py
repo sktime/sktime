@@ -15,11 +15,11 @@ VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIn
 def _check_is_univariate(y):
     """Check if series is univariate"""
     if isinstance(y, pd.DataFrame):
-        raise ValueError("Data must be univariate, but found a pd.DataFrame")
+        raise ValueError("Data must be univariate, but found a pd.DataFrame.")
     if isinstance(y, np.ndarray) and y.ndim > 1:
         raise ValueError(
             "Data must be univariate, but found np.array with more than "
-            "one dimension"
+            "one dimension."
         )
 
 
@@ -53,7 +53,7 @@ def check_series(
     ValueError, TypeError
         If Z is an invalid input
     """
-    # Check if pandas series or numpy array
+    # Check if pandas series or numpy array.
     if not allow_numpy:
         valid_data_types = tuple(
             filter(lambda x: x is not np.ndarray, VALID_DATA_TYPES)
@@ -69,7 +69,7 @@ def check_series(
     if enforce_univariate:
         _check_is_univariate(Z)
 
-    # check time index
+    # Check time index.
     check_time_index(
         Z.index, allow_empty=allow_empty, enforce_index_type=enforce_index_type
     )
@@ -110,14 +110,14 @@ def check_time_index(index, allow_empty=False, enforce_index_type=None):
             f"type: {enforce_index_type} instead."
         )
 
-    # Check time index is ordered in time
+    # Check time index is ordered in time.
     if not index.is_monotonic:
         raise ValueError(
             f"The (time) index must be sorted (monotonically increasing), "
             f"but found: {index}"
         )
 
-    # Check that index is not empty
+    # Check that index is not empty.
     if not allow_empty and len(index) < 1:
         raise ValueError(
             f"`index` must contain at least some values, but found "
@@ -141,7 +141,7 @@ def check_equal_time_index(*ys):
         If (time) indices are not the same
     """
 
-    # only validate indices if data is passed as pd.Series
+    # Only validate indices if data is passed as pd.Series.
     first_index = ys[0].index
     check_time_index(first_index)
 

@@ -47,19 +47,20 @@ class _SktimeForecaster(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        # set initial training data
+        # Set training data.
         self._y, self._X = check_y_X(
             y, X, allow_empty=False, enforce_index_type=enforce_index_type
         )
 
-        # set initial cutoff to the end of the training data
+        # Set cutoff as the end of the training data.
         self._set_cutoff(y.index[-1])
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None:
             X = check_X(X, enforce_index_type=enforce_index_type)
-            if X is len(X) > 0:
-                self._X = X.combine_first(self._X)
+            # We combine the new X with the existing self._X. If the new X contains
+            # values of the existing self._X, we use the new values.
+            self._X = X.combine_first(self._X)
 
     def _update_y_X(self, y, X=None, enforce_index_type=None):
         """Update training data.
@@ -83,65 +84,6 @@ class _SktimeForecaster(BaseForecaster):
             # update X if given
             if X is not None:
                 self._X = X.combine_first(self._X)
-
-    def _get_y_pred(self, y_in_sample, y_out_sample):
-        """Combining in-sample and out-sample prediction
-        and slicing on given fh.
-
-        Parameters
-        ----------
-        y_in_sample : pd.Series
-            In-sample prediction
-        y_out_sample : pd.Series
-            Out-sample prediction
-
-        Returns
-        -------
-        pd.Series
-            y_pred, sliced by fh
-        """
-        y_pred = y_in_sample.append(y_out_sample, ignore_index=True).rename("y_pred")
-        y_pred = pd.DataFrame(y_pred)
-        # Workaround for slicing with negative index
-        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
-        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        y_pred.index = self.fh.to_absolute(self.cutoff)
-        y_pred = y_pred["y_pred"].rename(None)
-        return y_pred
-
-    def _get_pred_int(self, lower, upper):
-        """Combining lower and upper bound of
-        prediction intervals. Slicing on fh.
-
-        Parameters
-        ----------
-        lower : pd.Series
-            Lower bound (can contain also in-sample bound)
-        upper : pd.Series
-            Upper bound (can contain also in-sample bound)
-
-        Returns
-        -------
-        pd.DataFrame
-            pred_int, predicion intervalls (out-sample, sliced by fh)
-        """
-        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
-        # Out-sample fh
-        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
-        # If pred_int contains in-sample prediction intervals
-        if len(pred_int) > len(self._y):
-            len_out = len(pred_int) - len(self._y)
-            # Workaround for slicing with negative index
-            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
-        # If pred_int does not contain in-sample prediction intervals
-        else:
-            pred_int["idx"] = [x for x in range(len(pred_int))]
-        pred_int = pred_int.loc[
-            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
-        ]
-        pred_int.index = fh_out.to_absolute(self.cutoff)
-        pred_int = pred_int.drop(columns=["idx"])
-        return pred_int
 
     @property
     def cutoff(self):
@@ -185,7 +127,7 @@ class _SktimeForecaster(BaseForecaster):
         # set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
+                "No `fh` has been set yet. Please specify `fh` in `fit` or `predict`."
             )
         return self._fh
 
@@ -198,7 +140,7 @@ class _SktimeForecaster(BaseForecaster):
         ----------
         fh : None, int, list, np.array
         """
-        raise NotImplementedError()
+        raise NotImplementedError("abstract method")
 
     def fit(self, y, X=None, fh=None):
         raise NotImplementedError("abstract method")
@@ -524,8 +466,7 @@ class _OptionalForecastingHorizonMixin:
                 # we can simply use that one
         else:
             # If fh is passed, validate first, then check if there is one
-            # already,
-            # and overwrite
+            # already and overwrite
 
             # A warning should only be raised if fh passed to fit is
             # overwritten, but no warning is required when no fh has been provided in

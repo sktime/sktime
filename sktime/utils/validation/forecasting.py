@@ -195,7 +195,7 @@ def check_sp(sp, enforce_list=False):
     ----------
     sp : int or [int/float]
         Seasonal periodicity
-    emforce_list : bool, optional (default=False)
+    enforce_list : bool, optional (default=False)
         If true, convert sp to list if not list.
 
     Returns
