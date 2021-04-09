@@ -167,9 +167,9 @@ def test_sliding_window_transform_explicit():
         ]
     )
 
-    assert (yt_actual == yt_expected).all()
-    assert (Xt_tabular_actual == Xt_tabular_expected).all()
-    assert (Xt_time_series_actual == Xt_time_series_expected).all()
+    np.testing.assert_array_equal(yt_actual, yt_expected)
+    np.testing.assert_array_equal(Xt_tabular_actual, Xt_tabular_expected)
+    np.testing.assert_array_equal(Xt_time_series_actual, Xt_time_series_expected)
 
 
 def _make_y(start, end, method="linear-trend", slope=1):
