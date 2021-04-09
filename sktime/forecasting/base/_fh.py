@@ -42,6 +42,7 @@ DELEGATED_METHODS = (
     "__len__",
     "max",
     "min",
+    "isin",
 )
 
 

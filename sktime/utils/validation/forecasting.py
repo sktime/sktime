@@ -237,15 +237,15 @@ def check_fh(fh, enforce_relative=False):
     if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=True)
 
-    # Check if non-empty, note we check for empty values here, rather than
-    # during construction of ForecastingHorizon because ForecastingHorizon
-    # can be empty in some cases, but users should not create forecasting horizons
-    # with no values
+    # Check if non-empty. Note that we check for empty values here rather than
+    # during construction of the ForecastingHorizon. This is because
+    # the ForecastingHorizon can be empty in some cases, but users should
+    # not create forecasting horizons with no values.
     if len(fh) == 0:
-        raise ValueError("`fh` must not be empty")
+        raise ValueError("`fh` must not be empty.")
 
     if enforce_relative and not fh.is_relative:
-        raise ValueError("`fh` must be relative, but found absolute `fh`")
+        raise ValueError("`fh` must be relative, but found absolute `fh`.")
 
     return fh
 
