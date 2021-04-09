@@ -300,7 +300,7 @@ def test_make_reduction_construct_instance(scitype, strategy, klass, window_leng
     "estimator, scitype",
     [
         (LinearRegression(), "tabular-regressor"),
-        (TimeSeriesForestRegressor(), "tabular-regressor"),
+        (TimeSeriesForestRegressor(), "time-series-regressor"),
     ],
 )
 def test_make_reduction_infer_scitype(estimator, scitype):

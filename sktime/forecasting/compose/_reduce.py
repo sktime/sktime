@@ -62,7 +62,6 @@ def _sliding_window_transform(
     # There are different ways to implement this transform. Pre-allocating an
     # array and filling it by iterating over the window length seems to be the most
     # efficient one.
-    scitype = _check_scitype(scitype)
     window_length = check_window_length(window_length)
 
     z = _prepare_y_X(y, X)
@@ -673,11 +672,13 @@ def _check_scitype(scitype):
 
 def _infer_scitype(estimator):
     # We can check if estimator is an instance of scikit-learn's RegressorMixin or
-    # of sktime's BaseRegressor, otherwise we raise an error.
-    if isinstance(estimator, RegressorMixin):
-        return "tabular-regressor"
-    elif isinstance(estimator, BaseRegressor):
+    # of sktime's BaseRegressor, otherwise we raise an error. Some time-series
+    # regressor also inherit from scikit-learn classes, hence the order in which we
+    # check matters.
+    if isinstance(estimator, BaseRegressor):
         return "time-series-regressor"
+    elif isinstance(estimator, RegressorMixin):
+        return "tabular-regressor"
     else:
         raise ValueError(
             "The `scitype` of the given `estimator` cannot be inferred. "
