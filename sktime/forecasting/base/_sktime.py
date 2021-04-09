@@ -26,7 +26,10 @@ from sktime.utils.validation.forecasting import check_y_X
 
 def _index_range(start, end):
     """Helper function to create index range from start to end point."""
-    assert type(start) is type(end)
+    if isinstance(start, (int, np.integer)):
+        assert isinstance(end, (int, np.integer))
+    else:
+        assert type(start) is type(end)
 
     if isinstance(start, pd.Period):
         return pd.period_range(start, end)
@@ -48,10 +51,13 @@ class _SktimeForecaster(BaseForecaster):
         # training data
         self._y = None
         self._X = None
+        self._with_X = False
 
         # forecasting horizon
         self._fh = None
-        self._cutoff = None  # reference point for relative fh
+
+        # reference point for relative fh
+        self._cutoff = None
         super(_SktimeForecaster, self).__init__()
 
     def _check_fit(self, y, X=None, fh=None, enforce_index_type=None):
@@ -69,18 +75,17 @@ class _SktimeForecaster(BaseForecaster):
         # We then check the forecasting horizon, if given, and its
         # compatibility with the input data.
         self._set_fh(fh)
-        if self.fh is not None:
+        if fh is not None:
             # Check if in-sample steps are within length of input data y.
             if (
                 not self.fh.is_all_out_of_sample(self.cutoff)
-                and abs(min(fh)) > len(y) - 1
+                and abs(min(self.fh.to_relative(self.cutoff))) > len(y) - 1
             ):
                 raise ValueError(
                     "The forecasting horizon `fh` is "
                     "incompatible with the length of the input "
                     "data `y`."
                 )
-        return y, X, fh
 
     def _check_predict(self, fh=None, X=None, enforce_index_type=None):
         self.check_is_fitted()
@@ -89,8 +94,13 @@ class _SktimeForecaster(BaseForecaster):
         if X is not None:
             if self._with_X:
                 X = check_X(X, enforce_index_type=enforce_index_type)
+
+                # We combine the new X with the existing self._X. If the new X contains
+                # values of the existing self._X, we use the new values.
                 self._X = X.combine_first(self._X)
             else:
+                # We raise an error if exogenous variables were not used during
+                # fitting but given in predict.
                 raise ValueError(
                     "Found exogenous variables `X` in `predict`, "
                     "but none were given in `fit`."
@@ -102,44 +112,32 @@ class _SktimeForecaster(BaseForecaster):
 
         # Check if in-sample steps are within length of input data y.
         if not self.fh.is_all_out_of_sample(self.cutoff):
-            if abs(min(fh)) > len(self._y) - 1:
+            if abs(min(self.fh.to_relative(self.cutoff))) > len(self._y) - 1:
                 raise ValueError(
                     "The given forecasting horizon `fh` specifies in-sample time "
                     "points which are incompatible with the length of the input "
                     "data `y`."
                 )
 
-        if not self.fh.is_all_in_sample(self.cutoff):
-            fh_max = self.fh.to_absolute(self.cutoff)[-1]
-            full_range = _index_range(self.cutoff, fh_max)[1:]
-            if not np.all(full_range.isin(self._X)):
-                raise ValueError(
-                    "The given exogenous variables `X` are insufficient for the given "
-                    "forecasting horizon `fh`. Please provide the full range of "
-                    "exogenous variables from the end of the training series to the "
-                    "further step ahead in the forecasting horizon."
-                )
+        # Check if exogenous variables are compatible with forecasting horizon.
+        if self._with_X:
+            if not self.fh.is_all_in_sample(self.cutoff):
+                fh_max = self.fh.to_absolute(self.cutoff)[-1]
+                full_range = _index_range(self.cutoff, fh_max)[1:]
+                if not np.all(np.isin(full_range, self._X)):
+                    raise ValueError(
+                        "The given exogenous variables `X` are insufficient for the "
+                        "given forecasting horizon `fh`. Please provide the full range "
+                        "of exogenous variables from the end of the training series to "
+                        "the furthest step ahead in the forecasting horizon."
+                    )
 
     def _check_update(self, y, X=None, enforce_index_type=None):
         self.check_is_fitted()
         y, X = check_y_X(y, X, allow_empty=True, enforce_index_type=enforce_index_type)
-        return y, X
 
-    def _set_fit(self, y, X=None, fh=None):
-        self._y = y
-        self._X = X
-        self._set_cutoff(y.index[-1])
-        self._set_fh(fh)
-
-    def _set_predict(self, fh=None, X=None):
-        if X is not None:
-            # We combine the new X with the existing self._X. If the new X contains
-            # values of the existing self._X, we use the new values.
-            self._X = X.combine_first(self._X)
-        self._set_fh(fh)
-
-    def _set_update(self, y, X=None):
-        if len(y) > 0:
+        # The input data y may be empty. We only update if it is non-empty.
+        if not y.empty:
             self._y = y.combine_first(self._y)
             self._set_cutoff(y.index[-1])
 
@@ -274,8 +272,7 @@ class _SktimeForecaster(BaseForecaster):
         y_pred_int : pd.DataFrame
             Prediction intervals
         """
-        self.check_is_fitted()
-        self._set_fh(fh)
+        self._check_predict(fh, X)
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
