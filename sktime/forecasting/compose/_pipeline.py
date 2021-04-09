@@ -15,7 +15,6 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_series
-from sktime.utils._testing.estimator_checks import _has_tag
 
 
 class TransformedTargetForecaster(
@@ -122,6 +121,9 @@ class TransformedTargetForecaster(
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        # import here to avoid circular dependency
+        from sktime.utils._testing.estimator_checks import _has_tag
+
         if return_pred_int:
             raise NotImplementedError()
 
