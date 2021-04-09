@@ -15,6 +15,7 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_series
+from sktime.utils import _has_tag
 
 
 class TransformedTargetForecaster(
@@ -121,9 +122,6 @@ class TransformedTargetForecaster(
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        # import here to avoid circular dependency
-        from sktime.utils._testing.estimator_checks import _has_tag
-
         if return_pred_int:
             raise NotImplementedError()
 
@@ -132,7 +130,7 @@ class TransformedTargetForecaster(
 
         for _, _, transformer in self._iter_transformers(reverse=True):
             # skip sktime transformers where inverse transform
-            # is not wanted ur meaningful (e.g. Imputer)
+            # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             if not _has_tag(transformer, "skip-inverse-transform"):
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred

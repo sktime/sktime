@@ -47,6 +47,7 @@ from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils.data_processing import is_nested_dataframe
+from sktime.utils import _has_tag
 
 
 def check_estimator(Estimator, exclude=None):
@@ -721,9 +722,3 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
-
-
-def _has_tag(Estimator, tag):
-    assert tag in VALID_ESTIMATOR_TAGS
-    # Check if tag is in all tags
-    return Estimator._all_tags().get(tag, False)

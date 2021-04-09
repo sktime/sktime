@@ -15,9 +15,9 @@ from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils import all_estimators
+from sktime.utils import _has_tag
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.estimator_checks import _has_tag
 from sktime.utils._testing.estimator_checks import _make_args
 from sktime.utils.data_processing import is_nested_dataframe
 
@@ -59,8 +59,8 @@ def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
 def _check_raises_error(Estimator, **kwargs):
     with pytest.raises(ValueError, match=r"univariate"):
         if _has_tag(Estimator, "fit-in-transform"):
-            # As some estimators have an empty fit method, we here check if they
-            # raise the appropriate error in transform rather than fit.
+            # As some estimators have an empty fit method, we here check if
+            # they raise the appropriate error in transform rather than fit.
             _construct_fit_transform(Estimator, **kwargs)
         else:
             # All other estimators should raise the error in fit.
