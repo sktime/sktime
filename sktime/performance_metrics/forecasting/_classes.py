@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from sklearn.base import BaseEstimator
 from sktime.performance_metrics.forecasting._functions import (
+    mean_asymmetric_error,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
     mean_squared_scaled_error,
@@ -75,6 +76,17 @@ class SquaredPercentageErrorMixIn:
         )
 
 
+class AsymmetricErrorMixIn:
+    def __call__(self, y_true, y_pred):
+        return self.fn(
+            y_true,
+            y_pred,
+            asymmetric_threshold=self.asymmetric_treshold,
+            left_error_function=self.left_error_function,
+            right_error_function=self.right_error_function,
+        )
+
+
 class PercentageMetricFunctionWrapper(PercentageErrorMixIn, BaseMetricFunctionWrapper):
     def __init__(self, fn, name=None, greater_is_better=False, symmetric=False):
         self.symmetric = symmetric
@@ -95,7 +107,23 @@ class SquaredPercentageMetricFunctionWrapper(
     ):
         self.square_root = square_root
         self.symmetric = symmetric
-        super().__init__(n=fn, name=name, greater_is_better=greater_is_better)
+        super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
+
+
+class AsymmetricMetricFunctionWrapper(AsymmetricErrorMixIn, BaseMetricFunctionWrapper):
+    def __init__(
+        self,
+        fn,
+        name=None,
+        greater_is_better=False,
+        asymmetric_threshold=0,
+        left_error_function="squared",
+        right_error_function="absolute",
+    ):
+        self.asymmetric_threshold = asymmetric_threshold
+        self.left_error_function = left_error_function
+        self.right_error_function = right_error_function
+        super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
 def make_forecasting_scorer(
@@ -249,7 +277,7 @@ class MedianSquaredError(SquaredMetricFunctionWrapper):
 
 
 class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
-    def __init__(self, symmetric):
+    def __init__(self, symmetric=False):
         name = "MeanAbsolutePercentageError"
         fn = mean_absolute_percentage_error
         greater_is_better = False
@@ -259,7 +287,7 @@ class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
 
 
 class MedianAbsolutePercentageError(PercentageMetricFunctionWrapper):
-    def __init__(self, symmetric):
+    def __init__(self, symmetric=False):
         name = "MedianAbsolutePercentageError"
         fn = median_absolute_percentage_error
         greater_is_better = False
@@ -330,4 +358,24 @@ class GeometricMeanRelativeSquaredError(SquaredMetricFunctionWrapper):
             name=name,
             greater_is_better=greater_is_better,
             square_root=square_root,
+        )
+
+
+class MeanAsymmetricError(AsymmetricMetricFunctionWrapper):
+    def __init__(
+        self,
+        asymmetric_threshold=0,
+        left_error_function="squared",
+        right_error_function="absolute",
+    ):
+        name = "MeanAsymmetricError"
+        fn = mean_asymmetric_error
+        greater_is_better = False
+        super().__init__(
+            fn=fn,
+            name=name,
+            greater_is_better=greater_is_better,
+            asymmetric_threshold=asymmetric_threshold,
+            left_error_function=left_error_function,
+            right_error_function=right_error_function,
         )
