@@ -657,8 +657,7 @@ class _BaseWindowForecaster(_SktimeForecaster):
 
         # both in-sample and out-of-sample values
         else:
-            y_ins = self._predict_in_sample(
-                fh.to_in_sample(self.cutoff), **kwargs)
+            y_ins = self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )

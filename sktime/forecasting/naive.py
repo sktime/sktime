@@ -243,7 +243,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         T = len(data)  # T of the equation
         K = 1
 
-        actual = data[0: T - 1]
+        actual = data[0 : T - 1]
         predicted = data[1:T]
 
         errors = (actual - predicted) ** 2
