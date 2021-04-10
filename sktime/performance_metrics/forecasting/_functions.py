@@ -19,8 +19,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
-from sktime.utils.validation.series import check_time_index
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.series import check_time_index, check_series
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
@@ -256,7 +255,10 @@ def mean_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_y(y_train, enforce_univariate=False)
+    y_train = check_series(y_train, enforce_univariate=False)
+    # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
+    if y_train.ndim == 1:
+        y_train = np.expand_dims(y_train, 1)
 
     # Check test and train have same dimensions
     if y_true.ndim != y_train.ndim:
@@ -388,7 +390,9 @@ def median_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
+    y_train = check_series(y_train, enforce_univariate=False)
+    if y_train.ndim == 1:
+        y_train = np.expand_dims(y_train, 1)
 
     # Check test and train have same dimensions
     if y_true.ndim != y_train.ndim:
@@ -530,7 +534,9 @@ def mean_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
+    y_train = check_series(y_train, enforce_univariate=False)
+    if y_train.ndim == 1:
+        y_train = np.expand_dims(y_train, 1)
 
     # Check test and train have same dimensions
     if y_true.ndim != y_train.ndim:
@@ -671,7 +677,9 @@ def median_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
+    y_train = check_series(y_train, enforce_univariate=False)
+    if y_train.ndim == 1:
+        y_train = np.expand_dims(y_train, 1)
 
     # Check test and train have same dimensions
     if y_true.ndim != y_train.ndim:
@@ -1633,7 +1641,9 @@ def mean_relative_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
+    _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
+        y_true, y_pred_benchmark, multioutput
+    )
 
     if horizon_weight is None:
         output_errors = np.mean(
@@ -1733,7 +1743,9 @@ def median_relative_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
+    _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
+        y_true, y_pred_benchmark, multioutput
+    )
 
     if horizon_weight is None:
         output_errors = np.median(
@@ -1832,7 +1844,9 @@ def geometric_mean_relative_absolute_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
+    _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
+        y_true, y_pred_benchmark, multioutput
+    )
 
     relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
@@ -1945,7 +1959,9 @@ def geometric_mean_relative_squared_error(
     """
 
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
+    _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
+        y_true, y_pred_benchmark, multioutput
+    )
     relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
