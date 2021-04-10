@@ -432,8 +432,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
-        # note: This might be wrong?
-        # I provide the to_relative, since the tester in the next lines NEED a relative?
+
         self._cv = SlidingWindowSplitter(
             fh=self.fh.to_relative(self.cutoff),  # THIS MIGHT BE INCORRECT.
             window_length=self.window_length_,
@@ -446,23 +445,26 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         # iterate over forecasting horizon
         self.regressors_ = []
+        self.islist_ = isinstance(self.regressor, list)
+        self.approximations_ = []
 
-        # TODO: Have to:
-        # enforce that we use ONE regressor per forecasting point
-        # enforce that we use A list of regressors, not just ONE regressor
-        # have to allow the regressors to have their fitting windows re-adjusted.
-        # --> It's not up to the algorithm for us to have fit, then perform regression.
-
-        # train over the whole range of provided predictors
-        # i feel this is incorrect, the predictors
-        # have to use a combination of original and predicted data.
+        # train over the whole range of provided predictors,
+        # whether provided as a list or not
         for i in range(len(self.fh)):
             y = Y_train[:, i]
-            regressor = clone(self.regressor)
-            regressor.fit(X, y)
+            if self.islist_:
+                regressor = clone(self.regressor[i % len(self.regressor)])
+            else:
+                regressor = clone(self.regressor)
+            # Basically stuck at this step.
+            # if not self.approximations_:
+            #     regressor.fit(X, y)
+            # else:
+            #     regressor.fit(X, "y_with_append_approximations")
+            # self.approximations_.append(regressor.predict("Some", "value", "x"))
             self.regressors_.append(regressor)
 
-            # this is where the additional magic happens.
+            # extension step of X.
             X = np.column_stack([X, y.reshape(-1, 1)])
             X = self._format_windows(X)
 
@@ -475,7 +477,6 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         """Predict"""
         # compute prediction
         # prepare recursive predictions
-        # fh_max = fh[-1] # this will ALWAYS be an array of one.
         y_pred = np.zeros(len(fh))
 
         # get last window from observation horizon
@@ -484,12 +485,9 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
             return self._predict_nan(fh)
 
         # recursively predict iterating over forecasting horizon
-        # the error made here is that NOW we ARE
-        # assuming relative ranges..
         for i in range(len(y_pred)):
-            X_last = self._format_windows(
-                [last_window]
-            )  # convert data into required input format
+            # convert data into required input format
+            X_last = self._format_windows([last_window])
 
             # make forecast using specific fitted regressor
             y_pred[i] = self.regressors_[i].predict(X_last)
@@ -499,8 +497,6 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
             last_window = np.append(last_window, y_pred[i])
 
-        # fh_idx = fh.index_like(self.cutoff)
-        # Not sure why it assumes "index like" if we're using absolute forecasting
         return y_pred
 
 

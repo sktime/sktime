@@ -22,6 +22,7 @@ from sktime.forecasting.compose._reduce import DirRecRegressionForecaster
 from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
+from sktime.performance_metrics.forecasting import smape_loss
 
 
 @pytest.fixture
@@ -89,9 +90,7 @@ def test_factory_method_ts_direct(test_data):
 
 
 def test_factory_method_dirrec(test_data):
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=4)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    y, y_train, y_test, fh = test_data
 
     regressor = LinearRegression()
     f1 = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
@@ -117,3 +116,21 @@ def test_multioutput_direct_tabular(test_data):
 
     # assert_almost_equal does not seem to work with pd.Series objects
     np.testing.assert_almost_equal(preds1.to_numpy(), preds2.to_numpy(), decimal=5)
+
+
+def test_dirrec_correctness(test_data):
+    # recursive and dirrec regressor strategies
+    # dirrec regressor should produce lower error due to less cumulative error
+    y, y_train, y_test, fh = test_data
+
+    regressor = LinearRegression()
+    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
+    recursive = ReducedForecaster(regressor, scitype="regressor", strategy="recursive")
+
+    preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
+    preds_recursive = recursive.fit(y_train, fh=fh).predict(fh)
+
+    loss_dirrec = smape_loss(preds_dirrec)
+    loss_recurs = smape_loss(preds_recursive)
+
+    assert loss_dirrec < loss_recurs
