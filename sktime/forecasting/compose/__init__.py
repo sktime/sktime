@@ -15,6 +15,7 @@ __all__ = [
     "RecursiveTimeSeriesRegressionForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
+    "ReducedForecaster",
     "make_reduction",
 ]
 
@@ -28,4 +29,5 @@ from sktime.forecasting.compose._reduce import RecursiveTabularRegressionForecas
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._stack import StackingForecaster
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
+from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._reduce import make_reduction
