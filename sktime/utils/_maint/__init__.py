@@ -16,7 +16,7 @@ def deprecated(msg=""):
     Parameters
     ----------
     msg : str
-        Message to for highlighting alternatives or extra info
+        Message for highlighting alternatives or extra info
     """
 
     def deprecator(func):
