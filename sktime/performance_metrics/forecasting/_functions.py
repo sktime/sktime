@@ -61,7 +61,6 @@ def weighted_geometric_mean(x, sample_weight=None, axis=None):
     geometric_mean : float
         Weighted geometric mean
     """
-    # TODO: ADD Checks of inputs
     check_consistent_length(x, sample_weight)
     return np.exp(
         np.sum(sample_weight * np.log(x), axis=axis) / np.sum(sample_weight, axis=axis)
@@ -77,7 +76,22 @@ def mean_asymmetric_error(
     horizon_weight=None,
     multioutput="uniform_average",
 ):
-    """Calculates asymmetric error.
+    """Calculates asymmetric loss function. Error values that are less
+    than the asymmetric threshold have `left_error_function` applied.
+    Error values greater than or equal to asymmetric threshold  have
+    `right_error_function` applied.
+
+    Many forecasting loss functions assume that over- and under-
+    predictions should receive an equal penalty. However, this may not align
+    with the actual cost faced by users' of the forecasts. Asymmetric loss
+    functions are useful when the cost of under- and over- prediction are not
+    the same.
+
+    Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
+    and `right_error_function` to 'absoulte` results in a greater penalty
+    applied to over-predictions (y_true - y_pred < 0). The opposite is true
+    for `left_error_function` set to 'absolute' and `right_error_function`
+    set to 'squared`
 
     Parameters
     ----------
