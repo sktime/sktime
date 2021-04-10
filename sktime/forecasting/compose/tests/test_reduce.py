@@ -247,6 +247,9 @@ def test_dummy_regressor_mean_prediction(fh, window_length, strategy, scitype):
         # ahead we want to predict.
         effective_window_length = window_length + max(fh) - 1
 
+    # In the sliding-window transformation, the first values of the target series
+    # make up the first window and are not used in the transformed target vector. So
+    # the expected result should be the mean of the remaining values.
     expected = np.mean(y_train[effective_window_length:])
     np.testing.assert_array_almost_equal(actual, expected)
 
@@ -312,9 +315,12 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
     y_fit = estimator_.y_fit
     X_pred = estimator_.X_pred
 
-    # Format data into 3d array if the data is not in that format already.
+    # Format feature data into 3d array if the data is not in that format already.
     X_fit = X_fit.reshape(X_fit.shape[0], n_variables, -1)
     X_pred = X_pred.reshape(X_pred.shape[0], n_variables, -1)
+
+    # Format target data into 2d array.
+    y_fit = y_fit.reshape(y_fit.shape[0], -1)
 
     # Check that both fit and predict data have unit steps between them.
     assert np.allclose(np.diff(X_fit), 1)

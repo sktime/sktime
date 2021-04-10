@@ -53,6 +53,9 @@ def _sliding_window_transform(
 ):
     """Transform time series data `y` and `X` using sliding window.
 
+    See `test_sliding_window_transform_explicit` in test_reduce.py for explicit
+    example.
+
     Parameters
     ----------
     y : pd.Series
@@ -67,12 +70,6 @@ def _sliding_window_transform(
         Scitype of estimator to use with transformed data.
         - If "tabular-regressor", returns X as tabular 2d array
         - If "time-series-regressor", returns X as panel 3d array
-
-    See section 2.1 of this hackmd file for intended design:
-    * https://hackmd.io/wElp3UjRSYyMX2dRjZpU5w?both
-
-    See `test_sliding_window_transform_explicit` in test_reduce.py for explicit
-    example
 
     Returns
     -------
@@ -122,11 +119,12 @@ def _sliding_window_transform(
 
     # Return transformed feature and target variables separately. This excludes
     # contemporaneous values of the exogenous variables. Including them would lead to
-    # unequal-length data, with more time points for exogenous series
-    # than the target series, with is currently not supported.
+    # unequal-length data, with more time points for exogenous series than the target
+    # series, which is currently not supported.
     yt = Zt[:, 0, window_length + fh]
     Xt = Zt[:, :, :window_length]
 
+    # If the scitype is tabular regression, we have to convert X into a 2d array.
     if scitype == "tabular-regressor":
         return yt, Xt.reshape(Xt.shape[0], -1)
     else:
@@ -233,7 +231,7 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         self.estimators_ = []
         for i in range(len(self.fh)):
             estimator = clone(self.estimator)
-            estimator.fit(Xt, yt[:, [i]])
+            estimator.fit(Xt, yt[:, i])
             self.estimators_.append(estimator)
         return self
 
@@ -252,7 +250,6 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         else:
             # X is ignored here, since we currently only look at lagged values for
             # exogenous variables and not contemporaneous ones.
-            # X = X.to_numpy()
             n_columns = self._X.shape[1] + 1
 
         # Pre-allocate arrays.
@@ -334,7 +331,6 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
         else:
             # X is ignored here, since we currently only look at lagged values for
             # exogenous variables and not contemporaneous ones.
-            # X = X.to_numpy()
             n_columns = self._X.shape[1] + 1
 
         # Pre-allocate arrays.
@@ -369,6 +365,10 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
 
     def _fit(self, y, X):
         yt, Xt = self._transform(y, X)
+
+        # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
+        yt = yt.ravel()
+
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
         return self
@@ -392,7 +392,6 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
         if X is None:
             n_columns = 1
         else:
-            X = X.to_numpy()
             n_columns = X.shape[1] + 1
         window_length = self.window_length_
         fh_max = fh.to_relative(self.cutoff)[-1]
@@ -579,7 +578,7 @@ def ReducedForecaster(
     """
     if step_length != 1:
         raise ValueError(
-            "`step_length` values different from 1 are no longer " "supported."
+            "`step_length` values different from 1 are no longer supported."
         )
     return make_reduction(
         estimator, strategy=strategy, window_length=window_length, scitype=scitype
@@ -676,16 +675,18 @@ def make_reduction(
 def _check_scitype(scitype):
     valid_scitypes = ("infer", "tabular-regressor", "time-series-regressor")
     if scitype not in valid_scitypes:
-        raise ValueError(f"Invalid `scitype`, please use one of: {valid_scitypes}.")
-
+        raise ValueError(
+            f"Invalid `scitype`. `scitype` must be one of:"
+            f" {valid_scitypes}, but found: {scitype}."
+        )
     return scitype
 
 
 def _infer_scitype(estimator):
     # We can check if estimator is an instance of scikit-learn's RegressorMixin or
-    # of sktime's BaseRegressor, otherwise we raise an error. Some time-series
+    # of sktime's BaseRegressor, otherwise we raise an error. Note that some time-series
     # regressor also inherit from scikit-learn classes, hence the order in which we
-    # check matters.
+    # check matters and we first need to check for BaseRegressor.
     if isinstance(estimator, BaseRegressor):
         return "time-series-regressor"
     elif isinstance(estimator, RegressorMixin):
@@ -700,7 +701,10 @@ def _infer_scitype(estimator):
 def _check_strategy(strategy):
     valid_strategies = ("direct", "recursive", "multioutput")
     if strategy not in valid_strategies:
-        raise ValueError(f"Invalid `strategy`, please use one of: {valid_strategies}.")
+        raise ValueError(
+            f"Invalid `strategy`. `strategy` must be one of :"
+            f" {valid_strategies}, but found: {strategy}."
+        )
     return strategy
 
 
@@ -721,4 +725,4 @@ def _get_forecaster(scitype, strategy):
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
         },
     }
-    return registry.get(scitype).get(strategy)
+    return registry[scitype][strategy]
