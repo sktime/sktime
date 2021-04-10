@@ -14,17 +14,13 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.utils.stats import _weighted_percentile
-
-# from sklearn.metrics import (
-# mean_absolute_error, mean_squared_error, median_absolute_error,
-# mean_absolute_percentage_error
-# )
+from sklearn.utils.validation import check_consistent_length
+from sklearn.metrics._regression import _check_reg_targets
+from sklearn.metrics import mean_absolute_error as _mean_absolute_error
+from sklearn.metrics import mean_squared_error as _mean_squared_error
+from sklearn.metrics import median_absolute_error as _median_absolute_error
 from sktime.utils.validation.series import check_time_index
-from sktime.utils.validation.forecasting import (
-    check_y,
-    check_y_true_pred,
-    check_horizon_weights,
-)
+from sktime.utils.validation.forecasting import check_y
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
@@ -32,22 +28,16 @@ __all__ = [
     "mean_asymmetric_error",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
-    "root_mean_squared_scaled_error",
-    "root_median_squared_scaled_error",
+    "mean_squared_scaled_error",
+    "median_squared_scaled_error",
     "mean_absolute_error",
     "mean_squared_error",
-    "root_mean_squared_error",
     "median_absolute_error",
     "median_squared_error",
-    "root_median_squared_error",
-    "symmetric_mean_absolute_percentage_error",
-    "symmetric_median_absolute_percentage_error",
     "mean_absolute_percentage_error",
     "median_absolute_percentage_error",
     "mean_squared_percentage_error",
     "median_squared_percentage_error",
-    "root_mean_squared_percentage_error",
-    "root_median_squared_percentage_error",
     "mean_relative_absolute_error",
     "median_relative_absolute_error",
     "geometric_mean_relative_absolute_error",
@@ -57,13 +47,13 @@ __all__ = [
 EPS = np.finfo(np.float64).eps
 
 
-def weighted_geometric_mean(x, sample_weights=None, axis=None):
+def weighted_geometric_mean(x, sample_weight=None, axis=None):
     """
     Parameters
     ----------
-    array : 1D or 2D array
+    array : np.ndarray
         Values to take the weighted geometric mean of.
-    sample_weight: 1D or 2D array
+    sample_weight: np.ndarray
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)`.
 
@@ -73,9 +63,9 @@ def weighted_geometric_mean(x, sample_weights=None, axis=None):
         Weighted geometric mean
     """
     # TODO: ADD Checks of inputs
+    check_consistent_length(x, sample_weight)
     return np.exp(
-        np.sum(sample_weights * np.log(x), axis=axis)
-        / np.sum(sample_weights, axis=axis)
+        np.sum(sample_weight * np.log(x), axis=axis) / np.sum(sample_weight, axis=axis)
     )
 
 
@@ -138,9 +128,10 @@ def mean_asymmetric_error(
     ..[2]   Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)" ,
             Thomson, South-Western: Ohio, US.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+
     if horizon_weight is not None:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
 
     asymmetric_errors = _asymmetric_error(
         y_true,
@@ -161,7 +152,7 @@ def mean_asymmetric_error(
 
 
 def mean_absolute_scaled_error(
-    y_true, y_pred, y_train, sp=1, multioutput="uniform_average"
+    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
 ):
     """Mean absolute scaled error (MASE). MASE output is non-negative floating
     point. The best value is 0.0.
@@ -194,6 +185,9 @@ def mean_absolute_scaled_error(
     sp : int
         Seasonal periodicity of training data.
 
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
@@ -215,8 +209,8 @@ def mean_absolute_scaled_error(
     See Also
     --------
     median_absolute_scaled_error
-    root_mean_squared_scaled_error
-    root_median_squared_scaled_error
+    mean_squared_scaled_error
+    median_squared_scaled_error
 
     Examples
     --------
@@ -259,8 +253,10 @@ def mean_absolute_scaled_error(
             )
 
     # Other input checks
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
+    y_train = check_y(y_train, enforce_univariate=False)
 
     # Check test and train have same dimensions
     if y_true.ndim != y_train.ndim:
@@ -276,12 +272,14 @@ def mean_absolute_scaled_error(
     # mean absolute error of naive seasonal prediction
     mae_naive = mean_absolute_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
 
-    mae_pred = mean_absolute_error(y_true, y_pred, multioutput=multioutput)
+    mae_pred = mean_absolute_error(
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    )
     return mae_pred / np.maximum(mae_naive, EPS)
 
 
 def median_absolute_scaled_error(
-    y_true, y_pred, y_train, sp=1, multioutput="uniform_average"
+    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
 ):
     """Median absolute scaled error (MdASE). MdASE output is non-negative
     floating point. The best value is 0.0.
@@ -319,6 +317,9 @@ def median_absolute_scaled_error(
     sp : int
         Seasonal periodicity of training data.
 
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
@@ -331,8 +332,8 @@ def median_absolute_scaled_error(
     See Also
     --------
     mean_absolute_scaled_error
-    root_mean_squared_scaled_error
-    root_median_squared_scaled_error
+    mean_squared_scaled_error
+    median_squared_scaled_error
 
     Examples
     --------
@@ -384,7 +385,9 @@ def median_absolute_scaled_error(
             )
 
     # Other input checks
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
     y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
 
     # Check test and train have same dimensions
@@ -403,15 +406,24 @@ def median_absolute_scaled_error(
         y_train[sp:], y_pred_naive, multioutput=multioutput
     )
 
-    mdae_pred = median_absolute_error(y_true, y_pred, multioutput=multioutput)
+    mdae_pred = median_absolute_error(
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    )
     return mdae_pred / np.maximum(mdae_naive, EPS)
 
 
-def root_mean_squared_scaled_error(
-    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
+def mean_squared_scaled_error(
+    y_true,
+    y_pred,
+    y_train,
+    sp=1,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
 ):
-    """Root mean squared scaled error (RMSSE). RMSSE output is non-negative
-        floating point. The best value is 0.0.
+    """Mean squared scaled error (MSSE) `square_root` is False or
+    root mean squared scaled error (RMSSE) if `square_root` is True.
+    MSSE and RMSSE output is non-negative floating point. The best value is 0.0.
 
     This is a squared varient of the MASE loss metric. Like MASE this
     scale-free metric can be used to copmare forecast methods on a single
@@ -442,6 +454,9 @@ def root_mean_squared_scaled_error(
     sp : int
         Seasonal periodicity of training data.
 
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
@@ -451,41 +466,45 @@ def root_mean_squared_scaled_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared scaled error.
+            If True, returns root mean squared scaled error (RMSSE)
+            If False, returns mean squared scaled error (MSSE)
+
     Returns
     -------
     loss : float
         RMSSE loss.
-        If multioutput is 'raw_values', then RMSSE is returned for each
+        If multioutput is 'raw_values', then MSSE or RMSSE is returned for each
         output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average RMSSE of all output errors is returned.
+        weighted average MSSE or RMSSE of all output errors is returned.
 
     See Also
     --------
     mean_absolute_scaled_error
     median_absolute_scaled_error
-    root_median_squared_scaled_error
+    median_squared_scaled_error
 
     Examples
     --------
-    >>> from sktime.performance_metrics.forecasting import \
-        root_mean_squared_scaled_error
+    >>> from sktime.performance_metrics.forecasting import mean_squared_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> root_mean_squared_scaled_error(y_true, y_pred, y_train)
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
     0.20568833780186058
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> root_mean_squared_scaled_error(y_true, y_pred, y_train)
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train,  square_root=True)
     0.15679361328058636
-    >>> root_mean_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput='raw_values'
+    >>> mean_squared_scaled_error(
+            y_true, y_pred, y_train, multioutput='raw_values',  square_root=True
         )
     array([0.11215443, 0.20203051])
-    >>> root_mean_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput=[0.3, 0.7]
+    >>> mean_squared_scaled_error(
+            y_true, y_pred, y_train, multioutput=[0.3, 0.7],  square_root=True
         )
     0.17451891814894502
 
@@ -508,7 +527,9 @@ def root_mean_squared_scaled_error(
                 "before time index of `y_true`"
             )
     # Other input checks
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
     y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
 
     # Check test and train have same dimensions
@@ -525,19 +546,33 @@ def root_mean_squared_scaled_error(
     # mean squared error of naive seasonal prediction
     mse_naive = mean_squared_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
 
-    mse = mean_squared_error(y_true, y_pred, multioutput=multioutput)
+    mse = mean_squared_error(
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    )
 
-    return np.sqrt(mse / np.maximum(mse_naive, EPS))
+    if square_root:
+        loss = np.sqrt(mse / np.maximum(mse_naive, EPS))
+    else:
+        loss = mse / np.maximum(mse_naive, EPS)
+
+    return loss
 
 
-def root_median_squared_scaled_error(
-    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
+def median_squared_scaled_error(
+    y_true,
+    y_pred,
+    y_train,
+    sp=1,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
 ):
-    """Root median squared scaled error (RMdSSE). RMdSSE output is non-negative
-        floating point. The best value is 0.0.
+    """Median squared scaled error (MdSSE) if `square_root` is False or
+    root median squared scaled error (RMdSSE) if `square_root` is True.
+    MdSSE and RMdSSE output is non-negative floating point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE, MdASE and
-    RMSSE this scale-free metric can be used to copmare forecast methods on a
+    This is a squared varient of the MdASE loss metric. Like MASE, MdASE, MSSE
+    and RMSSE this scale-free metric can be used to compare forecast methods on a
     single series or between series.
 
     This metric is also suited for intermittent-demand series because it
@@ -565,6 +600,9 @@ def root_median_squared_scaled_error(
     sp : int
         Seasonal periodicity of training data.
 
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
@@ -587,28 +625,27 @@ def root_median_squared_scaled_error(
     --------
     mean_absolute_scaled_error
     median_absolute_scaled_error
-    root_mean_squared_scaled_error
+    mean_squared_scaled_error
 
     Examples
     --------
-    >>> from sktime.performance_metrics.forecasting import \
-        root_median_squared_scaled_error
+    >>> from sktime.performance_metrics.forecasting import median_squared_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> root_median_squared_scaled_error(y_true, y_pred, y_train)
+    >>> median_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
     0.16666666666666666
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> root_median_squared_scaled_error(y_true, y_pred, y_train)
+    >>> median_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
     0.1472819539849714
-    >>> root_median_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput='raw_values'
+    >>> median_squared_scaled_error(
+            y_true, y_pred, y_train, multioutput='raw_values', square_root=True
         )
     array([0.08687445, 0.20203051])
-    >>> root_median_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput=[0.3, 0.7]
+    >>> median_squared_scaled_error(
+            y_true, y_pred, y_train, multioutput=[0.3, 0.7], square_root=True
         )
     0.16914781383660782
 
@@ -631,7 +668,9 @@ def root_median_squared_scaled_error(
                 "before time index of `y_true`"
             )
     # Other input checks
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
     y_train = check_y(y_train, enforce_univariate=False, allow_numpy=True)
 
     # Check test and train have same dimensions
@@ -650,9 +689,15 @@ def root_median_squared_scaled_error(
         y_train[sp:], y_pred_naive, multioutput=multioutput
     )
 
-    mdse = median_squared_error(y_true, y_pred, multioutput=multioutput)
+    mdse = median_squared_error(
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    )
 
-    return np.sqrt(mdse / np.maximum(mdse_naive, EPS))
+    if square_root:
+        loss = np.sqrt(mdse / np.maximum(mdse_naive, EPS))
+    else:
+        loss = mdse / np.maximum(mdse_naive, EPS)
+    return loss
 
 
 def mean_absolute_error(
@@ -701,8 +746,6 @@ def mean_absolute_error(
     median_absolute_error
     mean_squared_error
     median_squared_error
-    root_mean_squared_error
-    root_median_squared_error
 
     Examples
     --------
@@ -726,112 +769,25 @@ def mean_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    if horizon_weight is not None:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
-    # Once Scikit-learn 0.24 is widely available through Conda then switch
-    # to importing Scikit's function, which I used the code from below in the
-    # interim
-    # return mean_absolute_error(
-    # y_true, y_pred, sample_weight=horizon_weight,multioutput=multioutput
-    # )
-    output_errors = np.average(np.abs(y_true - y_pred), weights=horizon_weight, axis=0)
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-
-    return np.average(output_errors, weights=multioutput)
-
-
-def root_mean_squared_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Root mean squared error (RMSE). RMSE output is non-negative floating
-    point. The best value is 0.0.
-
-    RMSE is on same scale as the data. Because it squares the
-    forecast error rather than taking the absolute value, it is more sensitive
-    to outliers than MAE or MdAE.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        RMSE loss.
-        If multioutput is 'raw_values', then RMSE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average RMSE of all output errors is returned.
-
-    See Also
-    --------
-    mean_absolute_error
-    median_absolute_error
-    mean_squared_error
-    median_squared_error
-    root_median_squared_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import root_mean_squared_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> root_mean_squared_error(y_true, y_pred)
-    0.6422616289332564
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> root_mean_squared_error(y_true, y_pred)
-    0.6422616289332564
-    >>> root_mean_squared_error(y_true, y_pred, multioutput='raw_values')
-    array([0.64549722, 1. ])
-    >>> root_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.9082951062292475
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    """
-    mse = mean_squared_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    return _mean_absolute_error(
+        y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
-    return np.sqrt(mse)
 
 
 def mean_squared_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
 ):
-    """Mean squared error (MSE). MSE output is non-negative floating point.
-    The best value is 0.0.
+    """Mean squared error (MSE) if `square_root` is False or
+    root mean squared error (RMSE)  if `square_root` if True. MSE and RMSE are
+    both non-negative floating point. The best value is 0.0.
 
-    MSE is measured in squared units of the input data. Because it squares the
-    forecast error rather than taking the absolute value, it is more sensitive
+    MSE is measured in squared units of the input data, and RMSE is on the
+    same scale as the data. Because both metrics squares the
+    forecast error rather than taking the absolute value, they are more sensitive
     to outliers than MAE or MdAE.
 
     Parameters
@@ -856,6 +812,10 @@ def mean_squared_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+            If True, returns root mean squared error (RMSE)
+            If False, returns mean squared error (MSE)
 
     Returns
     -------
@@ -871,8 +831,6 @@ def mean_squared_error(
     mean_absolute_error
     median_absolute_error
     median_squared_error
-    root_mean_squared_error
-    root_median_squared_error
 
     Examples
     --------
@@ -885,10 +843,20 @@ def mean_squared_error(
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_error(y_true, y_pred)
     0.7083333333333334
+    >>> mean_squared_error(y_true, y_pred, square_root=True)
+    0.6422616289332564
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1. ])
+    >>> root_mean_squared_error(
+            y_true, y_pred, multioutput='raw_values', square_root=True
+        )
+    array([0.64549722, 1. ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825
+    >>> root_mean_squared_error(
+            y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
+        )
+    0.9082951062292475
 
     References
     ----------
@@ -896,26 +864,18 @@ def mean_squared_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    if horizon_weight is not None:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
-    # Once Scikit-learn 0.24 is widely available through Conda then switch
-    # to importing Scikit's function, which I used the code from below in the
-    # interim
-    # return mean_squared_error(
-    # y_true, y_pred, sample_weight=sample_weight,multioutput=multioutput
-    # )
-    output_errors = np.average(
-        np.square(y_true - y_pred), weights=horizon_weight, axis=0
+    # Scikit-learn argument `squared` returns MSE when True and RMSE when False
+    # Scikit-time argument `square_root` returns RMSE when True and MSE when False
+    # Therefore need to pass the opposite of square_root as squared argument
+    # to the scikit-learn function being wrapped
+    squared = not square_root
+    return _mean_squared_error(
+        y_true,
+        y_pred,
+        sample_weight=horizon_weight,
+        multioutput=multioutput,
+        squared=squared,
     )
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-
-    return np.average(output_errors, weights=multioutput)
 
 
 def median_absolute_error(
@@ -968,8 +928,6 @@ def median_absolute_error(
     mean_absolute_error
     mean_squared_error
     median_squared_error
-    root_mean_squared_error
-    root_median_squared_error
 
     Examples
     --------
@@ -993,119 +951,31 @@ def median_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    if horizon_weight is None:
-        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
-    else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
-        output_errors = _weighted_percentile(
-            np.abs(y_pred - y_true), sample_weight=horizon_weight
-        )
-
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-
-    return np.average(output_errors, weights=multioutput)
-
-
-def root_median_squared_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Root median squared error (RMdSE). RMdSE output is non-negative floating
-    point. The best value is 0.0.
-
-    Like RMSE, RMdSE is on same scale as the data. Because it squares the
-    forecast error rather than taking the absolute value, it is more
-    sensitive to outliers than MAE or MdAE.
-
-    Taking the median instead of the mean of the squared errors also makes
-    this metric more robust to error outliers since the median tends
-    to be a more robust measure of central tendency in the presence of outliers.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        RMdSE loss.
-        If multioutput is 'raw_values', then RMdSE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average RMdSE of all output errors is returned.
-
-    See Also
-    --------
-    mean_absolute_error
-    median_absolute_error
-    mean_squared_error
-    median_squared_error
-    root_mean_squared_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import root_median_squared_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> root_median_squared_error(y_true, y_pred)
-    0.5
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> root_median_squared_error(y_true, y_pred)
-    0.7905694150420949
-    >>> root_median_squared_error(y_true, y_pred, multioutput='raw_values')
-    array([0.5, 1. ])
-    >>> root_median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.8803408430829504
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    """
-    mdse = median_squared_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    return _median_absolute_error(
+        y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
-    return np.sqrt(mdse)
 
 
 def median_squared_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
 ):
-    """Median squared error (MdSE). MdSE output is non-negative floating
-    point. The best value is 0.0.
+    """Median squared error (MdSE) if `square_root` is False or root median
+    squared error (RMdSE) if `square_root` is True. MdSE and RMdSE return
+    non-negative floating point. The best value is 0.0.
 
-    Like MSE, MdSE is measured in squared units of the input data. Because it
-    squares the forecast error rather than taking the absolute value, it is more
-    sensitive to outliers than MAE or MdAE.
+    Like MSE, MdSE is measured in squared units of the input data. RMdSe is
+    on the same scale as the input data like RMSE. Because MdSE and RMdSE
+    square the forecast error rather than taking the absolute value, they are
+    more sensitive to outliers than MAE or MdAE.
 
-    Taking the median instead of the mean of the squared errors also makes
-    this metric more robust to error outliers since the median tends
-    to be a more robust measure of central tendency in the presence of outliers.
+    Taking the median instead of the mean of the squared errors makes
+    this metric more robust to error outliers relative to a meean based metric
+    since the median tends to be a more robust measure of central tendency in
+    the presence of outliers.
 
     Parameters
     ----------
@@ -1128,6 +998,11 @@ def median_squared_error(
             Returns a full set of errors in case of multioutput input.
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+            If True, returns root mean squared error (RMSE)
+            If False, returns mean squared error (MSE)
 
     Returns
     -------
@@ -1143,8 +1018,6 @@ def median_squared_error(
     mean_absolute_error
     median_absolute_error
     mean_squared_error
-    root_mean_squared_error
-    root_median_squared_error
 
     Examples
     --------
@@ -1153,14 +1026,27 @@ def median_squared_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_squared_error(y_true, y_pred)
     0.25
+    >>> median_squared_error(y_true, y_pred, square_root=True)
+    0.5
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_error(y_true, y_pred)
     0.625
+    >>> median_squared_error(y_true, y_pred, square_root=True)
+    0.7905694150420949
     >>> median_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.25, 1. ])
-    >>> median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> median_squared_error(
+            y_true, y_pred, multioutput='raw_values', square_root=True
+        )
+    array([0.5, 1. ])
+    >>> squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.7749999999999999
+    >>> median_squared_error(
+            y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
+        )
+    0.8803408430829504
+
 
     References
     ----------
@@ -1168,14 +1054,18 @@ def median_squared_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(np.square(y_pred - y_true), axis=0)
+
     else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
             np.square(y_pred - y_true), sample_weight=horizon_weight
         )
+
+    if square_root:
+        output_errors = np.sqrt(output_errors)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -1187,15 +1077,16 @@ def median_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
-def symmetric_mean_absolute_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+def mean_absolute_percentage_error(
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=False
 ):
-    """Symmetric mean absolute percentage error (sMAPE). sMAPE output is
-    non-negative floating point. The best value is 0.0.
+    """Mean absolute percentage error (MAPE) if `symmetric` is False or
+    symmetric mean absolute percentage error (sMAPE) if `symmetric is True.
+    MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
 
     sMAPE is measured in percentage error relative to the test data. Because it
     takes the absolute value rather than square the percentage forecast
-    error, it is less sensitive to outliers than RMSPE or RMdSPE.
+    error, it is less sensitive to outliers than MSPE, RMSPE, MdSPE or RMdSPE.
 
     There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
@@ -1223,10 +1114,13 @@ def symmetric_mean_absolute_percentage_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    symmetric : bool, default=False
+        Calculates symmetric version of metric if True.
+
     Returns
     -------
     loss : float
-        sMAPE loss.
+        MAPE or sMAPE loss.
         If multioutput is 'raw_values', then sMAPE is returned for each
         output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
@@ -1234,247 +1128,38 @@ def symmetric_mean_absolute_percentage_error(
 
     See Also
     --------
-    symmetric_median_absolute_percentage_error
+    median_absolute_percentage_error
+    mean_squared_percentage_error
+    median_squared_percentage_error
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import \
     mean_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    root_mean_squared_percentage_error
-    root_median_squared_percentage_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import \
-        symmetric_mean_absolute_percentage_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> symmetric_mean_absolute_percentage_error(y_true, y_pred)
-    55.53379953379954
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> symmetric_mean_absolute_percentage_error(y_true, y_pred)
-    55.53379953379954
-    >>> symmetric_mean_absolute_percentage_error(
-            y_true, y_pred, multioutput='raw_values'
-        )
-    array([71.11111111, 50.50505051])
-    >>> symmetric_mean_absolute_percentage_error(
-            y_true, y_pred, multioutput=[0.3, 0.7]
-        )
-    56.68686868686869
-
-    Parameters
-    ----------
-    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-    y_pred : pandas Series of shape = (fh,)
-        Estimated target values.
-
-    Returns
-    -------
-    loss : float
-        sMAPE loss
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    """
-
-    return mean_absolute_percentage_error(
-        y_true,
-        y_pred,
-        symmetric=True,
-        horizon_weight=horizon_weight,
-        multioutput=multioutput,
-    )
-
-
-def symmetric_median_absolute_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Symmetric median absolute percentage error (sMdAPE). sMdAPE output is
-    non-negative floating point. The best value is 0.0.
-
-    sMdAPE is measured in percentage error relative to the test data. Because it
-    takes the absolute value rather than square the percentage forecast
-    error, it is less sensitive to outliers than RMSPE or RMdSPE.
-
-    There is no limit on how large the error can be, particulalrly when `y_true`
-    values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        sMAPE loss.
-        If multioutput is 'raw_values', then sMAPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average sMAPE of all output errors is returned.
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import \
-        symmetric_median_absolute_percentage_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> symmetric_median_absolute_percentage_error(y_true, y_pred)
-    18.181818181818183
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> symmetric_median_absolute_percentage_error(y_true, y_pred)
-    40.0
-    >>> symmetric_median_absolute_percentage_error(
-            y_true, y_pred, multioutput='raw_values'
-        )
-    array([13.33333333, 66.66666667])
-    >>> symmetric_median_absolute_percentage_error(
-            y_true, y_pred, multioutput=[0.3, 0.7]
-        )
-    50.666666666666664
-
-    Parameters
-    ----------
-    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-    y_pred : pandas Series of shape = (fh,)
-        Estimated target values.
-
-    Returns
-    -------
-    loss : float
-        sMdAPE loss
-
-    See Also
-    --------
-    symmetric_mean_absolute_percentage_error
-    mean_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    root_mean_squared_percentage_error
-    root_median_squared_percentage_error
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    """
-
-    return median_absolute_percentage_error(
-        y_true,
-        y_pred,
-        symmetric=True,
-        horizon_weight=horizon_weight,
-        multioutput=multioutput,
-    )
-
-
-def mean_absolute_percentage_error(
-    y_true,
-    y_pred,
-    symmetric=False,
-    horizon_weight=None,
-    multioutput="uniform_average",
-):
-    """Mean absolute percentage error (MAPE). MAPE output is non-negative floating
-    point. The best value is 0.0.
-
-    Symmetric = True calculates symmetric absolute percentage error (sMAPE).
-
-    MAPE and sMAPE are measured in percentage error relative to the test data.
-    Because they take the absolute value rather than square the percentage
-    forecast error, they is less sensitive to outliers than RMSPE or RMdSPE.
-
-    There is no limit on how large the error can be, particulalrly when `y_true`
-    values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    symmetric : bool, default = False
-        Whether to calculate symmetric percentage error.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        MAPE unless symmetric is True, then sMAPE is returned.
-        If multioutput is 'raw_values', then MAPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average MAPE of all output errors is returned.
-
-    See Also
-    --------
-    symmetric_mean_absolute_percentage_error
-    symmetric_median_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    root_mean_squared_percentage_error
-    root_median_squared_percentage_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import \
-        mean_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred)
     33.69047619047619
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    55.53379953379954
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred)
     55.15873015873015
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    55.53379953379954
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
     array([38.0952381, 72.22222222])
+    >>> mean_absolute_percentage_error(
+            y_true, y_pred, multioutput='raw_values', symmetric=True
+        )
+    array([71.11111111, 50.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     61.98412698412698
+    >>> mean_absolute_percentage_error(
+            y_true, y_pred, multioutput=[0.3, 0.7], symmetric=True
+        )
+    56.68686868686869
 
     References
     ----------
@@ -1482,10 +1167,9 @@ def mean_absolute_percentage_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
 
     output_errors = np.average(
         np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)),
@@ -1503,201 +1187,16 @@ def mean_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
-def root_mean_squared_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Root mean squared percentage error (RMSPE). RMSPE output is non-negative
-    floating point. The best value is 0.0.
-
-    RMSPE is measured in percentage error relative to the test data. Because it
-    takes the square rather than absolute value of the percentage forecast
-    error, it is more sensitive to outliers than MAPE or MdAPE.
-
-    There is no limit on how large the error can be, particulalrly when `y_true`
-    values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        RMSPE loss.
-        If multioutput is 'raw_values', then RMSPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average RMSPE of all output errors is returned.
-
-    See Also
-    --------
-    symmetric_mean_absolute_percentage_error
-    symmetric_median_absolute_percentage_error
-    mean_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    root_median_squared_percentage_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import \
-        root_mean_squared_percentage_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> root_mean_squared_percentage_error(y_true, y_pred)
-    48.76086424671088
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> root_mean_squared_percentage_error(y_true, y_pred)
-    71.27629270478701
-    >>> root_mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([58.32118435, 82.21471437])
-    >>> root_mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    75.84121336547028
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.s
-    """
-    mspe = mean_squared_percentage_error(
-        y_true, y_pred, horizon_weight=None, multioutput=multioutput
-    )
-    # Here we are multipying by 10 b/c mspe is already converted to "percentage"
-    # units by multiplying by 100. Multipylying by 10 reverses the square root
-    # of this multiplicative factor
-    return np.sqrt(mspe)
-
-
-def mean_squared_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Mean squared percentage error (MSPE). MSPE output is non-negative
-    floating point. The best value is 0.0.
-
-    MSPE is measured in squared percentage error relative to the test data.
-    Because it takes the square rather than absolute value of the percentage
-    forecast error, it is more sensitive to outliers than MAPE or MdAPE.
-
-    There is no limit on how large the error can be, particulalrly when `y_true`
-    values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
-
-    Returns
-    -------
-    loss : float
-        RMSPE loss.
-        If multioutput is 'raw_values', then RMSPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average RMSPE of all output errors is returned.
-
-    See Also
-    --------
-    symmetric_mean_absolute_percentage_error
-    symmetric_median_absolute_percentage_error
-    mean_absolute_percentage_error
-    median_absolute_percentage_error
-    median_squared_percentage_error
-    root_mean_squared_percentage_error
-    root_median_squared_percentage_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import mean_squared_percentage_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_squared_percentage_error(y_true, y_pred)
-    2377.6218820861677
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_squared_percentage_error(y_true, y_pred)
-    5080.309901738473
-    >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([3401.36054422, 6759.25925926])
-    >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    5751.889644746787
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.s
-    """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    if horizon_weight is not None:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
-
-    output_errors = np.average(
-        np.square(_percentage_error(y_true, y_pred)),
-        weights=horizon_weight,
-        axis=0,
-    )
-
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-
-    return np.average(output_errors, weights=multioutput)
-
-
 def median_absolute_percentage_error(
-    y_true, y_pred, symmetric=False, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=False
 ):
-    """Median absolute percentage error (MdAPE). MdAPE output is non-negative
-    floating point. The best value is 0.0.
-
-    Symmetric = True calculates symmetric absolute percentage error (sMAPE).
+    """Median absolute percentage error (MdAPE) if `symmetric` is False or
+    symmetric median absolute percentage error (sMdAPE). MdAPE and sMdAPE output
+    is non-negative floating point. The best value is 0.0.
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
-    Because they take the absolute value rather than square the percentage
-    forecast error, they are less sensitive to outliers than RMSPE or RMdSPE.
+    Because it takes the absolute value rather than square the percentage forecast
+    error, it is less sensitive to outliers than MSPE, RMSPE, MdSPE or RMdSPE.
 
     Taking the median instead of the mean of the absolute percentage errors also
     makes this metric more robust to error outliers since the median tends
@@ -1729,24 +1228,17 @@ def median_absolute_percentage_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    symmetric : bool, default=False
+        Calculates symmetric version of metric if True.
+
     Returns
     -------
     loss : float
-        MdAPE unless symmetric is True, then sMdAPE is returned.
-        If multioutput is 'raw_values', then MdAPE or sMdAPE is returned for
-        each output separately.
+        MdAPE or sMdAPE loss.
+        If multioutput is 'raw_values', then MdAPE or sMdAPE is returned for each
+        output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average MdAPE or sMdAPE of all output errors is returned.
-
-    See Also
-    --------
-    symmetric_mean_absolute_percentage_error
-    symmetric_median_absolute_percentage_error
-    mean_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    root_mean_squared_percentage_error
-    root_median_squared_percentage_error
 
     Examples
     --------
@@ -1756,14 +1248,32 @@ def median_absolute_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_absolute_percentage_error(y_true, y_pred)
     16.666666666666668
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    18.181818181818183
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_percentage_error(y_true, y_pred)
     57.142857142857146
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    40.0
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
     array([14.28571429, 100.])
+    >>> median_absolute_percentage_error(
+            y_true, y_pred, multioutput='raw_values', symmetric=True
+        )
+    array([13.33333333, 66.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     74.28571428571429
+    >>> median_absolute_percentage_error(
+            y_true, y_pred, multioutput=[0.3, 0.7], symmetric=True
+        )
+    50.666666666666664
+
+    See Also
+    --------
+    mean_absolute_percentage_error
+    mean_squared_percentage_error
+    median_squared_percentage_error
 
     References
     ----------
@@ -1771,13 +1281,14 @@ def median_absolute_percentage_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(
             np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)), axis=0
         )
     else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
             np.abs(_percentage_error(y_pred, y_true, symmetric=symmetric)),
             sample_weight=horizon_weight,
@@ -1793,15 +1304,147 @@ def median_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
-def root_median_squared_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+def mean_squared_percentage_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
+    symmetric=False,
 ):
-    """Root median squared percentage error (RMdSPE). RMdSPE output is
-    non-negative floating point. The best value is 0.0.
+    """Mean squared percentage error (MSPE) if `square_root` is False or
+    root mean squared percentage error (RMSPE) if `square_root` is True.
+    MSPE and RMSPE output is non-negative floating point. The best value is 0.0.
 
-    RMdSPE is measured in percentage error relative to the test data. Because it
-    takes the square rather than absolute value of the percentage forecast
-    error, it is more sensitive to outliers than MAPE or MdAPE.
+    MSPE is measured in squared percentage error relative to the test data and
+    RMSPE is measured in percentage error relative to the test data.
+    Because either calculation takes the square rather than absolute value of
+    the percentage forecast error, they are more sensitive to outliers than
+    MAPE, sMAPE, MdAPE or sMdAPE.
+
+    There is no limit on how large the error can be, particulalrly when `y_true`
+    values are close to zero. In such cases the function returns a large value
+    instead of `inf`.
+
+    Parameters
+    ----------
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+            If True, returns root mean squared error (RMSPE)
+            If False, returns mean squared error (MSPE)
+
+    symmetric : bool, default=False
+        Calculates symmetric version of metric if True.
+
+    Returns
+    -------
+    loss : float
+        MSPE or RMSPE loss.
+        If multioutput is 'raw_values', then MSPE or RMSPE is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average MSPE or RMSPE of all output errors is returned.
+
+    See Also
+    --------
+    mean_absolute_percentage_error
+    median_absolute_percentage_error
+    median_squared_percentage_error
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import mean_squared_percentage_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mean_squared_percentage_error(y_true, y_pred)
+    2377.6218820861677
+    >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
+    48.76086424671088
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mean_squared_percentage_error(y_true, y_pred)
+    5080.309901738473
+    >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
+    71.27629270478701
+    >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
+    array([3401.36054422, 6759.25925926])
+    >>> mean_squared_percentage_error(
+        y_true, y_pred, multioutput='raw_values', square_root=True
+        )
+    array([58.32118435, 82.21471437])
+    >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    5751.889644746787
+    >>> mean_squared_percentage_error(
+        y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
+        )
+    75.84121336547028
+S
+    References
+    ----------
+    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
+            "Another look at measures of forecast accuracy", International
+            Journal of Forecasting, Volume 22, Issue 4.s
+    """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
+
+    output_errors = np.average(
+        np.square(_percentage_error(y_true, y_pred, symmetric=symmetric)),
+        weights=horizon_weight,
+        axis=0,
+    )
+
+    if square_root:
+        output_errors = np.sqrt(output_errors)
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+def median_squared_percentage_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
+    symmetric=False,
+):
+    """Median squared percentage error (MdSPE) if `square_root` is False or
+    root median squared percentage error (RMdSPE) if `square_root` is True.
+    MdSPE and RMdSPE output is non-negative floating point. The best value is 0.0.
+
+    MdSPE is measured in squared percentage error relative to the test data.
+    RMdSPE is measured in percentage error relative to the test data.
+    Because it takes the square rather than absolute value of the percentage
+    forecast error, both calculations are more sensitive to outliers than
+    MAPE, sMAPE, MdAPE or sMdAPE.
 
     Taking the median instead of the mean of the absolute percentage errors also
     makes this metric more robust to error outliers since the median tends
@@ -1833,110 +1476,28 @@ def root_median_squared_percentage_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    Returns
-    -------
-    loss : float
-        RMdSPE loss.
-        If multioutput is 'raw_values', then RMdSPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average RMdSPE of all output errors is returned.
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+            If True, returns root mean squared error (RMSPE)
+            If False, returns mean squared error (MSPE)
 
-    See Also
-    --------
-    symmetric_mean_absolute_percentage_error
-    symmetric_median_absolute_percentage_error
-    mean_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    root_mean_squared_percentage_error
-
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import \
-        root_median_squared_percentage_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> root_median_squared_percentage_error(y_true, y_pred)
-    16.666666666666668
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> root_median_squared_percentage_error(y_true, y_pred)
-    71.42857142857143
-    >>> root_median_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([14.28571429, 100. ])
-    >>> root_median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    84.03109239915852
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    """
-
-    mdspe = median_squared_percentage_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
-    )
-
-    return np.sqrt(mdspe)
-
-
-def median_squared_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
-):
-    """Median squared percentage error (MdSPE). MdSPE output is non-negative
-    floating point. The best value is 0.0.
-
-    MdSPE is measured in squared percentage error relative to the test data.
-    Because it takes the square rather than absolute value of the percentage
-    forecast error, it is more sensitive to outliers than MAPE or MdAPE.
-
-    There is no limit on how large the error can be, particulalrly when `y_true`
-    values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+    symmetric : bool, default=False
+        Calculates symmetric version of metric if True.
 
     Returns
     -------
     loss : float
-        MdSPE loss.
-        If multioutput is 'raw_values', then MdSPE is returned for each
+        MdSPE or RMdSPE loss.
+        If multioutput is 'raw_values', then MdSPE or RMdSPE is returned for each
         output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average MdSPE of all output errors is returned.
+        weighted average MdSPE or RMdSPE of all output errors is returned.
 
     See Also
     --------
-    symmetric_mean_absolute_percentage_error
-    symmetric_median_absolute_percentage_error
     mean_absolute_percentage_error
     median_absolute_percentage_error
     mean_squared_percentage_error
-    root_mean_squared_percentage_error
-    root_median_squared_percentage_error
 
     Examples
     --------
@@ -1946,14 +1507,26 @@ def median_squared_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_squared_percentage_error(y_true, y_pred)
     277.7777777777778
+    >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
+    16.666666666666668
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_percentage_error(y_true, y_pred)
     5102.040816326531
+    >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
+    71.42857142857143
     >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
     array([204.08163265, 10000.])
+   >>> median_squared_percentage_error(
+        y_true, y_pred, multioutput='raw_values', square_root=True
+        )
+    array([14.28571429, 100. ])
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     7061.224489795918
+    >>> median_squared_percentage_error(
+            y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
+        )
+    84.03109239915852
 
     References
     ----------
@@ -1961,15 +1534,19 @@ def median_squared_percentage_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.s
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    if horizon_weight is not None:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
+    if horizon_weight is None:
+        output_errors = np.median(np.square(perc_err), axis=0)
+    else:
+        check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
-            np.square(_percentage_error(y_true, y_pred)),
+            np.square(perc_err),
             sample_weight=horizon_weight,
         )
-    else:
-        output_errors = np.median(np.square(_percentage_error(y_true, y_pred)), axis=0)
+
+    if square_root:
+        output_errors = np.sqrt(output_errors)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -2055,16 +1632,15 @@ def mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    y_pred_benchmark = check_y(
-        y_pred_benchmark, enforce_univariate=False, allow_numpy=True
-    )
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
+
     if horizon_weight is None:
         output_errors = np.mean(
             np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
         )
     else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
         output_errors = np.average(
             np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)),
             weights=horizon_weight,
@@ -2156,16 +1732,15 @@ def median_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    y_pred_benchmark = check_y(
-        y_pred_benchmark, enforce_univariate=False, allow_numpy=True
-    )
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
+
     if horizon_weight is None:
         output_errors = np.median(
             np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
         )
     else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
             np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)),
             sample_weight=horizon_weight,
@@ -2256,18 +1831,16 @@ def geometric_mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
 
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    y_pred_benchmark = check_y(
-        y_pred_benchmark, enforce_univariate=False, allow_numpy=True
-    )
     relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
             np.where(relative_errors == 0.0, EPS, relative_errors), axis=0
         )
     else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
         output_errors = weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
             sample_weight=horizon_weight,
@@ -2285,9 +1858,15 @@ def geometric_mean_relative_absolute_error(
 
 
 def geometric_mean_relative_squared_error(
-    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    y_pred_benchmark,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
 ):
-    """Geometric mean relative squared error (GMRSE).
+    """Geometric mean relative squared error (GMRSE) if `square_root` is False or
+    root geometric mean relative squared error (RGMRSE) if `square_root` is True.
 
     Parameters
     ----------
@@ -2315,14 +1894,19 @@ def geometric_mean_relative_squared_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+            If True, returns root mean squared error (RMSPE)
+            If False, returns mean squared error (MSPE)
+
     Returns
     -------
     loss : float
-        GMRSE loss.
-        If multioutput is 'raw_values', then GMRSE is returned for each
+        GMRSE or RGMRSE loss.
+        If multioutput is 'raw_values', then GMRSE or RGMRSE is returned for each
         output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average GMRSE of all output errors is returned.
+        weighted average GMRSE or RGMRSE of all output errors is returned.
 
     See Also
     --------
@@ -2360,22 +1944,23 @@ def geometric_mean_relative_squared_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
-    y_pred_benchmark = check_y(
-        y_pred_benchmark, enforce_univariate=False, allow_numpy=True
-    )
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    y_pred_benchmark = check_y(y_pred_benchmark, enforce_univariate=False)
     relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
     if horizon_weight is None:
         output_errors = gmean(
             np.where(relative_errors == 0.0, EPS, relative_errors), axis=0
         )
     else:
-        horizon_weight = check_horizon_weights(horizon_weight, y_pred)
+        check_consistent_length(y_true, horizon_weight)
         output_errors = weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
             sample_weight=horizon_weight,
             axis=0,
         )
+
+    if square_root:
+        output_errors = np.sqrt(output_errors)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -2396,7 +1981,14 @@ def relative_loss(
     multioutput="uniform_average",
 ):
     """Calculates relative loss for a set of predictions and benchmark
-    predictions for a given loss function
+    predictions for a given loss function.
+
+    This function allows the calculation of scale-free relative loss metrics.
+    Unlike mean absolute scaled error (MASE) the function calculates the
+    scale-free metric relative to a defined loss function on a benchmark
+    method. Like MASE, metrics created using this function can be used to compare
+    forecast methods on a single series and also to compare forecast accuracy
+    between series.
 
     Parameters
     ----------
@@ -2436,17 +2028,21 @@ def relative_loss(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    return np.divide(
-        loss_function(
-            y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
-        ),
-        loss_function(
-            y_true,
-            y_pred_benchmark,
-            horizon_weight=horizon_weight,
-            multioutput=multioutput,
-        ),
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
+
+    loss_preds = loss_function(
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
+    loss_benchmark = loss_function(
+        y_true,
+        y_pred_benchmark,
+        horizon_weight=horizon_weight,
+        multioutput=multioutput,
+    )
+    return np.divide(loss_preds, loss_benchmark)
 
 
 def _asymmetric_error(
@@ -2492,7 +2088,6 @@ def _asymmetric_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_true, y_pred = check_y_true_pred(y_true, y_pred)
 
     functions = {"squared": np.square, "absolute": np.abs}
     left_func, right_func = (
