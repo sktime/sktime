@@ -126,14 +126,20 @@ Composition
 
     EnsembleForecaster
     TransformedTargetForecaster
-    DirectRegressionForecaster
-    DirectTimeSeriesRegressionForecaster
-    MultioutputRegressionForecaster
-    RecursiveRegressionForecaster
+    RecursiveTabularRegressionForecaster
+    DirectTabularRegressionForecaster
+    MultioutputTabularRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    ReducedForecaster
+    DirectTimeSeriesRegressionForecaster
+    MultioutputTimeSeriesRegressionForecaster
     StackingForecaster
     MultiplexForecaster
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: function.rst
+
+    make_reduction
 
 Online Forecasting
 ------------------
