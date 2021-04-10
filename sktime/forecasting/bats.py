@@ -13,6 +13,7 @@ _check_soft_dependencies("tbats")
 
 class BATS(_TbatsAdapter):
     """BATS estimator used to fit and select best performing model.
+
     BATS (Exponential smoothing state space model with Box-Cox
     transformation, ARMA errors, Trend and Seasonal components.)
     Model has been described in De Livera, Hyndman & Snyder (2011).
@@ -51,6 +52,22 @@ class BATS(_TbatsAdapter):
         https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.bats import BATS
+    >>> y = load_airline()
+    >>> forecaster = BATS(
+    ...     use_box_cox=False,
+    ...     use_trend=False,
+    ...     use_damped_trend=False,
+    ...     sp=12,
+    ...     use_arma_errors=False,
+    ...     n_jobs=1)
+    >>> forecaster.fit(y)
+    BATS(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     # both bats and tbats inherit the same interface from the base class and only

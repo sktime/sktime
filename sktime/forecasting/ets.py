@@ -145,6 +145,16 @@ class AutoETS(_StatsModelsAdapter):
     [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
         principles and practice*, 3rd edition, OTexts: Melbourne,
         Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.ets import AutoETS
+    >>> y = load_airline()
+    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)
+    >>> forecaster.fit(y)
+    AutoETS(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(

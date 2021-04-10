@@ -746,19 +746,16 @@ class _BaseWindowForecaster(_SktimeForecaster):
 
     def _get_last_window(self):
         """Select last window"""
-        # get the start and end points of the last window
+        # Get the start and end points of the last window.
         cutoff = self.cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
 
-        # get the last window of the endogenous variable
+        # Get the last window of the endogenous variable.
         y = self._y.loc[start:cutoff].to_numpy()
 
-        # if exogenous variables are given, also get the last window of
-        # those
-        if self._X is not None:
-            X = self._X.loc[start:cutoff].to_numpy()
-        else:
-            X = None
+        # If X is given, also get the last window of the exogenous variables.
+        X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+
         return y, X
 
     @staticmethod

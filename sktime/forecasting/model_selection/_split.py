@@ -133,15 +133,17 @@ def _check_window_lengths(y, fh, window_length, initial_window):
 
     if window_length + fh_max > n_timepoints:
         raise ValueError(
-            "The `window_length` and the forecasting horizon are "
-            "incompatible with the length of `y`."
+            f"The `window_length` and the forecasting horizon are incompatible with "
+            f"the length of `y`. Found `window_length`={window_length}, `max(fh)`="
+            f"{fh_max}, but len(y)={n_timepoints}."
         )
 
     if initial_window is not None:
         if initial_window + fh_max > n_timepoints:
             raise ValueError(
-                "The `initial_window` and the forecasting horizon are "
-                "incompatible with the length of `y`."
+                f"The `initial_window` and the forecasting horizon are incompatible "
+                f"with the length of `y`. Found `initial_window`={initial_window},"
+                f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
             )
 
 
