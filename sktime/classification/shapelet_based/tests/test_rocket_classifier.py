@@ -40,6 +40,7 @@ def test_rocket_ensemble_on_gunpoint():
     probas = rocket_e.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, rocket_e_gunpoint_probas)
 
+
 def test_rocket_parallel_ensemble_on_gunpoint():
     # load gunpoint data
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
@@ -59,6 +60,7 @@ def test_rocket_parallel_ensemble_on_gunpoint():
     # assert probabilities are the same
     probas = rocket_e.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, rocket_e_gunpoint_probas)
+
 
 def test_rocket_on_power_demand():
     # load power demand data

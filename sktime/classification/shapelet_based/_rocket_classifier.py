@@ -17,12 +17,14 @@ from sktime.transformations.panel.rocket import Rocket
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
+
 def _fit_pipeline(X, y, num_kernels, random_state):
     classifier = make_pipeline(
         Rocket(num_kernels=num_kernels, random_state=random_state),
         RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
     )
     return classifier.fit(X, y)
+
 
 class ROCKETClassifier(BaseClassifier):
     """
@@ -96,7 +98,6 @@ class ROCKETClassifier(BaseClassifier):
         self.class_dictionary = {}
 
         super(ROCKETClassifier, self).__init__()
-
 
     def fit(self, X, y):
         """
