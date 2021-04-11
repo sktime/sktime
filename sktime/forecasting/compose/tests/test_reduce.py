@@ -447,6 +447,8 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
             DirectTabularRegressionForecaster(LinearRegression()),
             EXPECTED_AIRLINE_LINEAR_DIRECT,
         ),
+        # multioutput should behave the same as direct with linear regression estimator
+        # hence the reason for the same expected predictions
         (
             MultioutputTabularRegressionForecaster(LinearRegression()),
             EXPECTED_AIRLINE_LINEAR_DIRECT,
@@ -461,6 +463,8 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
             ),
             EXPECTED_AIRLINE_LINEAR_DIRECT,
         ),
+        # multioutput should behave the same as direct with linear regression estimator
+        # hence the reason for the same expected predictions
         (
             MultioutputTimeSeriesRegressionForecaster(
                 make_pipeline(Tabularizer(), LinearRegression())
