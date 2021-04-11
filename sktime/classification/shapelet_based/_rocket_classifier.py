@@ -2,10 +2,11 @@
 """ RandOm Convolutional KErnel Transform (ROCKET)
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["Matthew Middlehurst", "Oleksii Kachaiev"]
 __all__ = ["ROCKETClassifier"]
 
 import numpy as np
+from joblib import delayed, Parallel
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
@@ -16,6 +17,12 @@ from sktime.transformations.panel.rocket import Rocket
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
+def _fit_pipeline(X, y, num_kernels, random_state):
+    classifier = make_pipeline(
+        Rocket(num_kernels=num_kernels, random_state=random_state),
+        RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+    )
+    return classifier.fit(X, y)
 
 class ROCKETClassifier(BaseClassifier):
     """
@@ -26,12 +33,11 @@ class ROCKETClassifier(BaseClassifier):
 
     Parameters
     ----------
-    num_kernels             : int, number of kernels for ROCKET transform
-    (default=10,000)
+    num_kernels             : int, number of kernels for ROCKET transform (default=10,000)
     ensemble                : boolean, create ensemble of ROCKET's (default=False)
     ensemble_size           : int, size of the ensemble (default=25)
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
+    random_state            : int or None, seed for random, integer, optional (default to no seed)
+    n_jobs                  : int, the number of jobs to run in parallel for `fit`, optional (default=1)
 
     Attributes
     ----------
@@ -70,11 +76,13 @@ class ROCKETClassifier(BaseClassifier):
         ensemble=False,
         ensemble_size=25,
         random_state=None,
+        n_jobs=1,
     ):
         self.num_kernels = num_kernels
         self.ensemble = ensemble
         self.ensemble_size = ensemble_size
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
         self.classifiers = []
         self.weights = []
@@ -85,6 +93,7 @@ class ROCKETClassifier(BaseClassifier):
         self.class_dictionary = {}
 
         super(ROCKETClassifier, self).__init__()
+
 
     def fit(self, X, y):
         """
@@ -109,23 +118,16 @@ class ROCKETClassifier(BaseClassifier):
             self.class_dictionary[classVal] = index
 
         if self.ensemble:
-            for i in range(self.ensemble_size):
-                rocket_pipeline = make_pipeline(
-                    Rocket(
-                        num_kernels=self.num_kernels, random_state=self.random_state
-                    ),
-                    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-                )
-                rocket_pipeline.fit(X, y)
-                self.classifiers.append(rocket_pipeline)
-                self.weights.append(rocket_pipeline.steps[1][1].best_score_)
-                self.weight_sum = self.weight_sum + self.weights[i]
-        else:
-            rocket_pipeline = make_pipeline(
-                Rocket(num_kernels=self.num_kernels, random_state=self.random_state),
-                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            self.classifiers = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_pipeline)(X, y, self.num_kernels, self.random_state)
+                for _ in range(self.ensemble_size)
             )
-            rocket_pipeline.fit(X, y)
+            for rocket_pipeline in self.classifiers:
+                weight = rocket_pipeline.steps[1][1].best_score_
+                self.weights.append(weight)
+                self.weight_sum += weight
+        else:
+            rocket_pipeline = _fit_pipeline(X, y, self.num_kernels, self.random_state)
             self.classifiers.append(rocket_pipeline)
 
         self._is_fitted = True
