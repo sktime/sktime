@@ -457,11 +457,14 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
             else:
                 regressor = clone(self.regressor)
             # Basically stuck at this step.
-            # if not self.approximations_:
-            #     regressor.fit(X, y)
+            if not self.approximations_:
+                regressor.fit(X, y)
             # else:
-            #     regressor.fit(X, "y_with_append_approximations")
+            #     regressor.fit(X
+            # ^^^^ "I have to append new data to X
+            # from approximations_.append", "y_with_append_approximations")
             # self.approximations_.append(regressor.predict("Some", "value", "x"))
+
             self.regressors_.append(regressor)
 
             # extension step of X.
@@ -480,17 +483,23 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         y_pred = np.zeros(len(fh))
 
         # get last window from observation horizon
-        last_window, _ = self._get_last_window()
+        (
+            last_window,
+            _,
+        ) = self._get_last_window()  # last observed stuff of y_train (caboose)
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
         # recursively predict iterating over forecasting horizon
         for i in range(len(y_pred)):
             # convert data into required input format
-            X_last = self._format_windows([last_window])
+            X_last = self._format_windows([last_window])  # size of the window, yep?
 
             # make forecast using specific fitted regressor
-            y_pred[i] = self.regressors_[i].predict(X_last)
+            y_pred[i] = self.regressors_[i].predict(
+                X_last
+            )  # predicts using the last ten inputs + consecutively
+            # adding the outputs... correct?
 
             # update last window with previous prediction
             # use full window adopting from DirectReducer
