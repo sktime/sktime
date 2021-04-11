@@ -121,28 +121,11 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         llf(\hat{\lambda}) - llf(\lambda) < \frac{1}{2}\chi^2(1 - \alpha, 1),
     with ``llf`` the log-likelihood function and :math:`\chi^2` the chi-squared
     function.
+
     References
     ----------
     G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
     Royal Statistical Society B, 26, 211-252 (1964).
-    Examples
-    --------
-    >>> from scipy import stats
-    >>> import matplotlib.pyplot as plt
-    We generate some random variates from a non-normal distribution and make a
-    probability plot for it, to show it is non-normal in the tails:
-    >>> fig = plt.figure()
-    >>> ax1 = fig.add_subplot(211)
-    >>> x = stats.loggamma.rvs(5, size=500) + 5
-    >>> prob = stats.probplot(x, dist=stats.norm, plot=ax1)
-    >>> ax1.set_xlabel('')
-    >>> ax1.set_title('Probplot against normal distribution')
-    We now use `boxcox` to transform the data so it's closest to normal:
-    >>> ax2 = fig.add_subplot(212)
-    >>> xt, _ = stats._boxcox(x)
-    >>> prob = stats.probplot(xt, dist=stats.norm, plot=ax2)
-    >>> ax2.set_title('Probplot after Box-Cox transformation')
-    >>> plt.show()
     """
     x = np.asarray(x)
     if x.ndim != 1:

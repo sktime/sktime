@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -28,14 +29,16 @@ from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.bats import BATS
-from sktime.forecasting.compose import DirectRegressionForecaster
+from sktime.forecasting.compose import DirectTabularRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import MultioutputRegressionForecaster
-from sktime.forecasting.compose import RecursiveRegressionForecaster
+from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
+from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -74,7 +77,9 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
 # The following estimators currently do not pass all unit tests
@@ -128,14 +133,17 @@ STEPS = [
 ESTIMATOR_TEST_PARAMS = {
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
-    DirectRegressionForecaster: {"regressor": REGRESSOR},
-    MultioutputRegressionForecaster: {"regressor": REGRESSOR},
-    RecursiveRegressionForecaster: {"regressor": REGRESSOR},
+    DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
+    MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
+    RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
-        "regressor": make_pipeline(Tabularizer(), REGRESSOR)
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     RecursiveTimeSeriesRegressionForecaster: {
-        "regressor": make_pipeline(Tabularizer(), REGRESSOR)
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
+    },
+    MultioutputTimeSeriesRegressionForecaster: {
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     TransformedTargetForecaster: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
@@ -180,6 +188,14 @@ ESTIMATOR_TEST_PARAMS = {
         "max_p": 2,
         "max_q": 2,
         "seasonal": False,
+    },
+    MultiplexForecaster: {
+        "forecasters": [
+            ("Naive_mean", NaiveForecaster(strategy="mean")),
+            ("Naive_last", NaiveForecaster(strategy="last")),
+            ("Naive_drift", NaiveForecaster(strategy="drift")),
+        ],
+        "selected_forecaster": "Naive_mean",
     },
     ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
@@ -239,6 +255,7 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
 }
 
 # These methods should not change the state of the estimator, that is, they should
