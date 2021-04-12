@@ -14,52 +14,85 @@ __all__ = ["MultiplexForecaster"]
 class MultiplexForecaster(
     _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
 ):
+    """
+    MultiplexForecaster facilitates a framework for performing
+    model selection process over different model classes.
+    It should be used in conjunction with ForecastingGridSearchCV
+    to get full utilization.
+
+    Single use of MultiplexForecaster with forecasters
+    and selected_forecaster parameter specified,
+    works just like the selected component.
+    It does not provide any further use in that case.
+
+    When used with ForecastingGridSearchCV, MultiplexForecaster
+    provides an ability to compare different model class
+    performances with each other, just like a model tournament.
+    When ForecastingGridSearchCV is fitted with a MultiplexForecaster,
+    returned value for the selected_forecaster argument of best_params_
+    attribute of ForecastingGridSearchCV, gives the best
+    performing model class among given models provided in forecasters.
+
+    Parameters
+    ----------
+    forecasters : list
+        List of (forecaster names, forecaster objects)
+        MultiplexForecaster switches between these forecasters
+        objects when used with ForecastingGridSearchCV to
+        find the optimal model
+    selected_forecaster: str
+        An argument to make a selection among forecasters.
+        MultiplexForecaster uses selected_forecaster
+        to choose which component to fit.
+        Important for using with ForecastingGridSearchCV as a
+        hyperparameter.
+
+    Attributes
+    ----------
+    _forecaster : Sktime forecaster
+        forecaster that MultiplexForecaster will currently
+        forecast with.
+
+    Example
+    ----------
+    >>> from sktime.forecasting.all import (
+    ...     MultiplexForecaster,
+    ...     ThetaForecaster,
+    ...     AutoETS,
+    ...     AutoARIMA,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter,
+    ...     load_airline,
+    ...     temporal_train_test_split,
+    >>> )
+    >>>
+    >>> y = load_airline()
+    >>>
+    >>> forecaster = MultiplexForecaster(forecasters=[
+    ...     ("ets", AutoETS()),
+    ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
+    ...     ("naive", NaiveForecaster())])
+    >>>
+    >>> cv = ExpandingWindowSplitter(
+    ...     start_with_window=True,
+    ...     step_length=24)
+    >>> gscv = ForecastingGridSearchCV(
+    ...     cv=cv,
+    ...     param_grid={"selected_forecaster":["ets", "arima", "naive"]},
+    ...     forecaster=forecaster)
+    >>>
+    >>> gscv.fit(y)
+    ForecastingGridSearchCV(...)
+    >>>
+    >>> gscv.best_forecaster_.selected_forecaster
+    'naive'
+    """
+
     def __init__(
         self,
         forecasters: list,
         selected_forecaster=None,
     ):
-
-        """
-        MultiplexForecaster facilitates a framework for performing
-        model selection process over different model classes.
-        It should be used in conjunction with ForecastingGridSearchCV
-        to get full utilization.
-
-        Single use of MultiplexForecaster with forecasters
-        and selected_forecaster parameter specified,
-        works just like the selected component.
-        It does not provide any further use in that case.
-
-        When used with ForecastingGridSearchCV, MultiplexForecaster
-        provides an ability to compare different model class
-        performances with each other, just like a model tournament.
-        When ForecastingGridSearchCV is fitted with a MultiplexForecaster,
-        returned value for the selected_forecaster argument of best_params_
-        attribute of ForecastingGridSearchCV, gives the best
-        performing model class among given models provided in forecasters.
-
-        Parameters
-        ----------
-        forecasters : list
-            List of (forecaster names, forecaster objects)
-            MultiplexForecaster switches between these forecasters
-            objects when used with ForecastingGridSearchCV to
-            find the optimal model
-        selected_forecaster: str
-            An argument to make a selection among forecasters.
-            MultiplexForecaster uses selected_forecaster
-            to choose which component to fit.
-            Important for using with ForecastingGridSearchCV as a
-            hyperparameter.
-
-        Attributes
-        ----------
-        _forecaster : Sktime forecaster
-            forecaster that MultiplexForecaster will currently
-            forecast with.
-        """
-
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
         self._forecaster = None

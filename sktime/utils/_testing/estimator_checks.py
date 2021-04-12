@@ -25,6 +25,7 @@ from sklearn.utils.estimator_checks import (
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.validation import check_random_state
+from sktime.utils import VALID_ESTIMATOR_TAGS
 
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
@@ -34,7 +35,6 @@ from sktime.regression.base import BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
-from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -86,6 +86,7 @@ def yield_estimator_checks(exclude=None):
         check_methods_do_not_change_state,
         check_persistence_via_pickle,
         check_multiprocessing_idempotent,
+        check_valid_estimator_tags,
     ]
     for check in checks:
         # check if associated test is not included in the exclusion list
@@ -501,6 +502,12 @@ def check_multiprocessing_idempotent(Estimator):
                     result,
                     err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
                 )
+
+
+def check_valid_estimator_tags(Estimator):
+    # check if Estimator tags are in VALID_ESTIMATOR_TAGS
+    for tag in Estimator._all_tags().keys():
+        assert tag in VALID_ESTIMATOR_TAGS
 
 
 def _get_err_msg(estimator):

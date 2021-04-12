@@ -122,9 +122,6 @@ class TransformedTargetForecaster(
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if return_pred_int:
-            raise NotImplementedError()
-
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 

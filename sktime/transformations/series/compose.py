@@ -70,7 +70,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         "fit-in-transform": True,
     }
 
-    def __init__(self, transformer, passthrough=True):
+    def __init__(self, transformer, passthrough):
         self.transformer = transformer
         self.transformer_ = None
         self.passthrough = passthrough

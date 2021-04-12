@@ -255,7 +255,7 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
 }
 
 # These methods should not change the state of the estimator, that is, they should
@@ -267,17 +267,6 @@ NON_STATE_CHANGING_METHODS = (
     "decision_function",
     "transform",
     "inverse_transform",
-)
-
-# We use estimator tags in addition to class hierarchies to further distinguish
-# estimators into different categories. This is useful for defining and running
-# common tests for estimators with the same tags.
-VALID_ESTIMATOR_TAGS = (
-    "fit-in-transform",  # fitted in transform or non-fittable
-    "univariate-only",
-    "transform-returns-same-time-index",
-    "handles-missing-data",
-    "skip-inverse-transform",
 )
 
 # The following gives a list of valid estimator base classes.

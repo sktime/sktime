@@ -20,8 +20,11 @@ __all__ = [
     "ThetaForecaster",
     "AutoARIMA",
     "ARIMA",
+    "AutoETS",
+    "Prophet",
     "PolynomialTrendForecaster",
     "TransformedTargetForecaster",
+    "MultiplexForecaster",
     "Deseasonalizer",
     "ReducedForecaster",
     "EnsembleForecaster",
@@ -46,12 +49,17 @@ from sktime.datasets import load_airline
 from sktime.datasets import load_longley
 from sktime.datasets import load_lynx
 from sktime.datasets import load_shampoo_sales
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.arima import ARIMA
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.fbprophet import Prophet
+from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose import ReducedForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -71,8 +79,6 @@ from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
 from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
     NormalHedgeEnsemble,
 )
-from sktime.forecasting.theta import ThetaForecaster
-from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.performance_metrics.forecasting import MASE
 from sktime.performance_metrics.forecasting import mase_loss
 from sktime.performance_metrics.forecasting import sMAPE

@@ -8,7 +8,17 @@ from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 
-from sktime.tests._config import VALID_ESTIMATOR_TAGS
+
+# We use estimator tags in addition to class hierarchies to further distinguish
+# estimators into different categories. This is useful for defining and running
+# common tests for estimators with the same tags.
+VALID_ESTIMATOR_TAGS = (
+    "fit-in-transform",  # fitted in transform or non-fittable
+    "univariate-only",
+    "transform-returns-same-time-index",
+    "handles-missing-data",
+    "skip-inverse-transform",
+)
 
 
 def _get_name(obj):
@@ -193,6 +203,5 @@ def _has_tag(Estimator, tag):
     -------
     bool
     """
-    assert tag in VALID_ESTIMATOR_TAGS
     # Check if tag is in all tags
     return Estimator._all_tags().get(tag, False)
