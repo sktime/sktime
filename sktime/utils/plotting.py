@@ -11,7 +11,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 
 
-def plot_series(*series, labels=None, markers=None):
+def plot_series(*series, labels=None, markers=None, pred_int=None):
     """Plot one or more time series
 
     Parameters
@@ -23,6 +23,8 @@ def plot_series(*series, labels=None, markers=None):
     markers: list, optional (default=None)
         Markers of data points, if None the marker "o" is used by default.
         Lenght of list has to match with number of series
+    pred_int : pd.DataFrame, optional (default=None)
+        Prediction intervals of series
 
     Returns
     -------
@@ -90,6 +92,25 @@ def plot_series(*series, labels=None, markers=None):
             plot_func = sns.lineplot
 
         plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
+
+    # plot prediction intervals if present
+    if pred_int is not None:
+        # check same conditions as for earlier indices
+        if not type(index) is type(pred_int.index):  # noqa
+            raise TypeError("Found series with different index types.")
+        elif all([x in index for x in pred_int.index]):
+            ax.fill_between(
+                ax.get_lines()[-1].get_xdata(),
+                pred_int.lower,
+                pred_int.upper,
+                alpha=0.3,
+                color=ax.get_lines()[-1].get_c(),
+                label="prediction intervals",
+            )
+        else:
+            raise ValueError(
+                "pred_int index does not match the index of the other passed series"
+            )
 
     # combine data points for all series
     xs_flat = list(flatten(xs))
