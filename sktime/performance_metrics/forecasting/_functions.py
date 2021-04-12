@@ -1420,7 +1420,7 @@ def mean_squared_percentage_error(
         y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
         )
     75.84121336547028
-S
+
     References
     ----------
     ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
