@@ -78,7 +78,7 @@ def test_raises_not_fitted_error(Forecaster):
         f.update(y_test, update_params=False)
 
     with pytest.raises(NotFittedError):
-        cv = SlidingWindowSplitter(fh=1, window_length=1)
+        cv = SlidingWindowSplitter(fh=1, window_length=1, start_with_window=False)
         f.update_predict(y_test, cv=cv)
 
     try:
@@ -260,7 +260,12 @@ def _check_update_predict_predicted_index(
 ):
     y = make_forecasting_problem(all_positive=True, index_type="datetime")
     y_train, y_test = temporal_train_test_split(y)
-    cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
+    cv = SlidingWindowSplitter(
+        fh,
+        window_length=window_length,
+        step_length=step_length,
+        start_with_window=False,
+    )
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
