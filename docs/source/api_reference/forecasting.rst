@@ -141,6 +141,7 @@ Composition
     RecursiveTimeSeriesRegressionForecaster
     ReducedForecaster
     StackingForecaster
+    MultiplexForecaster
 
 Online Forecasting
 ------------------
@@ -167,6 +168,7 @@ Model Selection
     CutoffSplitter
     SingleWindowSplitter
     SlidingWindowSplitter
+    ExpandingWindowSplitter
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
 

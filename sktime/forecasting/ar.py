@@ -11,7 +11,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 class AutoAR(_StatsModelsAdapter):
     """
-    Autor-egressive AR-X(p) model.
+    Auto-regressive AR-X(p) model.
     Estimate an AR-X model using Conditional Maximum Likelihood (OLS)
     and automatically selecting the value for p.
     Parameters
@@ -67,6 +67,23 @@ class AutoAR(_StatsModelsAdapter):
         ic="aic",
         glob=False,
         old_names=True,
+        deterministic=None,
+        dates=None,
+        freq=None,
+        method="cmle",
+        cov_type="nonrobust",
+        cov_kwds=None,
+        use_t=False,
+        transparams=True,
+        start_params=None,
+        solver="lbfgs",
+        maxiter=35,
+        full_output=1,
+        disp=1,
+        callback=None,
+        normalized_cov_params=None,
+        scale=1.0,
+        **kwargs
     ):
         self.maxlag = maxlag
         self.trend = trend
@@ -77,6 +94,21 @@ class AutoAR(_StatsModelsAdapter):
         self.glob = glob
         self.ic = ic
         self.old_names = old_names
+        self.deterministic = deterministic
+        self.dates = dates
+        self.freq = freq
+        self.cov_type = cov_type
+        self.cov_kwds = cov_kwds
+        self.use_t = use_t
+        self.start_params = start_params
+        self.method = method
+        self.normalized_cov_params = normalized_cov_params
+        self.solver = solver
+        self.maxiter = maxiter
+        self.full_output = full_output
+        self.disp = disp
+        self.scale = scale
+        self.callback = callback
 
         super(AutoAR, self).__init__()
 

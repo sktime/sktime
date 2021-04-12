@@ -17,13 +17,6 @@ class BaseEstimator(_BaseEstimator):
     BaseEstimator.
     """
 
-    # def __init__(self, *args, **kwargs):
-    #     # Including args and kwargs make the class cooperative, so that args
-    #     # and kwargs are passed on to other parent classes when using
-    #     # multiple inheritance
-    #     self._is_fitted = False
-    #     super(BaseEstimator, self).__init__(*args, **kwargs)
-
     def __init__(self):
         self._is_fitted = False
 
