@@ -25,7 +25,7 @@ __all__ = [
     "PercentageErrorMixIn",
     "SquaredErrorMixIn",
     "SquaredPercentageErrorMixIn",
-    "BaseMetricFunctionWrapper",
+    "MetricFunctionWrapper",
     "PercentageMetricFunctionWrapper",
     "SquaredMetricFunctionWrapper",
     "SquaredPercentageMetricFunctionWrapper",
@@ -49,7 +49,7 @@ __all__ = [
 ]
 
 
-class BaseMetricFunctionWrapper(BaseEstimator):
+class MetricFunctionWrapper(BaseEstimator):
     def __init__(self, fn, name=None, greater_is_better=False):
         self.fn = fn
         self.name = name if name is not None else fn.__name__
@@ -87,20 +87,20 @@ class AsymmetricErrorMixIn:
         )
 
 
-class PercentageMetricFunctionWrapper(PercentageErrorMixIn, BaseMetricFunctionWrapper):
+class PercentageMetricFunctionWrapper(PercentageErrorMixIn, MetricFunctionWrapper):
     def __init__(self, fn, name=None, greater_is_better=False, symmetric=False):
         self.symmetric = symmetric
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
-class SquaredMetricFunctionWrapper(SquaredErrorMixIn, BaseMetricFunctionWrapper):
+class SquaredMetricFunctionWrapper(SquaredErrorMixIn, MetricFunctionWrapper):
     def __init__(self, fn, name=None, greater_is_better=False, square_root=False):
         self.square_root = square_root
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
 class SquaredPercentageMetricFunctionWrapper(
-    SquaredPercentageErrorMixIn, BaseMetricFunctionWrapper
+    SquaredPercentageErrorMixIn, MetricFunctionWrapper
 ):
     def __init__(
         self, fn, name=None, greater_is_better=False, square_root=False, symmetric=False
@@ -110,7 +110,7 @@ class SquaredPercentageMetricFunctionWrapper(
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
-class AsymmetricMetricFunctionWrapper(AsymmetricErrorMixIn, BaseMetricFunctionWrapper):
+class AsymmetricMetricFunctionWrapper(AsymmetricErrorMixIn, MetricFunctionWrapper):
     def __init__(
         self,
         fn,
@@ -170,9 +170,7 @@ def make_forecasting_scorer(
     """
     # Create bas
     if not symmetric and not square_root:
-        return BaseMetricFunctionWrapper(
-            fn, name=name, greater_is_better=greater_is_better
-        )
+        return MetricFunctionWrapper(fn, name=name, greater_is_better=greater_is_better)
     elif symmetric and not square_root:
         return PercentageMetricFunctionWrapper(
             fn, name=name, greater_is_better=greater_is_better, symmetric=symmetric
@@ -192,7 +190,7 @@ def make_forecasting_scorer(
         )
 
 
-class MeanAbsoluteScaledError(BaseMetricFunctionWrapper):
+class MeanAbsoluteScaledError(MetricFunctionWrapper):
     def __init__(self):
         name = "MeanAbsoluteScaledError"
         fn = mean_absolute_scaled_error
@@ -200,7 +198,7 @@ class MeanAbsoluteScaledError(BaseMetricFunctionWrapper):
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
-class MedianAbsoluteScaledError(BaseMetricFunctionWrapper):
+class MedianAbsoluteScaledError(MetricFunctionWrapper):
     def __init__(self):
         name = "MedianAbsoluteScaledError"
         fn = median_absolute_scaled_error
@@ -234,7 +232,7 @@ class MedianSquaredScaledError(SquaredMetricFunctionWrapper):
         )
 
 
-class MeanAbsoluteError(BaseMetricFunctionWrapper):
+class MeanAbsoluteError(MetricFunctionWrapper):
     def __init__(self):
         name = "MeanAbsoluteError"
         fn = mean_absolute_error
@@ -242,7 +240,7 @@ class MeanAbsoluteError(BaseMetricFunctionWrapper):
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
-class MedianAbsoluteError(BaseMetricFunctionWrapper):
+class MedianAbsoluteError(MetricFunctionWrapper):
     def __init__(self):
         name = "MedianAbsoluteError"
         fn = median_absolute_error
@@ -324,7 +322,7 @@ class MedianSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
         )
 
 
-class MeanRelativeAbsoluteError(BaseMetricFunctionWrapper):
+class MeanRelativeAbsoluteError(MetricFunctionWrapper):
     def __init__(self):
         name = "MeanRelativeAbsoluteError"
         fn = mean_relative_absolute_error
@@ -332,7 +330,7 @@ class MeanRelativeAbsoluteError(BaseMetricFunctionWrapper):
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
-class MedianRelativeAbsoluteError(BaseMetricFunctionWrapper):
+class MedianRelativeAbsoluteError(MetricFunctionWrapper):
     def __init__(self):
         name = "MedianRelativeAbsoluteError"
         fn = median_relative_absolute_error
@@ -340,7 +338,7 @@ class MedianRelativeAbsoluteError(BaseMetricFunctionWrapper):
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
 
-class GeometricMeanRelativeAbsoluteError(BaseMetricFunctionWrapper):
+class GeometricMeanRelativeAbsoluteError(MetricFunctionWrapper):
     def __init__(self):
         name = "GeometricMeanRelativeAbsoluteError"
         fn = geometric_mean_relative_absolute_error
