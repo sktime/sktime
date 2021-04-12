@@ -35,7 +35,7 @@ from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import (
-    symmetric_mean_absolute_percentage_error,
+    mean_absolute_percentage_error,
 )
 from sktime.utils import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
@@ -235,7 +235,9 @@ def test_score(Forecaster, fh):
     y_pred = f.predict()
 
     fh_idx = check_fh(fh).to_indexer()  # get zero based index
-    expected = symmetric_mean_absolute_percentage_error(y_pred, y_test.iloc[fh_idx])
+    expected = mean_absolute_percentage_error(
+        y_pred, y_test.iloc[fh_idx], symmetric=True
+    )
 
     # compare with actual score
     f = _construct_instance(Forecaster)
