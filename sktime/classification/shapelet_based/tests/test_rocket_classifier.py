@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from numpy import testing
+import pytest
 
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
@@ -21,7 +22,8 @@ def test_rocket_on_gunpoint():
     testing.assert_array_equal(probas, rocket_gunpoint_probas)
 
 
-def test_rocket_ensemble_on_gunpoint():
+@pytest.mark.parametrize("n_jobs", [None, 1, 8])
+def test_rocket_ensemble_on_gunpoint(n_jobs):
     # load gunpoint data
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
@@ -33,27 +35,7 @@ def test_rocket_ensemble_on_gunpoint():
         ensemble_size=10,
         ensemble=True,
         random_state=0,
-    )
-    rocket_e.fit(X_train.iloc[indices], y_train[indices])
-
-    # assert probabilities are the same
-    probas = rocket_e.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, rocket_e_gunpoint_probas)
-
-
-def test_rocket_parallel_ensemble_on_gunpoint():
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
-
-    # train ROCKET ensemble
-    rocket_e = ROCKETClassifier(
-        num_kernels=1000,
-        ensemble_size=10,
-        ensemble=True,
-        random_state=0,
-        n_jobs=8,
+        n_jobs=n_jobs,
     )
     rocket_e.fit(X_train.iloc[indices], y_train[indices])
 
