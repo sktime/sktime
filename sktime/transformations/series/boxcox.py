@@ -35,17 +35,62 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
-    def __init__(self, bounds=None, method="mle"):
+    def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds
         self.method = method
         self.lambda_ = None
+        self.sp = sp
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, Z, X=None):
+        self._check_method()
         z = check_series(Z, enforce_univariate=True)
-        self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
+        if self.method != "guerrero":
+            self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
+        else:
+
+            def _guerrero(x, sp):
+                # Uses the Guerrero method for a time series x
+                # with seasonal periodicity sp.
+                #
+                # References
+                # ----------
+                # [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
+                # Transformations ", Journal of Forecasting, Vol. 12, 37-48 (1993)
+                # https://doi.org/10.1002/for.3980120104
+
+                x = np.asarray(x)
+                num_obs = len(x)
+                len_prefix = num_obs % sp
+
+                x_trimmed = x[len_prefix:]
+                x_mat = x_trimmed.reshape((-1, sp))
+                x_mean = np.mean(x_mat, axis=1)
+
+                # [Guerrero, Eq.(5)] uses an unbiased estimation for
+                # the standard deviation
+                x_std = np.std(x_mat, axis=1, ddof=1)
+
+                def _eval_guerrero(lmb, x_std, x_mean):
+                    x_ratio = x_std / x_mean ** (1 - lmb)
+                    x_ratio_cv = variation(x_ratio)
+                    return x_ratio_cv
+
+                optimizer = _make_boxcox_optimizer(self.bounds)
+                return optimizer(_eval_guerrero, args=(x_std, x_mean))
+
+            self.lambda_ = _guerrero(z, self.sp)
+
         self._is_fitted = True
         return self
+
+    def _check_method(self):
+        if self.method == "guerrero" and (self.sp is None or self.sp < 2):
+            raise ValueError(
+                "Guerrero method requires a seasonal periodicity sp value >= 2"
+            )
+        else:
+            pass
 
     def transform(self, Z, X=None):
         self.check_is_fitted()
@@ -74,8 +119,7 @@ class LogTransformer(_SeriesToSeriesTransformer):
         return np.exp(Z)
 
 
-# TODO replace with scipy version once PR for adding bounds is merged
-def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
+def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
     # bounds is None, use simple Brent optimisation
     if bounds is None:
 
@@ -92,6 +136,13 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
         def optimizer(func, args):
             return optimize.fminbound(func, bounds[0], bounds[1], args=args)
+
+    return optimizer
+
+
+# TODO replace with scipy version once PR for adding bounds is merged
+def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
+    optimizer = _make_boxcox_optimizer(bounds, brack)
 
     def _pearsonr(x):
         osm_uniform = _calc_uniform_order_statistic_medians(len(x))
@@ -122,31 +173,7 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         maxlog[1] = _mle(x)
         return maxlog
 
-    def _guerrero(x, sp=5):
-        # function _guerrero uses the Guerrero method
-        # for a time series x with seasonal periodicity sp
-        # and lambda parameter lmb
-        # returns the x_ratio_cv coefficient of variation
-
-        x = np.asarray(x)
-        num_obs = len(x)
-        len_prefix = num_obs % sp
-
-        x_trimmed = x[len_prefix:]
-        x_mat = x_trimmed.reshape((-1, sp))
-        x_mean = np.mean(x_mat, axis=1)
-
-        # [Guerrero, Eq.(5)] uses an unbiased estimation for the standard deviation
-        x_std = np.std(x_mat, axis=1, ddof=1)
-
-        def _eval_guerrero(lmb, x_std, x_mean):
-            x_ratio = x_std / x_mean ** (1 - lmb)
-            x_ratio_cv = variation(x_ratio)
-            return x_ratio_cv
-
-        return optimizer(_eval_guerrero, args=(x_std, x_mean))
-
-    methods = {"pearsonr": _pearsonr, "mle": _mle, "all": _all, "guerrero": _guerrero}
+    methods = {"pearsonr": _pearsonr, "mle": _mle, "all": _all}
     if method not in methods.keys():
         raise ValueError("Method %s not recognized." % method)
 

@@ -25,9 +25,11 @@ def test_boxcox_against_scipy():
 
 
 @pytest.mark.parametrize("bounds", [(0, 1), (-1, 0), (-1, 2)])
-@pytest.mark.parametrize("method", ["mle", "pearsonr", "guerrero"])
-def test_lambda_bounds(bounds, method):
+@pytest.mark.parametrize(
+    "method_sp", [("mle", None), ("pearsonr", None), ("guerrero", 5)]
+)
+def test_lambda_bounds(bounds, method_sp):
     y = load_airline()
-    t = BoxCoxTransformer(bounds=bounds, method=method)
+    t = BoxCoxTransformer(bounds=bounds, method=method_sp[0], sp=method_sp[1])
     t.fit(y)
     assert bounds[0] < t.lambda_ < bounds[1]
