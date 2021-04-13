@@ -78,7 +78,7 @@ class MultiplexForecaster(
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> gscv.best_forecaster_.selected_forecaster
-    'naive'
+    'arima'
     """
 
     def __init__(
