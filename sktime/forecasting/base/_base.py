@@ -151,7 +151,8 @@ class BaseForecaster(BaseEstimator):
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def score(self, y, X=None, fh=None):
-        """Compute the sMAPE loss for the given forecasting horizon.
+        """Compute the symmetric version of mean absolute percentage error
+        for the given forecasting horizon.
 
         Parameters
         ----------
@@ -169,15 +170,15 @@ class BaseForecaster(BaseEstimator):
 
         See Also
         --------
-        :meth:`sktime.performance_metrics.forecasting.symmetric_mean_absolute_percentage_error`.`
+        :meth:`sktime.performance_metrics.forecasting.mean_absolute_percentage_error`
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
         from sktime.performance_metrics.forecasting import (
-            symmetric_mean_absolute_percentage_error,
+            mean_absolute_percentage_error,
         )
 
-        return symmetric_mean_absolute_percentage_error(y, self.predict(fh, X))
+        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=True)
 
     def get_fitted_params(self):
         """Get fitted parameters
