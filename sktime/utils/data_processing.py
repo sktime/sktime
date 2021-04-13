@@ -778,7 +778,7 @@ def from_nested_to_3d_numpy(X):
     Parameters
     ----------
     X : pd.DataFrame
-        Nested Pandas DataFrame
+        Nested pandas DataFrame
 
     Returns
     -------
