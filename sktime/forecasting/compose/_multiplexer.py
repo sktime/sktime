@@ -57,9 +57,9 @@ class MultiplexForecaster(
     ----------
     >>> from sktime.forecasting.all import (
     ...     MultiplexForecaster,
-    ...     ThetaForecaster,
     ...     AutoETS,
     ...     AutoARIMA,
+    ...     NaiveForecaster,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
     ...     load_airline)
