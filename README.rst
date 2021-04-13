@@ -114,7 +114,7 @@ Forecasting
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.theta import ThetaForecaster
-    from sktime.performance_metrics.forecasting import smape_loss
+    from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -122,7 +122,7 @@ Forecasting
     forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    symmetric_mean_absolute_percentage_error(y_test, y_pred)
+    mean_absolute_percentage_error(y_test, y_pred, symmetric=True)
     >>> 8.661467738190659
 
 For more, check out the `forecasting tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting
