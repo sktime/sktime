@@ -346,13 +346,13 @@ def check_scoring(scoring):
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
 
-    allowed_base_classes = [
+    allowed_base_classes = (
         MetricFunctionWrapper,
         SquaredMetricFunctionWrapper,
         PercentageMetricFunctionWrapper,
         SquaredPercentageMetricFunctionWrapper,
         AsymmetricMetricFunctionWrapper,
-    ]
+    )
     if not isinstance(scoring, allowed_base_classes):
         allowed_base_class_names = [
             allowed_base_class.__name__ for allowed_base_class in allowed_base_classes
