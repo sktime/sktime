@@ -17,7 +17,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_equal_time_index, check_series
+from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.validation.series import check_series
 
 
 def check_y_X(
@@ -100,33 +101,20 @@ def check_X(
     )
 
 
-def check_y(
-    y,
-    enforce_univariate=True,
-    allow_empty=False,
-    allow_constant=True,
-    enforce_index_type=None,
-):
+def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     """Validate input data.
-
     Parameters
     ----------
     y : pd.Series
-
-    enforce_univariate : bool, default = True
-
-    allow_empty : bool, default = False
-
-    allow_constant : bool, default = True
+    allow_empty : bool, optional (default=False)
+        If False, empty `y` raises an error.
+    allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
-
-    enforce_index_type : type, default=None
+    enforce_index_type : type, optional (default=None)
         type of time index
-
     Returns
     -------
-    y : pd.Series or pd.DataFrame
-
+    y : pd.Series
     Raises
     ------
     ValueError, TypeError
@@ -134,7 +122,7 @@ def check_y(
     """
     y = check_series(
         y,
-        enforce_univariate=enforce_univariate,
+        enforce_univariate=True,
         allow_empty=allow_empty,
         allow_numpy=False,
         enforce_index_type=enforce_index_type,
@@ -340,19 +328,32 @@ def check_scoring(scoring):
         if object is not an instance of class MetricFunctionWrapper of
         sktime.performance_metrics.
     """
-    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
-    from sktime.performance_metrics.forecasting import (
-        SymmetricMeanAbsolutePercentageError,
+    from sktime.performance_metrics.forecasting._classes import (
+        MetricFunctionWrapper,
+        SquaredMetricFunctionWrapper,
+        PercentageMetricFunctionWrapper,
+        SquaredPercentageMetricFunctionWrapper,
+        AsymmetricMetricFunctionWrapper,
     )
+    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
     if scoring is None:
-        return SymmetricMeanAbsolutePercentageError()
+        return MeanAbsolutePercentageError(symmetric=True)
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
 
-    allowed_base_class = MetricFunctionWrapper
-    if not isinstance(scoring, allowed_base_class):
-        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
+    allowed_base_classes = [
+        MetricFunctionWrapper,
+        SquaredMetricFunctionWrapper,
+        PercentageMetricFunctionWrapper,
+        SquaredPercentageMetricFunctionWrapper,
+        AsymmetricMetricFunctionWrapper,
+    ]
+    if not isinstance(scoring, allowed_base_classes):
+        allowed_base_class_names = [
+            allowed_base_class.__name__ for allowed_base_class in allowed_base_classes
+        ]
+        raise TypeError(f"`scoring` must inherit from `{allowed_base_class_names}`")
 
     return scoring
