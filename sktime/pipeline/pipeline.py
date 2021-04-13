@@ -35,8 +35,6 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
 
     def __init__(self, steps, interface="simple"):
         self._steps = steps
-        self._results_dict = {}
-        self._interface = interface
 
     def _iter(self):
         for name, alg, arguments in self._steps:
@@ -61,32 +59,32 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
             if value == "original":
                 arguments[key] = self._X
 
-            if value in self._results_dict:
-                arguments[key] = self._results_dict[value]._fit_result
+            for step in self._steps:
+                if value in step:
+                    arguments[key] = step[1].step_result
 
         return arguments
 
     def fit(self, X):
         self._X = X
-        for name, alg, arguments in self._iter():
-            if self._interface == "simple":
-                arguments = self._check_arguments(arguments)
-                # Transformers are instances of BaseTransformer and BaseEstimator
-                # Estimators are only instances of BaseEstimator
-                if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                    self._results_dict[name] = alg.transform(**arguments)
-                if not isinstance(alg, BaseTransformer) and isinstance(
-                    alg, BaseEstimator
-                ):
-                    self._results_dict[name] = alg.fit(**arguments)
-            if self._interface == "advanced":
-                for arg in arguments:
-                    func_name = arg["function"]
-                    arguments = self._check_arguments(arg["arguments"])
-                    # execute function
-                    if arguments is not None:
-                        self._results_dict[name] = getattr(alg, func_name)(**arguments)
-                    else:
-                        self._results_dict[name] = getattr(alg, func_name)()
+        for _, alg, arguments in self._iter():
+            arguments = self._check_arguments(arguments)
+            # Transformers are instances of BaseTransformer and BaseEstimator
+            # Estimators are only instances of BaseEstimator
+            if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
+                alg.fit_transform(**arguments)
+            if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
+                alg.fit(**arguments)
 
         return self
+
+    def predict(self, X):
+
+        self._X = X
+
+        for _, alg, arguments in self._iter():
+            arguments = self._check_arguments(arguments)
+            if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
+                alg.transform(**arguments)
+            if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
+                alg.predict(**arguments)

@@ -5,9 +5,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 import numpy as np
 import mlfinlab as ml
+from sktime.pipeline.base import _NonSequentialPipelineStepResultsMixin
 
 
-class Estimator(BaseEstimator):
+class Estimator(BaseEstimator, _NonSequentialPipelineStepResultsMixin):
     def __init__(
         self,
         estimator,
@@ -50,12 +51,13 @@ class Estimator(BaseEstimator):
         y_train = y.iloc[train_idx][self._labels_col_name]
 
         trained_estimator = gs.fit(X_train, y_train)
-        self._fit_result = trained_estimator
+        self.step_result = trained_estimator
 
         return self
 
-    def predict(self):
-        raise NotImplementedError
+    def predict(self, X, y):
+        trained_estimator = self.step_result
+        trained_estimator.best_estimator_.predict(X, y)
 
     def update(self):
         raise NotImplementedError

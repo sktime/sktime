@@ -13,7 +13,7 @@ from sklearn.ensemble import BaggingClassifier
 from sktime.pipeline.estimators import Estimator
 
 if __name__ == "__main__":
-    # simple example
+    # mlfinlab fit example
     pipe = OnlineUnsupervisedPipeline(
         steps=[
             ("dollar_bars", DollarBars(), {"X": "original"}),
@@ -27,9 +27,9 @@ if __name__ == "__main__":
                 "triple_barrier_events",
                 TrippleBarrierEvents(price_col="close", num_days=5),
                 {
-                    "prices": "dollar_bars",
+                    "input_series": "dollar_bars",
                     "change_points": "cusum",
-                    "daily_vol": "daily_vol",
+                    "target": "daily_vol",
                 },
             ),
             (
@@ -69,77 +69,37 @@ if __name__ == "__main__":
     )
     pipe.fit(X="sktime/pipeline/curated_tick_data.csv")
 
-    # Advance example
-    # same pipeline but we define explicitly which function we want to call
-    pipeAdvanced = OnlineUnsupervisedPipeline(
+    # mlfinlab predict example
+    pipe = OnlineUnsupervisedPipeline(
         steps=[
-            (
-                "dollar_bars",
-                DollarBars(),
-                [
-                    {"function": "fit", "arguments": None},
-                    {"function": "transform", "arguments": {"X": "original"}},
-                ],
-            ),
-            (
-                "cusum",
-                CUSUM(price_col="close"),
-                [
-                    {
-                        "function": "transform",
-                        "arguments": {"input_series": "dollar_bars"},
-                    }
-                ],
-            ),
+            ("dollar_bars", DollarBars(), {"X": "original"}),
+            ("cusum", CUSUM(price_col="close"), {"input_series": "dollar_bars"}),
             (
                 "daily_vol",
                 DailyVol(price_col="close", lookback=5),
-                [
-                    {
-                        "function": "transform",
-                        "arguments": {"input_series": "dollar_bars"},
-                    }
-                ],
+                {"input_series": "dollar_bars"},
             ),
             (
                 "triple_barrier_events",
                 TrippleBarrierEvents(price_col="close", num_days=5),
-                [
-                    {
-                        "function": "transform",
-                        "arguments": {
-                            "prices": "dollar_bars",
-                            "change_points": "cusum",
-                            "daily_vol": "daily_vol",
-                        },
-                    }
-                ],
+                {
+                    "input_series": "dollar_bars",
+                    "change_points": "cusum",
+                    "target": "daily_vol",
+                },
             ),
             (
                 "labels",
                 TrippleBarrierLabels(price_col="close"),
-                [
-                    {
-                        "function": "transform",
-                        "arguments": {
-                            "triple_barrier_events": "triple_barrier_events",
-                            "prices": "dollar_bars",
-                        },
-                    }
-                ],
+                {
+                    "triple_barrier_events": "triple_barrier_events",
+                    "prices": "dollar_bars",
+                },
             ),
             (
                 "build_dataset",
                 BuildDataset(price_col="close", labels_col="bin", lookback=20),
-                [
-                    {
-                        "function": "transform",
-                        "arguments": {
-                            "input_dataset": "dollar_bars",
-                            "labels": "labels",
-                        },
-                    }
-                ],
+                {"input_dataset": "dollar_bars", "labels": "labels"},
             ),
             (
                 "estimator",
@@ -155,18 +115,11 @@ if __name__ == "__main__":
                     samples_col_name="t1",
                     labels_col_name="bin",
                 ),
-                [
-                    {
-                        "function": "fit",
-                        "arguments": {
-                            "X": "build_dataset",
-                            "y": "labels",
-                            "samples": "triple_barrier_events",
-                        },
-                    }
-                ],
+                {
+                    "X": "build_dataset",
+                    "y": "labels",
+                },
             ),
-        ],
-        interface="advanced",
+        ]
     )
-    pipeAdvanced.fit(X="sktime/pipeline/curated_tick_data.csv")
+    pipe.predict(X="sktime/pipeline/curated_tick_data.csv")

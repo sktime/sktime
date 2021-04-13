@@ -8,6 +8,7 @@ from sktime.transformations.base import BaseTransformer
 
 from sktime.transformations.base import Series
 import logging
+from sktime.pipeline.base import _NonSequentialPipelineStepResultsMixin
 
 
 class _ComplexToSeriesTransformer(BaseTransformer):
@@ -24,7 +25,7 @@ class _ComplexToTabular(BaseTransformer):
         raise NotImplementedError("abstract method")
 
 
-class DollarBars(_SeriesToSeriesTransformer):
+class DollarBars(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -49,9 +50,15 @@ class DollarBars(_SeriesToSeriesTransformer):
         idx = dollar_bars.index.duplicated(keep="first")
         dollar_bars = dollar_bars.loc[~idx]
 
-        self._fit_result = dollar_bars
+        self.step_result = dollar_bars
 
         return self
+
+    def fit_transform(self, X):
+        """
+        Dummy method, calls transform
+        """
+        self.transform(X)
 
     def fit(self):
         logging.warning("testing")
@@ -61,7 +68,7 @@ class DollarBars(_SeriesToSeriesTransformer):
         raise NotImplementedError
 
 
-class CUSUM(_SeriesToSeriesTransformer):
+class CUSUM(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -80,11 +87,17 @@ class CUSUM(_SeriesToSeriesTransformer):
         self._threshold = threshold
         self._price_col = price_col
 
+    def fit_transform(self, input_series):
+        """
+        Dummy method, calls transform
+        """
+        self.transform(input_series)
+
     def transform(self, input_series):
         cusum_events = ml.filters.cusum_filter(
             input_series[self._price_col], threshold=self._threshold
         )
-        self._fit_result = cusum_events
+        self.step_result = cusum_events
         return self
 
     def fit(self):
@@ -94,7 +107,7 @@ class CUSUM(_SeriesToSeriesTransformer):
         raise NotImplementedError
 
 
-class DailyVol(_SeriesToSeriesTransformer):
+class DailyVol(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -111,8 +124,14 @@ class DailyVol(_SeriesToSeriesTransformer):
         daily_vol = ml.util.volatility.get_daily_vol(
             close=input_series[self._price_col], lookback=self._lookback
         )
-        self._fit_result = daily_vol
+        self.step_result = daily_vol
         return self
+
+    def fit_transform(self, input_series):
+        """
+        Dummy method, calls transform
+        """
+        self.transform(input_series)
 
     def fit(self):
         raise NotImplementedError
@@ -121,7 +140,9 @@ class DailyVol(_SeriesToSeriesTransformer):
         raise NotImplementedError
 
 
-class TrippleBarrierEvents(_ComplexToSeriesTransformer):
+class TrippleBarrierEvents(
+    _ComplexToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
+):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -151,24 +172,30 @@ class TrippleBarrierEvents(_ComplexToSeriesTransformer):
         self._min_return = min_return
         self._num_threads = num_threads
 
-    def transform(self, prices, change_points, daily_vol):
+    def fit_transform(self, input_series, change_points, target):
+        """
+        Dummy method, calls transform
+        """
+        self.transform(input_series, change_points, target)
+
+    def transform(self, input_series, change_points, target):
         vertical_barriers = ml.labeling.add_vertical_barrier(
             t_events=change_points,
-            close=prices[self._price_col],
+            close=input_series[self._price_col],
             num_days=self._num_days,
         )
         triple_barrier_events = ml.labeling.get_events(
-            close=prices[self._price_col],
+            close=input_series[self._price_col],
             t_events=change_points,
             pt_sl=self._pt_sl,  # sets the width of the barriers
-            target=daily_vol * self._target_barrier_multiple,  # twice the daily vol
+            target=target * self._target_barrier_multiple,  # twice the daily vol
             min_ret=self._min_return,
             num_threads=self._num_threads,
             vertical_barrier_times=vertical_barriers,
             side_prediction=None,
             verbose=False,
         )
-        self._fit_result = triple_barrier_events
+        self.step_result = triple_barrier_events
 
         return self
 
@@ -179,7 +206,9 @@ class TrippleBarrierEvents(_ComplexToSeriesTransformer):
         raise NotImplementedError
 
 
-class TrippleBarrierLabels(_ComplexToSeriesTransformer):
+class TrippleBarrierLabels(
+    _ComplexToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
+):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -192,13 +221,17 @@ class TrippleBarrierLabels(_ComplexToSeriesTransformer):
     def __init__(self, price_col):
         self._price_col = price_col
 
+    def fit_transform(self, triple_barrier_events, prices):
+        """Dummy method, calls transform"""
+        self.transform(triple_barrier_events, prices)
+
     def transform(self, triple_barrier_events, prices):
 
         triple_labels = ml.labeling.get_bins(
             triple_barrier_events, prices[self._price_col]
         )
 
-        self._fit_result = triple_labels
+        self.step_result = triple_labels
 
         return self
 
@@ -209,7 +242,7 @@ class TrippleBarrierLabels(_ComplexToSeriesTransformer):
         raise NotImplementedError
 
 
-class BuildDataset(_ComplexToTabular):
+class BuildDataset(_ComplexToTabular, _NonSequentialPipelineStepResultsMixin):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -222,6 +255,10 @@ class BuildDataset(_ComplexToTabular):
         self._lookback = lookback
         self._price_col = price_col
         self._labels_col = labels_col
+
+    def fit_transform(self, input_dataset, labels):
+        """Dummy method, calls transform"""
+        self.transform(input_dataset, labels)
 
     def transform(self, input_dataset, labels):
         col_names = [f"feature_{i}" for i in np.arange(self._lookback)]
@@ -240,7 +277,7 @@ class BuildDataset(_ComplexToTabular):
         dataset[self._labels_col] = labels[self._labels_col].values
         dataset[self._labels_col] = dataset[self._labels_col].replace(-1, 0)
 
-        self._fit_result = dataset
+        self.step_result = dataset
 
         return self
 
