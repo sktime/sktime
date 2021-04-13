@@ -103,6 +103,7 @@ def check_X(
 
 def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     """Validate input data.
+
     Parameters
     ----------
     y : pd.Series
@@ -112,9 +113,11 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
         If True, constant `y` does not raise an error.
     enforce_index_type : type, optional (default=None)
         type of time index
+
     Returns
     -------
     y : pd.Series
+
     Raises
     ------
     ValueError, TypeError
@@ -318,8 +321,8 @@ def check_scoring(scoring):
 
     Returns
     ----------
-    scoring : object of class MetricFunctionWrapper of sktime.permormance_metrics.
-        SymmetricMeanAbsolutePercentageError if the object is None.
+    scoring :
+        MeanAbsolutePercentageError if the object is None.
 
     Raises
     ----------
