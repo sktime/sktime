@@ -517,13 +517,11 @@ def mean_squared_scaled_error(
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_scaled_error(y_true, y_pred, y_train,  square_root=True)
     0.15679361328058636
-    >>> mean_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput='raw_values',  square_root=True
-        )
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train, multioutput='raw_values',  \
+    square_root=True)
     array([0.11215443, 0.20203051])
-    >>> mean_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput=[0.3, 0.7],  square_root=True
-        )
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train, multioutput=[0.3, 0.7], \
+    square_root=True)
     0.17451891814894502
 
     References
@@ -660,13 +658,11 @@ def median_squared_scaled_error(
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
     0.1472819539849714
-    >>> median_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput='raw_values', square_root=True
-        )
+    >>> median_squared_scaled_error(y_true, y_pred, y_train, multioutput='raw_values', \
+    square_root=True)
     array([0.08687445, 0.20203051])
-    >>> median_squared_scaled_error(
-            y_true, y_pred, y_train, multioutput=[0.3, 0.7], square_root=True
-        )
+    >>> median_squared_scaled_error(y_true, y_pred, y_train, multioutput=[0.3, 0.7], \
+    square_root=True)
     0.16914781383660782
 
     References
@@ -866,19 +862,15 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred)
     0.7083333333333334
     >>> mean_squared_error(y_true, y_pred, square_root=True)
-    0.6422616289332564
+    0.8227486121839513
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
-    array([0.41666667, 1. ])
-    >>> root_mean_squared_error(
-            y_true, y_pred, multioutput='raw_values', square_root=True
-        )
-    array([0.64549722, 1. ])
+    array([0.41666667, 1.        ])
+    >>> mean_squared_error(y_true, y_pred, multioutput='raw_values', square_root=True)
+    array([0.64549722, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825
-    >>> root_mean_squared_error(
-            y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
-        )
-    0.9082951062292475
+    >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
+    0.8936491673103708
 
     References
     ----------
@@ -1055,19 +1047,15 @@ def median_squared_error(
     >>> median_squared_error(y_true, y_pred)
     0.625
     >>> median_squared_error(y_true, y_pred, square_root=True)
-    0.7905694150420949
+    0.75
     >>> median_squared_error(y_true, y_pred, multioutput='raw_values')
-    array([0.25, 1. ])
-    >>> median_squared_error(
-            y_true, y_pred, multioutput='raw_values', square_root=True
-        )
+    array([0.25, 1.  ])
+    >>> median_squared_error(y_true, y_pred, multioutput='raw_values', square_root=True)
     array([0.5, 1. ])
-    >>> squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.7749999999999999
-    >>> median_squared_error(
-            y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
-        )
-    0.8803408430829504
+    >>> median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
+    0.85
 
 
     References
@@ -1169,18 +1157,16 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     55.15873015873015
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    55.53379953379954
+    60.80808080808082
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([38.0952381, 72.22222222])
-    >>> mean_absolute_percentage_error(
-            y_true, y_pred, multioutput='raw_values', symmetric=True
-        )
+    array([38.0952381 , 72.22222222])
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=True)
     array([71.11111111, 50.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     61.98412698412698
-    >>> mean_absolute_percentage_error(
-            y_true, y_pred, multioutput=[0.3, 0.7], symmetric=True
-        )
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     56.68686868686869
 
     References
@@ -1279,16 +1265,14 @@ def median_absolute_percentage_error(
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
     40.0
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([14.28571429, 100.])
-    >>> median_absolute_percentage_error(
-            y_true, y_pred, multioutput='raw_values', symmetric=True
-        )
+    array([ 14.28571429, 100.        ])
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=True)
     array([13.33333333, 66.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     74.28571428571429
-    >>> median_absolute_percentage_error(
-            y_true, y_pred, multioutput=[0.3, 0.7], symmetric=True
-        )
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     50.666666666666664
 
     See Also
@@ -1407,19 +1391,17 @@ def mean_squared_percentage_error(
     >>> mean_squared_percentage_error(y_true, y_pred)
     5080.309901738473
     >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
-    71.27629270478701
+    70.26794936195896
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
     array([3401.36054422, 6759.25925926])
-    >>> mean_squared_percentage_error(
-        y_true, y_pred, multioutput='raw_values', square_root=True
-        )
+    >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    square_root=True)
     array([58.32118435, 82.21471437])
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     5751.889644746787
-    >>> mean_squared_percentage_error(
-        y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
-        )
-    75.84121336547028
+    >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    square_root=True)
+    75.04665536595036
 
     References
     ----------
@@ -1536,19 +1518,17 @@ def median_squared_percentage_error(
     >>> median_squared_percentage_error(y_true, y_pred)
     5102.040816326531
     >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
-    71.42857142857143
+    57.142857142857146
     >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([204.08163265, 10000.])
-   >>> median_squared_percentage_error(
-        y_true, y_pred, multioutput='raw_values', square_root=True
-        )
-    array([14.28571429, 100. ])
+    array([  204.08163265, 10000.        ])
+    >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    square_root=True)
+    array([ 14.28571429, 100.        ])
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     7061.224489795918
-    >>> median_squared_percentage_error(
-            y_true, y_pred, multioutput=[0.3, 0.7], square_root=True
-        )
-    84.03109239915852
+    >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    square_root=True)
+    74.28571428571429
 
     References
     ----------
@@ -1639,13 +1619,11 @@ def mean_relative_absolute_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
     0.8703703703703702
-    >>> mean_relative_absolute_error(
-            y_true, y_pred, y_pred_benchmark, multioutput='raw_values'
-        )
+    >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput='raw_values')
     array([0.51851852, 1.22222222])
-    >>> mean_relative_absolute_error(
-            y_true, y_pred, y_pred_benchmark, multioutput=[0.3, 0.7]
-        )
+    >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput=[0.3, 0.7])
     1.0111111111111108
 
     References
@@ -1741,13 +1719,11 @@ def median_relative_absolute_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
     0.6944444444444443
-    >>> median_relative_absolute_error(
-            y_true, y_pred, y_pred_benchmark, multioutput='raw_values'
-        )
+    >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput='raw_values')
     array([0.55555556, 0.83333333])
-    >>> median_relative_absolute_error(
-            y_true, y_pred, y_pred_benchmark, multioutput=[0.3, 0.7]
-        )
+    >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput=[0.3, 0.7])
     0.7499999999999999
 
     References
@@ -1841,14 +1817,12 @@ def geometric_mean_relative_absolute_error(
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
-    .5578632807409556
-    >>> geometric_mean_relative_absolute_error(
-            y_true, y_pred, y_pred_benchmark, multioutput='raw_values'
-        )
-    array([4.97801163e-06 1.11572158e+00])
-    >>> geometric_mean_relative_absolute_error(
-            y_true, y_pred, y_pred_benchmark, multioutput=[0.3, 0.7]
-        )
+    0.5578632807409556
+    >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput='raw_values')
+    array([4.97801163e-06, 1.11572158e+00])
+    >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput=[0.3, 0.7])
     0.7810066018326863
 
     References
@@ -1956,13 +1930,11 @@ def geometric_mean_relative_squared_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark)
     0.622419372049448
-    >>> geometric_mean_relative_squared_error(
-            y_true, y_pred, y_pred_benchmark, multioutput='raw_values'
-        )
-    array([04.09227746e-06, 1.24483465e+00])
-    >>> geometric_mean_relative_squared_error(
-            y_true, y_pred, y_pred_benchmark, multioutput=[0.3, 0.7]
-        )
+    >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput='raw_values')
+    array([4.09227746e-06, 1.24483465e+00])
+    >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark, \
+    multioutput=[0.3, 0.7])
     0.8713854839582426
 
     References
