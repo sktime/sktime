@@ -121,8 +121,7 @@ class ROCKETClassifier(BaseClassifier):
                     base_estimator = _make_estimator(
                         self.num_kernels, self.random_state
                     )
-                    classifier = _fit_estimator(base_estimator, X, y)
-                    self.classifiers.append(classifier)
+                    self.classifiers.append(_fit_estimator(base_estimator, X, y))
             else:
                 base_estimator = _make_estimator(self.num_kernels, self.random_state)
                 self.classifiers = Parallel(n_jobs=self.n_jobs)(
@@ -137,8 +136,7 @@ class ROCKETClassifier(BaseClassifier):
                 self.weight_sum += weight
         else:
             base_estimator = _make_estimator(self.num_kernels, self.random_state)
-            classifier = _fit_estimator(base_estimator, X, y)
-            self.classifiers.append(classifier)
+            self.classifiers.append(_fit_estimator(base_estimator, X, y))
 
         self._is_fitted = True
         return self
