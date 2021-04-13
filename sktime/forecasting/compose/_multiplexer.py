@@ -63,8 +63,7 @@ class MultiplexForecaster(
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
     ...     load_airline,
-    ...     temporal_train_test_split,
-    >>> )
+    ...     temporal_train_test_split)
     >>>
     >>> y = load_airline()
     >>>
