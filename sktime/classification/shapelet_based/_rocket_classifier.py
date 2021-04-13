@@ -7,6 +7,8 @@ __all__ = ["ROCKETClassifier"]
 
 import numpy as np
 from joblib import delayed, Parallel
+from sklearn.base import clone
+from sklearn.ensemble._base import _set_random_states
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
@@ -16,14 +18,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import Rocket
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
-
-
-def _fit_pipeline(X, y, num_kernels, random_state):
-    classifier = make_pipeline(
-        Rocket(num_kernels=num_kernels, random_state=random_state),
-        RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-    )
-    return classifier.fit(X, y)
 
 
 class ROCKETClassifier(BaseClassifier):
@@ -42,7 +36,7 @@ class ROCKETClassifier(BaseClassifier):
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
     n_jobs                  : int, the number of jobs to run in parallel for `fit`,
-    optional (default=1)
+    optional (default=None)
 
     Attributes
     ----------
@@ -81,7 +75,7 @@ class ROCKETClassifier(BaseClassifier):
         ensemble=False,
         ensemble_size=25,
         random_state=None,
-        n_jobs=1,
+        n_jobs=None,
     ):
         self.num_kernels = num_kernels
         self.ensemble = ensemble
@@ -122,17 +116,29 @@ class ROCKETClassifier(BaseClassifier):
             self.class_dictionary[classVal] = index
 
         if self.ensemble:
-            self.classifiers = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_pipeline)(X, y, self.num_kernels, self.random_state)
-                for _ in range(self.ensemble_size)
-            )
+            if self.n_jobs is None:
+                for _ in range(self.ensemble_size):
+                    base_estimator = _make_estimator(
+                        self.num_kernels, self.random_state
+                    )
+                    classifier = _fit_estimator(base_estimator, X, y)
+                    self.classifiers.append(classifier)
+            else:
+                base_estimator = _make_estimator(self.num_kernels, self.random_state)
+                self.classifiers = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_fit_estimator)(
+                        _clone_estimator(base_estimator, self.random_state), X, y
+                    )
+                    for _ in range(self.ensemble_size)
+                )
             for rocket_pipeline in self.classifiers:
                 weight = rocket_pipeline.steps[1][1].best_score_
                 self.weights.append(weight)
                 self.weight_sum += weight
         else:
-            rocket_pipeline = _fit_pipeline(X, y, self.num_kernels, self.random_state)
-            self.classifiers.append(rocket_pipeline)
+            base_estimator = _make_estimator(self.num_kernels, self.random_state)
+            classifier = _fit_estimator(base_estimator, X, y)
+            self.classifiers.append(classifier)
 
         self._is_fitted = True
         return self
@@ -170,3 +176,23 @@ class ROCKETClassifier(BaseClassifier):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
+
+
+def _fit_estimator(estimator, X, y):
+    return estimator.fit(X, y)
+
+
+def _make_estimator(num_kernels, random_state):
+    return make_pipeline(
+        Rocket(num_kernels=num_kernels, random_state=random_state),
+        RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+    )
+
+
+def _clone_estimator(base_estimator, random_state=None):
+    estimator = clone(base_estimator)
+
+    if random_state is not None:
+        _set_random_states(estimator, random_state)
+
+    return estimator
