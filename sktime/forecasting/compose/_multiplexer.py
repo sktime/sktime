@@ -63,14 +63,11 @@ class MultiplexForecaster(
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
     ...     load_airline)
-    >>>
     >>> y = load_airline()
-    >>>
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
     ...     ("naive", NaiveForecaster())])
-    >>>
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
     ...     step_length=24)
@@ -78,10 +75,8 @@ class MultiplexForecaster(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "arima", "naive"]},
     ...     forecaster=forecaster)
-    >>>
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
-    >>>
     >>> gscv.best_forecaster_.selected_forecaster
     'naive'
     """
