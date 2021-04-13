@@ -62,8 +62,7 @@ class MultiplexForecaster(
     ...     AutoARIMA,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
-    ...     load_airline,
-    ...     temporal_train_test_split)
+    ...     load_airline)
     >>>
     >>> y = load_airline()
     >>>
