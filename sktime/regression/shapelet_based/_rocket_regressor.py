@@ -7,17 +7,15 @@ __all__ = ["ROCKETRegressor"]
 
 import numpy as np
 from sklearn.linear_model import RidgeCV
-from sklearn.pipeline import make_pipeline
-from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
+
 
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.panel.rocket import Rocket
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.series_as_features.base.estimators.shapelet_based._rocket_estimator import (
+    BaseROCKETEstimator,
+)
 
 
-class ROCKETRegressor(BaseRegressor):
+class ROCKETRegressor(BaseROCKETEstimator, BaseRegressor):
     """
     Regressor wrapped for the ROCKET transformer using RidgeCV as the
     base regressor.
@@ -51,9 +49,6 @@ class ROCKETRegressor(BaseRegressor):
       journal = {arXiv:1910.13051}
     }
 
-    Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/regressors/hybrids/ROCKETRegressor.java
 
     """
 
@@ -71,20 +66,9 @@ class ROCKETRegressor(BaseRegressor):
         ensemble_size=25,
         random_state=None,
     ):
-        self.num_kernels = num_kernels
-        self.ensemble = ensemble
-        self.ensemble_size = ensemble_size
-        self.random_state = random_state
 
-        self.regressors = []
-        self.weights = []
-        self.weight_sum = 0
-
-        self.n_classes = 0
-        self.classes_ = []
-        self.class_dictionary = {}
-
-        super(ROCKETRegressor, self).__init__()
+        super().__init__(num_kernels, ensemble, ensemble_size, random_state)
+        super().__init__()
 
     def fit(self, X, y):
         """
@@ -101,66 +85,5 @@ class ROCKETRegressor(BaseRegressor):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
-
-        self.n_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
-
-        if self.ensemble:
-            for i in range(self.ensemble_size):
-                rocket_pipeline = make_pipeline(
-                    Rocket(
-                        num_kernels=self.num_kernels, random_state=self.random_state
-                    ),
-                    RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-                )
-                rocket_pipeline.fit(X, y)
-                self.regressors.append(rocket_pipeline)
-                self.weights.append(rocket_pipeline.steps[1][1].best_score_)
-                self.weight_sum = self.weight_sum + self.weights[i]
-        else:
-            rocket_pipeline = make_pipeline(
-                Rocket(num_kernels=self.num_kernels, random_state=self.random_state),
-                RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            )
-            rocket_pipeline.fit(X, y)
-            self.regressors.append(rocket_pipeline)
-
-        self._is_fitted = True
+        self._fit(RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True), X, y)
         return self
-
-    def predict(self, X):
-        if self.ensemble:
-            rng = check_random_state(self.random_state)
-            return np.array(
-                [
-                    self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                    for prob in self.predict_proba(X)
-                ]
-            )
-        else:
-            self.check_is_fitted()
-            return self.regressors[0].predict(X)
-
-    def predict_proba(self, X):
-        self.check_is_fitted()
-        X = check_X(X)
-
-        if self.ensemble:
-            sums = np.zeros((X.shape[0], self.n_classes))
-
-            for n, clf in enumerate(self.regressors):
-                preds = clf.predict(X)
-                for i in range(0, X.shape[0]):
-                    sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
-
-            dists = sums / (np.ones(self.n_classes) * self.weight_sum)
-        else:
-            dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self.regressors[0].predict(X)
-            for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
-
-        return dists
