@@ -16,6 +16,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import Rocket
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -109,6 +110,7 @@ class ROCKETClassifier(BaseClassifier):
         self : object
         """
         X, y = check_X_y(X, y)
+        n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -116,7 +118,7 @@ class ROCKETClassifier(BaseClassifier):
             self.class_dictionary[classVal] = index
 
         if self.ensemble:
-            if self.n_jobs is None:
+            if n_jobs is None:
                 for _ in range(self.ensemble_size):
                     base_estimator = _make_estimator(
                         self.num_kernels, self.random_state
@@ -124,7 +126,7 @@ class ROCKETClassifier(BaseClassifier):
                     self.classifiers.append(_fit_estimator(base_estimator, X, y))
             else:
                 base_estimator = _make_estimator(self.num_kernels, self.random_state)
-                self.classifiers = Parallel(n_jobs=self.n_jobs)(
+                self.classifiers = Parallel(n_jobs=n_jobs)(
                     delayed(_fit_estimator)(
                         _clone_estimator(base_estimator, self.random_state), X, y
                     )
