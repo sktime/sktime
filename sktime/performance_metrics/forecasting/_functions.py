@@ -1149,25 +1149,25 @@ def mean_absolute_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    33.69047619047619
+    0.33690476190476193
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    55.53379953379954
+    0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    55.15873015873015
+    0.5515873015873016
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    60.80808080808082
+    0.6080808080808081
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([38.0952381 , 72.22222222])
+    array([0.38095238, 0.72222222])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=True)
-    array([71.11111111, 50.50505051])
+    array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    61.98412698412698
+    0.6198412698412699
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=True)
-    56.68686868686869
+    0.5668686868686869
 
     References
     ----------
@@ -1255,25 +1255,25 @@ def median_absolute_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_absolute_percentage_error(y_true, y_pred)
-    16.666666666666668
+    0.16666666666666666
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    18.181818181818183
+    0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_percentage_error(y_true, y_pred)
-    57.142857142857146
+    0.5714285714285714
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    40.0
+    0.39999999999999997
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([ 14.28571429, 100.        ])
+    array([0.14285714, 1.        ])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=True)
-    array([13.33333333, 66.66666667])
+    array([0.13333333, 0.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    74.28571428571429
+    0.7428571428571428
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=True)
-    50.666666666666664
+    0.5066666666666666
 
     See Also
     --------
@@ -1383,25 +1383,25 @@ def mean_squared_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_squared_percentage_error(y_true, y_pred)
-    2377.6218820861677
+    0.23776218820861678
     >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
-    48.76086424671088
+    0.48760864246710883
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_percentage_error(y_true, y_pred)
-    5080.309901738473
+    0.5080309901738473
     >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
-    70.26794936195896
+    0.7026794936195895
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([3401.36054422, 6759.25925926])
+    array([0.34013605, 0.67592593])
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
     square_root=True)
-    array([58.32118435, 82.21471437])
+    array([0.58321184, 0.82214714])
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    5751.889644746787
+    0.5751889644746787
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True)
-    75.04665536595036
+    0.7504665536595034
 
     References
     ----------
@@ -1510,25 +1510,25 @@ def median_squared_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_squared_percentage_error(y_true, y_pred)
-    277.7777777777778
+    0.027777777777777776
     >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
-    16.666666666666668
+    0.16666666666666666
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_percentage_error(y_true, y_pred)
-    5102.040816326531
+    0.5102040816326531
     >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
-    57.142857142857146
+    0.5714285714285714
     >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([  204.08163265, 10000.        ])
+    array([0.02040816, 1.        ])
     >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
     square_root=True)
-    array([ 14.28571429, 100.        ])
+    array([0.14285714, 1.        ])
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    7061.224489795918
+    0.7061224489795918
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True)
-    74.28571428571429
+    0.7428571428571428
 
     References
     ----------
@@ -2172,10 +2172,10 @@ def _percentage_error(y_true, y_pred, symmetric=False):
         # Alternatively could use np.abs(y_true + y_pred) in denom
         # Results will be different if y_true and y_pred have different signs
         percentage_error = (
-            200
+            2
             * np.abs(y_true - y_pred)
             / np.maximum(np.abs(y_true) + np.abs(y_pred), EPS)
         )
     else:
-        percentage_error = 100 * (y_true - y_pred) / np.maximum(np.abs(y_true), EPS)
+        percentage_error = (y_true - y_pred) / np.maximum(np.abs(y_true), EPS)
     return percentage_error
