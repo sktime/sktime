@@ -258,6 +258,17 @@ ESTIMATOR_TEST_PARAMS = {
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
 }
 
+# We use estimator tags in addition to class hierarchies to further distinguish
+# estimators into different categories. This is useful for defining and running
+# common tests for estimators with the same tags.
+VALID_ESTIMATOR_TAGS = (
+    "fit-in-transform",  # fitted in transform or non-fittable
+    "univariate-only",
+    "transform-returns-same-time-index",
+    "handles-missing-data",
+    "skip-inverse-transform",
+)
+
 # These methods should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
 # "apply" the fitted estimator to data and useful for checking results.

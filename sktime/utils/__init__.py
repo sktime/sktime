@@ -9,18 +9,6 @@ from operator import itemgetter
 from pathlib import Path
 
 
-# We use estimator tags in addition to class hierarchies to further distinguish
-# estimators into different categories. This is useful for defining and running
-# common tests for estimators with the same tags.
-VALID_ESTIMATOR_TAGS = (
-    "fit-in-transform",  # fitted in transform or non-fittable
-    "univariate-only",
-    "transform-returns-same-time-index",
-    "handles-missing-data",
-    "skip-inverse-transform",
-)
-
-
 def _get_name(obj):
     return obj.__class__.__name__
 

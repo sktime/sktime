@@ -25,7 +25,6 @@ from sklearn.utils.estimator_checks import (
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.validation import check_random_state
-from sktime.utils import VALID_ESTIMATOR_TAGS
 
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
@@ -37,6 +36,7 @@ from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
