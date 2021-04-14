@@ -100,13 +100,15 @@ def _check_values(values):
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
-            f"`values` type not supported. `values` must be one of"
-            f" {valid_types}, but found: {type(values)}"
+            f"Invalid `fh`. The type of the passed `fh` values is not supported. "
+            f"Please use one of {valid_types}, but found: {type(values)}"
         )
 
     # check values does not contain duplicates
     if len(values) != values.nunique():
-        raise ValueError("`values` must not contain duplicates.")
+        raise ValueError(
+            "Invalid `fh`. The `fh` values must not contain any duplicates."
+        )
 
     # return sorted values
     return values.sort_values()
