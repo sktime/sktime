@@ -35,7 +35,7 @@ repos:
     stages: [manual]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.4.0
+  rev: 0.6.0
   hooks:
   - id: nbqa-black
     args: ["--nbqa-mutate"]
