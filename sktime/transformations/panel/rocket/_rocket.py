@@ -6,12 +6,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
 
-_check_soft_dependencies("numba")
-from numba import njit  # noqa: E402
-from numba import prange  # noqa: E402
+from numba import njit
+from numba import prange
 
 
 class Rocket(_PanelToTabularTransformer):
