@@ -20,6 +20,8 @@ from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
+import warnings
+
 
 class ROCKETClassifier(BaseClassifier):
     """
@@ -32,8 +34,7 @@ class ROCKETClassifier(BaseClassifier):
     ----------
     num_kernels             : int, number of kernels for ROCKET transform
     (default=10,000)
-    ensemble                : boolean, create ensemble of ROCKET's (default=False)
-    ensemble_size           : int, size of the ensemble (default=25)
+    n_estimators            : int, ensemble size, optional (default=None)
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
     n_jobs                  : int, the number of jobs to run in parallel for `fit`,
@@ -41,7 +42,7 @@ class ROCKETClassifier(BaseClassifier):
 
     Attributes
     ----------
-    classifiers             : array of IndividualTDE classifiers
+    estimators_             : array of individual classifiers
     weights                 : weight of each classifier in the ensemble
     weight_sum              : sum of all weights
     n_classes               : extracted from the data
@@ -73,18 +74,27 @@ class ROCKETClassifier(BaseClassifier):
     def __init__(
         self,
         num_kernels=10000,
-        ensemble=False,
+        ensemble=None,
         ensemble_size=25,
         random_state=None,
+        n_estimators=None,
         n_jobs=None,
     ):
         self.num_kernels = num_kernels
-        self.ensemble = ensemble
-        self.ensemble_size = ensemble_size
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.n_estimators = n_estimators
 
-        self.classifiers = []
+        # for compatibility only
+        if ensemble is not None and n_estimators is None:
+            self.n_estimators = ensemble_size
+            warnings.warn(
+                "ensemble and ensemble_size params are deprecated and will be "
+                "removed in future releases, use n_estimators instead",
+                PendingDeprecationWarning,
+            )
+
+        self.estimators_ = []
         self.weights = []
         self.weight_sum = 0
 
@@ -114,37 +124,37 @@ class ROCKETClassifier(BaseClassifier):
 
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
+        for index, class_val in enumerate(self.classes_):
+            self.class_dictionary[class_val] = index
 
-        if self.ensemble:
+        if self.n_estimators is not None:
             if n_jobs is None:
-                for _ in range(self.ensemble_size):
+                for _ in range(self.n_estimators):
                     base_estimator = _make_estimator(
                         self.num_kernels, self.random_state
                     )
-                    self.classifiers.append(_fit_estimator(base_estimator, X, y))
+                    self.estimators_ = [_fit_estimator(base_estimator, X, y)]
             else:
                 base_estimator = _make_estimator(self.num_kernels, self.random_state)
-                self.classifiers = Parallel(n_jobs=n_jobs)(
+                self.estimators_ = Parallel(n_jobs=n_jobs)(
                     delayed(_fit_estimator)(
                         _clone_estimator(base_estimator, self.random_state), X, y
                     )
-                    for _ in range(self.ensemble_size)
+                    for _ in range(self.n_estimators)
                 )
-            for rocket_pipeline in self.classifiers:
+            for rocket_pipeline in self.estimators_:
                 weight = rocket_pipeline.steps[1][1].best_score_
                 self.weights.append(weight)
                 self.weight_sum += weight
         else:
             base_estimator = _make_estimator(self.num_kernels, self.random_state)
-            self.classifiers.append(_fit_estimator(base_estimator, X, y))
+            self.estimators_ = [_fit_estimator(base_estimator, X, y)]
 
         self._is_fitted = True
         return self
 
     def predict(self, X):
-        if self.ensemble:
+        if self.n_estimators is not None:
             rng = check_random_state(self.random_state)
             return np.array(
                 [
@@ -154,16 +164,16 @@ class ROCKETClassifier(BaseClassifier):
             )
         else:
             self.check_is_fitted()
-            return self.classifiers[0].predict(X)
+            return self.estimators_[0].predict(X)
 
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X)
 
-        if self.ensemble:
+        if self.n_estimators is not None:
             sums = np.zeros((X.shape[0], self.n_classes))
 
-            for n, clf in enumerate(self.classifiers):
+            for n, clf in enumerate(self.estimators_):
                 preds = clf.predict(X)
                 for i in range(0, X.shape[0]):
                     sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
@@ -171,11 +181,21 @@ class ROCKETClassifier(BaseClassifier):
             dists = sums / (np.ones(self.n_classes) * self.weight_sum)
         else:
             dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self.classifiers[0].predict(X)
+            preds = self.estimators_[0].predict(X)
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
+
+    # for compatibility
+    @property
+    def classifiers(self):
+        warnings.warn(
+            "classifiers attribute is deprecated and will be removed "
+            "in future releases, use estimators_ instead",
+            PendingDeprecationWarning,
+        )
+        return self.estimators_
 
 
 def _fit_estimator(estimator, X, y):

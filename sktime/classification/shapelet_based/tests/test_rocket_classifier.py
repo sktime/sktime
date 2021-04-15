@@ -23,7 +23,10 @@ def test_rocket_on_gunpoint():
 
 
 @pytest.mark.parametrize("n_jobs", [None, 1, 8])
-def test_rocket_ensemble_on_gunpoint(n_jobs):
+@pytest.mark.parametrize("ensemble_config", [(10, True, None), (None, None, 10)])
+def test_rocket_ensemble_on_gunpoint(n_jobs, ensemble_config):
+    ensemble_size, ensemble, n_estimators = ensemble_config
+
     # load gunpoint data
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
@@ -32,8 +35,9 @@ def test_rocket_ensemble_on_gunpoint(n_jobs):
     # train ROCKET ensemble
     rocket_e = ROCKETClassifier(
         num_kernels=1000,
-        ensemble_size=10,
-        ensemble=True,
+        ensemble_size=ensemble_size,
+        ensemble=ensemble,
+        n_estimators=n_estimators,
         random_state=0,
         n_jobs=n_jobs,
     )
