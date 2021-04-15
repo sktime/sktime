@@ -146,6 +146,8 @@ Libraries
      - Direct time series classifiers and regressors
    * - `tspreprocess <https://github.com/MaxBenChrist/tspreprocess>`_
      - Preprocess time series (resampling, denoising etc.), still WIP
+   * - `alibi-detect <https://github.com/SeldonIO/alibi-detect>`_
+     - Toolbox for Outlier, Adversarial and Drift detection
 
 
 Specific model implementations
