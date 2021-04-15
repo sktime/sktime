@@ -53,21 +53,24 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         arguments : dictionary
             key-value for fit() method of algorithm
         """
+
+        returned_arguments_kwarg = {}
         if arguments is None:
             return arguments
         for key, value in arguments.items():
             if value == "original":
-                arguments[key] = self._X
+                returned_arguments_kwarg[key] = self._X
 
             for step in self._steps:
                 if value in step:
-                    arguments[key] = step[1].step_result
+                    returned_arguments_kwarg[key] = step[1].step_result
 
-        return arguments
+        return returned_arguments_kwarg
 
     def fit(self, X):
         self._X = X
         for _, alg, arguments in self._iter():
+
             arguments = self._check_arguments(arguments)
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator

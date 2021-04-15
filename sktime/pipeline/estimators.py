@@ -55,9 +55,10 @@ class Estimator(BaseEstimator, _NonSequentialPipelineStepResultsMixin):
 
         return self
 
-    def predict(self, X, y):
+    # todo! predict should take only X
+    def predict(self, X, y, samples):
         trained_estimator = self.step_result
-        trained_estimator.best_estimator_.predict(X, y)
+        trained_estimator.predict(X)
 
     def update(self):
         raise NotImplementedError
