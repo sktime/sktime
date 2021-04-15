@@ -926,6 +926,24 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "Ifeanyi30",
+      "name": "Ifeanyi30",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49926145?v=4",
+      "profile": "https://github.com/Ifeanyi30",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jschemm",
+      "name": "jschemm",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81151346?v=4",
+      "profile": "https://github.com/jschemm",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
