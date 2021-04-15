@@ -123,7 +123,7 @@ Forecasting
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     mean_absolute_percentage_error(y_test, y_pred, symmetric=True)
-    >>> 8.661467738190659
+    >>> 0.08661467738190656
 
 For more, check out the `forecasting tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting
 .ipynb>`__.

@@ -48,7 +48,7 @@ can simply write:
     y_pred = forecaster.predict(fh)
     smape = MeanAbsolutePercentageError(symmetric=True)
     smape(y_test, y_pred)
-    >>> 12.479070502954873
+    >>> 0.1261192310833735
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
