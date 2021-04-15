@@ -84,6 +84,9 @@ class ROCKETClassifier(BaseClassifier):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.n_estimators = n_estimators
+        # for compatibility only
+        self.ensemble = ensemble
+        self.ensemble_size = ensemble_size
 
         # for compatibility only
         if ensemble is not None and n_estimators is None:
