@@ -3,9 +3,12 @@
     Time Series Forest Regressor (TSF).
 """
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
+__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
 __all__ = ["TimeSeriesForestRegressor"]
 
+import numpy as np
+from joblib import Parallel
+from joblib import delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
@@ -13,6 +16,8 @@ from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators.interval_based._tsf import (
     BaseTimeSeriesForest,
 )
+from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
+from sktime.utils.validation.panel import check_X
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
@@ -59,4 +64,38 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
      Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
 
-    _base_estimator = DecisionTreeRegressor(criterion="entropy")
+    _base_estimator = DecisionTreeRegressor()
+
+    def predict(self, X):
+        """Predict
+
+        Parameters
+        ----------
+        X : pd.DataFrame or np.ndarray
+            Panel data
+
+        Returns
+        -------
+        y_pred : np.array
+            Predictions
+        """
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
+
+        _, series_length = X.shape
+        if series_length != self.series_length:
+            raise TypeError(
+                "The number of time points in the training data does not match "
+                "that in the test data."
+            )
+        y_pred = Parallel(n_jobs=self.n_jobs)(
+            delayed(_predict)(X, self.estimators_[i], self.intervals_[i])
+            for i in range(self.n_estimators)
+        )
+        return np.mean(y_pred, axis=0)
+
+
+def _predict(X, estimator, intervals):
+    Xt = _transform(X, intervals)
+    return estimator.predict(Xt)

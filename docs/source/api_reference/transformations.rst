@@ -247,3 +247,14 @@ HampelFilter
     :template: class.rst
 
     HampelFilter
+
+OptionalPassthrough
+~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.compose
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    OptionalPassthrough

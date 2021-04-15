@@ -123,6 +123,7 @@ def mape_loss(y_test, y_pred):
     Examples
     --------
     >>> from sklearn.metrics import mean_absolute_error
+    >>> import pandas as pd
     >>> y_test = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
     >>> mape_loss(y_test, y_pred)

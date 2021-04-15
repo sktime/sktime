@@ -83,7 +83,7 @@ def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, s
     # Test a number of basic configurations
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
-    cv = CV(fh=fh, window_length=window_length, step_length=step_length)
+    cv = CV(fh, window_length, step_length=step_length)
 
     out = evaluate(
         forecaster=forecaster, y=y, cv=cv, strategy=strategy, scoring=scoring

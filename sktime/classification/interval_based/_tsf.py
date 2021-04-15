@@ -6,13 +6,18 @@
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
+import numpy as np
+from joblib import Parallel
+from joblib import delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.base.estimators.interval_based._tsf import (
+from sktime.series_as_features.base.estimators.interval_based import (
     BaseTimeSeriesForest,
 )
+from sktime.utils.validation.panel import check_X
+from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
 
 
 class TimeSeriesForestClassifier(
@@ -62,3 +67,68 @@ class TimeSeriesForestClassifier(
     """
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
+
+    def predict(self, X):
+        """
+        Find predictions for all cases in X. Built on top of predict_proba
+        Parameters
+        ----------
+        X : The training input samples. array-like or pandas data frame.
+        If a Pandas data frame is passed, a check is performed that it only
+        has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
+        proba = self.predict_proba(X)
+        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
+
+    def predict_proba(self, X):
+        """
+        Find probability estimates for each class for all cases in X.
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is
+            performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        output : nd.array of shape = (n_instances, n_classes)
+            Predicted probabilities
+        """
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
+
+        _, series_length = X.shape
+        if series_length != self.series_length:
+            raise TypeError(
+                "The number of time points in the training data does not match "
+                "that in the test data."
+            )
+        y_probas = Parallel(n_jobs=self.n_jobs)(
+            delayed(_predict_proba)(X, self.estimators_[i], self.intervals_[i])
+            for i in range(self.n_estimators)
+        )
+
+        output = np.sum(y_probas, axis=0) / (
+            np.ones(self.n_classes) * self.n_estimators
+        )
+        return output
+
+
+def _predict_proba(X, estimator, intervals):
+    """
+    Find probability estimates for each class for all cases in X using
+    given estimator and intervals.
+    """
+    Xt = _transform(X, intervals)
+    return estimator.predict_proba(Xt)

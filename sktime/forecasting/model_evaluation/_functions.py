@@ -61,13 +61,10 @@ def evaluate(
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift", sp=12)
-    >>> cv = ExpandingWindowSplitter(
-        initial_window=24,
-        step_length=12,
-        fh=[1,2,3,4,5,6,7,8,9,10,11,12]
-        )
-    >>> evaluate(forecaster=forecaster, y=y, cv=cv)
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
+    >>> cv = ExpandingWindowSplitter(initial_window=24, step_length=12,
+    ...                              fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
