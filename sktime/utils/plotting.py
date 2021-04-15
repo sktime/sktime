@@ -97,7 +97,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     # plot prediction intervals if present
     if pred_int is not None:
         # check same conditions as for earlier indices
-        check_equal_time_index(index, pred_int)
+        check_equal_time_index(pred_int)
         if all([x in index for x in pred_int.index]):
             ax.fill_between(
                 ax.get_lines()[-1].get_xdata(),
