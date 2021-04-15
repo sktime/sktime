@@ -1,4 +1,4 @@
-.. _classification:
+.. _user_guide_classification:
 
 Time Series Classification
 ==========================

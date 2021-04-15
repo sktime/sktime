@@ -7,21 +7,27 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "EnsembleForecaster",
     "TransformedTargetForecaster",
-    "DirectRegressionForecaster",
+    "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
-    "MultioutputRegressionForecaster",
-    "RecursiveRegressionForecaster",
+    "MultioutputTabularRegressionForecaster",
+    "MultioutputTimeSeriesRegressionForecaster",
+    "RecursiveTabularRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
-    "ReducedForecaster",
     "StackingForecaster",
+    "MultiplexForecaster",
+    "ReducedForecaster",
+    "make_reduction",
 ]
 
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
-from sktime.forecasting.compose._reduce import DirectRegressionForecaster
+from sktime.forecasting.compose._reduce import DirectTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
-from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
-from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
+from sktime.forecasting.compose._reduce import MultioutputTabularRegressionForecaster
+from sktime.forecasting.compose._reduce import MultioutputTimeSeriesRegressionForecaster
+from sktime.forecasting.compose._reduce import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._stack import StackingForecaster
+from sktime.forecasting.compose._multiplexer import MultiplexForecaster
+from sktime.forecasting.compose._reduce import ReducedForecaster
+from sktime.forecasting.compose._reduce import make_reduction

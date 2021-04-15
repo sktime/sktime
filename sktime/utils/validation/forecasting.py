@@ -138,7 +138,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     return y
 
 
-def check_cv(cv):
+def check_cv(cv, enforce_start_with_window=False):
     """
     Check CV generators.
 
@@ -155,6 +155,11 @@ def check_cv(cv):
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
+
+    if enforce_start_with_window:
+        if hasattr(cv, "start_with_window") and not cv.start_with_window:
+            raise ValueError("`start_with_window` must be set to True")
+
     return cv
 
 
@@ -237,7 +242,7 @@ def check_fh(fh, enforce_relative=False):
     # can be empty in some cases, but users should not create forecasting horizons
     # with no values
     if len(fh) == 0:
-        raise ValueError(f"`fh` must not be empty, but found: {fh}")
+        raise ValueError("`fh` must not be empty")
 
     if enforce_relative and not fh.is_relative:
         raise ValueError("`fh` must be relative, but found absolute `fh`")
