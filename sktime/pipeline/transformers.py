@@ -286,3 +286,103 @@ class BuildDataset(_ComplexToTabular, _NonSequentialPipelineStepResultsMixin):
 
     def update(self):
         raise NotImplementedError
+
+
+# -----------------------------------------------------
+class MovingAverage(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+    def __init__(self, input_col):
+        self._input_col = input_col
+
+    def transform(self, input_series, window):
+        """
+        Parameters
+        ----------
+        input_series : pandas Dataframe
+        window : int
+        """
+        result = input_series[self._input_col].rolling(window).mean()
+        result.name = f"MA_{window}"
+        result = input_series[self._input_col].rolling(window).mean()
+        self.step_result = result
+        return result
+
+    def fit_transform(self, input_series, window):
+        self.transform(input_series, window)
+
+
+class RelativeStrengthIndex(
+    _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
+):
+    def __init__(self, input_col):
+        self._input_col = input_col
+
+    def transform(self, input_series):
+        delta = input_series[self._input_col].diff()
+        up = delta.clip(lower=0)
+        down = -1 * delta.clip(upper=0)
+        ema_up = up.ewm(com=13, adjust=False).mean()
+        ema_down = down.ewm(com=13, adjust=False).mean()
+        rs = ema_up / ema_down
+        rs.name = "RSI"
+        self.step_result = rs
+        return rs
+
+    def fit_transform(self, input_series):
+        self.transform(input_series)
+
+
+class DateFeatures(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+    def __init__(self, input_col):
+        self._input_col = input_col
+
+    def transform(self, input_series, func):
+        result = None
+        if self._input_col == "index":
+            result = pd.Series(data=input_series.index, index=input_series.index)
+        else:
+            result = pd.Series(
+                data=input_series[self._input_col], index=input_series.index
+            )
+        result.name = f"df_{func.__name__}"
+        result = result.apply(func)
+
+        self.step_result = result
+        return result
+
+    def fit_transform(self, input_series, func):
+        self.transform(input_series, func)
+
+
+class DatasetConcatenator(
+    _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
+):
+    """Concatenates pandas series by index and removes NA values"""
+
+    def transform(self, series):
+
+        dts = pd.concat(series, axis=1)
+        dts.dropna(inplace=True)
+        self.step_result = dts
+        return dts
+
+    def fit_transform(self, series):
+        self.transform(series)
+
+
+def is_friday(dt):
+    if dt.weekday() == 4:
+        return True
+    else:
+        return False
+
+
+def is_month_end(dt):
+    return dt.is_month_end
+
+
+def is_quarter_end(dt):
+    return dt.is_quarter_end
+
+
+def is_year_end(dt):
+    return dt.is_year_end

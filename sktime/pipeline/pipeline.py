@@ -40,7 +40,13 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         for name, alg, arguments in self._steps:
             yield name, alg, arguments
 
-    def _check_arguments(self, arguments):
+    def _check_steps_for_values(self, value):
+        for step in self._steps:
+            if value in step:
+                return step[1].step_result
+            return None
+
+    def _process_arguments(self, arguments):
         """
         Checks arguments for consistency.
 
@@ -54,16 +60,25 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
             key-value for fit() method of algorithm
         """
 
-        returned_arguments_kwarg = {}
+        returned_arguments_kwarg = arguments.copy()
         if arguments is None:
             return arguments
-        for key, value in arguments.items():
+        for key, value in returned_arguments_kwarg.items():
             if value == "original":
                 returned_arguments_kwarg[key] = self._X
-
-            for step in self._steps:
-                if value in step:
-                    returned_arguments_kwarg[key] = step[1].step_result
+                continue
+            if type(value) == list:
+                out = []
+                for list_val in value:
+                    returned_step_value = self._check_steps_for_values(list_val)
+                    if returned_step_value is not None:
+                        out.append(returned_step_value)
+                returned_arguments_kwarg[key] = out
+                continue
+            # go through all steps and look for returned values
+            returned_step_value = self._check_steps_for_values(value)
+            if returned_step_value is not None:
+                returned_arguments_kwarg[key] = returned_step_value
 
         return returned_arguments_kwarg
 
@@ -71,7 +86,7 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         self._X = X
         for _, alg, arguments in self._iter():
 
-            arguments = self._check_arguments(arguments)
+            arguments = self._process_arguments(arguments)
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
             if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
@@ -86,7 +101,7 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         self._X = X
 
         for _, alg, arguments in self._iter():
-            arguments = self._check_arguments(arguments)
+            arguments = self._process_arguments(arguments)
             if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
                 alg.transform(**arguments)
             if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
