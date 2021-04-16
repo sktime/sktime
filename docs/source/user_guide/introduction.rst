@@ -46,7 +46,7 @@ can simply write:
     )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    smape = MeanAbsolutePercentageError(symmetric=True)
+    smape = MeanAbsolutePercentageError()
     smape(y_test, y_pred)
     >>> 0.1261192310833735
 
