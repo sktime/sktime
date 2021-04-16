@@ -41,9 +41,18 @@ def check_n_jobs(n_jobs):
 def check_window_length(window_length, name="window_length"):
     """Validate window length"""
     if window_length is not None:
-        if not is_int(window_length) or window_length < 1:
+
+        valid = False
+        if isinstance(window_length, int) and window_length >= 1:
+            valid = True
+
+        if not valid and (isinstance(window_length, float) and 0 < window_length < 1):
+            valid = True
+
+        if not valid:
             raise ValueError(
-                f"`{name}` must be a positive integer >= 1 or None, "
+                f"`{name}` must be a positive integer >= 1,\
+                 float between 0 and 1, or None "
                 f"but found: {window_length}"
             )
     return window_length
