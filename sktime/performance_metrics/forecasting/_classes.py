@@ -88,7 +88,7 @@ class AsymmetricErrorMixIn:
 
 
 class PercentageMetricFunctionWrapper(PercentageErrorMixIn, MetricFunctionWrapper):
-    def __init__(self, fn, name=None, greater_is_better=False, symmetric=False):
+    def __init__(self, fn, name=None, greater_is_better=False, symmetric=True):
         self.symmetric = symmetric
         super().__init__(fn=fn, name=name, greater_is_better=greater_is_better)
 
@@ -103,7 +103,7 @@ class SquaredPercentageMetricFunctionWrapper(
     SquaredPercentageErrorMixIn, MetricFunctionWrapper
 ):
     def __init__(
-        self, fn, name=None, greater_is_better=False, square_root=False, symmetric=False
+        self, fn, name=None, greater_is_better=False, square_root=False, symmetric=True
     ):
         self.square_root = square_root
         self.symmetric = symmetric
@@ -168,19 +168,19 @@ def make_forecasting_scorer(
     scorer:
         Metric class that can be used as forecasting scorer.
     """
-    # Create bas
-    if not symmetric and not square_root:
+    # Create base
+    if symmetric is None and square_root is None:
         return MetricFunctionWrapper(fn, name=name, greater_is_better=greater_is_better)
-    elif symmetric and not square_root:
+    elif symmetric is not None and square_root is None:
         return PercentageMetricFunctionWrapper(
             fn, name=name, greater_is_better=greater_is_better, symmetric=symmetric
         )
-    elif not symmetric and square_root:
+    elif symmetric is None and square_root is not None:
         return SquaredMetricFunctionWrapper(
             fn, name=name, greater_is_better=greater_is_better, square_root=square_root
         )
 
-    elif symmetric and square_root:
+    elif symmetric is not None and square_root is not None:
         return SquaredPercentageMetricFunctionWrapper(
             fn,
             name=name,
@@ -275,7 +275,7 @@ class MedianSquaredError(SquaredMetricFunctionWrapper):
 
 
 class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
-    def __init__(self, symmetric=False):
+    def __init__(self, symmetric=True):
         name = "MeanAbsolutePercentageError"
         fn = mean_absolute_percentage_error
         greater_is_better = False
@@ -285,7 +285,7 @@ class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
 
 
 class MedianAbsolutePercentageError(PercentageMetricFunctionWrapper):
-    def __init__(self, symmetric=False):
+    def __init__(self, symmetric=True):
         name = "MedianAbsolutePercentageError"
         fn = median_absolute_percentage_error
         greater_is_better = False
@@ -295,7 +295,7 @@ class MedianAbsolutePercentageError(PercentageMetricFunctionWrapper):
 
 
 class MeanSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
-    def __init__(self, symmetric=False, square_root=False):
+    def __init__(self, symmetric=True, square_root=False):
         name = "MeanSquaredPercentageError"
         fn = mean_squared_percentage_error
         greater_is_better = False
@@ -309,7 +309,7 @@ class MeanSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
 
 
 class MedianSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
-    def __init__(self, symmetric=False, square_root=False):
+    def __init__(self, symmetric=True, square_root=False):
         name = "MedianSquaredPercentageError"
         fn = median_squared_percentage_error
         greater_is_better = False

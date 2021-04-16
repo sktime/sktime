@@ -46,7 +46,7 @@ __all__ = [
 EPS = np.finfo(np.float64).eps
 
 
-def weighted_geometric_mean(x, sample_weight=None, axis=None):
+def _weighted_geometric_mean(x, sample_weight=None, axis=None):
     """
     Parameters
     ----------
@@ -1088,7 +1088,7 @@ def median_squared_error(
 
 
 def mean_absolute_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=False
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=True
 ):
     """Mean absolute percentage error (MAPE) if `symmetric` is False or
     symmetric mean absolute percentage error (sMAPE) if `symmetric is True.
@@ -1124,7 +1124,7 @@ def mean_absolute_percentage_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    symmetric : bool, default=False
+    symmetric : bool, default=True
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1148,25 +1148,25 @@ def mean_absolute_percentage_error(
     mean_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.33690476190476193
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    >>> mean_absolute_percentage_error(y_true, y_pred)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5515873015873016
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    >>> mean_absolute_percentage_error(y_true, y_pred)
     0.6080808080808081
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([0.38095238, 0.72222222])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-    symmetric=True)
+        symmetric=False)
+    array([0.38095238, 0.72222222])
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
     array([0.71111111, 0.50505051])
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.6198412698412699
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=True)
+    symmetric=False)
+    0.6198412698412699
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.5668686868686869
 
     References
@@ -1196,7 +1196,7 @@ def mean_absolute_percentage_error(
 
 
 def median_absolute_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=False
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=True
 ):
     """Median absolute percentage error (MdAPE) if `symmetric` is False or
     symmetric median absolute percentage error (sMdAPE). MdAPE and sMdAPE output
@@ -1236,7 +1236,7 @@ def median_absolute_percentage_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    symmetric : bool, default=False
+    symmetric : bool, default=True
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1254,25 +1254,25 @@ def median_absolute_percentage_error(
         median_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> median_absolute_percentage_error(y_true, y_pred)
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.16666666666666666
-    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    >>> median_absolute_percentage_error(y_true, y_pred)
     0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> median_absolute_percentage_error(y_true, y_pred)
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5714285714285714
-    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    >>> median_absolute_percentage_error(y_true, y_pred)
     0.39999999999999997
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([0.14285714, 1.        ])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-    symmetric=True)
+    symmetric=False)
+    array([0.14285714, 1.        ])
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
     array([0.13333333, 0.66666667])
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.7428571428571428
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=True)
+    symmetric=False)
+    0.7428571428571428
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.5066666666666666
 
     See Also
@@ -1316,7 +1316,7 @@ def mean_squared_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
-    symmetric=False,
+    symmetric=True,
 ):
     """Mean squared percentage error (MSPE) if `square_root` is False or
     root mean squared percentage error (RMSPE) if `square_root` is True.
@@ -1382,25 +1382,29 @@ def mean_squared_percentage_error(
     >>> from sktime.performance_metrics.forecasting import mean_squared_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_squared_percentage_error(y_true, y_pred)
+    >>> mean_squared_percentage_error(y_true, y_pred, symmetric=False)
     0.23776218820861678
-    >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
+    >>> mean_squared_percentage_error(y_true, y_pred, square_root=True, \
+    symmetric=False)
     0.48760864246710883
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_squared_percentage_error(y_true, y_pred)
+    >>> mean_squared_percentage_error(y_true, y_pred, symmetric=False)
     0.5080309901738473
-    >>> mean_squared_percentage_error(y_true, y_pred, square_root=True)
+    >>> mean_squared_percentage_error(y_true, y_pred, square_root=True, \
+    symmetric=False)
     0.7026794936195895
-    >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=False)
     array([0.34013605, 0.67592593])
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
-    square_root=True)
+    square_root=True, symmetric=False)
     array([0.58321184, 0.82214714])
-    >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=False)
     0.5751889644746787
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    square_root=True)
+    square_root=True, symmetric=False)
     0.7504665536595034
 
     References
@@ -1438,7 +1442,7 @@ def median_squared_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
-    symmetric=False,
+    symmetric=True,
 ):
     """Median squared percentage error (MdSPE) if `square_root` is False or
     root median squared percentage error (RMdSPE) if `square_root` is True.
@@ -1509,25 +1513,29 @@ def median_squared_percentage_error(
         median_squared_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> median_squared_percentage_error(y_true, y_pred)
+    >>> median_squared_percentage_error(y_true, y_pred, symmetric=False)
     0.027777777777777776
-    >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
+    >>> median_squared_percentage_error(y_true, y_pred, square_root=True, \
+    symmetric=False)
     0.16666666666666666
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> median_squared_percentage_error(y_true, y_pred)
+    >>> median_squared_percentage_error(y_true, y_pred, symmetric=False)
     0.5102040816326531
-    >>> median_squared_percentage_error(y_true, y_pred, square_root=True)
+    >>> median_squared_percentage_error(y_true, y_pred, square_root=True, \
+    symmetric=False)
     0.5714285714285714
-    >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=False)
     array([0.02040816, 1.        ])
     >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
-    square_root=True)
+    square_root=True, symmetric=False)
     array([0.14285714, 1.        ])
-    >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=False)
     0.7061224489795918
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    square_root=True)
+    square_root=True, symmetric=False)
     0.7428571428571428
 
     References
@@ -1843,7 +1851,7 @@ def geometric_mean_relative_absolute_error(
         )
     else:
         check_consistent_length(y_true, horizon_weight)
-        output_errors = weighted_geometric_mean(
+        output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
             sample_weight=horizon_weight,
             axis=0,
@@ -1955,7 +1963,7 @@ def geometric_mean_relative_squared_error(
         )
     else:
         check_consistent_length(y_true, horizon_weight)
-        output_errors = weighted_geometric_mean(
+        output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
             sample_weight=horizon_weight,
             axis=0,
@@ -1991,6 +1999,11 @@ def relative_loss(
     method. Like MASE, metrics created using this function can be used to compare
     forecast methods on a single series and also to compare forecast accuracy
     between series.
+
+    This is useful when a scale-free comparison is beneficial but the training
+    used to generate some (or all) predictions is unknown such as when
+    comparing the loss of 3rd party forecasts or surveys of professional
+    forecastsers.
 
     Parameters
     ----------
@@ -2142,7 +2155,7 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
     return (y_true - y_pred) / denominator
 
 
-def _percentage_error(y_true, y_pred, symmetric=False):
+def _percentage_error(y_true, y_pred, symmetric=True):
     """Percentage error.
 
     Parameters
