@@ -26,8 +26,6 @@ from sktime.performance_metrics.forecasting import (
     MedianRelativeAbsoluteError,
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
-    # relative_loss,
-    # mean_asymmetric_error,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
     mean_squared_scaled_error,
@@ -45,15 +43,155 @@ from sktime.performance_metrics.forecasting import (
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
 )
-from sktime.performance_metrics.tests._config import (
-    RANDOM_SEEDS,
-    # TEST_YS,
-    # TEST_YS_ZERO,
-    Y_TEST_CASES,
+from sktime.performance_metrics.tests._config import RANDOM_SEED
+
+# For multiple comparisons of equality between functions and classes
+rng = np.random.default_rng(RANDOM_SEED)
+RANDOM_SEEDS = rng.integers(0, 1000000, size=5).tolist()
+
+# Create specific test series to verify calculated performance metrics match
+# those calculated externally
+Y1 = np.array(
+    [
+        0.626832772836215,
+        0.783382993377663,
+        0.745780385700732,
+        1.06737808331213,
+        1.69664933579028,
+        2.08627141338732,
+        1.78023192557434,
+        1.58568920200064,
+        2.08902410668301,
+        2.51472070324453,
+        2.47425419784015,
+        2.27275916300358,
+        1.92803852608368,
+        1.64662766528414,
+        1.7028471682496,
+        1.62051042240568,
+        2.03642032341352,
+        2.36019377457168,
+        2.39730479510699,
+        2.69699728045652,
+        2.41172828049954,
+        2.37679353181132,
+        1.99603448413176,
+        2.53946033171028,
+        2.16285521091308,
+        1.70889477546947,
+        1.52488156869114,
+        1.8369477471545,
+        1.8225935878131,
+        1.64685504990138,
+        1.36106553603259,
+        1.20252674753628,
+        1.33235953453508,
+        1.70560866839458,
+        2.25722026784685,
+        1.84446872239422,
+    ]
 )
 
+Y2 = np.array(
+    [
+        0.982136629140069,
+        1.45950325745833,
+        1.42708285946536,
+        2.10474124388042,
+        2.12958738712948,
+        1.94254184770726,
+        2.24111458763484,
+        2.68784805815518,
+        2.97248086366361,
+        3.27426914233203,
+        3.16674535150384,
+        2.933698752984,
+        3.18393847027259,
+        3.43030921792323,
+        3.21901076902567,
+        2.51266154720592,
+        2.52702260323378,
+        2.4241798970835,
+        1.91495784087606,
+        1.49993972682056,
+        1.66460722130508,
+        1.72380847201769,
+        1.45265679700175,
+        1.54961689438936,
+        1.40262473301413,
+        1.50833698230433,
+        1.17807171492728,
+        1.37642259034361,
+        1.19122274092639,
+        1.72766650406602,
+        2.01019283258555,
+        1.70144149287405,
+        1.40552850108184,
+        1.22336047820607,
+        1.58882703694742,
+        1.68674857175401,
+    ]
+)
+# Data for this test case borrower from Rob Hyndman's excel workbook
+# demonstrating how to calculate MASE
+Y3 = np.array(
+    [
+        0,
+        2,
+        0,
+        1,
+        0,
+        11,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        6,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+    ]
+)
+Y1_TRAIN, Y1_TEST = Y1[:24], Y1[24:]
+Y2_TRAIN, Y2_TEST = Y2[:24], Y2[24:]
+Y3_TRAIN, Y3_TEST = Y3[:24], Y3[24:]
+
+Y_TEST_CASES = {
+    "test_case_1": {"train": Y1_TRAIN, "test": Y1_TEST},
+    "test_case_2": {"train": Y2_TRAIN, "test": Y2_TEST},
+    "test_case_3": {"train": Y3_TRAIN, "test": Y3_TEST},
+    # Multivariate test case
+    "test_case_4": {
+        "train": np.vstack([Y1_TRAIN, Y2_TRAIN]),
+        "test": np.vstack([Y1_TEST, Y2_TEST]),
+    },
+}
 
 # Dictionary mapping functions to the true loss values
+# True loss values calculated manually outside of sktime (in excel)
+# to verify the sktime metrics are performing as expected
 LOSS_RESULTS = {
     "mean_absolute_scaled_error": {
         "test_case_1": 1.044427857,
@@ -144,42 +282,42 @@ LOSS_RESULTS = {
         "test_case_2": 0.16956968442429066,
         "test_case_3": 1125899906842624.2,
         "func": mean_absolute_percentage_error,
-        "class": MeanAbsolutePercentageError(),
+        "class": MeanAbsolutePercentageError(symmetric=False),
     },
     "median_absolute_percentage_error": {
         "test_case_1": 0.17200352348889714,
         "test_case_2": 0.1521891319356885,
         "test_case_3": 1.0,
         "func": median_absolute_percentage_error,
-        "class": MedianAbsolutePercentageError(),
+        "class": MedianAbsolutePercentageError(symmetric=False),
     },
     "mean_squared_percentage_error": {
         "test_case_1": 0.03203423036447087,
         "test_case_2": 0.03427486821803671,
         "test_case_3": 5.070602400912918e30,
         "func": mean_squared_percentage_error,
-        "class": MeanSquaredPercentageError(),
+        "class": MeanSquaredPercentageError(symmetric=False),
     },
     "median_squared_percentage_error": {
         "test_case_1": 0.029589708748632582,
         "test_case_2": 0.023172298452886965,
         "test_case_3": 1.0,
         "func": median_squared_percentage_error,
-        "class": MedianSquaredPercentageError(),
+        "class": MedianSquaredPercentageError(symmetric=False),
     },
     "root_mean_squared_percentage_error": {
         "test_case_1": 0.17898108940463758,
         "test_case_2": 0.18513472990780716,
         "test_case_3": 2251799813685248.0,
         "func": mean_squared_percentage_error,
-        "class": MeanSquaredPercentageError(square_root=True),
+        "class": MeanSquaredPercentageError(square_root=True, symmetric=False),
     },
     "root_median_squared_percentage_error": {
         "test_case_1": 0.17201659439900727,
         "test_case_2": 0.15222450017289255,
         "test_case_3": 1.0,
         "func": median_squared_percentage_error,
-        "class": MedianSquaredPercentageError(square_root=True),
+        "class": MedianSquaredPercentageError(square_root=True, symmetric=False),
     },
     "mean_relative_absolute_error": {
         "test_case_1": 0.485695805,
