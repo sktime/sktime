@@ -34,7 +34,8 @@ class ROCKETClassifier(BaseClassifier):
     ----------
     num_kernels             : int, number of kernels for ROCKET transform
     (default=10,000)
-    n_estimators            : int, ensemble size, optional (default=None)
+    n_estimators            : int, ensemble size, optional (default=None). When set
+    to None (default) or 1, the classifier uses a single estimator rather than ensemble
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
     n_jobs                  : int, the number of jobs to run in parallel for `fit`,
@@ -130,7 +131,7 @@ class ROCKETClassifier(BaseClassifier):
         for index, class_val in enumerate(self.classes_):
             self.class_dictionary[class_val] = index
 
-        if self.n_estimators is not None:
+        if self.n_estimators is not None and self.n_estimators > 1:
             if n_jobs is None:
                 for _ in range(self.n_estimators):
                     base_estimator = _make_estimator(
