@@ -9,7 +9,7 @@ import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.validation.panel import check_X_y
 
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
@@ -39,7 +39,10 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     import seaborn as sns
 
     for y in series:
-        check_y(y)
+        if pred_int is not None:
+            check_X_y(X=pred_int, y=y)
+        else:
+            check_y(y)
 
     n_series = len(series)
 
