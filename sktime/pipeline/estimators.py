@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import mlfinlab as ml
 from sktime.pipeline.base import _NonSequentialPipelineStepResultsMixin
+from sklearn.ensemble import RandomForestRegressor
 
 
 class Estimator(BaseEstimator, _NonSequentialPipelineStepResultsMixin):
@@ -58,7 +59,20 @@ class Estimator(BaseEstimator, _NonSequentialPipelineStepResultsMixin):
     # todo! predict should take only X
     def predict(self, X, y, samples):
         trained_estimator = self.step_result
-        trained_estimator.predict(X)
+        return trained_estimator.predict(X)
 
     def update(self):
         raise NotImplementedError
+
+
+class RandomForestRegressorWrapper(
+    BaseEstimator, _NonSequentialPipelineStepResultsMixin
+):
+    def fit(self, X, y):
+        trained_estimator = RandomForestRegressor().fit(X, y)
+        self.step_result = trained_estimator
+        return self
+
+    def predict(self, X):
+        trained_estimator = self.step_result
+        return trained_estimator.predict(X)

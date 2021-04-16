@@ -353,6 +353,23 @@ class DateFeatures(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResults
         self.transform(input_series, func)
 
 
+class FixedTimeHorizonLabels(
+    _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
+):
+    def __init__(self, input_col):
+        self._input_col = input_col
+
+    def transform(self, input_series, horizon, features):
+        labels = input_series[self._input_col].shift(horizon)
+        labels.name = "labels"
+        dts = pd.concat([features, labels], axis=1).dropna()
+        self.step_result = dts["labels"]
+        return dts["labels"]
+
+    def fit_transform(self, input_series, horizon, features):
+        self.transform(input_series, horizon, features)
+
+
 class DatasetConcatenator(
     _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
 ):

@@ -44,7 +44,7 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         for step in self._steps:
             if value in step:
                 return step[1].step_result
-            return None
+        return None
 
     def _process_arguments(self, arguments):
         """
@@ -103,6 +103,6 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         for _, alg, arguments in self._iter():
             arguments = self._process_arguments(arguments)
             if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                alg.transform(**arguments)
+                return alg.transform(**arguments)
             if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                alg.predict(**arguments)
+                return alg.predict(**arguments)
