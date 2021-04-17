@@ -40,7 +40,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
 
     for index, y in enumerate(series):
         if pred_int is not None:
-            check_equal_time_index(y, pred_int.iloc[:,index])
+            check_equal_time_index(y, pred_int.iloc[:, index])
         else:
             check_y(y)
 
