@@ -38,8 +38,22 @@ def check_n_jobs(n_jobs):
         return n_jobs
 
 
-def check_window_length(window_length, name="window_length"):
+def check_window_length(y, window_length, name="window_length"):
     """Validate window length"""
+    """
+    Parameters
+    ----------
+    y : pd.Series
+        Endogenous time series
+    window_length: positive int or positive float
+        The number of training set used for splitting
+        Window length for transformed feature variables
+
+    Returns
+    -------
+    window_length: int
+    """
+    n_timepoints = y.shape[0]
     if window_length is not None:
 
         valid = False
@@ -48,11 +62,12 @@ def check_window_length(window_length, name="window_length"):
 
         if not valid and (isinstance(window_length, float) and 0 < window_length < 1):
             valid = True
+            window_length = int(np.ceil(window_length * n_timepoints))
 
         if not valid:
             raise ValueError(
-                f"`{name}` must be a positive integer >= 1,\
-                 float between 0 and 1, or None "
+                f"`{name}` must be a positive integer >= 1,"
+                f"float between 0 and 1, or None "
                 f"but found: {window_length}"
             )
     return window_length
