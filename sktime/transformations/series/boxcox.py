@@ -19,6 +19,7 @@ from scipy.stats.morestats import _boxcox_conf_interval
 from scipy.stats.morestats import _calc_uniform_order_statistic_medians
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_series
 
 
@@ -43,54 +44,14 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, Z, X=None):
-        self._check_method()
         z = check_series(Z, enforce_univariate=True)
         if self.method != "guerrero":
             self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
         else:
-
-            def _guerrero(x, sp):
-                # Uses the Guerrero method for a time series x
-                # with seasonal periodicity sp.
-                #
-                # References
-                # ----------
-                # [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
-                # Transformations ", Journal of Forecasting, Vol. 12, 37-48 (1993)
-                # https://doi.org/10.1002/for.3980120104
-
-                x = np.asarray(x)
-                num_obs = len(x)
-                len_prefix = num_obs % sp
-
-                x_trimmed = x[len_prefix:]
-                x_mat = x_trimmed.reshape((-1, sp))
-                x_mean = np.mean(x_mat, axis=1)
-
-                # [Guerrero, Eq.(5)] uses an unbiased estimation for
-                # the standard deviation
-                x_std = np.std(x_mat, axis=1, ddof=1)
-
-                def _eval_guerrero(lmb, x_std, x_mean):
-                    x_ratio = x_std / x_mean ** (1 - lmb)
-                    x_ratio_cv = variation(x_ratio)
-                    return x_ratio_cv
-
-                optimizer = _make_boxcox_optimizer(self.bounds)
-                return optimizer(_eval_guerrero, args=(x_std, x_mean))
-
-            self.lambda_ = _guerrero(z, self.sp)
+            self.lambda_ = _guerrero(z, self.sp, self.bounds)
 
         self._is_fitted = True
         return self
-
-    def _check_method(self):
-        if self.method == "guerrero" and (self.sp is None or self.sp < 2):
-            raise ValueError(
-                "Guerrero method requires a seasonal periodicity sp value >= 2"
-            )
-        else:
-            pass
 
     def transform(self, Z, X=None):
         self.check_is_fitted()
@@ -179,6 +140,60 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
     optimfunc = methods[method]
     return optimfunc(x)
+
+
+def _guerrero(x, sp, bounds=None):
+    r"""
+    Returns lambda estimated by the Guerrero method [Guerrero].
+    Parameters
+    ----------
+    x : ndarray
+        Input array. Must be 1-dimensional.
+    sp : integer
+        Seasonal periodicity value. Must be an integer >= 2
+    bounds : {None, (float, float)}, optional
+        Bounds on lambda to be used in minimization.
+    Returns
+    -------
+    lambda : float
+        Lambda value that minimizes the coefficient of variation of
+        variances of the time series in different periods after
+        Box-Cox transformation [Guerrero].
+
+    References
+    ----------
+    [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
+    Transformations ", Journal of Forecasting, Vol. 12, 37-48 (1993)
+    https://doi.org/10.1002/for.3980120104
+    """
+
+    if sp is None or not is_int(sp) or sp < 2:
+        raise ValueError(
+            "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
+        )
+
+    x = np.asarray(x)
+    if x.ndim != 1:
+        raise ValueError("Data must be 1-dimensional.")
+
+    num_obs = len(x)
+    len_prefix = num_obs % sp
+
+    x_trimmed = x[len_prefix:]
+    x_mat = x_trimmed.reshape((-1, sp))
+    x_mean = np.mean(x_mat, axis=1)
+
+    # [Guerrero, Eq.(5)] uses an unbiased estimation for
+    # the standard deviation
+    x_std = np.std(x_mat, axis=1, ddof=1)
+
+    def _eval_guerrero(lmb, x_std, x_mean):
+        x_ratio = x_std / x_mean ** (1 - lmb)
+        x_ratio_cv = variation(x_ratio)
+        return x_ratio_cv
+
+    optimizer = _make_boxcox_optimizer(bounds)
+    return optimizer(_eval_guerrero, args=(x_std, x_mean))
 
 
 def _boxcox(x, lmbda=None, bounds=None, alpha=None):
