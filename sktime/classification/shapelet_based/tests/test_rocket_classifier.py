@@ -22,7 +22,7 @@ def test_rocket_on_gunpoint():
     testing.assert_array_equal(probas, rocket_gunpoint_probas)
 
 
-@pytest.mark.parametrize("n_jobs", [None, 1, 8])
+@pytest.mark.parametrize("n_jobs", [1, 8])
 @pytest.mark.parametrize("ensemble_config", [(10, True, None), (None, None, 10)])
 def test_rocket_ensemble_on_gunpoint(n_jobs, ensemble_config):
     ensemble_size, ensemble, n_estimators = ensemble_config
