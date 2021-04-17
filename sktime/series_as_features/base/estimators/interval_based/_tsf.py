@@ -4,7 +4,14 @@
     An implementation of Deng's Time Series Forest, with minor changes.
 """
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
+__author__ = [
+    "Tony Bagnall",
+    "kkoziara",
+    "luiszugasti",
+    "kanand77",
+    "Markus Löning",
+    "Oleksii Kachaiev",
+]
 __all__ = [
     "BaseTimeSeriesForest",
     "_transform",
@@ -18,10 +25,12 @@ import numpy as np
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
+from sklearn.ensemble._base import _set_random_states
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -88,6 +97,8 @@ class BaseTimeSeriesForest:
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
 
+        n_jobs = check_n_jobs(self.n_jobs)
+
         rng = check_random_state(self.random_state)
 
         self.n_classes = np.unique(y).shape[0]
@@ -104,13 +115,9 @@ class BaseTimeSeriesForest:
             for _ in range(self.n_estimators)
         ]
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                X,
-                y,
-                self.base_estimator,
-                self.intervals_[i],
-                self.random_state,
+                _clone_estimator(self.base_estimator, rng), X, y, self.intervals_[i]
             )
             for i in range(self.n_estimators)
         )
@@ -159,14 +166,19 @@ def _get_intervals(n_intervals, min_interval, series_length, rng):
     return intervals
 
 
-def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
+def _fit_estimator(estimator, X, y, intervals):
     """
-    Fit an estimator - a clone of base_estimator - on input data (X, y)
-    transformed using the randomly generated intervals.
+    Fit an estimator on input data (X, y) transformed using
+    the randomly generated intervals.
     """
-
-    estimator = clone(base_estimator)
-    estimator.set_params(random_state=random_state)
-
     transformed_x = _transform(X, intervals)
     return estimator.fit(transformed_x, y)
+
+
+def _clone_estimator(base_estimator, random_state=None):
+    estimator = clone(base_estimator)
+
+    if random_state is not None:
+        _set_random_states(estimator, random_state)
+
+    return estimator
