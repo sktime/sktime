@@ -39,7 +39,7 @@ class ROCKETClassifier(BaseClassifier):
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
     n_jobs                  : int, the number of jobs to run in parallel for `fit`,
-    optional (default=None)
+    optional (default=1)
 
     Attributes
     ----------
@@ -79,7 +79,7 @@ class ROCKETClassifier(BaseClassifier):
         ensemble_size=25,
         random_state=None,
         n_estimators=None,
-        n_jobs=None,
+        n_jobs=1,
     ):
         self.num_kernels = num_kernels
         self.random_state = random_state
@@ -132,20 +132,13 @@ class ROCKETClassifier(BaseClassifier):
             self.class_dictionary[class_val] = index
 
         if self.n_estimators is not None and self.n_estimators > 1:
-            if n_jobs is None:
-                for _ in range(self.n_estimators):
-                    base_estimator = _make_estimator(
-                        self.num_kernels, self.random_state
-                    )
-                    self.estimators_ = [_fit_estimator(base_estimator, X, y)]
-            else:
-                base_estimator = _make_estimator(self.num_kernels, self.random_state)
-                self.estimators_ = Parallel(n_jobs=n_jobs)(
-                    delayed(_fit_estimator)(
-                        _clone_estimator(base_estimator, self.random_state), X, y
-                    )
-                    for _ in range(self.n_estimators)
+            base_estimator = _make_estimator(self.num_kernels, self.random_state)
+            self.estimators_ = Parallel(n_jobs=n_jobs)(
+                delayed(_fit_estimator)(
+                    _clone_estimator(base_estimator, self.random_state), X, y
                 )
+                for _ in range(self.n_estimators)
+            )
             for rocket_pipeline in self.estimators_:
                 weight = rocket_pipeline.steps[1][1].best_score_
                 self.weights.append(weight)
