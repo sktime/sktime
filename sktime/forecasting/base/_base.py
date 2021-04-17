@@ -174,11 +174,12 @@ class BaseForecaster(BaseEstimator):
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
+        # symmetric=True is default for mean_absolute_percentage_error
         from sktime.performance_metrics.forecasting import (
             mean_absolute_percentage_error,
         )
 
-        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=True)
+        return mean_absolute_percentage_error(y, self.predict(fh, X))
 
     def get_fitted_params(self):
         """Get fitted parameters

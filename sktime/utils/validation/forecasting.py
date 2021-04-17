@@ -331,10 +331,11 @@ def check_scoring(scoring):
         if object is not an instance of class MetricFunctionWrapper of
         sktime.performance_metrics.
     """
+    # Note symmetric=True is default arg for MeanAbsolutePercentageError
     from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
     if scoring is None:
-        return MeanAbsolutePercentageError(symmetric=True)
+        return MeanAbsolutePercentageError()
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
