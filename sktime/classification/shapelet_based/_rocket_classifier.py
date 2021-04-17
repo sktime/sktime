@@ -125,6 +125,7 @@ class ROCKETClassifier(BaseClassifier):
         """
         X, y = check_X_y(X, y)
         n_jobs = check_n_jobs(self.n_jobs)
+        rng = check_random_state(self.random_state)
 
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -132,11 +133,9 @@ class ROCKETClassifier(BaseClassifier):
             self.class_dictionary[class_val] = index
 
         if self.n_estimators is not None and self.n_estimators > 1:
-            base_estimator = _make_estimator(self.num_kernels, self.random_state)
+            base_estimator = _make_estimator(self.num_kernels, rng)
             self.estimators_ = Parallel(n_jobs=n_jobs)(
-                delayed(_fit_estimator)(
-                    _clone_estimator(base_estimator, self.random_state), X, y
-                )
+                delayed(_fit_estimator)(_clone_estimator(base_estimator, rng), X, y)
                 for _ in range(self.n_estimators)
             )
             for rocket_pipeline in self.estimators_:
@@ -144,7 +143,7 @@ class ROCKETClassifier(BaseClassifier):
                 self.weights.append(weight)
                 self.weight_sum += weight
         else:
-            base_estimator = _make_estimator(self.num_kernels, self.random_state)
+            base_estimator = _make_estimator(self.num_kernels, rng)
             self.estimators_ = [_fit_estimator(base_estimator, X, y)]
 
         self._is_fitted = True
