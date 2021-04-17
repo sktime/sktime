@@ -366,13 +366,13 @@ def test_univariate_loss_zero_error(n_test_case, loss_func_name):
     loss_func_args = inspect.getfullargspec(loss_func).args
     if "y_train" in loss_func_args:
         function_loss = loss_func(y_true, y_pred, y_train)
-        class_loss = loss_class.fn(y_true, y_pred, y_train)
+        class_loss = loss_class._func(y_true, y_pred, y_train)
     elif "y_pred_benchmark" in loss_func_args:
         function_loss = loss_func(y_true, y_pred, y_pred_benchmark)
-        class_loss = loss_class.fn(y_true, y_pred, y_pred_benchmark)
+        class_loss = loss_class._func(y_true, y_pred, y_pred_benchmark)
     else:
         function_loss = loss_func(y_true, y_pred)
-        class_loss = loss_class.fn(y_true, y_pred)
+        class_loss = loss_class._func(y_true, y_pred)
 
     # Assertion for functions
     assert np.isclose(function_loss, true_loss), " ".join(
@@ -408,24 +408,26 @@ def test_univariate_loss_value(n_test_case, loss_func_name):
     if "y_train" in loss_func_args:
         if len(class_attrs) > 0:
             function_loss = loss_func(y_true, y_pred, y_train, **class_attrs)
-            class_loss = loss_class.fn(y_true, y_pred, y_train, **class_attrs)
+            class_loss = loss_class._func(y_true, y_pred, y_train, **class_attrs)
         else:
             function_loss = loss_func(y_true, y_pred, y_train)
-            class_loss = loss_class.fn(y_true, y_pred, y_train)
+            class_loss = loss_class._func(y_true, y_pred, y_train)
     elif "y_pred_benchmark" in loss_func_args:
         if len(class_attrs) > 0:
             function_loss = loss_func(y_true, y_pred, y_pred_benchmark, **class_attrs)
-            class_loss = loss_class.fn(y_true, y_pred, y_pred_benchmark, **class_attrs)
+            class_loss = loss_class._func(
+                y_true, y_pred, y_pred_benchmark, **class_attrs
+            )
         else:
             function_loss = loss_func(y_true, y_pred, y_pred_benchmark)
-            class_loss = loss_class.fn(y_true, y_pred, y_pred_benchmark)
+            class_loss = loss_class._func(y_true, y_pred, y_pred_benchmark)
     else:
         if len(class_attrs) > 0:
             function_loss = loss_func(y_true, y_pred, **class_attrs)
-            class_loss = loss_class.fn(y_true, y_pred, **class_attrs)
+            class_loss = loss_class._func(y_true, y_pred, **class_attrs)
         else:
             function_loss = loss_func(y_true, y_pred)
-            class_loss = loss_class.fn(y_true, y_pred)
+            class_loss = loss_class._func(y_true, y_pred)
 
     # Assertion for functions
     assert np.isclose(function_loss, true_loss), " ".join(
@@ -459,28 +461,28 @@ def test_univariate_function_class_equality(loss_func_name):
         if "y_train" in loss_func_args:
             if len(class_attrs) > 0:
                 function_loss = loss_func(y_true, y_pred, y_train, **class_attrs)
-                class_loss = loss_class.fn(y_true, y_pred, y_train, **class_attrs)
+                class_loss = loss_class._func(y_true, y_pred, y_train, **class_attrs)
             else:
                 function_loss = loss_func(y_true, y_pred, y_train)
-                class_loss = loss_class.fn(y_true, y_pred, y_train)
+                class_loss = loss_class._func(y_true, y_pred, y_train)
         elif "y_pred_benchmark" in loss_func_args:
             if len(class_attrs) > 0:
                 function_loss = loss_func(
                     y_true, y_pred, y_pred_benchmark, **class_attrs
                 )
-                class_loss = loss_class.fn(
+                class_loss = loss_class._func(
                     y_true, y_pred, y_pred_benchmark, **class_attrs
                 )
             else:
                 function_loss = loss_func(y_true, y_pred, y_pred_benchmark)
-                class_loss = loss_class.fn(y_true, y_pred, y_pred_benchmark)
+                class_loss = loss_class._func(y_true, y_pred, y_pred_benchmark)
         else:
             if len(class_attrs) > 0:
                 function_loss = loss_func(y_true, y_pred, **class_attrs)
-                class_loss = loss_class.fn(y_true, y_pred, **class_attrs)
+                class_loss = loss_class._func(y_true, y_pred, **class_attrs)
             else:
                 function_loss = loss_func(y_true, y_pred)
-                class_loss = loss_class.fn(y_true, y_pred)
+                class_loss = loss_class._func(y_true, y_pred)
 
         # Assertion for functions and class having same result
         assert np.isclose(function_loss, class_loss), " ".join(
