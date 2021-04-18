@@ -176,8 +176,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self : RandomIntervalSegmenter
             This estimator
         """
-        self.min_length = check_window_length(self.min_length, y=y, name="min_length")
-        self.max_length = check_window_length(self.max_length, y=y, name="max_length")
+        self.min_length = check_window_length(self.min_length, y, name="min_length")
+        self.max_length = check_window_length(self.max_length, y, name="max_length")
 
         if self.min_length is None:
             min_length = 2
@@ -211,7 +211,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             self.intervals_ = _rand_intervals_fixed_n(
                 self._time_index,
                 n_intervals=self.n_intervals,
-                min_length=min_length,
+                min_length=self.min_length,
                 max_length=self.max_length,
                 random_state=self.random_state,
             )
