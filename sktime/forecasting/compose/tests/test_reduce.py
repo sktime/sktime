@@ -26,15 +26,15 @@ from sktime.performance_metrics.forecasting import smape_loss
 
 
 @pytest.fixture
-def test_data():
+def get_data():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
     return y, y_train, y_test, fh
 
 
-def test_factory_method_recursive(test_data):
-    (y, y_train, y_test, fh) = test_data
+def test_factory_method_recursive(get_data):
+    (y, y_train, y_test, fh) = get_data
 
     regressor = LinearRegression()
     f1 = ReducedForecaster(regressor, scitype="regressor", strategy="recursive")
@@ -46,8 +46,8 @@ def test_factory_method_recursive(test_data):
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_direct(test_data):
-    y, y_train, y_test, fh = test_data
+def test_factory_method_direct(get_data):
+    y, y_train, y_test, fh = get_data
 
     regressor = LinearRegression()
     f1 = ReducedForecaster(regressor, scitype="regressor", strategy="direct")
@@ -59,8 +59,8 @@ def test_factory_method_direct(test_data):
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_ts_recursive(test_data):
-    y, y_train, y_test, fh = test_data
+def test_factory_method_ts_recursive(get_data):
+    y, y_train, y_test, fh = get_data
 
     ts_regressor = Pipeline(
         [("tabularize", Tabularizer()), ("model", LinearRegression())]
@@ -74,8 +74,8 @@ def test_factory_method_ts_recursive(test_data):
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_ts_direct(test_data):
-    y, y_train, y_test, fh = test_data
+def test_factory_method_ts_direct(get_data):
+    y, y_train, y_test, fh = get_data
 
     ts_regressor = Pipeline(
         [("tabularize", Tabularizer()), ("model", LinearRegression())]
@@ -89,8 +89,8 @@ def test_factory_method_ts_direct(test_data):
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_factory_method_dirrec(test_data):
-    y, y_train, y_test, fh = test_data
+def test_factory_method_dirrec(get_data):
+    y, y_train, y_test, fh = get_data
 
     regressor = LinearRegression()
     f1 = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
@@ -102,10 +102,10 @@ def test_factory_method_dirrec(test_data):
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_multioutput_direct_tabular(test_data):
+def test_multioutput_direct_tabular(get_data):
     # multioutput and direct strategies with linear regression
     # regressor should produce same predictions
-    y, y_train, y_test, fh = test_data
+    y, y_train, y_test, fh = get_data
 
     regressor = LinearRegression()
     f1 = MultioutputRegressionForecaster(regressor)
@@ -118,10 +118,10 @@ def test_multioutput_direct_tabular(test_data):
     np.testing.assert_almost_equal(preds1.to_numpy(), preds2.to_numpy(), decimal=5)
 
 
-def test_dirrec_correctness(test_data):
+def test_dirrec_correctness(get_data):
     # recursive and dirrec regressor strategies
     # dirrec regressor should produce lower error due to less cumulative error
-    y, y_train, y_test, fh = test_data
+    y, y_train, y_test, fh = get_data
 
     regressor = LinearRegression()
     dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
@@ -130,7 +130,37 @@ def test_dirrec_correctness(test_data):
     preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
     preds_recursive = recursive.fit(y_train, fh=fh).predict(fh)
 
-    loss_dirrec = smape_loss(preds_dirrec)
-    loss_recurs = smape_loss(preds_recursive)
+    assert smape_loss(y_test, preds_dirrec) < smape_loss(y_test, preds_recursive)
 
-    assert loss_dirrec < loss_recurs
+
+def test_dirrec_overloading(get_data):
+    y, y_train, y_test, fh = get_data
+
+    # Both overloads of dirrec should give the same result
+    regressor = [LinearRegression()] * len(fh)
+    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
+
+    preds_dirrec_multiple = dirrec.fit(y_train, fh=fh).predict(fh)
+
+    regressor = LinearRegression()
+    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
+
+    preds_dirrec_single = dirrec.fit(y_train, fh=fh).predict(fh)
+
+    assert (preds_dirrec_multiple == preds_dirrec_single).all()
+
+
+def test_dirrec_incorrect_num_regressors(get_data):
+    y, y_train, y_test, fh = get_data
+
+    regressor = [LinearRegression()] * (len(fh) + 1)
+    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
+
+    with pytest.raises(ValueError):
+        _ = dirrec.fit(y_train, fh=fh).predict(fh)
+
+    regressor = [LinearRegression()] * (len(fh) - 1)
+    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
+
+    with pytest.raises(ValueError):
+        _ = dirrec.fit(y_train, fh=fh).predict(fh)

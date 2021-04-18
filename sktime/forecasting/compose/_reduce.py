@@ -403,6 +403,29 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
 class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "dirrec"
 
+    def _list_transform(self):
+        # Three possibilities. We are either provided with a list that's too long,
+        # or a list of the same length/shorter,
+        # or a single regressor.
+        len_fh = len(self.fh)
+
+        regressors = np.empty(len_fh, dtype=object)
+        try:
+            if len(self.regressor) != len_fh:
+                raise ValueError(
+                    "When using a list with regressors, the regressor list must"
+                    " be equal in length to the forecasting horizon."
+                )
+
+            for i in range(len_fh):
+                regressors[i] = clone(self.regressor[i % len(self.regressor)])
+
+        except TypeError:
+            for i in range(len_fh):
+                regressors[i] = clone(self.regressor)
+
+        return regressors
+
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -413,7 +436,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+            For this estimator, exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
@@ -425,7 +448,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         self._set_fh(fh)
 
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
-            raise NotImplementedError("in-sample predictions are not implemented")
+            raise NotImplementedError("In-sample predictions are not implemented")
 
         self.step_length_ = check_step_length(self.step_length)
         self.window_length_ = check_window_length(self.window_length)
@@ -434,7 +457,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         # for each step ahead of the forecasting horizon
 
         self._cv = SlidingWindowSplitter(
-            fh=self.fh.to_relative(self.cutoff),  # THIS MIGHT BE INCORRECT.
+            fh=self.fh.to_relative(self.cutoff),
             window_length=self.window_length_,
             step_length=self.step_length_,
             start_with_window=True,
@@ -443,31 +466,12 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         # transform data using rolling window split
         X, Y_train = self._transform(y, X)
 
-        # iterate over forecasting horizon
-        self.regressors_ = []
-        self.islist_ = isinstance(self.regressor, list)
-        self.approximations_ = []
+        # perform conversion to list from provided regressors
+        self.regressors_ = self._list_transform()
 
-        # train over the whole range of provided predictors,
-        # whether provided as a list or not
         for i in range(len(self.fh)):
             y = Y_train[:, i]
-            if self.islist_:
-                regressor = clone(self.regressor[i % len(self.regressor)])
-            else:
-                regressor = clone(self.regressor)
-            # Basically stuck at this step.
-            if not self.approximations_:
-                regressor.fit(X, y)
-            # else:
-            #     regressor.fit(X
-            # ^^^^ "I have to append new data to X
-            # from approximations_.append", "y_with_append_approximations")
-            # self.approximations_.append(regressor.predict("Some", "value", "x"))
-
-            self.regressors_.append(regressor)
-
-            # extension step of X.
+            self.regressors_[i].fit(X, y)
             X = np.column_stack([X, y.reshape(-1, 1)])
             X = self._format_windows(X)
 
@@ -477,8 +481,6 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Predict"""
-        # compute prediction
         # prepare recursive predictions
         y_pred = np.zeros(len(fh))
 
@@ -486,25 +488,23 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         (
             last_window,
             _,
-        ) = self._get_last_window()  # last observed stuff of y_train (caboose)
+        ) = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
+
+        # pre-allocate last window indices
+        original_window_size = len(last_window)
+        last_window = np.append(last_window, np.zeros(len(fh)))
 
         # recursively predict iterating over forecasting horizon
         for i in range(len(y_pred)):
             # convert data into required input format
-            X_last = self._format_windows([last_window])  # size of the window, yep?
-
+            X_last = self._format_windows([last_window[: original_window_size + i]])
             # make forecast using specific fitted regressor
-            y_pred[i] = self.regressors_[i].predict(
-                X_last
-            )  # predicts using the last ten inputs + consecutively
-            # adding the outputs... correct?
+            y_pred[i] = self.regressors_[i].predict(X_last)
 
             # update last window with previous prediction
-            # use full window adopting from DirectReducer
-
-            last_window = np.append(last_window, y_pred[i])
+            last_window[i + original_window_size] = y_pred[i]
 
         return y_pred
 
