@@ -43,7 +43,7 @@ def check_window_length(window_length, y=None, name="window_length"):
     """
     Parameters
     ----------
-    y : pd.Series, optional (default= None)
+    y : pd.Series, optional (default = None)
         Endogenous time series
     window_length: positive int or positive float
         The number of training set used for splitting
