@@ -40,8 +40,9 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
 
     for index, y in enumerate(series):
         if pred_int is not None:
-            pred_col = pred_int.iloc[:, index].to_frame()
-            check_X_y(y=y, X=pred_col)
+            y = check_y(y)
+            pred_col = pred_int.iloc[:, index]
+            type(y.index) is type(pred_col.index)
         else:
             check_y(y)
 
