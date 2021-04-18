@@ -9,7 +9,6 @@ import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.panel import check_X_y
 
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
