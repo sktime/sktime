@@ -9,6 +9,7 @@ import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.panel import check_X_y
 
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
@@ -39,9 +40,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
 
     for index, y in enumerate(series):
         if pred_int is not None:
-            y = check_y(y)
-            pred_col = pred_int.iloc[:, index]
-            type(y.index) is type(pred_col.index)
+            _ = check_X_y(X=(pred_int.iloc[:, index]).to_frame(), y=y)
         else:
             check_y(y)
 
