@@ -486,8 +486,8 @@ def mean_squared_scaled_error(
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared scaled error.
-            If True, returns root mean squared scaled error (RMSSE)
-            If False, returns mean squared scaled error (MSSE)
+        If True, returns root mean squared scaled error (RMSSE)
+        If False, returns mean squared scaled error (MSSE)
 
     Returns
     -------
@@ -832,8 +832,8 @@ def mean_squared_error(
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
-            If True, returns root mean squared error (RMSE)
-            If False, returns mean squared error (MSE)
+        If True, returns root mean squared error (RMSE)
+        If False, returns mean squared error (MSE)
 
     Returns
     -------
@@ -1015,8 +1015,8 @@ def median_squared_error(
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
-            If True, returns root mean squared error (RMSE)
-            If False, returns mean squared error (MSE)
+        If True, returns root mean squared error (RMSE)
+        If False, returns mean squared error (MSE)
 
     Returns
     -------
@@ -1356,8 +1356,8 @@ def mean_squared_percentage_error(
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
-            If True, returns root mean squared error (RMSPE)
-            If False, returns mean squared error (MSPE)
+        If True, returns root mean squared error (RMSPE)
+        If False, returns mean squared error (MSPE)
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
@@ -1486,8 +1486,8 @@ def median_squared_percentage_error(
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
-            If True, returns root mean squared error (RMSPE)
-            If False, returns mean squared error (MSPE)
+        If True, returns root mean squared error (RMSPE)
+        If False, returns mean squared error (MSPE)
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
@@ -1906,8 +1906,8 @@ def geometric_mean_relative_squared_error(
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
-            If True, returns root mean squared error (RMSPE)
-            If False, returns mean squared error (MSPE)
+        If True, returns root mean squared error (RMSPE)
+        If False, returns mean squared error (MSPE)
 
     Returns
     -------
