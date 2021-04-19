@@ -254,7 +254,7 @@ class CutoffSplitter(BaseSplitter):
             raise ValueError("`cutoffs` are incompatible with given `y`.")
 
         fh = _check_fh(self.fh)
-        n_timepoints = y.shape[[0]]
+        n_timepoints = y.shape[0]
 
         if np.max(cutoffs) + np.max(fh) > y.shape[0]:
             raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
