@@ -20,12 +20,12 @@ conda create -n sktime_testenv python=3.7
 conda activate sktime_testenv
 
 # Install from test PyPI
-echo "Install sktime from Test PyPI ..."
+echo "Installing sktime from Test PyPI ..."
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple sktime=="$VERSION"
 echo "Successfully installed sktime from Test PyPI."
 
 # Clean up test directory and environment
-echo "Clean up ..."
+echo "Cleaning up ..."
 conda deactivate
 conda remove -n sktime_testenv --all -y
 rm -r "$HOME"/testdir
