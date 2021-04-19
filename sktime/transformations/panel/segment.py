@@ -176,8 +176,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self : RandomIntervalSegmenter
             This estimator
         """
-        self.min_length = check_window_length(self.min_length, y, "min_length")
-        self.max_length = check_window_length(self.max_length, y, "max_length")
+        check_window_length(self.min_length, "min_length")
+        check_window_length(self.max_length, "max_length")
         if self.min_length is None:
             min_length = 2
         else:
@@ -185,6 +185,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         if self.max_length is not None:
             if not min_length < self.max_length:
                 raise ValueError("`max_length` must be bigger than `min_length`.")
+
         X = check_X(X, enforce_univariate=True)
         self.input_shape_ = X.shape
 
