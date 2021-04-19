@@ -40,7 +40,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
 
     for y in series:
         if pred_int is not None:
-            check_X_y(X=pred_int, y=y)
+            pred_int, y = check_X_y(X=pred_int, y=y)
         else:
             check_y(y)
 
