@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "Ayushmaan Seth",]
+__author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "Ayushmaan Seth"]
 __all__ = []
 
 __author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti"]
@@ -19,11 +19,9 @@ from sktime.datasets import load_airline
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
 from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
-from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.compose._reduce import _sliding_window_transform
 from sktime.forecasting.model_selection import SlidingWindowSplitter
@@ -35,10 +33,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.forecasting.compose._reduce import ReducedForecaster
-from sktime.forecasting.compose._reduce import RecursiveRegressionForecaster
-from sktime.forecasting.compose._reduce import DirectRegressionForecaster
 from sktime.forecasting.compose._reduce import DirRecRegressionForecaster
-from sktime.forecasting.compose._reduce import MultioutputRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
 from sktime.performance_metrics.forecasting import smape_loss
@@ -48,6 +43,7 @@ from sktime.utils.validation.forecasting import check_fh
 N_TIMEPOINTS = [13, 17]
 N_VARIABLES = [1, 3]
 FH = ForecastingHorizon(1)
+
 
 @pytest.fixture
 def get_data():
@@ -59,6 +55,7 @@ def get_data():
 
 def test_factory_method_recursive(get_data):
     (y, y_train, y_test, fh) = get_data
+
 
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
@@ -274,7 +271,7 @@ def test_dummy_regressor_mean_prediction(fh, window_length, strategy, scitype):
     expected = np.mean(y_train[effective_window_length:])
     np.testing.assert_array_almost_equal(actual, expected)
 
-    
+
 _REGISTRY = [
     ("tabular-regressor", "direct", DirectTabularRegressionForecaster),
     ("tabular-regressor", "recursive", RecursiveTabularRegressionForecaster),
@@ -514,17 +511,22 @@ def test_reductions_airline_data(forecaster, expected):
 
     np.testing.assert_almost_equal(actual, expected)
 
+
 def test_dirrec_correctness(get_data):
     # recursive and dirrec regressor strategies
     # dirrec regressor should produce lower error due to less cumulative error
     y, y_train, y_test, fh = get_data
 
     regressor = LinearRegression()
-    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
-    recursive = ReducedForecaster(regressor, scitype="regressor", strategy="recursive")
+    recursive = ReducedForecaster(
+        regressor, scitype="time-series-regressor", strategy="recursive"
+    )
+    dirrec = ReducedForecaster(
+        regressor, scitype="time-series-regressor", strategy="dirrec"
+    )
 
-    preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
     preds_recursive = recursive.fit(y_train, fh=fh).predict(fh)
+    preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
 
     assert smape_loss(y_test, preds_dirrec) < smape_loss(y_test, preds_recursive)
 
@@ -560,6 +562,7 @@ def test_dirrec_incorrect_num_regressors(get_data):
 
     with pytest.raises(ValueError):
         _ = dirrec.fit(y_train, fh=fh).predict(fh)
+
 
 def test_factory_method_dirrec(get_data):
     y, y_train, y_test, fh = get_data

@@ -3,7 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 
-__author__ = ["Ayushmaan Seth", "Kavin Anand", "Luis Zugasti", "Lovkush Agarwal", "Markus Löning"]
+__author__ = [
+    "Ayushmaan Seth",
+    "Kavin Anand",
+    "Luis Zugasti",
+    "Lovkush Agarwal",
+    "Markus Löning",
+]
 
 __all__ = [
     "make_reduction",
@@ -14,8 +20,7 @@ __all__ = [
     "RecursiveTabularRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
     "DirRecRegressionForecaster",
-    "DirRecTimeSeriesForecaster",
-    "ReducedForecaster"
+    "ReducedForecaster",
     "ReducedRegressionForecaster",
 ]
 
@@ -431,7 +436,7 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
         return y_pred[fh_idx]
 
 
-class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
+class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
     strategy = "dirrec"
 
     def _list_transform(self):
@@ -457,7 +462,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
 
         return regressors
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -487,11 +492,9 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
 
-        self._cv = SlidingWindowSplitter(
+        self._cv = _sliding_window_transform(
             fh=self.fh.to_relative(self.cutoff),
             window_length=self.window_length_,
-            step_length=self.step_length_,
-            start_with_window=True,
         )
 
         # transform data using rolling window split
@@ -600,33 +603,8 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     _estimator_scitype = "tabular-regressor"
 
 
-class DirRecTimeSeriesForecaster(ReducedTimeSeriesRegressorMixin, _DirRecReducer):
-    """
-    Forecasting based on reduction to time series regression with a DirRec
-    (hybrid) reduction strategy.
-    For the direct strategy,  a separate forecaster is fitted
-    for each step ahead of the forecasting horizon and then
-    the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
-    strategy.
-
-    Parameters
-    ----------
-    regressor : sktime estimator object
-        Define the type of time series regression model.
-    window_length : int, optional (default=10)
-        The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
-    """
-
-    _estimator_scitype = "time-series-regressor"
-    pass
-
-
-class DirRecRegressionForecaster(ReducedTabularRegressorMixin, _DirRecReducer):
+# Where can I find the reduced tabular regressor mixin...
+class DirRecRegressionForecaster(_DirRecReducer):
     """
     Forecasting based on reduction to tabular regression with the
     DirRec (hybrid) strategy.
@@ -651,9 +629,8 @@ class DirRecRegressionForecaster(ReducedTabularRegressorMixin, _DirRecReducer):
     _estimator_scitype = "tabular-regressor"
     pass
 
-  
-class DirectTimeSeriesRegressionForecaster(_DirectReducer):
 
+class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     """
     Forecasting based on reduction to time-series regression using the direct
     strategy.
@@ -689,9 +666,10 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix.
     """
-    
+
     _estimator_scitype = "time-series-regressor"
     pass
+
 
 class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
@@ -861,7 +839,7 @@ def _infer_scitype(estimator):
             "The `scitype` of the given `estimator` cannot be inferred. "
             "Please specify the `scitype` explicitly."
         )
-        
+
 
 def _check_strategy(strategy):
     valid_strategies = ("direct", "recursive", "multioutput", "dirrec")
