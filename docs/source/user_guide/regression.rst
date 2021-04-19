@@ -1,4 +1,4 @@
-.. _regression:
+.. _user_guide_regression:
 
 Time Series Regression
 ======================

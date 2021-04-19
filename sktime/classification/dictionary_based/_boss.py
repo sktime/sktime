@@ -57,6 +57,9 @@ class BOSSEnsemble(BaseClassifier):
     max_win_len_prop        : maximum window length as a proportion of
     series length (default = 1)
     min_window              : minimum window size, (default = 10)
+    n_jobs                  : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
@@ -74,6 +77,7 @@ class BOSSEnsemble(BaseClassifier):
     ..[1] Patrick Schäfer, "The BOSS is concerned with time series classification
             in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
             https://link.springer.com/article/10.1007/s10618-014-0377-7
+
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/dictionary_based/BOSS.java

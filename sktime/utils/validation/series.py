@@ -39,12 +39,13 @@ def check_series(
     enforce_univariate : bool, optional (default=False)
         If True, multivariate Z will raise an error.
     allow_empty : bool
+        If False, empty Z will raise an error
     enforce_index_type : type, optional (default=None)
         type of time index
 
     Returns
     -------
-    y : pd.Series, pd.DataFrame
+    Z : pd.Series, pd.DataFrame
         Validated time series
 
     Raises
@@ -83,7 +84,7 @@ def check_time_index(index, allow_empty=False, enforce_index_type=None):
     index : pd.Index or np.array
         Time index
     allow_empty : bool, optional (default=False)
-        If True, empty `index` raises an error.
+        If False, empty `index` raises an error.
     enforce_index_type : type, optional (default=None)
         type of time index
 

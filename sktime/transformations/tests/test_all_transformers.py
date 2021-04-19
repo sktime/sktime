@@ -79,7 +79,11 @@ def check_series_to_primitive_transform_multivariate(Estimator):
 
 def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 15
-    out = _construct_fit_transform(Estimator, n_timepoints=n_timepoints)
+    out = _construct_fit_transform(
+        Estimator,
+        n_timepoints=n_timepoints,
+        add_nan=_has_tag(Estimator, "handles-missing-data"),
+    )
     assert isinstance(out, (pd.Series, np.ndarray))
 
 

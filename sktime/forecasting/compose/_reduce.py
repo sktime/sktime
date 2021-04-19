@@ -2,108 +2,174 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = "Markus Löning"
+__author__ = ["Lovkush Agarwal", "Markus Löning"]
 __all__ = [
-    "ReducedTabularRegressorMixin",
-    "ReducedTimeSeriesRegressorMixin",
+    "make_reduction",
     "DirectTimeSeriesRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
-    "DirectRegressionForecaster",
-    "MultioutputRegressionForecaster",
-    "RecursiveRegressionForecaster",
+    "MultioutputTimeSeriesRegressionForecaster",
+    "DirectTabularRegressionForecaster",
+    "RecursiveTabularRegressionForecaster",
+    "MultioutputTabularRegressionForecaster",
     "ReducedForecaster",
+    "ReducedRegressionForecaster",
 ]
 
 import numpy as np
-import pandas as pd
+from sklearn.base import RegressorMixin
 from sklearn.base import clone
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.regression.base import BaseRegressor
+from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_step_length
-from sktime.utils.validation.forecasting import check_y
 
 
-##############################################################################
-# base classes for reduction from forecasting to regression
+def _concat_y_X(y, X):
+    """Helper function to concatenate y and X in preparation for sliding-window
+    transform"""
+    z = y.to_numpy()
+    if z.ndim == 1:
+        z = z.reshape(-1, 1)
+    if X is not None:
+        z = np.column_stack([z, X.to_numpy()])
+    return z
 
 
-class BaseReducer(_BaseWindowForecaster):
+def _check_fh(fh):
+    """Helper function to check fh for sliding-window transform"""
+    assert fh.is_relative
+    assert fh.is_all_out_of_sample()
+    return fh.to_indexer().to_numpy()
+
+
+def _sliding_window_transform(
+    y, window_length, fh, X=None, scitype="tabular-regressor"
+):
+    """Transform time series data `y` and `X` using sliding window.
+
+    See `test_sliding_window_transform_explicit` in test_reduce.py for explicit
+    example.
+
+    Parameters
+    ----------
+    y : pd.Series
+        Endogenous time series
+    window_length : int
+        Window length for transformed feature variables
+    fh : ForecastingHorizon
+        Forecasting horizon for transformed target variable
+    X : pd.DataFrame, optional (default=None)
+        Exogenous series.
+    scitype : str {"tabular-regressor", "time-series-regressor"}, optional
+        Scitype of estimator to use with transformed data.
+        - If "tabular-regressor", returns X as tabular 2d array
+        - If "time-series-regressor", returns X as panel 3d array
+
+    Returns
+    -------
+    yt : np.ndarray, shape = (n_timepoints - window_length, 1)
+        Transformed target variable.
+    Xt : np.ndarray, shape = (n_timepoints - window_length, n_variables,
+    window_length)
+        Transformed lagged values of target variable and exogenous variables,
+        excluding contemporaneous values.
+    """
+    # There are different ways to implement this transform. Pre-allocating an
+    # array and filling it by iterating over the window length seems to be the most
+    # efficient one.
+    window_length = check_window_length(window_length)
+
+    z = _concat_y_X(y, X)
+    n_timepoints, n_variables = z.shape
+
+    fh = _check_fh(fh)
+    fh_max = fh[-1]
+
+    if window_length + fh_max >= n_timepoints:
+        raise ValueError(
+            "The `window_length` and `fh` are incompatible with the length of `y`"
+        )
+
+    # Get the effective window length accounting for the forecasting horizon.
+    effective_window_length = window_length + fh_max
+
+    # Pre-allocate array for sliding windows.
+    Zt = np.zeros(
+        (
+            n_timepoints + effective_window_length,
+            n_variables,
+            effective_window_length + 1,
+        )
+    )
+
+    # Transform data.
+    for k in range(effective_window_length + 1):
+        i = effective_window_length - k
+        j = n_timepoints + effective_window_length - k
+        Zt[i:j, :, k] = z
+
+    # Truncate data, selecting only full windows, discarding incomplete ones.
+    Zt = Zt[effective_window_length:-effective_window_length]
+
+    # Return transformed feature and target variables separately. This excludes
+    # contemporaneous values of the exogenous variables. Including them would lead to
+    # unequal-length data, with more time points for exogenous series than the target
+    # series, which is currently not supported.
+    yt = Zt[:, 0, window_length + fh]
+    Xt = Zt[:, :, :window_length]
+
+    # If the scitype is tabular regression, we have to convert X into a 2d array.
+    if scitype == "tabular-regressor":
+        return yt, Xt.reshape(Xt.shape[0], -1)
+    else:
+        return yt, Xt
+
+
+class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
 
-    _required_parameters = ["regressor"]
+    _required_parameters = ["estimator"]
 
-    def __init__(self, regressor, window_length=10, step_length=1):
-        super(BaseReducer, self).__init__(window_length=window_length)
-        self.regressor = regressor
+    def __init__(self, estimator, window_length=10, step_length=1):
+        super(_Reducer, self).__init__(window_length=window_length)
+        self.estimator = estimator
         self.step_length = step_length
         self.step_length_ = None
         self._cv = None
 
-    def _transform(self, y, X=None):
-        """Transform data using rolling window approach"""
-        if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
-        y = check_y(y)
-
-        # get integer time index
-        cv = self._cv
-
-        # Transform target series into tabular format using
-        # rolling window tabularisation
-        x_windows = []
-        y_windows = []
-        for x_index, y_index in cv.split(y):
-            x_window = y.iloc[x_index]
-            y_window = y.iloc[y_index]
-
-            x_windows.append(x_window)
-            y_windows.append(y_window)
-
-        # Put into required input format for regression
-        X, y = self._format_windows(x_windows, y_windows)
-        return X, y
-
-    def _format_windows(self, x_windows, y_windows=None):
-        """Helper function to combine windows from temporal cross-validation
-        into nested
-        pd.DataFrame for reduction to time series regression or tabular
-        np.array for
-        tabular regression.
+    def fit(self, y, X=None, fh=None):
+        """Fit to training data.
 
         Parameters
         ----------
-        x_windows : list of pd.Series or np.array
-        y_windows : list of pd.Series or np.array, optional (default=None)
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
 
         Returns
         -------
-        X : pd.DataFrame or np.array
-            Nested time series data frame.
-        y : np.array
-            Array of target values.
+        self : returns an instance of self.
         """
-        X = self._format_x_windows(x_windows)
+        self._set_y_X(y, X)
+        self._set_fh(fh)
 
-        # during prediction, y=None, so only return X
-        if y_windows is None:
-            return X
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
 
-        y = self._format_y_windows(y_windows)
-        return X, y
+        self._fit(y, X)
+        self._is_fitted = True
+        return self
 
-    @staticmethod
-    def _format_y_windows(y_windows):
-        """Template method for formatting y windows"""
-        raise NotImplementedError("abstract method")
-
-    @staticmethod
-    def _format_x_windows(x_windows):
-        """Template method for formatting x windows"""
+    def _fit(self, y, X):
         raise NotImplementedError("abstract method")
 
     def _is_predictable(self, last_window):
@@ -115,64 +181,30 @@ class BaseReducer(_BaseWindowForecaster):
             and np.sum(np.isinf(last_window)) == 0
         )
 
-
-class ReducedTimeSeriesRegressorMixin:
-    """Mixin class for reducing forecasting to time series regression"""
-
-    @staticmethod
-    def _format_x_windows(x_windows):
-        """Helper function to combine windows from temporal cross-validation
-        into nested
-        pd.DataFrame used for solving forecasting via reduction to time
-        series regression.
-
-        Parameters
-        ----------
-        x_windows : list of pd.Series or np.array
-
-        Returns
-        -------
-        X : pd.DataFrame
-            Nested time series data frame.
-        """
-        # return nested dataframe
-        return pd.DataFrame(pd.Series([pd.Series(xi) for xi in x_windows]))
-
-    @staticmethod
-    def _format_y_windows(y_windows):
-        return np.array([np.asarray(yi) for yi in y_windows])
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        # Note that we currently only support out-of-sample predictions. For the
+        # direct and multioutput strategy, we need to check this already during fit,
+        # as the fh is required for fitting.
+        raise NotImplementedError(
+            f"Generating in-sample predictions is not yet "
+            f"implemented for {self.__class__.__name__}."
+        )
 
 
-class ReducedTabularRegressorMixin:
-    """Mixin class for reducing forecasting to tabular regression"""
-
-    @staticmethod
-    def _format_x_windows(x_windows):
-        """Helper function to combine windows from temporal cross-validation
-        into nested
-        pd.DataFrame used for solving forecasting via reduction to time
-        series regression.
-
-        Parameters
-        ----------
-        x_windows : list of pd.Series or np.array
-
-        Returns
-        -------
-        X : pd.DataFrame
-            Nested time series data frame.
-        """
-        return np.vstack(x_windows)
-
-    @staticmethod
-    def _format_y_windows(y_windows):
-        return np.vstack(y_windows)
-
-
-class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
+class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
     strategy = "direct"
 
-    def fit(self, y, X=None, fh=None):
+    def _transform(self, y, X=None):
+        fh = self.fh.to_relative(self.cutoff)
+        return _sliding_window_transform(
+            y,
+            window_length=self.window_length,
+            fh=fh,
+            X=X,
+            scitype=self._estimator_scitype,
+        )
+
+    def _fit(self, y, X=None):
         """Fit to training data.
 
         Parameters
@@ -187,69 +219,76 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y, X)
-        if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
-        self._set_fh(fh)
-        if len(self.fh.to_in_sample(self.cutoff)) > 0:
-            raise NotImplementedError("In-sample predictions are not implemented")
+        # We currently only support out-of-sample predictions. For the direct
+        # strategy, we need to check this at the beginning of fit, as the fh is
+        # required for fitting.
+        if not self.fh.is_all_out_of_sample(self.cutoff):
+            raise NotImplementedError("In-sample predictions are not implemented.")
 
-        self.step_length_ = check_step_length(self.step_length)
-        self.window_length_ = check_window_length(self.window_length)
+        yt, Xt = self._transform(y, X)
 
-        # for the direct reduction strategy, a separate forecaster is fitted
-        # for each step ahead of the forecasting horizon
-        self._cv = SlidingWindowSplitter(
-            fh=self.fh.to_relative(self.cutoff),
-            window_length=self.window_length_,
-            step_length=self.step_length_,
-            start_with_window=True,
-        )
-
-        # transform data using rolling window split
-        X, Y_train = self._transform(y, X)
-
-        # iterate over forecasting horizon
-        self.regressors_ = []
+        # Iterate over forecasting horizon, fitting a separate estimator for each step.
+        self.estimators_ = []
         for i in range(len(self.fh)):
-            y = Y_train[:, i]
-            regressor = clone(self.regressor)
-            regressor.fit(X, y)
-            self.regressors_.append(regressor)
-
-        self._is_fitted = True
+            estimator = clone(self.estimator)
+            estimator.fit(Xt, yt[:, i])
+            self.estimators_.append(estimator)
         return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        # use last window as new input data for time series regressors to
-        # make forecasts
-        # get last window from observation horizon
-        last_window, _ = self._get_last_window()
-        if not self._is_predictable(last_window):
+        # Get last window of available data.
+        y_last, X_last = self._get_last_window()
+
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
-        X_last = self._format_windows([last_window])
+        if self._X is None:
+            n_columns = 1
+        else:
+            # X is ignored here, since we currently only look at lagged values for
+            # exogenous variables and not contemporaneous ones.
+            n_columns = self._X.shape[1] + 1
 
-        # preallocate array for forecasted values
+        # Pre-allocate arrays.
+        window_length = self.window_length_
+        X_pred = np.zeros((1, n_columns, window_length))
+
+        # Fill pre-allocated arrays with available data.
+        X_pred[:, 0, :] = y_last
+        if self._X is not None:
+            X_pred[:, 1:, :] = X_last.T
+
+        # We need to make sure that X has the same order as used in fit.
+        if self._estimator_scitype == "tabular-regressor":
+            X_pred = X_pred.reshape(1, -1)
+
+        # Allocate array for predictions.
         y_pred = np.zeros(len(fh))
 
         # Iterate over estimators/forecast horizon
-        for i, regressor in enumerate(self.regressors_):
-            y_pred[i] = regressor.predict(X_last)
+        for i, estimator in enumerate(self.estimators_):
+            y_pred[i] = estimator.predict(X_pred)
+
         return y_pred
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
-        # it's not clear how the direct reducer would generate in-sample
-        # predictions
-        raise NotImplementedError("in-sample predictions are not implemented")
 
-
-class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
+class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
     strategy = "multioutput"
 
-    def fit(self, y, X=None, fh=None):
+    def _transform(self, y, X=None):
+        fh = self.fh.to_relative(self.cutoff)
+        return _sliding_window_transform(
+            y,
+            window_length=self.window_length,
+            fh=fh,
+            X=X,
+            scitype=self._estimator_scitype,
+        )
+
+    def _fit(self, y, X=None):
         """Fit to training data.
 
         Parameters
@@ -264,286 +303,272 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y, X)
-        if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
-        self._set_fh(fh)
-        if len(self.fh.to_in_sample(self.cutoff)) > 0:
-            raise NotImplementedError("In-sample predictions are not implemented")
+        # We currently only support out-of-sample predictions. For the direct
+        # strategy, we need to check this at the beginning of fit, as the fh is
+        # required for fitting.
+        if not self.fh.is_all_out_of_sample(self.cutoff):
+            raise NotImplementedError("In-sample predictions are not implemented.")
 
-        self.step_length_ = check_step_length(self.step_length)
-        self.window_length_ = check_window_length(self.window_length)
+        yt, Xt = self._transform(y, X)
 
-        # for the multioutput reduction strategy, a single forecaster is fitted
-        # simultaneously to all the future steps in the forecasting horizon
-        # by reducing to a forecaster that can handle multi-dimensional outputs
-        self._cv = SlidingWindowSplitter(
-            fh=self.fh.to_relative(self.cutoff),
-            window_length=self.window_length_,
-            step_length=self.step_length_,
-            start_with_window=True,
-        )
-
-        # transform data using rolling window split
-        X, Y_train = self._transform(y, X)
-
-        # fit regressor to training data
-        regressor = clone(self.regressor)
-        regressor.fit(X, Y_train)
-        self.regressor_ = regressor
-
-        self._is_fitted = True
+        # Fit a multi-output estimator to the transformed data.
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(Xt, yt)
         return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        # use last window as new input data for regressor to
-        # make forecasts
-        # get last window from observation horizon
-        last_window, _ = self._get_last_window()
-        if not self._is_predictable(last_window):
+        # Get last window of available data.
+        y_last, X_last = self._get_last_window()
+
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
-        X_last = self._format_windows([last_window])
+        if self._X is None:
+            n_columns = 1
+        else:
+            # X is ignored here, since we currently only look at lagged values for
+            # exogenous variables and not contemporaneous ones.
+            n_columns = self._X.shape[1] + 1
 
-        y_pred = self.regressor_.predict(X_last)
+        # Pre-allocate arrays.
+        window_length = self.window_length_
+        X_pred = np.zeros((1, n_columns, window_length))
 
-        # preallocate array for forecasted values
-        # y_pred = np.zeros(len(fh))
+        # Fill pre-allocated arrays with available data.
+        X_pred[:, 0, :] = y_last
+        if self._X is not None:
+            X_pred[:, 1:, :] = X_last.T
 
-        return y_pred[0]
+        # We need to make sure that X has the same order as used in fit.
+        if self._estimator_scitype == "tabular-regressor":
+            X_pred = X_pred.reshape(1, -1)
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
-        raise NotImplementedError("in-sample predictions are not implemented")
+        # Iterate over estimators/forecast horizon
+        y_pred = self.estimator_.predict(X_pred)
+        return y_pred.ravel()
 
 
-class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
+class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
     strategy = "recursive"
 
-    def fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        # input checks
-        if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
-
-        # set values
-        self._set_y_X(y, X)
-        self._set_fh(fh)
-
-        self.step_length_ = check_step_length(self.step_length)
-        self.window_length_ = check_window_length(self.window_length)
-
-        # set up cv iterator, for recursive strategy, a single estimator
-        # is fit for a one-step-ahead forecasting horizon and then called
-        # iteratively to predict multiple steps ahead
-        self._cv = SlidingWindowSplitter(
-            fh=1,
-            window_length=self.window_length_,
-            step_length=self.step_length_,
-            start_with_window=True,
+    def _transform(self, y, X=None):
+        # For the recursive strategy, the forecasting horizon for the sliding-window
+        # transform is simply a one-step ahead horizon, regardless of the horizon
+        # used during prediction.
+        fh = ForecastingHorizon([1])
+        return _sliding_window_transform(
+            y, self.window_length_, fh, X, scitype=self._estimator_scitype
         )
 
-        # transform data into tabular form
-        X_train_tab, y_train_tab = self._transform(y, X)
+    def _fit(self, y, X):
+        yt, Xt = self._transform(y, X)
 
-        # fit base regressor
-        regressor = clone(self.regressor)
-        regressor.fit(X_train_tab, y_train_tab.ravel())
-        self.regressor_ = regressor
+        # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
+        yt = yt.ravel()
 
-        self._is_fitted = True
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(Xt, yt)
         return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Predict"""
-        # compute prediction
-        # prepare recursive predictions
-        fh_max = fh.to_relative(self.cutoff)[-1]
-        y_pred = np.zeros(fh_max)
+        if self._X is not None and X is None:
+            raise ValueError(
+                "`X` must be passed to `predict` if `X` is given in `fit`."
+            )
 
-        # get last window from observation horizon
-        last_window, _ = self._get_last_window()
-        if not self._is_predictable(last_window):
+        # Get last window of available data.
+        y_last, X_last = self._get_last_window()
+
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
-        # recursively predict iterating over forecasting horizon
+        # Pre-allocate arrays.
+        if X is None:
+            n_columns = 1
+        else:
+            n_columns = X.shape[1] + 1
+        window_length = self.window_length_
+        fh_max = fh.to_relative(self.cutoff)[-1]
+
+        y_pred = np.zeros(fh_max)
+        last = np.zeros((1, n_columns, window_length + fh_max))
+
+        # Fill pre-allocated arrays with available data.
+        last[:, 0, :window_length] = y_last
+        if X is not None:
+            last[:, 1:, :window_length] = X_last.T
+            last[:, 1:, window_length:] = X.T
+
+        # Recursively generate predictions by iterating over forecasting horizon.
         for i in range(fh_max):
-            X_last = self._format_windows(
-                [last_window]
-            )  # convert data into required input format
-            y_pred[i] = self.regressor_.predict(
-                X_last
-            )  # make forecast using fitted regressor
+            # Slice prediction window.
+            X_pred = last[:, :, i : window_length + i]
 
-            # update last window with previous prediction
-            last_window = np.append(last_window, y_pred[i])[-self.window_length_ :]
+            # Reshape data into tabular array.
+            if self._estimator_scitype == "tabular-regressor":
+                X_pred = X_pred.reshape(1, -1)
 
+            # Generate predictions.
+            y_pred[i] = self.estimator_.predict(X_pred)
+
+            # Update last window with previous prediction.
+            last[:, 0, window_length + i] = y_pred[i]
+
+        # While the recursive strategy requires to generate predictions for all steps
+        # until the furthest step in the forecasting horizon, we only return the
+        # requested ones.
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
 
-##############################################################################
-# reduction to regression
-class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
+class DirectTabularRegressionForecaster(_DirectReducer):
     """
-    Forecasting based on reduction to tabular regression with a direct
-    reduction strategy.
+    Forecasting based on reduction to tabular regression using the direct
+    strategy.
+
     For the direct reduction strategy, a separate forecaster is fitted
-    for each step ahead of the forecasting horizon
+    for each step ahead of the forecasting horizon.
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-        Define the regression model type.
+    estimator : Estimator
+        A tabular regression estimator as provided by scikit-learn.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
+        a tabular matrix.
     """
 
-    pass
+    _estimator_scitype = "tabular-regressor"
 
 
-class MultioutputRegressionForecaster(
-    ReducedTabularRegressorMixin, _MultioutputReducer
-):
+class MultioutputTabularRegressionForecaster(_MultioutputReducer):
     """
-    Forecasting based on reduction to tabular regression with a multioutput
-    reduction strategy.
-    For the multioutput reduction strategy, a single forecaster is fitted
-    simultaneously to all the future steps in the forecasting horizon
+    Forecasting based on reduction to tabular regression using the multioutput
+    strategy.
+
+    For the multioutput strategy, a single estimator capable of handling multioutput
+    targets is fitted to all the future steps in the forecasting horizon.
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-        Define the regression model type.
+    estimator : Estimator
+        A tabular regression estimator as provided by scikit-learn.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
+        a tabular matrix.
     """
 
-    pass
+    _estimator_scitype = "tabular-regressor"
 
 
-class RecursiveRegressionForecaster(ReducedTabularRegressorMixin, _RecursiveReducer):
+class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     """
-    Forecasting based on reduction to tabular regression with a recursive
-    reduction strategy.
-    For the recursive reduction strategy, a single estimator is
-    fit for a one-step-ahead forecasting horizon and then called
-    iteratively to predict multiple steps ahead.
+    Forecasting based on reduction to tabular regression using the recursive
+    strategy.
+
+    For the recursive strategy, a single estimator is fit for a one-step-ahead
+    forecasting horizon and then called iteratively to predict multiple steps ahead.
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-        Define the regression model type.
+    estimator : Estimator
+        A tabular regression estimator as provided by scikit-learn.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
+        a tabular matrix.
     """
 
-    pass
+    _estimator_scitype = "tabular-regressor"
 
 
-##############################################################################
-# reduction to time series regression
-class DirectTimeSeriesRegressionForecaster(
-    ReducedTimeSeriesRegressorMixin, _DirectReducer
-):
+class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     """
-    Forecasting based on reduction to time series regression with a direct
-    reduction strategy.
+    Forecasting based on reduction to time-series regression using the direct
+    strategy.
+
     For the direct reduction strategy, a separate forecaster is fitted
-    for each step ahead of the forecasting horizon
+    for each step ahead of the forecasting horizon.
 
     Parameters
     ----------
-    regressor : sktime estimator object
-        Define the type of time series regression model.
+    estimator : Estimator
+        A time-series regression estimator as provided by sktime.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
+        a tabular matrix.
+    """
+
+    _estimator_scitype = "time-series-regressor"
+
+
+class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
+    """
+    Forecasting based on reduction to time series regression with a multioutput
+    reduction strategy.
+
+    For the multioutput strategy, a single estimator capable of handling multioutput
+    targets is fitted to all the future steps in the forecasting horizon.
+
+    Parameters
+    ----------
+    estimator : Estimator
+        A time-series regression estimator as provided by sktime.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix.
     """
 
     pass
+    _estimator_scitype = "time-series-regressor"
 
 
-class RecursiveTimeSeriesRegressionForecaster(
-    ReducedTimeSeriesRegressorMixin, _RecursiveReducer
-):
+class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
     Forecasting based on reduction to time series regression with a recursive
     reduction strategy.
-    For the recursive reduction strategy, a single estimator is
-    fit for a one-step-ahead forecasting horizon and then called
-    iteratively to predict multiple steps ahead.
+
+    For the recursive strategy, a single estimator is fit for a one-step-ahead
+    forecasting horizon and then called iteratively to predict multiple steps ahead.
 
     Parameters
     ----------
-    regressor : sktime estimator object
-        Define the type of time series regression model.
+    estimator : Estimator
+        A time-series regression estimator as provided by sktime.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
-        a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
+        a tabular matrix.
     """
 
-    pass
+    _estimator_scitype = "time-series-regressor"
 
 
-##############################################################################
-# factory methods for easier user interface, but not tunable as it's not an
-# estimator
+@deprecated("Please use `make_reduction` from `sktime.forecasting.compose` instead.")
 def ReducedForecaster(
-    regressor, scitype, strategy="recursive", window_length=10, step_length=1
+    estimator, scitype="infer", strategy="recursive", window_length=10, step_length=1
 ):
     """
-    Forecasting based on reduction
+    Forecasting based on reduction.
 
-    When fitting, a rolling window approach is used to first transform the
-    target series into panel data which is
-    then used to train a regressor. During prediction, the last
-    available data is used as input to the
-    fitted regressors to make forecasts.
+    During fitting, a sliding-window approach is used to first transform the
+    time series into tabular or panel data, which is then used to fit a tabular or
+    time-series regression estimator. During prediction, the last available data is
+    used as input to the fitted regression estimator to generate forecasts.
 
     Parameters
     ----------
-    scitype : str
-        Can be 'regressor' or 'ts-regressor'
-    strategy : str {"direct", "recursive", "multioutput"}, optional
+    estimator : a estimator of type given by parameter scitype
+    scitype : str {"infer", "tabular-regressor", "time-series-regressor"}
+        Scitype of estimator.
+    strategy : str {"recursive", "direct", "multioutput"}, optional
         Strategy to generate predictions
     window_length : int, optional (default=10)
     step_length : int, optional (default=1)
-    regressor : a regressor of type given by parameter scitype
 
     References
     ----------
@@ -551,40 +576,153 @@ def ReducedForecaster(
     2013).
       Machine Learning Strategies for Time Series Forecasting.
     """
-    Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(
-        regressor=regressor, window_length=window_length, step_length=step_length
+    if step_length != 1:
+        raise ValueError(
+            "`step_length` values different from 1 are no longer supported."
+        )
+    return make_reduction(
+        estimator, strategy=strategy, window_length=window_length, scitype=scitype
     )
 
 
-def _get_forecaster_class(scitype, strategy):
+@deprecated("Please use `make_reduction` from `sktime.forecasting.compose` instead.")
+def ReducedRegressionForecaster(
+    estimator, scitype, strategy="recursive", window_length=10, step_length=1
+):
+    """
+    Forecasting based on reduction.
+
+    During fitting, a sliding-window approach is used to first transform the
+    time series into tabular or panel data, which is then used to fit a tabular or
+    time-series regression estimator. During prediction, the last available data is
+    used as input to the fitted regression estimator to generate forecasts.
+
+    Parameters
+    ----------
+    estimator : a estimator of type given by parameter scitype
+    scitype : str {"infer", "tabular-regressor", "time-series-regressor"}
+        Scitype of estimator.
+    strategy : str {"recursive", "direct", "multioutput"}, optional
+        Strategy to generate predictions
+    window_length : int, optional (default=10)
+    step_length : int, optional (default=1)
+
+    References
+    ----------
+    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
+    2013).
+      Machine Learning Strategies for Time Series Forecasting.
+    """
+    if step_length != 1:
+        raise ValueError(
+            "`step_length` values different from 1 are no longer " "supported."
+        )
+    return make_reduction(
+        estimator, strategy=strategy, window_length=window_length, scitype=scitype
+    )
+
+
+def make_reduction(
+    estimator,
+    strategy="recursive",
+    window_length=10,
+    scitype="infer",
+):
+    """
+    Create a reduction forecaster based on a tabular or time-series regression
+    estimator.
+
+    During fitting, a sliding-window approach is used to first transform the
+    time series into tabular or panel data, which is then used to fit a tabular or
+    time-series regression estimator. During prediction, the last available data is
+    used as input to the fitted regression estimator to generate forecasts.
+
+    Parameters
+    ----------
+    estimator : an estimator instance
+        Either a tabular regressor from scikit-learn or a time series regressor from
+        sktime.
+    strategy : str, optional (default="recursive")
+        The strategy to generate forecasts. Must be one of "direct", "recursive" or
+        "multioutput".
+    window_length : int, optional (default=10)
+        Window length used in sliding window transformation.
+    scitype : str, optional (default="infer")
+        Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
+        the scitype cannot be inferred, please specify it explicitly.
+
+    Returns
+    -------
+    estimator : an Estimator instance
+        A reduction forecaster
+
+    References
+    ----------
+    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
+      Machine Learning Strategies for Time Series Forecasting.
+    """
+    # We provide this function as a factory method for user convenience.
+    strategy = _check_strategy(strategy)
+    scitype = _check_scitype(scitype)
+
+    if scitype == "infer":
+        scitype = _infer_scitype(estimator)
+
+    Forecaster = _get_forecaster(scitype, strategy)
+    return Forecaster(estimator=estimator, window_length=window_length)
+
+
+def _check_scitype(scitype):
+    valid_scitypes = ("infer", "tabular-regressor", "time-series-regressor")
+    if scitype not in valid_scitypes:
+        raise ValueError(
+            f"Invalid `scitype`. `scitype` must be one of:"
+            f" {valid_scitypes}, but found: {scitype}."
+        )
+    return scitype
+
+
+def _infer_scitype(estimator):
+    # We can check if estimator is an instance of scikit-learn's RegressorMixin or
+    # of sktime's BaseRegressor, otherwise we raise an error. Note that some time-series
+    # regressor also inherit from scikit-learn classes, hence the order in which we
+    # check matters and we first need to check for BaseRegressor.
+    if isinstance(estimator, BaseRegressor):
+        return "time-series-regressor"
+    elif isinstance(estimator, RegressorMixin):
+        return "tabular-regressor"
+    else:
+        raise ValueError(
+            "The `scitype` of the given `estimator` cannot be inferred. "
+            "Please specify the `scitype` explicitly."
+        )
+
+
+def _check_strategy(strategy):
+    valid_strategies = ("direct", "recursive", "multioutput")
+    if strategy not in valid_strategies:
+        raise ValueError(
+            f"Invalid `strategy`. `strategy` must be one of :"
+            f" {valid_strategies}, but found: {strategy}."
+        )
+    return strategy
+
+
+def _get_forecaster(scitype, strategy):
     """Helper function to select forecaster for a given scientific type (
     scitype)
     and reduction strategy"""
 
-    allowed_strategies = ("direct", "recursive", "multioutput")
-    if strategy not in allowed_strategies:
-        raise ValueError(
-            f"Unknown strategy, please provide one of {allowed_strategies}."
-        )
-
-    if scitype == "ts_regressor" and strategy == "multioutput":
-        raise NotImplementedError(
-            "The `multioutput` strategy is not yet implemented "
-            "for time series regresors."
-        )
-
-    lookup_table = {
-        "regressor": {
-            "direct": DirectRegressionForecaster,
-            "recursive": RecursiveRegressionForecaster,
-            "multioutput": MultioutputRegressionForecaster,
+    registry = {
+        "tabular-regressor": {
+            "direct": DirectTabularRegressionForecaster,
+            "recursive": RecursiveTabularRegressionForecaster,
+            "multioutput": MultioutputTabularRegressionForecaster,
         },
-        "ts_regressor": {
+        "time-series-regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster,
+            "multioutput": MultioutputTimeSeriesRegressionForecaster,
         },
     }
-    # look up and return forecaster class
-    Forecaster = lookup_table.get(scitype).get(strategy)
-    return Forecaster
+    return registry[scitype][strategy]

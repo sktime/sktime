@@ -8,6 +8,7 @@ from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_time_index
 from sktime.utils.validation.forecasting import check_y
 
+
 __author__ = ["Markus Löning", "Tomasz Chodakowski"]
 __all__ = ["mase_loss", "smape_loss", "mape_loss"]
 
@@ -122,6 +123,7 @@ def mape_loss(y_test, y_pred):
     Examples
     --------
     >>> from sklearn.metrics import mean_absolute_error
+    >>> import pandas as pd
     >>> y_test = pd.Series([1, -1, 2])
     >>> y_pred = pd.Series([2, -2, 4])
     >>> mape_loss(y_test, y_pred)

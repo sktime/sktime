@@ -129,7 +129,7 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == "st":
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == "dtw":
-        return nn.KNeighborsTimeSeriesClassifier(metric="dtw")
+        return nn.KNeighborsTimeSeriesClassifier(distance="dtw")
     elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
         return dist.ElasticEnsemble()
     elif cls.lower() == "shapedtw_raw":
@@ -166,7 +166,7 @@ def set_classifier(cls, resampleId):
         )
     elif cls.lower() == "tsfcomposite":
         # It defaults to TSF
-        return ensemble.TimeSeriesForestClassifier()
+        return ensemble.ComposableTimeSeriesForestClassifier()
     elif cls.lower() == "risecomposite":
         steps = [
             ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
@@ -193,7 +193,7 @@ def set_classifier(cls, resampleId):
             ("clf", DecisionTreeClassifier()),
         ]
         base_estimator = Pipeline(steps)
-        return ensemble.TimeSeriesForestClassifier(
+        return ensemble.ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
     else:

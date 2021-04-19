@@ -15,10 +15,10 @@ __all__ = [
     "ProximityTree",
     "ProximityForest",
     "ElasticEnsemble",
-    "TimeSeriesForest",
+    "TimeSeriesForestClassifier",
     "RandomIntervalSpectralForest",
     "SupervisedTimeSeriesForest",
-    "TimeSeriesForestClassifier",
+    "ComposableTimeSeriesForestClassifier",
     "ColumnEnsembleClassifier",
     "pd",
     "np",
@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import BOSSEnsemble
 from sktime.classification.dictionary_based import IndividualBOSS
 from sktime.classification.dictionary_based import IndividualTDE
@@ -44,7 +44,7 @@ from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import ProximityTree
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier

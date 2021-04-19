@@ -93,6 +93,10 @@ class SFA(_PanelToPanelTransformer):
             setting to true reduces speed significantly but is required for
             automatic test.
 
+        n_jobs:              int, optional, default = 1
+            The number of jobs to run in parallel for both `transform`.
+            ``-1`` means using all processors.
+
     Attributes
     ----------
         words: []

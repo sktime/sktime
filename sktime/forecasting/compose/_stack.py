@@ -5,8 +5,6 @@
 __author__ = ["Markus Löning"]
 __all__ = ["StackingForecaster"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -16,6 +14,8 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SingleWindowSplitter
+
+from warnings import warn
 
 
 class StackingForecaster(
@@ -54,8 +54,8 @@ class StackingForecaster(
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
         cv = SingleWindowSplitter(fh=self.fh.to_relative(self.cutoff))
-        training_window, test_window = next(cv.split(y))
-        y_fcst = y.iloc[training_window]
+        train_window, test_window = next(cv.split(y))
+        y_fcst = y.iloc[train_window]
         y_meta = y.iloc[test_window].values
 
         # fit forecasters on training window

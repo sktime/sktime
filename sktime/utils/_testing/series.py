@@ -16,10 +16,16 @@ def _make_series(
     index_type=None,
     return_numpy=False,
     random_state=None,
+    add_nan=False,
 ):
     """Helper function to generate univariate or multivariate time series"""
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
+    if add_nan:
+        # add some nan values
+        data[int(len(data) / 2)] = np.nan
+        data[0] = np.nan
+        data[-1] = np.nan
     if all_positive:
         data -= np.min(data, axis=0) - 1
     if return_numpy:
