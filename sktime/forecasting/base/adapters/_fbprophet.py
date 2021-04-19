@@ -187,7 +187,7 @@ def _merge_X(df, X):
     X.columns = X.columns.astype(str)
     if "ds" in X.columns:
         raise ValueError("Column name 'ds' is reserved in fbprophet")
-    X["ds"] = X.index
+    X.loc[:, "ds"] = X.index
     # df = df.merge(X, how="inner", on="ds", copy=False)
     df = df.merge(X, how="inner", on="ds")
     return df, X.drop(columns="ds")
