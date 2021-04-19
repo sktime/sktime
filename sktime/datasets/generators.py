@@ -2,7 +2,7 @@
 """
 Generators for time series simulation
 """
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Union, Tuple
 
 import numpy as np
@@ -12,11 +12,13 @@ from statsmodels.tsa.arima_process import arma_generate_sample
 
 from numpy import ndarray
 from pandas import Series, DataFrame
+from sklearn.base import BaseEstimator
+
 
 __all__ = ["ArmaGenerator", "LinearGenerator", "NoiseGenerator"]
 
 
-class Generator(ABC):
+class Generator(BaseEstimator):
     """
     Abstrct class for generators.
     """
