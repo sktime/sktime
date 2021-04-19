@@ -44,7 +44,6 @@ class Imputer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "univariate-only": True,
         "fit-in-transform": True,
         "handles-missing-data": True,
     }
@@ -71,12 +70,12 @@ class Imputer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series
+        Z : pd.Series, pd.DataFrame
 
         Returns
         -------
-        Z : pd.Series
-            Transformed time series.
+        Z : pd.Series, pd.DataFrame
+            Transformed time series(es).
         """
         self.check_is_fitted()
         self._check_method()
@@ -91,6 +90,15 @@ class Imputer(_SeriesToSeriesTransformer):
         return Z
 
     def _transform_series(self, Z):
+        """
+        Parameters
+        ----------
+        Z : pd.Series
+
+        Returns
+        -------
+        pd.Series
+        """
         # replace missing_values with np.nan
         if self.missing_values:
             Z = Z.replace(to_replace=self.missing_values, value=np.nan)

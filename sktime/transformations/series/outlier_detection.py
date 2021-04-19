@@ -53,6 +53,18 @@ class HampelFilter(_SeriesToSeriesTransformer):
         super(HampelFilter, self).__init__()
 
     def transform(self, Z, X=None):
+        """Transform data.
+        Returns a transformed version of Z.
+
+        Parameters
+        ----------
+        Z : pd.Series, pd.DataFrame
+
+        Returns
+        -------
+        Z : pd.Series, pd.DataFrame
+            Transformed time series(es).
+        """
         self.check_is_fitted()
         Z = check_series(Z)
 
@@ -66,6 +78,15 @@ class HampelFilter(_SeriesToSeriesTransformer):
         return Z
 
     def _transform_series(self, Z):
+        """
+        Parameters
+        ----------
+        Z : pd.Series
+
+        Returns
+        -------
+        pd.Series
+        """
         # warn if nan values in Series, as user might mix them
         # up with outliers otherwise
         if Z.isnull().values.any():
