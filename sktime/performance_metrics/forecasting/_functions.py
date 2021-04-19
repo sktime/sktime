@@ -123,10 +123,8 @@ def mean_asymmetric_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -205,10 +203,8 @@ def mean_absolute_scaled_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -340,10 +336,8 @@ def median_absolute_scaled_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     See Also
     --------
@@ -479,10 +473,8 @@ def mean_squared_scaled_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared scaled error.
@@ -625,10 +617,8 @@ def median_squared_scaled_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -745,10 +735,8 @@ def mean_absolute_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -825,10 +813,8 @@ def mean_squared_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average' errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
@@ -923,10 +909,8 @@ def median_absolute_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -1008,10 +992,8 @@ def median_squared_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
@@ -1119,10 +1101,8 @@ def mean_absolute_percentage_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     symmetric : bool, default=True
         Calculates symmetric version of metric if True.
@@ -1231,10 +1211,8 @@ def median_absolute_percentage_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     symmetric : bool, default=True
         Calculates symmetric version of metric if True.
@@ -1349,10 +1327,8 @@ def mean_squared_percentage_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
@@ -1479,10 +1455,8 @@ def median_squared_percentage_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
@@ -1594,10 +1568,8 @@ def mean_relative_absolute_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -1693,10 +1665,8 @@ def median_relative_absolute_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -1792,10 +1762,8 @@ def geometric_mean_relative_absolute_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -1899,10 +1867,8 @@ def geometric_mean_relative_squared_error(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
@@ -2026,10 +1992,8 @@ def relative_loss(
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
-        'raw_values' :
-            Returns a full set of errors in case of multioutput input.
-        'uniform_average' :
-            Errors of all outputs are averaged with uniform weight.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
