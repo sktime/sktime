@@ -38,9 +38,9 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     from matplotlib.cbook import flatten
     import seaborn as sns
 
-    for index, y in enumerate(series):
+    for y in series:
         if pred_int is not None:
-            _ = check_X_y(X=(pred_int.iloc[:, index]).to_frame(), y=y)
+            check_X_y(X=pred_int, y=y)
         else:
             check_y(y)
 
