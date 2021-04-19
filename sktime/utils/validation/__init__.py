@@ -13,6 +13,12 @@ def is_int(x):
     return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
 
 
+def is_float(x):
+    """Check if x is of integer type, but not boolean"""
+    # boolean are subclasses of integers in Python, so explicitly exclude them
+    return isinstance(x, (float, np.floating)) and not isinstance(x, bool)
+
+
 def check_n_jobs(n_jobs):
     """Check `n_jobs` parameter according to the scikit-learn convention.
 
@@ -38,42 +44,41 @@ def check_n_jobs(n_jobs):
         return n_jobs
 
 
-def check_window_length(window_length, y=None, name="window_length"):
+def check_window_length(window_length, n_timepoints=None, name="window_length"):
     """Validate window length"""
     """
     Parameters
     ----------
-    y : pd.Series, optional (default = None)
-        Endogenous time series
     window_length: positive int or positive float
         The number of training set used for splitting
         Window length for transformed feature variables
+
     Returns
     -------
     window_length: int
     """
     if window_length is not None:
 
+        if n_timepoints is None:
+            n_timepoints = 1
+        elif not is_int(n_timepoints) or n_timepoints is None:
+            raise ValueError("n_timepoints must be a positive integer >= 1")
+
         valid = False
-        if isinstance(window_length, int) and window_length >= 1:
+        if is_int(window_length) and window_length >= 1:
             valid = True
 
-        if (
-            y is not None
-            and not valid
-            and (isinstance(window_length, float) and 0 < window_length < 1)
-        ):
-            n_timepoints = y
+        elif not valid and (is_float(window_length) and 0 < window_length < 1):
             valid = True
             window_length = int(np.ceil(window_length * n_timepoints))
 
-        elif y is None and (isinstance(window_length, float) and 0 < window_length < 1):
+        elif is_float(window_length) and 0 < window_length < 1:
             raise Exception(
-                f"if window_lenght : {window_length} is a float "
-                f" y cannot be None. input y "
+                f"if window_lenght : {window_length} is a float, "
+                f" n_timepoints cannot be None. input n_timepoints"
             )
 
-        if not valid:
+        elif not valid:
             raise ValueError(
                 f"`{name}` must be a positive integer >= 1, "
                 f"float between 0 and 1, or None "
