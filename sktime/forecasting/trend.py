@@ -34,6 +34,16 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         If true, then include a feature in which all polynomial powers are
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> y = load_airline()
+    >>> forecaster = PolynomialTrendForecaster(degree=1)
+    >>> forecaster.fit(y)
+    PolynomialTrendForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(self, regressor=None, degree=1, with_intercept=True):
