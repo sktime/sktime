@@ -257,7 +257,7 @@ class CutoffSplitter(BaseSplitter):
 
         if np.max(cutoffs) + np.max(fh) > y.shape[0]:
             raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
-        window_length = check_window_length(self.window_length)
+        window_length = check_window_length(self.window_length, y)
 
         for cutoff in cutoffs:
             training_window = np.arange(cutoff - window_length, cutoff) + 1
@@ -291,8 +291,8 @@ class BaseWindowSplitter(BaseSplitter):
 
     def _split(self, y):
         step_length = check_step_length(self.step_length)
-        window_length = check_window_length(self.window_length, "window_length")
-        initial_window = check_window_length(self.initial_window, "initial_window")
+        window_length = check_window_length(self.window_length, y, "window_length")
+        initial_window = check_window_length(self.initial_window, y, "initial_window")
         fh = _check_fh(self.fh)
         _check_window_lengths(y, fh, window_length, initial_window)
 
@@ -544,7 +544,7 @@ class SingleWindowSplitter(BaseSplitter):
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y):
-        window_length = check_window_length(self.window_length)
+        window_length = check_window_length(self.window_length, y)
         fh = _check_fh(self.fh)
 
         end = _get_end(y, fh) - 1
