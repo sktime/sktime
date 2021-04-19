@@ -16,7 +16,7 @@ Forecasting
 .. currentmodule:: sktime.performance_metrics.forecasting
 
 Tunable Classes
-^^^^^^^^^^^^^^^
+***************
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class.rst
@@ -39,7 +39,7 @@ Tunable Classes
     GeometricMeanRelativeSquaredError
 
 Functions
-^^^^^^^^^
+*********
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: function.rst
