@@ -50,7 +50,6 @@ class BaseGridSearch(BaseForecaster):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
         self.best_forecaster_.update(y, X, update_params=update_params)
-        self.cutoff = self.best_forecaster_.cutoff
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -295,7 +294,6 @@ class BaseGridSearch(BaseForecaster):
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = clone(self.forecaster).set_params(**self.best_params_)
-        self.cutoff = self.best_forecaster_.cutoff
 
         # Refit model with best parameters.
         if self.refit:
@@ -303,6 +301,16 @@ class BaseGridSearch(BaseForecaster):
 
         self._is_fitted = True
         return self
+
+    @property
+    def cutoff(self):
+        """The time point at which to make forecasts
+
+        Returns
+        -------
+        cutoff : pd.Period, pd.Timestamp, int
+        """
+        return self.best_forecaster_.cutoff
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
@@ -359,9 +367,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Time (seconds) to refit the best forecaster
     scorer_ : function
         Function used to score model
-    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
-        Cutoff value is required to convert a relative forecasting
-        horizon to an absolute one and vice versa.
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
@@ -454,9 +459,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Fitted estimator with the best parameters
     cv_results_ : dict
         Results from grid search cross validation
-    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
-        Cutoff value is required to convert a relative forecasting
-        horizon to an absolute one and vice versa.
     """
 
     _required_parameters = ["forecaster", "cv", "param_distributions"]
