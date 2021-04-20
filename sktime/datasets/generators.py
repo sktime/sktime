@@ -3,7 +3,7 @@
 Generators for time series simulation
 """
 from abc import abstractmethod
-from typing import Union, Tuple
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -64,7 +64,7 @@ class NoiseGenerator(Generator):
     ...                                ma=np.array([0.7, 0.3]),
     ...                                random_state=42)
     >>> # generate 100 samples
-    >>> sample = arma_generator.sample(100)
+    >>> sample = arma_generator.sample(100, 1)
     """
 
     def __init__(self, random_state: Union[int, RandomState] = None) -> None:
@@ -74,14 +74,16 @@ class NoiseGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(self, n_sample: Union[int, Tuple[int]]) -> Union[Series, DataFrame]:
+    def sample(self, n_sample: int, n_instance: int) -> Union[Series, DataFrame]:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int or tuple of int
+        n_sample : int
             Number of sample to generate.
+        n_instance : int
+            Number of series to generate.
 
         Returns
         -------
@@ -89,14 +91,14 @@ class NoiseGenerator(Generator):
             A sample from a standard normal random process.
         """
 
-        if isinstance(n_sample, int):
+        if n_instance == 1:
             return pd.Series(self.random_state.normal(size=n_sample))
-        elif isinstance(n_sample, tuple):
-            return pd.DataFrame(self.random_state.normal(size=n_sample))
+        elif n_instance > 1:
+            return pd.DataFrame(self.random_state.normal(size=(n_sample, n_instance)))
         else:
-            raise TypeError(
-                f"Unsupported type {type(n_sample).__name__}"
-                + " for n_sample, must be int or tuple of int"
+            raise ValueError(
+                "Value of n_instance must be greater than 1. "
+                f"Got {n_instance} for value n_instance."
             )
 
 
@@ -111,6 +113,9 @@ class ArmaGenerator(Generator):
         Must be entered without sign negation see example.
     ma : ndarray
         Coefficient for moving-average lag polynomial.
+    burnin : int, default=0
+        Number of sample at the beginning to drop.
+        Used to reduce the dependence on initial values.
     random_state : int or RandomState instance, default=None
         Random state generator controls generations of random
         sequences for reproducible results over multiple calls.
@@ -125,15 +130,19 @@ class ArmaGenerator(Generator):
     ...                                ma=np.array([0.7, 0.3]),
     ...                                random_state=42)
     >>> # generate 100 samples
-    >>> sample = arma_generator.sample(100)
+    >>> sample = arma_generator.sample(100, 1)
     """
 
     def __init__(
         self,
         ar: ndarray = None,
         ma: ndarray = None,
+        burnin: int = 0,
         random_state: Union[int, RandomState] = None,
     ) -> None:
+
+        # set burnin
+        self.burnin = burnin
 
         # if either set of coef is missing, set to 1
         # set to coef sets to ndarrays (if not)
@@ -153,49 +162,39 @@ class ArmaGenerator(Generator):
         else:
             self.random_state = RandomState(random_state)
 
-    def sample(
-        self, n_sample: Union[int, Tuple[int]], burnin: int = 0
-    ) -> Union[Series, DataFrame]:
+    def sample(self, n_sample: int, n_instance: int) -> Union[Series, DataFrame]:
         """
         Generate a sample from the generator.
 
         Parameters
         ----------
-        n_sample : int or tuple of int
+        n_sample : int
             Number of sample to generate.
-        burnin : int, default=0
-            Number of sample at the beginning to drop.
-            Used to reduce the dependence on initial values.
+        n_instance : int
+            Number of series to generate
 
         Returns
         -------
         sample : Series or DataFrame
             Sample from an ARMA process.
         """
-        if isinstance(n_sample, int):
-            return pd.Series(
-                arma_generate_sample(
-                    self.arparams,
-                    self.maparams,
-                    n_sample,
-                    distrvs=self.random_state.normal,
-                    burnin=burnin,
-                )
-            )
-        elif isinstance(n_sample, tuple):
-            pd.DataFrame(
-                arma_generate_sample(
-                    self.arparams,
-                    self.maparams,
-                    n_sample,
-                    distrvs=self.random_state.normal,
-                    burnin=burnin,
-                )
-            )
+
+        samp = arma_generate_sample(
+            self.arparams,
+            self.maparams,
+            (n_sample, n_instance),
+            distrvs=self.random_state.normal,
+            burnin=self.burnin,
+        )
+
+        if n_instance == 1:
+            return pd.Series(samp.ravel())
+        elif n_instance > 1:
+            return pd.DataFrame(samp)
         else:
-            raise TypeError(
-                f"Unsupported type {type(n_sample).__name__}"
-                + " for n_sample, must be int or tuple of int"
+            raise ValueError(
+                "Value of n_instance must be greater than 1. "
+                f"Got {n_instance} for value n_instance."
             )
 
 
@@ -231,7 +230,7 @@ class LinearGenerator(Generator):
     ...                                    arma_generator)
     >>> # generator sample from linear process with arma noise
     >>> # generate 100 samples
-    >>> sample = linear_generator.sample(100)
+    >>> sample = linear_generator.sample(100, 1)
     """
 
     def __init__(
@@ -242,7 +241,7 @@ class LinearGenerator(Generator):
         self.intercept = intercept
         self.noise_generator = noise_generator
 
-    def sample(self, n_sample) -> Series:
+    def sample(self, n_sample: int, n_instance: int) -> Series:
         """
         Generate a sample from the generator.
 
@@ -250,6 +249,8 @@ class LinearGenerator(Generator):
         ----------
         n_sample : int
             Number of sample to generate.
+        n_instance : int
+            Number of series to generate.
 
         Returns
         -------
@@ -257,10 +258,29 @@ class LinearGenerator(Generator):
             A sample from a linear process.
         """
 
-        signal = np.arange(n_sample) * self.slope + self.intercept
+        if n_instance == 1:
+            signal = (
+                np.linspace(0, n_sample - 1, num=n_sample) * self.slope + self.intercept
+            )
+        elif n_instance > 1:
+            signal = (
+                np.linspace(
+                    (0,) * n_instance, (n_sample - 1,) * n_instance, num=n_sample
+                )
+                * self.slope
+                + self.intercept
+            )
+        else:
+            raise ValueError(
+                "Value of n_instance must be greater than 1. "
+                f"Got {n_instance} for value n_instance."
+            )
 
         if self.noise_generator is not None:
-            noise = self.noise_generator.sample(n_sample)
+            noise = self.noise_generator.sample(n_sample, n_instance)
             signal = signal + noise
 
-        return pd.Series(signal)
+        if n_instance == 1:
+            return pd.Series(signal)
+        else:
+            return pd.DataFrame(signal)
