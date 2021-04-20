@@ -227,8 +227,11 @@ class LinearGenerator(Generator):
     >>> linear_generator = LinearGenerator(0.01, 0,
     ...                                    arma_generator)
     >>> # generator sample from linear process with arma noise
-    >>> # generate 100 samples
+    >>> # generate 100 samples for 1d series
     >>> sample = linear_generator.sample(100, 1)
+    >>>
+    >>> # generate 100 samples for 2d series
+    >>> sample = linear_generator.sample(100, 2)
     """
 
     def __init__(
