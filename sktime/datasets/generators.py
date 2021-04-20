@@ -20,15 +20,29 @@ __all__ = ["ArmaGenerator", "LinearGenerator", "NoiseGenerator"]
 
 class Generator(BaseEstimator):
     """
-    Abstrct class for generators.
+    A base class for generators.
+
+    Notes
+    -----
+    All generator parameters should be specified as keyword arguments in
+    their `__init__`.
+    All generators should implement the unified interface given below.
+
     """
 
     @abstractmethod
-    def sample(self, n_sample):
+    def sample(self, n_sample, n_instance):
         """
         Sample from the generator.
+
+        Parameters
+        ----------
+        n_sample : int
+            The length of the series to create.
+        n_instance : int
+            The number of series to create.
         """
-        NotImplementedError
+        raise NotImplementedError
 
 
 class NoiseGenerator(Generator):
