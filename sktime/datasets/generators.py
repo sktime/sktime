@@ -55,14 +55,26 @@ class NoiseGenerator(Generator):
         Random state generator controls generations of random
         sequences for reproducible results over multiple calls.
 
+    Notes
+    -----
+    When multiple series are generated, the resulting DataFrame will have dimentsions
+    `(n_instances, n_samples)`.
+    This can be converted to nested format with `from_2d_array_to_nested` from
+    `sktime.utils.data_processing`.
+
     Examples
     --------
-
     >>> from sktime.datasets.generators import NoiseGenerator
     >>> import numpy as np
     >>> noise_generator = NoiseGenerator(random_state=42)
-    >>> # generate 100 samples
+    >>> # generate 100 samples for 1d series
     >>> sample = noise_generator.sample(100, 1)
+    >>>
+    >>> # generate 100 samples for 2d series
+    >>> sample = linear_generator.sample(100, 2)
+    >>> # convert to nested format
+    >>> from sktime.utils.data_processing import from_2d_array_to_nested
+    >>> nested_sample = from_2d_array_to_nested(sample)
     """
 
     def __init__(self, random_state: Union[int, RandomState] = None) -> None:
@@ -118,6 +130,13 @@ class ArmaGenerator(Generator):
         Random state generator controls generations of random
         sequences for reproducible results over multiple calls.
 
+    Notes
+    -----
+    When multiple series are generated, the resulting DataFrame will have dimentsions
+    `(n_instances, n_samples)`.
+    This can be converted to nested format with `from_2d_array_to_nested` from
+    `sktime.utils.data_processing`.
+
     Examples
     --------
     ARMA(1,2) with AR coefficient 0.9 and MA coefficients 0.7 and 0.3
@@ -127,8 +146,14 @@ class ArmaGenerator(Generator):
     >>> arma_generator = ArmaGenerator(ar=np.array([0.9]),
     ...                                ma=np.array([0.7, 0.3]),
     ...                                random_state=42)
-    >>> # generate 100 samples
+    >>> # generate 100 samples for 1d series
     >>> sample = arma_generator.sample(100, 1)
+    >>>
+    >>> # generate 100 samples for 2d series
+    >>> sample = linear_generator.sample(100, 2)
+    >>> # convert to nested format
+    >>> from sktime.utils.data_processing import from_2d_array_to_nested
+    >>> nested_sample = from_2d_array_to_nested(sample)
     """
 
     def __init__(
@@ -212,6 +237,13 @@ class LinearGenerator(Generator):
         `sktime.datasets.generators.Generator`.
         No noise will be produced when `None` is specified.
 
+    Notes
+    -----
+    When multiple series are generated, the resulting DataFrame will have dimentsions
+    `(n_instances, n_samples)`.
+    This can be converted to nested format with `from_2d_array_to_nested` from
+    `sktime.utils.data_processing`.
+
     Examples
     --------
     Linear process with ARMA(1,2) noise.
@@ -232,6 +264,9 @@ class LinearGenerator(Generator):
     >>>
     >>> # generate 100 samples for 2d series
     >>> sample = linear_generator.sample(100, 2)
+    >>> # convert to nested format
+    >>> from sktime.utils.data_processing import from_2d_array_to_nested
+    >>> nested_sample = from_2d_array_to_nested(sample)
     """
 
     def __init__(
