@@ -92,7 +92,7 @@ class NoiseGenerator(Generator):
         if n_instance == 1:
             return pd.Series(self.random_state.normal(size=n_sample))
         elif n_instance > 1:
-            return pd.DataFrame(self.random_state.normal(size=(n_sample, n_instance)))
+            return pd.DataFrame(self.random_state.normal(size=(n_instance, n_sample)))
         else:
             raise ValueError(
                 "Value of n_instance must be greater than 1. "
@@ -180,7 +180,7 @@ class ArmaGenerator(Generator):
         samp = arma_generate_sample(
             self.arparams,
             self.maparams,
-            (n_sample, n_instance),
+            (n_instance, n_sample),
             distrvs=self.random_state.normal,
             burnin=self.burnin,
         )
@@ -264,7 +264,7 @@ class LinearGenerator(Generator):
             signal = (
                 np.linspace(
                     (0,) * n_instance, (n_sample - 1,) * n_instance, num=n_sample
-                )
+                ).T
                 * self.slope
                 + self.intercept
             )
