@@ -58,13 +58,11 @@ class NoiseGenerator(Generator):
     Examples
     --------
 
-    >>> from sktime.datasets.generators import ArmaGenerator
+    >>> from sktime.datasets.generators import NoiseGenerator
     >>> import numpy as np
-    >>> arma_generator = ArmaGenerator(ar=np.array([0.9]),
-    ...                                ma=np.array([0.7, 0.3]),
-    ...                                random_state=42)
+    >>> noise_generator = NoiseGenerator(random_state=42)
     >>> # generate 100 samples
-    >>> sample = arma_generator.sample(100, 1)
+    >>> sample = noise_generator.sample(100, 1)
     """
 
     def __init__(self, random_state: Union[int, RandomState] = None) -> None:
