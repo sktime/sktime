@@ -9,7 +9,6 @@ from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sklearn.utils import check_random_state
 
-
 import numpy as np
 import pandas as pd
 
@@ -80,31 +79,19 @@ class Imputer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         self._check_method()
         Z = check_series(Z)
-        # multivariate
-        if isinstance(Z, pd.DataFrame):
-            for col in Z:
-                Z[col] = self._transform_series(Z[col])
-        # univariate
-        else:
-            Z = self._transform_series(Z)
-        return Z
 
-    def _transform_series(self, Z):
-        """
-        Parameters
-        ----------
-        Z : pd.Series
-
-        Returns
-        -------
-        pd.Series
-        """
         # replace missing_values with np.nan
         if self.missing_values:
             Z = Z.replace(to_replace=self.missing_values, value=np.nan)
 
         if self.method == "random":
-            Z = Z.apply(lambda x: self._get_random(Z) if np.isnan(x) else x)
+            if isinstance(Z, pd.DataFrame):
+                for col in Z:
+                    Z[col] = Z[col].apply(
+                        lambda i: self._get_random(Z[col]) if np.isnan(i) else i
+                    )
+            else:
+                Z = Z.apply(lambda i: self._get_random(Z) if np.isnan(i) else i)
         elif self.method == "constant":
             Z = Z.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
@@ -117,11 +104,18 @@ class Imputer(_SeriesToSeriesTransformer):
             # in-sample forecasting horizon
             fh_ins = -np.arange(len(Z))
             # fill NaN before fitting with ffill and backfill (heuristic)
-            Z_pred = forecaster.fit(
-                Z.fillna(method="ffill").fillna(method="backfill")
-            ).predict(fh=fh_ins)
-            # fill with trend values
-            Z = Z.fillna(value=Z_pred)
+            Z = Z.fillna(method="ffill").fillna(method="backfill")
+            # multivariate
+            if isinstance(Z, pd.DataFrame):
+                for col in Z:
+                    forecaster.fit(y=Z[col])
+                    Z_pred = forecaster.predict(fh=fh_ins)
+                    Z[col] = Z[col].fillna(value=Z_pred)
+            # univariate
+            else:
+                forecaster.fit(y=Z)
+                Z_pred = forecaster.predict(fh=fh_ins)
+                Z = Z.fillna(value=Z_pred)
         elif self.method == "mean":
             Z = Z.fillna(value=Z.mean())
         elif self.method == "median":
@@ -144,7 +138,7 @@ class Imputer(_SeriesToSeriesTransformer):
         ):
             raise ValueError(
                 """Imputing with a value can only be
-                used if method=\"value\" and if arg value is not None"""
+                used if method="constant" and if parameter "value" is not None"""
             )
         elif (
             self.forecaster is not None
