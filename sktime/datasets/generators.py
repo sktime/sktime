@@ -31,7 +31,7 @@ class Generator(BaseEstimator):
     """
 
     @abstractmethod
-    def sample(self, n_sample, n_instance):
+    def sample(self, n_sample, n_instance) -> Union[Series, DataFrame]:
         """
         Sample from the generator.
 
@@ -41,6 +41,12 @@ class Generator(BaseEstimator):
             The length of the series to create.
         n_instance : int
             The number of series to create.
+
+        Returns
+        -------
+        sample : Series or DataFrame
+            Series should be returned for 1d time series, DataFrame with dimensions
+            `(n_instances, n_samples)` should be returned for 2d time series
         """
         raise NotImplementedError
 
