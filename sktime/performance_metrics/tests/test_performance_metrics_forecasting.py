@@ -47,7 +47,7 @@ from sktime.performance_metrics.tests._config import RANDOM_SEED
 
 # For multiple comparisons of equality between functions and classes
 rng = np.random.default_rng(RANDOM_SEED)
-RANDOM_SEEDS = rng.integers(0, 1000000, size=5).tolist()
+RANDOM_STATES = rng.integers(0, 1000000, size=5).tolist()
 
 # Create specific test series to verify calculated performance metrics match
 # those calculated externally
@@ -189,9 +189,9 @@ Y_TEST_CASES = {
     },
 }
 
-# Dictionary mapping functions to the true loss values
-# True loss values calculated manually outside of sktime (in excel)
-# to verify the sktime metrics are performing as expected
+# Dictionary mapping functions to the true loss values to verify the sktime
+# metrics are performing as expected. True loss values were calculated
+# manually outside of sktime in Excel.
 LOSS_RESULTS = {
     "mean_absolute_scaled_error": {
         "test_case_1": 1.044427857,
@@ -352,15 +352,18 @@ LOSS_RESULTS = {
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
-def test_univariate_loss_zero_error(n_test_case, loss_func_name):
+def test_univariate_loss_expected_zero(n_test_case, loss_func_name):
+    # Test cases where the expected loss is zero for perfect forecast.
+
     loss_class = LOSS_RESULTS[loss_func_name]["class"]
     loss_func = LOSS_RESULTS[loss_func_name]["func"]
-    true_loss = 0
+
     y_true = Y_TEST_CASES[f"test_case_{n_test_case}"]["test"]
     y_train = Y_TEST_CASES[f"test_case_{n_test_case}"]["train"]
-    # Testing case of perfect forecaster
+
+    # Setting test case of perfect forecast and benchmark
+    true_loss = 0
     y_pred = y_true
-    # Also perfect benchmark
     y_pred_benchmark = y_true
 
     loss_func_args = inspect.getfullargspec(loss_func).args
@@ -392,14 +395,16 @@ def test_univariate_loss_zero_error(n_test_case, loss_func_name):
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
-def test_univariate_loss_value(n_test_case, loss_func_name):
+def test_univariate_loss_against_expected_value(n_test_case, loss_func_name):
     loss_class = LOSS_RESULTS[loss_func_name]["class"]
     loss_func = LOSS_RESULTS[loss_func_name]["func"]
     true_loss = LOSS_RESULTS[loss_func_name][f"test_case_{n_test_case}"]
     y_true = Y_TEST_CASES[f"test_case_{n_test_case}"]["test"]
     y_train = Y_TEST_CASES[f"test_case_{n_test_case}"]["train"]
+
     # Use last value as naive forecast to test function
     y_pred = np.concatenate([y_train, y_true])[23:35]
+
     # Just using this nonsensical approach to generate  benchmark for testing
     y_pred_benchmark = 0.6 * y_pred
 
@@ -446,77 +451,75 @@ def test_univariate_loss_value(n_test_case, loss_func_name):
 
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_univariate_function_class_equality(loss_func_name):
+@pytest.mark.parametrize("random_state", RANDOM_STATES)
+def test_univariate_loss_function_class_equality(loss_func_name, random_state):
     loss_class = LOSS_RESULTS[loss_func_name]["class"]
     loss_func = LOSS_RESULTS[loss_func_name]["func"]
 
-    for random_seed in RANDOM_SEEDS:
-        y = _make_series(n_timepoints=75, random_state=random_seed)
-        y_train, y_true = y.iloc[:50], y.iloc[50:]
-        y_pred = y.shift(1).iloc[50:]
-        y_pred_benchmark = y.rolling(2).mean().iloc[50:]
+    y = _make_series(n_timepoints=75, random_state=random_state)
+    y_train, y_true = y.iloc[:50], y.iloc[50:]
+    y_pred = y.shift(1).iloc[50:]
+    y_pred_benchmark = y.rolling(2).mean().iloc[50:]
 
-        class_attrs = loss_class.get_params()
-        loss_func_args = inspect.getfullargspec(loss_func).args
-        if "y_train" in loss_func_args:
-            if len(class_attrs) > 0:
-                function_loss = loss_func(y_true, y_pred, y_train, **class_attrs)
-                class_loss = loss_class._func(y_true, y_pred, y_train, **class_attrs)
-            else:
-                function_loss = loss_func(y_true, y_pred, y_train)
-                class_loss = loss_class._func(y_true, y_pred, y_train)
-        elif "y_pred_benchmark" in loss_func_args:
-            if len(class_attrs) > 0:
-                function_loss = loss_func(
-                    y_true, y_pred, y_pred_benchmark, **class_attrs
-                )
-                class_loss = loss_class._func(
-                    y_true, y_pred, y_pred_benchmark, **class_attrs
-                )
-            else:
-                function_loss = loss_func(y_true, y_pred, y_pred_benchmark)
-                class_loss = loss_class._func(y_true, y_pred, y_pred_benchmark)
+    class_attrs = loss_class.get_params()
+    loss_func_args = inspect.getfullargspec(loss_func).args
+    if "y_train" in loss_func_args:
+        if len(class_attrs) > 0:
+            function_loss = loss_func(y_true, y_pred, y_train, **class_attrs)
+            class_loss = loss_class._func(y_true, y_pred, y_train, **class_attrs)
         else:
-            if len(class_attrs) > 0:
-                function_loss = loss_func(y_true, y_pred, **class_attrs)
-                class_loss = loss_class._func(y_true, y_pred, **class_attrs)
-            else:
-                function_loss = loss_func(y_true, y_pred)
-                class_loss = loss_class._func(y_true, y_pred)
-
-        # Assertion for functions and class having same result
-        assert np.isclose(function_loss, class_loss), " ".join(
-            [
-                "Expected loss function and class to return equal values,",
-                f"but loss function {loss_func.__name__} returned {function_loss}",
-                f"and {loss_class.name} returned {class_loss}.",
-            ]
-        )
-
-
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_univariate_function_output_type(loss_func_name):
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
-    for random_seed in RANDOM_SEEDS:
-        y = _make_series(n_timepoints=75, random_state=random_seed)
-        y_train, y_true = y.iloc[:50], y.iloc[50:]
-        y_pred = y.shift(1).iloc[50:]
-        y_pred_benchmark = y.rolling(2).mean().iloc[50:]
-
-        loss_func_args = inspect.getfullargspec(loss_func).args
-
-        if "y_train" in loss_func_args:
             function_loss = loss_func(y_true, y_pred, y_train)
-        elif "y_pred_benchmark" in loss_func_args:
+            class_loss = loss_class._func(y_true, y_pred, y_train)
+    elif "y_pred_benchmark" in loss_func_args:
+        if len(class_attrs) > 0:
+            function_loss = loss_func(y_true, y_pred, y_pred_benchmark, **class_attrs)
+            class_loss = loss_class._func(
+                y_true, y_pred, y_pred_benchmark, **class_attrs
+            )
+        else:
             function_loss = loss_func(y_true, y_pred, y_pred_benchmark)
+            class_loss = loss_class._func(y_true, y_pred, y_pred_benchmark)
+    else:
+        if len(class_attrs) > 0:
+            function_loss = loss_func(y_true, y_pred, **class_attrs)
+            class_loss = loss_class._func(y_true, y_pred, **class_attrs)
         else:
             function_loss = loss_func(y_true, y_pred)
+            class_loss = loss_class._func(y_true, y_pred)
 
-        is_num = is_numeric_dtype(function_loss)
-        is_scalar = np.isscalar(function_loss)
-        assert is_num and is_scalar, " ".join(
-            ["Loss function with univariate input should return scalar number"]
-        )
+    # Assertion for functions and class having same result
+    assert np.isclose(function_loss, class_loss), " ".join(
+        [
+            "Expected loss function and class to return equal values,",
+            f"but loss function {loss_func.__name__} returned {function_loss}",
+            f"and {loss_class.name} returned {class_loss}.",
+        ]
+    )
+
+
+@pytest.mark.parametrize("random_state", RANDOM_STATES)
+@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
+def test_univariate_function_output_type(loss_func_name, random_state):
+    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+    y = _make_series(n_timepoints=75, random_state=random_state)
+    y_train, y_true = y.iloc[:50], y.iloc[50:]
+    y_pred = y.shift(1).iloc[50:]
+    y_pred_benchmark = y.rolling(2).mean().iloc[50:]
+
+    loss_func_args = inspect.getfullargspec(loss_func).args
+
+    if "y_train" in loss_func_args:
+        function_loss = loss_func(y_true, y_pred, y_train)
+    elif "y_pred_benchmark" in loss_func_args:
+        function_loss = loss_func(y_true, y_pred, y_pred_benchmark)
+    else:
+        function_loss = loss_func(y_true, y_pred)
+
+    is_num = is_numeric_dtype(function_loss)
+    is_scalar = np.isscalar(function_loss)
+    assert is_num and is_scalar, " ".join(
+        ["Loss function with univariate input should return scalar number"]
+    )
 
 
 # @pytest.mark.parametrize("loss_func", LOSS_RESULTS.keys())
@@ -599,9 +602,9 @@ def test_univariate_function_output_type(loss_func_name):
 
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_y_true_y_pred_ndim(loss_func_name):
+def test_y_true_y_pred_inconsistent_n_outputs_raises_error(loss_func_name):
     loss_func = LOSS_RESULTS[loss_func_name]["func"]
-    y = _make_series(n_timepoints=75, random_state=RANDOM_SEEDS[0])
+    y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_true = y_true.values  # Convert to flat NumPy array
     y_pred = y.shift(1).iloc[50:]
@@ -612,7 +615,9 @@ def test_y_true_y_pred_ndim(loss_func_name):
     loss_func_args = inspect.getfullargspec(loss_func).args
 
     # Test input types
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="y_true and y_pred have different number of output"
+    ):
         if "y_train" in loss_func_args:
             loss_func(y_true, y_pred, y_train)
         elif "y_pred_benchmark" in loss_func_args:
@@ -622,9 +627,9 @@ def test_y_true_y_pred_ndim(loss_func_name):
 
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_y_true_y_pred_equal_number_of_obs(loss_func_name):
+def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(loss_func_name):
     loss_func = LOSS_RESULTS[loss_func_name]["func"]
-    y = _make_series(n_timepoints=75, random_state=RANDOM_SEEDS[0])
+    y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_pred = y.shift(1).iloc[40:]  # y_pred has more obs
     y_pred_benchmark = y.rolling(2).mean().iloc[50:]
@@ -632,7 +637,9 @@ def test_y_true_y_pred_equal_number_of_obs(loss_func_name):
     loss_func_args = inspect.getfullargspec(loss_func).args
 
     # Test input types
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Found input variables with inconsistent numbers of samples"
+    ):
         if "y_train" in loss_func_args:
             loss_func(y_true, y_pred, y_train)
         elif "y_pred_benchmark" in loss_func_args:
@@ -642,9 +649,9 @@ def test_y_true_y_pred_equal_number_of_obs(loss_func_name):
 
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_y_true_y_pred_equal_number_of_series(loss_func_name):
+def test_y_true_y_pred_inconsistent_n_variables_raises_error(loss_func_name):
     loss_func = LOSS_RESULTS[loss_func_name]["func"]
-    y = _make_series(n_timepoints=75, random_state=RANDOM_SEEDS[0])
+    y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_true = y_true.values  # will pass as NumPy array
     y_pred = y.shift(1).iloc[50:]
@@ -656,7 +663,9 @@ def test_y_true_y_pred_equal_number_of_series(loss_func_name):
     loss_func_args = inspect.getfullargspec(loss_func).args
 
     # Test input types
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="y_true and y_pred have different number of output"
+    ):
         if "y_train" in loss_func_args:
             loss_func(y_true, y_pred, y_train)
         elif "y_pred_benchmark" in loss_func_args:
