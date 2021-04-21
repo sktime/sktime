@@ -77,7 +77,7 @@ class NoiseGenerator(Generator):
     >>> sample = noise_generator.sample(100, 1)
     >>>
     >>> # generate 100 samples for 2d series
-    >>> sample = linear_generator.sample(100, 2)
+    >>> sample = noise_generator.sample(100, 2)
     >>> # convert to nested format
     >>> from sktime.utils.data_processing import from_2d_array_to_nested
     >>> nested_sample = from_2d_array_to_nested(sample)
@@ -156,7 +156,7 @@ class ArmaGenerator(Generator):
     >>> sample = arma_generator.sample(100, 1)
     >>>
     >>> # generate 100 samples for 2d series
-    >>> sample = linear_generator.sample(100, 2)
+    >>> sample = arma_generator.sample(100, 2)
     >>> # convert to nested format
     >>> from sktime.utils.data_processing import from_2d_array_to_nested
     >>> nested_sample = from_2d_array_to_nested(sample)
