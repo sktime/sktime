@@ -7,13 +7,15 @@ __author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 import math
-import random
-
+import numba
+from numba import float64, int64, prange
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
+
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
+from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -30,12 +32,13 @@ def _transform(X, interval, lag):
     """
     n_instances, _ = X.shape
     acf_x = np.empty(shape=(n_instances, lag))
-    ps_len = _round_to_next_power_of_two(interval[1] - interval[0]) // 2
+    ps_len = _round_to_next_power_of_two(interval[1] - interval[0] + 1)
     ps_x = np.empty(shape=(n_instances, ps_len))
     for j in range(n_instances):
-        acf_x[j] = acf(X[j, interval[0]: interval[1]], lag)
-        ps_x[j] = _ps(X[j, interval[0]: interval[1]])
-    transformed_x = np.concatenate((acf_x, ps_x), axis=1)
+        interval_x = X[j, interval[0]: interval[1] + 1]
+        acf_x[j] = acf(interval_x, lag)
+        ps_x[j] = _ps(interval_x, n=ps_len*2)
+    transformed_x = np.concatenate((ps_x, acf_x), axis=1)
 
     return transformed_x
 
@@ -45,8 +48,8 @@ def _parallel_build_trees(X, y, tree, interval, lag, acf_min_values):
     Private function used to fit a single tree in parallel.
     """
     temp_lag = lag
-    if temp_lag > interval[1] - interval[0] - acf_min_values:
-        temp_lag = interval[1] - interval[0] - acf_min_values
+    if temp_lag > interval[1] - interval[0] + 1 - acf_min_values:
+        temp_lag = interval[1] - interval[0] + 1 - acf_min_values
     if temp_lag < 0:
         temp_lag = 1
     temp_lag = int(temp_lag)
@@ -80,14 +83,14 @@ def _select_interval(min_interval, max_interval, series_length, rng, method=3):
     """
     private function used to select an interval for a single tree
     """
-    interval = np.empty(2)
+    interval = np.empty(2, dtype=int)
     if method == 0:
         interval[0] = rng.randint(series_length - min_interval)
         interval[1] = rng.randint(
             interval[0] + min_interval, series_length
         )
     else:
-        if random.getrandbits(1):
+        if rng.randint(2):
             interval[0] = rng.randint(series_length - min_interval)
             interval_range = min(series_length - interval[0], max_interval)
             length = rng.randint(min_interval, interval_range)
@@ -100,6 +103,41 @@ def _select_interval(min_interval, max_interval, series_length, rng, method=3):
             interval[0] = interval[1] - length
     return interval
 
+
+def _produce_intervals(n_estimators, min_interval, max_interval, series_length,
+                       rng, method=3):
+    intervals = np.empty((n_estimators, 2), dtype=int)
+    if method == 0:
+        # just keep it as a backup, untested
+        intervals[:, 0] = rng.randint(series_length - min_interval,
+                                      size=n_estimators)
+        intervals[:, 1] = rng.randint(
+            intervals[:, 0] + min_interval, series_length, size=n_estimators
+        )
+    elif method == 3:
+        bools = rng.randint(2, size=n_estimators)
+        true = np.where(bools == 1)[0]
+        intervals[true, 0] = rng.randint(series_length - min_interval,
+                                         size=true.size)
+        interval_range = np.fmin(series_length - intervals[true, 0],
+                                 max_interval)
+        length = rng.randint(min_interval, interval_range)
+        intervals[true, 1] = intervals[true, 0] + length
+
+        false = np.where(bools == 0)[0]
+        intervals[false, 1] = rng.randint(min_interval, series_length,
+                                          size=false.size)
+        interval_range = np.fmin(intervals[false, 1], max_interval)
+        min_mask = (interval_range == min_interval)
+        length = np.empty(false.size)
+        length[min_mask] = 3
+        length[~min_mask] = rng.randint(min_interval,
+                                        interval_range[~min_mask])
+        # length = np.where(interval_range == min_interval, 3,
+        #                   rng.randint(min_interval, interval_range))
+        intervals[false, 0] = intervals[false, 1] - length
+
+    return intervals
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """
@@ -227,24 +265,43 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         X = X.squeeze(1)
 
         n_instances, self.series_length = X.shape
-        self.max_interval = self.series_length
-        self.min_interval = self.series_length // 2
+        if self.max_interval not in range(1, self.series_length):
+            self.max_interval = self.series_length
+        if self.min_interval not in range(1, self.series_length):
+            self.min_interval = self.series_length // 2
 
         rng = check_random_state(self.random_state)
 
         self.estimators_ = []
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        # self.intervals = _produce_intervals(
+        #     self.n_estimators,
+        #     self.min_interval,
+        #     self.max_interval,
+        #     self.series_length,
+        #     rng
+        # )
         self.intervals = np.empty((self.n_estimators, 2), dtype=int)
-        self.intervals[0] = 0, self.series_length
-        self.intervals[1:] = [
-                _select_interval(
-                  self.min_interval,
-                  self.max_interval,
-                  self.series_length,
-                  rng
-                )
-                for _ in range(1, self.n_estimators)
+        # self.intervals[0] = 0, self.series_length
+        # self.intervals[0] = 153, 185
+        # self.intervals[1:] = [
+        #         _select_interval(
+        #           self.min_interval,
+        #           self.max_interval,
+        #           self.series_length,
+        #           rng
+        #         )
+        #         for _ in range(1, self.n_estimators)
+        # ]
+        self.intervals[:] = [
+            _select_interval(
+                self.min_interval,
+                self.max_interval,
+                self.series_length,
+                rng
+            )
+            for _ in range(self.n_estimators)
         ]
         # self.intervals[0][0] = 0
         # self.intervals[0][1] = self.series_length
@@ -362,7 +419,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
         return np.sum(all_proba, axis=0) / self.n_estimators
 
-
+@numba.jit(parallel=True, cache=True, nopython=True)
 def acf(x, max_lag):
     """
     Autocorrelation function transform, currently calculated using standard
@@ -382,20 +439,18 @@ def acf(x, max_lag):
     y : array-like shape = [max_lag]
 
     """
-    y = np.zeros(max_lag)
+    y = np.empty(max_lag)
     length = len(x)
-    for lag in range(1, max_lag + 1):
+    for lag in prange(1, max_lag + 1):
         # Do it ourselves to avoid zero variance warnings
-        s1 = np.sum(x[:-lag])
-        ss1 = np.sum(np.square(x[:-lag]))
-        s2 = np.sum(x[lag:])
-        ss2 = np.sum(np.square(x[lag:]))
-        s1 = s1 / (length - lag)
-        s2 = s2 / (length - lag)
-        y[lag - 1] = np.sum((x[:-lag] - s1) * (x[lag:] - s2))
-        y[lag - 1] = y[lag - 1] / (length - lag)
-        v1 = ss1 / (length - lag) - s1 * s1
-        v2 = ss2 / (length - lag) - s2 * s2
+        l = length - lag
+        x1, x2 = x[:-lag], x[lag:]
+        s1 = np.sum(x1) / l
+        ss1 = np.sum(x1 * x1) / l
+        s2 = np.sum(x2) / l
+        ss2 = np.sum(x2 * x2) / l
+        v1 = ss1 - s1 * s1
+        v2 = ss2 - s2 * s2
         if v1 <= 1e-9 and v2 <= 1e-9:  # Both zero variance,
             # so must be 100% correlated
             y[lag - 1] = 1
@@ -403,14 +458,44 @@ def acf(x, max_lag):
             # the other not
             y[lag - 1] = 0
         else:
-            y[lag - 1] = y[lag - 1] / (math.sqrt(v1) * math.sqrt(v2))
-    return np.array(y)
+            y[lag - 1] = np.sum((x1 - s1) * (x2 - s2)) / l
+            y[lag - 1] /= np.sqrt(v1 * v2)
+
+    return y
 
 
 #        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
 #        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
 #            y[lag-1]=0
 
+# @numba.jit(parallel=True, cache=True, nopython=True)
+def _acf(x, max_lag):
+    y = np.empty(max_lag)
+    length = len(x)
+    n = length - np.arange(1, max_lag + 1)
+    a, b = x[:-1], x[:0:-1]
+    from_end_to_lag = slice(-1, -max_lag - 1, -1)
+    cs1 = np.cumsum(a)[from_end_to_lag] / n
+    cs2 = np.cumsum(b)[from_end_to_lag] / n
+    css1 = np.cumsum(a * a)[from_end_to_lag] / n
+    css2 = np.cumsum(b * b)[from_end_to_lag] / n
+    cv1 = css1 - cs1 * cs1
+    cv2 = css2 - cs2 * cs2
+    covar = cv1 * cv2
+    for lag in prange(1, max_lag + 1):
+        idx = lag - 1
+        m1, m2, l = cs1[idx], cs2[idx], n[idx]
+        y[idx] = np.sum((x[:-lag] - m1) * (x[lag:] - m2)) / l
+    # both_zero = (cv1 <= 1e-9) & (cv2 <= 1e-9)
+    # one_zero = (cv1 <= 1e-9) ^ (cv2 <= 1e-9)
+    non_zero = (cv1 > 1e-9) & (cv2 > 1e-9)
+    y[(cv1 <= 1e-9) & (cv2 <= 1e-9)] = 1  # Both zero variance,
+    # so must be 100% correlated
+    y[(cv1 <= 1e-9) ^ (cv2 <= 1e-9)] = 0  # One zero variance
+    # the other not
+    y[non_zero] /= np.sqrt(covar[non_zero])
+
+    return y
 
 def matrix_acf(x, num_cases, max_lag):
     """
@@ -466,6 +551,7 @@ def ps(x):
     return np.array(fft)
 
 
+
 def _ps(x, sign=1, n=None, pad="mean"):
     """
     Power spectrum transform, currently calculated using np function.
@@ -487,10 +573,11 @@ def _ps(x, sign=1, n=None, pad="mean"):
     y : array-like shape = [len(x)/2]
     """
     x_len = x.size
-    # pad or slice series if length is not of power of 2
-    if x_len & (x_len - 1) != 0:
-        # round n (or the length of x) to next power of 2
-        n = _round_to_next_power_of_two(n or x_len)
+    # pad or slice series if length is not of power of 2 or n is specified
+    if x_len & (x_len - 1) != 0 or n:
+        # round n (or the length of x) to next power of 2 when n is not specified
+        if not n:
+            n = _round_to_next_power_of_two(x_len)
         # pad series up to n when n is larger otherwise slice series up to n
         if n > x_len:
             pad_length = n - x_len
@@ -503,14 +590,26 @@ def _ps(x, sign=1, n=None, pad="mean"):
     # using the norm in numpy fft function
     # backward = normal fft, forward = inverse fft (divide by n after fft)
     norm = "backward" if sign > 0 else "forward"
-    fft = np.fft.fft(x_in_power_2, norm=norm)
-    # if sign == -1:
-    #     fft /= n
-    fft = np.sqrt(fft.real * fft.real + fft.imag * fft.imag)
-    fft = fft[: len(x_in_power_2) // 2]
-    return np.array(fft)
+    fft = np.fft.rfft(x_in_power_2, norm=norm)[:-1]
+    # fft = fft[: len(x_in_power_2) // 2]
+    # return fft
+    return np.abs(fft)
 
-
+@numba.jit('int64(int64)', cache=True, nopython=True)
 def _round_to_next_power_of_two(n):
-    #return 1 << (int(n) - 1).bit_length() - (bin(n)[2:4] == '10')
-    return 1 << round(np.log2(n))
+    # return 1 << (int(n) - 1).bit_length() - (bin(n)[2:4] == '10')
+    return int64(1 << round(np.log2(n)))
+
+
+if __name__ == '__main__':
+    from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+    data_dir = "../../datasets/Univariate_ts/"
+    dataset = "ArrowHead" #"StarlightCurves"
+    trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
+    testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+    rise = RandomIntervalSpectralForest(random_state=0, n_jobs=-1)
+    rise.fit(trainX, trainY)
+    probs = rise.predict_proba(testX)
+    preds = rise.classes_[np.argmax(probs, axis=1)]
+    ac = accuracy_score(testY, preds)
+    print(ac)
