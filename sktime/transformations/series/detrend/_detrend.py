@@ -10,6 +10,7 @@ from sklearn.base import clone
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
+from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
@@ -36,7 +37,9 @@ class Detrender(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    forecaster : estimator object
+    forecaster : estimator object, optional
+        default=PolynomialTrendForecaster(degree=1)
+
         The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster)
 
@@ -50,7 +53,7 @@ class Detrender(_SeriesToSeriesTransformer):
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
     def __init__(self, forecaster):
-        self.forecaster = forecaster
+        self.forecaster = PolynomialTrendForecaster(degree=1)
         self.forecaster_ = None
         super(Detrender, self).__init__()
 
