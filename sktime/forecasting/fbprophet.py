@@ -146,7 +146,7 @@ class Prophet(_ProphetAdapter):
         self.verbose = verbose
 
         # import inside method to avoid hard dependency
-        from fbprophet.forecaster import Prophet as _Prophet
+        from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
 
