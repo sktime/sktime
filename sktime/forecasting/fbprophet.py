@@ -9,11 +9,11 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("fbprophet")
+_check_soft_dependencies("prophet")
 
 
 class Prophet(_ProphetAdapter):
-    """Prophet forecaster by wrapping fbprophet.
+    """Prophet forecaster by wrapping facebook "prophet" (previously "fbprophet").
     Parameters
     ----------
     freq: String of DatetimeIndex frequency. See here for possible values:

@@ -39,7 +39,7 @@ EXTRAS_REQUIRE = {
         "hcrystalball>=0.1.9",
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
-        "fbprophet>=0.7.1",
+        "prophet>=1.0.1",
     ],
 }
 
