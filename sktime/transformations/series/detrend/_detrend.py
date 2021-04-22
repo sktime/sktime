@@ -38,7 +38,7 @@ class Detrender(_SeriesToSeriesTransformer):
     Parameters
     ----------
     forecaster : estimator object, optional
-        default=PolynomialTrendForecaster(degree=1)
+        default=None. If None, PolynomialTrendForecaster(degree=1) is used.
 
         The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster)
@@ -52,8 +52,8 @@ class Detrender(_SeriesToSeriesTransformer):
     _required_parameters = ["forecaster"]
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
-    def __init__(self, forecaster):
-        self.forecaster = PolynomialTrendForecaster(degree=1)
+    def __init__(self, forecaster=None):
+        self.forecaster = forecaster
         self.forecaster_ = None
         super(Detrender, self).__init__()
 
@@ -73,6 +73,8 @@ class Detrender(_SeriesToSeriesTransformer):
         self : an instance of self
         """
         z = check_series(Z, enforce_univariate=True)
+        if self.forecaster is None:
+            self.forecaster = PolynomialTrendForecaster(degree=1)
         forecaster = clone(self.forecaster)
         self.forecaster_ = forecaster.fit(z, X)
         self._is_fitted = True
