@@ -8,7 +8,6 @@ from sktime.transformations.base import BaseTransformer
 
 from sktime.transformations.base import Series
 import logging
-from sktime.pipeline.base import _NonSequentialPipelineStepResultsMixin
 
 
 class _ComplexToSeriesTransformer(BaseTransformer):
@@ -25,7 +24,7 @@ class _ComplexToTabular(BaseTransformer):
         raise NotImplementedError("abstract method")
 
 
-class DollarBars(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+class DollarBars(_SeriesToSeriesTransformer):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -50,15 +49,13 @@ class DollarBars(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMi
         idx = dollar_bars.index.duplicated(keep="first")
         dollar_bars = dollar_bars.loc[~idx]
 
-        self.step_result = dollar_bars
-
-        return self
+        return dollar_bars
 
     def fit_transform(self, X):
         """
         Dummy method, calls transform
         """
-        self.transform(X)
+        return self.transform(X)
 
     def fit(self):
         logging.warning("testing")
@@ -68,7 +65,7 @@ class DollarBars(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMi
         raise NotImplementedError
 
 
-class CUSUM(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+class CUSUM(_SeriesToSeriesTransformer):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -88,17 +85,14 @@ class CUSUM(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
         self._price_col = price_col
 
     def fit_transform(self, input_series):
-        """
-        Dummy method, calls transform
-        """
-        self.transform(input_series)
+
+        return self.transform(input_series)
 
     def transform(self, input_series):
         cusum_events = ml.filters.cusum_filter(
             input_series[self._price_col], threshold=self._threshold
         )
-        self.step_result = cusum_events
-        return self
+        return cusum_events
 
     def fit(self):
         raise NotImplementedError
@@ -107,7 +101,7 @@ class CUSUM(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
         raise NotImplementedError
 
 
-class DailyVol(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+class DailyVol(_SeriesToSeriesTransformer):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -124,14 +118,13 @@ class DailyVol(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixi
         daily_vol = ml.util.volatility.get_daily_vol(
             close=input_series[self._price_col], lookback=self._lookback
         )
-        self.step_result = daily_vol
-        return self
+        return daily_vol
 
     def fit_transform(self, input_series):
         """
         Dummy method, calls transform
         """
-        self.transform(input_series)
+        return self.transform(input_series)
 
     def fit(self):
         raise NotImplementedError
@@ -140,9 +133,7 @@ class DailyVol(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixi
         raise NotImplementedError
 
 
-class TrippleBarrierEvents(
-    _ComplexToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
-):
+class TrippleBarrierEvents(_ComplexToSeriesTransformer):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -173,10 +164,8 @@ class TrippleBarrierEvents(
         self._num_threads = num_threads
 
     def fit_transform(self, input_series, change_points, target):
-        """
-        Dummy method, calls transform
-        """
-        self.transform(input_series, change_points, target)
+
+        return self.transform(input_series, change_points, target)
 
     def transform(self, input_series, change_points, target):
         vertical_barriers = ml.labeling.add_vertical_barrier(
@@ -195,9 +184,8 @@ class TrippleBarrierEvents(
             side_prediction=None,
             verbose=False,
         )
-        self.step_result = triple_barrier_events
 
-        return self
+        return triple_barrier_events
 
     def fit(self):
         raise NotImplementedError
@@ -206,9 +194,7 @@ class TrippleBarrierEvents(
         raise NotImplementedError
 
 
-class TrippleBarrierLabels(
-    _ComplexToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
-):
+class TrippleBarrierLabels(_ComplexToSeriesTransformer):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -222,8 +208,7 @@ class TrippleBarrierLabels(
         self._price_col = price_col
 
     def fit_transform(self, triple_barrier_events, prices):
-        """Dummy method, calls transform"""
-        self.transform(triple_barrier_events, prices)
+        return self.transform(triple_barrier_events, prices)
 
     def transform(self, triple_barrier_events, prices):
 
@@ -231,9 +216,7 @@ class TrippleBarrierLabels(
             triple_barrier_events, prices[self._price_col]
         )
 
-        self.step_result = triple_labels
-
-        return self
+        return triple_labels
 
     def fit(self):
         raise NotImplementedError
@@ -242,7 +225,7 @@ class TrippleBarrierLabels(
         raise NotImplementedError
 
 
-class BuildDataset(_ComplexToTabular, _NonSequentialPipelineStepResultsMixin):
+class BuildDataset(_ComplexToTabular):
     _tags = {"fit-in-transform": True}
 
     def __repr__(self):
@@ -257,8 +240,7 @@ class BuildDataset(_ComplexToTabular, _NonSequentialPipelineStepResultsMixin):
         self._labels_col = labels_col
 
     def fit_transform(self, input_dataset, labels):
-        """Dummy method, calls transform"""
-        self.transform(input_dataset, labels)
+        return self.transform(input_dataset, labels)
 
     def transform(self, input_dataset, labels):
         col_names = [f"feature_{i}" for i in np.arange(self._lookback)]
@@ -277,9 +259,7 @@ class BuildDataset(_ComplexToTabular, _NonSequentialPipelineStepResultsMixin):
         dataset[self._labels_col] = labels[self._labels_col].values
         dataset[self._labels_col] = dataset[self._labels_col].replace(-1, 0)
 
-        self.step_result = dataset
-
-        return self
+        return dataset
 
     def fit(self):
         raise NotImplementedError
@@ -289,7 +269,7 @@ class BuildDataset(_ComplexToTabular, _NonSequentialPipelineStepResultsMixin):
 
 
 # -----------------------------------------------------
-class MovingAverage(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+class MovingAverage(_SeriesToSeriesTransformer):
     def __init__(self, input_col):
         self._input_col = input_col
 
@@ -303,16 +283,13 @@ class MovingAverage(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResult
         result = input_series[self._input_col].rolling(window).mean()
         result.name = f"MA_{window}"
         result = input_series[self._input_col].rolling(window).mean()
-        self.step_result = result
         return result
 
     def fit_transform(self, input_series, window):
-        self.transform(input_series, window)
+        return self.transform(input_series, window)
 
 
-class RelativeStrengthIndex(
-    _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
-):
+class RelativeStrengthIndex(_SeriesToSeriesTransformer):
     def __init__(self, input_col):
         self._input_col = input_col
 
@@ -324,14 +301,13 @@ class RelativeStrengthIndex(
         ema_down = down.ewm(com=13, adjust=False).mean()
         rs = ema_up / ema_down
         rs.name = "RSI"
-        self.step_result = rs
         return rs
 
     def fit_transform(self, input_series):
-        self.transform(input_series)
+        return self.transform(input_series)
 
 
-class DateFeatures(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin):
+class DateFeatures(_SeriesToSeriesTransformer):
     def __init__(self, input_col):
         self._input_col = input_col
 
@@ -346,16 +322,13 @@ class DateFeatures(_SeriesToSeriesTransformer, _NonSequentialPipelineStepResults
         result.name = f"df_{func.__name__}"
         result = result.apply(func)
 
-        self.step_result = result
         return result
 
     def fit_transform(self, input_series, func):
-        self.transform(input_series, func)
+        return self.transform(input_series, func)
 
 
-class FixedTimeHorizonLabels(
-    _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
-):
+class FixedTimeHorizonLabels(_SeriesToSeriesTransformer):
     def __init__(self, input_col):
         self._input_col = input_col
 
@@ -363,27 +336,23 @@ class FixedTimeHorizonLabels(
         labels = input_series[self._input_col].shift(horizon)
         labels.name = "labels"
         dts = pd.concat([features, labels], axis=1).dropna()
-        self.step_result = dts["labels"]
         return dts["labels"]
 
     def fit_transform(self, input_series, horizon, features):
-        self.transform(input_series, horizon, features)
+        return self.transform(input_series, horizon, features)
 
 
-class DatasetConcatenator(
-    _SeriesToSeriesTransformer, _NonSequentialPipelineStepResultsMixin
-):
+class DatasetConcatenator(_SeriesToSeriesTransformer):
     """Concatenates pandas series by index and removes NA values"""
 
     def transform(self, series):
 
         dts = pd.concat(series, axis=1)
         dts.dropna(inplace=True)
-        self.step_result = dts
         return dts
 
     def fit_transform(self, series):
-        self.transform(series)
+        return self.transform(series)
 
 
 def is_friday(dt):

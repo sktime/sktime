@@ -12,7 +12,9 @@ from sktime.pipeline.transformers import (
     is_year_end,
 )
 from sktime.pipeline.pipeline import OnlineUnsupervisedPipeline
-from sktime.pipeline.estimators import RandomForestRegressorWrapper
+
+# from sktime.pipeline.estimators import RandomForestRegressorWrapper
+from sklearn.ensemble import RandomForestRegressor
 
 if __name__ == "__main__":
     aapl = pdr.DataReader(
@@ -91,7 +93,7 @@ if __name__ == "__main__":
             ),
             (
                 "estimator",
-                RandomForestRegressorWrapper(),
+                RandomForestRegressor(),
                 {"X": "dataset_concatenator", "y": "labels"},
             ),
         ]

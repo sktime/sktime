@@ -35,15 +35,16 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
 
     def __init__(self, steps, interface="simple"):
         self._steps = steps
+        self._step_results = {}
 
     def _iter(self):
         for name, alg, arguments in self._steps:
             yield name, alg, arguments
 
-    def _check_steps_for_values(self, value):
-        for step in self._steps:
-            if value in step:
-                return step[1].step_result
+    def _check_steps_for_values(self, step_name):
+        if step_name in self._step_results:
+            return self._step_results[step_name]
+
         return None
 
     def _process_arguments(self, arguments):
@@ -63,34 +64,35 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         returned_arguments_kwarg = arguments.copy()
         if arguments is None:
             return arguments
-        for key, value in returned_arguments_kwarg.items():
-            if value == "original":
-                returned_arguments_kwarg[key] = self._X
+        for argument_name, argument_value in returned_arguments_kwarg.items():
+            if argument_value == "original":
+                returned_arguments_kwarg[argument_name] = self._X
                 continue
-            if type(value) == list:
+            if type(argument_value) == list:
                 out = []
-                for list_val in value:
+                for list_val in argument_value:
                     returned_step_value = self._check_steps_for_values(list_val)
                     if returned_step_value is not None:
                         out.append(returned_step_value)
-                returned_arguments_kwarg[key] = out
+                returned_arguments_kwarg[argument_name] = out
                 continue
             # go through all steps and look for returned values
-            returned_step_value = self._check_steps_for_values(value)
+            returned_step_value = self._check_steps_for_values(argument_value)
             if returned_step_value is not None:
-                returned_arguments_kwarg[key] = returned_step_value
+                returned_arguments_kwarg[argument_name] = returned_step_value
 
         return returned_arguments_kwarg
 
     def fit(self, X):
         self._X = X
-        for _, alg, arguments in self._iter():
+        for name, alg, arguments in self._iter():
 
             arguments = self._process_arguments(arguments)
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
             if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                alg.fit_transform(**arguments)
+                out = alg.fit_transform(**arguments)
+                self._step_results[name] = out
             if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
                 alg.fit(**arguments)
 

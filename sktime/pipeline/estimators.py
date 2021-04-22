@@ -5,11 +5,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 import numpy as np
 import mlfinlab as ml
-from sktime.pipeline.base import _NonSequentialPipelineStepResultsMixin
-from sklearn.ensemble import RandomForestRegressor
 
 
-class Estimator(BaseEstimator, _NonSequentialPipelineStepResultsMixin):
+class Estimator(BaseEstimator):
     def __init__(
         self,
         estimator,
@@ -51,28 +49,13 @@ class Estimator(BaseEstimator, _NonSequentialPipelineStepResultsMixin):
         X_train = X.iloc[train_idx]
         y_train = y.iloc[train_idx][self._labels_col_name]
 
-        trained_estimator = gs.fit(X_train, y_train)
-        self.step_result = trained_estimator
+        gs.fit(X_train, y_train)
 
-        return self
-
-    # todo! predict should take only X
-    def predict(self, X, y, samples):
-        trained_estimator = self.step_result
-        return trained_estimator.predict(X)
-
-    def update(self):
-        raise NotImplementedError
-
-
-class RandomForestRegressorWrapper(
-    BaseEstimator, _NonSequentialPipelineStepResultsMixin
-):
-    def fit(self, X, y):
-        trained_estimator = RandomForestRegressor().fit(X, y)
-        self.step_result = trained_estimator
         return self
 
     def predict(self, X):
         trained_estimator = self.step_result
         return trained_estimator.predict(X)
+
+    def update(self):
+        raise NotImplementedError
