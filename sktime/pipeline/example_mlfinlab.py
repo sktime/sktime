@@ -10,7 +10,7 @@ from sktime.pipeline.transformers import (
 )
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
-from sktime.pipeline.estimators import Estimator
+from sktime.pipeline.estimators import PurgedKFoldGridSearchCV
 
 if __name__ == "__main__":
     # mlfinlab fit example
@@ -47,7 +47,7 @@ if __name__ == "__main__":
             ),
             (
                 "estimator",
-                Estimator(
+                PurgedKFoldGridSearchCV(
                     estimator=BaggingClassifier(
                         base_estimator=DecisionTreeClassifier(
                             max_depth=5, random_state=1

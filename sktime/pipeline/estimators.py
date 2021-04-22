@@ -7,7 +7,7 @@ import numpy as np
 import mlfinlab as ml
 
 
-class Estimator(BaseEstimator):
+class PurgedKFoldGridSearchCV(BaseEstimator):
     def __init__(
         self,
         estimator,
