@@ -33,7 +33,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.forecasting.compose._reduce import ReducedForecaster
-from sktime.forecasting.compose._reduce import DirRecRegressionForecaster
+from sktime.forecasting.compose._reduce import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
 from sktime.performance_metrics.forecasting import smape_loss
@@ -201,7 +201,7 @@ def _make_y(start, end, method="linear-trend", slope=1):
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
+@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput", "dirrec"])
 @pytest.mark.parametrize(
     "regressor, scitype",
     [
@@ -276,9 +276,11 @@ _REGISTRY = [
     ("tabular-regressor", "direct", DirectTabularRegressionForecaster),
     ("tabular-regressor", "recursive", RecursiveTabularRegressionForecaster),
     ("tabular-regressor", "multioutput", MultioutputTabularRegressionForecaster),
+    ("tabular-regressor", "dirrec", DirRecTabularRegressionForecaster),
     ("time-series-regressor", "direct", DirectTimeSeriesRegressionForecaster),
     ("time-series-regressor", "recursive", RecursiveTimeSeriesRegressionForecaster),
     ("time-series-regressor", "multioutput", MultioutputTimeSeriesRegressionForecaster),
+    # ("time-series-regressor", "dirrec", DirRecTimeSeriesRegressionForecaster),
 ]
 
 
@@ -517,13 +519,11 @@ def test_dirrec_correctness(get_data):
     # dirrec regressor should produce lower error due to less cumulative error
     y, y_train, y_test, fh = get_data
 
-    regressor = LinearRegression()
-    recursive = ReducedForecaster(
-        regressor, scitype="time-series-regressor", strategy="recursive"
+    estimator = LinearRegression()
+    recursive = make_reduction(
+        estimator, scitype="tabular-regressor", strategy="recursive"
     )
-    dirrec = ReducedForecaster(
-        regressor, scitype="time-series-regressor", strategy="dirrec"
-    )
+    dirrec = make_reduction(estimator, scitype="tabular-regressor", strategy="dirrec")
 
     preds_recursive = recursive.fit(y_train, fh=fh).predict(fh)
     preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
@@ -562,16 +562,3 @@ def test_dirrec_incorrect_num_regressors(get_data):
 
     with pytest.raises(ValueError):
         _ = dirrec.fit(y_train, fh=fh).predict(fh)
-
-
-def test_factory_method_dirrec(get_data):
-    y, y_train, y_test, fh = get_data
-
-    regressor = LinearRegression()
-    f1 = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
-    f2 = DirRecRegressionForecaster(regressor)
-
-    actual = f1.fit(y_train, fh=fh).predict(fh)
-    expected = f2.fit(y_train, fh=fh).predict(fh)
-
-    np.testing.assert_array_equal(actual, expected)

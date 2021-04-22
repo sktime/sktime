@@ -19,7 +19,8 @@ __all__ = [
     "DirectTabularRegressionForecaster",
     "RecursiveTabularRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
-    "DirRecRegressionForecaster",
+    "DirRecTabularRegressionForecaster",
+    # "DirRecTimeSeriesRegressionForecaster",
     "ReducedForecaster",
     "ReducedRegressionForecaster",
 ]
@@ -439,6 +440,16 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
 class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
     strategy = "dirrec"
 
+    def _transform(self, y, X=None):
+        fh = self.fh.to_relative(self.cutoff)
+        return _sliding_window_transform(
+            y,
+            window_length=self.window_length,
+            fh=fh,
+            X=X,
+            scitype=self._estimator_scitype,
+        )
+
     def _list_transform(self):
         # Three possibilities. We are either provided with a list that's too long,
         # or a list of the same length/shorter,
@@ -480,34 +491,24 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
         if X is not None:
             raise NotImplementedError("Exogenous variables `X` are not yet supported.")
 
-        self._set_y_X(y)
-        self._set_fh(fh)
-
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
 
-        self.step_length_ = check_step_length(self.step_length)
-        self.window_length_ = check_window_length(self.window_length)
-
-        # for the direct reduction strategy, a separate forecaster is fitted
-        # for each step ahead of the forecasting horizon
-
-        self._cv = _sliding_window_transform(
-            fh=self.fh.to_relative(self.cutoff),
-            window_length=self.window_length_,
-        )
-
         # transform data using rolling window split
-        X, Y_train = self._transform(y, X)
+        yt, Xt = self._transform(y, X)
 
         # perform conversion to list from provided regressors
-        self.regressors_ = self._list_transform()
+        self.estimators_ = []
+
+        # X_fit = np.column_stack([Xt, np.empty(Xt.shape[0], len(self.fh))])
+        # We here use the observed data, rather then predicted values.
+        X_fit = np.column_stack([Xt, yt])
+        n_columns = Xt.shape[1]
 
         for i in range(len(self.fh)):
-            y = Y_train[:, i]
-            self.regressors_[i].fit(X, y)
-            X = np.column_stack([X, y.reshape(-1, 1)])
-            X = self._format_windows(X)
+            estimator = clone(self.estimator)
+            estimator.fit(X_fit[:, : n_columns + i], yt[:, i])
+            self.estimators_.append(estimator)
 
         self._is_fitted = True
         return self
@@ -515,30 +516,39 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
+        # Get last window of available data.
+        y_last, X_last = self._get_last_window()
+        if not self._is_predictable(y_last):
+            return self._predict_nan(fh)
+
+        if self._X is None:
+            n_columns = 1
+        else:
+            # X is ignored here, since we currently only look at lagged values for
+            # exogenous variables and not contemporaneous ones.
+            n_columns = self._X.shape[1] + 1
+
+        # Pre-allocate arrays.
+        window_length = self.window_length_
+        X_pred = np.zeros((1, n_columns, window_length))
+
+        # Fill pre-allocated arrays with available data.
+        X_pred[:, 0, :] = y_last
+        if self._X is not None:
+            X_pred[:, 1:, :] = X_last.T
+
         # prepare recursive predictions
         y_pred = np.zeros(len(fh))
 
-        # get last window from observation horizon
-        (
-            last_window,
-            _,
-        ) = self._get_last_window()
-        if not self._is_predictable(last_window):
-            return self._predict_nan(fh)
-
-        # pre-allocate last window indices
-        original_window_size = len(last_window)
-        last_window = np.append(last_window, np.zeros(len(fh)))
+        X_pred = X_pred.reshape(1, -1)
+        X_pred = np.column_stack([X_pred, np.empty((1, len(self.fh)))])
 
         # recursively predict iterating over forecasting horizon
-        for i in range(len(y_pred)):
-            # convert data into required input format
-            X_last = self._format_windows([last_window[: original_window_size + i]])
-            # make forecast using specific fitted regressor
-            y_pred[i] = self.regressors_[i].predict(X_last)
+        for i in range(len(self.fh)):
+            y_pred[i] = self.estimators_[i].predict(X_pred[:, : window_length + i])
 
             # update last window with previous prediction
-            last_window[i + original_window_size] = y_pred[i]
+            X_pred[:, window_length + i] = y_pred[i]
 
         return y_pred
 
@@ -603,8 +613,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     _estimator_scitype = "tabular-regressor"
 
 
-# Where can I find the reduced tabular regressor mixin...
-class DirRecRegressionForecaster(_DirRecReducer):
+class DirRecTabularRegressionForecaster(_DirRecReducer):
     """
     Forecasting based on reduction to tabular regression with the
     DirRec (hybrid) strategy.
@@ -627,7 +636,6 @@ class DirRecRegressionForecaster(_DirRecReducer):
     """
 
     _estimator_scitype = "tabular-regressor"
-    pass
 
 
 class DirectTimeSeriesRegressionForecaster(_DirectReducer):
@@ -861,12 +869,13 @@ def _get_forecaster(scitype, strategy):
             "direct": DirectTabularRegressionForecaster,
             "recursive": RecursiveTabularRegressionForecaster,
             "multioutput": MultioutputTabularRegressionForecaster,
+            "dirrec": DirRecTabularRegressionForecaster,
         },
         "time-series-regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster,
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
-            "dirrec": DirRecRegressionForecaster,
+            # "dirrec": DirRecTimeSeriesRegressionForecaster,
         },
     }
     return registry[scitype][strategy]
