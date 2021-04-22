@@ -38,13 +38,11 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     ...     ForecastingGridSearchCV,
     ...     SlidingWindowSplitter)
     >>> from sklearn.preprocessing import StandardScaler
-
     >>> # create pipeline
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
     ...     ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
     ...     ("forecaster", NaiveForecaster())])
-
     >>> # putting it all together in a grid search
     >>> cv = SlidingWindowSplitter(
     ...     initial_window=60,
@@ -70,7 +68,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         "fit-in-transform": True,
     }
 
-    def __init__(self, transformer, passthrough=True):
+    def __init__(self, transformer, passthrough=False):
         self.transformer = transformer
         self.transformer_ = None
         self.passthrough = passthrough
