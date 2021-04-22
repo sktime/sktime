@@ -38,7 +38,11 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     import seaborn as sns
 
     for y in series:
-        check_y(y)
+        if pred_int is not None:
+            check_y(y)
+            y.index.equal(pred_int.index)
+        else:
+            check_y(y)
 
     n_series = len(series)
 
