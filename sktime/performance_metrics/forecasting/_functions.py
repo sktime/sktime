@@ -409,7 +409,7 @@ def median_absolute_scaled_error(
     if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
         raise ValueError("Equal number of columns required for y_true and y_train")
 
-    #  naive seasonal prediction
+    # naive seasonal prediction
     y_train = np.asarray(y_train)
     y_pred_naive = y_train[:-sp]
 

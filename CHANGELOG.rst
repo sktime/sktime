@@ -3,6 +3,61 @@ Changelog
 
 All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
+
+[0.6.0] - 2021-04-15
+--------------------
+
+Fixed
+~~~~~
+* Fix counting for Github's automatic language discovery (#812) @xuyxu
+* Fix counting for Github's automatic language discovery (#811) @xuyxu
+* Fix examples CI checks (#793) @mloning
+* Fix TimeSeriesForestRegressor (#777) @mloning
+* Fix Deseasonalizer docstring (#737) @mloning
+* SettingWithCopyWarning in Prophet with exogenous data (#735) @jschemm
+* Correct docstrings for check_X and related functions (#701) @Lovkush-A
+* Fixed bugs mentioned in #694  (#697) @AidenRushbrooke
+* fix typo in CONTRIBUTING.md (#688) @luiszugasti
+* Fix duplicacy in the contribution's list (#685) @afzal442
+* HIVE-COTE 1.0 fix (#678) @MatthewMiddlehurst
+
+Changed
+~~~~~~~
+* Update sklearn version (#810) @mloning
+* Remove soft dependency check for numba (#808) @mloning
+* Modify tests for forecasting reductions (#756) @Lovkush-A
+* Upgrade nbqa (#794) @MarcoGorelli
+* Enhanced exception message of splitters (#771) @aiwalter
+* Enhance forecasting model selection/evaluation (#739) @mloning
+* Pin PyStan version (#751) @mloning
+* master to main conversion in docs folder closes #644 (#667) @ayan-biswas0412
+* Update governance (#686) @mloning
+* remove MSM from unit tests for now (#698) @TonyBagnall
+* Make update_params=true by default (#660) @pabworks
+* update dataset names (#676) @TonyBagnall
+
+Added
+~~~~~
+* Add support for exogenous variables to forecasting reduction (#757) @mloning
+* Added forecasting docstring examples (#772) @aiwalter
+* Added the agg argument to EnsembleForecaster (#774) @Ifeanyi30
+* Added OptionalPassthrough transformer (#762) @aiwalter
+* Add doctests (#766) @mloning
+* Multiplexer forecaster (#715) @koralturkk
+* Upload source tarball to PyPI during releases (#749) @dsherry
+* Create developer guide (#734) @mloning
+* Refactor TSF classifier into TSF regressor (#693) @luiszugasti
+* Outlier detection with HampelFilter (#708) @aiwalter
+* changes to contributing.md to include directions to installation (#695) @kanand77
+* Evaluate (example and fix) (#690) @aiwalter
+* Knn unit tests (#705) @TonyBagnall
+* Knn transpose fix (#689) @TonyBagnall
+* Evaluate forecaster function (#657) @aiwalter
+* Multioutput reduction strategy for forecasting (#659) @Lovkush-A
+
+All contributors: @AidenRushbrooke, @Ifeanyi30, @Lovkush-A, @MarcoGorelli, @MatthewMiddlehurst, @TonyBagnall, @afzal442, @aiwalter, @ayan-biswas0412, @dsherry, @jschemm, @kanand77, @koralturkk, @luiszugasti, @mloning, @pabworks and @xuyxu
+
+
 [0.5.3] - 2021-02-06
 --------------------
 
