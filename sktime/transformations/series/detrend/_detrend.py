@@ -44,6 +44,15 @@ class Detrender(_SeriesToSeriesTransformer):
     ----------
     forecaster_ : estimator object
         Model that defines the trend in the series
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Detrender(forecaster=PolynomialTrendForecaster(degree=1))
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _required_parameters = ["forecaster"]
