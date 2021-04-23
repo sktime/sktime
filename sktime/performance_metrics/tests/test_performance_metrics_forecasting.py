@@ -26,6 +26,8 @@ from sktime.performance_metrics.forecasting import (
     MedianRelativeAbsoluteError,
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
+    MeanAsymmetricError,
+    RelativeLoss,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
     mean_squared_scaled_error,
@@ -42,6 +44,8 @@ from sktime.performance_metrics.forecasting import (
     median_relative_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    mean_asymmetric_error,
+    relative_loss,
 )
 from sktime.performance_metrics.tests._config import RANDOM_SEED
 
@@ -347,6 +351,20 @@ LOSS_RESULTS = {
         "func": geometric_mean_relative_squared_error,
         "class": GeometricMeanRelativeSquaredError(),
     },
+    "mean_aymmetric_error": {
+        "test_case_1": 0.17139968,
+        "test_case_2": 0.163956601,
+        "test_case_3": 1.000000,
+        "func": mean_asymmetric_error,
+        "class": MeanAsymmetricError(),
+    },
+    "relative_loss": {
+        "test_case_1": 0.442644622,
+        "test_case_2": 0.416852592,
+        "test_case_3": 1.315789474,
+        "func": relative_loss,
+        "class": RelativeLoss(),
+    },
 }
 
 
@@ -520,85 +538,6 @@ def test_univariate_function_output_type(loss_func_name, random_state):
     assert is_num and is_scalar, " ".join(
         ["Loss function with univariate input should return scalar number"]
     )
-
-
-# @pytest.mark.parametrize("loss_func", LOSS_RESULTS.keys())
-# def test_y_true_input_type(loss_func):
-#     y = _make_series(n_timepoints=75, random_state=RANDOM_SEEDS[0])
-#     y_train, y_true = y.iloc[:50], y.iloc[50:]
-#     y_pred = y.shift(1).iloc[50:]
-#     y_pred_benchmark = y.rolling(2).mean().iloc[50:]
-
-#     loss_func_args = inspect.getfullargspec(loss_func).args
-
-#     # create list version of each potential inputs
-#     y_true_list = y_true.tolist()
-
-#     # Test input types
-#     with pytest.raises(TypeError):
-#         if "y_train" in loss_func_args:
-#             loss_func(y_true_list, y_pred, y_train)
-#         elif "y_pred_benchmark" in loss_func_args:
-#             loss_func(y_true_list, y_pred, y_pred_benchmark)
-#         else:
-#             loss_func(y_true_list, y_pred)
-
-
-# @pytest.mark.parametrize("loss_func", LOSS_RESULTS.keys())
-# def test_y_pred_input_type(loss_func):
-#     y = _make_series(n_timepoints=75, random_state=RANDOM_SEEDS[0])
-#     y_train, y_true = y.iloc[:50], y.iloc[50:]
-#     y_pred = y.shift(1).iloc[50:]
-#     y_pred_benchmark = y.rolling(2).mean().iloc[50:]
-
-#     loss_func_args = inspect.getfullargspec(loss_func).args
-
-#     # create list version of each potential inputs
-#     y_pred_list = y_pred.tolist()
-
-#     # Test input types
-#     with pytest.raises(TypeError):
-#         if "y_train" in loss_func_args:
-#             loss_func(y_true, y_pred_list, y_train)
-#         elif "y_pred_benchmark" in loss_func_args:
-#             loss_func(y_true, y_pred_list, y_pred_benchmark)
-#         else:
-#            loss_func(y_true, y_pred_list)
-
-
-# Only need to run test of y_train and y_pred_benchmark on the functions
-# that accept those parameters
-# @pytest.mark.parametrize(
-#     "loss_func",
-#     [
-#         mean_absolute_scaled_error,
-#         median_absolute_scaled_error,
-#         mean_squared_scaled_error,
-#         median_squared_scaled_error,
-#         mean_relative_absolute_error,
-#         median_relative_absolute_error,
-#         geometric_mean_relative_absolute_error,
-#         geometric_mean_relative_squared_error,
-#     ],
-# )
-# def test_y_train_y_pred_benchmark_input_type(loss_func):
-#     y = _make_series(n_timepoints=75, random_state=RANDOM_SEEDS[0])
-#     y_train, y_true = y.iloc[:50], y.iloc[50:]
-#     y_pred = y.shift(1).iloc[50:]
-#     y_pred_benchmark = y.rolling(2).mean().iloc[50:]
-
-#     loss_func_args = inspect.getfullargspec(loss_func).args
-
-#     # create list version of each potential inputs
-#     y_train_list = y_train.tolist()
-#     y_pred_brenchmark_list = y_pred_benchmark.tolist()
-
-#     # Test input types
-#     with pytest.raises(TypeError):
-#         if "y_train" in loss_func_args:
-#             loss_func(y_true, y_pred, y_train_list)
-#         elif "y_pred_benchmark" in loss_func_args:
-#             loss_func(y_true, y_pred, y_pred_brenchmark_list)
 
 
 @pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
