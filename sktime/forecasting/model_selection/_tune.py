@@ -377,8 +377,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=forecaster,
     ...     param_grid=param_grid,
-    ...     cv=cv,
-    >>> )
+    ...     cv=cv)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh)
