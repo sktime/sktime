@@ -37,6 +37,8 @@ Tunable Classes
     MedianRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+    MeanAsymmetricError
+    RelativeLoss
 
 Functions
 *********
@@ -44,8 +46,7 @@ Functions
     :toctree: modules/auto_generated/
     :template: function.rst
 
-    relative_loss
-    mean_asymmetric_error
+    make_forecasting_scorer
     mean_absolute_scaled_error
     median_absolute_scaled_error
     mean_squared_scaled_error
@@ -62,3 +63,5 @@ Functions
     median_relative_absolute_error
     geometric_mean_relative_absolute_error
     geometric_mean_relative_squared_error
+    mean_asymmetric_error
+    relative_loss
