@@ -21,6 +21,15 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
     Parameters
     ----------
     window_length : int
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.matrix_profile import (
+    ... MatrixProfileTransformer)
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = MatrixProfileTransformer()
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
