@@ -32,6 +32,7 @@ __all__ = [
     "NNLSEnsemble",
     "OnlineEnsembleForecaster",
     "evaluate",
+    "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
     "MedianAbsoluteScaledError",
     "MeanSquaredScaledError",
@@ -49,8 +50,7 @@ __all__ = [
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
     "MeanAsymmetricError",
-    "relative_loss",
-    "mean_asymmetric_error",
+    "RelativeLoss",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
     "mean_squared_scaled_error",
@@ -67,6 +67,8 @@ __all__ = [
     "median_relative_absolute_error",
     "geometric_mean_relative_absolute_error",
     "geometric_mean_relative_squared_error",
+    "relative_loss",
+    "mean_asymmetric_error",
 ]
 
 import numpy as np
@@ -105,6 +107,7 @@ from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.detrend import Detrender
 from sktime.utils.plotting import plot_series
 from sktime.performance_metrics.forecasting import (
+    make_forecasting_scorer,
     MeanAbsoluteScaledError,
     MedianAbsoluteScaledError,
     MeanSquaredScaledError,
@@ -122,8 +125,7 @@ from sktime.performance_metrics.forecasting import (
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
     MeanAsymmetricError,
-    relative_loss,
-    mean_asymmetric_error,
+    RelativeLoss,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
     mean_squared_scaled_error,
@@ -140,4 +142,6 @@ from sktime.performance_metrics.forecasting import (
     median_relative_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    mean_asymmetric_error,
+    relative_loss,
 )

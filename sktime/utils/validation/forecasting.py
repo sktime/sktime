@@ -317,7 +317,7 @@ def check_scoring(scoring):
 
     Parameters
     ----------
-    scoring : object of class MetricFunctionWrapper from sktime.performance_metrics.
+    scoring : object of class _MetricFunctionWrapper from sktime.performance_metrics.
 
     Returns
     ----------
@@ -328,8 +328,6 @@ def check_scoring(scoring):
     ----------
     TypeError
         if object is not callable from current scope.
-        if object is not an instance of class MetricFunctionWrapper of
-        sktime.performance_metrics.
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
     from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError

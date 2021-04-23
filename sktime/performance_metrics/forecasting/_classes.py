@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from sklearn.base import BaseEstimator
 from sktime.performance_metrics.forecasting._functions import (
+    relative_loss,
     mean_asymmetric_error,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
@@ -22,10 +23,6 @@ from sktime.performance_metrics.forecasting._functions import (
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
-    "MetricFunctionWrapper",
-    "PercentageMetricFunctionWrapper",
-    "SquaredMetricFunctionWrapper",
-    "SquaredPercentageMetricFunctionWrapper",
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
     "MedianAbsoluteScaledError",
@@ -43,10 +40,12 @@ __all__ = [
     "MedianRelativeAbsoluteError",
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
+    "MeanAsymmetricError",
+    "RelativeLoss",
 ]
 
 
-class MetricFunctionWrapper(BaseEstimator):
+class _MetricFunctionWrapper(BaseEstimator):
     def __init__(self, func, name=None, greater_is_better=False):
         self._func = func
         self.name = name if name is not None else func.__name__
@@ -69,15 +68,22 @@ class MetricFunctionWrapper(BaseEstimator):
         Returns
         -------
         loss : float
-            Calculated loss metric
+            Calculated loss metric. If `greater_is_better` attribute is True
+            returns the negative of the metric. If `greater_is_better` attribute
+            is False the metric is returned.
         """
-        return self._func(y_true, y_pred)
+        sign = 1 if self.greater_is_better else -1
+        return sign * self._func(y_true, y_pred)
 
 
 class _PercentageErrorMixIn:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
+
+        Uses `symmetric` attribute to determine whether underlying function
+        should return symmetric percentage error metric or a percentage error
+        metric.
 
         Parameters
         ----------
@@ -102,6 +108,10 @@ class _SquaredErrorMixIn:
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
 
+        Uses `square_root` attribute to determine whether the
+        underlying function should return the square_root of the metric or
+        the metric.
+
         Parameters
         ----------
         y_true : pandas Series of shape (fh,) or (fh, n_outputs)
@@ -125,6 +135,12 @@ class _SquaredPercentageErrorMixIn:
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
 
+        Uses `symmetric` attribute to determine whether underlying function
+        should return symmetric percentage error metric or a percentage error
+        metric. Also uses `square_root` attribute to determine whether the
+        underlying function should return the square_root of the metric or
+        the metric.
+
         Parameters
         ----------
         y_true : pandas Series of shape (fh,) or (fh, n_outputs)
@@ -138,7 +154,9 @@ class _SquaredPercentageErrorMixIn:
         Returns
         -------
         loss : float
-            Calculated loss metric
+            Calculated loss metric.
+            If square_root = True, tells .
+            I
         """
         return self._func(
             y_true, y_pred, symmetric=self.symmetric, square_root=self.square_root
@@ -174,13 +192,40 @@ class _AsymmetricErrorMixIn:
         )
 
 
-class ScaledMetricFunctionWrapper(MetricFunctionWrapper):
+class _RelativeLossMixIn:
+    def __call__(self, y_true, y_pred):
+        """Returns calculated loss metric by passing `y_true` and `y_pred` to
+        underlying metric function.
+
+        Parameters
+        ----------
+        y_true : pandas Series of shape (fh,) or (fh, n_outputs)
+                where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
+                where fh is the forecasting horizon
+            Estimated target values.
+
+        Returns
+        -------
+        loss : float
+            Calculated loss metric
+        """
+        return self._func(
+            y_true,
+            y_pred,
+            loss_function=self._relative_func,
+        )
+
+
+class _ScaledMetricFunctionWrapper(_MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, sp=1):
         self.sp = sp
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, MetricFunctionWrapper):
+class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWrapper):
     def __init__(
         self, func, name=None, greater_is_better=False, sp=1, square_root=False
     ):
@@ -189,20 +234,20 @@ class ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, MetricFunctionWrapp
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class PercentageMetricFunctionWrapper(_PercentageErrorMixIn, MetricFunctionWrapper):
+class _PercentageMetricFunctionWrapper(_PercentageErrorMixIn, _MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, symmetric=True):
         self.symmetric = symmetric
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class SquaredMetricFunctionWrapper(_SquaredErrorMixIn, MetricFunctionWrapper):
+class _SquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, square_root=False):
         self.square_root = square_root
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class SquaredPercentageMetricFunctionWrapper(
-    _SquaredPercentageErrorMixIn, MetricFunctionWrapper
+class _SquaredPercentageMetricFunctionWrapper(
+    _SquaredPercentageErrorMixIn, _MetricFunctionWrapper
 ):
     def __init__(
         self,
@@ -217,7 +262,7 @@ class SquaredPercentageMetricFunctionWrapper(
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, MetricFunctionWrapper):
+class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, _MetricFunctionWrapper):
     def __init__(
         self,
         func,
@@ -233,9 +278,19 @@ class AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, MetricFunctionWrapp
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-def make_forecasting_scorer(
-    func, name=None, greater_is_better=False, symmetric=None, square_root=None
-):
+class _RelativeLossMetricFunctionWrapper(_RelativeLossMixIn, _MetricFunctionWrapper):
+    def __init__(
+        self,
+        func,
+        name=None,
+        greater_is_better=False,
+        relative_func=mean_absolute_error,
+    ):
+        self._relative_func = relative_func
+        super().__init__(func=func, name=name, greater_is_better=greater_is_better)
+
+
+def make_forecasting_scorer(func, name=None, greater_is_better=False):
     """Factory method for creating metric classes from metric functions
 
     Parameters
@@ -250,59 +305,16 @@ def make_forecasting_scorer(
         If True then maximizing the metric is better.
         If False then minimizing the metric is better.
 
-    symmetric: bool, default=None
-        Whether to calculate symmetric percentage error.
-            If None then created metric class does not include a `symmetric`
-                parameter
-            If True, created metric class includes has `symmetric` attribute
-                equal to True. Metric calculates symmetric version of
-                percentage error loss function.
-            If False, created metric class includes has `symmetric` attribute
-                equal to False. Metric calculates standard version of
-                percentage error loss function
-
-    square_root: bool, default=None
-        Whether to take the square root of the calculated metric.
-            If None then created metric class does not include a `square_root`
-                parameter
-            If True, created metric class includes has `square_root` attribute
-                equal to True. Metric calculates square root of provided loss function.
-            If False, created metric class includes has `square_root` attribute
-                equal to False. Metric calculates provided loss function.
-
     Returns
     -------
     scorer:
         Metric class that can be used as forecasting scorer.
     """
-    # Create base
-    if symmetric is None and square_root is None:
-        return MetricFunctionWrapper(
-            func, name=name, greater_is_better=greater_is_better
-        )
-    elif symmetric is not None and square_root is None:
-        return PercentageMetricFunctionWrapper(
-            func, name=name, greater_is_better=greater_is_better, symmetric=symmetric
-        )
-    elif symmetric is None and square_root is not None:
-        return SquaredMetricFunctionWrapper(
-            func,
-            name=name,
-            greater_is_better=greater_is_better,
-            square_root=square_root,
-        )
 
-    elif symmetric is not None and square_root is not None:
-        return SquaredPercentageMetricFunctionWrapper(
-            func,
-            name=name,
-            greater_is_better=greater_is_better,
-            symmetric=symmetric,
-            square_root=square_root,
-        )
+    return _MetricFunctionWrapper(func, name=name, greater_is_better=greater_is_better)
 
 
-class MeanAbsoluteScaledError(ScaledMetricFunctionWrapper):
+class MeanAbsoluteScaledError(_ScaledMetricFunctionWrapper):
     """Mean absolute scaled error (MASE). MASE output is non-negative floating
     point. The best value is 0.0.
 
@@ -343,14 +355,14 @@ class MeanAbsoluteScaledError(ScaledMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    ..[2]   Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-            for intermittent demand", Foresight, Issue 4.
-    ..[3]   Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-            "The M4 Competition: 100,000 time series and 61 forecasting methods",
-            International Journal of Forecasting, Volume 3
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
+    ..[2] Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+          for intermittent demand", Foresight, Issue 4.
+    ..[3] Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+          "The M4 Competition: 100,000 time series and 61 forecasting methods",
+          International Journal of Forecasting, Volume 3
     """
 
     def __init__(self):
@@ -360,7 +372,7 @@ class MeanAbsoluteScaledError(ScaledMetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class MedianAbsoluteScaledError(ScaledMetricFunctionWrapper):
+class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
     """Median absolute scaled error (MdASE). MdASE output is non-negative
     floating point. The best value is 0.0.
 
@@ -406,14 +418,14 @@ class MedianAbsoluteScaledError(ScaledMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    ..[2]   Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-            for intermittent demand", Foresight, Issue 4.
-    ..[3]   Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-            "The M4 Competition: 100,000 time series and 61 forecasting methods",
-            International Journal of Forecasting, Volume 3
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
+    ..[2] Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+          for intermittent demand", Foresight, Issue 4.
+    ..[3] Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+          "The M4 Competition: 100,000 time series and 61 forecasting methods",
+          International Journal of Forecasting, Volume 3
     """
 
     def __init__(self):
@@ -423,7 +435,7 @@ class MedianAbsoluteScaledError(ScaledMetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class MeanSquaredScaledError(ScaledSquaredMetricFunctionWrapper):
+class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
     """Mean squared scaled error (MSSE) `square_root` is False or
     root mean squared scaled error (RMSSE) if `square_root` is True.
     MSSE and RMSSE output is non-negative floating point. The best value is 0.0.
@@ -472,11 +484,11 @@ class MeanSquaredScaledError(ScaledSquaredMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   M5 Competition Guidelines.
-            https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-    ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] M5 Competition Guidelines.
+          https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+    ..[2] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, square_root=False):
@@ -491,7 +503,7 @@ class MeanSquaredScaledError(ScaledSquaredMetricFunctionWrapper):
         )
 
 
-class MedianSquaredScaledError(ScaledSquaredMetricFunctionWrapper):
+class MedianSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
     """Median squared scaled error (MdSSE) if `square_root` is False or
     root median squared scaled error (RMdSSE) if `square_root` is True.
     MdSSE and RMdSSE output is non-negative floating point. The best value is 0.0.
@@ -540,11 +552,11 @@ class MedianSquaredScaledError(ScaledSquaredMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   M5 Competition Guidelines.
-            https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-    ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] M5 Competition Guidelines.
+          https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+    ..[2] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, square_root=False):
@@ -559,7 +571,7 @@ class MedianSquaredScaledError(ScaledSquaredMetricFunctionWrapper):
         )
 
 
-class MeanAbsoluteError(MetricFunctionWrapper):
+class MeanAbsoluteError(_MetricFunctionWrapper):
     """Mean absolute error (MAE). MAE output is non-negative floating point.
     The best value is 0.0.
 
@@ -585,9 +597,9 @@ class MeanAbsoluteError(MetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self):
@@ -597,7 +609,7 @@ class MeanAbsoluteError(MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class MedianAbsoluteError(MetricFunctionWrapper):
+class MedianAbsoluteError(_MetricFunctionWrapper):
     """Median absolute error (MdAE).  MdAE output is non-negative floating
     point. The best value is 0.0.
 
@@ -627,9 +639,9 @@ class MedianAbsoluteError(MetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self):
@@ -639,7 +651,7 @@ class MedianAbsoluteError(MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class MeanSquaredError(SquaredMetricFunctionWrapper):
+class MeanSquaredError(_SquaredMetricFunctionWrapper):
     """Mean squared error (MSE) if `square_root` is False or
     root mean squared error (RMSE)  if `square_root` if True. MSE and RMSE are
     both non-negative floating point. The best value is 0.0.
@@ -675,9 +687,9 @@ class MeanSquaredError(SquaredMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, square_root=False):
@@ -692,7 +704,7 @@ class MeanSquaredError(SquaredMetricFunctionWrapper):
         )
 
 
-class MedianSquaredError(SquaredMetricFunctionWrapper):
+class MedianSquaredError(_SquaredMetricFunctionWrapper):
     """Median squared error (MdSE) if `square_root` is False or root median
     squared error (RMdSE) if `square_root` is True. MdSE and RMdSE return
     non-negative floating point. The best value is 0.0.
@@ -733,9 +745,9 @@ class MedianSquaredError(SquaredMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, square_root=False):
@@ -750,7 +762,7 @@ class MedianSquaredError(SquaredMetricFunctionWrapper):
         )
 
 
-class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
+class MeanAbsolutePercentageError(_PercentageMetricFunctionWrapper):
     """Mean absolute percentage error (MAPE) if `symmetric` is False or
     symmetric mean absolute percentage error (sMAPE) if `symmetric is True.
     MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
@@ -789,9 +801,9 @@ class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, symmetric=True):
@@ -806,7 +818,7 @@ class MeanAbsolutePercentageError(PercentageMetricFunctionWrapper):
         )
 
 
-class MedianAbsolutePercentageError(PercentageMetricFunctionWrapper):
+class MedianAbsolutePercentageError(_PercentageMetricFunctionWrapper):
     """Median absolute percentage error (MdAPE) if `symmetric` is False or
     symmetric median absolute percentage error (sMdAPE). MdAPE and sMdAPE output
     is non-negative floating point. The best value is 0.0.
@@ -849,9 +861,9 @@ class MedianAbsolutePercentageError(PercentageMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, symmetric=True):
@@ -866,7 +878,7 @@ class MedianAbsolutePercentageError(PercentageMetricFunctionWrapper):
         )
 
 
-class MeanSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
+class MeanSquaredPercentageError(_SquaredPercentageMetricFunctionWrapper):
     """Mean squared percentage error (MSPE) if `square_root` is False or
     root mean squared percentage error (RMSPE) if `square_root` is True.
     MSPE and RMSPE output is non-negative floating point. The best value is 0.0.
@@ -913,9 +925,9 @@ class MeanSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, symmetric=True, square_root=False):
@@ -931,7 +943,7 @@ class MeanSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
         )
 
 
-class MedianSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
+class MedianSquaredPercentageError(_SquaredPercentageMetricFunctionWrapper):
     """Median squared percentage error (MdSPE) if `square_root` is False or
     root median squared percentage error (RMdSPE) if `square_root` is True.
     MdSPE and RMdSPE output is non-negative floating point. The best value is 0.0.
@@ -982,9 +994,9 @@ class MedianSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, symmetric=True, square_root=False):
@@ -1000,7 +1012,7 @@ class MedianSquaredPercentageError(SquaredPercentageMetricFunctionWrapper):
         )
 
 
-class MeanRelativeAbsoluteError(MetricFunctionWrapper):
+class MeanRelativeAbsoluteError(_MetricFunctionWrapper):
     """Mean relative absolute error (MRAE).
 
     Attributes
@@ -1021,9 +1033,9 @@ class MeanRelativeAbsoluteError(MetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self):
@@ -1033,7 +1045,7 @@ class MeanRelativeAbsoluteError(MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class MedianRelativeAbsoluteError(MetricFunctionWrapper):
+class MedianRelativeAbsoluteError(_MetricFunctionWrapper):
     """Median relative absolute error (MdRAE).
 
     Attributes
@@ -1054,9 +1066,9 @@ class MedianRelativeAbsoluteError(MetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self):
@@ -1066,7 +1078,7 @@ class MedianRelativeAbsoluteError(MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class GeometricMeanRelativeAbsoluteError(MetricFunctionWrapper):
+class GeometricMeanRelativeAbsoluteError(_MetricFunctionWrapper):
     """Geometric mean relative absolute error (GMRAE).
 
     Attributes
@@ -1087,9 +1099,9 @@ class GeometricMeanRelativeAbsoluteError(MetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self):
@@ -1099,7 +1111,7 @@ class GeometricMeanRelativeAbsoluteError(MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class GeometricMeanRelativeSquaredError(SquaredMetricFunctionWrapper):
+class GeometricMeanRelativeSquaredError(_SquaredMetricFunctionWrapper):
     """Geometric mean relative squared error (GMRSE) if `square_root` is False or
     root geometric mean relative squared error (RGMRSE) if `square_root` is True.
 
@@ -1129,9 +1141,9 @@ class GeometricMeanRelativeSquaredError(SquaredMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, square_root=False):
@@ -1146,7 +1158,7 @@ class GeometricMeanRelativeSquaredError(SquaredMetricFunctionWrapper):
         )
 
 
-class MeanAsymmetricError(AsymmetricMetricFunctionWrapper):
+class MeanAsymmetricError(_AsymmetricMetricFunctionWrapper):
     """Calculates asymmetric loss function. Error values that are less
     than the asymmetric threshold have `left_error_function` applied.
     Error values greater than or equal to asymmetric threshold  have
@@ -1202,11 +1214,11 @@ class MeanAsymmetricError(AsymmetricMetricFunctionWrapper):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
-    ..[2]   Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)" ,
-            Thomson, South-Western: Ohio, US.
+    ..[2] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)" ,
+          Thomson, South-Western: Ohio, US.
     """
 
     def __init__(
@@ -1225,4 +1237,69 @@ class MeanAsymmetricError(AsymmetricMetricFunctionWrapper):
             asymmetric_threshold=asymmetric_threshold,
             left_error_function=left_error_function,
             right_error_function=right_error_function,
+        )
+
+
+class RelativeLoss(_RelativeLossMetricFunctionWrapper):
+    """Calculates relative loss for a set of predictions and benchmark
+    predictions for a given loss function.
+
+    This function allows the calculation of scale-free relative loss metrics.
+    Unlike mean absolute scaled error (MASE) the function calculates the
+    scale-free metric relative to a defined loss function on a benchmark
+    method. Like MASE, metrics created using this function can be used to compare
+    forecast methods on a single series and also to compare forecast accuracy
+    between series.
+
+    This is useful when a scale-free comparison is beneficial but the training
+    used to generate some (or all) predictions is unknown such as when
+    comparing the loss of 3rd party forecasts or surveys of professional
+    forecastsers.
+
+    Parameters
+    ----------
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
+
+    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values from benchmark method.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    relative_loss : float
+        Loss for a method relative to loss for a benchmark method for a given
+        loss metric.
+
+    References
+    ----------
+    ..[1] Hyndman, R. J and Koehler, A. B. (2006).
+          "Another look at measures of forecast accuracy", International
+          Journal of Forecasting, Volume 22, Issue 4.
+    """
+
+    def __init__(self, relative_func=mean_absolute_error):
+        name = "RelativeLoss"
+        func = relative_loss
+        greater_is_better = False
+        super().__init__(
+            func=func,
+            name=name,
+            greater_is_better=greater_is_better,
+            relative_func=relative_func,
         )
