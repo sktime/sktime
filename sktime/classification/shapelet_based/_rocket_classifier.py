@@ -60,16 +60,6 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
         "missing_values": False,
     }
 
-    def __init__(
-        self,
-        num_kernels=10000,
-        ensemble=False,
-        ensemble_size=25,
-        random_state=None,
-    ):
-        super().__init__(num_kernels, ensemble, ensemble_size, random_state)
-        super().__init__()
-
     def fit(self, X, y):
         """
         Build a single or ensemble of pipelines containing the ROCKET transformer and
@@ -86,6 +76,6 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
         self : object
         """
 
-        return self._fit(
+        return super().fit(
             RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True), X, y
         )

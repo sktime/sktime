@@ -79,7 +79,10 @@ class BaseROCKETEstimator:
         self.classes_ = []
         self.class_dictionary = {}
 
-    def _fit(self, base_model, X, y):
+        # We need to add is-fitted state when inheriting from scikit-learn
+        self._is_fitted = False
+
+    def fit(self, base_model, X, y):
         """
         Build a single or ensemble of pipelines containing the ROCKET transformer and
         the provided base model.

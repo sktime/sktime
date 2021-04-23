@@ -85,5 +85,5 @@ class ROCKETRegressor(BaseROCKETEstimator, BaseRegressor):
         -------
         self : object
         """
-        self._fit(RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True), X, y)
+        super().fit(RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True), X, y)
         return self
