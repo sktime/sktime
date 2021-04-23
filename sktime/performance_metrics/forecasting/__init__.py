@@ -22,8 +22,7 @@ __all__ = [
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
     "MeanAsymmetricError",
-    "relative_loss",
-    "mean_asymmetric_error",
+    "RelativeLoss",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
     "mean_squared_scaled_error",
@@ -40,6 +39,8 @@ __all__ = [
     "median_relative_absolute_error",
     "geometric_mean_relative_absolute_error",
     "geometric_mean_relative_squared_error",
+    "mean_asymmetric_error",
+    "relative_loss",
     "evaluate",
 ]
 
@@ -62,10 +63,9 @@ from sktime.performance_metrics.forecasting._classes import (
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
     MeanAsymmetricError,
+    RelativeLoss,
 )
 from sktime.performance_metrics.forecasting._functions import (
-    relative_loss,
-    mean_asymmetric_error,
     mean_absolute_scaled_error,
     median_absolute_scaled_error,
     mean_squared_scaled_error,
@@ -82,4 +82,6 @@ from sktime.performance_metrics.forecasting._functions import (
     median_relative_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    mean_asymmetric_error,
+    relative_loss,
 )
