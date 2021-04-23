@@ -954,6 +954,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "aaronreidsmith",
+      "name": "Aaron Smith",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21350310?v=4",
+      "profile": "https://github.com/aaronreidsmith",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
