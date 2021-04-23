@@ -15,7 +15,7 @@ class MeanTransformer(_SeriesToPrimitivesTransformer):
 
     Example
     ----------
-    >>> from sktime.transformations.series.detrend import MeanTransformer
+    >>> from sktime.transformations.series.summarize import MeanTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = MeanTransformer()

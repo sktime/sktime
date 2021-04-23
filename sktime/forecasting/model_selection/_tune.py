@@ -381,8 +381,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh)
-    >>> gscv.best_forecaster_
-    NaiveForecaster(strategy='drift')
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]

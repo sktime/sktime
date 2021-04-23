@@ -12,6 +12,8 @@ _check_soft_dependencies("stumpy")
 
 import stumpy  # noqa: E402
 
+# noqa: E501
+
 
 class MatrixProfileTransformer(_SeriesToSeriesTransformer):
     """
@@ -24,8 +26,8 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
 
     Example
     ----------
-    >>> from sktime.transformations.series.matrix_profile import (
-    ... MatrixProfileTransformer)
+    # noqa:
+    >>> from sktime.transformations.series.matrix_profile import MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = MatrixProfileTransformer()
