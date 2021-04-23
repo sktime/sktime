@@ -284,9 +284,9 @@ class _RelativeLossMetricFunctionWrapper(_RelativeLossMixIn, _MetricFunctionWrap
         func,
         name=None,
         greater_is_better=False,
-        relative_func=mean_absolute_error,
+        relative_loss_function=mean_absolute_error,
     ):
-        self._relative_func = relative_func
+        self.relative_loss_function = relative_loss_function
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
@@ -1293,7 +1293,7 @@ class RelativeLoss(_RelativeLossMetricFunctionWrapper):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    def __init__(self, relative_func=mean_absolute_error):
+    def __init__(self, relative_loss_function=mean_absolute_error):
         name = "RelativeLoss"
         func = relative_loss
         greater_is_better = False
@@ -1301,5 +1301,5 @@ class RelativeLoss(_RelativeLossMetricFunctionWrapper):
             func=func,
             name=name,
             greater_is_better=greater_is_better,
-            relative_func=relative_func,
+            relative_loss_function=relative_loss_function,
         )

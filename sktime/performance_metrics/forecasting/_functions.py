@@ -88,7 +88,7 @@ def mean_asymmetric_error(
     the same.
 
     Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
-    and `right_error_function` to 'absoulte` results in a greater penalty
+    and `right_error_function` to 'absolute` results in a greater penalty
     applied to over-predictions (y_true - y_pred < 0). The opposite is true
     for `left_error_function` set to 'absolute' and `right_error_function`
     set to 'squared`
@@ -109,10 +109,10 @@ def mean_asymmetric_error(
         applied. Error values greater than or equal to asymmetric threshold
         have `right_error_function` applied.
 
-    left_error_function : str, {'squared', 'absolute'}
+    left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
 
-    right_error_function : str, {'squared', 'absolute'}
+    right_error_function : {'squared', 'absolute'}, default='absolute'
         Loss penalty to apply to error values greater than or equal to the
         asymmetric threshold.
 
@@ -1952,12 +1952,16 @@ def relative_loss(
     y_true,
     y_pred,
     y_pred_benchmark,
-    loss_function=mean_absolute_error,
+    relative_loss_function=mean_absolute_error,
     horizon_weight=None,
     multioutput="uniform_average",
 ):
     """Calculates relative loss for a set of predictions and benchmark
-    predictions for a given loss function.
+    predictions for a given loss function. Relative loss output is non-negative
+    floating point. The best value is 0.0.
+
+    If the score of the benchmark predictions for a given loss function is zero
+    then a large value is returned.
 
     This function allows the calculation of scale-free relative loss metrics.
     Unlike mean absolute scaled error (MASE) the function calculates the
@@ -2012,16 +2016,16 @@ def relative_loss(
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
-    loss_preds = loss_function(
+    loss_preds = relative_loss_function(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
-    loss_benchmark = loss_function(
+    loss_benchmark = relative_loss_function(
         y_true,
         y_pred_benchmark,
         horizon_weight=horizon_weight,
         multioutput=multioutput,
     )
-    return np.divide(loss_preds, loss_benchmark)
+    return np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
 
 
 def _asymmetric_error(
