@@ -207,14 +207,12 @@ class TrippleBarrierLabels(_ComplexToSeriesTransformer):
     def __init__(self, price_col):
         self._price_col = price_col
 
-    def fit_transform(self, triple_barrier_events, prices):
-        return self.transform(triple_barrier_events, prices)
+    def fit_transform(self, input_series, events):
+        return self.transform(input_series, events)
 
-    def transform(self, triple_barrier_events, prices):
+    def transform(self, input_series, events):
 
-        triple_labels = ml.labeling.get_bins(
-            triple_barrier_events, prices[self._price_col]
-        )
+        triple_labels = ml.labeling.get_bins(events, input_series[self._price_col])
 
         return triple_labels
 

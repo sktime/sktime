@@ -36,8 +36,8 @@ if __name__ == "__main__":
                 "labels",
                 TrippleBarrierLabels(price_col="close"),
                 {
-                    "triple_barrier_events": "triple_barrier_events",
-                    "prices": "dollar_bars",
+                    "input_series": "dollar_bars",
+                    "events": "triple_barrier_events",
                 },
             ),
             (
