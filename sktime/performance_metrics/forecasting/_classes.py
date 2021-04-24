@@ -6,7 +6,7 @@ from sktime.performance_metrics.forecasting._functions import (
 )
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski"]
-__all__ = ["MetricFunctionWrapper", "make_forecasting_scorer", "MASE", "sMAPE", "MAPE"]
+__all__ = ["MetricFunctionWrapper", "make_forecasting_scorer", "MASE", "sMAPE", "MAPE", "RMSSE", "MAD", "GMAE", "RMSPE"]
 
 
 class MetricFunctionWrapper:
@@ -33,6 +33,14 @@ class MASE(MetricFunctionWrapper):
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
+class RMSSE(MetricFunctionWrapper):
+    def __init__(self):
+        name = "RMSSE"
+        fn = rmsse_loss
+        greater_is_better = False
+        super(RMSSE, self).__init__(
+            fn=fn, name=name, greater_is_better=greater_is_better
+        )
 
 class sMAPE(MetricFunctionWrapper):
     def __init__(self):
@@ -43,6 +51,32 @@ class sMAPE(MetricFunctionWrapper):
             fn=fn, name=name, greater_is_better=greater_is_better
         )
 
+class MAD(MetricFunctionWrapper):
+    def __init__(self):
+        name = "MAD"
+        fn = mad_loss
+        greater_is_better = False
+        super(MAD, self).__init__(
+            fn=fn, name=name, greater_is_better=greater_is_better
+        )
+
+class GMAE(MetricFunctionWrapper):
+    def __init__(self):
+        name = "GMAE"
+        fn = gmae_loss
+        greater_is_better = False
+        super(GMAE, self).__init__(
+            fn=fn, name=name, greater_is_better=greater_is_better
+        )
+
+class RMSPE(MetricFunctionWrapper):
+    def __init__(self):
+        name = "RMSPE"
+        fn = rmspe_loss
+        greater_is_better = False
+        super(RMSPE, self).__init__(
+            fn=fn, name=name, greater_is_better=greater_is_better
+        )
 
 class MAPE(MetricFunctionWrapper):
     def __init__(self):
