@@ -10,6 +10,28 @@ import numpy as np
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 
+def check_pred_int(pred_int):
+    """helper function to check pred_int data type
+    
+    pred_int: pd.DataFrame
+        Prediction intervals of series
+        
+    Riases
+    -------
+    TypeError: when pred_int is not a pd.DataFrame
+    Exception: when the number of columns is less or more than 2
+        and column labels are not ['lower', 'upper']
+    """
+    if isinstance(pred_int, pd.DataFrame):
+        if pred_int.shape[1] == 2:
+            if not pred_int.columns == ["lower", "upper"]:
+                raise Exception(
+                    f"{pred_int} must have 'lower' and 'upper' boundary columns"
+                )
+        else:
+            raise Exception(f"{pred_int} must have exactly two columns")
+    else:
+        raise TypeError(f"{pred_int} must be a DataFrame")
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
     """Plot one or more time series
@@ -38,12 +60,8 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     import seaborn as sns
 
     for y in series:
-        if pred_int is not None:
-            check_y(y)
-            y.index.equals(pred_int.index)
-        else:
-            check_y(y)
-
+        check_y(y)
+        
     n_series = len(series)
 
     # labels
@@ -99,6 +117,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
 
     # plot prediction intervals if present
     if pred_int is not None:
+        check_pred_int(pred_int)
         # check same conditions as for earlier indices
         if all([x in index for x in pred_int.index]):
             ax.fill_between(
