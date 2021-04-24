@@ -15,6 +15,15 @@ from sktime.utils.validation.series import check_series
 class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
     """
     Auto-correlation transformer.
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = AutoCorrelationTransformer(n_lags=12)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}
@@ -60,14 +69,23 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
     ----------
     n_lags : int
          largest lag for which pacf is returned
-    method : str {'ywunbiased', 'ywmle', 'ols'}
+    method : str {'ywadjusted', 'ywmle', 'ols'}
          specifies which method for the calculations to use:
-        - yw or ywunbiased : yule walker with bias correction in denominator
+        - yw or ywadjusted : yule walker with bias correction in denominator
           for acovf. Default.
         - ywm or ywmle : yule walker without bias correction
         - ols - regression of time series on lags of it and on constant
         - ld or ldunbiased : Levinson-Durbin recursion with bias correction
         - ldb or ldbiased : Levinson-Durbin recursion without bias correction
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = AutoCorrelationTransformer(n_lags=12)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}
@@ -75,7 +93,7 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
     def __init__(
         self,
         n_lags=None,
-        method="ywunbiased",
+        method="ywadjusted",
     ):
         self.n_lags = n_lags
         self.method = method

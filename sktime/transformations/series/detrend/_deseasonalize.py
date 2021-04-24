@@ -23,7 +23,7 @@ from sktime.utils.validation.series import check_series
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
     """A transformer that removes seasonal components from time
-    series
+    series.
 
     Parameters
     ----------
@@ -31,6 +31,14 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         Seasonal periodicity
     model : str {"additive", "multiplicative"}, optional (default="additive")
         Model to use for estimating seasonal component
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Deseasonalizer()
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}

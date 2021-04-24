@@ -24,7 +24,35 @@ class TransformedTargetForecaster(
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
-    """Meta-estimator for forecasting transformed time series."""
+    """
+    Meta-estimator for forecasting transformed time series.
+    Pipeline functionality to apply transformers to the target series.
+
+    Parameters
+    ----------
+    steps : list
+        List of tuples like ("name", forecaster/transformer)
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> y = load_airline()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer(method="mean")),
+    ...     ("detrender", Deseasonalizer()),
+    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    >>> pipe.fit(y)
+    TransformedTargetForecaster(...)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
+    """
 
     _required_parameters = ["steps"]
     _tags = {"univariate-only": True}

@@ -357,6 +357,30 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Time (seconds) to refit the best forecaster
     scorer_ : function
         Function used to score model
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+
+    >>> y = load_airline()
+    >>> fh = [1,2,3]
+    >>> cv = ExpandingWindowSplitter(
+    ...     start_with_window=True,
+    ...     fh=fh)
+    >>> forecaster = NaiveForecaster()
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_grid=param_grid,
+    ...     cv=cv)
+    >>> gscv.fit(y)
+    ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh)
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
