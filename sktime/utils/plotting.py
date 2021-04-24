@@ -28,7 +28,6 @@ def check_pred_int(pred_int):
     _check_soft_dependencies("pandas")
     import pandas as pd
 
-
     if isinstance(pred_int, pd.DataFrame):
         if pred_int.shape[1] == 2:
             if not pred_int.columns == ["lower", "upper"]:
@@ -68,8 +67,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     import seaborn as sns
 
     for y in series:
-        check_y(y)
-        
+        check_y(y)   
 
     n_series = len(series)
 
