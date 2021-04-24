@@ -30,7 +30,7 @@ def check_pred_int(pred_int):
 
     if isinstance(pred_int, pd.DataFrame):
         if pred_int.shape[1] == 2:
-            if not pred_int.isin(["lower", "upper"]).all():
+            if not pred_int.columns.isin(["lower", "upper"]).all():
                 raise Exception(
                     f"{pred_int} must have 'lower' and 'upper' boundary columns"
                 )
