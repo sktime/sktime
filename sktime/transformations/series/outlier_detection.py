@@ -35,7 +35,13 @@ class HampelFilter(_SeriesToSeriesTransformer):
     Hampel F. R., "The influence curve and its role in robust estimation",
     Journal of the American Statistical Association, 69, 382–393, 1974
 
-    https://github.com/MichaelisTrofficus/hampel_filter
+    Example
+    ----------
+    >>> from sktime.transformations.series.outlier_detection import HampelFilter
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = HampelFilter(window_length=10)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {

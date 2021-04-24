@@ -40,6 +40,14 @@ class Imputer(_SeriesToSeriesTransformer):
         as heuristic.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Imputer(method="drift")
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
