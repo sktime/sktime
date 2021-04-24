@@ -7,7 +7,7 @@ from sktime.utils.validation.series import check_series
 __author__ = ["Markus Löning", "Satya Pattnaik"]
 
 
-class PyODOutlierDector(_SeriesToSeriesTransformer):
+class PyODOutlierDetector(_SeriesToSeriesTransformer):
     """Transformer that applies Outlier Detection to a
     univariate time series.
 
