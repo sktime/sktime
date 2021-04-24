@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+__author__ = ["Markus Löning", "Satya Pattnaik"]
+
 import numpy as np
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
