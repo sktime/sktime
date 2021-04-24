@@ -67,7 +67,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     import seaborn as sns
 
     for y in series:
-        
+
         check_y(y)
 
     n_series = len(series)
