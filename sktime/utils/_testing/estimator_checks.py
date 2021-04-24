@@ -34,9 +34,9 @@ from sktime.regression.base import BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
-from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
@@ -47,6 +47,7 @@ from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils.data_processing import is_nested_dataframe
+from sktime.utils import _has_tag
 
 
 def check_estimator(Estimator, exclude=None):
@@ -85,6 +86,7 @@ def yield_estimator_checks(exclude=None):
         check_methods_do_not_change_state,
         check_persistence_via_pickle,
         check_multiprocessing_idempotent,
+        check_valid_estimator_tags,
     ]
     for check in checks:
         # check if associated test is not included in the exclusion list
@@ -502,6 +504,12 @@ def check_multiprocessing_idempotent(Estimator):
                 )
 
 
+def check_valid_estimator_tags(Estimator):
+    # check if Estimator tags are in VALID_ESTIMATOR_TAGS
+    for tag in Estimator._all_tags().keys():
+        assert tag in VALID_ESTIMATOR_TAGS
+
+
 def _get_err_msg(estimator):
     return (
         f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
@@ -721,9 +729,3 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
-
-
-def _has_tag(Estimator, tag):
-    assert tag in VALID_ESTIMATOR_TAGS
-    # Check if tag is in all tags
-    return Estimator._all_tags().get(tag, False)
