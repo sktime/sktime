@@ -22,6 +22,9 @@ def check_pred_int(pred_int):
     Exception: when the number of columns is less or more than 2
         and column labels are not ['lower', 'upper']
     """
+    _check_soft_dependencies("pandas")
+    import pandas as pd
+    
     if isinstance(pred_int, pd.DataFrame):
         if pred_int.shape[1] == 2:
             if not pred_int.columns == ["lower", "upper"]:
