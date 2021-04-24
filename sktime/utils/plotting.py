@@ -10,12 +10,15 @@ import numpy as np
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 
+
 def check_pred_int(pred_int):
     """helper function to check pred_int data type
-    
+
+
     pred_int: pd.DataFrame
         Prediction intervals of series
-        
+
+
     Riases
     -------
     TypeError: when pred_int is not a pd.DataFrame
@@ -24,7 +27,8 @@ def check_pred_int(pred_int):
     """
     _check_soft_dependencies("pandas")
     import pandas as pd
-    
+
+
     if isinstance(pred_int, pd.DataFrame):
         if pred_int.shape[1] == 2:
             if not pred_int.columns == ["lower", "upper"]:
@@ -35,6 +39,7 @@ def check_pred_int(pred_int):
             raise Exception(f"{pred_int} must have exactly two columns")
     else:
         raise TypeError(f"{pred_int} must be a DataFrame")
+
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
     """Plot one or more time series
@@ -65,6 +70,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     for y in series:
         check_y(y)
         
+
     n_series = len(series)
 
     # labels
