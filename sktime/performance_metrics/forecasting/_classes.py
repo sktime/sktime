@@ -72,8 +72,7 @@ class _MetricFunctionWrapper(BaseEstimator):
             returns the negative of the metric. If `greater_is_better` attribute
             is False the metric is returned.
         """
-        sign = 1 if self.greater_is_better else -1
-        return sign * self._func(y_true, y_pred)
+        return self._func(y_true, y_pred)
 
 
 class _PercentageErrorMixIn:
