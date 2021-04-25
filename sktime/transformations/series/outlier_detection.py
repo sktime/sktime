@@ -19,7 +19,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_length : int
+    window_length : int, optional (default=10)
         Lenght of the sliding window
     n_sigma : int, optional
         Defines how strong a point must outly to be an "outlier", by default 3
@@ -51,7 +51,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
         "skip-inverse-transform": True,
     }
 
-    def __init__(self, window_length, n_sigma=3, k=1.4826, return_bool=False):
+    def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
 
         self.window_length = window_length
         self.n_sigma = n_sigma
