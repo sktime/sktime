@@ -9,6 +9,7 @@ import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
+import pandas as pd
 
 
 def check_pred_int(pred_int):
@@ -25,14 +26,11 @@ def check_pred_int(pred_int):
     Exception: when the number of columns is less or more than 2
         and column labels are not ['lower', 'upper']
     """
-    _check_soft_dependencies("pandas")
-    import pandas as pd
-
     if isinstance(pred_int, pd.DataFrame):
         if pred_int.shape[1] == 2:
             if not pred_int.columns.isin(["lower", "upper"]).all():
-                raise Exception(
-                    f"{pred_int} must have 'lower' and 'upper' boundary columns"
+                raise ValueError(
+                    "Both DataFrame column labels must be 'lower' and 'upper'"
                 )
         else:
             raise Exception(f"{pred_int} must have exactly two columns")
