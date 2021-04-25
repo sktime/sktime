@@ -32,7 +32,6 @@ from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._reduce import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
@@ -514,7 +513,7 @@ def test_reductions_airline_data(forecaster, expected):
     np.testing.assert_almost_equal(actual, expected)
 
 
-def test_dirrec_correctness(get_data):
+def test_dirrec_against_recursive_accumulated_error(get_data):
     # recursive and dirrec regressor strategies
     # dirrec regressor should produce lower error due to less cumulative error
     y, y_train, y_test, fh = get_data
@@ -529,36 +528,3 @@ def test_dirrec_correctness(get_data):
     preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
 
     assert smape_loss(y_test, preds_dirrec) < smape_loss(y_test, preds_recursive)
-
-
-def test_dirrec_overloading(get_data):
-    y, y_train, y_test, fh = get_data
-
-    # Both overloads of dirrec should give the same result
-    regressor = [LinearRegression()] * len(fh)
-    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
-
-    preds_dirrec_multiple = dirrec.fit(y_train, fh=fh).predict(fh)
-
-    regressor = LinearRegression()
-    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
-
-    preds_dirrec_single = dirrec.fit(y_train, fh=fh).predict(fh)
-
-    assert (preds_dirrec_multiple == preds_dirrec_single).all()
-
-
-def test_dirrec_incorrect_num_regressors(get_data):
-    y, y_train, y_test, fh = get_data
-
-    regressor = [LinearRegression()] * (len(fh) + 1)
-    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
-
-    with pytest.raises(ValueError):
-        _ = dirrec.fit(y_train, fh=fh).predict(fh)
-
-    regressor = [LinearRegression()] * (len(fh) - 1)
-    dirrec = ReducedForecaster(regressor, scitype="regressor", strategy="dirrec")
-
-    with pytest.raises(ValueError):
-        _ = dirrec.fit(y_train, fh=fh).predict(fh)
