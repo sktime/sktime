@@ -18,7 +18,8 @@ class Imputer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    method : Method to fill values.
+    method : str, optional (default="drift")
+        Method to fill the missing values values.
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
         * "linear" : linear interpolation, by pd.Series.interpolate()
         * "nearest" : use nearest value, by pd.Series.interpolate()
@@ -59,7 +60,7 @@ class Imputer(_SeriesToSeriesTransformer):
 
     def __init__(
         self,
-        method,
+        method="drift",
         random_state=None,
         value=None,
         forecaster=None,
