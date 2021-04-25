@@ -505,6 +505,9 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
+        if X is not None:
+            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
+
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
         if not self._is_predictable(y_last):
@@ -807,13 +810,14 @@ def make_reduction(
         Either a tabular regressor from scikit-learn or a time series regressor from
         sktime.
     strategy : str, optional (default="recursive")
-        The strategy to generate forecasts. Must be one of "direct", "recursive" or
-        "multioutput".
+        The strategy to generate forecasts. Must be one of "direct", "recursive",
+        "multioutput" or "dirrec".
     window_length : int, optional (default=10)
         Window length used in sliding window transformation.
     scitype : str, optional (default="infer")
-        Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
-        the scitype cannot be inferred, please specify it explicitly.
+        The scientific type of the estimator. Must be one of "infer",
+        "tabular-regressor" or "time-series-regressor". If the scitype cannot be
+        inferred, please specify it explicitly.
 
     Returns
     -------

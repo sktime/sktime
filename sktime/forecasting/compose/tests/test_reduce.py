@@ -32,28 +32,18 @@ from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.forecasting.compose._reduce import DirRecTabularRegressionForecaster
-from sktime.forecasting.compose._reduce import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import DirRecTabularRegressionForecaster
+from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = [13, 17]
 N_VARIABLES = [1, 3]
+STRATEGIES = ["recursive", "direct", "multioutput", "dirrec"]
 FH = ForecastingHorizon(1)
-
-
-@pytest.fixture
-def get_data():
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y, test_size=24)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-    return y, y_train, y_test, fh
-
-
-def test_factory_method_recursive(get_data):
-    (y, y_train, y_test, fh) = get_data
 
 
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
@@ -200,7 +190,7 @@ def _make_y(start, end, method="linear-trend", slope=1):
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput", "dirrec"])
+@pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize(
     "regressor, scitype",
     [
@@ -216,7 +206,7 @@ def _make_y(start, end, method="linear-trend", slope=1):
         ("linear-trend", 0),  # constant
     ],
 )
-def test_linear_extrapolation(
+def test_linear_extrapolation_endogenous_only(
     fh, window_length, strategy, method, slope, regressor, scitype
 ):
     n_timepoints = 13
@@ -237,22 +227,24 @@ def test_linear_extrapolation(
 
 @pytest.mark.parametrize("fh", [1, 3, 5])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
+@pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize("scitype", ["time-series-regressor", "tabular-regressor"])
-def test_dummy_regressor_mean_prediction(fh, window_length, strategy, scitype):
+def test_dummy_regressor_mean_prediction_endogenous_only(
+    fh, window_length, strategy, scitype
+):
     # The DummyRegressor ignores the input feature data X, hence we can use it for
     # testing reduction from forecasting to both tabular and time series regression.
     # The DummyRegressor also supports the 'multioutput' strategy.
-    y, X = make_forecasting_problem(make_X=True)
+    y = make_forecasting_problem()
     fh = check_fh(fh)
-    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+    y_train, y_test = temporal_train_test_split(y, fh=fh)
 
     regressor = DummyRegressor(strategy="mean")
     forecaster = make_reduction(
         regressor, scitype=scitype, window_length=window_length, strategy=strategy
     )
-    forecaster.fit(y_train, X_train, fh=fh)
-    actual = forecaster.predict(X=X_test)
+    forecaster.fit(y_train, fh=fh)
+    actual = forecaster.predict()
 
     if strategy == "recursive":
         # For the recursive strategy, we always use the first-step ahead as the
@@ -279,7 +271,7 @@ _REGISTRY = [
     ("time-series-regressor", "direct", DirectTimeSeriesRegressionForecaster),
     ("time-series-regressor", "recursive", RecursiveTimeSeriesRegressionForecaster),
     ("time-series-regressor", "multioutput", MultioutputTimeSeriesRegressionForecaster),
-    # ("time-series-regressor", "dirrec", DirRecTimeSeriesRegressionForecaster),
+    ("time-series-regressor", "dirrec", DirRecTimeSeriesRegressionForecaster),
 ]
 
 
@@ -321,7 +313,7 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
     forecaster = make_reduction(
         estimator, strategy=strategy, window_length=window_length
     )
-    forecaster.fit(y_train, X_train, FH)
+    forecaster.fit(y_train, X_train, fh=FH)
     forecaster.predict(X=X_test)
 
     # Get recorded data.
@@ -513,10 +505,12 @@ def test_reductions_airline_data(forecaster, expected):
     np.testing.assert_almost_equal(actual, expected)
 
 
-def test_dirrec_against_recursive_accumulated_error(get_data):
+def test_dirrec_against_recursive_accumulated_error():
     # recursive and dirrec regressor strategies
     # dirrec regressor should produce lower error due to less cumulative error
-    y, y_train, y_test, fh = get_data
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=24)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     estimator = LinearRegression()
     recursive = make_reduction(
