@@ -450,29 +450,6 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _list_transform(self):
-        # Three possibilities. We are either provided with a list that's too long,
-        # or a list of the same length/shorter,
-        # or a single regressor.
-        len_fh = len(self.fh)
-
-        regressors = np.empty(len_fh, dtype=object)
-        try:
-            if len(self.regressor) != len_fh:
-                raise ValueError(
-                    "When using a list with regressors, the regressor list must"
-                    " be equal in length to the forecasting horizon."
-                )
-
-            for i in range(len_fh):
-                regressors[i] = clone(self.regressor[i % len(self.regressor)])
-
-        except TypeError:
-            for i in range(len_fh):
-                regressors[i] = clone(self.regressor)
-
-        return regressors
-
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -497,17 +474,29 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
         # transform data using rolling window split
         yt, Xt = self._transform(y, X)
 
-        # perform conversion to list from provided regressors
-        self.estimators_ = []
+        # We cast the 2d tabular array into a 3d panel array to handle data
+        # more consistently.
+        if self._estimator_scitype == "tabular-regressor":
+            Xt = np.expand_dims(Xt, axis=1)
 
-        # X_fit = np.column_stack([Xt, np.empty(Xt.shape[0], len(self.fh))])
-        # We here use the observed data, rather then predicted values.
-        X_fit = np.column_stack([Xt, yt])
-        n_columns = Xt.shape[1]
+        # This only works without exogenous variables. To support exogenous
+        # variables, we need additional values for X.
+        X_full = np.concatenate([Xt, np.expand_dims(yt, axis=1)], axis=2)
+
+        self.estimators_ = []
+        n_timepoints = Xt.shape[2]
 
         for i in range(len(self.fh)):
             estimator = clone(self.estimator)
-            estimator.fit(X_fit[:, : n_columns + i], yt[:, i])
+
+            # Slice data using expanding window.
+            X_fit = X_full[:, :, : n_timepoints + i]
+
+            # We need to make sure that X has the same order as used in fit.
+            if self._estimator_scitype == "tabular-regressor":
+                X_fit = X_fit.reshape(X_fit.shape[0], -1)
+
+            estimator.fit(X_fit, yt[:, i])
             self.estimators_.append(estimator)
 
         self._is_fitted = True
@@ -521,34 +510,33 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
         if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
-        if self._X is None:
-            n_columns = 1
-        else:
-            # X is ignored here, since we currently only look at lagged values for
-            # exogenous variables and not contemporaneous ones.
-            n_columns = self._X.shape[1] + 1
-
         # Pre-allocate arrays.
         window_length = self.window_length_
-        X_pred = np.zeros((1, n_columns, window_length))
+
+        # n_columns is hard-coded to 1 here, since exogenous variables are not yet
+        # supported.
+        n_columns = 1
+        X_full = np.zeros((1, n_columns, window_length + len(self.fh)))
 
         # Fill pre-allocated arrays with available data.
-        X_pred[:, 0, :] = y_last
-        if self._X is not None:
-            X_pred[:, 1:, :] = X_last.T
+        X_full[:, 0, :window_length] = y_last
 
         # prepare recursive predictions
         y_pred = np.zeros(len(fh))
 
-        X_pred = X_pred.reshape(1, -1)
-        X_pred = np.column_stack([X_pred, np.empty((1, len(self.fh)))])
-
         # recursively predict iterating over forecasting horizon
         for i in range(len(self.fh)):
-            y_pred[i] = self.estimators_[i].predict(X_pred[:, : window_length + i])
+
+            X_pred = X_full[:, :, : window_length + i]
+
+            # We need to make sure that X has the same order as used in fit.
+            if self._estimator_scitype == "tabular-regressor":
+                X_pred = X_pred.reshape(1, -1)
+
+            y_pred[i] = self.estimators_[i].predict(X_pred)
 
             # update last window with previous prediction
-            X_pred[:, window_length + i] = y_pred[i]
+            X_full[:, :, window_length + i] = y_pred[i]
 
         return y_pred
 
@@ -694,6 +682,31 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    """
+
+    _estimator_scitype = "time-series-regressor"
+
+
+class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
+    """
+    Forecasting based on reduction to time-series regression with the
+    DirRec (hybrid) strategy.
+    For the DirRec strategy, a separate forecaster is fitted
+    for each step ahead of the forecasting horizon and then
+    the previous forecasting horizon is added as an input
+    for training the next forecaster, following the Recusrive
+    strategy.
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -875,7 +888,7 @@ def _get_forecaster(scitype, strategy):
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster,
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
-            # "dirrec": DirRecTimeSeriesRegressionForecaster,
+            "dirrec": DirRecTimeSeriesRegressionForecaster,
         },
     }
     return registry[scitype][strategy]
