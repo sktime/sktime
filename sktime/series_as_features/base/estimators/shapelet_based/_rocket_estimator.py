@@ -83,7 +83,7 @@ class BaseROCKETEstimator(ABC):
 
     @property
     @abstractmethod
-    def base_model(self):
+    def base_estimator(self):
         pass
 
     def fit(self, X, y):
@@ -114,7 +114,7 @@ class BaseROCKETEstimator(ABC):
                     Rocket(
                         num_kernels=self.num_kernels, random_state=self.random_state
                     ),
-                    self.base_model,
+                    self.base_estimator,
                 )
                 rocket_pipeline.fit(X, y)
                 self.classifiers.append(rocket_pipeline)
@@ -123,7 +123,7 @@ class BaseROCKETEstimator(ABC):
         else:
             rocket_pipeline = make_pipeline(
                 Rocket(num_kernels=self.num_kernels, random_state=self.random_state),
-                self.base_model,
+                self.base_estimator,
             )
             rocket_pipeline.fit(X, y)
             self.classifiers.append(rocket_pipeline)

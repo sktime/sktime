@@ -53,12 +53,5 @@ class ROCKETRegressor(BaseROCKETEstimator, BaseRegressor):
     """
 
     @property
-    def base_model(self):
+    def base_estimator(self):
         return RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-    }

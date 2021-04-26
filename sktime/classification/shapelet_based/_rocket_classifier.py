@@ -53,14 +53,7 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
 
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-    }
-
     # Used in BaseROCKETEstimator
     @property
-    def base_model(self):
+    def base_estimator(self):
         return RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
