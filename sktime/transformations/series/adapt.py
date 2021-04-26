@@ -36,13 +36,22 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
     setting.
 
     This is useful for applying scikit-learn transformations to series,
-    but only works with transformations that do not require multiple instances for
-    fitting.
+    but only works with transformations that do not require multiple
+    instances for fitting.
 
     Parameters
     ----------
     transformer : Estimator
         scikit-learn-like transformer to fit and apply to series
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = TabularToSeriesAdaptor(MinMaxScaler())
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _required_parameters = ["transformer"]
