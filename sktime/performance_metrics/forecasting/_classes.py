@@ -75,7 +75,7 @@ class _MetricFunctionWrapper(BaseEstimator):
         return self._func(y_true, y_pred)
 
 
-class _PercentageErrorMixIn:
+class _PercentageErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -102,7 +102,7 @@ class _PercentageErrorMixIn:
         return self._func(y_true, y_pred, symmetric=self.symmetric)
 
 
-class _SquaredErrorMixIn:
+class _SquaredErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -129,7 +129,7 @@ class _SquaredErrorMixIn:
         return self._func(y_true, y_pred, square_root=self.square_root)
 
 
-class _SquaredPercentageErrorMixIn:
+class _SquaredPercentageErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -162,7 +162,7 @@ class _SquaredPercentageErrorMixIn:
         )
 
 
-class _AsymmetricErrorMixIn:
+class _AsymmetricErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -191,7 +191,7 @@ class _AsymmetricErrorMixIn:
         )
 
 
-class _RelativeLossMixIn:
+class _RelativeLossMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -224,7 +224,7 @@ class _ScaledMetricFunctionWrapper(_MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWrapper):
+class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixin, _MetricFunctionWrapper):
     def __init__(
         self, func, name=None, greater_is_better=False, sp=1, square_root=False
     ):
@@ -233,20 +233,20 @@ class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWra
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _PercentageMetricFunctionWrapper(_PercentageErrorMixIn, _MetricFunctionWrapper):
+class _PercentageMetricFunctionWrapper(_PercentageErrorMixin, _MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, symmetric=True):
         self.symmetric = symmetric
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _SquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWrapper):
+class _SquaredMetricFunctionWrapper(_SquaredErrorMixin, _MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, square_root=False):
         self.square_root = square_root
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
 class _SquaredPercentageMetricFunctionWrapper(
-    _SquaredPercentageErrorMixIn, _MetricFunctionWrapper
+    _SquaredPercentageErrorMixin, _MetricFunctionWrapper
 ):
     def __init__(
         self,
@@ -261,7 +261,7 @@ class _SquaredPercentageMetricFunctionWrapper(
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, _MetricFunctionWrapper):
+class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixin, _MetricFunctionWrapper):
     def __init__(
         self,
         func,
@@ -277,7 +277,7 @@ class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, _MetricFunctionWra
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _RelativeLossMetricFunctionWrapper(_RelativeLossMixIn, _MetricFunctionWrapper):
+class _RelativeLossMetricFunctionWrapper(_RelativeLossMixin, _MetricFunctionWrapper):
     def __init__(
         self,
         func,
