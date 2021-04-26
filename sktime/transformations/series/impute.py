@@ -18,7 +18,8 @@ class Imputer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    method : Method to fill values.
+    method : str, optional (default="drift")
+        Method to fill the missing values values.
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
         * "linear" : linear interpolation, by pd.Series.interpolate()
         * "nearest" : use nearest value, by pd.Series.interpolate()
@@ -40,6 +41,14 @@ class Imputer(_SeriesToSeriesTransformer):
         as heuristic.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Imputer(method="drift")
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
@@ -51,7 +60,7 @@ class Imputer(_SeriesToSeriesTransformer):
 
     def __init__(
         self,
-        method,
+        method="drift",
         random_state=None,
         value=None,
         forecaster=None,

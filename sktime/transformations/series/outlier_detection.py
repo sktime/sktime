@@ -19,7 +19,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_length : int
+    window_length : int, optional (default=10)
         Lenght of the sliding window
     n_sigma : int, optional
         Defines how strong a point must outly to be an "outlier", by default 3
@@ -35,7 +35,13 @@ class HampelFilter(_SeriesToSeriesTransformer):
     Hampel F. R., "The influence curve and its role in robust estimation",
     Journal of the American Statistical Association, 69, 382–393, 1974
 
-    https://github.com/MichaelisTrofficus/hampel_filter
+    Example
+    ----------
+    >>> from sktime.transformations.series.outlier_detection import HampelFilter
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = HampelFilter(window_length=10)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
@@ -45,7 +51,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
         "skip-inverse-transform": True,
     }
 
-    def __init__(self, window_length, n_sigma=3, k=1.4826, return_bool=False):
+    def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
 
         self.window_length = window_length
         self.n_sigma = n_sigma
