@@ -2,7 +2,7 @@
 """ RandOm Convolutional KErnel Transform (ROCKET)
 """
 
-__author__ = "RavenRudi"
+__author__ = ["RavenRudi"]
 __all__ = ["ROCKETRegressor"]
 
 import numpy as np
