@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-__all__ = ["is_int", "check_n_jobs"]
-__author__ = ["Markus Löning"]
+__all__ = ["is_int", "is_float", "check_n_jobs", "check_window_length"]
+__author__ = ["Markus Löning", "Taiwo Owoseni"]
 
 import os
 
@@ -14,9 +14,8 @@ def is_int(x):
 
 
 def is_float(x):
-    """Check if x is of integer type, but not boolean"""
-    # boolean are subclasses of integers in Python, so explicitly exclude them
-    return isinstance(x, (float, np.floating)) and not isinstance(x, bool)
+    """Check if x is of float type"""
+    return isinstance(x, (float, np.floating))
 
 
 def check_n_jobs(n_jobs):
@@ -61,24 +60,14 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
 
         if n_timepoints is None:
             n_timepoints = 1
-        elif not is_int(n_timepoints) or n_timepoints is None:
-            raise ValueError("n_timepoints must be a positive integer >= 1")
 
-        valid = False
         if is_int(window_length) and window_length >= 1:
-            valid = True
-
-        elif not valid and (is_float(window_length) and 0 < window_length < 1):
-            valid = True
-            window_length = int(np.ceil(window_length * n_timepoints))
+            return window_length
 
         elif is_float(window_length) and 0 < window_length < 1:
-            raise Exception(
-                f"if window_lenght : {window_length} is a float, "
-                f" n_timepoints cannot be None. input n_timepoints"
-            )
+            window_length = int(np.ceil(window_length * n_timepoints))
 
-        elif not valid:
+        else:
             raise ValueError(
                 f"`{name}` must be a positive integer >= 1, "
                 f"float between 0 and 1, or None "
