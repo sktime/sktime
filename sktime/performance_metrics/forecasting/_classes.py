@@ -330,7 +330,7 @@ class MeanAbsoluteScaledError(_ScaledMetricFunctionWrapper):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of the data
 
     Attributes
@@ -364,11 +364,13 @@ class MeanAbsoluteScaledError(_ScaledMetricFunctionWrapper):
           International Journal of Forecasting, Volume 3
     """
 
-    def __init__(self):
+    def __init__(self, sp=1):
         name = "MeanAbsoluteScaledError"
         func = mean_absolute_scaled_error
         greater_is_better = False
-        super().__init__(func=func, name=name, greater_is_better=greater_is_better)
+        super().__init__(
+            func=func, name=name, greater_is_better=greater_is_better, sp=sp
+        )
 
 
 class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
@@ -393,7 +395,7 @@ class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of data.
 
     Attributes
@@ -427,11 +429,13 @@ class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
           International Journal of Forecasting, Volume 3
     """
 
-    def __init__(self):
+    def __init__(self, sp=1):
         name = "MedianAbsoluteScaledError"
         func = median_absolute_scaled_error
         greater_is_better = False
-        super().__init__(func=func, name=name, greater_is_better=greater_is_better)
+        super().__init__(
+            func=func, name=name, greater_is_better=greater_is_better, sp=sp
+        )
 
 
 class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
@@ -453,7 +457,7 @@ class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of data.
 
     square_root : bool, default = False
@@ -490,7 +494,7 @@ class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    def __init__(self, square_root=False):
+    def __init__(self, sp=1, square_root=False):
         name = "MeanSquaredScaledError"
         func = mean_squared_scaled_error
         greater_is_better = False
@@ -498,6 +502,7 @@ class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
             func=func,
             name=name,
             greater_is_better=greater_is_better,
+            sp=1,
             square_root=square_root,
         )
 
@@ -558,7 +563,7 @@ class MedianSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    def __init__(self, square_root=False):
+    def __init__(self, sp=1, square_root=False):
         name = "MedianSquaredScaledError"
         func = median_squared_scaled_error
         greater_is_better = False
@@ -566,6 +571,7 @@ class MedianSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
             func=func,
             name=name,
             greater_is_better=greater_is_better,
+            sp=sp,
             square_root=square_root,
         )
 
@@ -1268,16 +1274,6 @@ class RelativeLoss(_RelativeLossMetricFunctionWrapper):
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Forecasted values from benchmark method.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
