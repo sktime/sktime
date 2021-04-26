@@ -60,22 +60,7 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
         "missing_values": False,
     }
 
-    def fit(self, X, y):
-        """
-        Build a single or ensemble of pipelines containing the ROCKET transformer and
-        RidgeClassifierCV classifier.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-
-        return super().fit(
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True), X, y
-        )
+    # Used in BaseROCKETEstimator
+    @property
+    def base_model(self):
+        return RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)

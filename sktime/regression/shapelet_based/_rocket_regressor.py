@@ -52,38 +52,13 @@ class ROCKETRegressor(BaseROCKETEstimator, BaseRegressor):
 
     """
 
+    @property
+    def base_model(self):
+        return RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+
     # Capability tags
     capabilities = {
         "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
     }
-
-    def __init__(
-        self,
-        num_kernels=10000,
-        ensemble=False,
-        ensemble_size=25,
-        random_state=None,
-    ):
-
-        super().__init__(num_kernels, ensemble, ensemble_size, random_state)
-        super().__init__()
-
-    def fit(self, X, y):
-        """
-        Build a single or ensemble of pipelines containing the ROCKET transformer and
-        RidgeCV regressor.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        super().fit(RidgeCV(alphas=np.logspace(-3, 3, 10), normalize=True), X, y)
-        return self

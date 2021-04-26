@@ -3,9 +3,9 @@
 """
 
 __author__ = "Raven Rudi"
-# TODO
 __all__ = ["BaseROCKETEstimator"]
 
+from abc import ABC, abstractmethod
 import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
@@ -16,7 +16,7 @@ from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-class BaseROCKETEstimator:
+class BaseROCKETEstimator(ABC):
     """
     Base class for ROCKET classifier and ROCKET regressor.
 
@@ -79,17 +79,20 @@ class BaseROCKETEstimator:
         self.classes_ = []
         self.class_dictionary = {}
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        super().__init__()
 
-    def fit(self, base_model, X, y):
+    @property
+    @abstractmethod
+    def base_model(self):
+        pass
+
+    def fit(self, X, y):
         """
         Build a single or ensemble of pipelines containing the ROCKET transformer and
-        the provided base model.
+        the provided base model. Base_model is set by the child class.
 
         Parameters
         ----------
-        base_model : Model the output of ROCKET transformer is fed into.
         X : nested pandas DataFrame of shape [n_instances, 1]
             Nested dataframe with univariate time-series in cells.
         y : array-like, shape = [n_instances] The class labels.
@@ -111,7 +114,7 @@ class BaseROCKETEstimator:
                     Rocket(
                         num_kernels=self.num_kernels, random_state=self.random_state
                     ),
-                    base_model,
+                    self.base_model,
                 )
                 rocket_pipeline.fit(X, y)
                 self.classifiers.append(rocket_pipeline)
@@ -120,7 +123,7 @@ class BaseROCKETEstimator:
         else:
             rocket_pipeline = make_pipeline(
                 Rocket(num_kernels=self.num_kernels, random_state=self.random_state),
-                base_model,
+                self.base_model,
             )
             rocket_pipeline.fit(X, y)
             self.classifiers.append(rocket_pipeline)
