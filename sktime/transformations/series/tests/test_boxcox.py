@@ -10,7 +10,6 @@ import pytest
 from scipy.stats import boxcox
 from sktime.datasets import load_airline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from pytest import approx
 
 
 def test_boxcox_against_scipy():
@@ -60,4 +59,4 @@ def test_guerrero_against_r_implementation(bounds, r_lambda):
     y = load_airline()
     t = BoxCoxTransformer(bounds=bounds, method="guerrero", sp=20)
     t.fit(y)
-    assert t.lambda_ == approx(r_lambda, abs=1e-4)
+    np.testing.assert_almost_equal(t.lambda_, r_lambda, decimal=4)
