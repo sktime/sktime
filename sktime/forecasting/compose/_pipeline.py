@@ -137,7 +137,7 @@ class TransformedTargetForecaster(
         yt = check_y(y)
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            yt = t.fit_transform(yt)
+            yt = t.fit_transform(yt, X)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
@@ -151,14 +151,24 @@ class TransformedTargetForecaster(
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         forecaster = self.steps_[-1][1]
-        y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        if return_pred_int:
+            y_pred, pred_int = forecaster.predict(
+                fh, X, return_pred_int=return_pred_int, alpha=alpha
+            )
+        else:
+            y_pred = forecaster.predict(
+                fh, X, return_pred_int=return_pred_int, alpha=alpha
+            )
 
         for _, _, transformer in self._iter_transformers(reverse=True):
             # skip sktime transformers where inverse transform
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             if not _has_tag(transformer, "skip-inverse-transform"):
-                y_pred = transformer.inverse_transform(y_pred)
-        return y_pred
+                y_pred = transformer.inverse_transform(y_pred, X)
+        if return_pred_int:
+            return y_pred, pred_int
+        else:
+            return y_pred
 
     def update(self, y, X=None, update_params=True):
         """Update fitted parameters
