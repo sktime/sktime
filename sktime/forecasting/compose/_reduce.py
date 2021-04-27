@@ -20,7 +20,7 @@ __all__ = [
     "RecursiveTabularRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
     "DirRecTabularRegressionForecaster",
-    # "DirRecTimeSeriesRegressionForecaster",
+    "DirRecTimeSeriesRegressionForecaster",
     "ReducedForecaster",
     "ReducedRegressionForecaster",
 ]
@@ -672,7 +672,6 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     """
 
     _estimator_scitype = "time-series-regressor"
-    pass
 
 
 class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
