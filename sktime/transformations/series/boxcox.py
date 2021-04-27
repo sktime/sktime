@@ -21,6 +21,58 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
+class BoxCoxTransformer(_SeriesToSeriesTransformer):
+    """
+    Example
+    ----------
+    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = BoxCoxTransformer()
+    >>> y_hat = transformer.fit_transform(y)
+    """
+
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+
+    def __init__(self, bounds=None, method="mle"):
+        self.bounds = bounds
+        self.method = method
+        self.lambda_ = None
+        super(BoxCoxTransformer, self).__init__()
+
+    def fit(self, Z, X=None):
+        z = check_series(Z, enforce_univariate=True)
+        self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
+        self._is_fitted = True
+        return self
+
+    def transform(self, Z, X=None):
+        self.check_is_fitted()
+        z = check_series(Z, enforce_univariate=True)
+        zt = boxcox(z.to_numpy(), self.lambda_)
+        return pd.Series(zt, index=z.index)
+
+    def inverse_transform(self, Z, X=None):
+        self.check_is_fitted()
+        z = check_series(Z, enforce_univariate=True)
+        zt = inv_boxcox(z.to_numpy(), self.lambda_)
+        return pd.Series(zt, index=z.index)
+
+
+class LogTransformer(_SeriesToSeriesTransformer):
+    _tags = {"transform-returns-same-time-index": True}
+
+    def transform(self, Z, X=None):
+        self.check_is_fitted()
+        Z = check_series(Z)
+        return np.log(Z)
+
+    def inverse_transform(self, Z, X=None):
+        self.check_is_fitted()
+        Z = check_series(Z)
+        return np.exp(Z)
+
+
 # TODO replace with scipy version once PR for adding bounds is merged
 def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
     # bounds is None, use simple Brent optimisation
@@ -153,45 +205,3 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         # Find confidence interval
         interval = _boxcox_conf_interval(x, lmax, alpha)
         return y, lmax, interval
-
-
-class BoxCoxTransformer(_SeriesToSeriesTransformer):
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
-
-    def __init__(self, bounds=None, method="mle"):
-        self.bounds = bounds
-        self.method = method
-        self.lambda_ = None
-        super(BoxCoxTransformer, self).__init__()
-
-    def fit(self, Z, X=None):
-        z = check_series(Z, enforce_univariate=True)
-        self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
-        self._is_fitted = True
-        return self
-
-    def transform(self, Z, X=None):
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        zt = boxcox(z.to_numpy(), self.lambda_)
-        return pd.Series(zt, index=z.index)
-
-    def inverse_transform(self, Z, X=None):
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        zt = inv_boxcox(z.to_numpy(), self.lambda_)
-        return pd.Series(zt, index=z.index)
-
-
-class LogTransformer(_SeriesToSeriesTransformer):
-    _tags = {"transform-returns-same-time-index": True}
-
-    def transform(self, Z, X=None):
-        self.check_is_fitted()
-        Z = check_series(Z)
-        return np.log(Z)
-
-    def inverse_transform(self, Z, X=None):
-        self.check_is_fitted()
-        Z = check_series(Z)
-        return np.exp(Z)

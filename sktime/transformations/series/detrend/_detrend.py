@@ -10,6 +10,7 @@ from sklearn.base import clone
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
+from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
@@ -36,7 +37,9 @@ class Detrender(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    forecaster : estimator object
+    forecaster : estimator object, optional
+        default=None. If None, PolynomialTrendForecaster(degree=1) is used.
+
         The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster)
 
@@ -44,12 +47,21 @@ class Detrender(_SeriesToSeriesTransformer):
     ----------
     forecaster_ : estimator object
         Model that defines the trend in the series
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Detrender(forecaster=PolynomialTrendForecaster(degree=1))
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _required_parameters = ["forecaster"]
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
-    def __init__(self, forecaster):
+    def __init__(self, forecaster=None):
         self.forecaster = forecaster
         self.forecaster_ = None
         super(Detrender, self).__init__()
@@ -70,6 +82,8 @@ class Detrender(_SeriesToSeriesTransformer):
         self : an instance of self
         """
         z = check_series(Z, enforce_univariate=True)
+        if self.forecaster is None:
+            self.forecaster = PolynomialTrendForecaster(degree=1)
         forecaster = clone(self.forecaster)
         self.forecaster_ = forecaster.fit(z, X)
         self._is_fitted = True
