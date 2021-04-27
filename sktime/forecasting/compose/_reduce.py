@@ -441,6 +441,8 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
     strategy = "dirrec"
 
     def _transform(self, y, X=None):
+        # Note that the transform for dirrec is the same as in the direct
+        # strategy.
         fh = self.fh.to_relative(self.cutoff)
         return _sliding_window_transform(
             y,
@@ -465,22 +467,27 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
         -------
         self : returns an instance of self.
         """
+        # Exogenous variables are not yet support for the dirrec strategy.
         if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not yet support exogenous "
+                f"variables `X`."
+            )
 
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
 
-        # transform data using rolling window split
+        # Transform the data using sliding-window.
         yt, Xt = self._transform(y, X)
 
-        # We cast the 2d tabular array into a 3d panel array to handle data
-        # more consistently.
+        # We cast the 2d tabular array into a 3d panel array to handle the data
+        # consistently for the reduction to tabular and time-series regression.
         if self._estimator_scitype == "tabular-regressor":
             Xt = np.expand_dims(Xt, axis=1)
 
         # This only works without exogenous variables. To support exogenous
-        # variables, we need additional values for X.
+        # variables, we need additional values for X to fill the array
+        # appropriately.
         X_full = np.concatenate([Xt, np.expand_dims(yt, axis=1)], axis=2)
 
         self.estimators_ = []
@@ -492,7 +499,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
             # Slice data using expanding window.
             X_fit = X_full[:, :, : n_timepoints + i]
 
-            # We need to make sure that X has the same order as used in fit.
+            # Convert to 2d tabular array for reduction to tabular regression.
             if self._estimator_scitype == "tabular-regressor":
                 X_fit = X_fit.reshape(X_fit.shape[0], -1)
 
@@ -505,40 +512,40 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
+        # Exogenous variables are not yet support for the dirrec strategy.
         if X is not None:
-            raise NotImplementedError("Exogenous variables `X` are not yet supported.")
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not yet support exogenous "
+                f"variables `X`."
+            )
 
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
         if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
-        # Pre-allocate arrays.
         window_length = self.window_length_
 
-        # n_columns is hard-coded to 1 here, since exogenous variables are not yet
-        # supported.
+        # Pre-allocated arrays.
+        # We set `n_columns` here to 1, because exogenous variables
+        # are not yet supported.
         n_columns = 1
         X_full = np.zeros((1, n_columns, window_length + len(self.fh)))
-
-        # Fill pre-allocated arrays with available data.
         X_full[:, 0, :window_length] = y_last
 
-        # prepare recursive predictions
         y_pred = np.zeros(len(fh))
 
-        # recursively predict iterating over forecasting horizon
         for i in range(len(self.fh)):
 
+            # Slice data using expanding window.
             X_pred = X_full[:, :, : window_length + i]
 
-            # We need to make sure that X has the same order as used in fit.
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(1, -1)
 
             y_pred[i] = self.estimators_[i].predict(X_pred)
 
-            # update last window with previous prediction
+            # Update the last window with previously predicted value.
             X_full[:, :, window_length + i] = y_pred[i]
 
         return y_pred
@@ -607,23 +614,21 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 class DirRecTabularRegressionForecaster(_DirRecReducer):
     """
     Forecasting based on reduction to tabular regression with the
-    DirRec (hybrid) strategy.
-    For the DirRec strategy, a separate forecaster is fitted
+    dirrec (hybrid) strategy.
+
+    For the dirrec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the Recusrive
+    for training the next forecaster, following the recusrive
     strategy.
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-        Define the regression model type.
+    estimator : sklearn estimator object
+        Tabular regressor.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -693,23 +698,21 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     """
     Forecasting based on reduction to time-series regression with the
-    DirRec (hybrid) strategy.
-    For the DirRec strategy, a separate forecaster is fitted
+    dirrec (hybrid) strategy.
+
+    For the dirrec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the Recusrive
+    for training the next forecaster, following the recusrive
     strategy.
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-        Define the regression model type.
+    estimator : sktime estimator object
+        Time-series regressor.
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
-    step_length : int, optional (default=1)
-        The number of time steps taken at each step of the sliding window
-        used to transform the series into a tabular matrix.
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -810,14 +813,13 @@ def make_reduction(
         Either a tabular regressor from scikit-learn or a time series regressor from
         sktime.
     strategy : str, optional (default="recursive")
-        The strategy to generate forecasts. Must be one of "direct", "recursive",
-        "multioutput" or "dirrec".
+        The strategy to generate forecasts. Must be one of "direct", "recursive" or
+        "multioutput".
     window_length : int, optional (default=10)
         Window length used in sliding window transformation.
     scitype : str, optional (default="infer")
-        The scientific type of the estimator. Must be one of "infer",
-        "tabular-regressor" or "time-series-regressor". If the scitype cannot be
-        inferred, please specify it explicitly.
+        Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
+        the scitype cannot be inferred, please specify it explicitly.
 
     Returns
     -------
