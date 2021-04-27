@@ -88,7 +88,7 @@ class BaseTransformer(BaseEstimator):
             return self.fit(Z).transform(Z)
         else:
             # Fit method of arity 2 (supervised transformation)
-            return self.fit(Z, X).transform(Z)
+            return self.fit(Z, X).transform(Z, X)
 
     # def inverse_transform(self, Z, X=None):
     #     raise NotImplementedError("abstract method")
