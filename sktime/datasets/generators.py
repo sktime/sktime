@@ -2,6 +2,9 @@
 """
 Generators for time series simulation
 """
+
+__author__ = ["Stuart Miller"]
+
 from abc import abstractmethod
 from typing import Union
 
@@ -107,6 +110,12 @@ class NoiseGenerator(Generator):
             A sample from a standard normal random process.
         """
 
+        if n_sample < 1:
+            raise ValueError(
+                "Value of n_sample must be greater than 0. "
+                f"Got {n_sample} for value of n_sample."
+            )
+
         if n_instance == 1:
             return pd.Series(self.random_state.normal(size=n_sample))
         elif n_instance > 1:
@@ -114,7 +123,7 @@ class NoiseGenerator(Generator):
         else:
             raise ValueError(
                 "Value of n_instance must be greater than 1. "
-                f"Got {n_instance} for value n_instance."
+                f"Got {n_instance} for value of n_instance."
             )
 
 
@@ -177,13 +186,13 @@ class ArmaGenerator(Generator):
         # set to coef sets to ndarrays (if not)
         # convert from coef to ar/ma polynomials
         if ar is None:
-            ar = np.array([1.0])
+            self.ar = np.array([1.0])
         else:
-            self.arparams = np.r_[1, -np.asarray(ar)]
+            self.ar = np.r_[1, -np.asarray(ar)]
         if ma is None:
-            ma = np.array([1.0])
+            self.ma = np.array([1.0])
         else:
-            self.maparams = np.r_[1, np.asarray(ma)]
+            self.ma = np.r_[1, np.asarray(ma)]
 
         # use random state generation
         if isinstance(random_state, RandomState):
@@ -208,9 +217,16 @@ class ArmaGenerator(Generator):
             Sample from an ARMA process.
         """
 
+        if n_sample < 1:
+            raise ValueError(
+                "Value of n_sample must be greater than 0. "
+                f"Got {n_sample} for value of n_sample."
+            )
+
+        # generate sample
         samp = arma_generate_sample(
-            self.arparams,
-            self.maparams,
+            self.ar,
+            self.ma,
             (n_instance, n_sample),
             distrvs=self.random_state.normal,
             burnin=self.burnin,
@@ -299,6 +315,12 @@ class LinearGenerator(Generator):
         Series
             A sample from a linear process.
         """
+
+        if n_sample < 1:
+            raise ValueError(
+                "Value of n_sample must be greater than 0. "
+                f"Got {n_sample} for value of n_sample."
+            )
 
         if n_instance == 1:
             signal = (
