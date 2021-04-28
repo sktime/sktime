@@ -14,6 +14,7 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation import check_window_length
+import scipy.stats as stats
 
 
 class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
@@ -83,7 +84,6 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         # X_train is ignored
         self._set_y_X(y, X)
         self._set_fh(fh)
-        self.data = y
         if self.strategy == "last":
             if self.sp == 1:
                 if self.window_length is not None:
@@ -238,9 +238,10 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                     y_pred = last_window[-1] + (fh_idx + 1) * slope
                     return y_pred
 
-    def _predict_intervals(self, fh, alpha=DEFAULT_ALPHA):
-        data = np.array(self.data)
-        T = len(data)  # T of the equation
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        fh = len(y_pred)
+        data = np.array(self._y)
+        T = len(data)
         K = 1
 
         actual = data[0 : T - 1]
@@ -249,34 +250,16 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         errors = (actual - predicted) ** 2
 
         sigma_hat = np.sqrt(np.sum(errors) / (T - K))
-        sigma_hat_h = sigma_hat * np.sqrt(fh)
 
+        if self.strategy == "last":
+            sigma_hat_h = sigma_hat * np.sqrt(fh)
+        elif self.strategy == "mean":
+            sigma_hat_h = sigma_hat * np.sqrt(1+(1/T))
+        elif self.strategy == "drift":
+            sigma_hat_h = sigma_hat * np.sqrt(fh(1+(fh/T)))
         predicted_val = data[T - 1]
-        # find C from alpha using Gaussian equation
-        # For now I will take multiplier using this Dictionary
-        # (values taken from the book tabel 5.1)
-        # In a future Commit I'll do it with the equation
-        # for normal distribution OR
-        # If there is anyother way
-        # (A Package currently using in sktime)
-        # please let me know
-        multipliers = {
-            0.50: 0.67,
-            0.55: 0.76,
-            0.60: 0.84,
-            0.65: 0.93,
-            0.70: 1.04,
-            0.75: 1.15,
-            0.80: 1.28,
-            0.85: 1.44,
-            0.90: 1.64,
-            0.95: 1.96,
-            0.96: 2.05,
-            0.97: 2.17,
-            0.98: 2.33,
-            0.99: 2.58,
-        }
-        C = multipliers[alpha]
+        C = stats.norm.ppf((1 + alpha)/2.)
+
         lower_bound = predicted_val - (C * sigma_hat_h)
         upper_bound = predicted_val + (C * sigma_hat_h)
         return (lower_bound, upper_bound)
