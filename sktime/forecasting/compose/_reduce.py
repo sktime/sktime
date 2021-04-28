@@ -160,7 +160,7 @@ class _Reducer(_BaseWindowForecaster):
         -------
         self : returns an instance of self.
         """
-        n_timepoints = y.shape[0]
+        n_timepoints = len(y)
         self._set_y_X(y, X)
         self._set_fh(fh)
 

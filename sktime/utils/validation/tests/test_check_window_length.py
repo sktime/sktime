@@ -5,10 +5,16 @@ import pytest
 from sktime.utils.validation import check_window_length
 
 
-def test_check_window_length():
-    # assert check_window_length(0.2) == 1  # true
-    # assert check_window_length(43) == 43  # True
-    assert check_window_length(None) is None  # True
+def test_check_float_window_length():
+    assert check_window_length(0.2) == 1
+
+
+def test_check_integer_window_length():
+    assert check_window_length(43) == 43
+
+
+def test_check_None_window_length():
+    assert check_window_length(None) is None
 
 
 def test_raises_exception_on_string_arg():
