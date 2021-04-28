@@ -300,13 +300,17 @@ class AutoETS(_StatsModelsAdapter):
             )
 
             # Select best model based on information criterion
+            # Ignore infinite likelihood models
             # Get index of best model
-            _index = np.argmin(
-                [
-                    getattr(result[1], self.information_criterion)
-                    for result in _fitted_results
-                ]
-            )
+            _ic_list = []
+            for result in _fitted_results:
+                ic = getattr(result[1], self.information_criterion)
+                if ic != -np.inf:
+                    _ic_list.append(ic)
+                else:
+                    _ic_list.append(np.nan)
+            _index = np.nanargmin(_ic_list)
+
             # Update best model
             self._forecaster = _fitted_results[_index][0]
             self._fitted_forecaster = _fitted_results[_index][1]
