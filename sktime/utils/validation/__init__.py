@@ -67,6 +67,8 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
         elif is_float(window_length) and 0 < window_length < 1:
             window_length = int(np.ceil(window_length * n_timepoints))
 
+        elif isinstance(window_length, str):
+            raise TypeError("Please provide a float or integer argument")
         else:
             raise ValueError(
                 f"`{name}` must be a positive integer >= 1, "
