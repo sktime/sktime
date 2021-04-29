@@ -11,7 +11,7 @@ import numpy as np
 # test results against R implementation on airline dataset
 y = load_airline()
 
-# dummy time series that results in infinite IC
+# dummy time series that results in infinite ICs
 inf_ic_ts = pd.Series(
     10 * np.sin(np.array(range(0, 264)) / 10) + 12,
     pd.date_range("2017-01-01", periods=264, freq="W"),
@@ -67,7 +67,7 @@ def test_inf_ic_true():
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=True)
     forecaster.fit(inf_ic_ts)
     fitted_forecaster = forecaster._fitted_forecaster
-    # check that none of the information criteria are finite
+    # check that none of the information criteria are infinite
     assert (
         np.isfinite(fitted_forecaster.aic)
         and np.isfinite(fitted_forecaster.bic)
@@ -75,12 +75,12 @@ def test_inf_ic_true():
     )
 
 
-# Don't ignore infinite IC models when ignore_inf_ic is True
+# Don't ignore infinite IC models when ignore_inf_ic is False
 def test_inf_ic_false():
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=False)
     forecaster.fit(inf_ic_ts)
     fitted_forecaster = forecaster._fitted_forecaster
-    # check that none of the information criteria are finite
+    # check that all of the information criteria are infinite
     assert (
         np.isinf(fitted_forecaster.aic)
         and np.isinf(fitted_forecaster.bic)
