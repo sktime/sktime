@@ -310,7 +310,7 @@ class AutoETS(_StatsModelsAdapter):
             _ic_list = []
             for result in _fitted_results:
                 ic = getattr(result[1], self.information_criterion)
-                if ic == -np.inf and self.ignore_inf_ic:
+                if self.ignore_inf_ic and np.isinf(ic):
                     _ic_list.append(np.nan)
                 else:
                     _ic_list.append(ic)
