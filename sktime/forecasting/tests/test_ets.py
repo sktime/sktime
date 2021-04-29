@@ -66,11 +66,12 @@ def test_airline_allow_multiplicative_trend():
 def test_inf_ic_true():
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=True)
     forecaster.fit(inf_ic_ts)
+    fitted_forecaster = forecaster._fitted_forecaster
     # check that none of the information criteria are finite
     assert (
-        np.isfinite(forecaster.aic)
-        and np.isfinite(forecaster.bic)
-        and np.isfinite(forecaster.bic)
+        np.isfinite(fitted_forecaster.aic)
+        and np.isfinite(fitted_forecaster.bic)
+        and np.isfinite(fitted_forecaster.aicc)
     )
 
 
@@ -78,9 +79,10 @@ def test_inf_ic_true():
 def test_inf_ic_false():
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=False)
     forecaster.fit(inf_ic_ts)
+    fitted_forecaster = forecaster._fitted_forecaster
     # check that none of the information criteria are finite
     assert (
-        np.isinf(forecaster.aic)
-        and np.isinf(forecaster.bic)
-        and np.isinf(forecaster.bic)
+        np.isinf(fitted_forecaster.aic)
+        and np.isinf(fitted_forecaster.bic)
+        and np.isinf(fitted_forecaster.aicc)
     )
