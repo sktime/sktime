@@ -953,6 +953,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ltsaprounis",
+      "name": "Leonidas Tsaprounis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64217214?v=4",
+      "profile": "https://github.com/ltsaprounis",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "projectName": "sktime",
