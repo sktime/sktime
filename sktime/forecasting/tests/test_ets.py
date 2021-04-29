@@ -4,10 +4,18 @@ __author__ = ["Hongyi Yang"]
 from numpy.testing import assert_array_equal
 from sktime.forecasting.ets import AutoETS
 from sktime.datasets import load_airline
+import pandas as pd
+import numpy as np
 
 
 # test results against R implementation on airline dataset
 y = load_airline()
+
+# dummy time series that lead to infinite IC
+inf_ic_ts = pd.Series(
+    10 * np.sin(np.array(range(0, 264)) / 10) + 12,
+    pd.date_range("2017-01-01", periods=264, freq="W"),
+)
 
 
 # Default condition
@@ -52,3 +60,27 @@ def test_airline_allow_multiplicative_trend():
     ]
 
     assert_array_equal(fit_result_R, fit_result)
+
+
+# Ignore infinite IC models when ignore_inf_ic is True
+def test_inf_ic_true():
+    forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=True)
+    forecaster.fit(inf_ic_ts)
+    # check that none of the information criteria are finite
+    assert (
+        np.isfinite(forecaster.aic)
+        and np.isfinite(forecaster.bic)
+        and np.isfinite(forecaster.bic)
+    )
+
+
+# Don't ignore infinite IC models when ignore_inf_ic is True
+def test_inf_ic_false():
+    forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=False)
+    forecaster.fit(inf_ic_ts)
+    # check that none of the information criteria are finite
+    assert (
+        np.isinf(forecaster.aic)
+        and np.isinf(forecaster.bic)
+        and np.isinf(forecaster.bic)
+    )
