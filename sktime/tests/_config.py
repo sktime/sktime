@@ -30,7 +30,9 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
+from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
 from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
@@ -136,6 +138,7 @@ ESTIMATOR_TEST_PARAMS = {
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
     MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
     RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
+    DirRecTabularRegressionForecaster: {"estimator": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
@@ -143,6 +146,9 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     MultioutputTimeSeriesRegressionForecaster: {
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
+    },
+    DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     TransformedTargetForecaster: {"steps": STEPS},
