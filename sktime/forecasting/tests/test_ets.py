@@ -11,7 +11,7 @@ import numpy as np
 # test results against R implementation on airline dataset
 y = load_airline()
 
-# dummy time series that lead to infinite IC
+# dummy time series that results in infinite IC
 inf_ic_ts = pd.Series(
     10 * np.sin(np.array(range(0, 264)) / 10) + 12,
     pd.date_range("2017-01-01", periods=264, freq="W"),
