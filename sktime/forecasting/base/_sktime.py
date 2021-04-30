@@ -637,10 +637,6 @@ class _BaseWindowForecaster(_SktimeForecaster):
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal predict"""
-        if return_pred_int:
-            # assuming alpha means the prediction coverage probability
-            intervals = self._predict_intervals(fh=fh, alpha=alpha)
-
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
         # all values are out-of-sample
@@ -664,10 +660,9 @@ class _BaseWindowForecaster(_SktimeForecaster):
             predictions = y_ins.append(y_oos)
 
         if return_pred_int:
-            # If predict interval requested then
-            # it will return pridictions with intervals
-            # else only the predictions to avoid errors.
+            intervals = self.compute_pred_int(y_pred=predictions, alpha=alpha)
             return predictions, intervals
+
         else:
             return predictions
 

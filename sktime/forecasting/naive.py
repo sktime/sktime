@@ -239,7 +239,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                     return y_pred
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        fh = len(y_pred)
+        fh = list(range(1, len(y_pred)+1))
         data = np.array(self._y)
         T = len(data)
         K = 1
