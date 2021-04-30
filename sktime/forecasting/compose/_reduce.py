@@ -2,7 +2,15 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Lovkush Agarwal", "Markus Löning"]
+
+__author__ = [
+    "Ayushmaan Seth",
+    "Kavin Anand",
+    "Luis Zugasti",
+    "Lovkush Agarwal",
+    "Markus Löning",
+]
+
 __all__ = [
     "make_reduction",
     "DirectTimeSeriesRegressionForecaster",
@@ -11,6 +19,8 @@ __all__ = [
     "DirectTabularRegressionForecaster",
     "RecursiveTabularRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
+    "DirRecTabularRegressionForecaster",
+    "DirRecTimeSeriesRegressionForecaster",
     "ReducedForecaster",
     "ReducedRegressionForecaster",
 ]
@@ -427,6 +437,120 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
         return y_pred[fh_idx]
 
 
+class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
+    strategy = "dirrec"
+
+    def _transform(self, y, X=None):
+        # Note that the transform for dirrec is the same as in the direct
+        # strategy.
+        fh = self.fh.to_relative(self.cutoff)
+        return _sliding_window_transform(
+            y,
+            window_length=self.window_length,
+            fh=fh,
+            X=X,
+            scitype=self._estimator_scitype,
+        )
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            For this estimator, exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        # Exogenous variables are not yet support for the dirrec strategy.
+        if X is not None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not yet support exogenous "
+                f"variables `X`."
+            )
+
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
+            raise NotImplementedError("In-sample predictions are not implemented")
+
+        # Transform the data using sliding-window.
+        yt, Xt = self._transform(y, X)
+
+        # We cast the 2d tabular array into a 3d panel array to handle the data
+        # consistently for the reduction to tabular and time-series regression.
+        if self._estimator_scitype == "tabular-regressor":
+            Xt = np.expand_dims(Xt, axis=1)
+
+        # This only works without exogenous variables. To support exogenous
+        # variables, we need additional values for X to fill the array
+        # appropriately.
+        X_full = np.concatenate([Xt, np.expand_dims(yt, axis=1)], axis=2)
+
+        self.estimators_ = []
+        n_timepoints = Xt.shape[2]
+
+        for i in range(len(self.fh)):
+            estimator = clone(self.estimator)
+
+            # Slice data using expanding window.
+            X_fit = X_full[:, :, : n_timepoints + i]
+
+            # Convert to 2d tabular array for reduction to tabular regression.
+            if self._estimator_scitype == "tabular-regressor":
+                X_fit = X_fit.reshape(X_fit.shape[0], -1)
+
+            estimator.fit(X_fit, yt[:, i])
+            self.estimators_.append(estimator)
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        # Exogenous variables are not yet support for the dirrec strategy.
+        if X is not None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not yet support exogenous "
+                f"variables `X`."
+            )
+
+        # Get last window of available data.
+        y_last, X_last = self._get_last_window()
+        if not self._is_predictable(y_last):
+            return self._predict_nan(fh)
+
+        window_length = self.window_length_
+
+        # Pre-allocated arrays.
+        # We set `n_columns` here to 1, because exogenous variables
+        # are not yet supported.
+        n_columns = 1
+        X_full = np.zeros((1, n_columns, window_length + len(self.fh)))
+        X_full[:, 0, :window_length] = y_last
+
+        y_pred = np.zeros(len(fh))
+
+        for i in range(len(self.fh)):
+
+            # Slice data using expanding window.
+            X_pred = X_full[:, :, : window_length + i]
+
+            if self._estimator_scitype == "tabular-regressor":
+                X_pred = X_pred.reshape(1, -1)
+
+            y_pred[i] = self.estimators_[i].predict(X_pred)
+
+            # Update the last window with previously predicted value.
+            X_full[:, :, window_length + i] = y_pred[i]
+
+        return y_pred
+
+
 class DirectTabularRegressionForecaster(_DirectReducer):
     """
     Forecasting based on reduction to tabular regression using the direct
@@ -487,6 +611,29 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     _estimator_scitype = "tabular-regressor"
 
 
+class DirRecTabularRegressionForecaster(_DirRecReducer):
+    """
+    Forecasting based on reduction to tabular regression with the
+    dirrec (hybrid) strategy.
+
+    For the dirrec strategy, a separate forecaster is fitted
+    for each step ahead of the forecasting horizon and then
+    the previous forecasting horizon is added as an input
+    for training the next forecaster, following the recusrive
+    strategy.
+
+    Parameters
+    ----------
+    estimator : sklearn estimator object
+        Tabular regressor.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    """
+
+    _estimator_scitype = "tabular-regressor"
+
+
 class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     """
     Forecasting based on reduction to time-series regression using the direct
@@ -524,7 +671,6 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
-    pass
     _estimator_scitype = "time-series-regressor"
 
 
@@ -543,6 +689,29 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    """
+
+    _estimator_scitype = "time-series-regressor"
+
+
+class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
+    """
+    Forecasting based on reduction to time-series regression with the
+    dirrec (hybrid) strategy.
+
+    For the dirrec strategy, a separate forecaster is fitted
+    for each step ahead of the forecasting horizon and then
+    the previous forecasting horizon is added as an input
+    for training the next forecaster, following the recusrive
+    strategy.
+
+    Parameters
+    ----------
+    estimator : sktime estimator object
+        Time-series regressor.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -699,7 +868,7 @@ def _infer_scitype(estimator):
 
 
 def _check_strategy(strategy):
-    valid_strategies = ("direct", "recursive", "multioutput")
+    valid_strategies = ("direct", "recursive", "multioutput", "dirrec")
     if strategy not in valid_strategies:
         raise ValueError(
             f"Invalid `strategy`. `strategy` must be one of :"
@@ -718,11 +887,13 @@ def _get_forecaster(scitype, strategy):
             "direct": DirectTabularRegressionForecaster,
             "recursive": RecursiveTabularRegressionForecaster,
             "multioutput": MultioutputTabularRegressionForecaster,
+            "dirrec": DirRecTabularRegressionForecaster,
         },
         "time-series-regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster,
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
+            "dirrec": DirRecTimeSeriesRegressionForecaster,
         },
     }
     return registry[scitype][strategy]
