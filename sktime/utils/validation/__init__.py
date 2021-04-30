@@ -51,25 +51,36 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
     window_length: positive int or positive float
         The number of training set used for splitting
         Window length for transformed feature variables
+    n_timepoints: poisitve int , None when window_length
+        is an int
 
     Returns
     -------
     window_length: int
     """
     if window_length is not None:
-
-        if n_timepoints is None:
-            n_timepoints = 1
-
         if is_int(window_length) and window_length >= 1:
             return window_length
-
-        elif is_float(window_length) and 0 < window_length < 1:
-            window_length = int(np.ceil(window_length * n_timepoints))
+        if is_int(n_timepoints):
+            if is_float(window_length) and 0 < window_length < 1:
+                window_length = int(np.ceil(window_length * n_timepoints))
+            else:
+                raise ValueError(
+                    f"`{name}` must be a positive integer >= 1, "
+                    f"float between 0 and 1, or None "
+                    f"but found: {window_length}"
+                )
         else:
             raise ValueError(
-                f"`{name}` must be a positive integer >= 1, "
-                f"float between 0 and 1, or None "
-                f"but found: {window_length}"
+                f"`{name}` must be a positive integer >= 1,"
+                f"float between 0 and 1"
+                f"n_timepoints cannot be None when "
+                f"{name}` is a float. "
+                f"n_timepoints is integer when"
+                f"{name}` is a float. "
+                f"n_timepoints cannot be a float. "
             )
+    elif window_length is None:
+        raise ValueError(f"`{name}` cannot be None " f"but found: {window_length}")
+
     return window_length

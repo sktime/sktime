@@ -6,18 +6,41 @@ from sktime.utils.validation import check_window_length
 
 
 @pytest.mark.parametrize(
-    "arg,expected",
+    "window_length, n_timepoints, expected",
     [
-        (0.2, 1),
-        (43, 43),
+        (0.2, 33, 7),
+        (43, 23, 43),
+        (33, 1, 33),
+        (33, None, 33),
+        (67, 0.3, 67),  # bad arg
+    ],
+)
+def test_check_window_length(window_length, n_timepoints, expected):
+    assert (
+        check_window_length(
+            window_length,
+            n_timepoints,
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "window_length, n_timepoints",
+    [
+        ("string", 34),
+        ("string", "string"),
+        (6.2, 33),
+        (-5, 34),
+        (-0.5, 15),
+        (6.1, 0.3),
+        (0.3, 0.1),
+        (-2.4, 10),
+        (0.2, None),
+        (None, 0.2),
         (None, None),
     ],
 )
-def test_check_window_length(arg, expected):
-    assert check_window_length(arg) == expected
-
-
-@pytest.mark.parametrize("arg", ["string", -5, -0.5, 6.1, -2.4])
-def test_window_length_bad_arg(arg):
+def test_window_length_bad_arg(window_length, n_timepoints):
     with pytest.raises(ValueError):
-        check_window_length(arg)
+        check_window_length(window_length, n_timepoints)
