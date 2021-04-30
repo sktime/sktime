@@ -80,7 +80,5 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
                 f"{name}` is a float. "
                 f"n_timepoints cannot be a float. "
             )
-    elif window_length is None:
-        raise ValueError(f"`{name}` cannot be None " f"but found: {window_length}")
 
     return window_length
