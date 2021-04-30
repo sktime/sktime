@@ -176,3 +176,20 @@ def all_estimators(estimator_types=None, return_names=True, exclude_estimators=N
         return all_estimators
     else:
         return [estimator for (name, estimator) in all_estimators]
+
+
+def _has_tag(Estimator, tag):
+    """Check whether an Estimator has the given tag or not.
+
+    Parameters
+    ----------
+    Estimator : Estimator class
+    tag : str
+        An Estimator tag like "skip-inverse-transform"
+
+    Returns
+    -------
+    bool
+    """
+    # Check if tag is in all tags
+    return Estimator._all_tags().get(tag, False)

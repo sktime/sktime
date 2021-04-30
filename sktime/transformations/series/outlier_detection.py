@@ -10,6 +10,7 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 import numpy as np
 import warnings
+import pandas as pd
 
 
 class HampelFilter(_SeriesToSeriesTransformer):
@@ -19,7 +20,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_length : int
+    window_length : int, optional (default=10)
         Lenght of the sliding window
     n_sigma : int, optional
         Defines how strong a point must outly to be an "outlier", by default 3
@@ -35,16 +36,22 @@ class HampelFilter(_SeriesToSeriesTransformer):
     Hampel F. R., "The influence curve and its role in robust estimation",
     Journal of the American Statistical Association, 69, 382–393, 1974
 
-    https://github.com/MichaelisTrofficus/hampel_filter
+    Example
+    ----------
+    >>> from sktime.transformations.series.outlier_detection import HampelFilter
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = HampelFilter(window_length=10)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
-        "univariate-only": True,
         "fit-in-transform": True,
         "handles-missing-data": True,
+        "skip-inverse-transform": True,
     }
 
-    def __init__(self, window_length, n_sigma=3, k=1.4826, return_bool=False):
+    def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
 
         self.window_length = window_length
         self.n_sigma = n_sigma
@@ -53,12 +60,43 @@ class HampelFilter(_SeriesToSeriesTransformer):
         super(HampelFilter, self).__init__()
 
     def transform(self, Z, X=None):
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        """Transform data.
+        Returns a transformed version of Z.
 
+        Parameters
+        ----------
+        Z : pd.Series, pd.DataFrame
+
+        Returns
+        -------
+        Z : pd.Series, pd.DataFrame
+            Transformed time series(es).
+        """
+        self.check_is_fitted()
+        Z = check_series(Z)
+
+        # multivariate
+        if isinstance(Z, pd.DataFrame):
+            for col in Z:
+                Z[col] = self._transform_series(Z[col])
+        # univariate
+        else:
+            Z = self._transform_series(Z)
+        return Z
+
+    def _transform_series(self, Z):
+        """
+        Parameters
+        ----------
+        Z : pd.Series
+
+        Returns
+        -------
+        pd.Series
+        """
         # warn if nan values in Series, as user might mix them
         # up with outliers otherwise
-        if z.isnull().values.any():
+        if Z.isnull().values.any():
             warnings.warn(
                 """Series contains nan values, more nan might be
                 added if there are outliers"""
@@ -69,8 +107,8 @@ class HampelFilter(_SeriesToSeriesTransformer):
         )
         half_window_length = int(self.window_length / 2)
 
-        z = _hampel_filter(
-            z=z,
+        Z = _hampel_filter(
+            Z=Z,
             cv=cv,
             n_sigma=self.n_sigma,
             half_window_length=half_window_length,
@@ -79,22 +117,22 @@ class HampelFilter(_SeriesToSeriesTransformer):
 
         # data post-processing
         if self.return_bool:
-            z = z.apply(lambda x: True if np.isnan(x) else False)
+            Z = Z.apply(lambda x: True if np.isnan(x) else False)
 
-        return z
+        return Z
 
 
-def _hampel_filter(z, cv, n_sigma, half_window_length, k):
-    for i in cv.split(z):
+def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
+    for i in cv.split(Z):
         cv_window = i[0]
-        cv_median = np.nanmedian(z[cv_window])
-        cv_sigma = k * np.nanmedian(np.abs(z[cv_window] - cv_median))
+        cv_median = np.nanmedian(Z[cv_window])
+        cv_sigma = k * np.nanmedian(np.abs(Z[cv_window] - cv_median))
 
         # find outliers at start and end of z
         if (
             cv_window[0] <= half_window_length
-            or cv_window[-1] >= len(z) - half_window_length
-        ) and (cv_window[0] in [0, len(z) - cv.window_length - 1]):
+            or cv_window[-1] >= len(Z) - half_window_length
+        ) and (cv_window[0] in [0, len(Z) - cv.window_length - 1]):
 
             # first half of the first window
             if cv_window[0] <= half_window_length:
@@ -102,23 +140,23 @@ def _hampel_filter(z, cv, n_sigma, half_window_length, k):
 
             # last half of the last window
             else:
-                idx_range = range(len(z) - half_window_length - 1, len(z))
+                idx_range = range(len(Z) - half_window_length - 1, len(Z))
             for j in idx_range:
-                z.iloc[j] = _compare(
-                    value=z.iloc[j],
+                Z.iloc[j] = _compare(
+                    value=Z.iloc[j],
                     cv_median=cv_median,
                     cv_sigma=cv_sigma,
                     n_sigma=n_sigma,
                 )
         else:
             idx = cv_window[0] + half_window_length
-            z.iloc[idx] = _compare(
-                value=z.iloc[idx],
+            Z.iloc[idx] = _compare(
+                value=Z.iloc[idx],
                 cv_median=cv_median,
                 cv_sigma=cv_sigma,
                 n_sigma=n_sigma,
             )
-    return z
+    return Z
 
 
 def _compare(value, cv_median, cv_sigma, n_sigma):

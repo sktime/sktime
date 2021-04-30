@@ -9,7 +9,33 @@ import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.series import check_equal_time_index
+import pandas as pd
+
+
+def check_pred_int(pred_int):
+    """helper function to check pred_int data type
+
+
+    pred_int: pd.DataFrame
+        Prediction intervals of series
+
+
+    Riases
+    -------
+    TypeError: when pred_int is not a pd.DataFrame
+    Exception: when the number of columns is less or more than 2
+        and column labels are not ['lower', 'upper']
+    """
+    if isinstance(pred_int, pd.DataFrame):
+        if pred_int.shape[1] == 2:
+            if not pred_int.columns.isin(["lower", "upper"]).all():
+                raise ValueError(
+                    "Both DataFrame column labels must be 'lower' and 'upper'"
+                )
+        else:
+            raise Exception(f"{pred_int} must have exactly two columns")
+    else:
+        raise TypeError(f"{pred_int} must be a DataFrame")
 
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
@@ -39,6 +65,7 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
     import seaborn as sns
 
     for y in series:
+
         check_y(y)
 
     n_series = len(series)
@@ -96,8 +123,8 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
 
     # plot prediction intervals if present
     if pred_int is not None:
+        check_pred_int(pred_int)
         # check same conditions as for earlier indices
-        check_equal_time_index(pred_int)
         if all([x in index for x in pred_int.index]):
             ax.fill_between(
                 ax.get_lines()[-1].get_xdata(),
