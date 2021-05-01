@@ -135,7 +135,7 @@ class AutoETS(_StatsModelsAdapter):
     additive_only : bool, optional
         If True, will only consider additive models.
         Default is False.
-    ignore_inf_IC: bool, optional
+    ignore_inf_ic: bool, optional
         If True models with negative infinity Information Criterion
         (aic, bic, aicc) will be ignored.
         Default is True
