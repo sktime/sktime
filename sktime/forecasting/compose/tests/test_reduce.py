@@ -33,7 +33,7 @@ from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
-from sktime.performance_metrics.forecasting import smape_loss
+from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
@@ -518,4 +518,6 @@ def test_dirrec_against_recursive_accumulated_error():
     preds_recursive = recursive.fit(y_train, fh=fh).predict(fh)
     preds_dirrec = dirrec.fit(y_train, fh=fh).predict(fh)
 
-    assert smape_loss(y_test, preds_dirrec) < smape_loss(y_test, preds_recursive)
+    assert mean_absolute_percentage_error(
+        y_test, preds_dirrec
+    ) < mean_absolute_percentage_error(y_test, preds_recursive)
