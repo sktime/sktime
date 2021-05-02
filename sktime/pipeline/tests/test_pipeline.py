@@ -29,7 +29,7 @@ def test_airline():
             (
                 "forecaster",
                 forecaster,
-                {"fit": {"y": "original_y"}, "predict": {"fh": "original_y"}},
+                {"fit": {"y": "imputer"}, "predict": {"fh": "original_y"}},
             ),
         ]
     )
