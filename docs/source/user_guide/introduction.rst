@@ -29,20 +29,26 @@ can simply write:
 
     import numpy as np
     from sktime.datasets import load_airline
-    from sktime.forecasting.compose import ReducedRegressionForecaster
+    from sktime.forecasting.compose import make_reduction
     from sklearn.ensemble import RandomForestRegressor
     from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.performance_metrics.forecasting import smape_loss
+    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
     fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
     regressor = RandomForestRegressor()
-    forecaster = ReducedRegressionForecaster(regressor, window_length=12)
+    forecaster = make_reduction(
+    	regressor,
+    	strategy="recursive",
+    	window_length=12,
+    	scitype="infer",
+    )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    smape_loss(y_test, y_pred)
-    >>> 0.12726230426056875
+    smape = MeanAbsolutePercentageError()
+    smape(y_test, y_pred)
+    >>> 0.1261192310833735
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
