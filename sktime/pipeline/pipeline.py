@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from sktime.base import BaseEstimator
-from sktime.transformations.base import BaseTransformer
 
 
-class OnlineUnsupervisedPipeline(BaseEstimator):
+class NetworkPipeline(BaseEstimator):
     """
     Parameters
     ----------
@@ -63,9 +62,13 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         if arguments is None:
             return arguments
         for argument_name, argument_value in returned_arguments_kwarg.items():
-            if argument_value == "original":
+            if argument_value == "original_X":
                 returned_arguments_kwarg[argument_name] = self._X
                 continue
+            if argument_value == "original_y":
+                returned_arguments_kwarg[argument_name] = self._y
+                continue
+
             if type(argument_value) == list:
                 out = []
                 for list_val in argument_value:
@@ -81,28 +84,48 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
 
         return returned_arguments_kwarg
 
-    def fit(self, X):
+    def fit(self, X=None, y=None):
         self._X = X
+        self._y = y
         for name, alg, arguments in self._iter():
+            processed_arguments = {}
 
-            arguments = self._process_arguments(arguments["fit"])
+            if "fit" in arguments and arguments["fit"] is None:
+                # this step must be skipped
+                continue
+            elif "fit" in arguments:
+                processed_arguments = self._process_arguments(arguments["fit"])
+            else:
+                processed_arguments = self._process_arguments(arguments)
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
-            if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                out = alg.fit_transform(**arguments)
+            if hasattr(alg, "fit_transform"):
+                out = alg.fit_transform(**processed_arguments)
                 self._step_results[name] = out
-            if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                alg.fit(**arguments)
+            # estimators have fit and predict methods
+            if hasattr(alg, "fit") and hasattr(alg, "predict"):
+                alg.fit(**processed_arguments)
 
         return self
 
-    def predict(self, X):
+    def predict(self, X=None, y=None):
 
         self._X = X
+        self._y = y
 
-        for _, alg, arguments in self._iter():
-            arguments = self._process_arguments(arguments["predict"])
-            if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                return alg.transform(**arguments)
-            if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
-                return alg.predict(**arguments)
+        for name, alg, arguments in self._iter():
+            processed_arguments = {}
+
+            if "predict" in arguments and arguments["predict"] is None:
+                # this step must be skipped
+                continue
+            elif "predict" in arguments:
+                processed_arguments = self._process_arguments(arguments["predict"])
+            else:
+                processed_arguments = self._process_arguments(arguments)
+            if hasattr(alg, "transform"):
+                self._step_results[name] = alg.transform(**processed_arguments)
+            if hasattr(alg, "predict"):
+                self._step_results[name] = alg.predict(**processed_arguments)
+
+        return self._step_results[self._steps[-1][0]]
