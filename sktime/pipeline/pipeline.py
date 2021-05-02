@@ -4,30 +4,66 @@ from sktime.base import BaseEstimator
 
 class NetworkPipeline(BaseEstimator):
     """
+    Prototype of non sequential pipeline mimicking a network.
+
+    Each step in the pipeline can use the output of any of the previous steps or
+    the original input values to the fit and predict methods of the pipeline.
+
+    The arguments of the steps in the pipeline must be provided as a dictionary.
+    The dictionary is substituted in the fit_transform, fit or predict function calls
+    of the step transformer or estimator.
+
     Parameters
     ----------
     steps : array of lists
         list comprised of three elements:
             1. name of step (string),
             2. algorithm (object),
-            3. input (dictionary) key value paris for fit() method of algorithm
-    interface: sting
-        `simple`(default) or `advanced`.
-            If `simple` `fit` method of the object is called.
-            If `advanced` name of method can be specified like this:
-            (`name of step`, `algorithm`, `input`), where input:
-        input_dict = [
-            {
-                function: name of function to be called (fit, transform, predict ...),
-                arguments: key value pairs(value is name of step) ,
-            },
-            {
-                function: name of function to be called,
-                arguments: key value pairs(value is name of step),
-            },
-            ......
+            3. arguments (dictionary) key value paris for
+            fit_transform or predict method of algorithm
+
+    Examples
+    --------
+    `original_X` and `original_y` are key words referring to the
+    X and y arguments of NetworkPipeline.fit
+    and NetworkPipeline.predict
+
+    The arguments dictionary can refer to any of the previous
+    steps in the pipline by its name.
+
+    Forecasting example. Note convention for specifying
+    different arguments depending on whether
+    NetworkPipeline.fit or NetworkPipeline.predict is called.
+    >>> pipe = NetworkPipeline(
+        steps=[
+            (
+                "imputer",
+                Imputer(method="drift"),
+                {"fit": {"Z": "original_y"}, "predict": None},
+            ),
+            (
+                "forecaster",
+                forecaster,
+                {"fit": {"y": "original_y"}, "predict": {"fh": "original_y"}},
+            ),
+        ]
+    )
+
+    Classification example.
+    >>>  pipe = NetworkPipeline(
+        steps=[
+            ("tabularizer", Tabularizer(), {"X": "original_X"}),
+            (
+                "classifier",
+                DummyClassifier(strategy="prior"),
+                {
+                    "fit": {"X": "tabularizer", "y": "original_y"},
+                    "predict": {"X": "tabularizer"},
+                },
+            ),
         ]
 
+    See the tests folder for a working implementations of these examples.
     """
 
     def __init__(self, steps, interface="simple"):
