@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from sktime.base import BaseEstimator
-
-
 from sktime.transformations.base import BaseTransformer
 
 
@@ -87,7 +85,7 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         self._X = X
         for name, alg, arguments in self._iter():
 
-            arguments = self._process_arguments(arguments)
+            arguments = self._process_arguments(arguments["fit"])
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
             if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
@@ -103,7 +101,7 @@ class OnlineUnsupervisedPipeline(BaseEstimator):
         self._X = X
 
         for _, alg, arguments in self._iter():
-            arguments = self._process_arguments(arguments)
+            arguments = self._process_arguments(arguments["predict"])
             if isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
                 return alg.transform(**arguments)
             if not isinstance(alg, BaseTransformer) and isinstance(alg, BaseEstimator):
