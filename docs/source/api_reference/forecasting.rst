@@ -132,6 +132,8 @@ Composition
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
+    DirRecTabularRegressionForecaster,
+    DirRecTimeSeriesRegressionForecaster,
     StackingForecaster
     MultiplexForecaster
 

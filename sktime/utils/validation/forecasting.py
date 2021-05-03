@@ -317,32 +317,25 @@ def check_scoring(scoring):
 
     Parameters
     ----------
-    scoring : object of class MetricFunctionWrapper from sktime.performance_metrics.
+    scoring : object of class _MetricFunctionWrapper from sktime.performance_metrics.
 
     Returns
     ----------
-    scoring : object of class MetricFunctionWrapper of sktime.performance_metrics.
-    sMAPE(mean percentage error)
-        if the object is None.
+    scoring :
+        MeanAbsolutePercentageError if the object is None.
 
     Raises
     ----------
     TypeError
         if object is not callable from current scope.
-        if object is not an instance of class MetricFunctionWrapper of
-        sktime.performance_metrics.
     """
-    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
-    from sktime.performance_metrics.forecasting import sMAPE
+    # Note symmetric=True is default arg for MeanAbsolutePercentageError
+    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
     if scoring is None:
-        return sMAPE()
+        return MeanAbsolutePercentageError()
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
-
-    allowed_base_class = MetricFunctionWrapper
-    if not isinstance(scoring, allowed_base_class):
-        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
