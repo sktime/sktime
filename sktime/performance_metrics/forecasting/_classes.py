@@ -23,7 +23,7 @@ from sktime.performance_metrics.forecasting._functions import (
     geometric_median_absolute_error,
 )
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns", "Shreya Singh"]
+__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -79,7 +79,7 @@ class _MetricFunctionWrapper(BaseEstimator):
         return self._func(y_true, y_pred)
 
 
-class _PercentageErrorMixIn:
+class _PercentageErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -106,7 +106,7 @@ class _PercentageErrorMixIn:
         return self._func(y_true, y_pred, symmetric=self.symmetric)
 
 
-class _SquaredErrorMixIn:
+class _SquaredErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -133,7 +133,7 @@ class _SquaredErrorMixIn:
         return self._func(y_true, y_pred, square_root=self.square_root)
 
 
-class _SquaredPercentageErrorMixIn:
+class _SquaredPercentageErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -166,7 +166,7 @@ class _SquaredPercentageErrorMixIn:
         )
 
 
-class _AsymmetricErrorMixIn:
+class _AsymmetricErrorMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -195,7 +195,7 @@ class _AsymmetricErrorMixIn:
         )
 
 
-class _RelativeLossMixIn:
+class _RelativeLossMixin:
     def __call__(self, y_true, y_pred):
         """Returns calculated loss metric by passing `y_true` and `y_pred` to
         underlying metric function.
@@ -228,7 +228,7 @@ class _ScaledMetricFunctionWrapper(_MetricFunctionWrapper):
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWrapper):
+class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixin, _MetricFunctionWrapper):
     def __init__(
         self, func, name=None, greater_is_better=False, sp=1, square_root=False
     ):
@@ -237,20 +237,20 @@ class _ScaledSquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWra
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _PercentageMetricFunctionWrapper(_PercentageErrorMixIn, _MetricFunctionWrapper):
+class _PercentageMetricFunctionWrapper(_PercentageErrorMixin, _MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, symmetric=True):
         self.symmetric = symmetric
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _SquaredMetricFunctionWrapper(_SquaredErrorMixIn, _MetricFunctionWrapper):
+class _SquaredMetricFunctionWrapper(_SquaredErrorMixin, _MetricFunctionWrapper):
     def __init__(self, func, name=None, greater_is_better=False, square_root=False):
         self.square_root = square_root
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
 class _SquaredPercentageMetricFunctionWrapper(
-    _SquaredPercentageErrorMixIn, _MetricFunctionWrapper
+    _SquaredPercentageErrorMixin, _MetricFunctionWrapper
 ):
     def __init__(
         self,
@@ -265,7 +265,7 @@ class _SquaredPercentageMetricFunctionWrapper(
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, _MetricFunctionWrapper):
+class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixin, _MetricFunctionWrapper):
     def __init__(
         self,
         func,
@@ -281,7 +281,7 @@ class _AsymmetricMetricFunctionWrapper(_AsymmetricErrorMixIn, _MetricFunctionWra
         super().__init__(func=func, name=name, greater_is_better=greater_is_better)
 
 
-class _RelativeLossMetricFunctionWrapper(_RelativeLossMixIn, _MetricFunctionWrapper):
+class _RelativeLossMetricFunctionWrapper(_RelativeLossMixin, _MetricFunctionWrapper):
     def __init__(
         self,
         func,
@@ -334,7 +334,7 @@ class MeanAbsoluteScaledError(_ScaledMetricFunctionWrapper):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of the data
 
     Attributes
@@ -368,11 +368,13 @@ class MeanAbsoluteScaledError(_ScaledMetricFunctionWrapper):
           International Journal of Forecasting, Volume 3
     """
 
-    def __init__(self):
+    def __init__(self, sp=1):
         name = "MeanAbsoluteScaledError"
         func = mean_absolute_scaled_error
         greater_is_better = False
-        super().__init__(func=func, name=name, greater_is_better=greater_is_better)
+        super().__init__(
+            func=func, name=name, greater_is_better=greater_is_better, sp=sp
+        )
 
 
 class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
@@ -397,7 +399,7 @@ class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of data.
 
     Attributes
@@ -431,11 +433,13 @@ class MedianAbsoluteScaledError(_ScaledMetricFunctionWrapper):
           International Journal of Forecasting, Volume 3
     """
 
-    def __init__(self):
+    def __init__(self, sp=1):
         name = "MedianAbsoluteScaledError"
         func = median_absolute_scaled_error
         greater_is_better = False
-        super().__init__(func=func, name=name, greater_is_better=greater_is_better)
+        super().__init__(
+            func=func, name=name, greater_is_better=greater_is_better, sp=sp
+        )
 
 
 class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
@@ -457,7 +461,7 @@ class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of data.
 
     square_root : bool, default = False
@@ -494,7 +498,7 @@ class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    def __init__(self, square_root=False):
+    def __init__(self, sp=1, square_root=False):
         name = "MeanSquaredScaledError"
         func = mean_squared_scaled_error
         greater_is_better = False
@@ -502,6 +506,7 @@ class MeanSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
             func=func,
             name=name,
             greater_is_better=greater_is_better,
+            sp=1,
             square_root=square_root,
         )
 
@@ -562,7 +567,7 @@ class MedianSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
-    def __init__(self, square_root=False):
+    def __init__(self, sp=1, square_root=False):
         name = "MedianSquaredScaledError"
         func = median_squared_scaled_error
         greater_is_better = False
@@ -570,6 +575,7 @@ class MedianSquaredScaledError(_ScaledSquaredMetricFunctionWrapper):
             func=func,
             name=name,
             greater_is_better=greater_is_better,
+            sp=sp,
             square_root=square_root,
         )
 
@@ -1272,16 +1278,6 @@ class RelativeLoss(_RelativeLossMetricFunctionWrapper):
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Forecasted values from benchmark method.
-
-    horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
-
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------

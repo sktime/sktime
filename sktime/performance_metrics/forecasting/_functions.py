@@ -21,7 +21,7 @@ from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
 from sktime.utils.validation.series import check_time_index, check_series
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns", "Shreya Singh"]
+__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
     "relative_loss",
     "mean_asymmetric_error",
@@ -2163,7 +2163,6 @@ def _percentage_error(y_true, y_pred, symmetric=True):
         percentage_error = (y_true - y_pred) / np.maximum(np.abs(y_true), EPS)
     return percentage_error
 
-
 def geometric_mean_absolute_error(
     y_true, y_pred, horizon_weight=None, multioutput="uniform_average", square_root=False, symmetric=False,
 ):  
@@ -2220,6 +2219,7 @@ def geometric_mean_absolute_error(
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
             return output_errors
+            
         elif multioutput == "uniform_average":
             # pass None as weights to np.average: uniform mean
             multioutput = None
@@ -2286,6 +2286,7 @@ def geometric_median_absolute_error(
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
             return output_errors
+
         elif multioutput == "uniform_average":
             # pass None as weights to np.average: uniform mean
             multioutput = None
@@ -2294,5 +2295,4 @@ def geometric_median_absolute_error(
 
     except:
         print("GeometricMedianAbsoluteError is undefined since two or more groups of corresponding values are same in the arguments passed.")
-
 
