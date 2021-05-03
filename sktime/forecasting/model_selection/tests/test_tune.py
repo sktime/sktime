@@ -27,7 +27,7 @@ from sktime.forecasting.tests._config import TEST_RANDOM_SEEDS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.performance_metrics.forecasting import make_forecasting_scorer
-from sktime.performance_metrics.forecasting import sMAPE
+from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.transformations.series.detrend import Detrender
 
 
@@ -82,7 +82,7 @@ MSE = make_forecasting_scorer(mean_squared_error, greater_is_better=False)
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
-@pytest.mark.parametrize("scoring", [sMAPE(), MSE])
+@pytest.mark.parametrize("scoring", [MeanAbsolutePercentageError(symmetric=True), MSE])
 @pytest.mark.parametrize("cv", CVs)
 def test_gscv(forecaster, param_grid, cv, scoring):
     y, X = load_longley()
@@ -98,7 +98,7 @@ def test_gscv(forecaster, param_grid, cv, scoring):
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
-@pytest.mark.parametrize("scoring", [sMAPE(), MSE])
+@pytest.mark.parametrize("scoring", [MeanAbsolutePercentageError(symmetric=True), MSE])
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 @pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
