@@ -316,7 +316,7 @@ class AutoETS(_StatsModelsAdapter):
                     _ic_list.append(ic)
 
             # Select best model based on information criterion
-            if all(np.isnan(ic) for ic in _ic_list):
+            if np.all(np.isnan(_ic_list)):
                 # if all models have infinite IC raise an error
                 raise ValueError(
                     "None of the fitted models have finite %s"
