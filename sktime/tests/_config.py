@@ -50,7 +50,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
-from sktime.performance_metrics.forecasting import sMAPE
+from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
@@ -159,13 +159,13 @@ ESTIMATOR_TEST_PARAMS = {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
-        "scoring": sMAPE(),
+        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     ForecastingRandomizedSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_distributions": {"window_length": [2, 5]},
-        "scoring": sMAPE(),
+        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
