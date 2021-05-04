@@ -1989,6 +1989,9 @@ def relative_loss(
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Forecasted values from benchmark method.
 
+    relative_loss_function : function
+        Function to use in calculation relative loss
+
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
 
