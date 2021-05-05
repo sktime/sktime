@@ -111,19 +111,21 @@ class Imputer(_SeriesToSeriesTransformer):
                 forecaster = self.forecaster
             else:
                 forecaster = PolynomialTrendForecaster(degree=1)
-            # in-sample forecasting horizon
-            fh_ins = -np.arange(len(Z))
             # fill NaN before fitting with ffill and backfill (heuristic)
-            Z = Z.fillna(method="ffill").fillna(method="backfill")
+            Z_aux = Z.fillna(method="ffill").fillna(method="backfill")
             # multivariate
-            if isinstance(Z, pd.DataFrame):
-                for col in Z:
-                    forecaster.fit(y=Z[col])
+            if isinstance(Z_aux, pd.DataFrame):
+                for col in Z_aux:
+                    forecaster.fit(y=Z_aux[col])
+                    # in-sample forecasting horizon
+                    fh_ins = np.where(Z[col].isna())[0] - (len(Z)-1)
                     Z_pred = forecaster.predict(fh=fh_ins)
                     Z[col] = Z[col].fillna(value=Z_pred)
             # univariate
             else:
-                forecaster.fit(y=Z)
+                forecaster.fit(y=Z_aux)
+                # in-sample forecasting horizon
+                fh_ins = np.where(Z.isna())[0] - (len(Z)-1)
                 Z_pred = forecaster.predict(fh=fh_ins)
                 Z = Z.fillna(value=Z_pred)
         elif self.method == "mean":
