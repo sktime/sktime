@@ -13,8 +13,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
-from sklearn.metrics import mean_squared_error
-
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.model_evaluation import evaluate
@@ -23,8 +21,10 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
-from sktime.performance_metrics.forecasting import make_forecasting_scorer
-from sktime.performance_metrics.forecasting import sMAPE
+from sktime.performance_metrics.forecasting import (
+    MeanAbsolutePercentageError,
+    MeanSquaredError,
+)
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
@@ -77,7 +77,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("strategy", ["refit", "update"])
 @pytest.mark.parametrize(
-    "scoring", [sMAPE(), make_forecasting_scorer(mean_squared_error)]
+    "scoring", [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 )
 def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
     # Test a number of basic configurations
@@ -109,7 +109,7 @@ def test_evaluate_initial_window():
     forecaster = NaiveForecaster()
     fh = 1
     cv = SlidingWindowSplitter(fh=fh, initial_window=initial_window)
-    scoring = sMAPE()
+    scoring = MeanAbsolutePercentageError(symmetric=True)
     out = evaluate(
         forecaster=forecaster, y=y, cv=cv, strategy="update", scoring=scoring
     )
@@ -130,7 +130,7 @@ def test_evaluate_no_exog_against_with_exog():
     y, X = load_longley()
     forecaster = ARIMA(suppress_warnings=True)
     cv = SlidingWindowSplitter()
-    scoring = sMAPE()
+    scoring = MeanAbsolutePercentageError(symmetric=True)
 
     out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring)
     out_no_exog = evaluate(forecaster, cv, y, X=None, scoring=scoring)
