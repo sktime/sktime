@@ -138,7 +138,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     return y
 
 
-def check_cv(cv):
+def check_cv(cv, enforce_start_with_window=False):
     """
     Check CV generators.
 
@@ -155,6 +155,11 @@ def check_cv(cv):
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
+
+    if enforce_start_with_window:
+        if hasattr(cv, "start_with_window") and not cv.start_with_window:
+            raise ValueError("`start_with_window` must be set to True")
+
     return cv
 
 
@@ -237,7 +242,7 @@ def check_fh(fh, enforce_relative=False):
     # can be empty in some cases, but users should not create forecasting horizons
     # with no values
     if len(fh) == 0:
-        raise ValueError(f"`fh` must not be empty, but found: {fh}")
+        raise ValueError("`fh` must not be empty")
 
     if enforce_relative and not fh.is_relative:
         raise ValueError("`fh` must be relative, but found absolute `fh`")
@@ -312,32 +317,25 @@ def check_scoring(scoring):
 
     Parameters
     ----------
-    scoring : object of class MetricFunctionWrapper from sktime.performance_metrics.
+    scoring : object of class _MetricFunctionWrapper from sktime.performance_metrics.
 
     Returns
     ----------
-    scoring : object of class MetricFunctionWrapper of sktime.performance_metrics.
-    sMAPE(mean percentage error)
-        if the object is None.
+    scoring :
+        MeanAbsolutePercentageError if the object is None.
 
     Raises
     ----------
     TypeError
         if object is not callable from current scope.
-        if object is not an instance of class MetricFunctionWrapper of
-        sktime.performance_metrics.
     """
-    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
-    from sktime.performance_metrics.forecasting import sMAPE
+    # Note symmetric=True is default arg for MeanAbsolutePercentageError
+    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
     if scoring is None:
-        return sMAPE()
+        return MeanAbsolutePercentageError()
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
-
-    allowed_base_class = MetricFunctionWrapper
-    if not isinstance(scoring, allowed_base_class):
-        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring

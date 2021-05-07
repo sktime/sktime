@@ -7,14 +7,14 @@ repos:
     # args: [--line-length 79]
 
 - repo: https://github.com/pycqa/flake8
-  rev: 3.8.3
+  rev: 3.9.0
   hooks:
   - id: flake8
     exclude: docs/conf.py
     additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.3.0
+  rev: v3.4.0
   hooks:
   - id: check-added-large-files
     args: ['--maxkb=1000']
@@ -29,13 +29,13 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/mgedmin/check-manifest
-  rev: "0.42"
+  rev: "0.46"
   hooks:
   - id: check-manifest
     stages: [manual]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.4.0
+  rev: 0.6.0
   hooks:
   - id: nbqa-black
     args: ["--nbqa-mutate"]

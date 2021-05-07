@@ -1,4 +1,4 @@
-.. _transformations:
+.. _user_guide_transformations:
 
 Time Series Transformations
 ===========================
