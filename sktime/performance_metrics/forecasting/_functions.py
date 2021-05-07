@@ -75,6 +75,7 @@ def mean_asymmetric_error(
     right_error_function="absolute",
     horizon_weight=None,
     multioutput="uniform_average",
+    **kwargs,
 ):
     """Calculates asymmetric loss function. Error values that are less
     than the asymmetric threshold have `left_error_function` applied.
@@ -163,7 +164,7 @@ def mean_asymmetric_error(
 
 
 def mean_absolute_scaled_error(
-    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, sp=1, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
     """Mean absolute scaled error (MASE). MASE output is non-negative floating
     point. The best value is 0.0.
@@ -189,7 +190,7 @@ def mean_absolute_scaled_error(
             where fh is the forecasting horizon
         Estimated target values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
             where fh is the forecasting horizon
         Observed training values.
 
@@ -227,16 +228,18 @@ def mean_absolute_scaled_error(
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_absolute_scaled_error(y_true, y_pred, y_train)
+    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
     0.18333333333333335
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_absolute_scaled_error(y_true, y_pred, y_train)
+    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
     0.18181818181818182
-    >>> mean_absolute_scaled_error(y_true, y_pred, y_train, multioutput='raw_values')
+    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput='raw_values')
     array([0.10526316, 0.28571429])
-    >>> mean_absolute_scaled_error(y_true, y_pred, y_train, multioutput=[0.3, 0.7])
+    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput=[0.3, 0.7])
     0.21935483870967742
 
     References
@@ -250,6 +253,9 @@ def mean_absolute_scaled_error(
             "The M4 Competition: 100,000 time series and 61 forecasting methods",
             International Journal of Forecasting, Volume 3
     """
+    y_train = kwargs.pop("y_train", None)
+    if y_train is None:
+        raise ValueError("y_train must be supplied to compute this metric.")
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -291,7 +297,7 @@ def mean_absolute_scaled_error(
 
 
 def median_absolute_scaled_error(
-    y_true, y_pred, y_train, sp=1, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, sp=1, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
     """Median absolute scaled error (MdASE). MdASE output is non-negative
     floating point. The best value is 0.0.
@@ -322,7 +328,7 @@ def median_absolute_scaled_error(
             where fh is the forecasting horizon
         Estimated target values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
             where fh is the forecasting horizon
         Observed training values.
 
@@ -351,16 +357,18 @@ def median_absolute_scaled_error(
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train)
+    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
     0.16666666666666666
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train)
+    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
     0.18181818181818182
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train, multioutput='raw_values')
+    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput='raw_values')
     array([0.10526316, 0.28571429])
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train, multioutput=[0.3, 0.7])
+    >>> median_absolute_scaled_error( y_true, y_pred, y_train=y_train, \
+    multioutput=[0.3, 0.7])
     0.21935483870967742
 
     Returns
@@ -383,6 +391,9 @@ def median_absolute_scaled_error(
             "The M4 Competition: 100,000 time series and 61 forecasting methods",
             International Journal of Forecasting, Volume 3
     """
+    y_train = kwargs.pop("y_train", None)
+    if y_train is None:
+        raise ValueError("y_train must be supplied to compute this metric.")
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -427,11 +438,11 @@ def median_absolute_scaled_error(
 def mean_squared_scaled_error(
     y_true,
     y_pred,
-    y_train,
     sp=1,
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Mean squared scaled error (MSSE) `square_root` is False or
     root mean squared scaled error (RMSSE) if `square_root` is True.
@@ -459,7 +470,7 @@ def mean_squared_scaled_error(
             where fh is the forecasting horizon
         Estimated target values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
             where fh is the forecasting horizon
         Observed training values.
 
@@ -502,18 +513,18 @@ def mean_squared_scaled_error(
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)
     0.20568833780186058
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_squared_scaled_error(y_true, y_pred, y_train,  square_root=True)
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train,  square_root=True)
     0.15679361328058636
-    >>> mean_squared_scaled_error(y_true, y_pred, y_train, multioutput='raw_values',  \
-    square_root=True)
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput='raw_values', square_root=True)
     array([0.11215443, 0.20203051])
-    >>> mean_squared_scaled_error(y_true, y_pred, y_train, multioutput=[0.3, 0.7], \
-    square_root=True)
+    >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput=[0.3, 0.7], square_root=True)
     0.17451891814894502
 
     References
@@ -524,6 +535,9 @@ def mean_squared_scaled_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    y_train = kwargs.pop("y_train", None)
+    if y_train is None:
+        raise ValueError("y_train must be supplied to compute this metric.")
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -571,11 +585,11 @@ def mean_squared_scaled_error(
 def median_squared_scaled_error(
     y_true,
     y_pred,
-    y_train,
     sp=1,
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Median squared scaled error (MdSSE) if `square_root` is False or
     root median squared scaled error (RMdSSE) if `square_root` is True.
@@ -603,7 +617,7 @@ def median_squared_scaled_error(
             where fh is the forecasting horizon
         Estimated target values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs)
+    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
             where fh is the forecasting horizon
         Observed training values.
 
@@ -641,18 +655,18 @@ def median_squared_scaled_error(
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> median_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
+    >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)
     0.16666666666666666
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> median_squared_scaled_error(y_true, y_pred, y_train, square_root=True)
+    >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)
     0.1472819539849714
-    >>> median_squared_scaled_error(y_true, y_pred, y_train, multioutput='raw_values', \
-    square_root=True)
+    >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput='raw_values', square_root=True)
     array([0.08687445, 0.20203051])
-    >>> median_squared_scaled_error(y_true, y_pred, y_train, multioutput=[0.3, 0.7], \
-    square_root=True)
+    >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput=[0.3, 0.7], square_root=True)
     0.16914781383660782
 
     References
@@ -663,6 +677,9 @@ def median_squared_scaled_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    y_train = kwargs.pop("y_train", None)
+    if y_train is None:
+        raise ValueError("y_train must be supplied to compute this metric.")
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -709,7 +726,7 @@ def median_squared_scaled_error(
 
 
 def mean_absolute_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
     """Mean absolute error (MAE). MAE output is non-negative floating point.
     The best value is 0.0.
@@ -786,6 +803,7 @@ def mean_squared_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Mean squared error (MSE) if `square_root` is False or
     root mean squared error (RMSE)  if `square_root` if True. MSE and RMSE are
@@ -879,7 +897,7 @@ def mean_squared_error(
 
 
 def median_absolute_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
     """Median absolute error (MdAE).  MdAE output is non-negative floating
     point. The best value is 0.0.
@@ -960,6 +978,7 @@ def median_squared_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Median squared error (MdSE) if `square_root` is False or root median
     squared error (RMdSE) if `square_root` is True. MdSE and RMdSE return
@@ -1070,7 +1089,12 @@ def median_squared_error(
 
 
 def mean_absolute_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=True
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    symmetric=True,
+    **kwargs,
 ):
     """Mean absolute percentage error (MAPE) if `symmetric` is False or
     symmetric mean absolute percentage error (sMAPE) if `symmetric is True.
@@ -1176,7 +1200,12 @@ def mean_absolute_percentage_error(
 
 
 def median_absolute_percentage_error(
-    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", symmetric=True
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    symmetric=True,
+    **kwargs,
 ):
     """Median absolute percentage error (MdAPE) if `symmetric` is False or
     symmetric median absolute percentage error (sMdAPE). MdAPE and sMdAPE output
@@ -1295,6 +1324,7 @@ def mean_squared_percentage_error(
     multioutput="uniform_average",
     square_root=False,
     symmetric=True,
+    **kwargs,
 ):
     """Mean squared percentage error (MSPE) if `square_root` is False or
     root mean squared percentage error (RMSPE) if `square_root` is True.
@@ -1419,6 +1449,7 @@ def median_squared_percentage_error(
     multioutput="uniform_average",
     square_root=False,
     symmetric=True,
+    **kwargs,
 ):
     """Median squared percentage error (MdSPE) if `square_root` is False or
     root median squared percentage error (RMdSPE) if `square_root` is True.
@@ -1543,7 +1574,11 @@ def median_squared_percentage_error(
 
 
 def mean_relative_absolute_error(
-    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    **kwargs,
 ):
     """Mean relative absolute error (MRAE).
 
@@ -1558,7 +1593,8 @@ def mean_relative_absolute_error(
         Forecasted values.
 
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1592,18 +1628,20 @@ def mean_relative_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
+    >>> mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.9511111111111111
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
+    >>> mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.8703703703703702
-    >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput='raw_values')
+    >>> mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([0.51851852, 1.22222222])
-    >>> mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput=[0.3, 0.7])
+    >>> mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     1.0111111111111108
 
     References
@@ -1612,6 +1650,9 @@ def mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
+    if y_pred_benchmark is None:
+        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1640,7 +1681,7 @@ def mean_relative_absolute_error(
 
 
 def median_relative_absolute_error(
-    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
     """Median relative absolute error
 
@@ -1655,7 +1696,8 @@ def median_relative_absolute_error(
         Forecasted values.
 
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1690,18 +1732,20 @@ def median_relative_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
+    >>> median_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     1.0
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
+    >>> median_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.6944444444444443
-    >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput='raw_values')
+    >>> median_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([0.55555556, 0.83333333])
-    >>> median_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput=[0.3, 0.7])
+    >>> median_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     0.7499999999999999
 
     References
@@ -1710,6 +1754,9 @@ def median_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
+    if y_pred_benchmark is None:
+        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1737,7 +1784,11 @@ def median_relative_absolute_error(
 
 
 def geometric_mean_relative_absolute_error(
-    y_true, y_pred, y_pred_benchmark, horizon_weight=None, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    **kwargs,
 ):
     """Geometric mean relative absolute error (GMRAE).
 
@@ -1752,7 +1803,8 @@ def geometric_mean_relative_absolute_error(
         Forecasted values.
 
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1787,18 +1839,20 @@ def geometric_mean_relative_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
+    >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.0007839273064064755
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark)
+    >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.5578632807409556
-    >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput='raw_values')
+    >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([4.97801163e-06, 1.11572158e+00])
-    >>> geometric_mean_relative_absolute_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput=[0.3, 0.7])
+    >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     0.7810066018326863
 
     References
@@ -1807,6 +1861,9 @@ def geometric_mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
+    if y_pred_benchmark is None:
+        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1838,10 +1895,10 @@ def geometric_mean_relative_absolute_error(
 def geometric_mean_relative_squared_error(
     y_true,
     y_pred,
-    y_pred_benchmark,
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Geometric mean relative squared error (GMRSE) if `square_root` is False or
     root geometric mean relative squared error (RGMRSE) if `square_root` is True.
@@ -1857,7 +1914,8 @@ def geometric_mean_relative_squared_error(
         Forecasted values.
 
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1897,18 +1955,20 @@ def geometric_mean_relative_squared_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark)
+    >>> geometric_mean_relative_squared_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.0008303544925949156
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark)
+    >>> geometric_mean_relative_squared_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark)
     0.622419372049448
-    >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput='raw_values')
+    >>> geometric_mean_relative_squared_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([4.09227746e-06, 1.24483465e+00])
-    >>> geometric_mean_relative_squared_error(y_true, y_pred, y_pred_benchmark, \
-    multioutput=[0.3, 0.7])
+    >>> geometric_mean_relative_squared_error(y_true, y_pred, \
+    y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     0.8713854839582426
 
     References
@@ -1917,7 +1977,9 @@ def geometric_mean_relative_squared_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-
+    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
+    if y_pred_benchmark is None:
+        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1951,10 +2013,10 @@ def geometric_mean_relative_squared_error(
 def relative_loss(
     y_true,
     y_pred,
-    y_pred_benchmark,
     relative_loss_function=mean_absolute_error,
     horizon_weight=None,
     multioutput="uniform_average",
+    **kwargs,
 ):
     """Calculates relative loss for a set of predictions and benchmark
     predictions for a given loss function. Relative loss output is non-negative
@@ -1986,7 +2048,8 @@ def relative_loss(
         Forecasted values.
 
     y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Forecasted values from benchmark method.
 
     relative_loss_function : function
@@ -2014,6 +2077,9 @@ def relative_loss(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
+    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
+    if y_pred_benchmark is None:
+        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:

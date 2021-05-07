@@ -79,19 +79,15 @@ class _BaseForecastingErrorMetric(BaseMetric):
         y_train : pandas Series
             Optional keyword argument to pass training data.
 
+        y_pred_benchmark : pandas Series
+            Optional keyword argument to pass benchmark predictions
+
         Returns
         -------
         loss : float
             Calculated loss metric.
         """
-        if self._tags["requires_y_train"]:
-            y_train = kwargs.pop("y_train", None)
-            return self._func(y_true, y_pred, y_train, multioutput=self.multioutput)
-        elif self._tags["requires_y_pred_benchmark"]:
-            msg = "Metrics requiring benchmark forecasts are not fully implemented."
-            raise NotImplementedError(msg)
-        else:
-            return self._func(y_true, y_pred, multioutput=self.multioutput)
+        return self._func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
 
 
 class _BaseForecastingSuccessMetric(_BaseForecastingErrorMetric):
@@ -117,30 +113,24 @@ class _PercentageErrorMixin:
                 where fh is the forecasting horizon
             Estimated target values.
 
-        y_train : pandas Series
+        y_train : pandas Series, default=None
             Optional keyword argument to pass training data.
+
+        y_pred_benchmark : pandas Series
+            Optional keyword argument to pass benchmark predictions
 
         Returns
         -------
         loss : float
             Calculated loss metric
         """
-        if self._tags["requires_y_train"]:
-            y_train = kwargs.pop("y_train", None)
-            return self._func(
-                y_true,
-                y_pred,
-                y_train,
-                multioutput=self.multioutput,
-                symmetric=self.symmetric,
-            )
-        elif self._tags["requires_y_pred_benchmark"]:
-            msg = "Metrics requiring benchmark forecasts are not fully implemented."
-            raise NotImplementedError(msg)
-        else:
-            return self._func(
-                y_true, y_pred, multioutput=self.multioutput, symmetric=self.symmetric
-            )
+        return self._func(
+            y_true,
+            y_pred,
+            multioutput=self.multioutput,
+            symmetric=self.symmetric,
+            **kwargs,
+        )
 
 
 class _SquaredErrorMixin:
@@ -162,33 +152,24 @@ class _SquaredErrorMixin:
                 where fh is the forecasting horizon
             Estimated target values.
 
-        y_train : pandas Series
+        y_train : pandas Series, default=None
             Optional keyword argument to pass training data.
+
+        y_pred_benchmark : pandas Series
+            Optional keyword argument to pass benchmark predictions
 
         Returns
         -------
         loss : float
             Calculated loss metric
         """
-        if self._tags["requires_y_train"]:
-            y_train = kwargs.pop("y_train", None)
-            return self._func(
-                y_true,
-                y_pred,
-                y_train,
-                multioutput=self.multioutput,
-                square_root=self.square_root,
-            )
-        elif self._tags["requires_y_pred_benchmark"]:
-            msg = "Metrics requiring benchmark forecasts are not fully implemented."
-            raise NotImplementedError(msg)
-        else:
-            return self._func(
-                y_true,
-                y_pred,
-                multioutput=self.multioutput,
-                square_root=self.square_root,
-            )
+        return self._func(
+            y_true,
+            y_pred,
+            multioutput=self.multioutput,
+            square_root=self.square_root,
+            **kwargs,
+        )
 
 
 class _SquaredPercentageErrorMixin:
@@ -215,6 +196,9 @@ class _SquaredPercentageErrorMixin:
         y_train : pandas Series
             Optional keyword argument to pass training data.
 
+        y_pred_benchmark : pandas Series
+            Optional keyword argument to pass benchmark predictions
+
         Returns
         -------
         loss : float
@@ -222,27 +206,14 @@ class _SquaredPercentageErrorMixin:
             If square_root = True, tells .
             I
         """
-        if self._tags["requires_y_train"]:
-            y_train = kwargs.pop("y_train", None)
-            return self._func(
-                y_true,
-                y_pred,
-                y_train,
-                multioutput=self.multioutput,
-                symmetric=self.symmetric,
-                square_root=self.square_root,
-            )
-        elif self._tags["requires_y_pred_benchmark"]:
-            msg = "Metrics requiring benchmark forecasts are not fully implemented."
-            raise NotImplementedError(msg)
-        else:
-            return self._func(
-                y_true,
-                y_pred,
-                multioutput=self.multioutput,
-                symmetric=self.symmetric,
-                square_root=self.square_root,
-            )
+        return self._func(
+            y_true,
+            y_pred,
+            multioutput=self.multioutput,
+            symmetric=self.symmetric,
+            square_root=self.square_root,
+            **kwargs,
+        )
 
 
 class _AsymmetricErrorMixin:
@@ -263,34 +234,21 @@ class _AsymmetricErrorMixin:
         y_train : pandas Series
             Optional keyword argument to pass training data.
 
+
         Returns
         -------
         loss : float
             Calculated loss metric
         """
-        if self._tags["requires_y_train"]:
-            y_train = kwargs.pop("y_train", None)
-            return self._func(
-                y_true,
-                y_pred,
-                y_train,
-                multioutput=self.multioutput,
-                asymmetric_threshold=self.asymmetric_treshold,
-                left_error_function=self.left_error_function,
-                right_error_function=self.right_error_function,
-            )
-        elif self._tags["requires_y_pred_benchmark"]:
-            msg = "Metrics requiring benchmark forecasts are not fully implemented."
-            raise NotImplementedError(msg)
-        else:
-            return self._func(
-                y_true,
-                y_pred,
-                multioutput=self.multioutput,
-                asymmetric_threshold=self.asymmetric_treshold,
-                left_error_function=self.left_error_function,
-                right_error_function=self.right_error_function,
-            )
+        return self._func(
+            y_true,
+            y_pred,
+            multioutput=self.multioutput,
+            asymmetric_threshold=self.asymmetric_threshold,
+            left_error_function=self.left_error_function,
+            right_error_function=self.right_error_function,
+            **kwargs,
+        )
 
 
 class _RelativeLossMixin:
@@ -308,33 +266,21 @@ class _RelativeLossMixin:
                 where fh is the forecasting horizon
             Estimated target values.
 
-        y_train : pandas Series
-            Optional keyword argument to pass training data.
+        y_pred_benchmark : pandas Series
+            Optional keyword argument to pass benchmark predictions
 
         Returns
         -------
         loss : float
             Calculated loss metric
         """
-        if self._tags["requires_y_train"]:
-            y_train = kwargs.pop("y_train", None)
-            return self._func(
-                y_true,
-                y_pred,
-                y_train,
-                multioutput=self.multioutput,
-                loss_function=self._relative_func,
-            )
-        elif self._tags["requires_y_pred_benchmark"]:
-            msg = "Metrics requiring benchmark forecasts are not fully implemented."
-            raise NotImplementedError(msg)
-        else:
-            return self._func(
-                y_true,
-                y_pred,
-                multioutput=self.multioutput,
-                loss_function=self._relative_func,
-            )
+        return self._func(
+            y_true,
+            y_pred,
+            multioutput=self.multioutput,
+            loss_function=self.relative_loss_function,
+            **kwargs,
+        )
 
 
 class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
@@ -412,6 +358,12 @@ class _AsymmetricForecastingErrorMetric(
 class _RelativeLossForecastingErrorMetric(
     _RelativeLossMixin, _BaseForecastingErrorMetric
 ):
+    _tags = {
+        "requires_y_train": False,
+        "requires_y_pred_benchmark": True,
+        "univariate-only": False,
+    }
+
     def __init__(
         self,
         func,
@@ -1305,6 +1257,12 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
+    _tags = {
+        "requires_y_train": False,
+        "requires_y_pred_benchmark": True,
+        "univariate-only": False,
+    }
+
     def __init__(self, multioutput="uniform_average"):
         name = "MeanRelativeAbsoluteError"
         func = mean_relative_absolute_error
@@ -1349,6 +1307,12 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
           Journal of Forecasting, Volume 22, Issue 4.
     """
 
+    _tags = {
+        "requires_y_train": False,
+        "requires_y_pred_benchmark": True,
+        "univariate-only": False,
+    }
+
     def __init__(self, multioutput="uniform_average"):
         name = "MedianRelativeAbsoluteError"
         func = median_relative_absolute_error
@@ -1392,6 +1356,12 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
           "Another look at measures of forecast accuracy", International
           Journal of Forecasting, Volume 22, Issue 4.
     """
+
+    _tags = {
+        "requires_y_train": False,
+        "requires_y_pred_benchmark": True,
+        "univariate-only": False,
+    }
 
     def __init__(self, multioutput="uniform_average"):
         name = "GeometricMeanRelativeAbsoluteError"
@@ -1443,6 +1413,12 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
           "Another look at measures of forecast accuracy", International
           Journal of Forecasting, Volume 22, Issue 4.
     """
+
+    _tags = {
+        "requires_y_train": False,
+        "requires_y_pred_benchmark": True,
+        "univariate-only": False,
+    }
 
     def __init__(self, multioutput="uniform_average", square_root=False):
         name = "GeometricMeanRelativeSquaredError"
