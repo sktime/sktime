@@ -334,6 +334,9 @@ def check_scoring(scoring):
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
     from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
+    if scoring is None:
+        return MeanAbsolutePercentageError()
+
     if scoring._tags["requires_y_pred_benchmark"]:
         msg = "".join(
             [
@@ -342,8 +345,6 @@ def check_scoring(scoring):
             ]
         )
         raise NotImplementedError(msg)
-    if scoring is None:
-        return MeanAbsolutePercentageError()
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
