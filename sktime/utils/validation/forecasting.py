@@ -317,7 +317,7 @@ def check_scoring(scoring):
 
     Parameters
     ----------
-    scoring : object of class _MetricFunctionWrapper from sktime.performance_metrics.
+    scoring : object that inherits from BaseMetric from sktime.performance_metrics.
 
     Returns
     ----------
@@ -328,10 +328,20 @@ def check_scoring(scoring):
     ----------
     TypeError
         if object is not callable from current scope.
+    NotImplementedError
+        if metric requires y_pred_benchmark to be passed
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
     from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
+    if scoring._tags["requires_y_pred_benchmark"]:
+        msg = "".join(
+            [
+                "Metrics requiring benchmark forecasts",
+                "are not fully implemented in the sktime API yet",
+            ]
+        )
+        raise NotImplementedError(msg)
     if scoring is None:
         return MeanAbsolutePercentageError()
 
