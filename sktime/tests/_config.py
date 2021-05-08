@@ -83,6 +83,7 @@ from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
+from sktime.forecasting.compose import NetworkPipelineForecaster
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -262,8 +263,21 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    NetworkPipelineForecaster: {
+        "steps": [
+            (
+                "imputer",
+                Imputer(method="drift"),
+                {"fit": {"Z": "original_X"}, "predict": None},
+            ),
+            (
+                "forecaster",
+                NaiveForecaster(strategy="mean"),
+                {"fit": {"y": "imputer"}, "predict": {"fh": "original_X"}},
+            ),
+        ]
+    },
 }
-
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
 # common tests for estimators with the same tags.

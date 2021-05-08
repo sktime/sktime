@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from sktime.base import BaseEstimator
+from sktime.forecasting.base import BaseForecaster
+
+__author__ = ["Viktor Kazakov"]
 
 
-class NetworkPipeline(BaseEstimator):
+class NetworkPipelineForecaster(BaseForecaster):
     """
     Prototype of non sequential pipeline mimicking a network.
 
@@ -66,6 +68,8 @@ class NetworkPipeline(BaseEstimator):
     See the tests folder for a working implementations of these examples.
     """
 
+    _required_parameters = ["steps"]
+
     def __init__(self, steps, interface="simple"):
         self._steps = steps
         self._step_results = {}
@@ -104,6 +108,9 @@ class NetworkPipeline(BaseEstimator):
             if argument_value == "original_y":
                 returned_arguments_kwarg[argument_name] = self._y
                 continue
+            if argument_value == "original_fh":
+                returned_arguments_kwarg[argument_name] = self._fh
+                continue
 
             if type(argument_value) == list:
                 out = []
@@ -120,7 +127,7 @@ class NetworkPipeline(BaseEstimator):
 
         return returned_arguments_kwarg
 
-    def fit(self, X=None, y=None):
+    def fit(self, y, X=None, fh=None):
         self._X = X
         self._y = y
         for name, alg, arguments in self._iter():
@@ -144,11 +151,10 @@ class NetworkPipeline(BaseEstimator):
 
         return self
 
-    def predict(self, X=None, y=None):
+    def predict(self, fh, X=None):
 
+        self._fh = fh
         self._X = X
-        self._y = y
-
         for name, alg, arguments in self._iter():
             processed_arguments = {}
 
@@ -165,3 +171,6 @@ class NetworkPipeline(BaseEstimator):
                 self._step_results[name] = alg.predict(**processed_arguments)
 
         return self._step_results[self._steps[-1][0]]
+
+    def update(self, y, X=None, update_params=True):
+        self.fit(y=y, X=X)

@@ -19,6 +19,7 @@ __all__ = [
     "MultiplexForecaster",
     "ReducedForecaster",
     "make_reduction",
+    "NetworkPipelineForecaster",
 ]
 
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
@@ -35,3 +36,4 @@ from sktime.forecasting.compose._stack import StackingForecaster
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._reduce import ReducedForecaster
 from sktime.forecasting.compose._reduce import make_reduction
+from sktime.forecasting.compose._networkpipeline import NetworkPipelineForecaster
