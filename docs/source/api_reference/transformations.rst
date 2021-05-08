@@ -55,7 +55,7 @@ tsfresh
 Catch22
 ~~~~~~~
 
-.. currentmodule:: sktime.transformations.panel.catch22_features
+.. currentmodule:: sktime.transformations.panel.catch22
 
 .. autosummary::
     :toctree: modules/auto_generated/

@@ -9,22 +9,20 @@ import numpy as np
 import math
 
 from joblib import Parallel, delayed
-from sklearn.ensemble._forest import ForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.slope_and_trend import _slope
+from sktime.classification.interval_based.vector_classifiers import \
+    ContinuousIntervalTree
+from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree import \
+    _cif_feature
+from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
-_check_soft_dependencies("catch22")
-from sktime.transformations.panel.catch22_features import Catch22  # noqa: E402
 
-
-class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
+class CanonicalIntervalForest(BaseClassifier):
     """Canonical Interval Forest Classifier.
 
     Interval based forest making use of the catch22 feature set on randomly
@@ -92,6 +90,8 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -104,10 +104,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-        super(CanonicalIntervalForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_estimators,
-        )
+        self.base_estimator = ContinuousIntervalTree()
 
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
@@ -131,8 +128,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.dims = []
         self.classes_ = []
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        super(CanonicalIntervalForest, self).__init__()
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
@@ -163,6 +159,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
             )
         if self.__n_intervals <= 0:
             self.__n_intervals = 1
+
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
 
@@ -225,7 +222,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         ----------
         n_test_instances     : int, number of cases to classify
         series_length    : int, number of attributes in X, must match
-        _num_atts determined in fit
+        series_length determined in fit
 
         Returns
         -------
@@ -249,7 +246,6 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                 self.intervals[i],
                 self.dims[i],
                 self.atts[i],
-                n_test_instances,
             )
             for i in range(self.n_estimators)
         )
@@ -261,7 +257,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
     def _fit_estimator(self, X, y, idx):
         c22 = Catch22()
-        rs = 5465 if self.random_state == 0 else self.random_state
+        rs = 255 if self.random_state == 0 else self.random_state
         rs = None if self.random_state is None else rs * 37 * (idx + 1)
         rng = check_random_state(rs)
 
@@ -301,52 +297,34 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                 intervals[j][0] = intervals[j][1] - length
 
             for a in range(0, self.att_subsample_size):
-                transformed_x[self.att_subsample_size * j + a] = self.__cif_feature(
+                transformed_x[self.att_subsample_size * j + a] = _cif_feature(
                     X, intervals[j], dims[j], atts[a], c22
                 )
 
         tree = clone(self.base_estimator)
         tree.set_params(random_state=rs)
         transformed_x = transformed_x.T
-        np.nan_to_num(transformed_x, False, 0, 0, 0)
+        transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
         return [tree, intervals, dims, atts]
 
     def _predict_proba_for_estimator(
-        self, X, classifier, intervals, dims, atts, test_size
+        self, X, classifier, intervals, dims, atts
     ):
         c22 = Catch22()
+        return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
 
-        transformed_x = np.empty(
-            shape=(self.att_subsample_size * self.__n_intervals, test_size),
-            dtype=np.float32,
-        )
+    def temporal_importance_curves(self):
+        curves = np.zeros((25, self.n_dims, self.series_length))
+        for i, tree in enumerate(self.classifiers):
+            splits, gains = tree.tree_splits_gain()
 
-        for j in range(0, self.__n_intervals):
-            for a in range(0, self.att_subsample_size):
-                transformed_x[self.att_subsample_size * j + a] = self.__cif_feature(
-                    X, intervals[j], dims[j], atts[a], c22
-                )
+            for n, split in enumerate(splits):
+                gain = gains[n]
+                interval = int(split / self.att_subsample_size)
+                att = self.atts[i][int(split % self.att_subsample_size)]
+                dim = self.dims[i][interval]
 
-        transformed_x = transformed_x.T
-        np.nan_to_num(transformed_x, False, 0, 0, 0)
-
-        return classifier.predict_proba(transformed_x)
-
-    @staticmethod
-    def __cif_feature(X, intervals, dims, att, c22):
-        if att == 22:
-            # mean
-            return np.mean(X[:, dims, intervals[0] : intervals[1]], axis=1)
-        elif att == 23:
-            # std_dev
-            return np.std(X[:, dims, intervals[0] : intervals[1]], axis=1)
-        elif att == 24:
-            # slope
-            return _slope(X[:, dims, intervals[0] : intervals[1]], axis=1)
-        else:
-            return c22._transform_single_feature(
-                X[:, dims, intervals[0] : intervals[1]],
-                feature=att,
-            )
+                for j in range(self.intervals[i][interval][0], self.intervals[i][interval][1] + 1):
+                    curves[att][dim][j] += gain

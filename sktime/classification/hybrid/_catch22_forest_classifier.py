@@ -11,11 +11,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X
-
-_check_soft_dependencies("catch22")
-from catch22 import catch22_all  # noqa: E402
 
 
 class Catch22ForestClassifier(BaseClassifier):
@@ -69,7 +66,16 @@ class Catch22ForestClassifier(BaseClassifier):
 
     """
 
-    def __init__(self, n_estimators=100, n_jobs=None, random_state=None):
+    # Capability tags
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
+    }
+
+    def __init__(self, n_estimators=100, n_jobs=1, random_state=None):
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -94,15 +100,10 @@ class Catch22ForestClassifier(BaseClassifier):
         self : object
         """
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
-        n_instances = X.shape[0]
-        X = np.reshape(X, (n_instances, -1))
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        c22_list = []
-        for i in range(n_instances):
-            series = X[i, :]
-            c22_dict = catch22_all(series)
-            c22_list.append(c22_dict["values"])
+        c22 = Catch22()
+        c22_list = c22.fit_transform(X)
 
         self.classifier = RandomForestClassifier(
             n_jobs=self.n_jobs,
@@ -110,9 +111,7 @@ class Catch22ForestClassifier(BaseClassifier):
             random_state=self.random_state,
         )
 
-        X_c22 = np.array(c22_list)
-        np.nan_to_num(X_c22, False, 0, 0, 0)
-
+        X_c22 = np.nan_to_num(np.array(c22_list, dtype=np.float32), False, 0, 0, 0)
         self.classifier.fit(X_c22, y)
 
         self._is_fitted = True
@@ -121,33 +120,19 @@ class Catch22ForestClassifier(BaseClassifier):
     def predict(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
-        n_instances = X.shape[0]
-        X = np.reshape(X, (n_instances, -1))
 
-        c22_list = []
-        for i in range(n_instances):
-            series = X[i, :]
-            c22_dict = catch22_all(series)
-            c22_list.append(c22_dict["values"])
+        c22 = Catch22()
+        c22_list = c22.fit_transform(X)
 
-        X_c22 = np.array(c22_list)
-        np.nan_to_num(X_c22, False, 0, 0, 0)
-
+        X_c22 = np.nan_to_num(np.array(c22_list, dtype=np.float32), False, 0, 0, 0)
         return self.classifier.predict(X_c22)
 
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
-        n_instances = X.shape[0]
-        X = np.reshape(X, (n_instances, -1))
 
-        c22_list = []
-        for i in range(n_instances):
-            series = X[i, :]
-            c22_dict = catch22_all(series)
-            c22_list.append(c22_dict["values"])
+        c22 = Catch22()
+        c22_list = c22.fit_transform(X)
 
-        X_c22 = np.array(c22_list)
-        np.nan_to_num(X_c22, False, 0, 0, 0)
-
+        X_c22 = np.nan_to_num(np.array(c22_list, dtype=np.float32), False, 0, 0, 0)
         return self.classifier.predict_proba(X_c22)
