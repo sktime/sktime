@@ -10,15 +10,12 @@ import math
 
 import numpy as np
 import pandas as pd
+from numba import njit
+from numba.typed import List
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.data_processing import from_nested_to_2d_array
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
-
-_check_soft_dependencies("numba")
-from numba import njit  # noqa: E402
-from numba.typed import List  # noqa: E402
 
 
 class Catch22(_PanelToTabularTransformer):
@@ -1048,7 +1045,8 @@ def spline_fit(X):
     for i in range(1, 4):
         for j in range(len(X)):
             second_half = 0 if j < breaks[1] else 1
-            y_out[j] = y_out[j] * (j - breaks[1] * second_half) + coeffs_spline[second_half][i]
+            y_out[j] = y_out[j] * (j - breaks[1] * second_half) + \
+                       coeffs_spline[second_half][i]
 
     return y_out
 
