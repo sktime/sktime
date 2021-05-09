@@ -400,7 +400,7 @@ class TreeNode:
             return dist
 
     def predict_proba_drcif(
-        self, X, c22, n_intervals, intervals, dims, atts, n_classes,class_dictionary
+        self, X, c22, n_intervals, intervals, dims, atts, n_classes, class_dictionary
     ):
         if self.best_split > -1:
             rep = -1
