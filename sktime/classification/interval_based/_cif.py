@@ -13,10 +13,12 @@ from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.classification.interval_based.vector_classifiers import \
-    ContinuousIntervalTree
-from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree import \
-    _cif_feature
+from sktime.classification.interval_based.vector_classifiers import (
+    ContinuousIntervalTree,
+)
+from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree import (
+    _cif_feature,
+)
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
@@ -309,9 +311,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
         return [tree, intervals, dims, atts]
 
-    def _predict_proba_for_estimator(
-        self, X, classifier, intervals, dims, atts
-    ):
+    def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
         c22 = Catch22()
         return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
 
@@ -326,5 +326,7 @@ class CanonicalIntervalForest(BaseClassifier):
                 att = self.atts[i][int(split % self.att_subsample_size)]
                 dim = self.dims[i][interval]
 
-                for j in range(self.intervals[i][interval][0], self.intervals[i][interval][1] + 1):
+                for j in range(
+                        self.intervals[i][interval][0], self.intervals[i][interval][1] + 1
+                ):
                     curves[att][dim][j] += gain

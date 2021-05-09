@@ -13,10 +13,12 @@ from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.classification.interval_based.vector_classifiers import \
-    ContinuousIntervalTree
-from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree \
-    import _drcif_feature
+from sktime.classification.interval_based.vector_classifiers import (
+    ContinuousIntervalTree,
+)
+from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree import (
+    _drcif_feature,
+)
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
@@ -154,8 +156,16 @@ class DrCIF(BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        X_p = np.zeros((self.n_instances, self.n_dims, int(math.pow(2, math.ceil(
-            math.log(self.series_length, 2))) - self.series_length)))
+        X_p = np.zeros(
+            (
+                self.n_instances,
+                self.n_dims,
+                int(
+                    math.pow(2, math.ceil(math.log(self.series_length, 2)))
+                    - self.series_length
+                ),
+            )
+        )
         X_p = np.concatenate((X, X_p), axis=2)
         X_p = np.abs(np.fft.fft(X_p)[:, :, : int(X_p.shape[2] / 2)])
 
@@ -177,9 +187,7 @@ class DrCIF(BaseClassifier):
         elif isinstance(self.n_intervals, list) and len(self.n_intervals) == 3:
             self.__n_intervals = self.n_intervals
         else:
-            raise ValueError(
-                "DrCIF n_intervals must be an int or list of length 3."
-            )
+            raise ValueError("DrCIF n_intervals must be an int or list of length 3.")
         for i, n in enumerate(self.__n_intervals):
             if n <= 0:
                 self.__n_intervals[i] = 1
@@ -187,13 +195,15 @@ class DrCIF(BaseClassifier):
         if self.min_interval is None:
             self.__min_interval = [4, 4, 4]
         elif isinstance(self.min_interval, int):
-            self.__min_interval = [self.min_interval, self.min_interval, self.min_interval]
+            self.__min_interval = [
+                self.min_interval,
+                self.min_interval,
+                self.min_interval,
+            ]
         elif isinstance(self.min_interval, list) and len(self.min_interval) == 3:
             self.__min_interval = self.min_interval
         else:
-            raise ValueError(
-                "DrCIF min_interval must be an int or list of length 3."
-            )
+            raise ValueError("DrCIF min_interval must be an int or list of length 3.")
         if self.series_length < self.__min_interval[0]:
             self.__min_interval[0] = self.series_length
         if X_p.shape[2] < self.__min_interval[1]:
@@ -202,15 +212,21 @@ class DrCIF(BaseClassifier):
             self.__min_interval[2] = X_d.shape[2]
 
         if self.max_interval is None:
-            self.__max_interval = [self.series_length / 2,  X_p.shape[2] / 2, X_d.shape[2] / 2]
+            self.__max_interval = [
+                self.series_length / 2,
+                X_p.shape[2] / 2,
+                X_d.shape[2] / 2,
+            ]
         elif isinstance(self.max_interval, int):
-            self.__max_interval = [self.max_interval, self.max_interval, self.max_interval]
+            self.__max_interval = [
+                self.max_interval,
+                self.max_interval,
+                self.max_interval,
+            ]
         elif isinstance(self.max_interval, list) and len(self.max_interval) == 3:
             self.__max_interval = self.max_interval
         else:
-            raise ValueError(
-                "DrCIF max_interval must be an int or list of length 3."
-            )
+            raise ValueError("DrCIF max_interval must be an int or list of length 3.")
         for i, n in enumerate(self.__max_interval):
             if n < self.__min_interval[i]:
                 self.__max_interval[i] = self.__min_interval[i]
@@ -290,8 +306,16 @@ class DrCIF(BaseClassifier):
                 "that in the test data"
             )
 
-        X_p = np.zeros((n_test_instances, self.n_dims, int(math.pow(2, math.ceil(
-            math.log(self.series_length, 2))) - self.series_length)))
+        X_p = np.zeros(
+            (
+                n_test_instances,
+                self.n_dims,
+                int(
+                    math.pow(2, math.ceil(math.log(self.series_length, 2)))
+                    - self.series_length
+                ),
+            )
+        )
         X_p = np.concatenate((X, X_p), axis=2)
         X_p = np.abs(np.fft.fft(X_p)[:, :, : int(X_p.shape[2] / 2)])
 
@@ -314,9 +338,6 @@ class DrCIF(BaseClassifier):
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
-
-    def _get_train_probs(self, X):
-        n=1
 
     def _fit_estimator(self, X, X_p, X_d, y, idx):
         c22 = Catch22()
@@ -389,4 +410,6 @@ class DrCIF(BaseClassifier):
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
         c22 = Catch22()
-        return classifier.predict_proba_drcif(X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts)
+        return classifier.predict_proba_drcif(
+            X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts
+        )

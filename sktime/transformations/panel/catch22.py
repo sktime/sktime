@@ -54,12 +54,11 @@ class Catch22(_PanelToTabularTransformer):
 
     """
 
-    def __init__(self,
-                 outlier_norm=False,
-                 n_jobs=1,
-                 ):
+    def __init__(
+            self,
+            outlier_norm=False,
+    ):
         self.outlier_norm = outlier_norm
-        self.n_jobs = n_jobs
 
         super(Catch22, self).__init__()
 
@@ -117,7 +116,8 @@ class Catch22(_PanelToTabularTransformer):
             c22_list[i, 17] = Catch22.CO_Embed2_Dist_tau_d_expfit_meandiff(series, acfz)
             c22_list[i, 18] = Catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(series)
             c22_list[i, 19] = Catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(
-                series)
+                series
+            )
             c22_list[i, 20] = Catch22.SB_TransitionMatrix_3ac_sumdiagcov(series, acfz)
             c22_list[i, 21] = Catch22.PD_PeriodicityWang_th0_01(series)
 
@@ -137,7 +137,7 @@ class Catch22(_PanelToTabularTransformer):
         Numpy array containing a catch22 feature for each input series
         """
         if isinstance(feature, (int, np.integer)) or isinstance(
-                feature, (float, np.float)
+            feature, (float, np.float)
         ):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")
@@ -296,9 +296,10 @@ class Catch22(_PanelToTabularTransformer):
         nsum = 0
         for i in range(5):
             for n in range(5):
-                if (histogram[i][n] > 0):
+                if histogram[i][n] > 0:
                     nsum += histogram[i][n] * np.log(
-                        histogram[i][n] / sumx[i] / sumy[n])
+                        histogram[i][n] / sumx[i] / sumy[n]
+                    )
 
         return nsum
 
@@ -394,7 +395,7 @@ class Catch22(_PanelToTabularTransformer):
     @staticmethod
     def FC_LocalSimple_mean1_tauresrat(X, acfz):
         # Change in correlation length after iterative differencing
-        if (len(X) < 2):
+        if len(X) < 2:
             return 0
         res = local_simple_mean(X, 1)
         mean = np.mean(res)
@@ -417,7 +418,8 @@ class Catch22(_PanelToTabularTransformer):
         d_mean = 0
         for i in range(len(d)):
             n = np.sqrt(
-                np.power(X[i + 1] - X[i], 2) + np.power(X[i + tau + 1] - X[i + tau], 2))
+                np.power(X[i + 1] - X[i], 2) + np.power(X[i + tau + 1] - X[i + tau], 2)
+            )
             d[i] = n
             d_mean += n
         d_mean /= len(X) - tau - 1
@@ -431,7 +433,8 @@ class Catch22(_PanelToTabularTransformer):
             return np.nan
 
         num_bins = int(
-            np.ceil(srange / (3.5 * np.std(d) / np.power(len(d), 0.3333333333333333))))
+            np.ceil(srange / (3.5 * np.std(d) / np.power(len(d), 0.3333333333333333)))
+        )
 
         if num_bins == 0:
             return np.nan
@@ -663,7 +666,7 @@ def outlier_include(X):
 
     trim_limit = max(mj, fbi)
 
-    return np.median(medians[:trim_limit + 1])
+    return np.median(medians[: trim_limit + 1])
 
 
 @njit(fastmath=True)
@@ -705,11 +708,12 @@ def summaries_welch_rect(X, centroid, X_fft):
     p[0] = (np.power(complex_magnitude(X_fft[0]), 2) / len(X)) / pi2
     for i in range(1, new_length - 1):
         p[i] = ((np.power(complex_magnitude(X_fft[i]), 2) / len(X)) * 2) / pi2
-    p[new_length - 1] = (np.power(complex_magnitude(X_fft[new_length - 1]), 2) / len(
-        X)) / pi2
+    p[new_length - 1] = (
+        np.power(complex_magnitude(X_fft[new_length - 1]), 2) / len(X)
+    ) / pi2
 
     w = np.zeros(new_length)
-    a = (1.0 / len(X_fft))
+    a = 1.0 / len(X_fft)
     for i in range(0, new_length):
         w[i] = i * a * math.pi * 2
 
@@ -1008,7 +1012,7 @@ def spline_fit(X):
     AElim = np.zeros((5, 5))
     for i in range(5):
         n = i * 5
-        AElim[i] = ATA[n:n + 5]
+        AElim[i] = ATA[n : n + 5]
 
     for i in range(5):
         for j in range(i + 1, 5):
@@ -1045,8 +1049,9 @@ def spline_fit(X):
     for i in range(1, 4):
         for j in range(len(X)):
             second_half = 0 if j < breaks[1] else 1
-            y_out[j] = y_out[j] * (j - breaks[1] * second_half) + \
-                       coeffs_spline[second_half][i]
+            y_out[j] = (
+                y_out[j] * (j - breaks[1] * second_half) + coeffs_spline[second_half][i]
+            )
 
     return y_out
 
