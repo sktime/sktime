@@ -911,21 +911,21 @@ def spline_fit(X):
 
     for k in range(1, 4):
         for j in range(k):
-            for l in range(32):
-                coeffs[l][j] *= H[l] / (k - j)
+            for u in range(32):
+                coeffs[u][j] *= H[u] / (k - j)
 
         Q = np.zeros((4, 8))
-        for l in range(32):
+        for u in range(32):
             for m in range(4):
-                Q[l % 4][int(l / 4)] += coeffs[l][m]
+                Q[u % 4][int(u / 4)] += coeffs[u][m]
 
-        for l in range(8):
+        for u in range(8):
             for m in range(1, 4):
-                Q[m][l] += Q[m - 1][l]
+                Q[m][u] += Q[m - 1][u]
 
-        for l in range(32):
-            if l % 4 > 0:
-                coeffs[l][k] = Q[l % 4 - 1][int(l / 4)]
+        for u in range(32):
+            if u % 4 > 0:
+                coeffs[u][k] = Q[u % 4 - 1][int(u / 4)]
 
         fmax = np.zeros(32)
         for i in range(8):
@@ -933,8 +933,8 @@ def spline_fit(X):
                 fmax[i * 4 + j] = Q[3][i]
 
         for j in range(k + 1):
-            for l in range(32):
-                coeffs[l][j] /= fmax[l]
+            for u in range(32):
+                coeffs[u][j] /= fmax[u]
 
         for i in range(29):
             for j in range(k + 1):

@@ -13,10 +13,10 @@ from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.classification.interval_based.vector_classifiers import (
+from sktime.classification.interval_based.vector import (
     ContinuousIntervalTree,
 )
-from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree import (
+from sktime.classification.interval_based.vector._continuous_interval_tree import (
     _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
