@@ -55,8 +55,8 @@ class Catch22(_PanelToTabularTransformer):
     """
 
     def __init__(
-            self,
-            outlier_norm=False,
+        self,
+        outlier_norm=False,
     ):
         self.outlier_norm = outlier_norm
 

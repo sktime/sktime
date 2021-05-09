@@ -4,5 +4,5 @@ __all__ = [
 ]
 
 from sktime.classification.interval_based.vector_classifiers._continuous_interval_tree import (
-    ContinuousIntervalTree
+    ContinuousIntervalTree,
 )

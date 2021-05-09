@@ -45,9 +45,9 @@ class ContinuousIntervalTree(BaseEstimator):
     """
 
     def __init__(
-            self,
-            max_depth=sys.maxsize,
-            random_state=None,
+        self,
+        max_depth=sys.maxsize,
+        random_state=None,
     ):
         self.max_depth = max_depth
 
@@ -93,7 +93,7 @@ class ContinuousIntervalTree(BaseEstimator):
             distribution,
             0,
             self.max_depth,
-            False
+            False,
         )
 
         self._is_fitted = True
@@ -163,7 +163,7 @@ class ContinuousIntervalTree(BaseEstimator):
             r = [
                 X[i].reshape((1, n_dims, series_length)),
                 X_p[i].reshape((1, n_dims, X_p.shape[2])),
-                X_d[i].reshape((1, n_dims, X_d.shape[2]))
+                X_d[i].reshape((1, n_dims, X_d.shape[2])),
             ]
             dists[i] = self.root.predict_proba_drcif(
                 r,
@@ -199,8 +199,8 @@ class TreeNode:
     """"""
 
     def __init__(
-            self,
-            random_state=None,
+        self,
+        random_state=None,
     ):
         self.random_state = random_state
 
@@ -214,16 +214,16 @@ class TreeNode:
         self.depth = -1
 
     def build_tree(
-            self,
-            X,
-            y,
-            thresholds,
-            entropy,
-            distribution_cls,
-            distribution,
-            depth,
-            max_depth,
-            leaf,
+        self,
+        X,
+        y,
+        thresholds,
+        entropy,
+        distribution_cls,
+        distribution,
+        depth,
+        max_depth,
+        leaf,
     ):
         self.depth = depth
         best_splits = []
@@ -254,14 +254,12 @@ class TreeNode:
                     margin = self.margin_gain(X, att, threshold)
                     if self.best_margin == -1:
                         self.best_margin = self.margin_gain(
-                            X,
-                            self.best_split,
-                            self.best_threshold
+                            X, self.best_split, self.best_threshold
                         )
 
                     if margin > self.best_margin or (
-                            margin == self.best_margin
-                            and self.random_state.choice([True, False])
+                        margin == self.best_margin
+                        and self.random_state.choice([True, False])
                     ):
                         self.best_split = att
                         self.best_threshold = threshold
@@ -283,7 +281,8 @@ class TreeNode:
                     best_entropies[0],
                     best_distributions_cls[0],
                     best_distributions[0],
-                    depth + 1, max_depth,
+                    depth + 1,
+                    max_depth,
                     len(best_distributions[0]) == 1,
                 )
             else:
@@ -309,7 +308,8 @@ class TreeNode:
                     best_entropies[1],
                     best_distributions_cls[1],
                     best_distributions[1],
-                    depth + 1, max_depth,
+                    depth + 1,
+                    max_depth,
                     len(best_distributions[1]) == 1,
                 )
             else:
@@ -373,7 +373,7 @@ class TreeNode:
             return dist
 
     def predict_proba_cif(
-            self, X, c22, intervals, dims, atts, n_classes, class_dictionary
+        self, X, c22, intervals, dims, atts, n_classes, class_dictionary
     ):
         if self.best_split > -1:
             interval = int(self.best_split / len(atts))
@@ -400,7 +400,7 @@ class TreeNode:
             return dist
 
     def predict_proba_drcif(
-            self, X, c22, n_intervals, intervals, dims, atts, n_classes,class_dictionary
+        self, X, c22, n_intervals, intervals, dims, atts, n_classes,class_dictionary
     ):
         if self.best_split > -1:
             rep = -1
@@ -478,10 +478,10 @@ class TreeNode:
 
         num_cases = X.shape[0]
         info_gain = (
-                parent_entropy
-                - sum_missing / num_cases * entropy_missing
-                - sum_left / num_cases * entropy_left
-                - sum_right / num_cases * entropy_right
+            parent_entropy
+            - sum_missing / num_cases * entropy_missing
+            - sum_left / num_cases * entropy_left
+            - sum_right / num_cases * entropy_right
         )
 
         return (
@@ -529,16 +529,16 @@ def entropy(x, s):
 def _cif_feature(X, intervals, dims, att, c22):
     if att == 22:
         # mean
-        return np.mean(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.mean(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 23:
         # std_dev
-        return np.std(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.std(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 24:
         # slope
-        return _slope(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return _slope(X[:, dims, intervals[0] : intervals[1]], axis=1)
     else:
         return c22._transform_single_feature(
-            X[:, dims, intervals[0]: intervals[1]],
+            X[:, dims, intervals[0] : intervals[1]],
             feature=att,
         )
 
@@ -546,27 +546,27 @@ def _cif_feature(X, intervals, dims, att, c22):
 def _drcif_feature(X, intervals, dims, att, c22):
     if att == 22:
         # mean
-        return np.mean(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.mean(X[:, dims, intervals[0] : intervals[1]], axis=1)
     if att == 23:
         # median
-        return np.median(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.median(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 24:
         # std_dev
-        return np.std(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.std(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 25:
         # slope
-        return _slope(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return _slope(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 26:
         # iqr
         return scipy.stats.iqr(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 27:
         # min
-        return np.min(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.min(X[:, dims, intervals[0] : intervals[1]], axis=1)
     elif att == 28:
         # max
-        return np.max(X[:, dims, intervals[0]: intervals[1]], axis=1)
+        return np.max(X[:, dims, intervals[0] : intervals[1]], axis=1)
     else:
         return c22._transform_single_feature(
-            X[:, dims, intervals[0]: intervals[1]],
+            X[:, dims, intervals[0] : intervals[1]],
             feature=att,
         )

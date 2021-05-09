@@ -327,6 +327,6 @@ class CanonicalIntervalForest(BaseClassifier):
                 dim = self.dims[i][interval]
 
                 for j in range(
-                        self.intervals[i][interval][0], self.intervals[i][interval][1] + 1
+                    self.intervals[i][interval][0], self.intervals[i][interval][1] + 1
                 ):
                     curves[att][dim][j] += gain
