@@ -10,6 +10,8 @@ import math
 
 from joblib import Parallel, delayed
 from sklearn import clone
+from sklearn.base import BaseEstimator
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
@@ -98,14 +100,15 @@ class DrCIF(BaseClassifier):
         self,
         min_interval=None,
         max_interval=None,
-        n_estimators=500,
+        n_estimators=200,
         n_intervals=None,
         att_subsample_size=10,
+        base_estimator=None,
         save_transform_for_estimate=False,
         n_jobs=1,
         random_state=None,
     ):
-        self.base_estimator = ContinuousIntervalTree()
+        self.base_estimator = base_estimator
 
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
@@ -131,6 +134,7 @@ class DrCIF(BaseClassifier):
         self.intervals = []
         self.dims = []
         self.classes_ = []
+        self.tree = None
 
         super(DrCIF, self).__init__()
 
@@ -155,6 +159,15 @@ class DrCIF(BaseClassifier):
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+
+        if self.base_estimator is None or self.base_estimator == "CIT":
+            self.tree = ContinuousIntervalTree()
+        elif self.base_estimator == "DTC":
+            self.tree = DecisionTreeClassifier(criterion="entropy")
+        elif isinstance(self.base_estimator, BaseEstimator):
+            self.tree = self.base_estimator
+        else:
+            raise ValueError("DrCIF invalid base estimator given.")
 
         X_p = np.zeros(
             (
@@ -398,7 +411,7 @@ class DrCIF(BaseClassifier):
 
                 j += 1
 
-        tree = clone(self.base_estimator)
+        tree = clone(self.tree)
         tree.set_params(random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -410,6 +423,30 @@ class DrCIF(BaseClassifier):
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
         c22 = Catch22()
-        return classifier.predict_proba_drcif(
-            X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts
-        )
+        if self.tree is ContinuousIntervalTree:
+            return classifier.predict_proba_drcif(
+                X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts
+            )
+        else:
+            T = [X, X_p, X_d]
+
+            transformed_x = np.empty(
+                shape=(self.att_subsample_size * self.total_intervals, X.shape[0]),
+                dtype=np.float32,
+            )
+
+            p = 0
+            j = 0
+            for r in range(0, len(T)):
+                for _ in range(0, self.__n_intervals[r]):
+                    for a in range(0, self.att_subsample_size):
+                        transformed_x[p] = _drcif_feature(
+                            T[r], intervals[j], dims[j], atts[a], c22,
+                        )
+                        p += 1
+                    j += 1
+
+            transformed_x = transformed_x.T
+            np.nan_to_num(transformed_x, False, 0, 0, 0)
+
+            return classifier.predict_proba(transformed_x)

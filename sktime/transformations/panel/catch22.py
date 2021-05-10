@@ -10,6 +10,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from numba import njit
 from numba.typed import List
 
@@ -57,8 +58,11 @@ class Catch22(_PanelToTabularTransformer):
     def __init__(
         self,
         outlier_norm=False,
+        n_jobs=1
     ):
         self.outlier_norm = outlier_norm
+
+        self.n_jobs=n_jobs
 
         super(Catch22, self).__init__()
 
@@ -79,49 +83,55 @@ class Catch22(_PanelToTabularTransformer):
         n_instances = X.shape[0]
         X = np.reshape(X, (n_instances, -1))
 
-        c22_list = np.zeros((n_instances, 22))
-        for i in range(n_instances):
-            series = X[i, :]
-            if self.outlier_norm:
-                outlier_series = (series - np.mean(series)) / np.std(series)
-            else:
-                outlier_series = series
-
-            smin = np.min(series)
-            smax = np.max(series)
-            smean = np.mean(series)
-
-            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-            fft = np.fft.fft(series - smean, n=nfft)
-            ac = autocorr(series, fft)
-            acfz = ac_first_zero(ac)
-
-            c22_list[i, 0] = Catch22.DN_HistogramMode_5(series, smin, smax)
-            c22_list[i, 1] = Catch22.DN_HistogramMode_10(series, smin, smax)
-            c22_list[i, 2] = Catch22.SB_BinaryStats_diff_longstretch0(series, smean)
-            c22_list[i, 3] = Catch22.DN_OutlierInclude_p_001_mdrmd(outlier_series)
-            c22_list[i, 4] = Catch22.DN_OutlierInclude_n_001_mdrmd(outlier_series)
-            c22_list[i, 5] = Catch22.CO_f1ecac(ac)
-            c22_list[i, 6] = Catch22.CO_FirstMin_ac(ac)
-            c22_list[i, 7] = Catch22.SP_Summaries_welch_rect_area_5_1(series, fft)
-            c22_list[i, 8] = Catch22.SP_Summaries_welch_rect_centroid(series, fft)
-            c22_list[i, 9] = Catch22.FC_LocalSimple_mean3_stderr(series)
-            c22_list[i, 10] = Catch22.CO_trev_1_num(series)
-            c22_list[i, 11] = Catch22.CO_HistogramAMI_even_2_5(series, smin, smax)
-            c22_list[i, 12] = Catch22.IN_AutoMutualInfoStats_40_gaussian_fmmi(ac)
-            c22_list[i, 13] = Catch22.MD_hrv_classic_pnn40(series)
-            c22_list[i, 14] = Catch22.SB_BinaryStats_mean_longstretch1(series)
-            c22_list[i, 15] = Catch22.SB_MotifThree_quantile_hh(series)
-            c22_list[i, 16] = Catch22.FC_LocalSimple_mean1_tauresrat(series, acfz)
-            c22_list[i, 17] = Catch22.CO_Embed2_Dist_tau_d_expfit_meandiff(series, acfz)
-            c22_list[i, 18] = Catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(series)
-            c22_list[i, 19] = Catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(
-                series
+        c22_list = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._transform_case)(
+                X[i],
             )
-            c22_list[i, 20] = Catch22.SB_TransitionMatrix_3ac_sumdiagcov(series, acfz)
-            c22_list[i, 21] = Catch22.PD_PeriodicityWang_th0_01(series)
+            for i in range(n_instances)
+        )
 
         return pd.DataFrame(c22_list)
+
+    def _transform_case(self, series):
+        if self.outlier_norm:
+            outlier_series = (series - np.mean(series)) / np.std(series)
+        else:
+            outlier_series = series
+
+        smin = np.min(series)
+        smax = np.max(series)
+        smean = np.mean(series)
+
+        nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+        fft = np.fft.fft(series - smean, n=nfft)
+        ac = autocorr(series, fft)
+        acfz = ac_first_zero(ac)
+
+        c22 = np.zeros(22)
+        c22[0] = Catch22.DN_HistogramMode_5(series, smin, smax)
+        c22[1] = Catch22.DN_HistogramMode_10(series, smin, smax)
+        c22[2] = Catch22.SB_BinaryStats_diff_longstretch0(series, smean)
+        c22[3] = Catch22.DN_OutlierInclude_p_001_mdrmd(outlier_series)
+        c22[4] = Catch22.DN_OutlierInclude_n_001_mdrmd(outlier_series)
+        c22[5] = Catch22.CO_f1ecac(ac)
+        c22[6] = Catch22.CO_FirstMin_ac(ac)
+        c22[7] = Catch22.SP_Summaries_welch_rect_area_5_1(series, fft)
+        c22[8] = Catch22.SP_Summaries_welch_rect_centroid(series, fft)
+        c22[9] = Catch22.FC_LocalSimple_mean3_stderr(series)
+        c22[10] = Catch22.CO_trev_1_num(series)
+        c22[11] = Catch22.CO_HistogramAMI_even_2_5(series, smin, smax)
+        c22[12] = Catch22.IN_AutoMutualInfoStats_40_gaussian_fmmi(ac)
+        c22[13] = Catch22.MD_hrv_classic_pnn40(series)
+        c22[14] = Catch22.SB_BinaryStats_mean_longstretch1(series)
+        c22[15] = Catch22.SB_MotifThree_quantile_hh(series)
+        c22[16] = Catch22.FC_LocalSimple_mean1_tauresrat(series, acfz)
+        c22[17] = Catch22.CO_Embed2_Dist_tau_d_expfit_meandiff(series, acfz)
+        c22[18] = Catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(series)
+        c22[19] = Catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(series)
+        c22[20] = Catch22.SB_TransitionMatrix_3ac_sumdiagcov(series, acfz)
+        c22[21] = Catch22.PD_PeriodicityWang_th0_01(series)
+
+        return c22
 
     def _transform_single_feature(self, X, feature):
         """transforms data into a specified catch22 feature
@@ -155,44 +165,50 @@ class Catch22(_PanelToTabularTransformer):
         n_instances = X.shape[0]
         X = np.reshape(X, (n_instances, -1))
 
-        c22_list = np.zeros(n_instances)
-        for i in range(n_instances):
-            series = X[i, :]
+        c22_list = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._transform_case_single)(
+                X[i],
+                feature,
+            )
+            for i in range(n_instances)
+        )
+
+        return np.asarray(c22_list)
+
+    def _transform_case_single(self, series, feature):
+        args = [series]
+
+        if feature == 0 or feature == 1 or feature == 11:
+            smin = np.min(series)
+            smax = np.max(series)
+            args = [series, smin, smax]
+        elif feature == 2:
+            smean = np.mean(series)
+            args = [series, smean]
+        elif feature == 3 or feature == 4:
+            if self.outlier_norm:
+                series = (series - np.mean(series)) / np.std(series)
             args = [series]
+        elif feature == 7 or feature == 8:
+            smean = np.mean(series)
+            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+            fft = np.fft.fft(series - smean, n=nfft)
+            args = [series, fft]
+        elif feature == 5 or feature == 6 or feature == 12:
+            smean = np.mean(series)
+            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+            fft = np.fft.fft(series - smean, n=nfft)
+            ac = autocorr(series, fft)
+            args = [ac]
+        elif feature == 16 or feature == 17 or feature == 20:
+            smean = np.mean(series)
+            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+            fft = np.fft.fft(series - smean, n=nfft)
+            ac = autocorr(series, fft)
+            acfz = ac_first_zero(ac)
+            args = [series, acfz]
 
-            if feature == 0 or feature == 1 or feature == 11:
-                smin = np.min(series)
-                smax = np.max(series)
-                args = [series, smin, smax]
-            elif feature == 2:
-                smean = np.mean(series)
-                args = [series, smean]
-            elif feature == 3 or feature == 4:
-                if self.outlier_norm:
-                    series = (series - np.mean(series)) / np.std(series)
-                args = [series]
-            elif feature == 7 or feature == 8:
-                smean = np.mean(series)
-                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-                fft = np.fft.fft(series - smean, n=nfft)
-                args = [series, fft]
-            elif feature == 5 or feature == 6 or feature == 12:
-                smean = np.mean(series)
-                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-                fft = np.fft.fft(series - smean, n=nfft)
-                ac = autocorr(series, fft)
-                args = [ac]
-            elif feature == 16 or feature == 17 or feature == 20:
-                smean = np.mean(series)
-                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-                fft = np.fft.fft(series - smean, n=nfft)
-                ac = autocorr(series, fft)
-                acfz = ac_first_zero(ac)
-                args = [series, acfz]
-
-            c22_list[i] = features[feature](*args)
-
-        return c22_list
+        return features[feature](*args)
 
     @staticmethod
     def DN_HistogramMode_5(X, smin, smax):

@@ -35,6 +35,20 @@ def test_drcif_on_power_demand():
     assert score >= 0.92
 
 
+def test_drcif_dtc_on_power_demand():
+    # load power demand data
+    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).permutation(100)
+
+    # train DrCIF
+    drcif = DrCIF(n_estimators=10, base_estimator="DTC", random_state=0)
+    drcif.fit(X_train, y_train)
+
+    score = drcif.score(X_test.iloc[indices], y_test[indices])
+    assert score >= 0.92
+
+
 def test_drcif_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)

@@ -10,6 +10,8 @@ import math
 
 from joblib import Parallel, delayed
 from sklearn import clone
+from sklearn.base import BaseEstimator
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
@@ -100,13 +102,14 @@ class CanonicalIntervalForest(BaseClassifier):
         self,
         min_interval=3,
         max_interval=None,
-        n_estimators=500,
+        n_estimators=200,
         n_intervals=None,
         att_subsample_size=8,
+        base_estimator=None,
         n_jobs=1,
         random_state=None,
     ):
-        self.base_estimator = ContinuousIntervalTree()
+        self.base_estimator = base_estimator
 
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
@@ -129,6 +132,7 @@ class CanonicalIntervalForest(BaseClassifier):
         self.intervals = []
         self.dims = []
         self.classes_ = []
+        self.tree = None
 
         super(CanonicalIntervalForest, self).__init__()
 
@@ -154,6 +158,15 @@ class CanonicalIntervalForest(BaseClassifier):
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+
+        if self.base_estimator is None or self.base_estimator == "CIT":
+            self.tree = ContinuousIntervalTree()
+        elif self.base_estimator == "DTC":
+            self.tree = DecisionTreeClassifier(criterion="entropy")
+        elif isinstance(self.base_estimator, BaseEstimator):
+            self.tree = self.base_estimator
+        else:
+            raise ValueError("DrCIF invalid base estimator given.")
 
         if self.n_intervals is None:
             self.__n_intervals = int(
@@ -303,7 +316,7 @@ class CanonicalIntervalForest(BaseClassifier):
                     X, intervals[j], dims[j], atts[a], c22
                 )
 
-        tree = clone(self.base_estimator)
+        tree = clone(self.tree)
         tree.set_params(random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -313,9 +326,30 @@ class CanonicalIntervalForest(BaseClassifier):
 
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
         c22 = Catch22()
-        return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
+        if self.tree is ContinuousIntervalTree:
+            return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
+        else:
+            transformed_x = np.empty(
+                shape=(self.att_subsample_size * self.__n_intervals, X.shape[0]),
+                dtype=np.float32,
+            )
+
+            for j in range(0, self.__n_intervals):
+                for a in range(0, self.att_subsample_size):
+                    transformed_x[self.att_subsample_size * j + a] = _cif_feature(
+                        X, intervals[j], dims[j], atts[a], c22
+                    )
+
+            transformed_x = transformed_x.T
+            np.nan_to_num(transformed_x, False, 0, 0, 0)
+
+            return classifier.predict_proba(transformed_x)
 
     def temporal_importance_curves(self):
+        if not isinstance(self.tree, ContinuousIntervalTree):
+            raise ValueError("DrCIF base estimator for temporal importance curves must"
+                             " be ContinuousIntervalTree.")
+
         curves = np.zeros((25, self.n_dims, self.series_length))
         for i, tree in enumerate(self.classifiers):
             splits, gains = tree.tree_splits_gain()
