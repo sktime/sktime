@@ -347,8 +347,10 @@ class CanonicalIntervalForest(BaseClassifier):
 
     def temporal_importance_curves(self):
         if not isinstance(self.tree, ContinuousIntervalTree):
-            raise ValueError("DrCIF base estimator for temporal importance curves must"
-                             " be ContinuousIntervalTree.")
+            raise ValueError(
+                "DrCIF base estimator for temporal importance curves must"
+                " be ContinuousIntervalTree."
+            )
 
         curves = np.zeros((25, self.n_dims, self.series_length))
         for i, tree in enumerate(self.classifiers):

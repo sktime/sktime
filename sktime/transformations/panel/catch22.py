@@ -58,11 +58,11 @@ class Catch22(_PanelToTabularTransformer):
     def __init__(
         self,
         outlier_norm=False,
-        n_jobs=1
+        n_jobs=1,
     ):
         self.outlier_norm = outlier_norm
 
-        self.n_jobs=n_jobs
+        self.n_jobs = n_jobs
 
         super(Catch22, self).__init__()
 

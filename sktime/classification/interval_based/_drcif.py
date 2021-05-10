@@ -441,7 +441,7 @@ class DrCIF(BaseClassifier):
                 for _ in range(0, self.__n_intervals[r]):
                     for a in range(0, self.att_subsample_size):
                         transformed_x[p] = _drcif_feature(
-                            T[r], intervals[j], dims[j], atts[a], c22,
+                            T[r], intervals[j], dims[j], atts[a], c22
                         )
                         p += 1
                     j += 1
