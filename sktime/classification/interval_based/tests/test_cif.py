@@ -13,7 +13,7 @@ def test_cif_on_gunpoint():
     indices = np.random.RandomState(0).permutation(10)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
     cif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -28,7 +28,7 @@ def test_cif_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
     cif.fit(X_train, y_train)
 
     score = cif.score(X_test.iloc[indices], y_test[indices])
@@ -42,7 +42,7 @@ def test_cif_on_basic_motions():
     indices = np.random.RandomState(0).permutation(20)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
     cif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
