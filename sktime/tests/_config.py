@@ -268,12 +268,16 @@ ESTIMATOR_TEST_PARAMS = {
             (
                 "imputer",
                 Imputer(method="drift"),
-                {"fit": {"Z": "original_X"}, "predict": None},
+                {"fit": {"Z": "original_y"}, "predict": None, "update": None},
             ),
             (
                 "forecaster",
                 NaiveForecaster(strategy="mean"),
-                {"fit": {"y": "imputer"}, "predict": {"fh": "original_X"}},
+                {
+                    "fit": {"y": "imputer", "fh": "original_fh"},
+                    "predict": {"fh": "original_fh"},
+                    "update": {"y": "imputer"},
+                },
             ),
         ]
     },

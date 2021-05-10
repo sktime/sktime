@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.base import _HeterogenousMetaEstimator
+from sktime.transformations.base import _SeriesToSeriesTransformer
 
 __author__ = ["Viktor Kazakov"]
+__all__ = ["NetworkPipelineForecaster"]
 
 
-class NetworkPipelineForecaster(BaseForecaster):
+class NetworkPipelineForecaster(
+    _SktimeForecaster,
+    _OptionalForecastingHorizonMixin,
+    _HeterogenousMetaEstimator,
+    _SeriesToSeriesTransformer,
+):
     """
     Prototype of non sequential pipeline mimicking a network.
 
@@ -69,13 +78,15 @@ class NetworkPipelineForecaster(BaseForecaster):
     """
 
     _required_parameters = ["steps"]
+    _tags = {"univariate-only": True}
 
-    def __init__(self, steps, interface="simple"):
-        self._steps = steps
+    def __init__(self, steps):
+        self.steps = steps
         self._step_results = {}
+        super().__init__()
 
     def _iter(self):
-        for name, alg, arguments in self._steps:
+        for name, alg, arguments in self.steps:
             yield name, alg, arguments
 
     def _check_steps_for_values(self, step_name):
@@ -130,6 +141,7 @@ class NetworkPipelineForecaster(BaseForecaster):
     def fit(self, y, X=None, fh=None):
         self._X = X
         self._y = y
+        self._fh = fh
         for name, alg, arguments in self._iter():
             processed_arguments = {}
 
@@ -145,9 +157,11 @@ class NetworkPipelineForecaster(BaseForecaster):
             if hasattr(alg, "fit_transform"):
                 out = alg.fit_transform(**processed_arguments)
                 self._step_results[name] = out
+                self._is_fitted = True
             # estimators have fit and predict methods
             if hasattr(alg, "fit") and hasattr(alg, "predict"):
                 alg.fit(**processed_arguments)
+                self._is_fitted = True
 
         return self
 
@@ -170,7 +184,68 @@ class NetworkPipelineForecaster(BaseForecaster):
             if hasattr(alg, "predict"):
                 self._step_results[name] = alg.predict(**processed_arguments)
 
-        return self._step_results[self._steps[-1][0]]
+        return self._step_results[self.steps[-1][0]]
 
     def update(self, y, X=None, update_params=True):
-        self.fit(y=y, X=X)
+        """Update fitted parameters
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        self.check_is_fitted()
+        self._update_y_X(y, X)
+        for name, alg, arguments in self._iter():
+            if "update" in arguments and arguments["update"] is None:
+                # this step must be skipped
+                continue
+            # assume update takes same arguments as fit
+            elif "update" in arguments:
+                processed_arguments = self._process_arguments(arguments["update"])
+            else:
+                processed_arguments = self._process_arguments(arguments)
+            # Transformers are instances of BaseTransformer and BaseEstimator
+            # Estimators are only instances of BaseEstimator
+            if hasattr(alg, "update"):
+                out = alg.update(**processed_arguments)
+                self._step_results[name] = out
+                self._is_fitted = True
+            # estimators have fit and predict methods
+            if hasattr(alg, "update") and hasattr(alg, "predict"):
+                alg.update(**processed_arguments)
+                self._is_fitted = True
+
+        return self
+
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+
+        return self._get_params("steps", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+        Valid parameter keys can be listed with ``get_params()``.
+        Returns
+        -------
+        self
+        """
+        self._set_params("steps", **kwargs)
+
+    def get_fitted_params(self):
+        raise NotImplementedError()
