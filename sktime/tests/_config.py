@@ -274,7 +274,7 @@ ESTIMATOR_TEST_PARAMS = {
                 "forecaster",
                 NaiveForecaster(strategy="mean"),
                 {
-                    "fit": {"y": "imputer", "fh": "original_fh"},
+                    "fit": {"y": "imputer", "X": "original_X", "fh": "original_fh"},
                     "predict": {"fh": "original_fh"},
                     "update": {"y": "imputer"},
                 },

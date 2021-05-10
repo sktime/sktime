@@ -3,6 +3,7 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.forecasting import check_y, check_X
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["NetworkPipelineForecaster"]
@@ -152,6 +153,15 @@ class NetworkPipelineForecaster(
                 processed_arguments = self._process_arguments(arguments["fit"])
             else:
                 processed_arguments = self._process_arguments(arguments)
+
+            if "y" in processed_arguments:
+                processed_arguments["y"] = check_y(processed_arguments["y"])
+            if "Z" in processed_arguments:
+                processed_arguments["Z"] = check_y(processed_arguments["Z"])
+            if "X" in processed_arguments and processed_arguments["X"] is not None:
+                processed_arguments["X"] = check_X(processed_arguments["X"])
+            if "X" in processed_arguments and processed_arguments["X"] is None:
+                del processed_arguments["X"]
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
             if hasattr(alg, "fit_transform"):
