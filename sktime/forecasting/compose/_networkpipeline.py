@@ -4,14 +4,15 @@ from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y, check_X
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["NetworkPipelineForecaster"]
 
 
 class NetworkPipelineForecaster(
-    _SktimeForecaster,
     _OptionalForecastingHorizonMixin,
+    _SktimeForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
@@ -142,7 +143,7 @@ class NetworkPipelineForecaster(
     def fit(self, y, X=None, fh=None):
         self._X = X
         self._y = y
-        self._fh = fh
+        self._set_fh(fh)
         for name, alg, arguments in self._iter():
             processed_arguments = {}
 
@@ -175,10 +176,11 @@ class NetworkPipelineForecaster(
 
         return self
 
-    def predict(self, fh, X=None):
-
-        self._fh = fh
-        self._X = X
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        if fh is not None:
+            self._set_fh(fh)
+        if X is not None:
+            self._X = X
         for name, alg, arguments in self._iter():
             processed_arguments = {}
 
@@ -192,7 +194,9 @@ class NetworkPipelineForecaster(
             if hasattr(alg, "transform"):
                 self._step_results[name] = alg.transform(**processed_arguments)
             if hasattr(alg, "predict"):
-                self._step_results[name] = alg.predict(**processed_arguments)
+                self._step_results[name] = alg.predict(
+                    **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
+                )
 
         return self._step_results[self.steps[-1][0]]
 
@@ -232,6 +236,24 @@ class NetworkPipelineForecaster(
                 self._is_fitted = True
 
         return self
+
+    def update_predict_single(
+        self,
+        y_new,
+        fh=None,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
+        return super().update_predict_single(
+            y_new,
+            fh=fh,
+            X=X,
+            update_params=update_params,
+            return_pred_int=return_pred_int,
+            alpha=alpha,
+        )
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
