@@ -6,6 +6,7 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sklearn.base import clone
+from sktime.utils.validation.forecasting import check_y_X
 
 __author__ = ["Kutay Koralturk"]
 __all__ = ["MultiplexForecaster"]
@@ -148,6 +149,7 @@ class MultiplexForecaster(
         """
 
         self._set_y_X(y, X)
+        y, X = check_y_X(y,X)
         self._set_fh(fh)
         self._check_forecasters()
         self._set_forecaster()

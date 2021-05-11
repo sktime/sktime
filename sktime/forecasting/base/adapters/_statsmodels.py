@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
-
+from sktime.utils.validation.forecasting import check_y_X
 
 class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing statsmodels forecasting algorithms"""
@@ -43,6 +43,7 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             y, X = _coerce_int_to_range_index(y, X)
 
         self._set_y_X(y, X)
+        y, X = check_y_X(y, X)
         self._set_fh(fh)
         self._fit_forecaster(y, X)
         self._is_fitted = True

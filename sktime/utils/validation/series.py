@@ -68,6 +68,10 @@ def check_series(
         )
 
     if enforce_univariate:
+        if isinstance(Z, pd.DataFrame):
+            # force the dataframe to series
+            Z = Z.squeeze()
+
         _check_is_univariate(Z)
 
     # check time index if input data is not an NumPy ndarray

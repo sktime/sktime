@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
-
+from sktime.utils.validation.forecasting import check_y_X
 
 class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing pmdarima"""
@@ -38,6 +38,7 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self : returns an instance of self.
         """
         self._set_y_X(y, X)
+        y, X = check_y_X(y,X)
         self._set_fh(fh)
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X, **fit_params)

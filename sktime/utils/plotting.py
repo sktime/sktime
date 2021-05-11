@@ -6,6 +6,7 @@ __all__ = ["plot_series"]
 __author__ = ["Markus Löning"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
@@ -35,8 +36,11 @@ def plot_series(*series, labels=None, markers=None):
     from matplotlib.cbook import flatten
     import seaborn as sns
 
+
     for y in series:
         check_y(y)
+
+
 
     n_series = len(series)
 
@@ -89,7 +93,11 @@ def plot_series(*series, labels=None, markers=None):
         else:
             plot_func = sns.lineplot
 
-        plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
+        if isinstance(y, pd.DataFrame):
+            plot_func(data =y, x = x, y = y.columns[0], ax=ax, marker=marker, label=label, color=color)
+
+        else:
+            plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
 
     # combine data points for all series
     xs_flat = list(flatten(xs))

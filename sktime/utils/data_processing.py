@@ -20,7 +20,6 @@ __all__ = [
     "convert_from_dictionary",
 ]
 
-
 def _cell_is_series_or_array(cell):
     return isinstance(cell, (pd.Series, np.ndarray))
 

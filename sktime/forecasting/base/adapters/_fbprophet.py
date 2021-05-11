@@ -12,6 +12,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.utils.validation.forecasting import check_y_X
 from contextlib import contextmanager
 
 
@@ -35,6 +36,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._instantiate_model()
         self._check_changepoints()
         self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
+        y, X = check_y_X(y, X)
         self._set_fh(fh)
 
         # We have to bring the data into the required format for fbprophet:
