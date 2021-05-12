@@ -93,10 +93,11 @@ class Catch22(_PanelToTabularTransformer):
         return pd.DataFrame(c22_list)
 
     def _transform_case(self, series):
+        outlier_series = series
         if self.outlier_norm:
-            outlier_series = (series - np.mean(series)) / np.std(series)
-        else:
-            outlier_series = series
+            std = np.std(outlier_series)
+            if std > 0:
+                outlier_series = (outlier_series - np.mean(outlier_series)) / std
 
         smin = np.min(series)
         smax = np.max(series)
@@ -187,7 +188,9 @@ class Catch22(_PanelToTabularTransformer):
             args = [series, smean]
         elif feature == 3 or feature == 4:
             if self.outlier_norm:
-                series = (series - np.mean(series)) / np.std(series)
+                std = np.std(series)
+                if std > 0:
+                    series = (series - np.mean(series)) / std
             args = [series]
         elif feature == 7 or feature == 8:
             smean = np.mean(series)

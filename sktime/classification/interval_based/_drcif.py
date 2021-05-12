@@ -353,7 +353,7 @@ class DrCIF(BaseClassifier):
         return output
 
     def _fit_estimator(self, X, X_p, X_d, y, idx):
-        c22 = Catch22()
+        c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
         rs = None if self.random_state is None else rs * 37 * (idx + 1)
@@ -422,7 +422,7 @@ class DrCIF(BaseClassifier):
     def _predict_proba_for_estimator(
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
-        c22 = Catch22()
+        c22 = Catch22(outlier_norm=True)
         if self.tree is ContinuousIntervalTree:
             return classifier.predict_proba_drcif(
                 X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts

@@ -271,7 +271,7 @@ class CanonicalIntervalForest(BaseClassifier):
         return output
 
     def _fit_estimator(self, X, y, idx):
-        c22 = Catch22()
+        c22 = Catch22(outlier_norm=True)
         rs = 255 if self.random_state == 0 else self.random_state
         rs = None if self.random_state is None else rs * 37 * (idx + 1)
         rng = check_random_state(rs)
@@ -325,7 +325,7 @@ class CanonicalIntervalForest(BaseClassifier):
         return [tree, intervals, dims, atts]
 
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
-        c22 = Catch22()
+        c22 = Catch22(outlier_norm=True)
         if self.tree is ContinuousIntervalTree:
             return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
         else:
