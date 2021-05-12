@@ -353,8 +353,8 @@ class TreeNode:
                     True,
                 )
         else:
-            self.leaf_distribution_cls = distribution_cls
-            self.leaf_distribution = distribution / distribution.sum()
+            self.leaf_distribution_cls = list(distribution_cls)
+            self.leaf_distribution = list(distribution / distribution.sum())
 
         return self
 
@@ -459,7 +459,7 @@ class TreeNode:
             return dist
 
     @staticmethod
-    @njit(fastmath=True)
+    @njit(fastmath=True, cache=True)
     def information_gain(X, y, attribute, threshold, parent_entropy):
         missing = np.isnan(X[:, attribute])
         dist_missing_cls, dist_missing = unique_count(y[missing])
@@ -493,13 +493,13 @@ class TreeNode:
         )
 
     @staticmethod
-    @njit(fastmath=True)
+    @njit(fastmath=True, cache=True)
     def margin_gain(X, attribute, threshold):
         margins = np.abs(X[:, attribute] - threshold)
         return np.min(margins)
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, cache=True)
 def unique_count(x):
     if len(x) > 0:
         x = np.sort(x)
@@ -517,7 +517,7 @@ def unique_count(x):
     return None, np.zeros(0, dtype=np.int64)
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, cache=True)
 def entropy(x, s):
     e = 0
     for i in x:
