@@ -76,7 +76,8 @@ class Catch22ForestClassifier(BaseClassifier):
     }
 
     def __init__(
-        self, n_estimators=200,
+        self,
+        n_estimators=200,
         outlier_norm=False,
         n_jobs=1,
         random_state=None,
