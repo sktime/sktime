@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 esig>=0.9.6
-=======
-esig<=0.9.1 --prefer-binary
->>>>>>> a7c949d6 (Updated to esig 0.9.1)
 jupyter
 m2r2
 matplotlib
