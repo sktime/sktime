@@ -14,7 +14,7 @@ from sktime.transformations.panel.signature_based._rescaling import (
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
-from esig import tosig  # noqa: E402
+import esig  # noqa: E402
 
 
 class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
@@ -67,14 +67,14 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         if self.sig_tfm == "signature":
 
             def transform(x):
-                return tosig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
+                return esig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
 
             # def transform(x):
             #     return iisignature.sig(x, self.depth).reshape(-1, 1)
         else:
 
             def transform(x):
-                return tosig.stream2logsig(x, self.depth).reshape(1, -1)
+                return esig.stream2logsig(x, self.depth).reshape(1, -1)
 
             # s = iisignature.prepare(data.shape[-1], self.depth)
 

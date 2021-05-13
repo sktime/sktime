@@ -5,7 +5,7 @@ from sktime.transformations.panel.signature_based import GeneralisedSignatureMet
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
-from esig import tosig  # noqa: E402
+import esig  # noqa: E402
 
 
 def test_generalised_signature_method():
@@ -16,7 +16,7 @@ def test_generalised_signature_method():
 
     # Check the global dimension comes out correctly
     method = GeneralisedSignatureMethod(depth=depth, window_name="global")
-    assert method.fit_transform(X).shape[1] == tosig.sigdim(n_channels + 1, depth) - 1
+    assert method.fit_transform(X).shape[1] == esig.sigdim(n_channels + 1, depth) - 1
 
     # Check dyadic dim
     method = GeneralisedSignatureMethod(
@@ -24,7 +24,7 @@ def test_generalised_signature_method():
     )
     assert (
         method.fit_transform(X).shape[1]
-        == (tosig.sigdim(n_channels + 1, depth) - 1) * 15
+        == (esig.sigdim(n_channels + 1, depth) - 1) * 15
     )
 
     # Ensure an example
