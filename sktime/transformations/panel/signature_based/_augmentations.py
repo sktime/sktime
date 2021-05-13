@@ -18,12 +18,13 @@ def _make_augmentation_pipeline(aug_list):
         The transforms, in order, as an sklearn pipeline.
     Examples
     --------
-    >>> _make_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
-    Pipeline([
-        ('leadlag', LeadLag()),
-        ('ir', InvisibilityReset()),
-        ('addtime', AddTime())
-    ])
+        _make_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
+        # Returns
+        Pipeline([
+            ('leadlag', LeadLag()),
+            ('ir', InvisibilityReset()),
+            ('addtime', AddTime())
+        ])
     """
     # Assertions
     types = [tuple, list, None, str]
