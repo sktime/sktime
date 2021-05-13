@@ -1,4 +1,4 @@
-esig==0.9.6
+esig==0.9.5
 jupyter
 m2r2
 matplotlib
