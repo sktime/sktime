@@ -37,9 +37,9 @@ def plot_series(*series, labels=None, markers=None, ax=None):
     ----------
     series : pd.Series
         One or more time series
-    labels : list, optional (default=None)
+    labels : list, default = None
         Names of series, will be displayed in figure legend
-    markers: list, optional (default=None)
+    markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
         Lenght of list has to match with number of series
 
