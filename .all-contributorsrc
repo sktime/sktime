@@ -963,6 +963,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "GuzalBulatova",
+      "name": "Guzal Bulatova",
+      "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
+      "profile": "https://github.com/GuzalBulatova",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "projectName": "sktime",
