@@ -177,6 +177,8 @@ def plot_correlations(
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
 
+    check_y(series)
+
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))
     gs = fig.add_gridspec(2, 2)
