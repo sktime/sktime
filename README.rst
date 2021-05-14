@@ -36,7 +36,7 @@
 .. |twitter| image:: https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social
 .. _twitter: https://twitter.com/sktime_toolbox
 
-.. |python| image:: https://img.shields.io/badge/python-3.6+-blue?logo=python
+.. |python| image:: https://img.shields.io/pypi/pyversions/sktime
 .. _python: https://www.python.org/
 
 .. |codestyle| image:: https://img.shields.io/badge/code%20style-black-000000.svg
