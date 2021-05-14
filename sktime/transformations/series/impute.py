@@ -8,6 +8,7 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sklearn.utils import check_random_state
+from sktime.forecasting.base import ForecastingHorizon
 
 import numpy as np
 import pandas as pd
@@ -107,27 +108,13 @@ class Imputer(_SeriesToSeriesTransformer):
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
             Z = Z.fillna(method=self.method)
         elif self.method in ["drift", "forecaster"]:
-            if self.method == "forecaster":
-                forecaster = self.forecaster
-            else:
-                forecaster = PolynomialTrendForecaster(degree=1)
-            # fill NaN before fitting with ffill and backfill (heuristic)
-            Z_aux = Z.fillna(method="ffill").fillna(method="backfill")
             # multivariate
-            if isinstance(Z_aux, pd.DataFrame):
-                for col in Z_aux:
-                    forecaster.fit(y=Z_aux[col])
-                    # in-sample forecasting horizon
-                    fh_ins = np.where(Z[col].isna())[0] - (len(Z)-1)
-                    Z_pred = forecaster.predict(fh=fh_ins)
-                    Z[col] = Z[col].fillna(value=Z_pred)
+            if isinstance(Z, pd.DataFrame):
+                for col in Z:
+                    Z[col] = self._univariate_forecaster(Z[col])
             # univariate
             else:
-                forecaster.fit(y=Z_aux)
-                # in-sample forecasting horizon
-                fh_ins = np.where(Z.isna())[0] - (len(Z)-1)
-                Z_pred = forecaster.predict(fh=fh_ins)
-                Z = Z.fillna(value=Z_pred)
+                Z = self._univariate_forecaster(Z)
         elif self.method == "mean":
             Z = Z.fillna(value=Z.mean())
         elif self.method == "median":
@@ -179,3 +166,31 @@ class Imputer(_SeriesToSeriesTransformer):
             return rng.randint(Z.min(), Z.max())
         else:
             return rng.uniform(Z.min(), Z.max())
+
+    def _univariate_forecaster(self, Z):
+        """Univariate forecaster imputation
+
+        :param Z: Series
+        :type Z: pd.Series
+        :return: Imputed time series
+        :rtype: pd.Series
+        """
+        # define fh based on index of missing values
+        naindex = Z.index[Z.isna()]
+        if not naindex.empty:
+            fh = ForecastingHorizon(values=naindex, is_relative=False)
+            # fill NaN before fitting with ffill and backfill (heuristic)
+            Z = Z.fillna(method="ffill").fillna(method="backfill")
+            if self.method == "forecaster":
+                forecaster = self.forecaster
+            elif self.method == "drift":
+                forecaster = PolynomialTrendForecaster(degree=1)
+            else:
+                raise ValueError(
+                    """_univariate_forecaster can only be
+                    used if method=\"forecaster\" or method=\"drift\""""
+                )
+            forecaster.fit(y=Z, fh=fh)
+            # replace missing values with predicted values
+            Z[naindex] = forecaster.predict()
+        return Z
