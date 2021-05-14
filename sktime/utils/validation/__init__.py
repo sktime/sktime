@@ -72,7 +72,10 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
     elif is_float(window_length) and 0 < window_length < 1:
         # Check `n_timepoints`.
         if not is_int(n_timepoints) or n_timepoints < 2:
-            raise ValueError("`n_timepoints` must be a positive integer.")
+            raise ValueError(
+                f"`n_timepoints` must be a positive integer, but found:"
+                f" {n_timepoints}."
+            )
 
         # Compute fraction relative to `n_timepoints`.
         return int(np.ceil(window_length * n_timepoints))
