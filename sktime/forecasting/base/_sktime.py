@@ -196,7 +196,7 @@ class _SktimeForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : None, int, list, np.array
+        fh : None, int, list, np.array or ForecastingHorizon
         """
         raise NotImplementedError()
 
@@ -208,7 +208,7 @@ class _SktimeForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -304,7 +304,7 @@ class _SktimeForecaster(BaseForecaster):
         Parameters
         ----------
         y_new : pd.Series
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
         X : pd.DataFrame
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
@@ -509,7 +509,7 @@ class _OptionalForecastingHorizonMixin:
 
         Parameters
         ----------
-        fh : None, int, list or np.ndarray
+        fh : None, int, list, np.ndarray or ForecastingHorizon
         """
         if fh is None:
             if self.is_fitted:
@@ -545,7 +545,7 @@ class _RequiredForecastingHorizonMixin:
 
         Parameters
         ----------
-        fh : None, int, list, np.ndarray
+        fh : None, int, list, np.ndarray or ForecastingHorizon
         """
 
         msg = (
