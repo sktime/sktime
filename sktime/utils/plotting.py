@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["plot_series", "plot_correlations"]
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "Ryan Kuhns"]
 
 import numpy as np
 
@@ -40,7 +40,7 @@ def plot_series(*series, labels=None, markers=None, ax=None):
         check_y(y)
 
     n_series = len(series)
-
+    _ax_kwarg_is_none = True if ax is None else False
     # labels
     if labels is not None:
         if n_series != len(labels):
@@ -78,7 +78,7 @@ def plot_series(*series, labels=None, markers=None, ax=None):
     xs = [np.argwhere(index.isin(y.index)).ravel() for y in series]
 
     # create figure if no Axe provided for plotting
-    if ax is None:
+    if _ax_kwarg_is_none:
         fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
     colors = sns.color_palette("colorblind", n_colors=n_series)
@@ -110,7 +110,7 @@ def plot_series(*series, labels=None, markers=None, ax=None):
 
     if legend:
         ax.legend()
-    if ax is None:
+    if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
