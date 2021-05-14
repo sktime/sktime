@@ -48,37 +48,37 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
     """
     Parameters
     ----------
-    window_length: positive int or positive float
-        The number of training set used for splitting
-        Window length for transformed feature variables
-    n_timepoints: poisitve int , None when window_length
-        is an int
+    window_length: positive int, positive float in (0, 1), or None
+        The window length:
+        - If int, the total number of time points.
+        - If float, the fraction of time points relative to `n_timepoints`.
+    n_timepoints: positive int, optional (default=None)
+        The number of time points to which to apply `window_length` when
+        passed as a float (fraction). Will be ignored if `window_length` is
+        an integer.
+    name: str
+        Name of argument for error messages.
 
     Returns
     -------
     window_length: int
     """
-    if window_length is not None:
-        if is_int(window_length) and window_length >= 1:
-            return window_length
-        if is_int(n_timepoints):
-            if is_float(window_length) and 0 < window_length < 1:
-                window_length = int(np.ceil(window_length * n_timepoints))
-            else:
-                raise ValueError(
-                    f"`{name}` must be a positive integer >= 1, "
-                    f"float between 0 and 1, or None "
-                    f"but found: {window_length}"
-                )
-        else:
-            raise ValueError(
-                f"`{name}` must be a positive integer >= 1,"
-                f"float between 0 and 1"
-                f"n_timepoints cannot be None when "
-                f"{name}` is a float. "
-                f"n_timepoints is integer when"
-                f"{name}` is a float. "
-                f"n_timepoints cannot be a float. "
-            )
+    if window_length is None:
+        return window_length
 
-    return window_length
+    elif is_int(window_length) and window_length >= 1:
+        return window_length
+
+    elif is_float(window_length) and 0 < window_length < 1:
+        # Check `n_timepoints`.
+        if not is_int(n_timepoints) or n_timepoints < 2:
+            raise ValueError("`n_timepoints` must be a positive integer.")
+
+        # Compute fraction relative to `n_timepoints`.
+        return int(np.ceil(window_length * n_timepoints))
+
+    else:
+        raise ValueError(
+            f"`{name}` must be a positive integer >= 1, or"
+            f"float in (0, 1) or None, but found: {window_length}."
+        )
