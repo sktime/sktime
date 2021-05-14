@@ -6,6 +6,7 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y, check_X
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
+
 __author__ = ["Viktor Kazakov"]
 __all__ = ["NetworkPipelineForecaster"]
 
@@ -226,6 +227,7 @@ class NetworkPipelineForecaster(
                 processed_arguments = self._process_arguments(arguments)
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
+
             if hasattr(alg, "update"):
                 out = alg.update(**processed_arguments)
                 self._step_results[name] = out
@@ -236,24 +238,6 @@ class NetworkPipelineForecaster(
                 self._is_fitted = True
 
         return self
-
-    def update_predict_single(
-        self,
-        y_new,
-        fh=None,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        return super().update_predict_single(
-            y_new,
-            fh=fh,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
