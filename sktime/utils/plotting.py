@@ -30,7 +30,9 @@ from sktime.utils.validation.forecasting import check_y
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 
-def plot_series(*series, labels=None, markers=None, ax=None):
+def plot_series(
+    *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
+):
     """Plot one or more time series.
 
     Parameters
@@ -125,6 +127,13 @@ def plot_series(*series, labels=None, markers=None, ax=None):
     # dynamically set x label ticks and spacing from index labels
     ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    # Label the x and y axes
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+
+    _y_label = y_label if y_label is not None else series[0].name
+    ax.set_ylabel(_y_label)
 
     if legend:
         ax.legend()
