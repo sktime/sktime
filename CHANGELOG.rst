@@ -3,6 +3,37 @@ Changelog
 
 All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
+[0.6.1] - 2021-05-14
+--------------------
+
+Fixed
+~~~~~
+* Exclude Python 3.10 from manylinux CI (#870) @mloning
+* Fix AutoETS handling of infinite information criteria (#848) @ltsaprounis
+* Fix smape import (#851) @mloning
+
+Changed
+~~~~~~~
+* ThetaForecaster now works with initial_level (#769) @yashlamba
+* Use joblib to parallelize ensemble fitting for Rocket classifier (#796) @kachayev
+* Update maintenance tools (#829) @mloning
+* Undo pmdarima hotfix and avoid pmdarima 1.8.1 (#831) @aaronreidsmith
+* Hotfix pmdarima version (#828) @aiwalter
+
+Added
+~~~~~
+* Added Guerrero method for lambda estimation to BoxCoxTransformer (#778) (#791) @GuzalBulatova
+* New forecasting metrics (#801) @RNKuhns
+* Implementation of DirRec reduction strategy (#779) @luiszugasti
+* Added cutoff to BaseGridSearch to use any grid search inside evaluate… (#825) @aiwalter
+* Added pd.DataFrame transformation for Imputer and HampelFilter (#830) @aiwalter
+* Added default params for some transformers (#834) @aiwalter
+* Added several docstring examples (#835) @aiwalter
+* Added skip-inverse-transform tag for Imputer and HampelFilter (#788) @aiwalter
+* Added a reference to alibi-detect (#815) @satya-pattnaik
+
+All contributors: @GuzalBulatova, @RNKuhns, @aaronreidsmith, @aiwalter, @kachayev, @ltsaprounis, @luiszugasti, @mloning, @satya-pattnaik and @yashlamba
+
 
 [0.6.0] - 2021-04-15
 --------------------
