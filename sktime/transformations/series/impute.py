@@ -9,6 +9,7 @@ from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sklearn.utils import check_random_state
 from sktime.forecasting.base import ForecastingHorizon
+from sklearn.base import clone
 
 import numpy as np
 import pandas as pd
@@ -108,13 +109,12 @@ class Imputer(_SeriesToSeriesTransformer):
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
             Z = Z.fillna(method=self.method)
         elif self.method in ["drift", "forecaster"]:
-            # multivariate
-            if isinstance(Z, pd.DataFrame):
-                for col in Z:
-                    Z[col] = self._univariate_forecaster(Z[col])
-            # univariate
-            else:
-                Z = self._univariate_forecaster(Z)
+            if self.method == "drift":
+                forecaster = PolynomialTrendForecaster(degree=1)
+                Z = _impute_with_forecaster(forecaster, Z)
+            elif self.method == "forecaster":
+                forecaster = clone(self.forecaster)
+                Z = _impute_with_forecaster(forecaster, Z)
         elif self.method == "mean":
             Z = Z.fillna(value=Z.mean())
         elif self.method == "median":
@@ -167,30 +167,31 @@ class Imputer(_SeriesToSeriesTransformer):
         else:
             return rng.uniform(Z.min(), Z.max())
 
-    def _univariate_forecaster(self, Z):
-        """Univariate forecaster imputation
 
-        :param Z: Series
-        :type Z: pd.Series
-        :return: Imputed time series
-        :rtype: pd.Series
-        """
+def _impute_with_forecaster(forecaster, Z):
+    """Use a given Forecaster to impute by insample predictions.
+    :param forecaster: Forecaster
+    :type forecaster: Based on sktime.BaseForecaster
+    :param Z: Series
+    :type Z: pd.DataFrame or pd.Series
+    :return: Imputed time series
+    :rtype: pd.DataFrame or pd.Series
+    """
+
+    # univariate
+    if isinstance(Z, pd.Series):
+        cols = [Z]
+    # multivariate
+    elif isinstance(Z, pd.DataFrame):
+        cols = [Z[col] for col in Z]
+
+    for z in cols:
         # define fh based on index of missing values
-        naindex = Z.index[Z.isna()]
+        naindex = z.index[z.isna()]
         if not naindex.empty:
             fh = ForecastingHorizon(values=naindex, is_relative=False)
             # fill NaN before fitting with ffill and backfill (heuristic)
-            Z = Z.fillna(method="ffill").fillna(method="backfill")
-            if self.method == "forecaster":
-                forecaster = self.forecaster
-            elif self.method == "drift":
-                forecaster = PolynomialTrendForecaster(degree=1)
-            else:
-                raise ValueError(
-                    """_univariate_forecaster can only be
-                    used if method=\"forecaster\" or method=\"drift\""""
-                )
-            forecaster.fit(y=Z, fh=fh)
+            forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
             # replace missing values with predicted values
-            Z[naindex] = forecaster.predict()
-        return Z
+            z[naindex] = forecaster.predict()
+    return Z
