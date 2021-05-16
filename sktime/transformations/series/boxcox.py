@@ -14,10 +14,12 @@ from scipy.special import boxcox
 from scipy.special import inv_boxcox
 from scipy.stats import boxcox_llf
 from scipy.stats import distributions
+from scipy.stats import variation
 from scipy.stats.morestats import _boxcox_conf_interval
 from scipy.stats.morestats import _calc_uniform_order_statistic_medians
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_series
 
 
@@ -34,15 +36,20 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
-    def __init__(self, bounds=None, method="mle"):
+    def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds
         self.method = method
         self.lambda_ = None
+        self.sp = sp
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, Z, X=None):
         z = check_series(Z, enforce_univariate=True)
-        self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
+        if self.method != "guerrero":
+            self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
+        else:
+            self.lambda_ = _guerrero(z, self.sp, self.bounds)
+
         self._is_fitted = True
         return self
 
@@ -73,8 +80,7 @@ class LogTransformer(_SeriesToSeriesTransformer):
         return np.exp(Z)
 
 
-# TODO replace with scipy version once PR for adding bounds is merged
-def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
+def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
     # bounds is None, use simple Brent optimisation
     if bounds is None:
 
@@ -91,6 +97,13 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
         def optimizer(func, args):
             return optimize.fminbound(func, bounds[0], bounds[1], args=args)
+
+    return optimizer
+
+
+# TODO replace with scipy version once PR for adding bounds is merged
+def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
+    optimizer = _make_boxcox_optimizer(bounds, brack)
 
     def _pearsonr(x):
         osm_uniform = _calc_uniform_order_statistic_medians(len(x))
@@ -127,6 +140,60 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
     optimfunc = methods[method]
     return optimfunc(x)
+
+
+def _guerrero(x, sp, bounds=None):
+    r"""
+    Returns lambda estimated by the Guerrero method [Guerrero].
+    Parameters
+    ----------
+    x : ndarray
+        Input array. Must be 1-dimensional.
+    sp : integer
+        Seasonal periodicity value. Must be an integer >= 2
+    bounds : {None, (float, float)}, optional
+        Bounds on lambda to be used in minimization.
+    Returns
+    -------
+    lambda : float
+        Lambda value that minimizes the coefficient of variation of
+        variances of the time series in different periods after
+        Box-Cox transformation [Guerrero].
+
+    References
+    ----------
+    [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
+    Transformations ", Journal of Forecasting, Vol. 12, 37-48 (1993)
+    https://doi.org/10.1002/for.3980120104
+    """
+
+    if sp is None or not is_int(sp) or sp < 2:
+        raise ValueError(
+            "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
+        )
+
+    x = np.asarray(x)
+    if x.ndim != 1:
+        raise ValueError("Data must be 1-dimensional.")
+
+    num_obs = len(x)
+    len_prefix = num_obs % sp
+
+    x_trimmed = x[len_prefix:]
+    x_mat = x_trimmed.reshape((-1, sp))
+    x_mean = np.mean(x_mat, axis=1)
+
+    # [Guerrero, Eq.(5)] uses an unbiased estimation for
+    # the standard deviation
+    x_std = np.std(x_mat, axis=1, ddof=1)
+
+    def _eval_guerrero(lmb, x_std, x_mean):
+        x_ratio = x_std / x_mean ** (1 - lmb)
+        x_ratio_cv = variation(x_ratio)
+        return x_ratio_cv
+
+    optimizer = _make_boxcox_optimizer(bounds)
+    return optimizer(_eval_guerrero, args=(x_std, x_mean))
 
 
 def _boxcox(x, lmbda=None, bounds=None, alpha=None):
