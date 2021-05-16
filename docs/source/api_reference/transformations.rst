@@ -226,7 +226,7 @@ Matrix Profile
 
     MatrixProfileTransformer
 
-Imputer
+Missing value imputation
 ~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
@@ -237,7 +237,7 @@ Imputer
 
     Imputer
 
-HampelFilter
+Outlier detection
 ~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.outlier_detection
@@ -248,7 +248,7 @@ HampelFilter
 
     HampelFilter
 
-OptionalPassthrough
+Composition
 ~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.compose
