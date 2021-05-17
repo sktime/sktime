@@ -367,32 +367,32 @@ LOSS_RESULTS = {
 }
 
 
-def _call_metrics(loss_func, loss_class, y_true, y_pred, y_train, y_pred_benchmark):
+def _call_metrics(metric_func, metric_class, y_true, y_pred, y_train, y_pred_benchmark):
     """Call function and class metrics and return results"""
-    class_attrs = loss_class.get_params()
-    function_loss = loss_func(
+    class_attrs = metric_class.get_params()
+    function_metric = metric_func(
         y_true,
         y_pred,
         y_train=y_train,
         y_pred_benchmark=y_pred_benchmark,
         **class_attrs,
     )
-    class_loss = loss_class(
+    class_metric = metric_class(
         y_true,
         y_pred,
         y_train=y_train,
         y_pred_benchmark=y_pred_benchmark,
     )
-    return function_loss, class_loss
+    return function_metric, class_metric
 
 
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
-def test_univariate_loss_expected_zero(n_test_case, loss_func_name):
+def test_univariate_loss_expected_zero(n_test_case, metric_func_name):
     # Test cases where the expected loss is zero for perfect forecast.
 
-    loss_class = LOSS_RESULTS[loss_func_name]["class"]
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+    metric_class = LOSS_RESULTS[metric_func_name]["class"]
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
 
     y_true = Y_TEST_CASES[f"test_case_{n_test_case}"]["test"]
     y_train = Y_TEST_CASES[f"test_case_{n_test_case}"]["train"]
@@ -403,31 +403,31 @@ def test_univariate_loss_expected_zero(n_test_case, loss_func_name):
     y_pred_benchmark = y_true
 
     function_loss, class_loss = _call_metrics(
-        loss_func, loss_class, y_true, y_pred, y_train, y_pred_benchmark
+        metric_func, metric_class, y_true, y_pred, y_train, y_pred_benchmark
     )
 
     # Assertion for functions
     assert np.isclose(function_loss, true_loss), " ".join(
         [
-            f"Loss function {loss_func.__name__} returned {function_loss}",
+            f"Loss function {metric_func.__name__} returned {function_loss}",
             f"loss, but {true_loss} loss expected",
         ]
     )
     # Assertion for classes
     assert np.isclose(class_loss, true_loss), " ".join(
         [
-            f"Loss function {loss_class.name} returned {class_loss}",
+            f"Loss function {metric_class.name} returned {class_loss}",
             f"loss, but {true_loss} loss expected",
         ]
     )
 
 
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
-def test_univariate_loss_against_expected_value(n_test_case, loss_func_name):
-    loss_class = LOSS_RESULTS[loss_func_name]["class"]
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
-    true_loss = LOSS_RESULTS[loss_func_name][f"test_case_{n_test_case}"]
+def test_univariate_loss_against_expected_value(n_test_case, metric_func_name):
+    metric_class = LOSS_RESULTS[metric_func_name]["class"]
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
+    true_loss = LOSS_RESULTS[metric_func_name][f"test_case_{n_test_case}"]
     y_true = Y_TEST_CASES[f"test_case_{n_test_case}"]["test"]
     y_train = Y_TEST_CASES[f"test_case_{n_test_case}"]["train"]
 
@@ -438,30 +438,30 @@ def test_univariate_loss_against_expected_value(n_test_case, loss_func_name):
     y_pred_benchmark = 0.6 * y_pred
 
     function_loss, class_loss = _call_metrics(
-        loss_func, loss_class, y_true, y_pred, y_train, y_pred_benchmark
+        metric_func, metric_class, y_true, y_pred, y_train, y_pred_benchmark
     )
 
     # Assertion for functions
     assert np.isclose(function_loss, true_loss), " ".join(
         [
-            f"Loss function {loss_func.__name__} returned {function_loss}",
+            f"Loss function {metric_func.__name__} returned {function_loss}",
             f"loss, but {true_loss} loss expected",
         ]
     )
     # Assertion for classes
     assert np.isclose(class_loss, true_loss), " ".join(
         [
-            f"Loss function {loss_class.name} returned {class_loss}",
+            f"Loss function {metric_class.name} returned {class_loss}",
             f"loss, but {true_loss} loss expected",
         ]
     )
 
 
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("random_state", RANDOM_STATES)
-def test_univariate_loss_function_class_equality(loss_func_name, random_state):
-    loss_class = LOSS_RESULTS[loss_func_name]["class"]
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+def test_univariate_metric_function_class_equality(metric_func_name, random_state):
+    metric_class = LOSS_RESULTS[metric_func_name]["class"]
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
 
     y = _make_series(n_timepoints=75, random_state=random_state)
     y_train, y_true = y.iloc[:50], y.iloc[50:]
@@ -469,29 +469,29 @@ def test_univariate_loss_function_class_equality(loss_func_name, random_state):
     y_pred_benchmark = y.rolling(2).mean().iloc[50:]
 
     function_loss, class_loss = _call_metrics(
-        loss_func, loss_class, y_true, y_pred, y_train, y_pred_benchmark
+        metric_func, metric_class, y_true, y_pred, y_train, y_pred_benchmark
     )
 
     # Assertion for functions and class having same result
     assert np.isclose(function_loss, class_loss), " ".join(
         [
             "Expected loss function and class to return equal values,",
-            f"but loss function {loss_func.__name__} returned {function_loss}",
-            f"and {loss_class.name} returned {class_loss}.",
+            f"but loss function {metric_func.__name__} returned {function_loss}",
+            f"and {metric_class.name} returned {class_loss}.",
         ]
     )
 
 
 @pytest.mark.parametrize("random_state", RANDOM_STATES)
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_univariate_function_output_type(loss_func_name, random_state):
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
+def test_univariate_function_output_type(metric_func_name, random_state):
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=random_state)
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_pred = y.shift(1).iloc[50:]
     y_pred_benchmark = y.rolling(2).mean().iloc[50:]
 
-    function_loss = loss_func(
+    function_loss = metric_func(
         y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark
     )
 
@@ -502,9 +502,9 @@ def test_univariate_function_output_type(loss_func_name, random_state):
     )
 
 
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_y_true_y_pred_inconsistent_n_outputs_raises_error(loss_func_name):
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
+def test_y_true_y_pred_inconsistent_n_outputs_raises_error(metric_func_name):
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_true = y_true.values  # Convert to flat NumPy array
@@ -517,12 +517,12 @@ def test_y_true_y_pred_inconsistent_n_outputs_raises_error(loss_func_name):
     with pytest.raises(
         ValueError, match="y_true and y_pred have different number of output"
     ):
-        loss_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
+        metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
 
 
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(loss_func_name):
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
+def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(metric_func_name):
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_pred = y.shift(1).iloc[40:]  # y_pred has more obs
@@ -532,12 +532,12 @@ def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(loss_func_name):
     with pytest.raises(
         ValueError, match="Found input variables with inconsistent numbers of samples"
     ):
-        loss_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
+        metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
 
 
-@pytest.mark.parametrize("loss_func_name", LOSS_RESULTS.keys())
-def test_y_true_y_pred_inconsistent_n_variables_raises_error(loss_func_name):
-    loss_func = LOSS_RESULTS[loss_func_name]["func"]
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
+def test_y_true_y_pred_inconsistent_n_variables_raises_error(metric_func_name):
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
     y_true = y_true.values  # will pass as NumPy array
@@ -551,4 +551,4 @@ def test_y_true_y_pred_inconsistent_n_variables_raises_error(loss_func_name):
     with pytest.raises(
         ValueError, match="y_true and y_pred have different number of output"
     ):
-        loss_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
+        metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
