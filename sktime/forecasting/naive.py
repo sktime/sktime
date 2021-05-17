@@ -83,6 +83,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         # X_train is ignored
         self._set_y_X(y, X)
         self._set_fh(fh)
+        n_timepoints = y.shape[0]
 
         if self.strategy == "last":
             if self.sp == 1:
@@ -110,7 +111,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                         f"{self.window_length} is smaller than "
                         f"`sp`: {self.sp}."
                     )
-            self.window_length_ = check_window_length(self.window_length)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
             self.sp_ = check_sp(self.sp)
 
             #  if not given, set default window length for the mean strategy
@@ -122,7 +123,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                 warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
-            self.window_length_ = check_window_length(self.window_length)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
             if self.window_length is None:
                 self.window_length_ = len(y)
             if self.window_length == 1:
