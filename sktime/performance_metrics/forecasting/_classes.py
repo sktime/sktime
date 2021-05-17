@@ -51,8 +51,8 @@ class _BaseForecastingErrorMetric(BaseMetric):
     """
 
     _tags = {
-        "requires_y_train": False,
-        "requires_y_pred_benchmark": False,
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": False,
         "univariate-only": False,
     }
 
@@ -285,8 +285,8 @@ class _RelativeLossMixin:
 
 class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
     _tags = {
-        "requires_y_train": True,
-        "requires_y_pred_benchmark": False,
+        "requires-y-train": True,
+        "requires-y-pred-benchmark": False,
         "univariate-only": False,
     }
 
@@ -359,8 +359,8 @@ class _RelativeLossForecastingErrorMetric(
     _RelativeLossMixin, _BaseForecastingErrorMetric
 ):
     _tags = {
-        "requires_y_train": False,
-        "requires_y_pred_benchmark": True,
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
         "univariate-only": False,
     }
 
@@ -1258,8 +1258,8 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     """
 
     _tags = {
-        "requires_y_train": False,
-        "requires_y_pred_benchmark": True,
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
         "univariate-only": False,
     }
 
@@ -1308,8 +1308,8 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     """
 
     _tags = {
-        "requires_y_train": False,
-        "requires_y_pred_benchmark": True,
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
         "univariate-only": False,
     }
 
@@ -1358,8 +1358,8 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     """
 
     _tags = {
-        "requires_y_train": False,
-        "requires_y_pred_benchmark": True,
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
         "univariate-only": False,
     }
 
@@ -1415,8 +1415,8 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     """
 
     _tags = {
-        "requires_y_train": False,
-        "requires_y_pred_benchmark": True,
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
         "univariate-only": False,
     }
 

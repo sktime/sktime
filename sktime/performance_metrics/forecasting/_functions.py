@@ -9,6 +9,7 @@ the lower the better.
 # !/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+import inspect
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
+
 from sktime.utils.validation.series import check_time_index, check_series
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
@@ -44,6 +46,20 @@ __all__ = [
 ]
 
 EPS = np.finfo(np.float64).eps
+
+
+def _get_kwarg(kwarg_, **kwargs):
+    kwarg_ = kwargs.pop(kwarg_, None)
+    if kwarg_ is None:
+        calling_function = inspect.stack()[1].function
+        msg = "".join(
+            [
+                f"{calling_function} requires `{kwarg_}`.",
+                f"Pass `{kwarg_}` as a keyword argument when calling the metric",
+            ]
+        )
+        raise ValueError(msg)
+    return kwarg_
 
 
 def _weighted_geometric_mean(x, sample_weight=None, axis=None):
@@ -253,9 +269,7 @@ def mean_absolute_scaled_error(
             "The M4 Competition: 100,000 time series and 61 forecasting methods",
             International Journal of Forecasting, Volume 3
     """
-    y_train = kwargs.pop("y_train", None)
-    if y_train is None:
-        raise ValueError("y_train must be supplied to compute this metric.")
+    y_train = _get_kwarg("y_train", **kwargs)
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -391,9 +405,7 @@ def median_absolute_scaled_error(
             "The M4 Competition: 100,000 time series and 61 forecasting methods",
             International Journal of Forecasting, Volume 3
     """
-    y_train = kwargs.pop("y_train", None)
-    if y_train is None:
-        raise ValueError("y_train must be supplied to compute this metric.")
+    y_train = _get_kwarg("y_train", **kwargs)
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -535,9 +547,7 @@ def mean_squared_scaled_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_train = kwargs.pop("y_train", None)
-    if y_train is None:
-        raise ValueError("y_train must be supplied to compute this metric.")
+    y_train = _get_kwarg("y_train", **kwargs)
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -677,9 +687,7 @@ def median_squared_scaled_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_train = kwargs.pop("y_train", None)
-    if y_train is None:
-        raise ValueError("y_train must be supplied to compute this metric.")
+    y_train = _get_kwarg("y_train", **kwargs)
     # Check if training set is prior to test set
     if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
         y_true, (pd.Series, pd.DataFrame)
@@ -1650,9 +1658,7 @@ def mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
-    if y_pred_benchmark is None:
-        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
+    y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1754,9 +1760,7 @@ def median_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
-    if y_pred_benchmark is None:
-        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
+    y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1861,9 +1865,7 @@ def geometric_mean_relative_absolute_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
-    if y_pred_benchmark is None:
-        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
+    y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -1977,9 +1979,7 @@ def geometric_mean_relative_squared_error(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
-    if y_pred_benchmark is None:
-        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
+    y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -2077,9 +2077,7 @@ def relative_loss(
             "Another look at measures of forecast accuracy", International
             Journal of Forecasting, Volume 22, Issue 4.
     """
-    y_pred_benchmark = kwargs.pop("y_pred_benchmark", None)
-    if y_pred_benchmark is None:
-        raise ValueError("y_pred_benchmark must be supplied to compute this metric.")
+    y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:
