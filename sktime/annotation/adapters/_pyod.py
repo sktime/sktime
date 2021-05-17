@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import warnings
 import numpy as np
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.annotation.base._base import BaseAnnotator
 from sktime.utils.validation.series import check_series
 
 __author__ = ["Markus Löning", "Satya Pattnaik"]
 
 
-class PyODOutlierDetector(_SeriesToSeriesTransformer):
+class PyODOutlierDetector(BaseAnnotator):
     """Transformer that applies Outlier Detection to a
     univariate time series.
 
