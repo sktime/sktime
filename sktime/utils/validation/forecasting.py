@@ -16,6 +16,7 @@ __author__ = ["Markus Löning", "@big-o"]
 import numpy as np
 import pandas as pd
 
+from sktime.utils import _has_tag
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_series
@@ -311,7 +312,7 @@ def check_cutoffs(cutoffs):
     return np.sort(cutoffs)
 
 
-def check_scoring(scoring):
+def check_scoring(scoring, allow_y_pred_benchmark=False):
     """
     Validates the performace scoring
 
@@ -337,13 +338,11 @@ def check_scoring(scoring):
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    if scoring._tags["requires_y_pred_benchmark"]:
-        msg = "".join(
-            [
-                "Metrics requiring benchmark forecasts",
-                "are not fully implemented in the sktime API yet",
-            ]
-        )
+    if _has_tag(scoring, "requires-y-pred-benchmark") and allow_y_pred_benchmark:
+        msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
+                 fully supported yet. Please use a performance metric that does not
+                 require y_pred_benchmark as a keyword argument in its call signature.
+              """
         raise NotImplementedError(msg)
 
     if not callable(scoring):
