@@ -92,3 +92,15 @@ Shapelet-based
     ShapeletTransformClassifier
     MrSEQLClassifier
     ROCKETClassifier
+
+Kernel-based
+--------------
+
+.. currentmodule:: sktime.classification.kernel_based
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ROCKETClassifier
+    Arsenal
