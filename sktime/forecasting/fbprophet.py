@@ -82,6 +82,20 @@ class Prophet(_ProphetAdapter):
     https://facebook.github.io/prophet
     https://github.com/facebook/prophet
 
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.fbprophet import Prophet
+    >>> # Prophet requires to have data with a pandas.DatetimeIndex
+    >>> y = load_airline().to_timestamp(freq='M')
+    >>> forecaster = Prophet(
+    ...     seasonality_mode='multiplicative',
+    ...     n_changepoints=int(len(y) / 12),
+    ...     add_country_holidays={'country_name': 'Germany'},
+    ...     yearly_seasonality=True)
+    >>> forecaster.fit(y)
+    Prophet(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(

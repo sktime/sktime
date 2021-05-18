@@ -16,5 +16,6 @@ This is the class and function reference for ``sktime``.
 .. include:: api_reference/series_as_features.rst
 .. include:: api_reference/forecasting.rst
 .. include:: api_reference/transformations.rst
+.. include:: api_reference/performance_metrics.rst
 .. include:: api_reference/datasets.rst
 .. include:: api_reference/utils.rst
