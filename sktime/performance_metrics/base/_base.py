@@ -21,6 +21,9 @@ class BaseMetric(BaseEstimator):
     def __call__(self, y_true, y_pred, **kwargs):
         NotImplementedError("abstract method")
 
+    # This is copied from sktime.base.BaseEstimator. Choice to copy was made to
+    # Avoid the not applicable functionality from BaseEstimator that tripped
+    # up unit tests (e.g. is_fitted, check_is_fitted).
     @classmethod
     def _all_tags(cls):
         """Get tags from estimator class and all its parent classes"""
