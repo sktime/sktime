@@ -91,7 +91,6 @@ Shapelet-based
 
     ShapeletTransformClassifier
     MrSEQLClassifier
-    ROCKETClassifier
 
 Kernel-based
 --------------
