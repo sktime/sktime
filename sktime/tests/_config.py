@@ -24,7 +24,8 @@ from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
-from sktime.classification.shapelet_based import ROCKETClassifier
+from sktime.classification.kernel_based import ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
@@ -211,6 +212,7 @@ ESTIMATOR_TEST_PARAMS = {
         "max_shapelet_length": 4,
     },
     ROCKETClassifier: {"num_kernels": 100},
+    Arsenal: {"num_kernels": 100},
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,
