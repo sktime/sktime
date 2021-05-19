@@ -46,8 +46,11 @@ __all__ = [
 
 
 class _BaseForecastingErrorMetric(BaseMetric):
-    """Base class for defining forecasting error metrics in sktime. Extends
-    sktime's BaseMetric to the forecasting interface.
+    """Base class for defining forecasting error metrics in sktime.
+
+    Extends sktime's BaseMetric to the forecasting interface. Forecasting error
+    metrics measure the error (loss) between forecasts and true values. Lower
+    values are better.
     """
 
     _tags = {
@@ -63,8 +66,7 @@ class _BaseForecastingErrorMetric(BaseMetric):
         super().__init__(func, name=name)
 
     def __call__(self, y_true, y_pred, **kwargs):
-        """Returns calculated loss metric by passing `y_true` and `y_pred` to
-        underlying metric function.
+        """Calculate metric value using underlying metric function.
 
         Parameters
         ----------
@@ -96,8 +98,7 @@ class _BaseForecastingSuccessMetric(_BaseForecastingErrorMetric):
 
 class _PercentageErrorMixin:
     def __call__(self, y_true, y_pred, **kwargs):
-        """Returns calculated loss metric by passing `y_true` and `y_pred` to
-        underlying metric function.
+        """Calculate metric value using underlying metric function.
 
         Uses `symmetric` attribute to determine whether underlying function
         should return symmetric percentage error metric or a percentage error
@@ -135,8 +136,7 @@ class _PercentageErrorMixin:
 
 class _SquaredErrorMixin:
     def __call__(self, y_true, y_pred, **kwargs):
-        """Returns calculated loss metric by passing `y_true` and `y_pred` to
-        underlying metric function.
+        """Calculate metric value using underlying metric function.
 
         Uses `square_root` attribute to determine whether the
         underlying function should return the square_root of the metric or
@@ -174,8 +174,7 @@ class _SquaredErrorMixin:
 
 class _SquaredPercentageErrorMixin:
     def __call__(self, y_true, y_pred, **kwargs):
-        """Returns calculated loss metric by passing `y_true` and `y_pred` to
-        underlying metric function.
+        """Calculate metric value using underlying metric function.
 
         Uses `symmetric` attribute to determine whether underlying function
         should return symmetric percentage error metric or a percentage error
@@ -218,8 +217,7 @@ class _SquaredPercentageErrorMixin:
 
 class _AsymmetricErrorMixin:
     def __call__(self, y_true, y_pred, **kwargs):
-        """Returns calculated loss metric by passing `y_true` and `y_pred` to
-        underlying metric function.
+        """Calculate metric value using underlying metric function.
 
         Parameters
         ----------
@@ -253,8 +251,7 @@ class _AsymmetricErrorMixin:
 
 class _RelativeLossMixin:
     def __call__(self, y_true, y_pred, **kwargs):
-        """Returns calculated loss metric by passing `y_true` and `y_pred` to
-        underlying metric function.
+        """Calculate metric value using underlying metric function.
 
         Parameters
         ----------
@@ -284,6 +281,13 @@ class _RelativeLossMixin:
 
 
 class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
+    """Base class for defining forecasting success metrics in sktime.
+
+    Extends sktime's BaseMetric to the forecasting interface. Forecasting success
+    metrics measure the agreement between forecasts and true values. Higher
+    values are better.
+    """
+
     _tags = {
         "requires-y-train": True,
         "requires-y-pred-benchmark": False,
@@ -378,7 +382,7 @@ class _RelativeLossForecastingErrorMetric(
 def make_forecasting_scorer(
     func, name=None, greater_is_better=False, multioutput="uniform_average"
 ):
-    """Factory method for creating metric classes from metric functions
+    """Create a metric class from metric functions.
 
     Parameters
     ----------
@@ -404,9 +408,9 @@ def make_forecasting_scorer(
 
 
 class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
-    """Mean absolute scaled error (MASE). MASE output is non-negative floating
-    point. The best value is 0.0.
+    """Mean absolute scaled error (MASE).
 
+    MASE output is non-negative floating point. The best value is 0.0.
     This scale-free error metric can be used to compare forecast methods on
     a single series and also to compare forecast accuracy between series.
 
@@ -471,8 +475,9 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
 
 
 class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
-    """Median absolute scaled error (MdASE). MdASE output is non-negative
-    floating point. The best value is 0.0.
+    """Median absolute scaled error (MdASE).
+
+    MdASE output is non-negative floating point. The best value is 0.0.
 
     Taking the median instead of the mean of the test and train absolute errors
     makes this metric more robust to error outliers since the median tends
@@ -543,9 +548,11 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
 
 
 class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
-    """Mean squared scaled error (MSSE) `square_root` is False or
-    root mean squared scaled error (RMSSE) if `square_root` is True.
-    MSSE and RMSSE output is non-negative floating point. The best value is 0.0.
+    """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
+
+    If `square_root` is False then calculates MSSE and RMSSE if
+    `square_root` is True. Both MSSE and RMSSE output is non-negative floating
+    point. The best value is 0.0.
 
     This is a squared varient of the MASE loss metric. Like MASE this
     scale-free metric can be used to copmare forecast methods on a single
@@ -621,9 +628,11 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
 
 
 class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
-    """Median squared scaled error (MdSSE) if `square_root` is False or
-    root median squared scaled error (RMdSSE) if `square_root` is True.
-    MdSSE and RMdSSE output is non-negative floating point. The best value is 0.0.
+    """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
+
+    If `square_root` is False then calculates MdSSE and if `square_root` is True
+    then RMdSSE. Both MdSSE and RMdSSE output is non-negative floating point.
+    The best value is 0.0.
 
     This is a squared varient of the MdASE loss metric. Like MASE, MdASE, MSSE
     and RMSSE this scale-free metric can be used to compare forecast methods on a
@@ -699,8 +708,9 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
 
 
 class MeanAbsoluteError(_BaseForecastingErrorMetric):
-    """Mean absolute error (MAE). MAE output is non-negative floating point.
-    The best value is 0.0.
+    """Mean absolute error (MAE).
+
+    MAE output is non-negative floating point. The best value is 0.0.
 
     MAE is on the same scale as the data. Because it takes the absolute value
     of the forecast error rather than the square, it is less sensitive to
@@ -748,8 +758,9 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
 
 
 class MedianAbsoluteError(_BaseForecastingErrorMetric):
-    """Median absolute error (MdAE).  MdAE output is non-negative floating
-    point. The best value is 0.0.
+    """Median absolute error (MdAE).
+
+    MdAE output is non-negative floating point. The best value is 0.0.
 
     Like MAE, MdAE is on the same scale as the data. Because it takes the
     absolute value of the forecast error rather than the square, it is less
@@ -801,9 +812,11 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
 
 
 class MeanSquaredError(_SquaredForecastingErrorMetric):
-    """Mean squared error (MSE) if `square_root` is False or
-    root mean squared error (RMSE)  if `square_root` if True. MSE and RMSE are
-    both non-negative floating point. The best value is 0.0.
+    """Mean squared error (MSE) or root mean squared error (RMSE).
+
+    If `square_root` is False then calculates MSE and if `square_root` is True
+    then calculates RMSE.  Both MSE and RMSE are both non-negative floating point.
+    The best value is 0.0.
 
     MSE is measured in squared units of the input data, and RMSE is on the
     same scale as the data. Because both metrics squares the
@@ -863,9 +876,11 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
 
 
 class MedianSquaredError(_SquaredForecastingErrorMetric):
-    """Median squared error (MdSE) if `square_root` is False or root median
-    squared error (RMdSE) if `square_root` is True. MdSE and RMdSE return
-    non-negative floating point. The best value is 0.0.
+    """Median squared error (MdSE) or root median squared error (RMdSE).
+
+    If `square_root` is False then calculates MdSE and if `square_root` is True
+    then RMdSE. Both MdSE and RMdSE return non-negative floating point.
+    The best value is 0.0.
 
     Like MSE, MdSE is measured in squared units of the input data. RMdSe is
     on the same scale as the input data like RMSE. Because MdSE and RMdSE
@@ -930,8 +945,10 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
 
 
 class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
-    """Mean absolute percentage error (MAPE) if `symmetric` is False or
-    symmetric mean absolute percentage error (sMAPE) if `symmetric is True.
+    """Mean absolute percentage error (MAPE) or symmetric version.
+
+    If `symmetric` is False then calculates MAPE and if `symmetric` is True
+    then calculates symmetric mean absolute percentage error (sMAPE). Both
     MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
 
     sMAPE is measured in percentage error relative to the test data. Because it
@@ -995,9 +1012,11 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
 
 
 class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
-    """Median absolute percentage error (MdAPE) if `symmetric` is False or
-    symmetric median absolute percentage error (sMdAPE). MdAPE and sMdAPE output
-    is non-negative floating point. The best value is 0.0.
+    """Median absolute percentage error (MdAPE) or symmetric version.
+
+    If `symmetric` is False then calculates MdAPE and if `symmetric` is True
+    then calculates symmetric median absolute percentage error (sMdAPE). Both
+    MdAPE and sMdAPE output is non-negative floating point. The best value is 0.0.
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
     Because it takes the absolute value rather than square the percentage forecast
@@ -1064,8 +1083,10 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
 
 
 class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
-    """Mean squared percentage error (MSPE) if `square_root` is False or
-    root mean squared percentage error (RMSPE) if `square_root` is True.
+    """Mean squared percentage error (MSPE)  or square root version.
+
+    If `square_root` is False then calculates MSPE and if `square_root` is True
+    then calculates root mean squared percentage error (RMSPE). Both
     MSPE and RMSPE output is non-negative floating point. The best value is 0.0.
 
     MSPE is measured in squared percentage error relative to the test data and
@@ -1140,8 +1161,10 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
 
 
 class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
-    """Median squared percentage error (MdSPE) if `square_root` is False or
-    root median squared percentage error (RMdSPE) if `square_root` is True.
+    """Median squared percentage error (MdSPE)  or square root version.
+
+    If `square_root` is False then calculates MdSPE and if `square_root` is True
+    then calculates root median squared percentage error (RMSPE). Both
     MdSPE and RMdSPE output is non-negative floating point. The best value is 0.0.
 
     MdSPE is measured in squared percentage error relative to the test data.
@@ -1323,7 +1346,7 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     """Geometric mean relative absolute error (GMRAE).
 
     Parameters
-    ---------
+    ----------
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
@@ -1370,8 +1393,10 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
 
 
 class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
-    """Geometric mean relative squared error (GMRSE) if `square_root` is False or
-    root geometric mean relative squared error (RGMRSE) if `square_root` is True.
+    """Geometric mean relative squared error (GMRSE).
+
+    If `square_root` is False then calculates GMRSE and if `square_root` is True
+    then calculates root geometric mean relative squared error (RGMRSE).
 
     Parameters
     ----------
@@ -1432,10 +1457,11 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
 
 
 class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
-    """Calculates asymmetric loss function. Error values that are less
-    than the asymmetric threshold have `left_error_function` applied.
-    Error values greater than or equal to asymmetric threshold  have
-    `right_error_function` applied.
+    """Calculate asymmetric loss function.
+
+    Error values that are less than the asymmetric threshold have
+    `left_error_function` applied. Error values greater than or equal to
+    asymmetric threshold  have `right_error_function` applied.
 
     Many forecasting loss functions assume that over- and under-
     predictions should receive an equal penalty. However, this may not align
@@ -1444,10 +1470,10 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
     the same.
 
     Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
-    and `right_error_function` to 'absoulte` results in a greater penalty
+    and `right_error_function` to 'absolute` results in a greater penalty
     applied to over-predictions (y_true - y_pred < 0). The opposite is true
     for `left_error_function` set to 'absolute' and `right_error_function`
-    set to 'squared`
+    set to 'squared`.
 
     Parameters
     ----------
@@ -1523,8 +1549,15 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
 
 
 class RelativeLoss(_RelativeLossForecastingErrorMetric):
-    """Calculates relative loss for a set of predictions and benchmark
-    predictions for a given loss function.
+    """Calculate relative loss of forecast versus benchmark forecast.
+
+    Applies a forecasting performance metric to a set of forecasts and
+    benchmark forecasts and reports ratio of the metric from the forecasts to
+    the the metric from the benchmark forecasts. Relative loss output is
+    non-negative floating point. The best value is 0.0.
+
+    If the score of the benchmark predictions for a given loss function is zero
+    then a large value is returned.
 
     This function allows the calculation of scale-free relative loss metrics.
     Unlike mean absolute scaled error (MASE) the function calculates the
