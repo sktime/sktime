@@ -2,6 +2,8 @@
 __author__ = "Angus Dempster"
 __all__ = ["Rocket"]
 
+import multiprocessing
+
 import numpy as np
 import pandas as pd
 
@@ -85,8 +87,8 @@ class Rocket(_PanelToTabularTransformer):
                 _X.std(axis=-1, keepdims=True) + 1e-8
             )
         prev_threads = get_num_threads()
-        if self.n_jobs < 1 or self.n_jobs > 8:
-            n_jobs = 8
+        if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
+            n_jobs = multiprocessing.cpu_count()
         else:
             n_jobs = self.n_jobs
         set_num_threads(n_jobs)
