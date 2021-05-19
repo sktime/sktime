@@ -10,7 +10,12 @@ from sktime.clustering.base.base_types import (
     Series,
     Numpy_Array,
 )
-from sktime.clustering.base.base import ClusterMixin, Init_Algo, Init_Algo_Dict
+from sktime.clustering.base.base import (
+    BaseCluster,
+    ClusterMixin,
+    Init_Algo,
+    Init_Algo_Dict,
+)
 from sktime.distances.elastic_cython import (
     ddtw_distance,
     dtw_distance,
@@ -22,15 +27,15 @@ from sktime.distances.elastic_cython import (
     wdtw_distance,
 )
 from sktime.distances.mpdist import mpdist
-from sktime.clustering.base.base import CenterInitializerMixin
+from sktime.clustering.base.base import BaseClusterCenterInitializer
 from sktime.clustering._center_initializers import (
-    RandomCenterInitializer,
-    KMeansPlusPlusInitializer,
+    RandomBaseClusterCenterInitializer,
+    KMeansPlusPlusInitializerBaseCluster,
 )
 from sktime.utils.data_processing import from_nested_to_2d_array
 
 
-class TimeSeriesKMeans(ClusterMixin):
+class TimeSeriesKMeans(BaseCluster, ClusterMixin):
     """
     TODO:
     Algorithm specific:
@@ -70,8 +75,8 @@ class TimeSeriesKMeans(ClusterMixin):
     }
 
     __init_algorithms: Init_Algo_Dict = {
-        "random": RandomCenterInitializer,
-        "k_means_plus_plus": KMeansPlusPlusInitializer,
+        "random": RandomBaseClusterCenterInitializer,
+        "k_means_plus_plus": KMeansPlusPlusInitializerBaseCluster,
     }
 
     def __init__(
@@ -133,7 +138,7 @@ class TimeSeriesKMeans(ClusterMixin):
 
         self.n_clusters: int = n_clusters
         self.n_init: int = n_init
-        self.init_algorithm: CenterInitializerMixin = init_algorithm
+        self.init_algorithm: BaseClusterCenterInitializer = init_algorithm
         self.max_iter: int = max_iter
         self.verbose: bool = verbose
         self.metric = metric
