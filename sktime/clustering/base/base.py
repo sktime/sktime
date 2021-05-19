@@ -4,25 +4,27 @@ from sktime.clustering.base.base_types import Data_Frame
 from typing import List, Union, Mapping
 
 
-class ClusterMixin(BaseEstimator):
+class BaseCluster:
     def fit(self, X: Data_Frame) -> None:
         raise NotImplementedError("abstract method")
 
     def predict(self, X: Data_Frame) -> List[List[int]]:
         raise NotImplementedError("abstract method")
 
+
+class ClusterMixin(BaseEstimator):
     def fit_predict(self, X: Data_Frame) -> List[List[int]]:
         self.fit(X)
         return self.predict(X)
 
 
-class CenterInitializerMixin:
+class BaseClusterCenterInitializer:
     @staticmethod
     def initialize_centers(df: Data_Frame, n_centers: int) -> Data_Frame:
         raise NotImplementedError("abstract method")
 
 
-class AverageMixin:
+class BaseClusterAverage:
     @staticmethod
     def average(series, iterations=100):
         """
@@ -39,5 +41,5 @@ class AverageMixin:
         raise NotImplementedError("abstract method")
 
 
-Init_Algo = Union[str, CenterInitializerMixin]
-Init_Algo_Dict = Mapping[str, CenterInitializerMixin]
+Init_Algo = Union[str, BaseClusterCenterInitializer]
+Init_Algo_Dict = Mapping[str, BaseClusterCenterInitializer]
