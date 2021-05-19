@@ -122,6 +122,9 @@ class Arsenal(BaseClassifier):
             )
             for _ in range(self.n_estimators)
         )
+
+        self.weights = []
+        self.weight_sum = 0
         for rocket_pipeline in self.estimators_:
             weight = rocket_pipeline.steps[1][1].best_score_
             self.weights.append(weight)

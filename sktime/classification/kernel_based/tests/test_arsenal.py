@@ -22,15 +22,15 @@ def test_arsenal_on_gunpoint():
     testing.assert_array_equal(probas, arsenal_gunpoint_probas)
 
 
-@pytest.mark.parametrize("n_jobs", [1, 4])
-def test_arsenal_on_power_demand():
+@pytest.mark.parametrize("n_jobs", [1, 8])
+def test_arsenal_on_power_demand(n_jobs):
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(100)
 
     # train Arsenal
-    arsenal = Arsenal(num_kernels=1000, n_estimators=10, random_state=0)
+    arsenal = Arsenal(num_kernels=1000, n_estimators=10, random_state=0, n_jobs=n_jobs)
     arsenal.fit(X_train, y_train)
 
     score = arsenal.score(X_test.iloc[indices], y_test[indices])

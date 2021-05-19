@@ -22,15 +22,15 @@ def test_rocket_on_gunpoint():
     testing.assert_array_equal(probas, rocket_gunpoint_probas)
 
 
-@pytest.mark.parametrize("n_jobs", [1, 4])
-def test_rocket_on_power_demand():
+@pytest.mark.parametrize("n_jobs", [1, 8])
+def test_rocket_on_power_demand(n_jobs):
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(100)
 
     # train ROCKET
-    rocket = ROCKETClassifier(num_kernels=1000, random_state=0)
+    rocket = ROCKETClassifier(num_kernels=1000, random_state=0, n_jobs=n_jobs)
     rocket.fit(X_train, y_train)
 
     score = rocket.score(X_test.iloc[indices], y_test[indices])
