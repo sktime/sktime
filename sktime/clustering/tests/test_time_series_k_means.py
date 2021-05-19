@@ -35,4 +35,4 @@ def test_k_means():
     for i in range(len(indexes)):
         series = X_test.iloc[indexes[i]]
         center = centers.iloc[i]
-        plot_test(series, center)
+        # plot_test(series, center)
