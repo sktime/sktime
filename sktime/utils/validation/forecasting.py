@@ -338,7 +338,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False):
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    if _has_tag(scoring, "requires-y-pred-benchmark") and allow_y_pred_benchmark:
+    if _has_tag(scoring, "requires-y-pred-benchmark") and not allow_y_pred_benchmark:
         msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
                  fully supported yet. Please use a performance metric that does not
                  require y_pred_benchmark as a keyword argument in its call signature.
