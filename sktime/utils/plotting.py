@@ -1,14 +1,12 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
-__all__ = ["plot_series"]
-__author__ = ["Markus Löning"]
-
 import numpy as np
-
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
+
+__all__ = ["plot_series"]
+i__author__ = ["Markus Löning"]
 
 
 def plot_series(*series, labels=None, markers=None):
@@ -64,13 +62,21 @@ def plot_series(*series, labels=None, markers=None):
     else:
         markers = ["o" for _ in range(n_series)]
 
+    def _type(idx):
+        return str(type(idx)).split(".")[-1].split("'")[0]
+
     # create combined index
     index = series[0].index
+    idx_type = type(index)
     for y in series[1:]:
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
+        acc_dtypes = ["RangeIndex", "Int64Index", "UInt64Index", "Float64Index"]
         if not type(index) is type(y.index):  # noqa
-            raise TypeError("Found series with different index types.")
+            if _type(idx_type) and _type(type(y.index)) in acc_dtypes:
+                y.index = idx_type(y.index)
+            else:
+                raise TypeError("Found series with incompatible index types.")
         index = index.union(y.index)
 
     # generate integer x-values
