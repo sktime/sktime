@@ -15,6 +15,7 @@ Plotting
     :template: function.rst
 
     plot_series
+    plot_correlations
 
 Data Processing
 ---------------
