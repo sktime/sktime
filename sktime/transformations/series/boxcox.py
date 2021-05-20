@@ -26,7 +26,7 @@ from sktime.utils.validation.series import check_series
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
     """
     Example
-    ----------
+    -------
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -144,13 +144,13 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
 def _guerrero(x, sp, bounds=None):
     r"""
-    Returns lambda estimated by the Guerrero method [Guerrero].
+    Return lambda estimated by the Guerrero method [Guerrero].
     Parameters
     ----------
     x : ndarray
         Input array. Must be 1-dimensional.
     sp : integer
-        Seasonal periodicity value. Must be an integer >= 2
+        Seasonal periodicity value. Must be an integer >= 2.
     bounds : {None, (float, float)}, optional
         Bounds on lambda to be used in minimization.
     Returns
