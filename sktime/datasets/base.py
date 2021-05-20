@@ -42,7 +42,7 @@ MODULE = os.path.dirname(__file__)
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
-    Download and unzip datasets (helper funciton).
+    Download and unzip datasets (helper function).
 
     This code was modified from
     https://github.com/tslearn-team/tslearn/blob
