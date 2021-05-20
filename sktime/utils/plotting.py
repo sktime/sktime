@@ -62,8 +62,8 @@ def plot_series(*series, labels=None, markers=None):
     else:
         markers = ["o" for _ in range(n_series)]
 
-    def _type(idx):
-        return str(type(idx)).split(".")[-1].split("'")[0]
+    def _type(id):
+        return str(type(id)).split(".")[-1].split("'")[0]
 
     # create combined index
     index = series[0].index
