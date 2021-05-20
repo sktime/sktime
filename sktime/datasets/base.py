@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Utilities for loading datasets. """
-
+"""Utilities for loading datasets."""
 import os
 import shutil
 import tempfile
@@ -43,7 +42,7 @@ MODULE = os.path.dirname(__file__)
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
-    Helper function for downloading and unzipping datasets.
+    Download and unzip datasets (helper funciton).
 
     This code was modified from
     https://github.com/tslearn-team/tslearn/blob
@@ -149,7 +148,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None):
-    """ Helper function to load time series classification datasets."""
+    """Load time series classification datasets (helper funciton)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
@@ -245,7 +244,6 @@ def load_gunpoint(split=None, return_X_y=False):
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=GunPoint
     """
-
     name = "GunPoint"
     return _load_dataset(name, split, return_X_y)
 
@@ -439,8 +437,7 @@ def load_arrow_head(split=None, return_X_y=False):
 
 def load_acsf1(split=None, return_X_y=False):
     """
-    Load the power consumption of typical appliances time series
-    classification problem and returns X and y.
+    Load dataset on power consumption of typical appliances.
 
     Parameters
     ----------
@@ -565,8 +562,7 @@ def load_shampoo_sales():
 
 def load_longley(y_name="TOTEMP"):
     """
-    Load the Longley multivariate time series dataset for forecasting with
-    exogenous variables.
+    Load the Longley dataset for forecasting with exogenous variables.
 
     Parameters
     ----------
@@ -582,9 +578,8 @@ def load_longley(y_name="TOTEMP"):
 
     Details
     -------
-    This dataset contains various US macroeconomic variables from 1947 to
-    1962 that are known to be highly
-    collinear.
+    This mulitvariate time series dataset contains various US macroeconomic
+    variables from 1947 to 1962 that are known to be highly collinear.
 
     Dimensionality:     multivariate, 6
     Series length:      16
@@ -711,8 +706,7 @@ def load_airline():
 
 def load_uschange(y_name="Consumption"):
     """
-    Load the multivariate time series dataset for forecasting
-    Growth rates of personal consumption and personal income.
+    Load MTS dataset for forecasting Growth rates of personal consumption and income.
 
     Returns
     -------
