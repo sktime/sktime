@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Utilities for loading datasets.
-"""
+""" Utilities for loading datasets. """
 
 import os
 import shutil
@@ -46,6 +44,7 @@ MODULE = os.path.dirname(__file__)
 def _download_and_extract(url, extract_path=None):
     """
     Helper function for downloading and unzipping datasets.
+
     This code was modified from
     https://github.com/tslearn-team/tslearn/blob
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
@@ -150,7 +149,6 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None):
-
     """ Helper function to load time series classification datasets."""
     # Allow user to have non standard extract path
     if extract_path is not None:
@@ -291,7 +289,6 @@ def load_osuleaf(split=None, return_X_y=False):
     Dataset details: http://www.timeseriesclassification.com/description.php
     ?Dataset=OSULeaf
     """
-
     name = "OSULeaf"
     return _load_dataset(name, split, return_X_y)
 
@@ -335,7 +332,6 @@ def load_italy_power_demand(split=None, return_X_y=False):
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=ItalyPowerDemand
     """
-
     name = "ItalyPowerDemand"
     return _load_dataset(name, split, return_X_y)
 
@@ -483,14 +479,13 @@ def load_acsf1(split=None, return_X_y=False):
     Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
     =ACSF1
     """
-
     name = "ACSF1"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_basic_motions(split=None, return_X_y=False):
     """
-    Loads the  BasicMotions time series classification problem and returns X and y.
+    Load the  BasicMotions time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -527,7 +522,6 @@ def load_basic_motions(split=None, return_X_y=False):
     Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
     =BasicMotions
     """
-
     name = "BasicMotions"
     return _load_dataset(name, split, return_X_y)
 
@@ -560,7 +554,6 @@ def load_shampoo_sales():
     and applications,
         John Wiley & Sons: New York. Chapter 3.
     """
-
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -666,7 +659,6 @@ def load_lynx():
     analysis. Journal of the Royal Statistical Society
     series A, 140, 411–431.
     """
-
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -706,7 +698,6 @@ def load_airline():
           Analysis, Forecasting and Control. Third Edition. Holden-Day.
           Series G.
     """
-
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -753,7 +744,6 @@ def load_uschange(y_name="Consumption"):
     ----------
     ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
     """
-
     name = "Uschange"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
