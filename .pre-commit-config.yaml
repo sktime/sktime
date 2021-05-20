@@ -1,20 +1,20 @@
 repos:
 - repo: https://github.com/psf/black
-  rev: 20.8b1
+  rev: 21.5b1
   hooks:
   - id: black
     language_version: python3
     # args: [--line-length 79]
 
 - repo: https://github.com/pycqa/flake8
-  rev: 3.9.0
+  rev: 3.9.2
   hooks:
   - id: flake8
     exclude: docs/conf.py
     additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.4.0
+  rev: v4.0.1
   hooks:
   - id: check-added-large-files
     args: ['--maxkb=1000']
@@ -35,7 +35,7 @@ repos:
     stages: [manual]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.6.0
+  rev: 0.8.1
   hooks:
   - id: nbqa-black
     args: ["--nbqa-mutate"]
@@ -46,3 +46,9 @@ repos:
   - id: nbqa-flake8
     args: ["--nbqa-config=setup.cfg", "--extend-ignore=E402,E203"]
     additional_dependencies: [flake8==3.8.3]
+
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 6.1.1  # pick a git hash / tag to point to
+  hooks:
+  - id: pydocstyle
+    args: ["--config=setup.cfg"]
