@@ -37,7 +37,8 @@ from sktime.classification.interval_based import (
 )
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.shapelet_based import MrSEQLClassifier, ROCKETClassifier
+from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
+from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
@@ -86,8 +87,10 @@ classifier_list = [
     "CanonicalIntervalForest",
     # Shapelet based
     "ShapeletTransformClassifier",
-    "ROCKET",
     "MrSEQLClassifier",
+    # Kernel based
+    "ROCKET",
+    "Arsenal",
 ]
 
 
@@ -150,6 +153,8 @@ def set_classifier(cls, resampleId=None):
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     elif name == "rocket":
         return ROCKETClassifier(random_state=resampleId)
+    elif name == "arsenal":
+        return Arsenal(random_state=resampleId)
     # Hybrid
     elif name == "catch22":
         return Catch22ForestClassifier(random_state=resampleId)

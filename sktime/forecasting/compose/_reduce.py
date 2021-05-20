@@ -93,7 +93,8 @@ def _sliding_window_transform(
     # There are different ways to implement this transform. Pre-allocating an
     # array and filling it by iterating over the window length seems to be the most
     # efficient one.
-    window_length = check_window_length(window_length)
+    n_timepoints = y.shape[0]
+    window_length = check_window_length(window_length, n_timepoints)
 
     z = _concat_y_X(y, X)
     n_timepoints, n_variables = z.shape
@@ -169,11 +170,12 @@ class _Reducer(_BaseWindowForecaster):
         -------
         self : returns an instance of self.
         """
+        n_timepoints = len(y)
         self._set_y_X(y, X)
         self._set_fh(fh)
 
         self.step_length_ = check_step_length(self.step_length)
-        self.window_length_ = check_window_length(self.window_length)
+        self.window_length_ = check_window_length(self.window_length, n_timepoints)
 
         self._fit(y, X)
         self._is_fitted = True
