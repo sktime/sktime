@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Auto-correlations transformations.
+Auto-correlation transformations.
 
 Module :mod:`sktime.transformations.series` implements auto-correlation
 transformers.
