@@ -116,13 +116,16 @@ def _list_downloaded_datasets(extract_path):
 
 def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
     """
-    Load dataset from UCR UEA time series classification repository. Downloads and
-    extracts dataset if not already downloaded.
+    Load dataset from UCR UEA time series archive at
+    http://www.timeseriesclassification.com/dataset.php .
+    Downloads and extracts dataset if not already downloaded.
 
     Parameters
     ----------
     name : str
-        Name of data set
+        Name of data set.
+        Possible strings can be found at:
+        http://www.timeseriesclassification.com/dataset.php .
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
