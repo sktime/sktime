@@ -96,7 +96,10 @@ class Imputer(_SeriesToSeriesTransformer):
         if self.missing_values:
             Z = Z.replace(to_replace=self.missing_values, value=np.nan)
 
-        if self.method == "random":
+        if not _has_missing_values(Z):
+            return Z
+
+        elif self.method == "random":
             if isinstance(Z, pd.DataFrame):
                 for col in Z:
                     Z[col] = Z[col].apply(
@@ -108,13 +111,12 @@ class Imputer(_SeriesToSeriesTransformer):
             Z = Z.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
             Z = Z.fillna(method=self.method)
-        elif self.method in ["drift", "forecaster"]:
-            if self.method == "drift":
-                forecaster = PolynomialTrendForecaster(degree=1)
-                Z = _impute_with_forecaster(forecaster, Z)
-            elif self.method == "forecaster":
-                forecaster = clone(self.forecaster)
-                Z = _impute_with_forecaster(forecaster, Z)
+        elif self.method == "drift":
+            forecaster = PolynomialTrendForecaster(degree=1)
+            Z = _impute_with_forecaster(forecaster, Z)
+        elif self.method == "forecaster":
+            forecaster = clone(self.forecaster)
+            Z = _impute_with_forecaster(forecaster, Z)
         elif self.method == "mean":
             Z = Z.fillna(value=Z.mean())
         elif self.method == "median":
@@ -122,7 +124,7 @@ class Imputer(_SeriesToSeriesTransformer):
         elif self.method in ["nearest", "linear"]:
             Z = Z.interpolate(method=self.method)
         else:
-            raise ValueError(f"method {self.method} not available")
+            raise ValueError(f"`method`: {self.method} not available.")
         # fill first/last elements of series,
         # as some methods (e.g. "linear") cant impute those
         Z = Z.fillna(method="ffill").fillna(method="backfill")
@@ -188,10 +190,13 @@ def _impute_with_forecaster(forecaster, Z):
     for z in cols:
         # define fh based on index of missing values
         naindex = z.index[z.isna()]
-        if not naindex.empty:
-            fh = ForecastingHorizon(values=naindex, is_relative=False)
-            # fill NaN before fitting with ffill and backfill (heuristic)
-            forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
-            # replace missing values with predicted values
-            z[naindex] = forecaster.predict()
+        fh = ForecastingHorizon(values=naindex, is_relative=False)
+        # fill NaN before fitting with ffill and backfill (heuristic)
+        forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
+        # replace missing values with predicted values
+        z[naindex] = forecaster.predict()
     return Z
+
+
+def _has_missing_values(Z):
+    return Z.isnull().to_numpy().any()
