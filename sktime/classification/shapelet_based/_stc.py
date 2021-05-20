@@ -64,7 +64,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         "contractable": False,
     }
 
-    def __init__(self, transform_contract_in_mins=300, n_estimators=500, random_state=None):
+    def __init__(self, transform_contract_in_mins=60, n_estimators=500, random_state=None):
         self.transform_contract_in_mins = transform_contract_in_mins
         self.n_estimators = n_estimators
         self.random_state = random_state

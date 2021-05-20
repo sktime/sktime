@@ -147,7 +147,7 @@ def set_classifier(cls, resampleId=None):
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
-            random_state=resampleId, time_contract_in_mins=1
+            random_state=resampleId, transform_contract_in_mins=60
         )
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
