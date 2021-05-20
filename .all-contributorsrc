@@ -929,7 +929,7 @@
     },
     {
       "login": "kachayev",
-      "name": "Oleksii Kachaiev"
+      "name": "Oleksii Kachaiev",
       "avatar_url": "https://avatars.githubusercontent.com/u/485647?v=4",
       "profile": "https://github.com/kachayev",
       "contributions": [
@@ -963,7 +963,55 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "ltsaprounis",
+      "name": "Leonidas Tsaprounis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64217214?v=4",
+      "profile": "https://github.com/ltsaprounis",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "GuzalBulatova",
+      "name": "Guzal Bulatova",
+      "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
+      "profile": "https://github.com/GuzalBulatova",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "satya-pattnaik",
+      "name": "Satya Prakash Pattnaik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22102468?v=4",
+      "profile": "https://www.linkedin.com/in/satya-pattnaik-77a430144/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "yashlamba",
+      "name": "Yash Lamba",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44164398?v=4",
+      "profile": "https://github.com/yashlamba",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ckastner",
+      "name": "Christian Kastner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15859947?v=4",
+      "profile": "https://github.com/ckastner",
+      "contributions": [
+        "code",
+        "bug",
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
