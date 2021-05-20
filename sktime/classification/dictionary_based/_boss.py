@@ -83,11 +83,13 @@ class BOSSEnsemble(BaseClassifier):
     classifiers/dictionary_based/BOSS.java
     """
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": True,
+        "contractable": False,
     }
 
     def __init__(

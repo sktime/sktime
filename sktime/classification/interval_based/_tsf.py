@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    Time Series Forest Regressor (TSF).
+    Time Series Forest (TSF) Classifier.
 """
 
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]

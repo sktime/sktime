@@ -118,9 +118,9 @@ class Arsenal(BaseClassifier):
         base_estimator = _make_estimator(self.num_kernels, self.random_state)
         self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                _clone_estimator(base_estimator, self.random_state), X, y
+                _clone_estimator(base_estimator, self.random_state, i), X, y
             )
-            for _ in range(self.n_estimators)
+            for i in range(self.n_estimators)
         )
 
         self.weights = []
@@ -144,7 +144,7 @@ class Arsenal(BaseClassifier):
 
     def predict_proba(self, X):
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, coerce_to_numpy=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 

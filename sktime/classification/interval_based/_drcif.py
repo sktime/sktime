@@ -91,6 +91,8 @@ class DrCIF(ForestClassifier, BaseClassifier):
         "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
