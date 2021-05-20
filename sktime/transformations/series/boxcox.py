@@ -26,7 +26,7 @@ from sktime.utils.validation.series import check_series
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
     """
     Example
-    ----------
+    -------
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -110,10 +110,11 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         xvals = distributions.norm.ppf(osm_uniform)
 
         def _eval_pearsonr(lmbda, xvals, samps):
-            # This function computes the x-axis values of the probability plot
-            # and computes a linear regression (including the correlation) and
-            # returns ``1 - r`` so that a minimization function maximizes the
-            # correlation.
+            """Compute the x-axis values of the probability plot
+            and compute a linear regression (including the correlation).
+            Returns ``1 - r`` so that a minimization function maximizes
+            the correlation.
+            """
             y = _boxcox(samps, lmbda)
             yvals = np.sort(y)
             r, prob = stats.pearsonr(xvals, yvals)
@@ -144,13 +145,13 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
 def _guerrero(x, sp, bounds=None):
     r"""
-    Returns lambda estimated by the Guerrero method [Guerrero].
+    Return lambda estimated by the Guerrero method [Guerrero].
     Parameters
     ----------
     x : ndarray
         Input array. Must be 1-dimensional.
     sp : integer
-        Seasonal periodicity value. Must be an integer >= 2
+        Seasonal periodicity value. Must be an integer >= 2.
     bounds : {None, (float, float)}, optional
         Bounds on lambda to be used in minimization.
     Returns
@@ -163,8 +164,7 @@ def _guerrero(x, sp, bounds=None):
     References
     ----------
     [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
-    Transformations ", Journal of Forecasting, Vol. 12, 37-48 (1993)
-    https://doi.org/10.1002/for.3980120104
+    Transformations ", Journal of Forecasting, Vol. 12, pp. 37-48, 1993.
     """
 
     if sp is None or not is_int(sp) or sp < 2:
