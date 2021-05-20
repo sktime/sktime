@@ -31,10 +31,9 @@ class HIVECOTEV1(BaseClassifier):
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
     representations using the CAWPE structure.
 
-
     Parameters
     ----------
-    verbose                             : int, level of output printed to
+    verbose                 : int, level of output printed to
     the console (for information only) (default = 0)
     n_jobs                  : int, optional (default=1)
     The number of jobs to run in parallel for both `fit` and `predict`.
@@ -66,6 +65,8 @@ class HIVECOTEV1(BaseClassifier):
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -79,7 +80,7 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {"time_contract_in_mins": 60}
+            stc_params = {"transform_contract_in_mins": 60}
         if tsf_params is None:
             tsf_params = {}
         if rise_params is None:

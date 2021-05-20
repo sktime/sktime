@@ -27,9 +27,10 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ____________
-    time_contract_in_mins: int, search time for shapelets, optional (default = 300)
-    n_estimators         :       500,
-    random_state         :  int, seed for random, optional (default = none)
+    transform_contract_in_mins : int, search time for shapelets, optional
+    (default = 300)
+    n_estimators               :       500,
+    random_state               :  int, seed for random, optional (default = none)
 
     Attributes
     ----------
@@ -54,15 +55,17 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     """
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
-    def __init__(self, time_contract_in_mins=300, n_estimators=500, random_state=None):
-        self.time_contract_in_mins = time_contract_in_mins
+    def __init__(self, transform_contract_in_mins=300, n_estimators=500, random_state=None):
+        self.transform_contract_in_mins = transform_contract_in_mins
         self.n_estimators = n_estimators
         self.random_state = random_state
 
@@ -101,7 +104,7 @@ class ShapeletTransformClassifier(BaseClassifier):
                 (
                     "st",
                     ContractedShapeletTransform(
-                        time_contract_in_mins=self.time_contract_in_mins,
+                        time_contract_in_mins=self.transform_contract_in_mins,
                         verbose=False,
                         random_state=self.random_state,
                     ),

@@ -91,11 +91,13 @@ class MUSE(BaseClassifier):
 
     """
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(

@@ -62,7 +62,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     (default=250)
     max_ensemble_size       : int, maximum number of classifiers
     (default=50)
-    time_limit              : int, time contract to limit build time in
+    time_limit_in_minutes              : int, time contract to limit build time in
     minutes (default=0, no limit)
     max_win_len_prop        : float between 0 and 1, maximum window length
     as a proportion of series length (default=1)
@@ -110,34 +110,37 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     """
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": True,
+        "contractable": True,
     }
 
     def __init__(
         self,
         n_parameter_samples=250,
         max_ensemble_size=50,
-        time_limit=0.0,
         max_win_len_prop=1,
         min_window=10,
         randomly_selected_params=50,
         bigrams=None,
         dim_threshold=0.85,
         max_dims=20,
+        time_limit_in_minutes=0.0,
         n_jobs=1,
         random_state=None,
     ):
         self.n_parameter_samples = n_parameter_samples
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
-        self.time_limit = time_limit
+        self.min_window = min_window
         self.randomly_selected_params = randomly_selected_params
         self.bigrams = bigrams
 
+        self.time_limit_in_minutes = time_limit_in_minutes
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -160,7 +163,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.word_lengths = [16, 14, 12, 10, 8]
         self.norm_options = [True, False]
-        self.min_window = min_window
         self.levels = [1, 2, 3]
         self.igb_options = [True, False]
         self.alphabet_size = 4
@@ -184,7 +186,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        self.time_limit = self.time_limit * 60
+        time_limit = self.time_limit_in_minutes * 60
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -202,6 +204,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         win_inc = int((max_window - self.min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
+        if self.min_window > max_window + 1:
+            raise ValueError(
+                f"Error in TemporalDictionaryEnsemble, min_window ="
+                f"{self.min_window} is bigger"
+                f" than max_window ={max_window},"
+                f" series length is {self.series_length}"
+                f" try set min_window to be smaller than series length in "
+                f"the constructor, but the classifier may not work at "
+                f"all with very short series"
+            )
 
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
@@ -211,18 +223,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         lowest_acc = 1
         lowest_acc_idx = 0
 
-        if self.time_limit > 0:
+        if time_limit > 0:
             self.n_parameter_samples = 0
-        if self.min_window > max_window + 1:
-            raise ValueError(
-                f"Error in TemporalDictionaryEnsemble, min_window ="
-                f"{self.min_window} is bigger"
-                f" than max_window ={self.max_window},"
-                f" series length is {self.series_length}"
-                f" try set min_window to be smaller than series length in "
-                f"the constructor, but the classifier may not work at "
-                f"all with very short series"
-            )
+
         rng = check_random_state(self.random_state)
 
         if self.bigrams is None:
@@ -235,7 +238,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         # use time limit or n_parameter_samples if limit is 0
         while (
-            train_time < self.time_limit or num_classifiers < self.n_parameter_samples
+                train_time < time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
             if num_classifiers < self.randomly_selected_params:
                 parameters = possible_parameters.pop(
@@ -265,7 +268,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde.subsample = subsample
 
             tde.accuracy = self._individual_train_acc(
-                tde, y_subsample, subsample_size, lowest_acc
+                tde, y_subsample, subsample_size, -999999 if num_classifiers < self.max_ensemble_size else lowest_acc
             )
             weight = math.pow(tde.accuracy, 4)
 
@@ -312,9 +315,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
-        dists = sums / (np.ones(self.n_classes) * self.weight_sum)
-
-        return dists
+        return sums / (np.ones(self.n_classes) * self.weight_sum)
 
     def _worst_ensemble_acc(self):
         min_acc = 1.0
