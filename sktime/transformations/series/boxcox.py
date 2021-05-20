@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)"""
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["BoxCoxTransformer"]
@@ -166,7 +166,7 @@ def _guerrero(x, sp, bounds=None):
     References
     ----------
     [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
-    Transformations ", Journal of Forecasting, Vol. 12, pp. 37-48, 1993.
+    Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
     """
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
