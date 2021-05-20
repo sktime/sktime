@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+"""Validations for use with forecasting module."""
+
 __all__ = [
     "check_y",
     "check_X",
@@ -80,6 +83,7 @@ def check_X(
         type of time index
     enforce_univariate : bool, optional (default=False)
         If True, multivariate X will raise an error.
+
     Returns
     -------
     X : pd.Series, pd.DataFrame
@@ -166,17 +170,18 @@ def check_cv(cv, enforce_start_with_window=False):
 
 def check_step_length(step_length):
     """Validate window length.
+
     Parameters
     ----------
     step_length : step length for data set.
 
     Returns
-    ----------
+    -------
     step_length : int
         if step_length in not none and is int and greater than or equal to 1.
 
     Raises
-    ----------
+    ------
     ValueError
         if step_length is negative or not an integer or is None.
     """
@@ -253,10 +258,13 @@ def check_fh(fh, enforce_relative=False):
 
 def check_alpha(alpha):
     """Check that a confidence level alpha (or list of alphas) is valid.
+
     All alpha values must lie in the open interval (0, 1).
+
     Parameters
     ----------
     alpha : float, list of float
+
     Raises
     ------
     ValueError
@@ -283,18 +291,18 @@ def check_alpha(alpha):
 
 
 def check_cutoffs(cutoffs):
-    """Validates the cutoff
+    """Validate the cutoff.
 
     Parameters
     ----------
     cutoffs : np.ndarray or pd.Index
 
     Returns
-    ----------
+    -------
     cutoffs (Sorted array)
 
     Raises
-    ----------
+    ------
     ValueError
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
@@ -314,19 +322,19 @@ def check_cutoffs(cutoffs):
 
 def check_scoring(scoring, allow_y_pred_benchmark=False):
     """
-    Validates the performace scoring
+    Validate the performace scoring.
 
     Parameters
     ----------
     scoring : object that inherits from BaseMetric from sktime.performance_metrics.
 
     Returns
-    ----------
+    -------
     scoring :
         MeanAbsolutePercentageError if the object is None.
 
     Raises
-    ----------
+    ------
     TypeError
         if object is not callable from current scope.
     NotImplementedError
