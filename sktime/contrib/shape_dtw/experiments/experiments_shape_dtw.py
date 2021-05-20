@@ -127,7 +127,7 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == "boss":
         return db.BOSSEnsemble()
     elif cls.lower() == "st":
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
+        return st.ShapeletTransformClassifier(transform_contract_in_mins=60)
     elif cls.lower() == "dtw":
         return nn.KNeighborsTimeSeriesClassifier(distance="dtw")
     elif cls.lower() == "ee" or cls.lower() == "elasticensemble":

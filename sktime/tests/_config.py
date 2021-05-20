@@ -204,7 +204,7 @@ ESTIMATOR_TEST_PARAMS = {
         ],
         "selected_forecaster": "Naive_mean",
     },
-    ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
+    ShapeletTransformClassifier: {"n_estimators": 3, "transform_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
     ShapeletTransform: {
         "max_shapelets_to_store_per_class": 1,
