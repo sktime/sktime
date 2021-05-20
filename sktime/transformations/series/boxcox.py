@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)"""
 
 __author__ = ["Markus Löning"]
 __all__ = ["BoxCoxTransformer"]
@@ -24,7 +24,8 @@ from sktime.utils.validation.series import check_series
 
 
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
-    """
+    """Box-Cox power transform.
+
     Example
     -------
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -144,8 +145,8 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
 
 def _guerrero(x, sp, bounds=None):
-    r"""
-    Return lambda estimated by the Guerrero method [Guerrero].
+    r"""Return lambda estimated by the Guerrero method [Guerrero].
+
     Parameters
     ----------
     x : ndarray
@@ -154,6 +155,7 @@ def _guerrero(x, sp, bounds=None):
         Seasonal periodicity value. Must be an integer >= 2.
     bounds : {None, (float, float)}, optional
         Bounds on lambda to be used in minimization.
+
     Returns
     -------
     lambda : float
@@ -166,7 +168,6 @@ def _guerrero(x, sp, bounds=None):
     [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
     Transformations ", Journal of Forecasting, Vol. 12, pp. 37-48, 1993.
     """
-
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
             "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
@@ -197,8 +198,8 @@ def _guerrero(x, sp, bounds=None):
 
 
 def _boxcox(x, lmbda=None, bounds=None, alpha=None):
-    r"""
-    Return a dataset transformed by a Box-Cox power transformation.
+    r"""Return a dataset transformed by a Box-Cox power transformation.
+
     Parameters
     ----------
     x : ndarray
@@ -211,6 +212,7 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         If ``alpha`` is not None, return the ``100 * (1-alpha)%`` confidence
         interval for `lmbda` as the third output argument.
         Must be between 0.0 and 1.0.
+
     Returns
     -------
     boxcox : ndarray
@@ -222,9 +224,11 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         If `lmbda` parameter is None and ``alpha`` is not None, this returned
         tuple of floats represents the minimum and maximum confidence limits
         given ``alpha``.
+
     See Also
     --------
     probplot, boxcox_normplot, boxcox_normmax, boxcox_llf
+
     Notes
     -----
     The Box-Cox transform is given by::
