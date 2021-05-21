@@ -48,7 +48,7 @@ repos:
     additional_dependencies: [flake8==3.8.3]
 
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.1.1  # pick a git hash / tag to point to
+  rev: 6.1.1
   hooks:
   - id: pydocstyle
     args: ["--config=setup.cfg"]
