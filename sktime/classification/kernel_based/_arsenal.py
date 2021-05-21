@@ -153,7 +153,7 @@ class Arsenal(BaseClassifier):
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
-        return sums / (np.ones(self.n_classes) * self.weight_sum)
+        return np.around(sums / (np.ones(self.n_classes) * self.weight_sum), 6)
 
     def _get_train_probs(self, X):
         return 0
