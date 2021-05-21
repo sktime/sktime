@@ -27,6 +27,7 @@ __all__ = [
     "Deseasonalizer",
     "ReducedForecaster",
     "EnsembleForecaster",
+    "STLForecaster",
     "Detrender",
     "pd",
     "np",
@@ -102,6 +103,7 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.stlforcaster import STLForecaster
 from sktime.forecasting.online_learning._online_ensemble import (
     OnlineEnsembleForecaster,
 )
