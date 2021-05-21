@@ -182,34 +182,34 @@ arsenal_basic_motions_probas = np.array(
 )
 
 
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
-#
-#     arsenal_u = Arsenal(num_kernels=1000, n_estimators=10, random_state=0)
-#
-#     arsenal_u.fit(X_train.iloc[indices], y_train[indices])
-#     probas = arsenal_u.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(20)
-#
-#     arsenal_m = Arsenal(num_kernels=1000, n_estimators=10, random_state=0)
-#
-#     arsenal_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = arsenal_m.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
+def print_array(array):
+    print('[')
+    for sub_array in array:
+        print('[')
+        for value in sub_array:
+            print(value.astype(str), end='')
+            print(', ')
+        print('],')
+    print(']')
+
+
+if __name__ == "__main__":
+    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).permutation(10)
+
+    arsenal_u = Arsenal(num_kernels=1000, n_estimators=10, random_state=0)
+
+    arsenal_u.fit(X_train.iloc[indices], y_train[indices])
+    probas = arsenal_u.predict_proba(X_test.iloc[indices])
+    print_array(probas)
+
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).permutation(20)
+
+    arsenal_m = Arsenal(num_kernels=1000, n_estimators=10, random_state=0)
+
+    arsenal_m.fit(X_train.iloc[indices], y_train[indices])
+    probas = arsenal_m.predict_proba(X_test.iloc[indices])
+    print_array(probas)

@@ -80,11 +80,11 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {"transform_contract_in_mins": 60}
+            stc_params = {}
         if tsf_params is None:
-            tsf_params = {}
+            tsf_params = {"n_estimators": 500}
         if rise_params is None:
-            rise_params = {}
+            rise_params = {"n_estimators": 500}
         if cboss_params is None:
             cboss_params = {}
 
@@ -124,7 +124,10 @@ class HIVECOTEV1(BaseClassifier):
         if min_class < cv_size:
             cv_size = min_class
 
-        self.stc = ShapeletTransformClassifier(**self.stc_params)
+        self.stc = ShapeletTransformClassifier(
+            **self.stc_params,
+            random_state=self.random_state,
+        )
         self.stc.fit(X, y)
 
         if self.verbose > 0:
