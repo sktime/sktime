@@ -37,7 +37,6 @@ from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
-from sktime.utils.validation.forecasting import check_step_length
 
 
 def _concat_y_X(y, X):
@@ -147,11 +146,9 @@ class _Reducer(_BaseWindowForecaster):
 
     _required_parameters = ["estimator"]
 
-    def __init__(self, estimator, window_length=10, step_length=1):
+    def __init__(self, estimator, window_length=10):
         super(_Reducer, self).__init__(window_length=window_length)
         self.estimator = estimator
-        self.step_length = step_length
-        self.step_length_ = None
         self._cv = None
 
     def fit(self, y, X=None, fh=None):
@@ -174,7 +171,6 @@ class _Reducer(_BaseWindowForecaster):
         self._set_y_X(y, X)
         self._set_fh(fh)
 
-        self.step_length_ = check_step_length(self.step_length)
         self.window_length_ = check_window_length(self.window_length, n_timepoints)
 
         self._fit(y, X)
