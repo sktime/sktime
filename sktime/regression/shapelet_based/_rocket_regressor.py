@@ -19,23 +19,20 @@ class ROCKETRegressor(BaseROCKETEstimator, BaseRegressor):
     """
     Regressor wrapped for the ROCKET transformer using RidgeCV as the
     base regressor.
-    Allows the creation of an ensemble of ROCKET regressors to allow for
-    generation of probabilities as the expense of scalability.
 
     Parameters
     ----------
     num_kernels             : int, number of kernels for ROCKET transform
     (default=10,000)
-    ensemble                : boolean, create ensemble of ROCKET's (default=False)
-    ensemble_size           : int, size of the ensemble (default=25)
+    n_jobs                  : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
     Attributes
     ----------
-    regressors             : array of IndividualTDE regressors
-    weights                 : weight of each classifier in the ensemble
-    weight_sum              : sum of all weights
+    classifier              : ROCKET classifier
     n_classes               : extracted from the data
 
     Notes
@@ -49,6 +46,9 @@ class ROCKETRegressor(BaseROCKETEstimator, BaseRegressor):
       journal = {arXiv:1910.13051}
     }
 
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/shapelet_based/ROCKETClassifier.java
 
     """
 

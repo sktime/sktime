@@ -8,7 +8,6 @@ __all__ = ["BaseROCKETEstimator"]
 from abc import ABC, abstractmethod
 import numpy as np
 from sklearn.pipeline import make_pipeline
-from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.panel.rocket import Rocket
@@ -57,23 +56,21 @@ class BaseROCKETEstimator(ABC):
         "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
         self,
         num_kernels=10000,
-        ensemble=False,
-        ensemble_size=25,
+        n_jobs=1,
         random_state=None,
     ):
         self.num_kernels = num_kernels
-        self.ensemble = ensemble
-        self.ensemble_size = ensemble_size
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.classifiers = []
-        self.weights = []
-        self.weight_sum = 0
+        self.classifier = None
 
         self.n_classes = 0
         self.classes_ = []
@@ -88,8 +85,8 @@ class BaseROCKETEstimator(ABC):
 
     def fit(self, X, y):
         """
-        Build a single or ensemble of pipelines containing the ROCKET transformer and
-        the provided base model. Base_model is set by the child class.
+        Build a pipeline containing the ROCKET transformer and RidgeClassifierCV
+        classifier.
 
         Parameters
         ----------
@@ -108,59 +105,32 @@ class BaseROCKETEstimator(ABC):
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
 
-        if self.ensemble:
-            for i in range(self.ensemble_size):
-                rocket_pipeline = make_pipeline(
-                    Rocket(
-                        num_kernels=self.num_kernels, random_state=self.random_state
-                    ),
-                    self.base_estimator,
-                )
-                rocket_pipeline.fit(X, y)
-                self.classifiers.append(rocket_pipeline)
-                self.weights.append(rocket_pipeline.steps[1][1].best_score_)
-                self.weight_sum = self.weight_sum + self.weights[i]
-        else:
-            rocket_pipeline = make_pipeline(
-                Rocket(num_kernels=self.num_kernels, random_state=self.random_state),
-                self.base_estimator,
-            )
-            rocket_pipeline.fit(X, y)
-            self.classifiers.append(rocket_pipeline)
+        self.classifier = rocket_pipeline = make_pipeline(
+            Rocket(
+                num_kernels=self.num_kernels,
+                random_state=self.random_state,
+                n_jobs=self.n_jobs,
+            ),
+            self.base_estimator,
+        )
+        rocket_pipeline.fit(X, y)
 
         self._is_fitted = True
         return self
 
+
     def predict(self, X):
-        if self.ensemble:
-            rng = check_random_state(self.random_state)
-            return np.array(
-                [
-                    self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                    for prob in self.predict_proba(X)
-                ]
-            )
-        else:
-            self.check_is_fitted()
-            return self.classifiers[0].predict(X)
+        self.check_is_fitted()
+        X = check_X(X)
+        return self.classifier.predict(X)
 
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X)
 
-        if self.ensemble:
-            sums = np.zeros((X.shape[0], self.n_classes))
-
-            for n, clf in enumerate(self.classifiers):
-                preds = clf.predict(X)
-                for i in range(0, X.shape[0]):
-                    sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
-
-            dists = sums / (np.ones(self.n_classes) * self.weight_sum)
-        else:
-            dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self.classifiers[0].predict(X)
-            for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
+        dists = np.zeros((X.shape[0], self.n_classes))
+        preds = self.classifier.predict(X)
+        for i in range(0, X.shape[0]):
+            dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
