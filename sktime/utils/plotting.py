@@ -20,7 +20,7 @@ def check_pred_int(pred_int):
         Prediction intervals of series
 
 
-    Riases
+    Raises
     -------
     TypeError: when pred_int is not a pd.DataFrame
     Exception: when the number of columns is less or more than 2
@@ -134,6 +134,8 @@ def plot_series(*series, labels=None, markers=None, pred_int=None):
                 color=ax.get_lines()[-1].get_c(),
                 label="prediction intervals",
             )
+        else:
+            raise ValueError("pred_int and x axis indices does not match")
 
     # combine data points for all series
     xs_flat = list(flatten(xs))
