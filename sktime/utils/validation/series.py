@@ -188,7 +188,7 @@ def check_consistent_index_type(*ys):
     for y in ys[1:]:
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
-        msg = "Please make sure that all series have the same index type."
+        msg = "Please make sure that all series have consistent index type."
 
         if _is_int_index(y.index):
             if not _is_int_index(index):
