@@ -238,7 +238,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         # use time limit or n_parameter_samples if limit is 0
         while (
-                train_time < time_limit or num_classifiers < self.n_parameter_samples
+            train_time < time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
             if num_classifiers < self.randomly_selected_params:
                 parameters = possible_parameters.pop(
@@ -268,7 +268,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde.subsample = subsample
 
             tde.accuracy = self._individual_train_acc(
-                tde, y_subsample, subsample_size, -999999 if num_classifiers < self.max_ensemble_size else lowest_acc
+                tde,
+                y_subsample,
+                subsample_size,
+                -999999 if num_classifiers < self.max_ensemble_size else lowest_acc,
             )
             weight = math.pow(tde.accuracy, 4)
 
