@@ -19,3 +19,4 @@ This is the class and function reference for ``sktime``.
 .. include:: api_reference/performance_metrics.rst
 .. include:: api_reference/datasets.rst
 .. include:: api_reference/utils.rst
+.. include:: api_reference/exceptions.rst
