@@ -193,7 +193,7 @@ class ContractableBOSS(BaseClassifier):
             self.n_parameter_samples = 0
 
         while (
-                train_time < time_limit or num_classifiers < self.n_parameter_samples
+            train_time < time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
             parameters = possible_parameters.pop(
                 rng.randint(0, len(possible_parameters))

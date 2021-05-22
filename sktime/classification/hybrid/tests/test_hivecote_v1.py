@@ -15,13 +15,10 @@ from sktime.datasets import load_gunpoint, load_italy_power_demand
 #     # train HIVE-COTE v1
 #     hc1 = HIVECOTEV1(
 #         random_state=0,
-#         stc_params={
-#             "n_estimators": 10,
-#             "transform_contract_in_mins": 0.1
-#         },
+#         stc_params={"n_estimators": 10, "transform_contract_in_mins": 0.1},
 #         tsf_params={"n_estimators": 10},
 #         rise_params={"n_estimators": 10},
-#         cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5}
+#         cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
 #     )
 #     hc1.fit(X_train.iloc[indices], y_train[indices])
 #
@@ -39,13 +36,10 @@ def test_hivecote_v1_on_power_demand():
     # train HIVE-COTE v1
     hc1 = HIVECOTEV1(
         random_state=0,
-        stc_params={
-            "n_estimators": 10,
-            "transform_contract_in_mins": 0.1
-        },
+        stc_params={"n_estimators": 10, "transform_contract_in_mins": 0.1},
         tsf_params={"n_estimators": 10},
         rise_params={"n_estimators": 10},
-        cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5}
+        cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
     )
     hc1.fit(X_train, y_train)
 
@@ -73,16 +67,13 @@ hivecote_v1_gunpoint_probas = np.array(
 #     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
-#     hc1 = HIVECOTEV1(
-#         random_state=0,
-#         stc_params={
-#             "n_estimators": 10,
-#             "transform_contract_in_mins": 0.1
-#         },
-#         tsf_params={"n_estimators": 10},
-#         rise_params={"n_estimators": 10},
-#         cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5}
-#     )
+# hc1 = HIVECOTEV1(
+#     random_state=0,
+#     stc_params={"n_estimators": 10, "transform_contract_in_mins": 0.1},
+#     tsf_params={"n_estimators": 10},
+#     rise_params={"n_estimators": 10},
+#     cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
+# )
 #
 #     hc1.fit(X_train.iloc[indices], y_train[indices])
 #     probas = hc1.predict_proba(X_test.iloc[indices])
