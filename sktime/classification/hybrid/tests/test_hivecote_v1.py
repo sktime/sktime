@@ -47,9 +47,9 @@ def test_hivecote_v1_on_power_demand():
     assert score >= 0.92
 
 
-hivecote_v1_gunpoint_probas = np.array(
-    []
-)
+# hivecote_v1_gunpoint_probas = np.array(
+#     []
+# )
 
 
 # def print_array(array):
