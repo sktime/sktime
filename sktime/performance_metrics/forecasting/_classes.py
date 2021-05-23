@@ -92,7 +92,14 @@ class _BaseForecastingErrorMetric(BaseMetric):
         return self._func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
 
 
-class _BaseForecastingSuccessMetric(_BaseForecastingErrorMetric):
+class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
+    """Base class for defining forecasting score metrics in sktime.
+
+    Extends sktime's BaseMetric to the forecasting interface. Forecasting score
+    metrics measure the agreement between forecasts and true values. Higher
+    values are better.
+    """
+
     greater_is_better = True
 
 
@@ -386,15 +393,23 @@ def make_forecasting_scorer(
 
     Parameters
     ----------
-    func:
-        Loss function to convert to a forecasting scorer class
+    func
+        Function to convert to a forecasting scorer class.
+        Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
 
-    name: str, default=None
-        Name to use for the forecasting scorer loss class
+    name : str, default=None
+        Name to use for the forecasting scorer loss class.
 
-    greater_is_better: bool, default=False
+    greater_is_better : bool, default=False
         If True then maximizing the metric is better.
         If False then minimizing the metric is better.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
@@ -404,7 +419,7 @@ def make_forecasting_scorer(
     if greater_is_better:
         return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
     else:
-        return _BaseForecastingSuccessMetric(func, name=name, multioutput=multioutput)
+        return _BaseForecastingScoreMetric(func, name=name, multioutput=multioutput)
 
 
 class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
