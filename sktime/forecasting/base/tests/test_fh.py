@@ -164,6 +164,7 @@ def test_shift(timepoint, by):
 
 DURATIONS = [
     pd.TimedeltaIndex(range(3), unit="D", freq="D"),
+    pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     pd.Index(pd.tseries.offsets.Day(day) for day in range(3)),
     # we also support pd.Timedelta, but it does not have freqstr so we
