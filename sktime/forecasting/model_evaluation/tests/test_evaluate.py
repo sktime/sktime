@@ -24,6 +24,7 @@ from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredError,
+    MeanAbsoluteScaledError,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
@@ -77,30 +78,39 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("strategy", ["refit", "update"])
 @pytest.mark.parametrize(
-    "scoring", [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
+    "scoring",
+    [
+        MeanAbsolutePercentageError(symmetric=True),
+        MeanSquaredError(),
+        MeanAbsoluteScaledError(),
+    ],
 )
 def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
-    # Test a number of basic configurations
-    y = make_forecasting_problem(n_timepoints=30, index_type="int")
-    forecaster = NaiveForecaster()
-    cv = CV(fh, window_length, step_length=step_length)
+    # Test a number of basic configurations but exclude any tests where
+    # scoring is MeanAbsoluteScaledError and fh is for in-sample predictions
+    if np.array(fh <= 0).any() and scoring._all_tags()["requires-y-train"]:
+        pass
+    else:
+        y = make_forecasting_problem(n_timepoints=30, index_type="int")
+        forecaster = NaiveForecaster()
+        cv = CV(fh, window_length, step_length=step_length)
 
-    out = evaluate(
-        forecaster=forecaster, y=y, cv=cv, strategy=strategy, scoring=scoring
-    )
-    _check_evaluate_output(out, cv, y, scoring)
+        out = evaluate(
+            forecaster=forecaster, y=y, cv=cv, strategy=strategy, scoring=scoring
+        )
+        _check_evaluate_output(out, cv, y, scoring)
 
-    # check scoring
-    actual = out.loc[:, f"test_{scoring.name}"]
+        # check scoring
+        actual = out.loc[:, f"test_{scoring.name}"]
 
-    n_splits = cv.get_n_splits(y)
-    expected = np.empty(n_splits)
-    for i, (train, test) in enumerate(cv.split(y)):
-        f = clone(forecaster)
-        f.fit(y.iloc[train], fh=fh)
-        expected[i] = scoring(y.iloc[test], f.predict())
+        n_splits = cv.get_n_splits(y)
+        expected = np.empty(n_splits)
+        for i, (train, test) in enumerate(cv.split(y)):
+            f = clone(forecaster)
+            f.fit(y.iloc[train], fh=fh)
+            expected[i] = scoring(y.iloc[test], f.predict(), y_train=y.iloc[train])
 
-    np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(actual, expected)
 
 
 def test_evaluate_initial_window():
@@ -121,7 +131,7 @@ def test_evaluate_initial_window():
     train, test = next(cv.split(y))
     f = clone(forecaster)
     f.fit(y.iloc[train], fh=fh)
-    expected = scoring(y.iloc[test], f.predict())
+    expected = scoring(y.iloc[test], f.predict(), y_Train=y.iloc[train])
     np.testing.assert_equal(actual, expected)
 
 
