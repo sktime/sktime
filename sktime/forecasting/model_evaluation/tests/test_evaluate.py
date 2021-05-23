@@ -87,7 +87,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 )
 def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
     # Test a number of basic configurations but exclude any tests where
-    # scoring is MeanAbsoluteScaledError and fh is for in-sample predictions
+    # scoring requires  y_train and fh is for in-sample predictions
     if np.array(fh <= 0).any() and scoring._all_tags()["requires-y-train"]:
         pass
     else:
