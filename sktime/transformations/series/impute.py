@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
+"""Utilities to impute series with missing values."""
 __author__ = ["Martin Walter"]
 __all__ = ["Imputer"]
 
@@ -16,7 +16,7 @@ import pandas as pd
 
 
 class Imputer(_SeriesToSeriesTransformer):
-    """Missing value imputation
+    """Missing value imputation.
 
     Parameters
     ----------
@@ -77,6 +77,7 @@ class Imputer(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of Z.
 
         Parameters
@@ -155,7 +156,7 @@ class Imputer(_SeriesToSeriesTransformer):
             pass
 
     def _get_random(self, Z):
-        """Create a random int or float value
+        """Create a random int or float value.
 
         :param Z: Series
         :type Z: pd.Series
@@ -172,6 +173,7 @@ class Imputer(_SeriesToSeriesTransformer):
 
 def _impute_with_forecaster(forecaster, Z):
     """Use a given Forecaster to impute by insample predictions.
+
     :param forecaster: Forecaster
     :type forecaster: Based on sktime.BaseForecaster
     :param Z: Series
@@ -179,7 +181,6 @@ def _impute_with_forecaster(forecaster, Z):
     :return: Imputed time series
     :rtype: pd.DataFrame or pd.Series
     """
-
     # univariate
     if isinstance(Z, pd.Series):
         cols = [Z]
