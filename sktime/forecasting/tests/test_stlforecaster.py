@@ -24,6 +24,7 @@ steps = [
 s = TransformedTargetForecaster(steps)
 s.fit(y_train)
 res = [1, 5, 3]
-assert res == s.predict(fh=[1, 3, 4])
+np.testing.assert_allclose(res, s.predict(fh=[1, 3, 4]))
+
 # d = STLForecaster(estimator, steps)
 # d.fit(y_train)
