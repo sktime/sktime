@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""All Forecasting Module"""
 __author__ = ["Markus Löning"]
 __all__ = [
     "ForecastingHorizon",

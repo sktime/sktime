@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-"""Test for STLForecaster Module"""
+"""Test for STLForecaster Module."""
 __author__ = ["Taiwo Owoseni"]
 __all__ = ["check_compare_stl_and_ttf_results"]
 

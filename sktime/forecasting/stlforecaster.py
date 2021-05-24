@@ -4,6 +4,8 @@
 
 __all__ = ["STLForecaster"]
 __author__ = ["Taiwo Owoseni"]
+
+"""STLForecaster Module."""
 from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
