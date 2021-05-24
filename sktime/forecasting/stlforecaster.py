@@ -41,7 +41,7 @@ class STLForecaster(
     Example
     -------
     >>> from sktime.datasets import load_airline
-    >>> ffrom sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.detrend import Detrender
@@ -157,7 +157,7 @@ class STLForecaster(
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        forecaster = self.estimator_
+        forecaster = self._check_estimator()
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
         for _, _, transformer in self._iter_transformers(reverse=True):
@@ -223,7 +223,7 @@ class STLForecaster(
         params: mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params(["estimator", "steps"], deep=deep)
+        return self._get_params("steps", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -234,5 +234,5 @@ class STLForecaster(
         -------
         self
         """
-        self._set_params(["estimator", "steps"], **kwargs)
+        self._set_params("steps", **kwargs)
         return self
