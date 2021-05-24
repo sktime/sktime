@@ -56,7 +56,7 @@ class STLForecaster(
     >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
-    _required_parameters = ["estimator", "steps"]
+    # _required_parameters = ["estimator", "steps"]
     _tags = {"univariate-only": True}
 
     def __init__(self, estimator, steps):
