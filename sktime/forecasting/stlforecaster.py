@@ -35,8 +35,9 @@ class STLForecaster(
     forecaster: a forecaster
     steps : list
         Transformers: List of tuples like ("name", transformer)
+
     Example
-    --------
+    -------
     >>> from sktime.datasets import load_airline
     >>> ffrom sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -64,9 +65,7 @@ class STLForecaster(
         super(STLForecaster, self).__init__()
 
     def _check_steps(self):
-        """
-        Returns transformers in the steps
-        """
+        """Return transformers in the steps."""
         names, transformers = zip(*self.steps)
 
         # validate names
@@ -88,9 +87,7 @@ class STLForecaster(
         return list(self.steps)
 
     def _check_estimator(self):
-        """
-        Returns estimator
-        """
+        """Return estimator."""
         estimator = self.estimator
 
         # validates estimator
@@ -104,10 +101,7 @@ class STLForecaster(
         return self.estimator
 
     def _iter_transformers(self, reverse=False):
-        """
-        Returns transformers in the steps
-        """
-
+        """Return transformers in the steps."""
         steps = self.steps
         if reverse:
             steps = reversed(steps)
@@ -116,14 +110,12 @@ class STLForecaster(
             yield idx, name, transformer
 
     def __len__(self):
-        """
-        Returns the length of the Pipeline
-        """
+        """Return the length of the Pipeline."""
         return len(self.steps)
 
     @property
     def named_steps(self):
-        """Map the steps to a dictionary"""
+        """Map the steps to a dictionary."""
         return dict(self.steps)
 
     def fit(self, y, X=None, fh=None):
@@ -174,7 +166,7 @@ class STLForecaster(
         return y_pred
 
     def update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -200,6 +192,7 @@ class STLForecaster(
         return self
 
     def transform(self, Z, X=None):
+        """Return Transform."""
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers():
@@ -207,6 +200,7 @@ class STLForecaster(
         return zt
 
     def inverse_transform(self, Z, X=None):
+        """Return Inverse Transform."""
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers(reverse=True):
@@ -215,11 +209,13 @@ class STLForecaster(
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
+
         Parameters
         ----------
         deep: boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
         Returns
         -------
         params: mapping of string to any
@@ -229,7 +225,9 @@ class STLForecaster(
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
+
         Valid parameter keys can be listed with ``get_params()``.
+
         Returns
         -------
         self

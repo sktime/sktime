@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-
+"""Test for STLForecaster Module"""
 __author__ = ["Taiwo Owoseni"]
 __all__ = ["check_compare_stl_and_ttf_results"]
 
@@ -38,5 +38,5 @@ stlf.fit(y_train)
 
 
 def check_compare_stl_and_ttf_results():
-    """Compares two Forecaster."""
+    """Compare two Forecaster."""
     np.testing.assert_allclose(stlf.predict(fh=[1, 3, 4]), ttf.predict(fh=[1, 3, 4]))
