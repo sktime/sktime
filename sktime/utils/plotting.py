@@ -13,7 +13,7 @@ import pandas as pd
 
 
 def check_pred_int(pred_int):
-    """This function is used to check pred_int data type.
+    """Helper function to check pred_int data type.
 
     pred_int: pd.DataFrame
         Prediction intervals of series
