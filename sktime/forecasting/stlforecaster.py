@@ -32,10 +32,28 @@ class STLForecaster(
 
     Parameter
     ---------
-    Forecaster: any forecaster
+    forecaster: a forecaster
+    steps : list
+        Transformers: List of tuples like ("name", transformer)
+    Example
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> ffrom sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.detrend import Detrender
+
+    >>> y = load_airline()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("deseasonalise", Deseasonalizer()),
+    ...     ("detrend", Detrender(forecaster=PolynomialTrendForecaster(degree=1)))
+    ...     ]
+    >>> pipe.fit(y)
+    STLForecaster(...)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
-    _required_parameters = ["steps"]
+    _required_parameters = ["estimator", "steps"]
     _tags = {"univariate-only": True}
 
     def __init__(self, estimator, steps):
@@ -46,13 +64,16 @@ class STLForecaster(
         super(STLForecaster, self).__init__()
 
     def _check_steps(self):
+        """
+        Returns transformers in the steps
+        """
         names, transformers = zip(*self.steps)
 
         # validate names
         self._check_names(names)
 
         # validate transformers
-        # cextends to valid for
+        # extends to valid for
         # - deseasonal and detrend
 
         valid_transformer_type = _SeriesToSeriesTransformer
@@ -63,8 +84,13 @@ class STLForecaster(
                     f"instances of {valid_transformer_type}, "
                     f"but transformer: {transformer} is not."
                 )
+                # Shallow copy
+        return list(self.steps)
 
     def _check_estimator(self):
+        """
+        Returns estimator
+        """
         estimator = self.estimator
 
         # validates estimator
@@ -75,12 +101,14 @@ class STLForecaster(
                 f"{valid_forecaster_type}, "
                 f"but forecaster: {estimator} is not."
             )
-        # Shallow copy
-        return list(self.steps)
+        return self.estimator
 
     def _iter_transformers(self, reverse=False):
+        """
+        Returns transformers in the steps
+        """
 
-        steps = self.steps_
+        steps = self.steps
         if reverse:
             steps = reversed(steps)
 
@@ -103,17 +131,18 @@ class STLForecaster(
 
         Parameters
         ----------
-        y : pd.Series
+        y: pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh: int, list or np.array, optional(default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
+        X: pd.DataFrame, optional(default=None)
             Exogenous variables are ignored
         Returns
         -------
-        self : returns an instance of self.
+        self: returns an instance of self.
         """
         self.steps_ = self._check_steps()
+        self.estimator_ = self._check_estimator()
         self._set_y_X(y, X)
         self._set_fh(fh)
 
@@ -122,10 +151,10 @@ class STLForecaster(
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
             yt = t.fit_transform(yt)
-            self.steps_[step_idx] = (name, t)
+            self.steps[step_idx] = (name, t)
 
         # fit forecaster
-        name, forecaster = self.estimator
+        forecaster = self.estimator_
         f = clone(forecaster)
         f.fit(yt, X, fh)
         self.estimator_ = f
@@ -149,13 +178,13 @@ class STLForecaster(
 
         Parameters
         ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=True)
+        y: pd.Series
+        X: pd.DataFrame
+        update_params: bool, optional(default=True)
 
         Returns
         -------
-        self : an instance of self
+        self: an instance of self
         """
         self.check_is_fitted()
         self._update_y_X(y, X)
@@ -188,15 +217,15 @@ class STLForecaster(
         """Get parameters for this estimator.
         Parameters
         ----------
-        deep : boolean, optional
+        deep: boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
         Returns
         -------
-        params : mapping of string to any
+        params: mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("steps", deep=deep)
+        return self._get_params("estimator", "steps", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -205,8 +234,5 @@ class STLForecaster(
         -------
         self
         """
-        self._set_params("steps", **kwargs)
+        self._set_params("estimator", "steps", **kwargs)
         return self
-
-
-# stlforecaster(forecaste, steps)
