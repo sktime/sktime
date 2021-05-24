@@ -45,7 +45,7 @@ class STLForecaster(
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.detrend import Detrender
-
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> y = load_airline()
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("deseasonalise", Deseasonalizer()),
