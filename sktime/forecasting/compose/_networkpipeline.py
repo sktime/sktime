@@ -2,7 +2,6 @@
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y, check_X
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
@@ -12,10 +11,7 @@ __all__ = ["NetworkPipelineForecaster"]
 
 
 class NetworkPipelineForecaster(
-    _OptionalForecastingHorizonMixin,
-    _SktimeForecaster,
-    _HeterogenousMetaEstimator,
-    _SeriesToSeriesTransformer,
+    _OptionalForecastingHorizonMixin, _SktimeForecaster, _HeterogenousMetaEstimator
 ):
     """
     Prototype of non sequential pipeline mimicking a network.
@@ -142,8 +138,8 @@ class NetworkPipelineForecaster(
         return returned_arguments_kwarg
 
     def fit(self, y, X=None, fh=None):
-        self._X = X
-        self._y = y
+        self._set_y_X(y, X)
+
         self._set_fh(fh)
         for name, alg, arguments in self._iter():
             processed_arguments = {}
@@ -177,9 +173,8 @@ class NetworkPipelineForecaster(
 
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if fh is not None:
-            self._set_fh(fh)
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        self._set_fh(fh)
         if X is not None:
             self._X = X
         for name, alg, arguments in self._iter():
@@ -195,9 +190,12 @@ class NetworkPipelineForecaster(
             if hasattr(alg, "transform"):
                 self._step_results[name] = alg.transform(**processed_arguments)
             if hasattr(alg, "predict"):
-                self._step_results[name] = alg.predict(
+
+                pred = alg.predict(
                     **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
                 )
+                # pred.index.freq = self._y.index.freq
+                self._step_results[name] = pred
 
         return self._step_results[self.steps[-1][0]]
 
