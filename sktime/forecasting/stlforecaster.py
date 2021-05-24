@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+"""STLForecaster Module."""
 __all__ = ["STLForecaster"]
 __author__ = ["Taiwo Owoseni"]
 
-"""STLForecaster Module."""
 from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
