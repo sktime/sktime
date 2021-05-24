@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__all__ = ["plot_series"]
-__author__ = ["Markus Löning"]
+__all__ = ["plot_series", "check_pred_int"]
+__author__ = ["Markus Löning", "Ifeanyi Eze"]
 
 import numpy as np
 
@@ -13,15 +13,13 @@ import pandas as pd
 
 
 def check_pred_int(pred_int):
-    """helper function to check pred_int data type
-
+    """This function is used to check pred_int data type.
 
     pred_int: pd.DataFrame
         Prediction intervals of series
 
-
     Raises
-    -------
+    ------
     TypeError: when pred_int is not a pd.DataFrame
     Exception: when the number of columns is less or more than 2
         and column labels are not ['lower', 'upper']
@@ -39,7 +37,7 @@ def check_pred_int(pred_int):
 
 
 def plot_series(*series, labels=None, markers=None, pred_int=None):
-    """Plot one or more time series
+    """Plot one or more time series.
 
     Parameters
     ----------
