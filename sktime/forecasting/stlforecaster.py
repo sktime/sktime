@@ -223,7 +223,7 @@ class STLForecaster(
         params: mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("estimator", "steps", deep=deep)
+        return self._get_params(["estimator", "steps"], deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -234,5 +234,5 @@ class STLForecaster(
         -------
         self
         """
-        self._set_params("estimator", "steps", **kwargs)
+        self._set_params(["estimator", "steps"], **kwargs)
         return self
