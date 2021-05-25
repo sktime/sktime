@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-""" RandOm Convolutional KErnel Transform (ROCKET)
+"""
+Arsenal, an ensemble of RandOm Convolutional KErnel Transform (ROCKET) classifiers.
 """
 
 __author__ = ["Matthew Middlehurst", "Oleksii Kachaiev"]
@@ -153,7 +154,7 @@ class Arsenal(BaseClassifier):
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
-        return np.around(sums / (np.ones(self.n_classes) * self.weight_sum), 6)
+        return np.around(sums / (np.ones(self.n_classes) * self.weight_sum), 8)
 
     def _get_train_probs(self, X):
         return 0
