@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-""" ContractableBOSS classifier
+"""ContractableBOSS classifier
+
 dictionary based cBOSS classifier based on SFA transform. Improves the
 ensemble structure of the original BOSS algorithm.
 """
@@ -21,8 +22,9 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
-    """Contractable Bag of SFA Symbols (cBOSS)
-    implementation of BOSS from [1] with refinements described in [2]
+    """Contractable Bag of SFA Symbols (cBOSS).
+
+    implementation of BOSS from [1] with refinements described in [2].
 
     Overview: Input n series length m
     cBOSS randomly samples n_parameter_samples parameter sets, evaluating
@@ -41,8 +43,6 @@ class ContractableBOSS(BaseClassifier):
     series is formed and stored. fit involves finding n histograms.
 
     predict uses 1 nearest neighbour with a bespoke distance function.
-
-
 
     Parameters
     ----------
@@ -90,9 +90,7 @@ class ContractableBOSS(BaseClassifier):
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/cBOSS.java
-
     """
-
     # Capability tags
     capabilities = {
         "multivariate": False,
