@@ -124,7 +124,9 @@ class BOSSEnsemble(BaseClassifier):
         super(BOSSEnsemble, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of BOSS classifiers from the training set (X,
+        """fit a boss ensemble on cases (X,y), where y is the target variable.
+
+        Build an ensemble of BOSS classifiers from the training set (X,
         y), through  creating a variable size ensemble of those within a
         threshold of the best.
 
@@ -240,7 +242,7 @@ class BOSSEnsemble(BaseClassifier):
         ----------
         X : pd.DataFrame of shape [n, 1]
 
-         Returns
+        Returns
         -------
         array of shape [n, 1]
         """
@@ -259,11 +261,10 @@ class BOSSEnsemble(BaseClassifier):
         ----------
         X : pd.DataFrame of shape [n, 1]
 
-         Returns
+        Returns
         -------
         array of shape [n, self.n_classes]
         """
-
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
@@ -350,10 +351,10 @@ class BOSSEnsemble(BaseClassifier):
 
 
 class IndividualBOSS(BaseClassifier):
-    """Single Bag of SFA Symbols (BOSS) classifier
+    """Single Bag of SFA Symbols (BOSS) classifier.
 
-    Bag of SFA Symbols Ensemble: implementation of BOSS from Schaffer :
-    @article
+    Bag of SFA Symbols Ensemble: implementation of a single BOSS Schaffer, the base
+    classifier for the boss ensemble.
     """
 
     def __init__(
@@ -396,6 +397,20 @@ class IndividualBOSS(BaseClassifier):
         super(IndividualBOSS, self).__init__()
 
     def fit(self, X, y):
+        """fit a single boss classifier on n_instances cases (X,y), where y is the
+        target variable.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+        """
+
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
@@ -411,6 +426,16 @@ class IndividualBOSS(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Predict class values of all instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, 1]
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
@@ -427,6 +452,16 @@ class IndividualBOSS(BaseClassifier):
         return np.array(classes)
 
     def predict_proba(self, X):
+        """Predict class probabilities for all instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, self.n_classes]
+        """
         preds = self.predict(X)
         dists = np.zeros((X.shape[0], self.num_classes))
 
@@ -503,9 +538,11 @@ class IndividualBOSS(BaseClassifier):
 
 
 def boss_distance(first, second, best_dist=sys.float_info.max):
-    """
-    returns the distance between first and second dictionaries, using a non symmetric
-    distance measure. It is used to find the distance between historgrams of words.
+    """finds the distance between two histograms.
+
+    This returns the distance between first and second dictionaries, using a non
+    symmetric distance measure. It is used to find the distance between historgrams
+    of words.
 
     This distance function is designed for sparse matrix, represented as either a
     dictionary or an arrray. It only measures the distance between counts present in
