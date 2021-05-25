@@ -124,7 +124,7 @@ class BOSSEnsemble(BaseClassifier):
         super(BOSSEnsemble, self).__init__()
 
     def fit(self, X, y):
-        """fit a boss ensemble on cases (X,y), where y is the target variable.
+        """Fit a boss ensemble on cases (X,y), where y is the target variable.
 
         Build an ensemble of BOSS classifiers from the training set (X,
         y), through  creating a variable size ensemble of those within a
@@ -236,7 +236,7 @@ class BOSSEnsemble(BaseClassifier):
         return self
 
     def predict(self, X):
-        """Predict class values of all instances in X.
+        """Predict class values of n instances in X.
 
         Parameters
         ----------
@@ -255,7 +255,7 @@ class BOSSEnsemble(BaseClassifier):
         )
 
     def predict_proba(self, X):
-        """Predict class probabilities for all instances in X.
+        """Predict class probabilities for n instances in X.
 
         Parameters
         ----------
@@ -397,8 +397,7 @@ class IndividualBOSS(BaseClassifier):
         super(IndividualBOSS, self).__init__()
 
     def fit(self, X, y):
-        """fit a single boss classifier on n_instances cases (X,y), where y is the
-        target variable.
+        """Fit a single boss classifier on n_instances cases (X,y).
 
         Parameters
         ----------
@@ -538,7 +537,7 @@ class IndividualBOSS(BaseClassifier):
 
 
 def boss_distance(first, second, best_dist=sys.float_info.max):
-    """finds the distance between two histograms.
+    """Find the distance between two histograms.
 
     This returns the distance between first and second dictionaries, using a non
     symmetric distance measure. It is used to find the distance between historgrams
@@ -549,7 +548,6 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
     the first dictionary and the second. Hence dist(a,b) does not necessarily equal
     dist(b,a).
     """
-
     dist = 0
 
     if isinstance(first, dict):
