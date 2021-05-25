@@ -219,7 +219,7 @@ ESTIMATOR_TEST_PARAMS = {
     ROCKETClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 100},
     HIVECOTEV1: {
-        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.25},
+        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.025},
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
         "cboss_params": {"n_parameter_samples": 6, "max_ensemble_size": 2},
