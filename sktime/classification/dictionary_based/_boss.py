@@ -526,8 +526,8 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
     else:
         dist = np.sum(
             [
-                0 if first[n] == 0 else (first[n] - second[n]) * (first[n] - second[n])
-                for n in range(len(first))
+                0 if first[i] == 0 else (first[i] - second[i]) * (first[i] - second[i])
+                for i in range(len(first))
             ]
         )
 
