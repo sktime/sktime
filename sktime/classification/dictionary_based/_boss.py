@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-""" BOSS classifiers
+"""BOSS classifiers.
+
 dictionary based BOSS classifiers based on SFA transform. Contains a single
-BOSS and a BOSS ensemble
+BOSS and a BOSS ensemble.
 """
 
 __author__ = "Matthew Middlehurst"
@@ -25,7 +26,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class BOSSEnsemble(BaseClassifier):
-    """Bag of SFA Symbols (BOSS)
+    """Bag of SFA Symbols (BOSS).
 
     Bag of SFA Symbols Ensemble: implementation of BOSS from [1]
 
@@ -233,6 +234,16 @@ class BOSSEnsemble(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Predict class values of all instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+         Returns
+        -------
+        array of shape [n, 1]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -242,6 +253,17 @@ class BOSSEnsemble(BaseClassifier):
         )
 
     def predict_proba(self, X):
+        """Predict class probabilities for all instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+         Returns
+        -------
+        array of shape [n, self.n_classes]
+        """
+
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
@@ -481,6 +503,16 @@ class IndividualBOSS(BaseClassifier):
 
 
 def boss_distance(first, second, best_dist=sys.float_info.max):
+    """
+    returns the distance between first and second dictionaries, using a non symmetric
+    distance measure. It is used to find the distance between historgrams of words.
+
+    This distance function is designed for sparse matrix, represented as either a
+    dictionary or an arrray. It only measures the distance between counts present in
+    the first dictionary and the second. Hence dist(a,b) does not necessarily equal
+    dist(b,a).
+    """
+
     dist = 0
 
     if isinstance(first, dict):
