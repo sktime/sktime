@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numpy import testing
 
 from sktime.classification.hybrid import HIVECOTEV1
-from sktime.datasets import load_gunpoint, load_italy_power_demand
+from sktime.datasets import load_italy_power_demand
 
 
 # def test_hivecote_v1_on_gunpoint():
