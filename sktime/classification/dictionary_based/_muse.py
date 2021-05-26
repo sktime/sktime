@@ -163,7 +163,7 @@ class MUSE(BaseClassifier):
 
         # add first order differences in each dimension to TS
         if self.use_first_order_differences:
-            X = self.add_first_order_differences(X)
+            X = self._add_first_order_differences(X)
 
         # Window length parameter space dependent on series length
         self.col_names = X.columns
@@ -186,7 +186,7 @@ class MUSE(BaseClassifier):
             series_length = X_dim.shape[-1]  # TODO compute minimum over all ts ?
 
             # increment window size in steps of 'win_inc'
-            win_inc = self.compute_window_inc(series_length)
+            win_inc = self._compute_window_inc(series_length)
 
             self.max_window = int(min(series_length, self.max_window))
             if self.min_window > self.max_window:
@@ -248,7 +248,7 @@ class MUSE(BaseClassifier):
                         if (not apply_chi_squared) or (key in relevant_features):
                             # append the prefices to the words to
                             # distinguish between window-sizes
-                            word = MUSE.shift_left(
+                            word = MUSE._shift_left(
                                 key, highest, ind, self.highest_dim_bit, window_size
                             )
                             all_words[j][word] = value
@@ -301,7 +301,7 @@ class MUSE(BaseClassifier):
         X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
 
         if self.use_first_order_differences:
-            X = self.add_first_order_differences(X)
+            X = self._add_first_order_differences(X)
 
         bag_all_words = [dict() for _ in range(len(X))]
 
@@ -324,18 +324,14 @@ class MUSE(BaseClassifier):
                     for (key, value) in bag[j].items():
                         # append the prefices to the words to distinguish
                         # between window-sizes
-                        word = MUSE.shift_left(
+                        word = MUSE._shift_left(
                             key, highest, ind, self.highest_dim_bit, window_size
                         )
                         bag_all_words[j][word] = value
 
         return bag_all_words
 
-    def add_first_order_differences(self, X):
-        """Adds the first order differences of X.
-
-        Copies the data X then concatenates the first oder differences
-        """
+    def _add_first_order_differences(self, X):
         X_copy = X.copy()
         for column in X.columns:
             X_copy[str(column) + "_diff"] = X_copy[column]
@@ -344,7 +340,7 @@ class MUSE(BaseClassifier):
                 ts.replace(ts_diff)
         return X_copy
 
-    def compute_window_inc(self, series_length):
+    def _compute_window_inc(self, series_length):
         win_inc = self.window_inc
         if series_length < 100:
             win_inc = 1  # less than 100 is ok time-wise
@@ -352,5 +348,5 @@ class MUSE(BaseClassifier):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def shift_left(key, highest, ind, highest_dim_bit, window_size):
+    def _shift_left(key, highest, ind, highest_dim_bit, window_size):
         return ((key << highest | ind) << highest_dim_bit) | window_size
