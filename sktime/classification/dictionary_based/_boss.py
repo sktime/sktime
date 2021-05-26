@@ -409,7 +409,6 @@ class IndividualBOSS(BaseClassifier):
         -------
         self : object
         """
-
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
@@ -430,7 +429,6 @@ class IndividualBOSS(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
-
         Returns
         -------
         array of shape [n, 1]
@@ -456,7 +454,6 @@ class IndividualBOSS(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
-
         Returns
         -------
         array of shape [n, self.n_classes]

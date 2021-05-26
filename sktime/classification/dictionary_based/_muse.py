@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-""" WEASEL+MUSE classifier
+"""WEASEL+MUSE classifier.
+
 multivariate dictionary based classifier based on SFA transform, dictionaries
 and linear regression.
 """
@@ -28,7 +29,8 @@ from sktime.utils.validation.panel import check_X_y
 
 class MUSE(BaseClassifier):
     """
-    WEASEL+MUSE (MUltivariate Symbolic Extension)
+    WEASEL+MUSE (MUltivariate Symbolic Extension).
+
     MUSE: implementation of multivariate version of WEASEL, referred to as
     just MUSE from [1]
 
@@ -155,7 +157,6 @@ class MUSE(BaseClassifier):
         -------
         self : object
         """
-
         X, y = check_X_y(X, y, coerce_to_pandas=True)
         y = np.asarray(y)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -270,10 +271,28 @@ class MUSE(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Predict class values of all instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+        Returns
+        -------
+        array of shape [n, 1]
+        """
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
     def predict_proba(self, X):
+        """Predict class probabilities for all instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+        Returns
+        -------
+        array of shape [n, self.n_classes]
+        """
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
@@ -313,6 +332,10 @@ class MUSE(BaseClassifier):
         return bag_all_words
 
     def add_first_order_differences(self, X):
+        """Adds the first order differences of X.
+
+        Copies the data X then concatenates the first oder differences
+        """
         X_copy = X.copy()
         for column in X.columns:
             X_copy[str(column) + "_diff"] = X_copy[column]
