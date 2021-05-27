@@ -904,8 +904,8 @@ class ProximityStump(BaseClassifier):
         return self
 
     def find_closest_exemplar_indices(self, X):
-        """
-        find the closest exemplar index for each instance in a dataframe
+        """Find the closest exemplar index for each instance in a dataframe.
+
         :param X: the dataframe containing instances
         :return: 1d numpy array of indices, one for each instance,
         reflecting the index of the closest exemplar
@@ -921,8 +921,8 @@ class ProximityStump(BaseClassifier):
         return indices
 
     def grow(self):
-        """
-        grow the stump, creating branches for each exemplar
+        """Grow the stump, creating branches for each exemplar.
+
         :return: self
         """
         n_exemplars = len(self.y_exemplar)
@@ -939,8 +939,8 @@ class ProximityStump(BaseClassifier):
         return self
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -951,6 +951,7 @@ class ProximityStump(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
@@ -967,24 +968,12 @@ class ProximityStump(BaseClassifier):
 
 
 class ProximityTree(BaseClassifier):
-    """
-    Proximity Tree class to model a decision tree which uses distance
-    measures to partition data.
+    """Proximity Tree class.
 
-    @article{lucas19proximity,
-        title={Proximity Forest: an effective and scalable distance-based
-        classifier for time series},
-        author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
-        Zaidi and B. Goethals and F. Petitjean and G. Webb},
-        journal={Data Mining and Knowledge Discovery},
-        volume={33},
-        number={3},
-        pages={607--635},
-        year={2019}
-    }
-    https://arxiv.org/abs/1808.10594
+    A decision tree which uses distance measures to partition data.
 
-    Attributes:
+    Attributes
+    ----------
         label_encoder: label encoder to change string labels to numeric indices
         classes_: unique list of classes
         random_state: the random state
@@ -1024,8 +1013,8 @@ class ProximityTree(BaseClassifier):
         n_stump_evaluations=5,
         find_stump=None,
     ):
-        """
-        build a Proximity Tree object
+        """Build a Proximity Tree object.
+
         :param random_state: the random state
         :param get_exemplars: get the exemplars from a given dataframe and
         list of class labels
@@ -1068,14 +1057,16 @@ class ProximityTree(BaseClassifier):
         super(ProximityTree, self).__init__()
 
     def fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y)
+        """Build the classifier on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
+
         Returns
         -------
         self : object
@@ -1123,8 +1114,8 @@ class ProximityTree(BaseClassifier):
         return self
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -1166,7 +1157,7 @@ class ProximityTree(BaseClassifier):
 class ProximityForest(BaseClassifier):
     """Proximity Forest class.
 
-     Models a decision tree forest which uses distance measures to partition data [1].
+    Models a decision tree forest which uses distance measures to partition data [1].
 
     Parameters
     ----------
