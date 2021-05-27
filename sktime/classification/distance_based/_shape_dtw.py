@@ -30,7 +30,7 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 __author__ = ["Vincent Nicholson"]
 
 
-class ShapeDTW(BaseClassifier):]
+class ShapeDTW(BaseClassifier):
     """ShapeDTW classifier.
 
     ShapeDTW[1] works by initially extracting a set of subsequences
@@ -107,6 +107,7 @@ class ShapeDTW(BaseClassifier):]
                                   (default = None).
 
     Notes
+    -----
     ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
@@ -124,13 +125,13 @@ class ShapeDTW(BaseClassifier):]
 
     def __init__(
         self,
-        n_neighbors=1,
+        n_neighbours=1,
         subsequence_length=30,
         shape_descriptor_function="raw",
         shape_descriptor_functions=["raw", "derivative"],  # noqa from flake8 B006
         metric_params=None,
     ):
-        self.n_neighbors = n_neighbors
+        self.n_neighbors = n_neighbours
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
@@ -233,7 +234,7 @@ class ShapeDTW(BaseClassifier):]
 
             grid = GridSearchCV(
                 estimator=ShapeDTW(
-                    n_neighbors=n,
+                    n_neighbours=n,
                     subsequence_length=sl,
                     shape_descriptor_function=sdf,
                     shape_descriptor_functions=sdfs,
@@ -284,9 +285,6 @@ class ShapeDTW(BaseClassifier):]
 
     def predict(self, X):
         """Find predictions for all cases in X.
-
-        Could do a wrap function for predict_proba,
-        but this will do for now.
 
         Parameters
         ----------
@@ -438,7 +436,7 @@ class ShapeDTW(BaseClassifier):]
 
     def _check_metric_params(self, parameters):
         """Check for an invalid metric_params."""
-        valid_metric_params = []
+        valid_metric_params = [
             "num_intervals_paa",
             "num_levels_dwt",
             "num_intervals_slope",
@@ -504,5 +502,4 @@ class ShapeDTW(BaseClassifier):]
                 inst = res[col][row]
                 colToAdd.append(pd.Series(inst))
             df[col] = colToAdd
-
         return df
