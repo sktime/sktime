@@ -114,6 +114,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
 
     def __str__(self):
         """Return the transformer string. """
+
         return self.transformer.__str__()
 
 
@@ -624,7 +625,7 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
     values)
 
     Parameters
-    __________
+    ----------
     param_pool : list of dicts OR list OR distribution
         parameters in the same format as GridSearchCV from scikit-learn.
         example:

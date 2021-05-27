@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1
-"""
+""" Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1."""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["HIVECOTEV1"]
@@ -24,12 +23,11 @@ from sktime.utils.validation.panel import check_X_y, check_X
 
 
 class HIVECOTEV1(BaseClassifier):
-    """
-    Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1
-    as described in [1].
+    """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
+
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
-    representations using the CAWPE structure.
+    representations using the CAWPE structure as described in [1].
 
     Parameters
     ----------
@@ -113,6 +111,18 @@ class HIVECOTEV1(BaseClassifier):
         super(HIVECOTEV1, self).__init__()
 
     def fit(self, X, y):
+        """Fit a HIVE-COTEv1.0 classifier.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+        """
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         self.n_classes = np.unique(y).shape[0]
@@ -228,6 +238,16 @@ class HIVECOTEV1(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Make predictions for all cases in X.
+
+        Parameters
+        ----------
+        X : The testing input samples of shape [n_instances,1].
+
+        Returns
+        -------
+        output : numpy array of shape = [n_instances]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -237,6 +257,17 @@ class HIVECOTEV1(BaseClassifier):
         )
 
     def predict_proba(self, X):
+        """Make class probability estimates on each case in X.
+
+        Parameters
+        ----------
+        X - pandas dataframe of testing data of shape [n_instances,1].
+
+        Returns
+        -------
+        output : numpy array of shape =
+                [n_instances, num_classes] of probabilities
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
 
