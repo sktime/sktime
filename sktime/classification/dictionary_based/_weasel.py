@@ -29,7 +29,7 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class WEASEL(BaseClassifier):
-    """Word ExtrAction for time SEries cLassification (WEASEL) from [1].
+    """Word ExtrAction for time SEries cLassification (WEASEL).
 
     Overview: Input n series length m
     WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA

@@ -28,11 +28,10 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class MUSE(BaseClassifier):
-    """
-    WEASEL+MUSE (MUltivariate Symbolic Extension).
+    """MUSE (MUltivariate Symbolic Extension).
 
-    MUSE: implementation of multivariate version of WEASEL, referred to as
-    just MUSE from [1]
+    Also known as WEASLE-MUSE: implementation of multivariate version of WEASEL,
+    referred to as just MUSE from [1].
 
     Overview: Input n series length m
      WEASEL+MUSE is a multivariate  dictionary classifier that builds a
@@ -76,7 +75,7 @@ class MUSE(BaseClassifier):
         Seed for random, integer
 
     See Also
-    -----
+    --------
     WEASEL
 
     Notes
