@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" KNN time series classification.
+"""KNN time series classification.
 
  Built on sklearn KNeighborsClassifier, this class supports a range of distance
  measure specifically for time series. These distance functions are defined in cython
@@ -56,9 +56,8 @@ from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-
 class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
-    """ KNN Time Series Classifier.
+    """KNN Time Series Classifier.
 
     An adapted version of the scikit-learn KNeighborsClassifier to work with
     time series data.
@@ -254,7 +253,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         return fx
 
     def _more_tags(self):
-        """Removes the need to pass y with _fit.
+        """Remove the need to pass y with _fit.
 
         Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
         so we can call fx = self._fit(X) and maintain backward compatibility.
@@ -262,7 +261,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         return {"requires_y": False}
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
-        """Finds the K-neighbors of a point.
+        """Find the K-neighbors of a point.
 
         Returns indices of and distances to the neighbors of each point.
 
@@ -270,14 +269,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         ----------
         X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
         or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
-
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
-
         n_neighbors : int
             Number of neighbors to get (default is the value
             passed to the constructor).
-
         return_distance : boolean, optional. Defaults to True.
             If False, distances will not be returned
 
@@ -286,7 +282,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         dist : array
             Array representing the lengths to points, only present if
             return_distance=True
-
         ind : array
             Indices of the nearest points in the population matrix.
         """
