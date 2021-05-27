@@ -429,6 +429,7 @@ class IndividualBOSS(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, 1]
@@ -454,6 +455,7 @@ class IndividualBOSS(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, self.n_classes]

@@ -306,6 +306,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, 1]
@@ -324,6 +325,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, self.n_classes]
@@ -688,7 +690,7 @@ class IndividualTDE(BaseClassifier):
 
 
 def histogram_intersection(first, second):
-    """ Histogram intersection between two instannces.
+    """Histogram intersection between two instannces.
 
     Passed either dictionaries on numpy arrays.
     """
