@@ -154,7 +154,7 @@ class WEASEL(BaseClassifier):
         super(WEASEL, self).__init__()
 
     def fit(self, X, y):
-        """Build a WEASEL classifiers from the training set (X, y),
+        """Build a WEASEL classifiers from the training set (X, y).
 
         Parameters
         ----------
@@ -237,7 +237,9 @@ class WEASEL(BaseClassifier):
                         if (not apply_chi_squared) or (key in relevant_features):
                             # append the prefixes to the words to
                             # distinguish between window-sizes
-                            word = WEASEL._shift_left(key, self.highest_bit, window_size)
+                            word = WEASEL._shift_left(
+                                key, self.highest_bit, window_size
+                            )
                             all_words[j][word] = value
 
                 return all_words, transformer, relevant_features_count
@@ -276,6 +278,16 @@ class WEASEL(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Predict class values of n instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, 1]
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
@@ -283,6 +295,16 @@ class WEASEL(BaseClassifier):
         return self.clf.predict(bag)
 
     def predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, self.n_classes]
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 

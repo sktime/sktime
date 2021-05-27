@@ -535,11 +535,12 @@ class IndividualTDE(BaseClassifier):
         return self
 
     def predict(self, X):
-        """Predict class values of all instances in X.
+        """Predict class values of n instances in X.
 
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, 1]
@@ -575,11 +576,12 @@ class IndividualTDE(BaseClassifier):
         return np.array(classes)
 
     def predict_proba(self, X):
-        """Predict class probabilities for all instances in X.
+        """Predict class probabilities for n instances in X.
 
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, self.n_classes]
