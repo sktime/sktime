@@ -30,8 +30,7 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 __author__ = ["Vincent Nicholson"]
 
 
-class ShapeDTW(BaseClassifier):
-
+class ShapeDTW(BaseClassifier):]
     """ShapeDTW classifier.
 
     ShapeDTW[1] works by initially extracting a set of subsequences
@@ -185,7 +184,7 @@ class ShapeDTW(BaseClassifier):
         return self
 
     def _calculate_weighting_factor_value(self, X, y):
-        """Helper function for calculating the appropriate weighting_factor.
+        """Calculate the appropriate weighting_factor.
 
         Check for the compound shape descriptor.
         If a value is given, the weighting_factor is set
@@ -262,7 +261,7 @@ class ShapeDTW(BaseClassifier):
         return X
 
     def predict_proba(self, X):
-        """Function to perform predictions on the testing data X.
+        """Perform predictions on the testing data X.
 
         This function returns the probabilities for each class.
 
@@ -306,7 +305,7 @@ class ShapeDTW(BaseClassifier):
         return self.knn.predict(X)
 
     def _generate_shape_descriptors(self, data):
-        """Generates shape descriptors.
+        """Generate shape descriptors.
 
         This function is used to convert a list of
         subsequences into a list of shape descriptors
@@ -353,10 +352,10 @@ class ShapeDTW(BaseClassifier):
         return result
 
     def _get_transformer(self, tName):
-        """Function to extract the appropriate transformer.
+        """Extract the appropriate transformer.
 
         Parameters
-        -------
+        ----------
         self   : the ShapeDTW object.
         tName  : the name of the required transformer.
 
@@ -438,8 +437,8 @@ class ShapeDTW(BaseClassifier):
             raise ValueError("Invalid shape desciptor function.")
 
     def _check_metric_params(self, parameters):
-        """Helper function for checking for an invalid metric_params."""
-        valid_metric_params = [
+        """Check for an invalid metric_params."""
+        valid_metric_params = []
             "num_intervals_paa",
             "num_levels_dwt",
             "num_intervals_slope",
@@ -462,10 +461,9 @@ class ShapeDTW(BaseClassifier):
                 )
 
     def _combine_data_frames(self, dataFrames, weighting_factor, col_names):
-        """Helper function for the shape_dtw class.
+        """Combine two dataframes together into a single dataframe.
 
-        Combine two dataframes together into a single dataframe. Used when the
-        shape_descriptor_function is set to "compound".
+        Used when the shape_descriptor_function is set to "compound".
         """
         first_desc = dataFrames[0]
         second_desc = dataFrames[1]

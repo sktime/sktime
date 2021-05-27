@@ -847,10 +847,15 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def distance_to_exemplars(self, X):
-        """
-        find distance to exemplars
-        :param X: the dataset containing a list of instances
-        :return: 2d numpy array of distances from each instance to each
+        """Find distance to exemplars.
+
+        Parameters
+        ----------
+        X: the dataset containing a list of instances
+
+        Return
+        ------
+        2d numpy array of distances from each instance to each
         exemplar (instance by exemplar)
         """
         check_X(X)
@@ -1238,17 +1243,19 @@ class ProximityForest(BaseClassifier):
         find_stump=None,
         setup_distance_measure_getter=setup_all_distance_measure_getter,
     ):
-        """
-        build a Proximity Forest object
-        :param random_state: the random state
-        :param get_exemplars: get the exemplars from a given dataframe and
+        """Build a Proximity Forest object.
+
+        Parameters
+        ----------
+        random_state: the random state
+        get_exemplars: get the exemplars from a given dataframe and
         list of class labels
-        :param distance_measure: distance measure to use
-        :param get_distance_measure: method to get the distance measure if
+        distance_measure: distance measure to use
+        get_distance_measure: method to get the distance measure if
         no already set
-        :param setup_distance_measure_getter: method to setup the distance
+        setup_distance_measure_getter: method to setup the distance
         measures based upon the dataset given
-        :param get_gain: method to find the gain of a data split
+        get_gain: method to find the gain of a data split
         :param max_depth: maximum depth of the tree
         :param is_leaf: function to decide when to mark a node as a leaf node
         :param verbosity: number reflecting the verbosity of logging
