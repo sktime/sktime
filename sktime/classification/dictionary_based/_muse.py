@@ -268,7 +268,7 @@ class MUSE(BaseClassifier):
         return self
 
     def predict(self, X):
-        """Predict class values of all instances in X.
+        """Predict class values of n instances in X.
 
         Parameters
         ----------
@@ -282,7 +282,7 @@ class MUSE(BaseClassifier):
         return self.clf.predict(bag)
 
     def predict_proba(self, X):
-        """Predict class probabilities for all instances in X.
+        """Predict class probabilities for n instances in X.
 
         Parameters
         ----------
