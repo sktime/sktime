@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
-""" KNN time series classification built on sklearn KNeighborsClassifier that
-supports a range of distance measure specifically for time series. This distance
-functions are defined in cython in sktime.distances.elastic_cython. Python versions
-are in sktime.distances.elastic, but these are orders of magnitude slower.
+""" KNN time series classification.
 
+ Built on sklearn KNeighborsClassifier, this class supports a range of distance
+ measure specifically for time series. These distance functions are defined in cython
+ in sktime.distances.elastic_cython. Python versions are in sktime.distances.elastic
+ but these are orders of magnitude slower.
+
+Please note that many aspects of this class are taken from scikit-learn's
+KNeighborsTimeSeriesClassifier class with necessary changes to enable use with time
+series classification data and distance measures.
+
+todo: add a utility method to set keyword args for distance measure parameters.
+(e.g.  handle the parameter name(s) that are passed as metric_params automatically,
+depending on what distance measure is used in the classifier (e.g. know that it is w
+for dtw, c for msm, etc.). Also allow long-format specification for
+non-standard/user-defined measures e.g. set_distance_params(measure_type=None,
+param_values_to_set=None,
+param_names=None)
 """
 
 __author__ = ["Jason Lines", "TonyBagnall"]
@@ -42,26 +55,11 @@ from sktime.distances.mpdist import mpdist
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
-"""
-Please note that many aspects of this class are taken from scikit-learn's
-KNeighborsTimeSeriesClassifier
-class with necessary changes to enable use with time series classification
-data and distance measures.
-
-TO-DO: add a utility method to set keyword args for distance measure
-parameters (e.g. handle the parameter
-name(s) that are passed as metric_params automatically, depending on what
-distance measure is used in the
-classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow
-long-format specification for
-non-standard/user-defined measures
-e.g. set_distance_params(measure_type=None, param_values_to_set=None,
-param_names=None)
-"""
 
 
 class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
-    """
+    """ KNN Time Series Classifier.
+
     An adapted version of the scikit-learn KNeighborsClassifier to work with
     time series data.
 
@@ -95,7 +93,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
-
     """
 
     # Capability tags
@@ -177,7 +174,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """Fit the model using X as training data and y as target values.
 
         Parameters
         ----------
@@ -186,7 +183,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
-
         """
         X, y = check_X_y(
             X,
@@ -258,7 +254,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         return fx
 
     def _more_tags(self):
-        """Removes the need to pass y with _fit
+        """Removes the need to pass y with _fit.
+
         Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
         so we can call fx = self._fit(X) and maintain backward compatibility.
         """
@@ -266,6 +263,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
+
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
@@ -392,14 +390,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             return neigh_ind
 
     def predict(self, X):
-        """Predict the class labels for the provided data
+        """Predict the class labels for the provided data.
 
         Parameters
         ----------
         X : sktime-format pandas dataframe or array-like, shape (n_query,
-        n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            Test samples.
+        n_features), or (n_query, n_indexed) if metric == 'precomputed' test samples.
 
         Returns
         -------

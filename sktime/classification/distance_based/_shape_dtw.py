@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-# Utilities
+"""ShapeDTW classifier.
+
+Nearest neighbour classifier that extracts shapee features.
+"""
+
 import numpy as np
 import pandas as pd
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -28,9 +32,9 @@ __author__ = ["Vincent Nicholson"]
 
 class ShapeDTW(BaseClassifier):
 
-    """
+    """ShapeDTW classifier.
 
-    The ShapeDTW classifier works by initially extracting a set of subsequences
+    ShapeDTW[1] works by initially extracting a set of subsequences
     describing local neighbourhoods around each data point in a time series.
     These subsequences are then passed into a shape descriptor function that
     transforms these local neighbourhoods into a new representation. This
@@ -104,7 +108,6 @@ class ShapeDTW(BaseClassifier):
                                   (default = None).
 
     Notes
-    _____
     ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
@@ -136,8 +139,7 @@ class ShapeDTW(BaseClassifier):
         super(ShapeDTW, self).__init__()
 
     def fit(self, X, y):
-        """
-        Method to perform training on the classifier.
+        """Method to perform training on the classifier.
 
         Parameters
         ----------
@@ -183,9 +185,9 @@ class ShapeDTW(BaseClassifier):
         return self
 
     def _calculate_weighting_factor_value(self, X, y):
-        """
-        Helper function for calculating the appropriate
-        weighting_factor for the compound shape descriptor.
+        """Helper function for calculating the appropriate weighting_factor.
+
+        Check for the compound shape descriptor.
         If a value is given, the weighting_factor is set
         as the given value. If not, its tuned via
         a 10-fold cross-validation on the training data.
@@ -260,9 +262,9 @@ class ShapeDTW(BaseClassifier):
         return X
 
     def predict_proba(self, X):
-        """
-        Function to perform predictions on the testing data X. This function
-        returns the probabilities for each class.
+        """Function to perform predictions on the testing data X.
+
+        This function returns the probabilities for each class.
 
         Parameters
         ----------
@@ -282,10 +284,12 @@ class ShapeDTW(BaseClassifier):
         return self.knn.predict_proba(X)
 
     def predict(self, X):
-        """
-        Find predictions for all cases in X.
+        """Find predictions for all cases in X.
+
         Could do a wrap function for predict_proba,
         but this will do for now.
+
+        Parameters
         ----------
         X : The testing input samples of shape [n_instances,1].
 
@@ -302,7 +306,8 @@ class ShapeDTW(BaseClassifier):
         return self.knn.predict(X)
 
     def _generate_shape_descriptors(self, data):
-        """
+        """Generates shape descriptors.
+
         This function is used to convert a list of
         subsequences into a list of shape descriptors
         to be used for classification.
@@ -348,8 +353,7 @@ class ShapeDTW(BaseClassifier):
         return result
 
     def _get_transformer(self, tName):
-        """
-        Function to extract the appropriate transformer
+        """Function to extract the appropriate transformer.
 
         Parameters
         -------
@@ -434,10 +438,7 @@ class ShapeDTW(BaseClassifier):
             raise ValueError("Invalid shape desciptor function.")
 
     def _check_metric_params(self, parameters):
-        """
-        Helper function for checking if a user has entered in
-        an invalid metric_params.
-        """
+        """Helper function for checking for an invalid metric_params."""
         valid_metric_params = [
             "num_intervals_paa",
             "num_levels_dwt",
@@ -461,10 +462,10 @@ class ShapeDTW(BaseClassifier):
                 )
 
     def _combine_data_frames(self, dataFrames, weighting_factor, col_names):
-        """
-        Helper function for the shape_dtw class to combine two dataframes
-        together into a single dataframe.
-        Used when the shape_descriptor_function is set to "compound".
+        """Helper function for the shape_dtw class.
+
+        Combine two dataframes together into a single dataframe. Used when the
+        shape_descriptor_function is set to "compound".
         """
         first_desc = dataFrames[0]
         second_desc = dataFrames[1]

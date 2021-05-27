@@ -874,13 +874,16 @@ class ProximityStump(BaseClassifier):
 
     def fit(self, X, y):
         """
-        Build the classifier on the training set (X, y)
+        Build the classifier on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
+
         Returns
         -------
         self : object
@@ -906,8 +909,13 @@ class ProximityStump(BaseClassifier):
     def find_closest_exemplar_indices(self, X):
         """Find the closest exemplar index for each instance in a dataframe.
 
-        :param X: the dataframe containing instances
-        :return: 1d numpy array of indices, one for each instance,
+        Parameters
+        ----------
+        X: the dataframe containing instances
+
+        Return
+        ------
+        1d numpy array of indices, one for each instance,
         reflecting the index of the closest exemplar
         """
         check_X(X)  # todo make checks optional and propogate from forest downwards
@@ -921,10 +929,7 @@ class ProximityStump(BaseClassifier):
         return indices
 
     def grow(self):
-        """Grow the stump, creating branches for each exemplar.
-
-        :return: self
-        """
+        """Grow the stump, creating branches for each exemplar."""
         n_exemplars = len(self.y_exemplar)
         indices = self.find_closest_exemplar_indices(self.X)
         self.X_branches = [None] * n_exemplars
@@ -1276,8 +1281,9 @@ class ProximityForest(BaseClassifier):
         super(ProximityForest, self).__init__()
 
     def _fit_tree(self, X, y, index, random_state):
-        """
-        Build the classifierr on the training set (X, y)
+        """Build the classifierr on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed,
@@ -1286,6 +1292,7 @@ class ProximityForest(BaseClassifier):
             The class labels.
         index : index of the tree to be constructed
         random_state: random_state to send to the tree to be constructed
+
         Returns
         -------
         self : object
@@ -1310,8 +1317,9 @@ class ProximityForest(BaseClassifier):
         return tree
 
     def fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y)
+        """Build the classifier on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
@@ -1356,8 +1364,8 @@ class ProximityForest(BaseClassifier):
 
     @staticmethod
     def _predict_proba_tree(X, tree):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -1369,6 +1377,7 @@ class ProximityForest(BaseClassifier):
             yet have
             multivariate capability.
         tree : the tree to collect predictions from
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
@@ -1376,8 +1385,8 @@ class ProximityForest(BaseClassifier):
         return tree.predict_proba(X)
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
