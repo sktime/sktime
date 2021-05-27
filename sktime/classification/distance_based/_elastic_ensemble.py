@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """The Elastic Ensemble (EE).
 
-    An ensemble of elastic nearest neighbour classifiers.
+An ensemble of elastic nearest neighbour classifiers.
 """
 
 __author__ = "Jason Lines"
@@ -130,7 +130,8 @@ class ElasticEnsemble(BaseClassifier):
         super(ElasticEnsemble, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of 1-NN classifiers from the training set (X, y),
+        """Build an ensemble of 1-NN classifiers from the training set (X, y).
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -143,7 +144,6 @@ class ElasticEnsemble(BaseClassifier):
         -------
         self : object
         """
-
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=False)
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that
@@ -435,9 +435,7 @@ class ElasticEnsemble(BaseClassifier):
             return preds, probas
 
     def get_train_probs(self, X=None):
-        """Finds and returns the probability estimates for data X.
-
-        """
+        """Finds and returns the probability estimates for data X."""
         num_cases = len(self.train_preds_by_classifier[0])
         num_classes = len(self.classes_)
         num_estimators = len(self.estimators_)
@@ -454,18 +452,14 @@ class ElasticEnsemble(BaseClassifier):
         return probs
 
     def get_metric_params(self):
-        """Returns the parameters for the distance metrics used.
-
-        """
+        """Return the parameters for the distance metrics used."""
         return {
             self.distance_measures[dm].__name__: str(self.estimators_[dm].metric_params)
             for dm in range(len(self.estimators_))
         }
 
     def write_constituent_train_files(self, output_file_path, dataset_name, actual_y):
-        """Writes the train information to file in UEA format.
-
-        """
+        """Write the train information to file in UEA format."""
         for c in range(len(self.estimators_)):
             measure_name = self.distance_measures[c].__name__
 
