@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1."""
+"""Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1."""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["HIVECOTEV1"]
@@ -24,7 +24,6 @@ from sktime.utils.validation.panel import check_X_y, check_X
 
 class HIVECOTEV1(BaseClassifier):
     """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
-
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
     representations using the CAWPE structure as described in [1].

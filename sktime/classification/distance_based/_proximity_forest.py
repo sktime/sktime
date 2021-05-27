@@ -113,8 +113,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
         return cached_instances
 
     def __str__(self):
-        """Return the transformer string. """
-
+        """Return the transformer string."""
         return self.transformer.__str__()
 
 

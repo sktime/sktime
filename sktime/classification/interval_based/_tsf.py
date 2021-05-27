@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    Time Series Forest (TSF) Classifier.
-"""
+"""Time Series Forest (TSF) Classifier."""
 
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
@@ -69,8 +67,8 @@ class TimeSeriesForestClassifier(
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
     def predict(self, X):
-        """
-        Find predictions for all cases in X. Built on top of predict_proba
+        """Find predictions for all cases in X. Built on top of predict_proba.
+
         Parameters
         ----------
         X : The training input samples. array-like or pandas data frame.
@@ -87,8 +85,8 @@ class TimeSeriesForestClassifier(
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : The training input samples. array-like or sparse matrix of shape
@@ -126,9 +124,7 @@ class TimeSeriesForestClassifier(
 
 
 def _predict_proba(X, estimator, intervals):
-    """
-    Find probability estimates for each class for all cases in X using
-    given estimator and intervals.
-    """
+    """Find probability estimates for each class for all cases in X using given
+    estimator and intervals."""
     Xt = _transform(X, intervals)
     return estimator.predict_proba(Xt)

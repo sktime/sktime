@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" RandOm Convolutional KErnel Transform (ROCKET)
-"""
+"""RandOm Convolutional KErnel Transform (ROCKET)"""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["ROCKETClassifier"]
@@ -17,8 +16,7 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ROCKETClassifier(BaseClassifier):
-    """
-    Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
+    """Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
     base classifier.
 
     Parameters
@@ -50,7 +48,6 @@ class ROCKETClassifier(BaseClassifier):
     Java version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/shapelet_based/ROCKETClassifier.java
-
     """
 
     # Capability tags
@@ -81,8 +78,7 @@ class ROCKETClassifier(BaseClassifier):
         super(ROCKETClassifier, self).__init__()
 
     def fit(self, X, y):
-        """
-        Build a pipeline containing the ROCKET transformer and RidgeClassifierCV
+        """Build a pipeline containing the ROCKET transformer and RidgeClassifierCV
         classifier.
 
         Parameters
@@ -116,11 +112,42 @@ class ROCKETClassifier(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Find predictions for all cases in X.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or pandas data frame.
+        If a Pandas data frame is passed, a check is performed that it only
+        has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
         self.check_is_fitted()
         X = check_X(X)
         return self.classifier.predict(X)
 
     def predict_proba(self, X):
+        """Find probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is
+            performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances, num_classes] of
+        probabilities
+        """
         self.check_is_fitted()
         X = check_X(X)
 
