@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Supervised Time Series Forest Classifier (STSF).
-"""
+"""Supervised Time Series Forest Classifier (STSF)."""
 
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["SupervisedTimeSeriesForest"]
@@ -103,8 +102,10 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y) using supervised
-        intervals and summary features
+        """Build a forest of trees from the training set (X, y).
+
+        Uses supervised intervals and summary features
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
@@ -168,8 +169,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return self
 
     def predict(self, X):
-        """
-        Find predictions for all cases in X. Built on top of predict_proba
+        """Find predictions for all cases in X. Built on top of predict_proba.
+
         Parameters
         ----------
         X : The training input samples. array-like or pandas data frame.
@@ -186,8 +187,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : The training input samples. array-like or sparse matrix of shape
@@ -227,8 +228,9 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return output
 
     def _transform(self, X, intervals):
-        """
-        Compute the mean, median, standard deviation, slope, iqr, min and max using
+        """Compute summary stats.
+
+        Find the mean, median, standard deviation, slope, iqr, min and max using
         intervals of input data X generated for each.
         """
         n_instances, _ = X.shape
@@ -250,9 +252,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return transformed_x.T
 
     def _get_intervals(self, X, y, rng):
-        """
-        Generate intervals using a recursive function and random split point.
-        """
+        """Generate intervals using a recursive function and random split point."""
         n_instances, series_length = X.shape
         split_point = (
             series_length / 2
@@ -295,13 +295,11 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
     def _supervised_interval_search(
         self, X, y, function, function_intervals, classes, class_counts, start, end
     ):
-        """
-        Recursive function for finding quality intervals for a feature
-        using fisher score.
+        """Recursive function for finding intervals for a feature using fisher score.
+
         Given a start and end point the series is split in half and both intervals
-        are evaluated.
-        The half with the higher score is retained and used as the new start and end
-        for a recursive call.
+        are evaluated. The half with the higher score is retained and used as the new
+        start and end for a recursive call.
         """
         series_length = end - start
         if series_length < 4:
@@ -341,9 +339,9 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
             )
 
     def _fit_estimator(self, X, X_p, X_d, y, bag, idx):
-        """
-        Fit an estimator - a clone of base_estimator - on input data (X, y)
-        transformed using the supervised intervals for each feature and representation.
+        """Fit an estimator - a clone of base_estimator - on input data (X, y).
+
+        Transformed using the supervised intervals for each feature and representation.
         """
         n_instances = bag.shape[0]
         bag = bag.astype(int)
@@ -380,10 +378,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         ]
 
     def _predict_proba_for_estimator(self, X, X_p, X_d, intervals, estimator):
-        """
-        Find probability estimates for each class for all cases in X using
-        given estimator and intervals.
-        """
+        """Find probability estimates for each class for all cases in X using
+        given estimator and intervals."""
         n_instances, _ = X.shape
         transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
@@ -406,9 +402,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
 
 def fisher_score(X, y, classes=None, class_counts=None):
-    """
-    Fisher score for feature selection.
-    """
+    """Fisher score for feature selection."""
     if classes is None or class_counts is None:
         classes, class_counts = np.unique(y, return_counts=True)
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""HIVE-COTE test code."""
 import numpy as np
 
 from sktime.classification.hybrid import HIVECOTEV1
@@ -27,6 +28,7 @@ from sktime.datasets import load_italy_power_demand
 
 
 def test_hivecote_v1_on_power_demand():
+    """Test of HIVE-COTEv1 on italy power demand."""
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)

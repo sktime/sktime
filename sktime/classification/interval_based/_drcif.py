@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Diverse Representation Canonical Interval Forest Classifier (DrCIF).
-"""
+"""Diverse Representation Canonical Interval Forest Classifier (DrCIF)."""
 
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["DrCIF"]
@@ -137,8 +136,10 @@ class DrCIF(ForestClassifier, BaseClassifier):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y) using random
-        intervals and catch22/tsf summary features
+        """Build a forest of trees from the training set (X, y).
+
+         Uses random intervals and catch22/tsf summary features
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
@@ -193,8 +194,8 @@ class DrCIF(ForestClassifier, BaseClassifier):
         return self
 
     def predict(self, X):
-        """
-        Find predictions for all cases in X. Built on top of predict_proba
+        """Find predictions for all cases in X. Built on top of predict_proba.
+
         Parameters
         ----------
         X : The training input samples. array-like or pandas data frame.
@@ -216,8 +217,8 @@ class DrCIF(ForestClassifier, BaseClassifier):
         )
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : The training input samples. array-like or sparse matrix of shape

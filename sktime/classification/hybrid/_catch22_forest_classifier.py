@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" catch22 Forest Classifier.
+"""Catch22 Forest Classifier.
 
 A forest classifier based on catch22 features
 """

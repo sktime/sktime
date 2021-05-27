@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-""" Shapelet Transform Classifier
-wrapper implementation of a shapelet transform classifier pipeline that
-simply performs a (configurable) shapelet transform
-then builds (by default) a random forest. This is a stripped down version
-for basic usage
+""" Shapelet Transform Classifier.
 
-TO DO: Change to allow classifier configuration
+Wrapper implementation of a shapelet transform classifier pipeline that simply
+performs a (configurable) shapelet transform then builds (by default) a random
+forest. This is a stripped down version for basic usage.
 """
 
 __author__ = "Tony Bagnall"
@@ -23,7 +21,8 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 class ShapeletTransformClassifier(BaseClassifier):
     """Shapelet Transform Classifier
-        Basic implementation along the lines of [1,2]
+
+    Basic implementation along the lines of [1,2]
 
     Parameters
     ____________
@@ -37,7 +36,7 @@ class ShapeletTransformClassifier(BaseClassifier):
     TO DO
 
     Notes
-    _____
+    -----
 
     ..[1] Jon Hills et al., "Classification of time series by
     shapelet transformation",
@@ -51,8 +50,6 @@ class ShapeletTransformClassifier(BaseClassifier):
     Java Version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/
     java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
-
-
     """
 
     # Capability tags
@@ -129,17 +126,19 @@ class ShapeletTransformClassifier(BaseClassifier):
         return self
 
     def predict(self, X):
-        """
-        Find predictions for all cases in X. Built on top of predict_proba
+        """Find predictions for all cases in X.
+
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts] or a
-        data frame.
-        If a Pandas data frame is passed,
+        X : The training input samples. array-like or pandas data frame.
+        If a Pandas data frame is passed, a check is performed that it only
+        has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
 
         Returns
         -------
-        output : array of shape = [n_samples]
+        output : array of shape = [n_test_instances]
         """
         X = check_X(X, enforce_univariate=True)
         self.check_is_fitted()
@@ -147,16 +146,22 @@ class ShapeletTransformClassifier(BaseClassifier):
         return self.classifier_.predict(X)
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances, n_columns]
-            The training input samples.  If a Pandas data frame is passed,
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is
+            performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
 
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_test_instances, num_classes] of
+        probabilities
         """
         X = check_X(X, enforce_univariate=True)
         self.check_is_fitted()

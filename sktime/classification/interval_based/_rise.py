@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ Random Interval Spectral Forest (RISE).
-Implementation of Deng's Time Series Forest, with minor changes
+
+Implementation of Deng's Time Series Forest, with minor changes.
 """
 
 __author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
@@ -24,9 +25,7 @@ from sktime.utils.validation.panel import check_X_y
 
 
 def _transform(X, interval, lag):
-    """
-    Compute the ACF and PS for given intervals of input data X.
-    """
+    """Compute the ACF and PS for given intervals of input data X."""
     n_instances, _ = X.shape
     acf_x = np.empty(shape=(n_instances, lag))
     ps_len = (interval[1] - interval[0]) / 2
@@ -40,9 +39,7 @@ def _transform(X, interval, lag):
 
 
 def _parallel_build_trees(X, y, tree, interval, lag, acf_min_values):
-    """
-    Private function used to fit a single tree in parallel.
-    """
+    """Private function used to fit a single tree in parallel."""
     temp_lag = lag
     if temp_lag > interval[1] - interval[0] - acf_min_values:
         temp_lag = interval[1] - interval[0] - acf_min_values
@@ -57,16 +54,14 @@ def _parallel_build_trees(X, y, tree, interval, lag, acf_min_values):
 
 
 def _predict_proba_for_estimator(X, estimator, interval, lag):
-    """
-    Private function used to predict class probabilities in parallel.
-    """
+    """Private function used to predict class probabilities in parallel."""
     transformed_x = _transform(X, interval, lag)
     return estimator.predict_proba(transformed_x)
 
 
 def _make_estimator(base_estimator, random_state=None):
-    """
-    Make and configure a copy of the `base_estimator` attribute.
+    """Make and configure a copy of the `base_estimator` attribute.
+
     Warning: This method should be used to properly instantiate new
     sub-estimators.
     """
@@ -76,23 +71,14 @@ def _make_estimator(base_estimator, random_state=None):
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
-    """
-    Random Interval Spectral Forest (RISE) from [1]
+    """Random Interval Spectral Forest (RISE)
 
-
-    Overview:
-
-    .. code-block:: none
-
-        Input: n series length m
-        for each tree
-            sample a random intervals
-            take the ACF and PS over this interval, and concatenate features
-            build tree on new features
-        ensemble the trees through averaging probabilities.
-
-    Need to have a minimum interval for each tree
-    This is from the python github.
+    Input: n series length m
+    for each tree
+        sample a random intervals
+        take the ACF and PS over this interval, and concatenate features
+        build tree on new features
+    ensemble the trees through averaging probabilities.
 
     Parameters
     ----------
@@ -118,12 +104,12 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     ----------
     n_classes : int
         The number of classes, extracted from the data.
-    classifiers : array of shape = [n_estimators] of DecisionTree classifiers
+    n_estimators : array of shape = [n_estimators] of DecisionTree classifiers
     intervals : array of shape = [n_estimators][2]
         Stores indexes of start and end points for all classifiers.
 
     Notes
-    _____
+    -----
     ..[1] Jason Lines, Sarah Taylor and Anthony Bagnall, "Time Series Classification
     with HIVE-COTE: The Hierarchical Vote Collective of Transformation-Based Ensembles",
       ACM Transactions on Knowledge and Data Engineering, 12(5): 2018
@@ -131,9 +117,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     Java implementation
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/frequency_based/RISE.java
-
-
-
     """
 
     # Capability tags
@@ -179,9 +162,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         )
 
     def fit(self, X, y):
-        """
-        Build a forest of trees from the training set (X, y) using random
-        intervals and spectral features.
+        """Build a forest of trees from the training set (X, y).
+
+        using random intervals and spectral features.
 
         Parameters
         ----------
@@ -253,8 +236,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         return self
 
     def predict(self, X):
-        """
-        Find predictions for all cases in X. Built on top of `predict_proba`.
+        """Find predictions for all cases in X. Built on top of `predict_proba.
 
         Parameters
         ----------
@@ -272,8 +254,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
 
         Parameters
         ----------
@@ -325,12 +306,12 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
 
 def acf(x, max_lag):
-    """
-    Autocorrelation function transform, currently calculated using standard
-    stats method. We could use inverse of power spectrum, especially given we
-    already have found it, worth testing for speed and correctness. HOWEVER,
-    for long series, it may not give much benefit, as we do not use that many
-    ACF terms.
+    """Autocorrelation function transform.
+
+    currently calculated using standard stats method. We could use inverse of power
+    spectrum, especially given we already have found it, worth testing for speed and
+    correctness. HOWEVER, for long series, it may not give much benefit, as we do not
+    use that many ACF terms.
 
     Parameters
     ----------
@@ -341,7 +322,6 @@ def acf(x, max_lag):
     Return
     ----------
     y : array-like shape = [max_lag]
-
     """
     y = np.zeros(max_lag)
     length = len(x)
@@ -374,12 +354,12 @@ def acf(x, max_lag):
 
 
 def matrix_acf(x, num_cases, max_lag):
-    """
-    Autocorrelation function transform, currently calculated using standard
-    stats method. We could use inverse of power spectrum, especially given we
-    already have found it, worth testing for speed and correctness. HOWEVER,
-    for long series, it may not give much benefit, as we do not use that many
-    ACF terms.
+    """Autocorrelation function transform.
+
+    Calculated using standard stats method. We could use inverse of power
+    spectrum, especially given we already have found it, worth testing for speed and
+    correctness. HOWEVER, for long series, it may not give much benefit, as we do not
+    use that many ACF terms.
 
     Parameters
     ----------
@@ -408,10 +388,10 @@ def matrix_acf(x, num_cases, max_lag):
 
 
 def ps(x):
-    """
-    Power spectrum transform, currently calculated using np function.
-    It would be worth looking at ff implementation, see difference in speed
-    to java.
+    """Power spectrum transform.
+
+    Calculated using np function. It would be worth looking at ff implementation,
+    see difference in speed to java.
 
     Parameters
     ----------

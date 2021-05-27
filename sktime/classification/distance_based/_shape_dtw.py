@@ -139,7 +139,7 @@ class ShapeDTW(BaseClassifier):
         super(ShapeDTW, self).__init__()
 
     def fit(self, X, y):
-        """Method to perform training on the classifier.
+        """Train the classifier.
 
         Parameters
         ----------
