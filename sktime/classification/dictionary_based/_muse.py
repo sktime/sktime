@@ -75,11 +75,8 @@ class MUSE(BaseClassifier):
     random_state:        int or None,
         Seed for random, integer
 
-    Attributes
-    ----------
-
     See Also
-    ________
+    -----
     WEASEL
 
     Notes
@@ -145,7 +142,7 @@ class MUSE(BaseClassifier):
         super(MUSE, self).__init__()
 
     def fit(self, X, y):
-        """Build a WEASEL+MUSE classifiers from the training set (X, y),
+        """Build a WEASEL+MUSE classifiers from the training set (X, y).
 
         Parameters
         ----------
@@ -276,6 +273,7 @@ class MUSE(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, 1]
@@ -289,6 +287,7 @@ class MUSE(BaseClassifier):
         Parameters
         ----------
         X : pd.DataFrame of shape [n, 1]
+
         Returns
         -------
         array of shape [n, self.n_classes]
