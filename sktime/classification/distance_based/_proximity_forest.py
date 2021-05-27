@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Proximity Forest time series classifier
-a decision tree forest which uses distance measures to partition data.
-B. Lucas and A. Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals,
-F. Petitjean and G. Webb
-Proximity Forest: an effective and scalable distance-based classifier for
-time series,
-Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
+"""Proximity Forest time series classifier.
+
+A decision tree forest which uses distance measures to partition data.
 """
 
 # linkedin.com/goastler; github.com/goastler
@@ -43,7 +39,6 @@ from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
-
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
 # todo get params avoid func pointer - use name
@@ -53,15 +48,16 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class _CachedTransformer(_PanelToPanelTransformer):
-    """Transformer container that transforms data and adds the transformed
-    version to a cache.
-    If the transformation is called again on already seen data the data is
-    fetched
-    from the cache rather than performing the expensive transformation.
+    """Transformer container.
+
+    Transforms data and adds the transformed version to a cache. If the
+    transformation is called again on already seen data the data is
+    fetched from the cache rather than performing the expensive transformation.
 
     Parameters
     ----------
     transformer : the transformer to transform uncached data
+
     Attributes
     ----------
     cache       : location to store transforms seen before for fast look up
@@ -76,14 +72,11 @@ class _CachedTransformer(_PanelToPanelTransformer):
         super(_CachedTransformer, self).__init__()
 
     def clear(self):
-        """
-        clear the cache
-        """
+        """Clear the cache."""
         self.cache = {}
 
     def transform(self, X, y=None):
-        """
-        Fit transformer, creating a cache for transformation.
+        """Fit transformer, creating a cache for transformation.
 
         Parameters
         ----------
@@ -142,8 +135,7 @@ def _derivative_distance(distance_measure, transformer):
 
 
 def distance_predefined_params(distance_measure, **params):
-    """
-    conduct distance measurement with a predefined set of parameters
+    """Conduct distance measurement with a predefined set of parameters.
     :param distance_measure: the distance measure to use
     :param params: the parameters to use in the distance measure
     :return: a distance measure with no parameters
@@ -156,9 +148,8 @@ def distance_predefined_params(distance_measure, **params):
 
 
 def cython_wrapper(distance_measure):
-    """
-    wrap a distance measure in cython conversion (to 1 column per dimension
-    format)
+    """wrap a distance measure in cython conversion.
+     (to 1 column per dimension format)
     :param distance_measure: distance measure to wrap
     :return: a distance measure which automatically formats data for cython
     distance measures
@@ -183,16 +174,15 @@ def cython_wrapper(distance_measure):
 
 
 def pure(y):
-    """
-    test whether a set of class labels are pure (i.e. all the same)
-    ----
+    """Test whether a set of class labels are pure (i.e. all the same).
+
     Parameters
-    ----
+    ----------
     y : 1d array like
         array of class labels
-    ----
+
     Returns
-    ----
+    -------
     result : boolean
         whether the set of class labels is pure
     """
@@ -203,18 +193,17 @@ def pure(y):
 
 
 def gini_gain(y, y_subs):
-    """
-    get gini score of a split, i.e. the gain from parent to children
-    ----
+    """Get gini score of a split, i.e. the gain from parent to children.
+
     Parameters
-    ----
+    ----------
     y : 1d array like
         array of class labels at parent
     y_subs : list of 1d array like
         list of array of class labels, one array per child
-    ----
+
     Returns
-    ----
+    -------
     score : float
         gini score of the split from parent class labels to children. Note a
         higher score means better gain,
@@ -248,14 +237,13 @@ def gini_gain(y, y_subs):
 
 
 def gini(y):
-    """
-    get gini score at a specific node
-    ----
+    """Get gini score at a specific node.
+
     Parameters
     ----
     y : 1d numpy array
         array of class labels
-    ----
+
     Returns
     ----
     score : float
@@ -280,17 +268,16 @@ def gini(y):
 
 
 def get_one_exemplar_per_class_proximity(proximity):
-    """
-    unpack proximity object into X, y and random_state for picking exemplars.
-    ----
+    """Unpack proximity object into X, y and random_state for picking exemplars.
+
     Parameters
-    ----
+    ----------
     proximity : Proximity object
         Proximity like object containing the X, y and random_state variables
         required for picking exemplars.
-    ----
+
     Returns
-    ----
+    -------
     result : function
         function choosing one exemplar per class
     """
@@ -298,11 +285,10 @@ def get_one_exemplar_per_class_proximity(proximity):
 
 
 def get_one_exemplar_per_class(X, y, random_state):
-    """
-    Pick one exemplar instance per class in the dataset.
-    ----
+    """Pick one exemplar instance per class in the dataset.
+
     Parameters
-    ----
+    ----------
     X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
             the column _dim_to_use is extracted
@@ -310,9 +296,9 @@ def get_one_exemplar_per_class(X, y, random_state):
         The class labels.
     random_state : numpy RandomState
         a random state for sampling random numbers
-    ----
+
     Returns
-    ----
+    -------
     chosen_instances : list
         list of the chosen exemplar instances.
     chosen_class_labels : array
@@ -1169,9 +1155,9 @@ class ProximityTree(BaseClassifier):
 
 
 class ProximityForest(BaseClassifier):
-    """
-    Proximity Forest class to model a decision tree forest which uses
-    distance measures to partition data, see [1].
+    """Proximity Forest class.
+
+     Models a decision tree forest which uses distance measures to partition data [1].
 
     Parameters
     ----------
@@ -1199,7 +1185,6 @@ class ProximityForest(BaseClassifier):
 
     Attributes
     ----------
-
     label_encoder: label encoder to change string labels to numeric indices
     classes_: unique list of classes
     get_exemplars: function to extract exemplars from a dataframe and
