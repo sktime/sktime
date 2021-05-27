@@ -579,7 +579,7 @@ def setup_ddtw_distance_measure_getter(transformer):
 
 
 def setup_all_distance_measure_getter(proximity):
-    """Setup all distance measure getter functions from a proximity object.
+    """All distance measure getter functions from a proximity object.
 
     :param proximity: a PT / PF / PS
     :return: a list of distance measure getters
@@ -789,7 +789,8 @@ class ProximityStump(BaseClassifier):
         n_jobs=1,
     ):
         """
-        construct a proximity stump
+        Construct a proximity stump.
+
         :param random_state: the random state
         :param get_exemplars: function to extract exemplars from a dataframe
         and class value list
