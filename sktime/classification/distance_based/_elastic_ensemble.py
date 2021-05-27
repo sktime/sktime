@@ -435,7 +435,7 @@ class ElasticEnsemble(BaseClassifier):
             return preds, probas
 
     def get_train_probs(self, X=None):
-        """Finds and returns the probability estimates for data X."""
+        """Find and returns the probability estimates for data X."""
         num_cases = len(self.train_preds_by_classifier[0])
         num_classes = len(self.classes_)
         num_estimators = len(self.estimators_)

@@ -113,12 +113,13 @@ class _CachedTransformer(_PanelToPanelTransformer):
         return cached_instances
 
     def __str__(self):
+        """Return the transformer string. """
         return self.transformer.__str__()
 
 
 def _derivative_distance(distance_measure, transformer):
-    """
-    take derivative before conducting distance measure
+    """Take derivative before conducting distance measure.
+
     :param distance_measure: the distance measure to use
     :param transformer: the transformer to use
     :return: a distance measure function with built in transformation
@@ -136,6 +137,7 @@ def _derivative_distance(distance_measure, transformer):
 
 def distance_predefined_params(distance_measure, **params):
     """Conduct distance measurement with a predefined set of parameters.
+
     :param distance_measure: the distance measure to use
     :param params: the parameters to use in the distance measure
     :return: a distance measure with no parameters
@@ -148,8 +150,9 @@ def distance_predefined_params(distance_measure, **params):
 
 
 def cython_wrapper(distance_measure):
-    """wrap a distance measure in cython conversion.
-     (to 1 column per dimension format)
+    """Wrap a distance measure in cython conversion.
+
+     Converts to 1 column per dimension format.
     :param distance_measure: distance measure to wrap
     :return: a distance measure which automatically formats data for cython
     distance measures
@@ -240,12 +243,12 @@ def gini(y):
     """Get gini score at a specific node.
 
     Parameters
-    ----
+    ----------
     y : 1d numpy array
         array of class labels
 
     Returns
-    ----
+    -------
     score : float
         gini score for the set of class labels (i.e. how pure they are). A
         larger score means more impurity. Zero means
@@ -326,8 +329,8 @@ def get_one_exemplar_per_class(X, y, random_state):
 
 
 def dtw_distance_measure_getter(X):
-    """
-    generate the dtw distance measure
+    """Generate the dtw distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -338,8 +341,8 @@ def dtw_distance_measure_getter(X):
 
 
 def msm_distance_measure_getter(X):
-    """
-    generate the msm distance measure
+    """Generate the msm distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -453,8 +456,8 @@ def msm_distance_measure_getter(X):
 
 
 def erp_distance_measure_getter(X):
-    """
-    generate the erp distance measure
+    """Generate the erp distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -473,8 +476,8 @@ def erp_distance_measure_getter(X):
 
 
 def lcss_distance_measure_getter(X):
-    """
-    generate the lcss distance measure
+    """Generate the lcss distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -493,8 +496,8 @@ def lcss_distance_measure_getter(X):
 
 
 def twe_distance_measure_getter(X):
-    """
-    generate the twe distance measure
+    """Generate the twe distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -517,8 +520,8 @@ def twe_distance_measure_getter(X):
 
 
 def wdtw_distance_measure_getter(X):
-    """
-    generate the wdtw distance measure
+    """Generate the wdtw distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -529,8 +532,8 @@ def wdtw_distance_measure_getter(X):
 
 
 def euclidean_distance_measure_getter(X):
-    """
-    generate the ed distance measure
+    """Generate the ed distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -538,9 +541,9 @@ def euclidean_distance_measure_getter(X):
 
 
 def setup_wddtw_distance_measure_getter(transformer):
-    """
-    generate the wddtw distance measure by baking the derivative transformer
-    into the wdtw distance measure
+    """Generate the wddtw distance measure.
+
+    Bakes the derivative transformer into the dtw distance measure
     :param transformer: the transformer to use
     :return: a getter to produce the distance measure
     """
@@ -557,9 +560,9 @@ def setup_wddtw_distance_measure_getter(transformer):
 
 
 def setup_ddtw_distance_measure_getter(transformer):
-    """
-    generate the ddtw distance measure by baking the derivative transformer
-    into the dtw distance measure
+    """Generate the ddtw distance measure.
+
+    Bakes the derivative transformer into the dtw distance measure
     :param transformer: the transformer to use
     :return: a getter to produce the distance measure
     """
@@ -576,8 +579,8 @@ def setup_ddtw_distance_measure_getter(transformer):
 
 
 def setup_all_distance_measure_getter(proximity):
-    """
-    setup all distance measure getter functions from a proximity object
+    """Setup all distance measure getter functions from a proximity object.
+
     :param proximity: a PT / PF / PS
     :return: a list of distance measure getters
     """
@@ -595,8 +598,8 @@ def setup_all_distance_measure_getter(proximity):
     ]
 
     def pick_rand_distance_measure(proximity):
-        """
-        generate a distance measure from a range of parameters
+        """Generate a distance measure from a range of parameters.
+
         :param proximity: proximity object containing distance measures,
         ranges and dataset
         :return: a distance measure with no parameters
@@ -614,12 +617,14 @@ def setup_all_distance_measure_getter(proximity):
 
 
 def pick_rand_param_perm_from_dict(param_pool, random_state):
-    """
-    pick a parameter permutation given a list of dictionaries contain
-    potential values OR a list of values OR a
-    distribution of values (a distribution must have the .rvs() function to
-    sample values)
-    ----------
+    """Pick a parameter permutation.
+
+    Given a list of dictionaries contain potential values OR a list of values OR a
+    distribution of values (a distribution must have the .rvs() function to sample
+    values)
+
+    Parameters
+    __________
     param_pool : list of dicts OR list OR distribution
         parameters in the same format as GridSearchCV from scikit-learn.
         example:
@@ -629,6 +634,7 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
           'kernel': ['linear']}],
           'kernel': ['rbf']},
          ]
+
     Returns
     -------
     param_perm : dict
@@ -662,9 +668,11 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
 
 
 def pick_rand_param_perm_from_list(params, random_state):
-    """
-    get a random parameter permutation providing a distance measure and
-    corresponding parameters
+    """Get a random parameter permutation.
+
+    Permutation providing a distance measure and corresponding parameters.
+
+    Parameters
     ----------
     params : list of dicts
         parameters in the same format as GridSearchCV from scikit-learn.
@@ -674,6 +682,7 @@ def pick_rand_param_perm_from_list(params, random_state):
           {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000],
           'kernel': ['linear']}], 'kernel': ['rbf']},
          ]
+
     Returns
     -------
     permutation : dict
@@ -686,17 +695,16 @@ def pick_rand_param_perm_from_list(params, random_state):
 
 
 def best_of_n_stumps(n):
-    """
-    Generate the function to pick the best of n stump evaluations.
-    ----
+    """Generate the function to pick the best of n stump evaluations.
+
     Parameters
-    ----
+    ----------
     n : int
         the number of stumps to evaluate before picking the best. Must be 1
         or more.
-    ----
+
     Returns
-    ----
+    -------
     find_best_stump : func
         function to find the best of n stumps.
     """
@@ -704,16 +712,15 @@ def best_of_n_stumps(n):
         raise ValueError("n cannot be less than 1")
 
     def find_best_stump(proximity):
-        """
-        Pick the best of n stump evaluations.
-        ----
+        """Pick the best of n stump evaluations.
+
         Parameters
-        ----
+        ----------
         proximity : Proximity like object
             the proximity object to split data from.
-        ----
+
         Returns
-        ----
+        -------
         stump : ProximityStump
             the best stump / split of data of the n attempts.
         """
@@ -743,11 +750,12 @@ def best_of_n_stumps(n):
 
 
 class ProximityStump(BaseClassifier):
-    """
-    Proximity Stump class to model a decision stump which uses a distance
-    measure to partition data.
+    """Proximity Stump class.
 
-    Attributes:
+    Model a decision stump which uses a distance measure to partition data.
+
+    Attributes
+    ----------
         label_encoder: label encoder to change string labels to numeric indices
         y_exemplar: class label list of the exemplar instances
         X_exemplar: dataframe of the exemplar instances
@@ -815,8 +823,8 @@ class ProximityStump(BaseClassifier):
 
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
-        """
-        find distance between a given instance and the exemplar instances
+        """Find distance between a given instance and the exemplar instances.
+
         :param exemplars: the exemplars to use
         :param instance: the instance to compare to each exemplar
         :param distance_measure: the distance measure to provide similarity
