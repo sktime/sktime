@@ -21,9 +21,9 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class Arsenal(BaseClassifier):
-    """Ensemble of ROCKET transformers using RidgeClassifierCV as the base
-    classifiers. Allows for generation of probabilities at the expense of
-    scalability.
+    """Ensemble of ROCKET transformers using RidgeClassifierCV base classifier.
+
+    Allows for generation of probabilities at the expense of scalability.
 
     Parameters
     ----------
@@ -91,8 +91,7 @@ class Arsenal(BaseClassifier):
         super(Arsenal, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of pipelines containing the ROCKET transformer and
-        RidgeClassifierCV classifier.
+        """Build an ensemble ROCKET transformer and RidgeClassifierCV classifier.
 
         Parameters
         ----------

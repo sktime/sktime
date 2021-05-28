@@ -71,7 +71,7 @@ def _make_estimator(base_estimator, random_state=None):
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
-    """Random Interval Spectral Forest (RISE)
+    """Random Interval Spectral Forest (RISE).
 
     Input: n series length m
     for each tree
@@ -156,6 +156,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     @property
     def feature_importances_(self):
+        """Feature importance not supported for the RISE classifier."""
         raise NotImplementedError(
             "The impurity-based feature importances of "
             "RandomIntervalSpectralForest is currently not supported."
@@ -372,7 +373,6 @@ def matrix_acf(x, num_cases, max_lag):
     y : array-like shape = [num_cases,max_lag]
 
     """
-
     y = np.empty(shape=(num_cases, max_lag))
     for lag in range(1, max_lag + 1):
         # Could just do it ourselves ... TO TEST

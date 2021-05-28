@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Shapelet Transform Classifier.
+"""Shapelet Transform Classifier.
 
 Wrapper implementation of a shapelet transform classifier pipeline that simply
 performs a (configurable) shapelet transform then builds (by default) a random
@@ -20,12 +20,12 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
-    """Shapelet Transform Classifier
+    """Shapelet Transform Classifier.
 
     Basic implementation along the lines of [1,2]
 
     Parameters
-    ____________
+    ----------
     transform_contract_in_mins : int, search time for shapelets, optional
     (default = 300)
     n_estimators               :       500,
@@ -77,6 +77,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def fit(self, X, y):
         """Perform a shapelet transform then builds a random forest.
+
         Contract default for ST is 5 hours
         ----------
         X : array-like or sparse matrix of shape = [n_instances,

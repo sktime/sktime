@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""RandOm Convolutional KErnel Transform (ROCKET)"""
+"""RandOm Convolutional KErnel Transform (ROCKET)."""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["ROCKETClassifier"]
@@ -16,8 +16,7 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ROCKETClassifier(BaseClassifier):
-    """Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
-    base classifier.
+    """Classifier wrapped for the ROCKET transformer using RidgeClassifierCV.
 
     Parameters
     ----------
@@ -78,8 +77,7 @@ class ROCKETClassifier(BaseClassifier):
         super(ROCKETClassifier, self).__init__()
 
     def fit(self, X, y):
-        """Build a pipeline containing the ROCKET transformer and RidgeClassifierCV
-        classifier.
+        """Build a pipeline containing the ROCKET transformer and RidgeClassifierCV.
 
         Parameters
         ----------
