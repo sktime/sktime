@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Base Time Series Forest Class.
-    An implementation of Deng's Time Series Forest, with minor changes.
-"""
+"""Time Series Forest (TSF) Classifier."""
 
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
 __all__ = [
