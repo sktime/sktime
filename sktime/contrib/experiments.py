@@ -2,9 +2,8 @@
 """ experiments.py: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
-single debugging runs. Results
-are written in a standard format
-TO DO: Tidy up this file!
+single debugging runs. Results are written in a standard format
+todo: Tidy up this file!
 """
 
 import os
@@ -95,16 +94,20 @@ classifier_list = [
 
 
 def set_classifier(cls, resampleId=None):
-    """
+    """Construct a classifier.
+
     Basic way of creating the classifier to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy
     reproducability. You can set up bespoke classifier in many other ways.
 
-    :param cls: String indicating which classifier you want
-    :param resampleId: classifier random seed
+    Parameters
+    ----------
+    cls: String indicating which classifier you want
+    resampleId: classifier random seed
 
-    :return: A classifier.
-
+    Return
+    ------
+    A classifier.
     """
     name = cls.lower()
     # Distance based
@@ -165,6 +168,22 @@ def set_classifier(cls, resampleId=None):
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
+    """ Resample data using a random state.
+
+    Reproducable resampling. Combines train and test, resamples to get the same class
+    distribution, then returns new trrain and test.
+
+    Parameters
+    ----------
+    X_train: train data attributes in sktime pandas format.
+    y_train: train data class labes as np array.
+    X_test: test data attributes in sktime pandas format.
+    y_test: test data class labes as np array.
+
+    Returns
+    -------
+    new train and test attributes and class labels.
+    """
     all_labels = np.concatenate((y_train, y_test), axis=None)
     all_data = pd.concat([X_train, X_test])
     random_state = sklearn.utils.check_random_state(random_state)
@@ -223,27 +242,30 @@ def run_experiment(
     format=".ts",
     train_file=False,
 ):
-    """
+    """Run a classification experiment.
+
     Method to run a basic experiment and write the results to files called
     testFold<resampleID>.csv and, if required, trainFold<resampleID>.csv.
-    :param problem_path: Location of problem files, full path.
-    :param results_path: Location of where to write results. Any required directories
+
+    Parameters
+    ----------
+    problem_path: Location of problem files, full path.
+    results_path: Location of where to write results. Any required directories
         will be created
-    :param cls_name: determines which classifier to use, as defined in set_classifier.
+    cls_name: determines which classifier to use, as defined in set_classifier.
         This assumes predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
-    :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
+    dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
                 "_TRAIN"+format, same for "_TEST"
-    :param resampleID: Seed for resampling. If set to 0, the default train/test split
+    resampleID: Seed for resampling. If set to 0, the default train/test split
                 from file is used. Also used in output file name.
-    :param overwrite: if set to False, this will only build results if there is not a
+    overwrite: if set to False, this will only build results if there is not a
                 result file already present. If
     True, it will overwrite anything already there
-    :param format: Valid formats are ".ts", ".arff" and ".long".
+    format: Valid formats are ".ts", ".arff" and ".long".
     For more info on format, see   examples/Loading%20Data%20Examples.ipynb
-    :param train_file: whether to generate train files or not. If true, it performs a
+    train_file: whether to generate train files or not. If true, it performs a
                 10xCV on the train and saves
-    :return:
     """
 
     build_test = True
@@ -425,23 +447,27 @@ def write_results_to_uea_format(
     third_line="N/A",
     class_labels=None,
 ):
-    """
-    This is very alpha and I will probably completely change the structure once train
-    fold is sorted, as that internally
-    does all this I think!
-    Output mirrors that produced by this Java
-    :param output_path:
-    :param classifier_name:
-    :param dataset_name:
-    :param actual_class_vals:
-    :param predicted_class_vals:
-    :param split:
-    :param resample_seed:
-    :param actual_probas:
-    :param second_line:
-    :param third_line:
-    :param class_labels:
-    :return:
+    """Write results to file.
+
+    Outputs the classifier results, mirrors that produced by tsml Java package.
+    Directories of the form
+    <output_path>/<classifier_name>/Predictions/<dataset_name>
+    Will automatically be created and results written.
+
+    Parameters
+    ----------
+    output_path:            string, root path where to put results.
+    classifier_name:        string, name of the classifier that made the predictions
+    dataset_name:           string, name of the problem the classifier was built on
+    actual_class_vals:      array, actual class labels
+    predicted_class_vals:   array, predicted class labels
+    split:                  string, wither TRAIN or TEST, depending on the results.
+    resample_seed:          int,
+    actual_probas:
+    second_line: unstructured, classifier parameters
+    third_line:
+    class_labels:
+
     """
     if len(actual_class_vals) != len(predicted_class_vals):
         raise IndexError(

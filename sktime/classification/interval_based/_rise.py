@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Random Interval Spectral Forest (RISE).
+"""Random Interval Spectral Forest (RISE).
 
 Implementation of Deng's Time Series Forest, with minor changes.
 """

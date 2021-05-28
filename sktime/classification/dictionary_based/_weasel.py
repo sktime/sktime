@@ -92,7 +92,7 @@ class WEASEL(BaseClassifier):
     ..[1]  Patrick Schäfer and Ulf Leser,    :
     @inproceedings{schafer2017fast,
       title={Fast and Accurate Time Series Classification with WEASEL},
-      author={Sch{\"a}fer, Patrick and Leser, Ulf},
+      author={Sch"afer, Patrick and Leser, Ulf},
       booktitle={Proceedings of the 2017 ACM on Conference on Information and
                  Knowledge Management},
       pages={637--646},
