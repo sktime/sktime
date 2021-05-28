@@ -28,36 +28,36 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
     A time series forest is an ensemble of decision trees built on intervals selected
     through a supervised process.
-     Overview: Input n series length m
-     for each tree
-         sample X using class-balanced bagging
-         sample intervals for all 3 representations and 7 features using supervised
-         method
-         find mean, median, std, slope, iqr, min and max using their corresponding
-         interval for each rperesentation, concatenate to form new data set
-         build decision tree on new data set
-     ensemble the trees with averaged probability estimates
+    Overview: Input n series length m
+    for each tree
+        sample X using class-balanced bagging
+        sample intervals for all 3 representations and 7 features using supervised
+        method
+        find mean, median, std, slope, iqr, min and max using their corresponding
+        interval for each rperesentation, concatenate to form new data set
+        build decision tree on new data set
+    ensemble the trees with averaged probability estimates
 
-     Parameters
-     ----------
-     n_estimators    : int, ensemble size, optional (default = 200)
-     n_jobs          : int, optional (default=1)
-     The number of jobs to run in parallel for both `fit` and `predict`.
-     ``-1`` means using all processors.
-     random_state    : int, seed for random, optional (default = none)
+    Parameters
+    ----------
+    n_estimators    : int, ensemble size, optional (default = 200)
+    n_jobs          : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
+    random_state    : int, seed for random, optional (default = none)
 
-     Attributes
-     ----------
-     n_classes    : int, extracted from the data
-     classifiers  : array of shape = [n_estimators] of DecisionTree
-     classifiers
-     intervals    : array of shape = [n_estimators][3][7][n_intervals][2] stores
-     indexes of all start and end points for all classifiers for each representaion
-     and feature
+    Attributes
+    ----------
+    n_classes    : int, extracted from the data
+    classifiers  : array of shape = [n_estimators] of DecisionTree
+    classifiers
+    intervals    : array of shape = [n_estimators][3][7][n_intervals][2] stores
+    indexes of all start and end points for all classifiers for each representaion
+    and feature
 
-     Notes
-     -----
-     ..[1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
+    Notes
+    -----
+    ..[1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
      Through Supervised Interval Search." IEEE ICDM 2020
 
      Java implementation
@@ -378,8 +378,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         ]
 
     def _predict_proba_for_estimator(self, X, X_p, X_d, intervals, estimator):
-        """Find probability estimates for each class for all cases in X using
-        given estimator and intervals."""
+        """Find probability estimates for each class for all cases in X."""
         n_instances, _ = X.shape
         transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
