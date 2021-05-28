@@ -37,7 +37,6 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Notes
     -----
-
     ..[1] Jon Hills et al., "Classification of time series by
     shapelet transformation",
         Data Mining and Knowledge Discovery, 28(4), 851--881, 2014

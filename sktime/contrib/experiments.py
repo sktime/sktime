@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" experiments.py: code to run experiments as an alternative to orchestration.
+"""Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
 single debugging runs. Results are written in a standard format
@@ -59,7 +59,7 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the
+"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method
@@ -168,7 +168,7 @@ def set_classifier(cls, resampleId=None):
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
-    """ Resample data using a random state.
+    """Resample data using a random state.
 
     Reproducable resampling. Combines train and test, resamples to get the same class
     distribution, then returns new trrain and test.
@@ -462,11 +462,11 @@ def write_results_to_uea_format(
     actual_class_vals:      array, actual class labels
     predicted_class_vals:   array, predicted class labels
     split:                  string, wither TRAIN or TEST, depending on the results.
-    resample_seed:          int,
-    actual_probas:
-    second_line: unstructured, classifier parameters
-    third_line:
-    class_labels:
+    resample_seed:          int, makes resampling deterministic
+    actual_probas:          number of cases x number of classes 2d array
+    second_line:            unstructured, classifier parameters
+    third_line:             summary performance information (see comment below)
+    class_labels:           needed to equate to tsml output
 
     """
     if len(actual_class_vals) != len(predicted_class_vals):
@@ -555,9 +555,7 @@ def write_results_to_uea_format(
 
 
 def test_loading():
-
-    # test multivariate
-    # Test univariate
+    """Test function to check dataset loading of univariate and multivaria problems."""
     for i in range(0, len(dataset_lists.univariate)):
         data_dir = "E:/tsc_ts/"
         dataset = dataset_lists.univariate[i]
