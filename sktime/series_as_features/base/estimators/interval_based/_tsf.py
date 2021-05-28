@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    Base Time Series Forest Class.
+"""Base Time Series Forest Class.
     An implementation of Deng's Time Series Forest, with minor changes.
 """
 
@@ -65,8 +64,8 @@ class BaseTimeSeriesForest:
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y) using random
-        intervals and summary features
+        """Build a forest of trees from the training set (X, y).
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
@@ -122,14 +121,15 @@ class BaseTimeSeriesForest:
 
 
 def _transform(X, intervals):
-    """Compute the mean, standard deviation and slope for given intervals
-    of input data X.
+    """Compute the mean, std_dev and slope for given intervals of input data X.
 
-    Args:
+    Parameters
+    ----------
         X (Array-like, int or float): Time series data X
         intervals (Array-like, int or float): Time range intervals for series X
 
-    Returns:
+    Returns
+    -------
         int32 Array: transformed_x containing mean, std_deviation and slope
     """
     n_instances, _ = X.shape
@@ -148,9 +148,7 @@ def _transform(X, intervals):
 
 
 def _get_intervals(n_intervals, min_interval, series_length, rng):
-    """
-    Generate random intervals for given parameters.
-    """
+    """Generate random intervals for given parameters."""
     intervals = np.zeros((n_intervals, 2), dtype=int)
     for j in range(n_intervals):
         intervals[j][0] = rng.randint(series_length - min_interval)
@@ -162,11 +160,11 @@ def _get_intervals(n_intervals, min_interval, series_length, rng):
 
 
 def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
-    """
-    Fit an estimator - a clone of base_estimator - on input data (X, y)
+    """Fit an estimator.
+
+     - a clone of base_estimator - on input data (X, y)
     transformed using the randomly generated intervals.
     """
-
     estimator = clone(base_estimator)
     estimator.set_params(random_state=random_state)
 
