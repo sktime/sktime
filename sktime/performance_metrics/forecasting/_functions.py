@@ -11,7 +11,6 @@ the lower the better.
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
-import pandas as pd
 from scipy.stats import gmean
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
@@ -20,7 +19,7 @@ from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
 
-from sktime.utils.validation.series import check_time_index, check_series
+from sktime.utils.validation.series import check_series
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
 __all__ = [
@@ -271,16 +270,6 @@ def mean_absolute_scaled_error(
             International Journal of Forecasting, Volume 3
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
-    # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
-        y_true, (pd.Series, pd.DataFrame)
-    ):
-        check_time_index(y_train.index)
-        if y_train.index.max() >= y_true.index.min():
-            raise ValueError(
-                "Found `y_train` with time index which is not "
-                "before time index of `y_true`"
-            )
 
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -410,16 +399,6 @@ def median_absolute_scaled_error(
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
     )
-    # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
-        y_true, (pd.Series, pd.DataFrame)
-    ):
-        check_time_index(y_train.index)
-        if y_train.index.max() >= y_true.index.min():
-            raise ValueError(
-                "Found `y_train` with time index which is not "
-                "before time index of `y_true`"
-            )
 
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -554,16 +533,7 @@ def mean_squared_scaled_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
-    # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
-        y_true, (pd.Series, pd.DataFrame)
-    ):
-        check_time_index(y_train.index)
-        if y_train.index.max() >= y_true.index.min():
-            raise ValueError(
-                "Found `y_train` with time index which is not "
-                "before time index of `y_true`"
-            )
+
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -696,16 +666,7 @@ def median_squared_scaled_error(
             Journal of Forecasting, Volume 22, Issue 4.
     """
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
-    # Check if training set is prior to test set
-    if isinstance(y_train, (pd.Series, pd.DataFrame)) and isinstance(
-        y_true, (pd.Series, pd.DataFrame)
-    ):
-        check_time_index(y_train.index)
-        if y_train.index.max() >= y_true.index.min():
-            raise ValueError(
-                "Found `y_train` with time index which is not "
-                "before time index of `y_true`"
-            )
+
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
