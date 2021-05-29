@@ -34,7 +34,7 @@ class _SktimeForecaster(BaseForecaster):
 
 
 
-class _BaseWindowForecaster(_SktimeForecaster):
+class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use """
 
     def __init__(self, window_length=None):
