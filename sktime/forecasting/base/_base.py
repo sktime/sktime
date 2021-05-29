@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning", "@big-o"]
+__author__ = ["Markus Löning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
@@ -54,8 +54,10 @@ class BaseForecaster(BaseEstimator):
 
 
     def fit(self, y, X=None, fh=None):
-        """Fit to training data, including checks & utility
-            dispatches to core logic in _fit
+        """fit forecaster to training data
+        
+        public method including checks & utility
+        dispatches to core logic in _fit
 
         Parameters
         ----------
@@ -80,7 +82,8 @@ class BaseForecaster(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Forecast to future horizon, including checks & utility
+        """Forecast time series at future horizon
+            public method including checks & utility
             dispatches to core logic in _predict
 
         Parameters
@@ -112,8 +115,12 @@ class BaseForecaster(BaseEstimator):
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
         Get the prediction intervals for a forecast.
+        Must be run *after* the forecaster has been fitted.
 
         If alpha is iterable, multiple intervals will be calculated.
+
+        public method including checks & utility
+        dispatches to core logic in _compute_pred_int
 
         Parameters
         ----------
@@ -132,7 +139,23 @@ class BaseForecaster(BaseEstimator):
             ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
             list of such tables.
         """
-        raise NotImplementedError("abstract method")
+
+        self.check_is_fitted()
+        alphas = check_alpha(alpha)
+        errors = self._compute_pred_int(alphas)
+
+        # compute prediction intervals
+        pred_int = [
+            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
+            for error in errors
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if isinstance(alpha, float):
+            return pred_int[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -524,7 +547,8 @@ class BaseForecaster(BaseEstimator):
                 pass
 
     def _fit(self, y, X=None, fh=None):
-        """Core fit logic
+        """fit forecaster to training data
+            core logic
 
         Parameters
         ----------
@@ -536,12 +560,13 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         self : returns an instance of self.
-
         """
+
         raise NotImplementedError("abstract method")
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Core forecasting logic
+        """Forecast time series at future horizon
+            core logic
 
         Parameters
         ----------
@@ -579,3 +604,77 @@ class BaseForecaster(BaseEstimator):
         """
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def _compute_pred_int(self, alphas):
+        """Calculate the prediction errors for each point.
+
+        Parameters
+        ----------
+
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+
+        errors : list of pd.Series
+            Each series in the list will contain the errors for each point in
+            the forecast for the corresponding alpha.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _predict_moving_cutoff(
+        self,
+        y,
+        cv,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
+        """Make single-step or multi-step moving cutoff predictions
+
+        Parameters
+        ----------
+        y : pd.Series
+        cv : temporal cross-validation generator
+        X : pd.DataFrame
+        update_params : bool
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series
+        """
+        if return_pred_int:
+            raise NotImplementedError()
+
+        fh = cv.get_fh()
+        y_preds = []
+        cutoffs = []
+
+        # enter into a detached cutoff mode
+        with self._detached_cutoff():
+            # set cutoff to time point before data
+            self._set_cutoff(_shift(y.index[0], by=-1))
+            # iterate over data
+            for new_window, _ in cv.split(y):
+                y_new = y.iloc[new_window]
+
+                # we cannot use `update_predict_single` here, as this would
+                # re-set the forecasting horizon, instead we use
+                # the internal `_update_predict_single` method
+                y_pred = self._update_predict_single(
+                    y_new,
+                    fh,
+                    X,
+                    update_params=update_params,
+                    return_pred_int=return_pred_int,
+                    alpha=alpha,
+                )
+                y_preds.append(y_pred)
+                cutoffs.append(self.cutoff)
+        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+
