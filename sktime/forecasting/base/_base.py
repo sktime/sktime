@@ -1,6 +1,25 @@
-#!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+Base class template for forecaster scitype
+    class name: BaseForecaster
+
+Scitype defining methods:
+    fitting         - fit(self, y, X=None, fh=None)
+    forecasting     - predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA)
+    updating        - update(self, y, X=None, update_params=True):
+    update&predict  - update_predict(y, cv=None, X=None, update_params=True,
+                        return_pred_int=False, alpha=DEFAULT_ALPHA):
+
+Inspection methods:
+    hyper-parameter inspection  - get_params()
+    fitted parameter inspection - get_fitted_params()
+
+State:
+    fitted model/strategy   - by convention, any attributes ending in "_"
+    fitted state flag       - check_is_fitted()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+
 
 __author__ = ["Markus Löning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
@@ -52,7 +71,6 @@ class BaseForecaster(BaseEstimator):
 
         super(BaseForecaster, self).__init__()
 
-
     def fit(self, y, X=None, fh=None):
         """fit forecaster to training data
         
@@ -66,20 +84,28 @@ class BaseForecaster(BaseEstimator):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
+            Exogeneous data
         Returns
         -------
-        self : returns an instance of self.
+        self : reference to self.
+
+        State change
+        ------------
+        stores data in self._X and self._y
+        stores fh, if passed
+        updates self.cutoff to most recent time in y
+        creates fitted model (attributes ending in "_")
         """
 
         self._set_fh(fh)
         y, X = check_y_X(y, X)
 
+        self._X = X
+        self._y = y
+
         self._fit(y=y, X=X, fh=fh)
 
         return self
-
-        
-        raise NotImplementedError("abstract method")
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast time series at future horizon
@@ -171,25 +197,28 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         y : pd.Series
-        X : pd.DataFrame
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
         update_params : bool, optional (default=True)
+            whether model parameters should be updated
 
         Returns
         -------
-        self : an instance of self
+        self : reference to self
+
+        State change
+        ------------
+        updates self._X and self._y with new data
+        updates self.cutoff to most recent time in y
+        if update_params=True, updates model (attributes ending in "_")
         """
+
         self.check_is_fitted()
         self._update_y_X(y, X)
-        if update_params:
-            # default to re-fitting if update is not implemented
-            warn(
-                f"NotImplementedWarning: {self.__class__.__name__} "
-                f"does not have a custom `update` method implemented. "
-                f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called."
-            )
-            # refit with updated data, not only passed data
-            self.fit(self._y, self._X, self.fh)
+
+        self._update(y=y, X=X, update_params=update_params)
+
         return self
 
     def update_predict(
@@ -586,6 +615,47 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals
         """
         raise NotImplementedError("abstract method")
+
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data
+            core logic
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+
+        State change
+        ------------
+        updates self._X and self._y with new data
+        updates self.cutoff to most recent time in y
+        if update_params=True, updates model (attributes ending in "_")
+        """
+
+        if update_params:
+            # default to re-fitting if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called."
+            )
+            # refit with updated data, not only passed data
+            self._fit(self._y, self._X, self.fh)
+
+        return self
 
     def _update_predict_single(
         self,
