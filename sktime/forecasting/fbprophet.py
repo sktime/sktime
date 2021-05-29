@@ -136,9 +136,9 @@ class Prophet(_ProphetAdapter):
         self.daily_seasonality = daily_seasonality
         self.holidays = holidays
         self.seasonality_mode = seasonality_mode
-        self.seasonality_prior_scale = float(seasonality_prior_scale)
-        self.changepoint_prior_scale = float(changepoint_prior_scale)
-        self.holidays_prior_scale = float(holidays_prior_scale)
+        self.seasonality_prior_scale = seasonality_prior_scale
+        self.changepoint_prior_scale = changepoint_prior_scale
+        self.holidays_prior_scale = holidays_prior_scale
         self.mcmc_samples = mcmc_samples
         self.alpha = alpha
         self.uncertainty_samples = uncertainty_samples
@@ -163,9 +163,9 @@ class Prophet(_ProphetAdapter):
             daily_seasonality=self.daily_seasonality,
             holidays=self.holidays,
             seasonality_mode=self.seasonality_mode,
-            seasonality_prior_scale=self.seasonality_prior_scale,
-            holidays_prior_scale=self.holidays_prior_scale,
-            changepoint_prior_scale=self.changepoint_prior_scale,
+            seasonality_prior_scale=float(self.seasonality_prior_scale),
+            holidays_prior_scale=float(self.holidays_prior_scale),
+            changepoint_prior_scale=float(self.changepoint_prior_scale),
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
