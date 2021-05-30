@@ -16,12 +16,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_X
-from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_cv
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.forecasting import check_y_X
 
 
 # keeping the _SktimeForecaster for the time being for its current children

@@ -33,7 +33,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_X
