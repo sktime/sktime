@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Extension template for forecasters
+Extension template for forecasters.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -37,13 +37,9 @@ from sktime.forecasting.base import DEFAULT_ALPHA
 
 
 class MyForecaster(BaseEstimator):
-    """Base forecaster
+    """Custom forecaster. todo: write docstring.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
-
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    todo: describe your custom forecaster here
 
     Hyper-parameters
     ----------------
@@ -84,7 +80,8 @@ class MyForecaster(BaseEstimator):
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
-        """fit forecaster to training data
+        """Fit forecaster to training data.
+
             core logic
 
         Parameters
@@ -94,6 +91,7 @@ class MyForecaster(BaseEstimator):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
+
         Returns
         -------
         self : returns an instance of self.
@@ -104,7 +102,8 @@ class MyForecaster(BaseEstimator):
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Forecast time series at future horizon
+        """Forecast time series at future horizon.
+
             core logic
 
         Parameters
@@ -131,7 +130,8 @@ class MyForecaster(BaseEstimator):
     # todo: consider implementing this, optional
     # if not implementing, delete the _update method
     def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data
+        """Update time series to incremental training data.
+
             core logic
 
         Parameters
@@ -172,7 +172,7 @@ class MyForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Internal method for updating and making forecasts.
+        """Update forecaster and then make forecasts.
 
         Implements default behaviour of calling update and predict
         sequentially, but can be overwritten by subclasses
@@ -191,13 +191,11 @@ class MyForecaster(BaseEstimator):
 
         Parameters
         ----------
-
         alpha : float or list, optional (default=0.95)
             A significance level or list of significance levels.
 
         Returns
         -------
-
         errors : list of pd.Series
             Each series in the list will contain the errors for each point in
             the forecast for the corresponding alpha.
@@ -215,7 +213,7 @@ class MyForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Make single-step or multi-step moving cutoff predictions
+        """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
@@ -237,7 +235,7 @@ class MyForecaster(BaseEstimator):
     # todo: consider implementing this, optional
     # if not implementing, delete the method
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
