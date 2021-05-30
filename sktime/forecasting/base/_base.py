@@ -137,7 +137,9 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._set_fh(fh)
 
-        X = check_X(X)
+        # todo: check_X should let a None argument pass here, but it doesn't
+        if X is not None:
+            X = check_X(X)
         alpha = check_alpha(alpha)
 
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
@@ -504,7 +506,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        optfh = self._tags["fh_in_fit"] == "required"
+        optfh = self._tags["fh_in_fit"] == "optional"
 
         msg = (
             f"This is because fitting of the `"
@@ -549,25 +551,20 @@ class BaseForecaster(BaseEstimator):
             # If fh is passed, validate (no matter the situation)
             fh = check_fh(fh)
 
-            # if A. not yet fitted, then write fh to self
-            if not self.is_fitted:
+            # if no fh seen yet, then write fh to self
+            if not self._fh:
                 self._fh = fh
-            # A. estimator is fitted
-            #  the only error can arise when fitted from inconsistency
-            #  between fh passed in fit and fh provided later
-            # this applies to both C. cases (optional/not)
-            elif self._fh:
-                if not np.array_equal(fh, self._fh):
-                    # raise error if existing fh and new one don't match
-                    raise ValueError(
-                        "A different forecasting horizon `fh` has been "
-                        "provided from "
-                        "the one seen in `fit`. If you want to change the "
-                        "forecasting "
-                        "horizon, please re-fit the forecaster. " + msg
-                    )
-                # if existing one and new match, ignore new one
-                pass
+            # if fh has already been stored, check against new one 
+            elif not np.array_equal(fh, self._fh):
+                # raise error if existing fh and new one don't match
+                raise ValueError(
+                    "A different forecasting horizon `fh` has been "
+                    "provided from "
+                    "the one seen in `fit`. If you want to change the "
+                    "forecasting "
+                    "horizon, please re-fit the forecaster. " + msg
+                )
+            # if existing one and new match, ignore new one
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
