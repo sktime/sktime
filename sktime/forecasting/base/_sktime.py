@@ -5,9 +5,6 @@
 __author__ = ["Markus Löning", "@big-o"]
 __all__ = ["_SktimeForecaster", "_BaseWindowForecaster"]
 
-from contextlib import contextmanager
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
@@ -26,6 +23,7 @@ class _SktimeForecaster(BaseForecaster):
     def __init__(self):
 
         super(_SktimeForecaster, self).__init__()
+
 
 class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use """
