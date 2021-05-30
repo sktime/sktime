@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Base class template for forecaster scitype
+Base class template for forecaster scitype.
+
     class name: BaseForecaster
 
 Scitype defining methods:
@@ -48,7 +49,7 @@ DEFAULT_ALPHA = 0.05
 
 
 class BaseForecaster(BaseEstimator):
-    """Base forecaster
+    """Base forecaster template class.
 
     The base forecaster specifies the methods and method
     signatures that all forecasters have to implement.
@@ -73,7 +74,7 @@ class BaseForecaster(BaseEstimator):
         super(BaseForecaster, self).__init__()
 
     def fit(self, y, X=None, fh=None):
-        """fit forecaster to training data
+        """Fit forecaster to training data.
 
         public method including checks & utility
         dispatches to core logic in _fit
@@ -97,7 +98,6 @@ class BaseForecaster(BaseEstimator):
         updates self.cutoff to most recent time in y
         creates fitted model (attributes ending in "_")
         """
-
         self._set_fh(fh)
         y, X = check_y_X(y, X)
 
@@ -109,7 +109,8 @@ class BaseForecaster(BaseEstimator):
         return self
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Forecast time series at future horizon
+        """Forecast time series at future horizon.
+
             public method including checks & utility
             dispatches to core logic in _predict
 
@@ -130,7 +131,6 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-
         self.check_is_fitted()
         self._set_fh(fh)
 
@@ -141,7 +141,8 @@ class BaseForecaster(BaseEstimator):
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
-        Get the prediction intervals for a forecast.
+        Compute/return prediction intervals for a forecast.
+
         Must be run *after* the forecaster has been fitted.
 
         If alpha is iterable, multiple intervals will be calculated.
@@ -151,22 +152,18 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-
         y_pred : pd.Series
             Point predictions.
-
         alpha : float or list, optional (default=0.95)
             A significance level or list of significance levels.
 
         Returns
         -------
-
         intervals : pd.DataFrame
             A table of upper and lower bounds for each point prediction in
             ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
             list of such tables.
         """
-
         self.check_is_fitted()
         alphas = check_alpha(alpha)
         errors = self._compute_pred_int(alphas)
@@ -214,7 +211,6 @@ class BaseForecaster(BaseEstimator):
         updates self.cutoff to most recent time in y
         if update_params=True, updates model (attributes ending in "_")
         """
-
         self.check_is_fitted()
         self._update_y_X(y, X)
 
@@ -249,7 +245,6 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame
             Prediction intervals
         """
-
         if return_pred_int:
             raise NotImplementedError()
         y = check_y(y)
@@ -276,7 +271,7 @@ class BaseForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Update and make forecasts."
+        """Update and make forecasts.
 
         This method is useful for updating forecasts in a single step,
         allowing to make use of more efficient
@@ -312,8 +307,7 @@ class BaseForecaster(BaseEstimator):
         )
 
     def score(self, y, X=None, fh=None):
-        """Compute the symmetric version of mean absolute percentage error
-        for the given forecasting horizon.
+        """Scores forecast against ground truth, using MAPE.
 
         Parameters
         ----------
@@ -343,7 +337,7 @@ class BaseForecaster(BaseEstimator):
         return mean_absolute_percentage_error(y, self.predict(fh, X))
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -399,8 +393,7 @@ class BaseForecaster(BaseEstimator):
                 self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
-        """Combining in-sample and out-sample prediction
-        and slicing on given fh.
+        """Combine in- & out-sample prediction, slices given fh.
 
         Parameters
         ----------
@@ -424,8 +417,7 @@ class BaseForecaster(BaseEstimator):
         return y_pred
 
     def _get_pred_int(self, lower, upper):
-        """Combining lower and upper bound of
-        prediction intervals. Slicing on fh.
+        """Combine lower/upper bounds of pred.intervals, slice on fh.
 
         Parameters
         ----------
@@ -459,7 +451,7 @@ class BaseForecaster(BaseEstimator):
 
     @property
     def cutoff(self):
-        """The time point at which to make forecasts
+        """Cut-off = "present time" state of forecaster.
 
         Returns
         -------
@@ -468,7 +460,7 @@ class BaseForecaster(BaseEstimator):
         return self._cutoff
 
     def _set_cutoff(self, cutoff):
-        """Set and update cutoff
+        """Set and update cutoff.
 
         Parameters
         ----------
@@ -478,7 +470,9 @@ class BaseForecaster(BaseEstimator):
 
     @contextmanager
     def _detached_cutoff(self):
-        """When in detached cutoff mode, the cutoff can be updated but will
+        """Detached cutoff mode.
+
+        When in detached cutoff mode, the cutoff can be updated but will
         be reset to the initial value after leaving the detached cutoff mode.
 
         This is useful during rolling-cutoff forecasts when the cutoff needs
@@ -494,7 +488,7 @@ class BaseForecaster(BaseEstimator):
 
     @property
     def fh(self):
-        """The forecasting horizon"""
+        """Forecasting horizon that was passed."""
         # raise error if some method tries to accessed it before it has been
         # set
         if self._fh is None:
@@ -510,7 +504,6 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-
         optfh = self._tags["fh_in_fit"] == "required"
 
         msg = (
@@ -577,7 +570,8 @@ class BaseForecaster(BaseEstimator):
                 pass
 
     def _fit(self, y, X=None, fh=None):
-        """fit forecaster to training data
+        """Fit forecaster to training data.
+
             core logic
 
         Parameters
@@ -587,15 +581,16 @@ class BaseForecaster(BaseEstimator):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
+
         Returns
         -------
         self : returns an instance of self.
         """
-
         raise NotImplementedError("abstract method")
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Forecast time series at future horizon
+        """Forecast time series at future horizon.
+
             core logic
 
         Parameters
@@ -618,7 +613,8 @@ class BaseForecaster(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data
+        """Update time series to incremental training data.
+
             core logic
 
         Parameters
@@ -644,7 +640,6 @@ class BaseForecaster(BaseEstimator):
         updates self.cutoff to most recent time in y
         if update_params=True, updates model (attributes ending in "_")
         """
-
         if update_params:
             # default to re-fitting if update is not implemented
             warn(
@@ -667,7 +662,7 @@ class BaseForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Internal method for updating and making forecasts.
+        """Update forecaster and then make forecasts.
 
         Implements default behaviour of calling update and predict
         sequentially, but can be overwritten by subclasses
@@ -681,13 +676,11 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-
         alpha : float or list, optional (default=0.95)
             A significance level or list of significance levels.
 
         Returns
         -------
-
         errors : list of pd.Series
             Each series in the list will contain the errors for each point in
             the forecast for the corresponding alpha.
@@ -703,7 +696,7 @@ class BaseForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Make single-step or multi-step moving cutoff predictions
+        """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
@@ -750,7 +743,7 @@ class BaseForecaster(BaseEstimator):
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
-    """Format moving-cutoff predictions"""
+    """Format moving-cutoff predictions."""
     if not isinstance(y_preds, list):
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
 
