@@ -31,12 +31,12 @@ from sktime.utils.validation.forecasting import check_cv
 class _SktimeForecaster(BaseForecaster):
     """Base class for forecaster implemented in sktime."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
 
         if not hasattr(self, "_tags"):
             self._tags = dict()
 
-        super().__init__(*args, **kwargs)
+        super(_SktimeForecaster, self).__init__()
 
 
 # keeping the mixins for the time being for its current children

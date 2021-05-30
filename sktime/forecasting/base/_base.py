@@ -57,7 +57,7 @@ class BaseForecaster(BaseEstimator):
     forecasters.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self._is_fitted = False
 
         self._y = None
