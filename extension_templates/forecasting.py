@@ -74,7 +74,7 @@ class BaseForecaster(BaseEstimator):
         self.paramc = paramc
 
         #todo: initialize None parameters, where necessary
-        if paramc=None
+        if paramc == None:
             self.paramc = '42'
 
         #todo: suncomment if forecast horizon is needed only in predict
