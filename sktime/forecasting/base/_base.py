@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Base class template for forecaster scitype
     class name: BaseForecaster
@@ -67,13 +68,13 @@ class BaseForecaster(BaseEstimator):
         self._cutoff = None  # reference point for relative fh
 
         # defaults for estimator tags
-        self._tags['fh_in_fit'] = 'required'
+        self._tags["fh_in_fit"] = "required"
 
         super(BaseForecaster, self).__init__()
 
     def fit(self, y, X=None, fh=None):
         """fit forecaster to training data
-        
+
         public method including checks & utility
         dispatches to core logic in _fit
 
@@ -510,7 +511,7 @@ class BaseForecaster(BaseEstimator):
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
 
-        optfh = self._tags['fh_in_fit'] == 'required'
+        optfh = self._tags["fh_in_fit"] == "required"
 
         msg = (
             f"This is because fitting of the `"
@@ -549,7 +550,7 @@ class BaseForecaster(BaseEstimator):
                 )
                 # in case C. fh is optional in fit:
                 # this is fine, nothing to check/raise
-    
+
         # B. fh is passed
         else:
             # If fh is passed, validate (no matter the situation)
@@ -746,5 +747,3 @@ class BaseForecaster(BaseEstimator):
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
-

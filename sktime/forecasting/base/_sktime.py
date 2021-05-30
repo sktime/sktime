@@ -32,8 +32,6 @@ class _SktimeForecaster(BaseForecaster):
 
         super(_SktimeForecaster, self).__init__()
 
-
-
 class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use """
 
