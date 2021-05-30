@@ -105,6 +105,9 @@ class BaseForecaster(BaseEstimator):
         creates fitted model (attributes ending in "_")
         sets is_fitted flag to true
         """
+        # if fit is called, fitted state is re-set
+        self._is_fitted = False
+
         self._set_fh(fh)
         y, X = check_y_X(y, X)
 
@@ -114,7 +117,7 @@ class BaseForecaster(BaseEstimator):
         self._fit(y=y, X=X, fh=fh)
 
         # this should happen last
-        self.is_fitted = True
+        self._is_fitted = True
 
         return self
 
@@ -529,7 +532,7 @@ class BaseForecaster(BaseEstimator):
         # B. no fh is passed
         if fh is None:
             # A. strategy fitted (call of predict or similar)
-            if self.is_fitted:
+            if self._is_fitted:
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
                 if optfh and self._fh is None:
@@ -561,7 +564,7 @@ class BaseForecaster(BaseEstimator):
             # if fh has not been passed yet, then write fh to self
             #  also do this if estimator has not been fitted yet
             #  (to avoid side effects from estimator reset)
-            if not self._fh or not self.is_fitted:
+            if not self._fh or not self._is_fitted:
                 self._fh = fh
             # if fh has already been stored, check against new one
             elif self._fh and not np.array_equal(fh, self._fh):
