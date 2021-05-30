@@ -3,7 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "@big-o"]
-__all__ = ["_SktimeForecaster", "_BaseWindowForecaster"]
+__all__ = ["_SktimeForecaster", "_BaseWindowForecaster",
+            "_OptionalForecastingHorizonMixin", "_RequiredForecastingHorizonMixin"]
 
 from contextlib import contextmanager
 from warnings import warn
@@ -32,6 +33,28 @@ class _SktimeForecaster(BaseForecaster):
 
         super(_SktimeForecaster, self).__init__()
 
+
+# keeping the mixins for the time being for its current children
+class _OptionalForecastingHorizonMixin:
+    """Mixin class for forecasters which can take the forecasting horizon
+    either during fit or predict."""
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init_(*args, **kwargs)
+
+        self._tags["fh_in_fit"] = "optional"
+
+
+class _RequiredForecastingHorizonMixin:
+    """Mixin class for forecasters which require the forecasting horizon
+    during fit."""
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init_(*args, **kwargs)
+
+        self._tags["fh_in_fit"] = "required"
 
 
 class _BaseWindowForecaster(BaseForecaster):
