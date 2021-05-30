@@ -1,6 +1,12 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""
+Refactored base class hierarchy and window forecaster base class.
+
+_SktimeForecaster and _xxxForecastingHorizonMixin are now mainly passthrough
+    for downwards compatibility with rest of package
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
 
 __author__ = ["Markus Löning", "@big-o"]
 __all__ = ["_SktimeForecaster", "_BaseWindowForecaster",
