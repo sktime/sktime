@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Extension template for forecasters
 
@@ -64,7 +65,7 @@ class MyForecaster(BaseEstimator):
     """
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb='default', paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
 
         # todo: write any hyper-parameters and components to self
         self.parama = parama
@@ -73,10 +74,10 @@ class MyForecaster(BaseEstimator):
 
         # todo: initialize None parameters, where necessary
         if paramc is None:
-            self.paramc = '42'
+            self.paramc = "42"
 
-        # todo: suncomment if forecast horizon is needed only in predict
-        # self._tags['fh_in_fit'] = 'optional'
+        # todo: uncomment if forecast horizon is needed only in predict
+        # self._tags["fh_in_fit"] = "optional"
 
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
