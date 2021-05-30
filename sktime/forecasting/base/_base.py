@@ -35,7 +35,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection._split import SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
@@ -248,11 +247,8 @@ class BaseForecaster(BaseEstimator):
         if return_pred_int:
             raise NotImplementedError()
         y = check_y(y)
-        cv = (
-            check_cv(cv)
-            if cv is not None
-            else SlidingWindowSplitter(fh=self.fh, start_with_window=False)
-        )
+        cv = check_cv(cv)
+
         return self._predict_moving_cutoff(
             y,
             cv,
