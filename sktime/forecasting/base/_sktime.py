@@ -33,6 +33,9 @@ class _SktimeForecaster(BaseForecaster):
 
     def __init__(self, *args, **kwargs):
 
+        if not hasattr(self, "_tags"):
+            self._tags = dict()
+
         super().__init__(*args, **kwargs)
 
 
@@ -42,7 +45,10 @@ class _OptionalForecastingHorizonMixin:
 
     def __init__(self, *args, **kwargs):
 
-        super().__init_(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        if not hasattr(self, "_tags"):
+            self._tags = dict()
 
         self._tags["fh_in_fit"] = "optional"
 
@@ -52,7 +58,10 @@ class _RequiredForecastingHorizonMixin:
 
     def __init__(self, *args, **kwargs):
 
-        super().__init_(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        if not hasattr(self, "_tags"):
+            self._tags = dict()
 
         self._tags["fh_in_fit"] = "required"
 

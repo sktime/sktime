@@ -57,7 +57,7 @@ class BaseForecaster(BaseEstimator):
     forecasters.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._is_fitted = False
 
         self._y = None
@@ -68,7 +68,11 @@ class BaseForecaster(BaseEstimator):
         self._cutoff = None  # reference point for relative fh
 
         # defaults for estimator tags
-        self._tags["fh_in_fit"] = "required"
+        if not hasattr(self, "_tags"):
+            self._tags = dict()
+
+        if "fh_in_fit" not in self._tags.keys():
+            self._tags["fh_in_fit"] = "required"
 
         super(BaseForecaster, self).__init__()
 
