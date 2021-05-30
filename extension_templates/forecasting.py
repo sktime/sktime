@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Extension template for forecasters
+Extension template for forecasters.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -15,7 +16,8 @@ How to use this:
 
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA)
+    forecasting     - _predict(self, fh=None, X=None, return_pred_int=False,
+                               alpha=DEFAULT_ALPHA)
 
 Optional implements:
     updating        - _update(self, y, X=None, update_params=True):
@@ -31,20 +33,13 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.forecasting.base import BaseEstimator
 from sktime.forecasting.base import DEFAULT_ALPHA
 
-import numpy as np
-import pandas as pd
-
-#todo: add any necessary imports here
+# todo: add any necessary imports here
 
 
-class BaseForecaster(BaseEstimator):
-    """Base forecaster
+class MyForecaster(BaseEstimator):
+    """Custom forecaster. todo: write docstring.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
-
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    todo: describe your custom forecaster here
 
     Hyper-parameters
     ----------------
@@ -65,28 +60,28 @@ class BaseForecaster(BaseEstimator):
     and so on
     """
 
-    #todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb='default', paramc=None):
+    # todo: add any hyper-parameters and components to constructor
+    def __init__(self, parama, paramb="default", paramc=None):
 
-        #todo: write any hyper-parameters and components to self
+        # todo: write any hyper-parameters and components to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
 
-        #todo: initialize None parameters, where necessary
-        if paramc=None
-            self.paramc = '42'
+        # todo: initialize None parameters, where necessary
+        if paramc is None:
+            self.paramc = "42"
 
-        #todo: suncomment if forecast horizon is needed only in predict
-        # self._tags['fh_in_fit'] = 'optional'
+        # todo: uncomment if forecast horizon is needed only in predict
+        # self._tags["fh_in_fit"] = "optional"
 
-        #todo: change "MyForecaster" to the name of the class
+        # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
 
-
-    #todo: implement this, mandatory
+    # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
-        """fit forecaster to training data
+        """Fit forecaster to training data.
+
             core logic
 
         Parameters
@@ -96,6 +91,7 @@ class BaseForecaster(BaseEstimator):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
+
         Returns
         -------
         self : returns an instance of self.
@@ -104,10 +100,10 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-
-    #todo: implement this, mandatory
+    # todo: implement this, mandatory
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Forecast time series at future horizon
+        """Forecast time series at future horizon.
+
             core logic
 
         Parameters
@@ -131,11 +127,11 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the _update method
     def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data
+        """Update time series to incremental training data.
+
             core logic
 
         Parameters
@@ -165,8 +161,7 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def _update_predict_single(
         self,
@@ -177,7 +172,7 @@ class BaseForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Internal method for updating and making forecasts.
+        """Update forecaster and then make forecasts.
 
         Implements default behaviour of calling update and predict
         sequentially, but can be overwritten by subclasses
@@ -189,29 +184,25 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def _compute_pred_int(self, alphas):
         """Calculate the prediction errors for each point.
 
         Parameters
         ----------
-
         alpha : float or list, optional (default=0.95)
             A significance level or list of significance levels.
 
         Returns
         -------
-
         errors : list of pd.Series
             Each series in the list will contain the errors for each point in
             the forecast for the corresponding alpha.
         """
         # implement here
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def _predict_moving_cutoff(
         self,
@@ -222,7 +213,7 @@ class BaseForecaster(BaseEstimator):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Make single-step or multi-step moving cutoff predictions
+        """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
@@ -241,10 +232,10 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to y, X, cv
 
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
