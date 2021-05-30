@@ -18,7 +18,7 @@ from sktime.utils.validation.forecasting import check_cv
 
 # keeping the _SktimeForecaster for the time being for its current children
 class _SktimeForecaster(BaseForecaster):
-    """Base class for forecaster implemented in sktime"""
+    """Base class for forecaster implemented in sktime."""
 
     def __init__(self):
 
@@ -26,7 +26,7 @@ class _SktimeForecaster(BaseForecaster):
 
 
 class _BaseWindowForecaster(BaseForecaster):
-    """Base class for forecasters that use """
+    """Base class for forecasters that use."""
 
     def __init__(self, window_length=None):
         super(_BaseWindowForecaster, self).__init__()
@@ -75,7 +75,7 @@ class _BaseWindowForecaster(BaseForecaster):
         )
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Internal predict"""
+        """Predict core logic."""
         if return_pred_int:
             raise NotImplementedError()
 
@@ -102,7 +102,7 @@ class _BaseWindowForecaster(BaseForecaster):
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Make single-step or multi-step fixed cutoff predictions
+        """Make single-step or multi-step fixed cutoff predictions.
 
         Parameters
         ----------
@@ -126,8 +126,7 @@ class _BaseWindowForecaster(BaseForecaster):
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Make in-sample prediction using single-step moving-cutoff
-        predictions
+        """Make in-sample prediction using single-step moving-cutoff predictions.
 
         Parameters
         ----------
@@ -159,7 +158,7 @@ class _BaseWindowForecaster(BaseForecaster):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Internal predict
+        """Predict core logic.
 
         Parameters
         ----------
@@ -175,7 +174,7 @@ class _BaseWindowForecaster(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def _get_last_window(self):
-        """Select last window"""
+        """Select last window."""
         # Get the start and end points of the last window.
         cutoff = self.cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
@@ -190,7 +189,7 @@ class _BaseWindowForecaster(BaseForecaster):
 
     @staticmethod
     def _predict_nan(fh):
-        """Predict nan if predictions are not possible"""
+        """Predict nan if predictions are not possible."""
         return np.full(len(fh), np.nan)
 
     def _update_predict_single(
@@ -202,7 +201,7 @@ class _BaseWindowForecaster(BaseForecaster):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Internal method for updating and making forecasts.
+        """Update and make forecasts, core logic..
 
         Implements default behaviour of calling update and predict
         sequentially, but can be overwritten by subclasses
@@ -219,6 +218,7 @@ class _BaseWindowForecaster(BaseForecaster):
 
         Returns
         -------
+        predictions
 
         """
         if X is not None:
@@ -228,7 +228,7 @@ class _BaseWindowForecaster(BaseForecaster):
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
-    """Format moving-cutoff predictions"""
+    """Format moving-cutoff predictions."""
     if not isinstance(y_preds, list):
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
 
