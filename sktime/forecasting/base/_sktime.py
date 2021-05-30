@@ -13,8 +13,8 @@ __all__ = [
     "_SktimeForecaster",
     "_BaseWindowForecaster",
     "_OptionalForecastingHorizonMixin",
-    "_RequiredForecastingHorizonMixin"
-    ]
+    "_RequiredForecastingHorizonMixin",
+]
 
 import numpy as np
 import pandas as pd
