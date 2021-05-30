@@ -554,7 +554,7 @@ class BaseForecaster(BaseEstimator):
             # if no fh seen yet, then write fh to self
             if not self._fh:
                 self._fh = fh
-            # if fh has already been stored, check against new one 
+            # if fh has already been stored, check against new one
             elif not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(
