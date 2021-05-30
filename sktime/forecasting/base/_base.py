@@ -71,6 +71,9 @@ class BaseForecaster(BaseEstimator):
         if not hasattr(self, "_tags"):
             self._tags = dict()
 
+        if hasattr(self, "fhmixinflag"):
+            self._tags["fh_in_fit"] = self.fhmixinflag
+
         if "fh_in_fit" not in self._tags.keys():
             self._tags["fh_in_fit"] = "required"
 

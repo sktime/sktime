@@ -31,39 +31,18 @@ from sktime.utils.validation.forecasting import check_cv
 class _SktimeForecaster(BaseForecaster):
     """Base class for forecaster implemented in sktime."""
 
-    def __init__(self):
-
-        if not hasattr(self, "_tags"):
-            self._tags = dict()
-
-        super(_SktimeForecaster, self).__init__()
-
 
 # keeping the mixins for the time being for its current children
 class _OptionalForecastingHorizonMixin:
     """Mixin class for forecasters with optional fh in fit."""
 
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-
-        if not hasattr(self, "_tags"):
-            self._tags = dict()
-
-        self._tags["fh_in_fit"] = "optional"
+    fhmixinflag = "optional"
 
 
 class _RequiredForecastingHorizonMixin:
     """Mixin class for forecasters with required fh in fit."""
 
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-
-        if not hasattr(self, "_tags"):
-            self._tags = dict()
-
-        self._tags["fh_in_fit"] = "required"
+    fhmixinflag = "required"
 
 
 class _BaseWindowForecaster(BaseForecaster):
