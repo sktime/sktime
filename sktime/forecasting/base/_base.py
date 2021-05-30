@@ -100,6 +100,7 @@ class BaseForecaster(BaseEstimator):
         stores fh, if passed
         updates self.cutoff to most recent time in y
         creates fitted model (attributes ending in "_")
+        sets is_fitted flag to true
         """
         self._set_fh(fh)
         y, X = check_y_X(y, X)
@@ -108,6 +109,9 @@ class BaseForecaster(BaseEstimator):
         self._y = y
 
         self._fit(y=y, X=X, fh=fh)
+
+        # this should happen last
+        self.is_fitted = True
 
         return self
 
@@ -491,12 +495,12 @@ class BaseForecaster(BaseEstimator):
     @property
     def fh(self):
         """Forecasting horizon that was passed."""
-        # raise error if some method tries to accessed it before it has been
-        # set
+        # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError(
                 "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
             )
+
         return self._fh
 
     def _set_fh(self, fh):
@@ -551,11 +555,13 @@ class BaseForecaster(BaseEstimator):
             # If fh is passed, validate (no matter the situation)
             fh = check_fh(fh)
 
-            # if no fh seen yet, then write fh to self
-            if not self._fh:
+            # if fh has not been passed yet, then write fh to self
+            #  also do this if estimator has not been fitted yet
+            #  (to avoid side effects from estimator reset)
+            if not self._fh or not self.is_fitted:
                 self._fh = fh
             # if fh has already been stored, check against new one
-            elif not np.array_equal(fh, self._fh):
+            elif self._fh and not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
