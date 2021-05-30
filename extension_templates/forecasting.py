@@ -15,7 +15,8 @@ How to use this:
 
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA)
+    forecasting     - _predict(self, fh=None, X=None, return_pred_int=False,
+                               alpha=DEFAULT_ALPHA)
 
 Optional implements:
     updating        - _update(self, y, X=None, update_params=True):
@@ -31,13 +32,10 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.forecasting.base import BaseEstimator
 from sktime.forecasting.base import DEFAULT_ALPHA
 
-import numpy as np
-import pandas as pd
-
-#todo: add any necessary imports here
+# todo: add any necessary imports here
 
 
-class BaseForecaster(BaseEstimator):
+class MyForecaster(BaseEstimator):
     """Base forecaster
 
     The base forecaster specifies the methods and method
@@ -65,26 +63,25 @@ class BaseForecaster(BaseEstimator):
     and so on
     """
 
-    #todo: add any hyper-parameters and components to constructor
+    # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb='default', paramc=None):
 
-        #todo: write any hyper-parameters and components to self
+        # todo: write any hyper-parameters and components to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
 
-        #todo: initialize None parameters, where necessary
-        if paramc == None:
+        # todo: initialize None parameters, where necessary
+        if paramc is None:
             self.paramc = '42'
 
-        #todo: suncomment if forecast horizon is needed only in predict
+        # todo: suncomment if forecast horizon is needed only in predict
         # self._tags['fh_in_fit'] = 'optional'
 
-        #todo: change "MyForecaster" to the name of the class
+        # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
 
-
-    #todo: implement this, mandatory
+    # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
         """fit forecaster to training data
             core logic
@@ -104,8 +101,7 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-
-    #todo: implement this, mandatory
+    # todo: implement this, mandatory
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast time series at future horizon
             core logic
@@ -131,8 +127,7 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the _update method
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data
@@ -165,8 +160,7 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def _update_predict_single(
         self,
@@ -189,8 +183,7 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def _compute_pred_int(self, alphas):
         """Calculate the prediction errors for each point.
@@ -210,8 +203,7 @@ class BaseForecaster(BaseEstimator):
         """
         # implement here
 
-
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def _predict_moving_cutoff(
         self,
@@ -241,7 +233,7 @@ class BaseForecaster(BaseEstimator):
         # implement here
         # IMPORTANT: avoid side effects to y, X, cv
 
-    #todo: consider implementing this, optional
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def get_fitted_params(self):
         """Get fitted parameters
