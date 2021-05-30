@@ -5,7 +5,8 @@ Base class template for forecaster scitype
 
 Scitype defining methods:
     fitting         - fit(self, y, X=None, fh=None)
-    forecasting     - predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA)
+    forecasting     - predict(self, fh=None, X=None, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA)
     updating        - update(self, y, X=None, update_params=True):
     update&predict  - update_predict(y, cv=None, X=None, update_params=True,
                         return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -522,7 +523,7 @@ class BaseForecaster(BaseEstimator):
         #  A. forecaster is fitted yes/no - self.is_fitted
         #  B. no fh is passed yes/no - fh is None
         #  C. fh is optional in fit yes/no - optfh
-    
+
         # B. no fh is passed
         if fh is None:
             # A. strategy fitted (call of predict or similar)
@@ -746,6 +747,7 @@ class BaseForecaster(BaseEstimator):
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions"""
