@@ -45,6 +45,20 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, Z, X=None):
+        """Fit data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to fit.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Fitted series.
+        """
         z = check_series(Z, enforce_univariate=True)
         if self.method != "guerrero":
             self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
@@ -55,12 +69,40 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series.
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         zt = boxcox(z.to_numpy(), self.lambda_)
         return pd.Series(zt, index=z.index)
 
     def inverse_transform(self, Z, X=None):
+        """Inverse transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed data - the inverse of the Box-Cox transformation.
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         zt = inv_boxcox(z.to_numpy(), self.lambda_)
@@ -111,11 +153,6 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         xvals = distributions.norm.ppf(osm_uniform)
 
         def _eval_pearsonr(lmbda, xvals, samps):
-            """Compute the x-axis values of the probability plot
-            and compute a linear regression (including the correlation).
-            Returns ``1 - r`` so that a minimization function maximizes
-            the correlation.
-            """
             y = _boxcox(samps, lmbda)
             yvals = np.sort(y)
             r, prob = stats.pearsonr(xvals, yvals)
