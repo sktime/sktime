@@ -8,9 +8,8 @@ __all__ = [
     "check_equal_time_index",
     "check_consistent_index_type",
 ]
-
-import numpy as np
 import pandas as pd
+import numpy as np
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
@@ -162,21 +161,16 @@ def check_equal_time_index(*ys):
 
 def _is_int_index(index):
     """Check if index type is one of pd.RangeIndex or pd.Int64Index"""
-    return type(index) in VALID_INDEX_TYPES[:2]
+    return type(index) in (pd.Int64Index, pd.RangeIndex)
 
 
-def check_consistent_index_type(*ys):
+def check_consistent_index_type(*idx):
     """Check that index types are compatible for plotting.
 
     Parameters
     ----------
-    ys : pd.Series
-        One or more time series
-
-    Returns
-    -------
-    index : pd.Index
-        Validated and combined indexes
+    idx : pd.Index
+        Indices being checked for compatibility
 
     Raises
     ------
@@ -184,19 +178,14 @@ def check_consistent_index_type(*ys):
         If index types are inconsistent
     """
 
-    index = ys[0].index
-    for y in ys[1:]:
-        # check types, note that isinstance() does not work here because index
-        # types inherit from each other, hence we check for type equality
-        msg = "Please make sure that all series have consistent index type."
+    # check types, note that isinstance() does not work here because index
+    # types inherit from each other, hence we check for type equality
+    msg = "Please make sure that all series have consistent index type."
 
-        if _is_int_index(y.index):
-            if not _is_int_index(index):
-                raise TypeError(msg)
+    if _is_int_index(idx[1]):
+        if not _is_int_index(idx[0]):
+            raise TypeError(msg)
 
-        else:
-            if not type(index) is type(y.index):  # noqa
-                raise TypeError(msg)
-
-        index = index.union(y.index)
-    return index
+    else:
+        if not type(idx[0]) is type(idx[1]):  # noqa
+            raise TypeError(msg)

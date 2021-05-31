@@ -65,7 +65,11 @@ def plot_series(*series, labels=None, markers=None):
         markers = ["o" for _ in range(n_series)]
 
     # create combined index
-    index = check_consistent_index_type(*series)
+    index = series[0].index
+    for y in series[1:]:
+        # check index types
+        check_consistent_index_type(index, y.index)
+        index = index.union(y.index)
 
     # generate integer x-values
     xs = [np.argwhere(index.isin(y.index)).ravel() for y in series]
