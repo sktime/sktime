@@ -16,6 +16,10 @@ PYTHON_VERSIONS=()
 
 # Include Python versions
 for VERSION in "${INCLUDED_VERSIONS[@]}"; do
+  # Trim white space
+  VERSION="$(echo -e "${VERSION}" | tr -d '[:space:]')"
+
+  # Append version
   PYTHON_VERSIONS+=("/opt/python/$VERSION/bin")
 done
 
