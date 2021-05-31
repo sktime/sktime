@@ -56,8 +56,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
         Returns
         -------
-        Zt : pd.Series
-            Fitted series.
+        self
         """
         z = check_series(Z, enforce_univariate=True)
         if self.method != "guerrero":
