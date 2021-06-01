@@ -1012,6 +1012,17 @@
         "bug",
       ]
     },
+    {
+      "login": "flix6x",
+      "name": "Felix Claessen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30658763?v=4",
+      "profile": "https://github.com/flix6x",
+      "contributions": [
+        "code",
+        "bug",
+        "test",
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
