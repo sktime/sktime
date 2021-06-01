@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Utilities for loading datasets
-"""
-
+"""Utilities for loading datasets."""
 import os
 import shutil
 import tempfile
@@ -46,10 +43,12 @@ MODULE = os.path.dirname(__file__)
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
-    Helper function for downloading and unzipping datasets
+    Download and unzip datasets (helper function).
+
     This code was modified from
     https://github.com/tslearn-team/tslearn/blob
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
+
     Parameters
     ----------
     url : string
@@ -92,7 +91,8 @@ def _download_and_extract(url, extract_path=None):
 
 def _list_downloaded_datasets(extract_path):
     """
-    Returns a list of all the currently downloaded datasets
+    Return a list of all the currently downloaded datasets.
+
     Modified version of
     https://github.com/tslearn-team/tslearn/blob
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
@@ -117,13 +117,17 @@ def _list_downloaded_datasets(extract_path):
 
 def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
     """
-    Load dataset from UCR UEA time series classification repository. Downloads and
-    extracts dataset if not already downloaded.
+    Load dataset from UCR UEA time series archive.
+
+    Datasets to be found here: http://www.timeseriesclassification.com/dataset.php
+    Downloads and extracts dataset if not already downloaded.
 
     Parameters
     ----------
     name : str
-        Name of data set
+        Name of data set.
+        Possible strings can be found at:
+        http://www.timeseriesclassification.com/dataset.php .
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
@@ -145,9 +149,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None):
-    """
-    Helper function to load time series classification datasets.
-    """
+    """Load time series classification datasets (helper funciton)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
@@ -198,7 +200,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
 
 def load_gunpoint(split=None, return_X_y=False):
     """
-    Loads the GunPoint time series classification problem and returns X and y
+    Load the GunPoint time series classification problem and returns X and y.
+
     Parameters
     ----------
     split: None or str{"train", "test"}, optional (default=None)
@@ -208,6 +211,7 @@ def load_gunpoint(split=None, return_X_y=False):
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
+
     Returns
     -------
     X: pandas DataFrame with m rows and c columns
@@ -237,6 +241,7 @@ def load_gunpoint(split=None, return_X_y=False):
     centroid
     of the actor's right hands in both X- and Y-axes, which appear to be highly
     correlated. The data in the archive is just the X-axis.
+
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=GunPoint
     """
@@ -246,7 +251,7 @@ def load_gunpoint(split=None, return_X_y=False):
 
 def load_osuleaf(split=None, return_X_y=False):
     """
-    Loads the OSULeaf time series classification problem and returns X and y
+    Load the OSULeaf time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -289,8 +294,7 @@ def load_osuleaf(split=None, return_X_y=False):
 
 def load_italy_power_demand(split=None, return_X_y=False):
     """
-    Loads the ItalyPowerDemand time series classification problem and
-    returns X and y
+    Load ItalyPowerDemand time series classification problem.
 
     Parameters
     ----------
@@ -324,19 +328,16 @@ def load_italy_power_demand(split=None, return_X_y=False):
     Visualization into GUI Operating Systems". The classification task is to
     distinguish days
     from Oct to March (inclusive) from April to September.
-
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=ItalyPowerDemand
     """
-
     name = "ItalyPowerDemand"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_japanese_vowels(split=None, return_X_y=False):
     """
-    Loads the JapaneseVowels time series classification problem and
-    returns X and y.
+    Load the JapaneseVowels time series classification problem.
 
     Parameters
     ----------
@@ -380,18 +381,16 @@ def load_japanese_vowels(split=None, return_X_y=False):
     and M. Shimbo. (1999). "Multidimensional Curve Classification Using
     Passing-Through Regions". Pattern
     Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
-
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=JapaneseVowels
     """
-
     name = "JapaneseVowels"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_arrow_head(split=None, return_X_y=False):
     """
-    Loads the ArrowHead time series classification problem and returns X and y.
+    Load the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -433,15 +432,13 @@ def load_arrow_head(split=None, return_X_y=False):
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=ArrowHead
     """
-
     name = "ArrowHead"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_acsf1(split=None, return_X_y=False):
     """
-    Loads the power consumption of typical appliances time series
-    classification problem and returns X and y.
+    Load dataset on power consumption of typical appliances.
 
     Parameters
     ----------
@@ -480,14 +477,13 @@ def load_acsf1(split=None, return_X_y=False):
     Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
     =ACSF1
     """
-
     name = "ACSF1"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_basic_motions(split=None, return_X_y=False):
     """
-    Loads the  BasicMotions time series classification problem and returns X and y.
+    Load the  BasicMotions time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -524,7 +520,6 @@ def load_basic_motions(split=None, return_X_y=False):
     Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
     =BasicMotions
     """
-
     name = "BasicMotions"
     return _load_dataset(name, split, return_X_y)
 
@@ -557,7 +552,6 @@ def load_shampoo_sales():
     and applications,
         John Wiley & Sons: New York. Chapter 3.
     """
-
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -569,8 +563,7 @@ def load_shampoo_sales():
 
 def load_longley(y_name="TOTEMP"):
     """
-    Load the Longley multivariate time series dataset for forecasting with
-    exogenous variables.
+    Load the Longley dataset for forecasting with exogenous variables.
 
     Parameters
     ----------
@@ -586,9 +579,8 @@ def load_longley(y_name="TOTEMP"):
 
     Details
     -------
-    This dataset contains various US macroeconomic variables from 1947 to
-    1962 that are known to be highly
-    collinear.
+    This mulitvariate time series dataset contains various US macroeconomic
+    variables from 1947 to 1962 that are known to be highly collinear.
 
     Dimensionality:     multivariate, 6
     Series length:      16
@@ -663,7 +655,6 @@ def load_lynx():
     analysis. Journal of the Royal Statistical Society
     series A, 140, 411–431.
     """
-
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -703,7 +694,6 @@ def load_airline():
           Analysis, Forecasting and Control. Third Edition. Holden-Day.
           Series G.
     """
-
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -717,8 +707,7 @@ def load_airline():
 
 def load_uschange(y_name="Consumption"):
     """
-    Load the multivariate time series dataset for forecasting
-    Growth rates of personal consumption and personal income.
+    Load MTS dataset for forecasting Growth rates of personal consumption and income.
 
     Returns
     -------
@@ -750,7 +739,6 @@ def load_uschange(y_name="Consumption"):
     ----------
     ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
     """
-
     name = "Uschange"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)

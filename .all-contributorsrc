@@ -606,17 +606,6 @@
       ]
     },
     {
-      "login": "AaronX121",
-      "name": "Yi-Xuan Xu",
-      "avatar_url": "https://avatars2.githubusercontent.com/u/22359569?v=4",
-      "profile": "https://github.com/AaronX121",
-      "contributions": [
-        "code",
-        "test",
-        "doc"
-      ]
-    },
-    {
       "login": "huayicodes",
       "name": "Huayi Wei",
       "avatar_url": "https://avatars3.githubusercontent.com/u/22870735?v=4",
@@ -837,7 +826,10 @@
       "avatar_url": "https://avatars2.githubusercontent.com/u/22359569?v=4",
       "profile": "https://github.com/xuyxu",
       "contributions": [
-        "code"
+        "code",
+        "test",
+        "maintenance",
+        "doc"
       ]
     },
     {
@@ -934,7 +926,92 @@
       "contributions": [
         "infra"
       ]
-    }
+    },
+    {
+      "login": "kachayev",
+      "name": "Oleksii Kachaiev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/485647?v=4",
+      "profile": "https://github.com/kachayev",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Ifeanyi30",
+      "name": "Ifeanyi30",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49926145?v=4",
+      "profile": "https://github.com/Ifeanyi30",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jschemm",
+      "name": "jschemm",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81151346?v=4",
+      "profile": "https://github.com/jschemm",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "aaronreidsmith",
+      "name": "Aaron Smith",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21350310?v=4",
+      "profile": "https://github.com/aaronreidsmith",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ltsaprounis",
+      "name": "Leonidas Tsaprounis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64217214?v=4",
+      "profile": "https://github.com/ltsaprounis",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "GuzalBulatova",
+      "name": "Guzal Bulatova",
+      "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
+      "profile": "https://github.com/GuzalBulatova",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "satya-pattnaik",
+      "name": "Satya Prakash Pattnaik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22102468?v=4",
+      "profile": "https://www.linkedin.com/in/satya-pattnaik-77a430144/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "yashlamba",
+      "name": "Yash Lamba",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44164398?v=4",
+      "profile": "https://github.com/yashlamba",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ckastner",
+      "name": "Christian Kastner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15859947?v=4",
+      "profile": "https://github.com/ckastner",
+      "contributions": [
+        "code",
+        "bug",
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

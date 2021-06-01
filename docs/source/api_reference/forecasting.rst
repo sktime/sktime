@@ -8,7 +8,6 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
 
 .. automodule:: sktime.forecasting
     :no-members:
-    :no-inherited-members:
 
 Base
 ----
@@ -104,17 +103,6 @@ BATS/TBATS
 
     TBATS
 
-MultiplexForecaster
-----------
-
-.. currentmodule:: sktime.forecasting.compose
-
-.. autosummary::
-    :toctree: modules/auto_generated/
-    :template: class.rst
-
-    MultiplexForecaster
-
 Prophet
 -------
 
@@ -137,13 +125,22 @@ Composition
 
     EnsembleForecaster
     TransformedTargetForecaster
-    DirectRegressionForecaster
+    DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
-    MultioutputRegressionForecaster
-    RecursiveRegressionForecaster
+    MultioutputTabularRegressionForecaster
+    MultioutputTimeSeriesRegressionForecaster
+    RecursiveTabularRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    ReducedForecaster
+    DirRecTabularRegressionForecaster
+    DirRecTimeSeriesRegressionForecaster
     StackingForecaster
+    MultiplexForecaster
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: function.rst
+
+    make_reduction
 
 Online Forecasting
 ------------------
@@ -180,7 +177,7 @@ Model Selection
 
     temporal_train_test_split
 
-Model Evaluation
+Model Evaluation (Backtesting)
 ----------------
 
 .. currentmodule:: sktime.forecasting.model_evaluation

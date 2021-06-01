@@ -47,6 +47,16 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -69,9 +79,11 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         Returns
         -------
         self : returns an instance of self.
-        """  # X_train is ignored
+        """
+        # X_train is ignored
         self._set_y_X(y, X)
         self._set_fh(fh)
+        n_timepoints = y.shape[0]
 
         if self.strategy == "last":
             if self.sp == 1:
@@ -99,7 +111,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                         f"{self.window_length} is smaller than "
                         f"`sp`: {self.sp}."
                     )
-            self.window_length_ = check_window_length(self.window_length)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
             self.sp_ = check_sp(self.sp)
 
             #  if not given, set default window length for the mean strategy
@@ -111,7 +123,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                 warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
-            self.window_length_ = check_window_length(self.window_length)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
             if self.window_length is None:
                 self.window_length_ = len(y)
             if self.window_length == 1:

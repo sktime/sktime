@@ -15,6 +15,7 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_series
+from sktime.utils import _has_tag
 
 
 class TransformedTargetForecaster(
@@ -23,7 +24,35 @@ class TransformedTargetForecaster(
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
-    """Meta-estimator for forecasting transformed time series."""
+    """
+    Meta-estimator for forecasting transformed time series.
+    Pipeline functionality to apply transformers to the target series.
+
+    Parameters
+    ----------
+    steps : list
+        List of tuples like ("name", forecaster/transformer)
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> y = load_airline()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer(method="mean")),
+    ...     ("detrender", Deseasonalizer()),
+    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    >>> pipe.fit(y)
+    TransformedTargetForecaster(...)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
+    """
 
     _required_parameters = ["steps"]
     _tags = {"univariate-only": True}
@@ -121,15 +150,14 @@ class TransformedTargetForecaster(
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if return_pred_int:
-            raise NotImplementedError()
-
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
         for _, _, transformer in self._iter_transformers(reverse=True):
-            y_pred = transformer.inverse_transform(y_pred)
-
+            # skip sktime transformers where inverse transform
+            # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
+            if not _has_tag(transformer, "skip-inverse-transform"):
+                y_pred = transformer.inverse_transform(y_pred)
         return y_pred
 
     def update(self, y, X=None, update_params=True):

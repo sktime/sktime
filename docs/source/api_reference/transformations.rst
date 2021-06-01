@@ -7,8 +7,8 @@ The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
 .. automodule:: sktime.transformations
-    :no-members:
-    :no-inherited-members:
+   :members:
+   :inherited-members:
 
 Panel transformers
 ------------------
@@ -226,7 +226,7 @@ Matrix Profile
 
     MatrixProfileTransformer
 
-Imputer
+Missing value imputation
 ~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
@@ -237,7 +237,7 @@ Imputer
 
     Imputer
 
-HampelFilter
+Outlier detection
 ~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.outlier_detection
@@ -247,3 +247,14 @@ HampelFilter
     :template: class.rst
 
     HampelFilter
+
+Composition
+~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.compose
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    OptionalPassthrough

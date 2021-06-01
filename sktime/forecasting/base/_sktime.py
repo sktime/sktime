@@ -196,7 +196,7 @@ class _SktimeForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : None, int, list, np.array
+        fh : None, int, list, np.array or ForecastingHorizon
         """
         raise NotImplementedError()
 
@@ -208,7 +208,7 @@ class _SktimeForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -304,7 +304,7 @@ class _SktimeForecaster(BaseForecaster):
         Parameters
         ----------
         y_new : pd.Series
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
         X : pd.DataFrame
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
@@ -509,7 +509,7 @@ class _OptionalForecastingHorizonMixin:
 
         Parameters
         ----------
-        fh : None, int, list or np.ndarray
+        fh : None, int, list, np.ndarray or ForecastingHorizon
         """
         if fh is None:
             if self.is_fitted:
@@ -545,7 +545,7 @@ class _RequiredForecastingHorizonMixin:
 
         Parameters
         ----------
-        fh : None, int, list, np.ndarray
+        fh : None, int, list, np.ndarray or ForecastingHorizon
         """
 
         msg = (
@@ -737,19 +737,16 @@ class _BaseWindowForecaster(_SktimeForecaster):
 
     def _get_last_window(self):
         """Select last window"""
-        # get the start and end points of the last window
+        # Get the start and end points of the last window.
         cutoff = self.cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
 
-        # get the last window of the endogenous variable
+        # Get the last window of the endogenous variable.
         y = self._y.loc[start:cutoff].to_numpy()
 
-        # if exogenous variables are given, also get the last window of
-        # those
-        if self._X is not None:
-            X = self._X.loc[start:cutoff].to_numpy()
-        else:
-            X = None
+        # If X is given, also get the last window of the exogenous variables.
+        X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+
         return y, X
 
     @staticmethod

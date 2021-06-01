@@ -32,7 +32,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
@@ -47,7 +47,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
         X : pd.DataFrame, optional (default=None)
         return_pred_int : bool, optional (default=False)
         alpha : float or list, optional (default=0.95)
@@ -151,13 +151,14 @@ class BaseForecaster(BaseEstimator):
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def score(self, y, X=None, fh=None):
-        """Compute the sMAPE loss for the given forecasting horizon.
+        """Compute the symmetric version of mean absolute percentage error
+        for the given forecasting horizon.
 
         Parameters
         ----------
         y : pd.Series
             Target time series to which to compare the forecasts.
-        fh : int, list or array-like, optional (default=None)
+        fh : int, list, array-like or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
@@ -169,13 +170,16 @@ class BaseForecaster(BaseEstimator):
 
         See Also
         --------
-        :meth:`sktime.performance_metrics.forecasting.smape_loss`.`
+        :meth:`sktime.performance_metrics.forecasting.mean_absolute_percentage_error`
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        from sktime.performance_metrics.forecasting import smape_loss
+        # symmetric=True is default for mean_absolute_percentage_error
+        from sktime.performance_metrics.forecasting import (
+            mean_absolute_percentage_error,
+        )
 
-        return smape_loss(y, self.predict(fh, X))
+        return mean_absolute_percentage_error(y, self.predict(fh, X))
 
     def get_fitted_params(self):
         """Get fitted parameters
