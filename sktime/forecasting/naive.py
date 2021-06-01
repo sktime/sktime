@@ -193,7 +193,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                     pad_width = self.sp_ - remainder
                 else:
                     pad_width = 0
-                last_window = np.hstack([last_window, np.full(pad_width, np.nan)])
+                last_window = np.hstack([np.full(pad_width, np.nan), last_window])
 
                 # reshape last window, one column per season
                 last_window = last_window.reshape(
