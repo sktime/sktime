@@ -23,7 +23,6 @@ from sktime.forecasting.tests._config import TEST_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
-    MeanSquaredError,
     MeanAbsoluteScaledError,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -72,6 +71,8 @@ def _check_evaluate_output(out, cv, y, scoring):
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
 
 
+# Test using MAPE and MASE scorers so that tests cover a metric that doesn't
+# use y_train (MAPE) and one that does use y_train (MASE).
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
@@ -81,7 +82,6 @@ def _check_evaluate_output(out, cv, y, scoring):
     "scoring",
     [
         MeanAbsolutePercentageError(symmetric=True),
-        MeanSquaredError(),
         MeanAbsoluteScaledError(),
     ],
 )
