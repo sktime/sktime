@@ -5,7 +5,7 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
 
-DEFAULT_SMOOTHING = 0.05
+DEFAULT_SMOOTHING = 0.1
 DEFAULT_ALPHA = 0.05
 
 
@@ -83,7 +83,6 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         fh=None,
         X=None,
         return_pred_int=False,
-        smoothing=DEFAULT_SMOOTHING,
         alpha=DEFAULT_ALPHA,
     ):
         if return_pred_int or X is not None:
