@@ -119,7 +119,6 @@ class BaseROCKETEstimator(ABC):
         self._is_fitted = True
         return self
 
-
     def predict(self, X):
         self.check_is_fitted()
         X = check_X(X)
