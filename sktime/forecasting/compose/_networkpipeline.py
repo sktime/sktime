@@ -71,7 +71,7 @@ class NetworkPipelineForecaster(
                     "predict": {"X": "tabularizer"},
                 },
             ),
-        ]
+        ])
 
     See the tests folder for a working implementations of these examples.
     """
@@ -139,7 +139,6 @@ class NetworkPipelineForecaster(
 
     def fit(self, y, X=None, fh=None):
         self._set_y_X(y, X)
-
         self._set_fh(fh)
         for name, alg, arguments in self._iter():
             processed_arguments = {}
@@ -166,6 +165,7 @@ class NetworkPipelineForecaster(
                 out = alg.fit_transform(**processed_arguments)
                 self._step_results[name] = out
                 self._is_fitted = True
+            processed_arguments["fh"] = self._fh
             # estimators have fit and predict methods
             if hasattr(alg, "fit") and hasattr(alg, "predict"):
                 alg.fit(**processed_arguments)
@@ -250,7 +250,7 @@ class NetworkPipelineForecaster(
             Parameter names mapped to their values.
         """
 
-        return self._get_params("steps", deep=deep)
+        return {"steps": self.steps}
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -259,7 +259,11 @@ class NetworkPipelineForecaster(
         -------
         self
         """
-        self._set_params("steps", **kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        return self
+        # super().set_params(**kwargs)
+        # self._set_params("steps", **kwargs)
 
     def get_fitted_params(self):
         raise NotImplementedError()
