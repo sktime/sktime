@@ -8,7 +8,6 @@ __all__ = ["ROCKETRegressor"]
 import numpy as np
 from sklearn.linear_model import RidgeCV
 
-
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators.shapelet_based._rocket_estimator import (
     BaseROCKETEstimator,
