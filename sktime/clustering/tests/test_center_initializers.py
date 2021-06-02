@@ -13,5 +13,5 @@ X, Y = load_from_tsfile_to_dataframe(
 
 
 def test_random_cluster_center_initializer():
-    random_clusters = RandomCenterInitializer.initialize_centers(X, 10)
-    return random_clusters
+    random_clusters = RandomCenterInitializer(X, 10)
+    random_clusters.initialize_centers()
