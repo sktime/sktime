@@ -166,7 +166,7 @@ def _is_int_index(index):
 
 
 def check_consistent_index_type(*idx):
-    """Check that index types are compatible for plotting.
+    """Check that index types are consistent with each other.
 
     Parameters
     ----------
@@ -178,8 +178,6 @@ def check_consistent_index_type(*idx):
     TypeError
         If index types are inconsistent
     """
-    # check types, note that isinstance() does not work here because index
-    # types inherit from each other, hence we check for type equality
     msg = "Please make sure that all series have consistent index type."
 
     if _is_int_index(idx[1]):
@@ -187,5 +185,7 @@ def check_consistent_index_type(*idx):
             raise TypeError(msg)
 
     else:
+        # check types, note that isinstance() does not work here because index
+        # types inherit from each other, hence we check for type equality
         if not type(idx[0]) is type(idx[1]):  # noqa
             raise TypeError(msg)

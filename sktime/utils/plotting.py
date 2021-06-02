@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""Function for plotting one or more time series."""
+"""Functionality for plotting one or more time series."""
+
+__all__ = ["plot_series"]
+__author__ = ["Markus Löning"]
 
 import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_consistent_index_type
-
-__all__ = ["plot_series"]
-__author__ = ["Markus Löning"]
 
 
 def plot_series(*series, labels=None, markers=None):
@@ -25,7 +25,7 @@ def plot_series(*series, labels=None, markers=None):
         Names of series, will be displayed in figure legend
     markers: list, optional (default=None)
         Markers of data points, if None the marker "o" is used by default.
-        lenght of list has to match with number of series
+        The length of the list has to match with the number of series.
 
     Returns
     -------
