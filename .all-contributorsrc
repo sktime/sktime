@@ -1001,7 +1001,26 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "ckastner",
+      "name": "Christian Kastner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15859947?v=4",
+      "profile": "https://github.com/ckastner",
+      "contributions": [
+        "code",
+        "bug",
+      ]
+    },
+    {
+      "login": "chrisholder",
+      "name": "Christopher Holder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4674372?s=400&u=159e0ee961a290e3a0b9d20434d98439ade6adbc&v=4",
+      "profile": "https://github.com/chrisholder",
+      "contributions": [
+        "clustering"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
