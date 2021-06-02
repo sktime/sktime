@@ -793,6 +793,8 @@ def load_PBS_dataset():
 
     name = "PBS_dataset"
     fname = name + ".csv"
+    MODULE, filename = os.path.split(os.path.realpath(__file__))
+    # MODULE variable to be removed once dataset merged with sktime package
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
 
