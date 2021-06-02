@@ -84,6 +84,7 @@ class BaseROCKETEstimator(ABC):
     @property
     @abstractmethod
     def base_estimator(self):
+        # set in ROCKET classifier and ROCKET regressor
         pass
 
     def fit(self, X, y):
