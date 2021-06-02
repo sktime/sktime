@@ -5,7 +5,8 @@ import sktime
 from sktime.clustering._averaging_metrics import BarycenterAveraging, MeanAveraging
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 from sktime.utils.data_processing import from_nested_to_2d_array
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 
 DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
 X, Y = load_from_tsfile_to_dataframe(
@@ -22,11 +23,12 @@ def test_barycenter_averaging():
     values = from_nested_to_2d_array(sub_section, return_numpy=True)
 
     BCA = BarycenterAveraging(values)
-    average_series = BCA.average()
+    BCA.average()
+    # average_series = BCA.average()
 
-    plt.figure()
-    plt.plot(range(0, len(average_series)), average_series)
-    plt.show()
+    # plt.figure()
+    # plt.plot(range(0, len(average_series)), average_series)
+    # plt.show()
 
 
 def test_mean_averaging():
@@ -34,8 +36,9 @@ def test_mean_averaging():
     values = from_nested_to_2d_array(sub_section, return_numpy=True)
 
     mean = MeanAveraging(values)
-    average_series = mean.average()
+    mean.average()
 
-    plt.figure()
-    plt.plot(range(0, len(average_series)), average_series)
-    plt.show()
+    # average_series = mean.average()
+    # plt.figure()
+    # plt.plot(range(0, len(average_series)), average_series)
+    # plt.show()
