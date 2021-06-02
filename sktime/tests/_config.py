@@ -24,13 +24,16 @@ from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
-from sktime.classification.shapelet_based import ROCKETClassifier
+from sktime.classification.kernel_based import ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
+from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
 from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
@@ -48,7 +51,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
-from sktime.performance_metrics.forecasting import sMAPE
+from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
@@ -136,6 +139,7 @@ ESTIMATOR_TEST_PARAMS = {
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
     MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
     RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
+    DirRecTabularRegressionForecaster: {"estimator": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
@@ -143,6 +147,9 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     MultioutputTimeSeriesRegressionForecaster: {
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
+    },
+    DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     TransformedTargetForecaster: {"steps": STEPS},
@@ -153,13 +160,13 @@ ESTIMATOR_TEST_PARAMS = {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
-        "scoring": sMAPE(),
+        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     ForecastingRandomizedSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_distributions": {"window_length": [2, 5]},
-        "scoring": sMAPE(),
+        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
@@ -205,6 +212,7 @@ ESTIMATOR_TEST_PARAMS = {
         "max_shapelet_length": 4,
     },
     ROCKETClassifier: {"num_kernels": 100},
+    Arsenal: {"num_kernels": 100},
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,

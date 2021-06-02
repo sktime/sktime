@@ -7,6 +7,7 @@ __all__ = ["ROCKETClassifier"]
 
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
+
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators.shapelet_based._rocket_estimator import (
     BaseROCKETEstimator,
@@ -17,23 +18,20 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
     """
     Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
     base classifier.
-    Allows the creation of an ensemble of ROCKET classifiers to allow for
-    generation of probabilities as the expense of scalability.
 
     Parameters
     ----------
     num_kernels             : int, number of kernels for ROCKET transform
     (default=10,000)
-    ensemble                : boolean, create ensemble of ROCKET's (default=False)
-    ensemble_size           : int, size of the ensemble (default=25)
+    n_jobs                  : int, optional (default=1)
+    The number of jobs to run in parallel for both `fit` and `predict`.
+    ``-1`` means using all processors.
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
     Attributes
     ----------
-    classifiers             : array of IndividualTDE classifiers
-    weights                 : weight of each classifier in the ensemble
-    weight_sum              : sum of all weights
+    classifier              : ROCKET classifier
     n_classes               : extracted from the data
 
     Notes
@@ -49,11 +47,10 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
 
     Java version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/classifiers/hybrids/ROCKETClassifier.java
+    tsml/classifiers/shapelet_based/ROCKETClassifier.java
 
     """
 
-    # Used in BaseROCKETEstimator
     @property
     def base_estimator(self):
         return RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
