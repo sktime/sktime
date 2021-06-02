@@ -37,6 +37,7 @@ from sktime.clustering._center_initializers import (
 )
 from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.clustering._averaging_metrics import BarycenterAveraging, MeanAveraging
+from sktime.clustering._utils import compute_pairwise_distances
 
 __author__ = "Christopher Holder"
 
@@ -223,7 +224,12 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
         centers = from_nested_to_2d_array(self.__centers, return_numpy=True)
 
         for i in range(len(X)):
-            pairwise_min = pairwise_distances_argmin_min([X[i]], centers, self.metric)
+            pairwise_min = compute_pairwise_distances(
+                metric=self.metric,
+                X=[X[i]],
+                Y=centers,
+                pairwise_func=pairwise_distances_argmin_min,
+            )
             clusters_index[pairwise_min[0][0]].append(i)
 
         return clusters_index
