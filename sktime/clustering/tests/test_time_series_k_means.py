@@ -19,6 +19,8 @@ X_test, Y_test = load_from_tsfile_to_dataframe(
 
 
 # import matplotlib.pyplot as plt
+#
+#
 # def plot_test(clusters, center):
 #     for cluster in clusters["dim_0"]:
 #         cluster.plot(color="b")
@@ -28,8 +30,10 @@ X_test, Y_test = load_from_tsfile_to_dataframe(
 
 
 def test_k_means():
-    model = TimeSeriesKMeans(n_clusters=5, max_iter=300)
-    model.fit(X)
+    sub_section = X.sample(n=10)
+    # model = TimeSeriesKMeans(n_clusters=5, max_iter=100, averaging_algorithm="dba")
+    model = TimeSeriesKMeans(n_clusters=5, max_iter=50, averaging_algorithm="mean")
+    model.fit(sub_section)
     indexes = model.predict(X_test)
     centers = model.get_centers()
     # for i in range(len(indexes)):
@@ -38,6 +42,4 @@ def test_k_means():
     #     plot_test(series, center)
 
     # This is just temp to get it past initial linting errors
-    if indexes is not None and centers is not None:
-        return True
-    return False
+    return indexes is not None and centers is not None

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 from typing import List
 import pandas as pd
 
+from sklearn.metrics.pairwise import (
+    pairwise_distances_argmin_min,
+)
 from sktime.clustering.base.base_types import (
     Metric_Parameter,
     Metric_Function_Dict,
@@ -15,6 +17,8 @@ from sktime.clustering.base.base import (
     ClusterMixin,
     Init_Algo,
     Init_Algo_Dict,
+    Averaging_Algo,
+    Averaging_Algo_Dict,
 )
 from sktime.distances.elastic_cython import (
     ddtw_distance,
@@ -29,31 +33,29 @@ from sktime.distances.elastic_cython import (
 from sktime.distances.mpdist import mpdist
 from sktime.clustering.base.base import BaseClusterCenterInitializer
 from sktime.clustering._center_initializers import (
-    RandomBaseClusterCenterInitializer,
-    KMeansPlusPlusInitializerBaseCluster,
+    RandomCenterInitializer,
 )
 from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.clustering._averaging_metrics import BarycenterAveraging, MeanAveraging
+
+__author__ = "Christopher Holder"
 
 
 class TimeSeriesKMeans(BaseCluster, ClusterMixin):
     """
     TODO:
     Algorithm specific:
-    Need to implement alternative averaging methods i.e. (barycenter
-    averaging) for dtw.
 
     Need to implement more init algorithms i.e. (K means ++)
 
     Probably want to rerun the algorithm multiple times and take the
     best result as the init can be so impactful on final result
 
-    Improve efficiency of distance calculation either want to precompute
-    or ideally use a pairwise with the sktime distances (I dont know
-    if this is already a thing in sktime)
-
     Multivariate support. While I've coded this with the intention to
     support it I doubt it will work with multivariate so need to code
     and improve that
+
+    Fix the future warning from sklearn
 
     Validation/practices:
     Check params
@@ -74,9 +76,14 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
         "mpdist": mpdist,
     }
 
+    # "k_means_plus_plus": KMeansPlusPlusCenterInitializer,
     __init_algorithms: Init_Algo_Dict = {
-        "random": RandomBaseClusterCenterInitializer,
-        "k_means_plus_plus": KMeansPlusPlusInitializerBaseCluster,
+        "random": RandomCenterInitializer,
+    }
+
+    __averaging_algorithm_dict: Averaging_Algo_Dict = {
+        "dba": BarycenterAveraging,
+        "mean": MeanAveraging,
     }
 
     def __init__(
@@ -87,14 +94,10 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
         max_iter: int = 300,
         verbose: bool = False,
         metric: Metric_Parameter = "dtw",
+        averaging_algorithm: Averaging_Algo = "auto",
     ):
         """
-
-        TODO:
-        Add kmeans++ initilisation and potentially some other
-        initialisations
-        Add multivariate support
-        Optimisation
+        Constructor for time_series_k_means clusterer
 
         Parameters
         ----------
@@ -129,12 +132,28 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
                 'eucli' = euclidean distance,
                 'dtw' = DTW distance
 
+            averaging_algorithm: Averaging_Algo
+                The method used to create the average from a cluster
+
         """
         if isinstance(init_algorithm, str):
             init_algorithm = TimeSeriesKMeans.__init_algorithms[init_algorithm]
 
+        metric_str = None
         if isinstance(metric, str):
+            metric_str = metric
             metric = TimeSeriesKMeans.__metric_dict[metric]
+
+        if isinstance(averaging_algorithm, str):
+            if metric_str is not None and averaging_algorithm == "auto":
+                if metric_str == "dtw":
+                    averaging_algorithm = "dba"
+                else:
+                    averaging_algorithm = "mean"
+
+            self.averaging_algorithm = TimeSeriesKMeans.__averaging_algorithm_dict[
+                averaging_algorithm
+            ]
 
         self.n_clusters: int = n_clusters
         self.n_init: int = n_init
@@ -146,24 +165,56 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
         self.__centers: Data_Frame = None
 
     def fit(self, X: Data_Frame) -> None:
-        self.__centers = self.init_algorithm.initialize_centers(X, self.n_clusters)
-        if self.verbose:
-            print("Initialization complete")
+        """
+        Method that is used to fir the time seires k-means
+        clustering algorithm on dataset X
+
+        Parameters
+        ----------
+        X: Data_Frame
+            sktime data_frame to train the model on
+        """
+        center_algo: BaseClusterCenterInitializer = self.init_algorithm(
+            X, self.n_clusters
+        )
+        self.__centers = center_algo.initialize_centers()
 
         for _ in range(self.max_iter):
             self.__update_centers(X)
 
-        if self.verbose:
-            print("Created centers")
-
     def predict(self, X: Data_Frame) -> Series:
+        """
+        Method used to perfor a prediction from the trained
+        time series k-means clustering algorithm
+
+        Parameters
+        ----------
+        X: Data_Frame
+            sktime data_frame to predict clusters for
+
+        Returns
+        -------
+        List[List[int]]
+            2d array, each sub list contains the indexes that
+            belong to that cluster
+        """
         if self.__centers is None:
             raise Exception("Fit must be run before predict")
 
         data = from_nested_to_2d_array(X, return_numpy=True)
         return self.__cluster_data(data)
 
-    def get_centers(self):
+    def get_centers(self) -> Data_Frame:
+        """
+        Method used to get the centers of the clustering
+        algorithm
+
+        Returns
+        -------
+        Data_Frame
+            sktime data_frame containing the centers of the
+            clusters
+        """
         return self.__centers
 
     def __cluster_data(self, X: Numpy_Array) -> List[List[int]]:
@@ -172,21 +223,8 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
         centers = from_nested_to_2d_array(self.__centers, return_numpy=True)
 
         for i in range(len(X)):
-            series = X[i]
-            curr_min = None
-            curr_min_index = 0
-
-            for j in range(self.n_clusters):
-                center = centers[j]
-                curr_dist = self.metric(np.array([center]), np.array([series]))
-
-                if curr_min is None:
-                    curr_min = curr_dist
-                elif curr_dist < curr_min:
-                    curr_min = curr_dist
-                    curr_min_index = j
-
-            clusters_index[curr_min_index].append(i)
+            pairwise_min = pairwise_distances_argmin_min([X[i]], centers, self.metric)
+            clusters_index[pairwise_min[0][0]].append(i)
 
         return clusters_index
 
@@ -198,10 +236,8 @@ class TimeSeriesKMeans(BaseCluster, ClusterMixin):
         for i in range(len(cluster_indexes)):
             cluster_index = cluster_indexes[i]
             values = from_nested_to_2d_array(X.iloc[cluster_index], return_numpy=True)
-            average = [pd.Series(values.mean(axis=0))]
-            # NOTE: For DTW you have to do barycenter averaging
-            # the below is temporary while I figure out how to
-            # implement that
+            average_algo: Averaging_Algo = self.averaging_algorithm(values)
+            average = [pd.Series(average_algo.average())]
             new_centers.append(average)
 
         new_centers = pd.DataFrame(new_centers)
