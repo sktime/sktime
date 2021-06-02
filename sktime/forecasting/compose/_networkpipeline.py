@@ -4,7 +4,7 @@ from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.utils.validation.forecasting import check_y, check_X
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-
+from sklearn.base import clone
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["NetworkPipelineForecaster"]
@@ -28,9 +28,9 @@ class NetworkPipelineForecaster(
     steps : array of lists
         list comprised of three elements:
             1. name of step (string),
-            2. algorithm (object),
+            2. estimator (object),
             3. arguments (dictionary) key value paris for
-            fit_transform or predict method of algorithm
+            fit_transform or predict method of estimator
 
     Examples
     --------
@@ -82,11 +82,12 @@ class NetworkPipelineForecaster(
     def __init__(self, steps):
         self.steps = steps
         self._step_results = {}
+        self._fitted_estimators = {}
         super().__init__()
 
     def _iter(self):
-        for name, alg, arguments in self.steps:
-            yield name, alg, arguments
+        for name, est, arguments in self.steps:
+            yield name, est, arguments
 
     def _check_steps_for_values(self, step_name):
         if step_name in self._step_results:
@@ -105,7 +106,7 @@ class NetworkPipelineForecaster(
         Parameters
         ----------
         arguments : dictionary
-            key-value for fit() method of algorithm
+            key-value for fit() method of estimator
         """
 
         returned_arguments_kwarg = arguments.copy()
@@ -140,7 +141,7 @@ class NetworkPipelineForecaster(
     def fit(self, y, X=None, fh=None):
         self._set_y_X(y, X)
         self._set_fh(fh)
-        for name, alg, arguments in self._iter():
+        for name, est, arguments in self._iter():
             processed_arguments = {}
 
             if "fit" in arguments and arguments["fit"] is None:
@@ -161,25 +162,31 @@ class NetworkPipelineForecaster(
                 del processed_arguments["X"]
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
-            if hasattr(alg, "fit_transform"):
-                out = alg.fit_transform(**processed_arguments)
+            if hasattr(est, "fit_transform"):
+                t = clone(est)
+                out = t.fit_transform(**processed_arguments)
                 self._step_results[name] = out
-                self._is_fitted = True
+                self._fitted_estimators[name] = t
             processed_arguments["fh"] = self._fh
             # estimators have fit and predict methods
-            if hasattr(alg, "fit") and hasattr(alg, "predict"):
-                alg.fit(**processed_arguments)
-                self._is_fitted = True
+            if hasattr(est, "fit") and hasattr(est, "predict"):
+                f = clone(est)
+                f.fit(**processed_arguments)
+                self._fitted_estimators[name] = f
 
+        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        self._set_fh(fh)
+        # self._set_fh(fh)
+
         if X is not None:
             self._X = X
-        for name, alg, arguments in self._iter():
+        for name, est, arguments in self._iter():
             processed_arguments = {}
-
+            # estimator in self.steps is not fitted.
+            # use fitted estimator in self._fitted_estimators
+            est = self._fitted_estimators[name]
             if "predict" in arguments and arguments["predict"] is None:
                 # this step must be skipped
                 continue
@@ -187,11 +194,11 @@ class NetworkPipelineForecaster(
                 processed_arguments = self._process_arguments(arguments["predict"])
             else:
                 processed_arguments = self._process_arguments(arguments)
-            if hasattr(alg, "transform"):
-                self._step_results[name] = alg.transform(**processed_arguments)
-            if hasattr(alg, "predict"):
+            if hasattr(est, "transform"):
 
-                pred = alg.predict(
+                self._step_results[name] = est.transform(**processed_arguments)
+            if hasattr(est, "predict"):
+                pred = est.predict(
                     **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
                 )
                 # pred.index.freq = self._y.index.freq
@@ -214,7 +221,11 @@ class NetworkPipelineForecaster(
         """
         self.check_is_fitted()
         self._update_y_X(y, X)
-        for name, alg, arguments in self._iter():
+
+        for name, est, arguments in self._iter():
+            # estimator in self.steps is not fitted.
+            # use fitted estimator in self._fitted_estimators
+            est = self._fitted_estimators[name]
             if "update" in arguments and arguments["update"] is None:
                 # this step must be skipped
                 continue
@@ -226,15 +237,14 @@ class NetworkPipelineForecaster(
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
 
-            if hasattr(alg, "update"):
-                out = alg.update(**processed_arguments)
+            if hasattr(est, "update"):
+                out = est.update(**processed_arguments)
                 self._step_results[name] = out
                 self._is_fitted = True
             # estimators have fit and predict methods
-            if hasattr(alg, "update") and hasattr(alg, "predict"):
-                alg.update(**processed_arguments)
-                self._is_fitted = True
-
+            if hasattr(est, "update") and hasattr(est, "predict"):
+                est.update(**processed_arguments)
+        self._is_fitted = True
         return self
 
     def get_params(self, deep=True):
