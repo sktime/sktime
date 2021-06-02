@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
+"""Functions for checking input data."""
+
 __author__ = ["Markus Löning"]
 __all__ = [
     "check_series",
@@ -17,7 +19,7 @@ VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIn
 
 
 def _check_is_univariate(y):
-    """Check if series is univariate"""
+    """Check if series is univariate."""
     if isinstance(y, pd.DataFrame):
         raise ValueError("Data must be univariate, but found a pd.DataFrame")
     if isinstance(y, np.ndarray) and y.ndim > 1:
@@ -147,7 +149,6 @@ def check_equal_time_index(*ys):
     ValueError
         If (time) indices are not the same
     """
-
     # only validate indices if data is passed as pd.Series
     first_index = ys[0].index
     check_time_index(first_index)
@@ -160,7 +161,7 @@ def check_equal_time_index(*ys):
 
 
 def _is_int_index(index):
-    """Check if index type is one of pd.RangeIndex or pd.Int64Index"""
+    """Check if index type is one of pd.RangeIndex or pd.Int64Index."""
     return type(index) in (pd.Int64Index, pd.RangeIndex)
 
 
@@ -177,7 +178,6 @@ def check_consistent_index_type(*idx):
     TypeError
         If index types are inconsistent
     """
-
     # check types, note that isinstance() does not work here because index
     # types inherit from each other, hence we check for type equality
     msg = "Please make sure that all series have consistent index type."

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+"""Function for plotting one or more time series."""
+
 import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -12,7 +15,7 @@ __author__ = ["Markus Löning"]
 
 
 def plot_series(*series, labels=None, markers=None):
-    """Plot one or more time series
+    """Plot one or more time series.
 
     Parameters
     ----------
@@ -22,7 +25,7 @@ def plot_series(*series, labels=None, markers=None):
         Names of series, will be displayed in figure legend
     markers: list, optional (default=None)
         Markers of data points, if None the marker "o" is used by default.
-        Lenght of list has to match with number of series
+        lenght of list has to match with number of series
 
     Returns
     -------
