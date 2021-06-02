@@ -8,7 +8,6 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
 
 .. automodule:: sktime.forecasting
     :no-members:
-    :no-inherited-members:
 
 Base
 ----
@@ -132,8 +131,8 @@ Composition
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
-    DirRecTabularRegressionForecaster,
-    DirRecTimeSeriesRegressionForecaster,
+    DirRecTabularRegressionForecaster
+    DirRecTimeSeriesRegressionForecaster
     StackingForecaster
     MultiplexForecaster
 
