@@ -15,7 +15,7 @@ X_test, Y_test = load_from_tsfile_to_dataframe(
     os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TEST.ts")
 )
 
-plot_results = False
+plot_results = True
 
 
 def __run_test(model: TimeSeriesKMedoids):
