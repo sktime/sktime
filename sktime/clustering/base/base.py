@@ -83,7 +83,7 @@ class BaseClusterCenterInitializer:
 
 
 class BaseClusterAverage:
-    def __init__(self, series):
+    def __init__(self, series: Numpy_Array, n_iterations: int = 10):
         """
         Constructor for BaseClusterAverage
 
@@ -92,6 +92,7 @@ class BaseClusterAverage:
         series: Numpy_Array
             Set of series to generate a average from
         """
+        self.n_iterations = 10
         self.series = series
 
     def average(self) -> Numpy_Array:
@@ -102,6 +103,9 @@ class BaseClusterAverage:
         -------
         Numpy_Array
             Created array denoting the average
+
+        n_iterations: int
+            Number of iterations to refine the average
         """
         raise NotImplementedError("abstract method")
 

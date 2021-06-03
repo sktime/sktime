@@ -2,7 +2,10 @@
 import os
 import sktime
 
-from sktime.clustering._averaging_metrics import BarycenterAveraging, MeanAveraging
+from sktime.clustering.partitioning._averaging_metrics import (
+    BarycenterAveraging,
+    MeanAveraging,
+)
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 from sktime.utils.data_processing import from_nested_to_2d_array
 
