@@ -9,7 +9,7 @@ __author__ = "Christopher Holder"
 
 
 class MeanAveraging(BaseClusterAverage):
-    def __init__(self, series: Numpy_Array):
+    def __init__(self, series: Numpy_Array, n_iterations: int = 10):
         """
         Constructor for mean averaging
 
@@ -17,8 +17,11 @@ class MeanAveraging(BaseClusterAverage):
         ----------
         series: Numpy_Array
             Series to get the mean of
+
+        n_iterations: int
+            Number of iterations to refine the average
         """
-        super(MeanAveraging, self).__init__(series)
+        super(MeanAveraging, self).__init__(series, n_iterations)
 
     def average(self):
         """
@@ -68,10 +71,9 @@ class BarycenterAveraging(BaseClusterAverage):
             The series to find the DBA average of
 
         n_iterations: int
-            Number of iterations to refine the center
+            Number of iterations to refine the average
         """
-        super(BarycenterAveraging, self).__init__(series)
-        self.n_iterations = n_iterations
+        super(BarycenterAveraging, self).__init__(series, n_iterations)
 
     def average(self):
         """
