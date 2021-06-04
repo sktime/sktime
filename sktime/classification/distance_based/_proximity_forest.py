@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Proximity Forest time series classifier
-a decision tree forest which uses distance measures to partition data.
-B. Lucas and A. Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals,
-F. Petitjean and G. Webb
-Proximity Forest: an effective and scalable distance-based classifier for
-time series,
-Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
+"""Proximity Forest time series classifier.
+
+A decision tree forest which uses distance measures to partition data.
 """
 
 # linkedin.com/goastler; github.com/goastler
@@ -43,7 +39,6 @@ from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
-
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
 # todo get params avoid func pointer - use name
@@ -53,15 +48,16 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class _CachedTransformer(_PanelToPanelTransformer):
-    """Transformer container that transforms data and adds the transformed
-    version to a cache.
-    If the transformation is called again on already seen data the data is
-    fetched
-    from the cache rather than performing the expensive transformation.
+    """Transformer container.
+
+    Transforms data and adds the transformed version to a cache. If the
+    transformation is called again on already seen data the data is
+    fetched from the cache rather than performing the expensive transformation.
 
     Parameters
     ----------
     transformer : the transformer to transform uncached data
+
     Attributes
     ----------
     cache       : location to store transforms seen before for fast look up
@@ -76,14 +72,11 @@ class _CachedTransformer(_PanelToPanelTransformer):
         super(_CachedTransformer, self).__init__()
 
     def clear(self):
-        """
-        clear the cache
-        """
+        """Clear the cache."""
         self.cache = {}
 
     def transform(self, X, y=None):
-        """
-        Fit transformer, creating a cache for transformation.
+        """Fit transformer, creating a cache for transformation.
 
         Parameters
         ----------
@@ -120,12 +113,13 @@ class _CachedTransformer(_PanelToPanelTransformer):
         return cached_instances
 
     def __str__(self):
+        """Return the transformer string."""
         return self.transformer.__str__()
 
 
 def _derivative_distance(distance_measure, transformer):
-    """
-    take derivative before conducting distance measure
+    """Take derivative before conducting distance measure.
+
     :param distance_measure: the distance measure to use
     :param transformer: the transformer to use
     :return: a distance measure function with built in transformation
@@ -142,8 +136,8 @@ def _derivative_distance(distance_measure, transformer):
 
 
 def distance_predefined_params(distance_measure, **params):
-    """
-    conduct distance measurement with a predefined set of parameters
+    """Conduct distance measurement with a predefined set of parameters.
+
     :param distance_measure: the distance measure to use
     :param params: the parameters to use in the distance measure
     :return: a distance measure with no parameters
@@ -156,9 +150,9 @@ def distance_predefined_params(distance_measure, **params):
 
 
 def cython_wrapper(distance_measure):
-    """
-    wrap a distance measure in cython conversion (to 1 column per dimension
-    format)
+    """Wrap a distance measure in cython conversion.
+
+     Converts to 1 column per dimension format.
     :param distance_measure: distance measure to wrap
     :return: a distance measure which automatically formats data for cython
     distance measures
@@ -183,16 +177,15 @@ def cython_wrapper(distance_measure):
 
 
 def pure(y):
-    """
-    test whether a set of class labels are pure (i.e. all the same)
-    ----
+    """Test whether a set of class labels are pure (i.e. all the same).
+
     Parameters
-    ----
+    ----------
     y : 1d array like
         array of class labels
-    ----
+
     Returns
-    ----
+    -------
     result : boolean
         whether the set of class labels is pure
     """
@@ -203,18 +196,17 @@ def pure(y):
 
 
 def gini_gain(y, y_subs):
-    """
-    get gini score of a split, i.e. the gain from parent to children
-    ----
+    """Get gini score of a split, i.e. the gain from parent to children.
+
     Parameters
-    ----
+    ----------
     y : 1d array like
         array of class labels at parent
     y_subs : list of 1d array like
         list of array of class labels, one array per child
-    ----
+
     Returns
-    ----
+    -------
     score : float
         gini score of the split from parent class labels to children. Note a
         higher score means better gain,
@@ -248,16 +240,15 @@ def gini_gain(y, y_subs):
 
 
 def gini(y):
-    """
-    get gini score at a specific node
-    ----
+    """Get gini score at a specific node.
+
     Parameters
-    ----
+    ----------
     y : 1d numpy array
         array of class labels
-    ----
+
     Returns
-    ----
+    -------
     score : float
         gini score for the set of class labels (i.e. how pure they are). A
         larger score means more impurity. Zero means
@@ -280,17 +271,16 @@ def gini(y):
 
 
 def get_one_exemplar_per_class_proximity(proximity):
-    """
-    unpack proximity object into X, y and random_state for picking exemplars.
-    ----
+    """Unpack proximity object into X, y and random_state for picking exemplars.
+
     Parameters
-    ----
+    ----------
     proximity : Proximity object
         Proximity like object containing the X, y and random_state variables
         required for picking exemplars.
-    ----
+
     Returns
-    ----
+    -------
     result : function
         function choosing one exemplar per class
     """
@@ -298,11 +288,10 @@ def get_one_exemplar_per_class_proximity(proximity):
 
 
 def get_one_exemplar_per_class(X, y, random_state):
-    """
-    Pick one exemplar instance per class in the dataset.
-    ----
+    """Pick one exemplar instance per class in the dataset.
+
     Parameters
-    ----
+    ----------
     X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
             the column _dim_to_use is extracted
@@ -310,9 +299,9 @@ def get_one_exemplar_per_class(X, y, random_state):
         The class labels.
     random_state : numpy RandomState
         a random state for sampling random numbers
-    ----
+
     Returns
-    ----
+    -------
     chosen_instances : list
         list of the chosen exemplar instances.
     chosen_class_labels : array
@@ -340,8 +329,8 @@ def get_one_exemplar_per_class(X, y, random_state):
 
 
 def dtw_distance_measure_getter(X):
-    """
-    generate the dtw distance measure
+    """Generate the dtw distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -352,8 +341,8 @@ def dtw_distance_measure_getter(X):
 
 
 def msm_distance_measure_getter(X):
-    """
-    generate the msm distance measure
+    """Generate the msm distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -467,8 +456,8 @@ def msm_distance_measure_getter(X):
 
 
 def erp_distance_measure_getter(X):
-    """
-    generate the erp distance measure
+    """Generate the erp distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -487,8 +476,8 @@ def erp_distance_measure_getter(X):
 
 
 def lcss_distance_measure_getter(X):
-    """
-    generate the lcss distance measure
+    """Generate the lcss distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -507,8 +496,8 @@ def lcss_distance_measure_getter(X):
 
 
 def twe_distance_measure_getter(X):
-    """
-    generate the twe distance measure
+    """Generate the twe distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -531,8 +520,8 @@ def twe_distance_measure_getter(X):
 
 
 def wdtw_distance_measure_getter(X):
-    """
-    generate the wdtw distance measure
+    """Generate the wdtw distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -543,8 +532,8 @@ def wdtw_distance_measure_getter(X):
 
 
 def euclidean_distance_measure_getter(X):
-    """
-    generate the ed distance measure
+    """Generate the ed distance measure.
+
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
@@ -552,9 +541,9 @@ def euclidean_distance_measure_getter(X):
 
 
 def setup_wddtw_distance_measure_getter(transformer):
-    """
-    generate the wddtw distance measure by baking the derivative transformer
-    into the wdtw distance measure
+    """Generate the wddtw distance measure.
+
+    Bakes the derivative transformer into the dtw distance measure
     :param transformer: the transformer to use
     :return: a getter to produce the distance measure
     """
@@ -571,9 +560,9 @@ def setup_wddtw_distance_measure_getter(transformer):
 
 
 def setup_ddtw_distance_measure_getter(transformer):
-    """
-    generate the ddtw distance measure by baking the derivative transformer
-    into the dtw distance measure
+    """Generate the ddtw distance measure.
+
+    Bakes the derivative transformer into the dtw distance measure
     :param transformer: the transformer to use
     :return: a getter to produce the distance measure
     """
@@ -590,8 +579,8 @@ def setup_ddtw_distance_measure_getter(transformer):
 
 
 def setup_all_distance_measure_getter(proximity):
-    """
-    setup all distance measure getter functions from a proximity object
+    """All distance measure getter functions from a proximity object.
+
     :param proximity: a PT / PF / PS
     :return: a list of distance measure getters
     """
@@ -609,8 +598,8 @@ def setup_all_distance_measure_getter(proximity):
     ]
 
     def pick_rand_distance_measure(proximity):
-        """
-        generate a distance measure from a range of parameters
+        """Generate a distance measure from a range of parameters.
+
         :param proximity: proximity object containing distance measures,
         ranges and dataset
         :return: a distance measure with no parameters
@@ -628,11 +617,13 @@ def setup_all_distance_measure_getter(proximity):
 
 
 def pick_rand_param_perm_from_dict(param_pool, random_state):
-    """
-    pick a parameter permutation given a list of dictionaries contain
-    potential values OR a list of values OR a
-    distribution of values (a distribution must have the .rvs() function to
-    sample values)
+    """Pick a parameter permutation.
+
+    Given a list of dictionaries contain potential values OR a list of values OR a
+    distribution of values (a distribution must have the .rvs() function to sample
+    values)
+
+    Parameters
     ----------
     param_pool : list of dicts OR list OR distribution
         parameters in the same format as GridSearchCV from scikit-learn.
@@ -643,6 +634,7 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
           'kernel': ['linear']}],
           'kernel': ['rbf']},
          ]
+
     Returns
     -------
     param_perm : dict
@@ -676,9 +668,11 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
 
 
 def pick_rand_param_perm_from_list(params, random_state):
-    """
-    get a random parameter permutation providing a distance measure and
-    corresponding parameters
+    """Get a random parameter permutation.
+
+    Permutation providing a distance measure and corresponding parameters.
+
+    Parameters
     ----------
     params : list of dicts
         parameters in the same format as GridSearchCV from scikit-learn.
@@ -688,6 +682,7 @@ def pick_rand_param_perm_from_list(params, random_state):
           {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000],
           'kernel': ['linear']}], 'kernel': ['rbf']},
          ]
+
     Returns
     -------
     permutation : dict
@@ -700,17 +695,16 @@ def pick_rand_param_perm_from_list(params, random_state):
 
 
 def best_of_n_stumps(n):
-    """
-    Generate the function to pick the best of n stump evaluations.
-    ----
+    """Generate the function to pick the best of n stump evaluations.
+
     Parameters
-    ----
+    ----------
     n : int
         the number of stumps to evaluate before picking the best. Must be 1
         or more.
-    ----
+
     Returns
-    ----
+    -------
     find_best_stump : func
         function to find the best of n stumps.
     """
@@ -718,16 +712,15 @@ def best_of_n_stumps(n):
         raise ValueError("n cannot be less than 1")
 
     def find_best_stump(proximity):
-        """
-        Pick the best of n stump evaluations.
-        ----
+        """Pick the best of n stump evaluations.
+
         Parameters
-        ----
+        ----------
         proximity : Proximity like object
             the proximity object to split data from.
-        ----
+
         Returns
-        ----
+        -------
         stump : ProximityStump
             the best stump / split of data of the n attempts.
         """
@@ -757,11 +750,12 @@ def best_of_n_stumps(n):
 
 
 class ProximityStump(BaseClassifier):
-    """
-    Proximity Stump class to model a decision stump which uses a distance
-    measure to partition data.
+    """Proximity Stump class.
 
-    Attributes:
+    Model a decision stump which uses a distance measure to partition data.
+
+    Attributes
+    ----------
         label_encoder: label encoder to change string labels to numeric indices
         y_exemplar: class label list of the exemplar instances
         X_exemplar: dataframe of the exemplar instances
@@ -795,7 +789,8 @@ class ProximityStump(BaseClassifier):
         n_jobs=1,
     ):
         """
-        construct a proximity stump
+        Construct a proximity stump.
+
         :param random_state: the random state
         :param get_exemplars: function to extract exemplars from a dataframe
         and class value list
@@ -829,8 +824,8 @@ class ProximityStump(BaseClassifier):
 
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
-        """
-        find distance between a given instance and the exemplar instances
+        """Find distance between a given instance and the exemplar instances.
+
         :param exemplars: the exemplars to use
         :param instance: the instance to compare to each exemplar
         :param distance_measure: the distance measure to provide similarity
@@ -852,10 +847,15 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def distance_to_exemplars(self, X):
-        """
-        find distance to exemplars
-        :param X: the dataset containing a list of instances
-        :return: 2d numpy array of distances from each instance to each
+        """Find distance to exemplars.
+
+        Parameters
+        ----------
+        X: the dataset containing a list of instances
+
+        Return
+        ------
+        2d numpy array of distances from each instance to each
         exemplar (instance by exemplar)
         """
         check_X(X)
@@ -879,13 +879,16 @@ class ProximityStump(BaseClassifier):
 
     def fit(self, X, y):
         """
-        Build the classifier on the training set (X, y)
+        Build the classifier on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
+
         Returns
         -------
         self : object
@@ -909,10 +912,15 @@ class ProximityStump(BaseClassifier):
         return self
 
     def find_closest_exemplar_indices(self, X):
-        """
-        find the closest exemplar index for each instance in a dataframe
-        :param X: the dataframe containing instances
-        :return: 1d numpy array of indices, one for each instance,
+        """Find the closest exemplar index for each instance in a dataframe.
+
+        Parameters
+        ----------
+        X: the dataframe containing instances
+
+        Return
+        ------
+        1d numpy array of indices, one for each instance,
         reflecting the index of the closest exemplar
         """
         check_X(X)  # todo make checks optional and propogate from forest downwards
@@ -926,10 +934,7 @@ class ProximityStump(BaseClassifier):
         return indices
 
     def grow(self):
-        """
-        grow the stump, creating branches for each exemplar
-        :return: self
-        """
+        """Grow the stump, creating branches for each exemplar."""
         n_exemplars = len(self.y_exemplar)
         indices = self.find_closest_exemplar_indices(self.X)
         self.X_branches = [None] * n_exemplars
@@ -944,8 +949,8 @@ class ProximityStump(BaseClassifier):
         return self
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -956,6 +961,7 @@ class ProximityStump(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
@@ -972,24 +978,12 @@ class ProximityStump(BaseClassifier):
 
 
 class ProximityTree(BaseClassifier):
-    """
-    Proximity Tree class to model a decision tree which uses distance
-    measures to partition data.
+    """Proximity Tree class.
 
-    @article{lucas19proximity,
-        title={Proximity Forest: an effective and scalable distance-based
-        classifier for time series},
-        author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
-        Zaidi and B. Goethals and F. Petitjean and G. Webb},
-        journal={Data Mining and Knowledge Discovery},
-        volume={33},
-        number={3},
-        pages={607--635},
-        year={2019}
-    }
-    https://arxiv.org/abs/1808.10594
+    A decision tree which uses distance measures to partition data.
 
-    Attributes:
+    Attributes
+    ----------
         label_encoder: label encoder to change string labels to numeric indices
         classes_: unique list of classes
         random_state: the random state
@@ -1029,8 +1023,8 @@ class ProximityTree(BaseClassifier):
         n_stump_evaluations=5,
         find_stump=None,
     ):
-        """
-        build a Proximity Tree object
+        """Build a Proximity Tree object.
+
         :param random_state: the random state
         :param get_exemplars: get the exemplars from a given dataframe and
         list of class labels
@@ -1073,14 +1067,16 @@ class ProximityTree(BaseClassifier):
         super(ProximityTree, self).__init__()
 
     def fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y)
+        """Build the classifier on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
+
         Returns
         -------
         self : object
@@ -1128,8 +1124,8 @@ class ProximityTree(BaseClassifier):
         return self
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -1169,9 +1165,9 @@ class ProximityTree(BaseClassifier):
 
 
 class ProximityForest(BaseClassifier):
-    """
-    Proximity Forest class to model a decision tree forest which uses
-    distance measures to partition data, see [1].
+    """Proximity Forest class.
+
+    Models a decision tree forest which uses distance measures to partition data [1].
 
     Parameters
     ----------
@@ -1199,7 +1195,6 @@ class ProximityForest(BaseClassifier):
 
     Attributes
     ----------
-
     label_encoder: label encoder to change string labels to numeric indices
     classes_: unique list of classes
     get_exemplars: function to extract exemplars from a dataframe and
@@ -1228,6 +1223,8 @@ class ProximityForest(BaseClassifier):
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -1246,17 +1243,19 @@ class ProximityForest(BaseClassifier):
         find_stump=None,
         setup_distance_measure_getter=setup_all_distance_measure_getter,
     ):
-        """
-        build a Proximity Forest object
-        :param random_state: the random state
-        :param get_exemplars: get the exemplars from a given dataframe and
+        """Build a Proximity Forest object.
+
+        Parameters
+        ----------
+        random_state: the random state
+        get_exemplars: get the exemplars from a given dataframe and
         list of class labels
-        :param distance_measure: distance measure to use
-        :param get_distance_measure: method to get the distance measure if
+        distance_measure: distance measure to use
+        get_distance_measure: method to get the distance measure if
         no already set
-        :param setup_distance_measure_getter: method to setup the distance
+        setup_distance_measure_getter: method to setup the distance
         measures based upon the dataset given
-        :param get_gain: method to find the gain of a data split
+        get_gain: method to find the gain of a data split
         :param max_depth: maximum depth of the tree
         :param is_leaf: function to decide when to mark a node as a leaf node
         :param verbosity: number reflecting the verbosity of logging
@@ -1289,8 +1288,9 @@ class ProximityForest(BaseClassifier):
         super(ProximityForest, self).__init__()
 
     def _fit_tree(self, X, y, index, random_state):
-        """
-        Build the classifierr on the training set (X, y)
+        """Build the classifierr on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed,
@@ -1299,6 +1299,7 @@ class ProximityForest(BaseClassifier):
             The class labels.
         index : index of the tree to be constructed
         random_state: random_state to send to the tree to be constructed
+
         Returns
         -------
         self : object
@@ -1323,8 +1324,9 @@ class ProximityForest(BaseClassifier):
         return tree
 
     def fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y)
+        """Build the classifier on the training set (X, y).
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
@@ -1369,8 +1371,8 @@ class ProximityForest(BaseClassifier):
 
     @staticmethod
     def _predict_proba_tree(X, tree):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -1382,6 +1384,7 @@ class ProximityForest(BaseClassifier):
             yet have
             multivariate capability.
         tree : the tree to collect predictions from
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
@@ -1389,8 +1392,8 @@ class ProximityForest(BaseClassifier):
         return tree.predict_proba(X)
 
     def predict_proba(self, X):
-        """
-        Find probability estimates for each class for all cases in X.
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]

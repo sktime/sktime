@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+"""Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
     "Ayushmaan Seth",
@@ -37,12 +38,10 @@ from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
-from sktime.utils.validation.forecasting import check_step_length
 
 
 def _concat_y_X(y, X):
-    """Helper function to concatenate y and X in preparation for sliding-window
-    transform"""
+    """Concatenate y and X prior to sliding-window transform."""
     z = y.to_numpy()
     if z.ndim == 1:
         z = z.reshape(-1, 1)
@@ -52,7 +51,7 @@ def _concat_y_X(y, X):
 
 
 def _check_fh(fh):
-    """Helper function to check fh for sliding-window transform"""
+    """Check fh prior to sliding-window transform."""
     assert fh.is_relative
     assert fh.is_all_out_of_sample()
     return fh.to_indexer().to_numpy()
@@ -61,7 +60,7 @@ def _check_fh(fh):
 def _sliding_window_transform(
     y, window_length, fh, X=None, scitype="tabular-regressor"
 ):
-    """Transform time series data `y` and `X` using sliding window.
+    """Transform time series data using sliding window.
 
     See `test_sliding_window_transform_explicit` in test_reduce.py for explicit
     example.
@@ -143,15 +142,13 @@ def _sliding_window_transform(
 
 
 class _Reducer(_BaseWindowForecaster):
-    """Base class for reducing forecasting to time series regression"""
+    """Base class for reducing forecasting to regression."""
 
     _required_parameters = ["estimator"]
 
-    def __init__(self, estimator, window_length=10, step_length=1):
+    def __init__(self, estimator, window_length=10):
         super(_Reducer, self).__init__(window_length=window_length)
         self.estimator = estimator
-        self.step_length = step_length
-        self.step_length_ = None
         self._cv = None
 
     def fit(self, y, X=None, fh=None):
@@ -168,13 +165,13 @@ class _Reducer(_BaseWindowForecaster):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : Estimator
+            An fitted instance of self.
         """
         n_timepoints = len(y)
         self._set_y_X(y, X)
         self._set_fh(fh)
 
-        self.step_length_ = check_step_length(self.step_length)
         self.window_length_ = check_window_length(self.window_length, n_timepoints)
 
         self._fit(y, X)
@@ -185,8 +182,7 @@ class _Reducer(_BaseWindowForecaster):
         raise NotImplementedError("abstract method")
 
     def _is_predictable(self, last_window):
-        """Helper function to check if we can make predictions from last
-        window"""
+        """Check if we can make predictions from last window."""
         return (
             len(last_window) == self.window_length_
             and np.sum(np.isnan(last_window)) == 0
@@ -223,13 +219,13 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
-        self : returns an instance of self.
+        self : Estimator
+            An fitted instance of self.
         """
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
@@ -465,9 +461,11 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             For this estimator, exogenous variables are ignored
+
         Returns
         -------
-        self : returns an instance of self.
+        self : Estimator
+            An fitted instance of self.
         """
         # Exogenous variables are not yet support for the dirrec strategy.
         if X is not None:
@@ -555,8 +553,7 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
 
 class DirectTabularRegressionForecaster(_DirectReducer):
     """
-    Forecasting based on reduction to tabular regression using the direct
-    strategy.
+    Direct reduction from forecasting to tabular regression.
 
     For the direct reduction strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon.
@@ -575,8 +572,7 @@ class DirectTabularRegressionForecaster(_DirectReducer):
 
 class MultioutputTabularRegressionForecaster(_MultioutputReducer):
     """
-    Forecasting based on reduction to tabular regression using the multioutput
-    strategy.
+    Multioutput reduction from forecasting to tabular regression.
 
     For the multioutput strategy, a single estimator capable of handling multioutput
     targets is fitted to all the future steps in the forecasting horizon.
@@ -595,8 +591,7 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
 
 class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     """
-    Forecasting based on reduction to tabular regression using the recursive
-    strategy.
+    Recursive reduction from forecasting to tabular regression.
 
     For the recursive strategy, a single estimator is fit for a one-step-ahead
     forecasting horizon and then called iteratively to predict multiple steps ahead.
@@ -615,10 +610,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
 class DirRecTabularRegressionForecaster(_DirRecReducer):
     """
-    Forecasting based on reduction to tabular regression with the
-    dirrec (hybrid) strategy.
+    Dir-rec reduction from forecasting to tabular regression.
 
-    For the dirrec strategy, a separate forecaster is fitted
+    For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
     for training the next forecaster, following the recusrive
@@ -638,8 +632,7 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
 
 class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     """
-    Forecasting based on reduction to time-series regression using the direct
-    strategy.
+    Direct reduction from forecasting to time-series regression.
 
     For the direct reduction strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon.
@@ -658,8 +651,7 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
 
 class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     """
-    Forecasting based on reduction to time series regression with a multioutput
-    reduction strategy.
+    Multioutput reduction from forecasting to time series regression.
 
     For the multioutput strategy, a single estimator capable of handling multioutput
     targets is fitted to all the future steps in the forecasting horizon.
@@ -678,8 +670,7 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
 
 class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
-    Forecasting based on reduction to time series regression with a recursive
-    reduction strategy.
+    Recursive reduction from forecasting to time series regression.
 
     For the recursive strategy, a single estimator is fit for a one-step-ahead
     forecasting horizon and then called iteratively to predict multiple steps ahead.
@@ -698,10 +689,9 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
 class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     """
-    Forecasting based on reduction to time-series regression with the
-    dirrec (hybrid) strategy.
+    Dir-rec reduction from forecasting to time-series regression.
 
-    For the dirrec strategy, a separate forecaster is fitted
+    For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
     for training the next forecaster, following the recusrive
@@ -724,7 +714,7 @@ def ReducedForecaster(
     estimator, scitype="infer", strategy="recursive", window_length=10, step_length=1
 ):
     """
-    Forecasting based on reduction.
+    Reduction from forecasting to tabular or time series regression.
 
     During fitting, a sliding-window approach is used to first transform the
     time series into tabular or panel data, which is then used to fit a tabular or
@@ -733,7 +723,8 @@ def ReducedForecaster(
 
     Parameters
     ----------
-    estimator : a estimator of type given by parameter scitype
+    estimator : Estimator
+        A estimator of type given by parameter scitype
     scitype : str {"infer", "tabular-regressor", "time-series-regressor"}
         Scitype of estimator.
     strategy : str {"recursive", "direct", "multioutput"}, optional
@@ -761,7 +752,7 @@ def ReducedRegressionForecaster(
     estimator, scitype, strategy="recursive", window_length=10, step_length=1
 ):
     """
-    Forecasting based on reduction.
+    Reduction from forecasting to tabular or time series regression.
 
     During fitting, a sliding-window approach is used to first transform the
     time series into tabular or panel data, which is then used to fit a tabular or
@@ -800,8 +791,7 @@ def make_reduction(
     scitype="infer",
 ):
     """
-    Create a reduction forecaster based on a tabular or time-series regression
-    estimator.
+    Make forecaster based on reduction to tabular or time-series regression.
 
     During fitting, a sliding-window approach is used to first transform the
     time series into tabular or panel data, which is then used to fit a tabular or
@@ -880,10 +870,7 @@ def _check_strategy(strategy):
 
 
 def _get_forecaster(scitype, strategy):
-    """Helper function to select forecaster for a given scientific type (
-    scitype)
-    and reduction strategy"""
-
+    """Select forecaster for a given scientific type and reduction strategy."""
     registry = {
         "tabular-regressor": {
             "direct": DirectTabularRegressionForecaster,
