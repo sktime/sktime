@@ -23,7 +23,7 @@ from sktime.forecasting.tests._config import TEST_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
-    MeanSquaredError,
+    MeanAbsoluteScaledError,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
@@ -71,16 +71,21 @@ def _check_evaluate_output(out, cv, y, scoring):
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
 
 
+# Test using MAPE and MASE scorers so that tests cover a metric that doesn't
+# use y_train (MAPE) and one that does use y_train (MASE).
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("strategy", ["refit", "update"])
 @pytest.mark.parametrize(
-    "scoring", [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
+    "scoring",
+    [
+        MeanAbsolutePercentageError(symmetric=True),
+        MeanAbsoluteScaledError(),
+    ],
 )
 def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
-    # Test a number of basic configurations
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = CV(fh, window_length, step_length=step_length)
@@ -98,7 +103,7 @@ def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, s
     for i, (train, test) in enumerate(cv.split(y)):
         f = clone(forecaster)
         f.fit(y.iloc[train], fh=fh)
-        expected[i] = scoring(y.iloc[test], f.predict())
+        expected[i] = scoring(y.iloc[test], f.predict(), y_train=y.iloc[train])
 
     np.testing.assert_array_equal(actual, expected)
 
@@ -121,7 +126,7 @@ def test_evaluate_initial_window():
     train, test = next(cv.split(y))
     f = clone(forecaster)
     f.fit(y.iloc[train], fh=fh)
-    expected = scoring(y.iloc[test], f.predict())
+    expected = scoring(y.iloc[test], f.predict(), y_Train=y.iloc[train])
     np.testing.assert_equal(actual, expected)
 
 
