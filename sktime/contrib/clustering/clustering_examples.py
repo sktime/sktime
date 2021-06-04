@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+"""Clustering usage tests and examples"""
 
 
 def test_loading():
@@ -16,3 +16,4 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
+
