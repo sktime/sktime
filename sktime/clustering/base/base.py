@@ -4,7 +4,7 @@ from sktime.clustering.base.base_types import Data_Frame, Numpy_Array
 from typing import List, Union, Mapping
 
 
-class BaseCluster:
+class BaseCluster(BaseEstimator):
     def fit(self, X: Data_Frame) -> None:
         """
         Method that is used to fit the clustering algorithm
@@ -36,7 +36,7 @@ class BaseCluster:
         raise NotImplementedError("abstract method")
 
 
-class ClusterMixin(BaseEstimator):
+class ClusterMixin:
     def fit_predict(self, X: Data_Frame) -> List[List[int]]:
         """
         Method that calls fit and then returns a prediction

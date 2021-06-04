@@ -30,7 +30,7 @@ def test_k_means_dtw_mean():
             n_clusters=5,
             max_iter=5,
             averaging_algorithm="dba",
-            averaging_algorithm_iterations=5,
+            averaging_algorithm_iterations=2,
         )
     )
     __run_test(
