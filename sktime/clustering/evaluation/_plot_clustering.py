@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from sktime.clustering.base.base_types import Data_Frame
 from sktime.clustering.base.base import BaseCluster
@@ -12,7 +12,7 @@ def __plot_test(clusters, center):
         cluster.plot(color="b")
 
     center.iloc[0].plot(color="r")
-    plt.show()
+    # plt.show()
 
 
 def plot_cluster_algorithm(model: BaseCluster, predict_series: Data_Frame):
