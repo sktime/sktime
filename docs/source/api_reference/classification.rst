@@ -7,7 +7,6 @@ The :mod:`sktime.classification` module contains algorithms and composition tool
 
 .. automodule:: sktime.classification
     :no-members:
-    :no-inherited-members:
 
 Composition
 -----------
@@ -18,7 +17,6 @@ Composition
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    TimeSeriesForestClassifier
     ColumnEnsembleClassifier
 
 Dictionary-based
@@ -62,7 +60,6 @@ Hybrid
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    Catch22ForestClassifier
     HIVECOTEV1
 
 Interval-based
@@ -74,11 +71,9 @@ Interval-based
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    TimeSeriesForest
+    TimeSeriesForestClassifier
     RandomIntervalSpectralForest
     SupervisedTimeSeriesForest
-    CanonicalIntervalForest
-    DrCIF
 
 Shapelet-based
 --------------
