@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" RandOm Convolutional KErnel Transform (ROCKET)
-"""
+"""Arsenal, an ensemble of ROCKET classifiers."""
 
 __author__ = ["Matthew Middlehurst", "Oleksii Kachaiev"]
 __all__ = ["Arsenal"]
@@ -22,10 +21,9 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class Arsenal(BaseClassifier):
-    """
-    Classifier wrapped for ensemble of ROCKET transformers using RidgeClassifierCV as
-    the base classifiers. Allows for generation of probabilities at the expense of
-    scalability.
+    """Ensemble of ROCKET transformers using RidgeClassifierCV base classifier.
+
+    Allows for generation of probabilities at the expense of scalability.
 
     Parameters
     ----------
@@ -93,9 +91,7 @@ class Arsenal(BaseClassifier):
         super(Arsenal, self).__init__()
 
     def fit(self, X, y):
-        """
-        Build an ensemble of pipelines containing the ROCKET transformer and
-        RidgeClassifierCV classifier.
+        """Build an ensemble ROCKET transformer and RidgeClassifierCV classifier.
 
         Parameters
         ----------
@@ -118,9 +114,9 @@ class Arsenal(BaseClassifier):
         base_estimator = _make_estimator(self.num_kernels, self.random_state)
         self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                _clone_estimator(base_estimator, self.random_state), X, y
+                _clone_estimator(base_estimator, self.random_state, i), X, y
             )
-            for _ in range(self.n_estimators)
+            for i in range(self.n_estimators)
         )
 
         self.weights = []
@@ -134,6 +130,20 @@ class Arsenal(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Find predictions for all cases in X. Built on top of predict_proba.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or pandas data frame.
+        If a Pandas data frame is passed, a check is performed that it only
+        has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -143,8 +153,25 @@ class Arsenal(BaseClassifier):
         )
 
     def predict_proba(self, X):
+        """Find probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is
+            performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances, num_classes] of
+        probabilities
+        """
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, coerce_to_numpy=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -153,7 +180,7 @@ class Arsenal(BaseClassifier):
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
-        return sums / (np.ones(self.n_classes) * self.weight_sum)
+        return np.around(sums / (np.ones(self.n_classes) * self.weight_sum), 8)
 
     def _get_train_probs(self, X):
         return 0
