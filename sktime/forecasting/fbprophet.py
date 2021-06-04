@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+"""Prophet forecaster by wrapping fbprophet."""
+
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
 
@@ -14,6 +16,7 @@ _check_soft_dependencies("fbprophet")
 
 class Prophet(_ProphetAdapter):
     """Prophet forecaster by wrapping fbprophet.
+
     Parameters
     ----------
     freq: String of DatetimeIndex frequency. See here for possible values:
