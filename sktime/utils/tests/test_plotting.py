@@ -15,12 +15,6 @@ y_airline_test = y_airline.iloc[y_airline.index >= "1960-01"]
 series_to_test = [y_airline, (y_airline_true, y_airline_test)]
 
 
-def _remove_axis_label_text(ax):
-    ax.set_ylabel("")
-    ax.set_xlabel("")
-    return ax
-
-
 def _plot_series(series, ax=None, **kwargs):
     if isinstance(series, tuple):
         return plot_series(*series, ax=ax, **kwargs)
@@ -131,20 +125,6 @@ def test_plot_series_output_type(series_to_plot):
     )
 
 
-@pytest.mark.mpl_image_compare(baseline_dir="_test_images", remove_text=True)
-def test_plot_single_series_image_comparison():
-    fig, ax = plot_series(y_airline)
-    ax = _remove_axis_label_text(ax)
-    return fig
-
-
-@pytest.mark.mpl_image_compare(baseline_dir="_test_images", remove_text=True)
-def test_plot_two_series_image_comparison():
-    fig, ax = plot_series(y_airline_true, y_airline_test)
-    ax = _remove_axis_label_text(ax)
-    return fig
-
-
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 def test_plot_correlations_runs_without_error(series_to_plot):
     _check_soft_dependencies("matplotlib")
@@ -165,9 +145,20 @@ def test_plot_correlations_invalid_input_type_raises_error(
         plot_correlations(series_to_plot)
 
 
-@pytest.mark.mpl_image_compare(baseline_dir="_test_images", remove_text=True)
-def test_plot_correlations_image_comparison():
-    fig, axes = plot_correlations(y_airline)
-    for idx in range(len(axes)):
-        axes[idx] = _remove_axis_label_text(axes[idx])
-    return fig
+@pytest.mark.parametrize("series_to_plot", [y_airline])
+def test_plot_correlations_output_type(series_to_plot):
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plot_correlations(series_to_plot)
+
+    is_fig_figure = isinstance(fig, plt.Figure)
+    is_ax_array = isinstance(ax, np.ndarray)
+    is_ax_array_axis = all([isinstance(ax_, plt.Axes) for ax_ in ax])
+
+    assert is_fig_figure and is_ax_array and is_ax_array_axis, "".join(
+        [
+            "plot_correlations should return plt.Figure and array of plt.Axes,",
+            f"but returned: {type(fig)} and {type(ax)}",
+        ]
+    )
