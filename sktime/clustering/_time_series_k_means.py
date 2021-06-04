@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""Time Series K-Means Clusterer."""
+
+__author__ = ["Chris Holder", "Matthew Middlehurst", "Tony Bagnall"]
+__all__ = ["TimeSeriesKMeans"]
+
+
 import numpy as np
 from typing import List
 import pandas as pd
@@ -36,7 +42,9 @@ from sktime.utils.data_processing import from_nested_to_2d_array
 
 
 class TimeSeriesKMeans(BaseCluster, ClusterMixin):
-    """
+    """Time Series K-Means Clusterer.
+
+    This is a work in progress.
     TODO:
     Algorithm specific:
     Need to implement alternative averaging methods i.e. (barycenter
