@@ -11,34 +11,7 @@ import os
 import sklearn.preprocessing
 import sklearn.utils
 
-from sktime.classification.dictionary_based import (
-    BOSSEnsemble,
-    ContractableBOSS,
-    TemporalDictionaryEnsemble,
-    WEASEL,
-    MUSE,
-)
-from sktime.classification.distance_based import (
-    ElasticEnsemble,
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
-    ShapeDTW,
-)
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier,
-)
-from sktime.classification.interval_based import (
-    TimeSeriesForestClassifier,
-    RandomIntervalSpectralForest,
-)
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
-from sktime.classification.shapelet_based import MrSEQLClassifier
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.clustering import TimeSeriesKMeans
 
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -93,78 +66,29 @@ classifier_list = [
 ]
 
 
-def set_classifier(cls, resampleId=None):
-    """Construct a classifier.
+def set_clusterer(cls, resampleId=None):
+    """Construct a clusterer.
 
-    Basic way of creating the classifier to build using the default settings. This
+    Basic way of creating the clusterer to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy
     reproducability. You can set up bespoke classifier in many other ways.
 
     Parameters
     ----------
-    cls: String indicating which classifier you want
+    cls: String indicating which clusterer you want
     resampleId: classifier random seed
 
     Return
     ------
-    A classifier.
+    A clusterer.
     """
     name = cls.lower()
     # Distance based
-    if name == "pf" or name == "proximityforest":
-        return ProximityForest(random_state=resampleId)
-    elif name == "pt" or name == "proximitytree":
-        return ProximityTree(random_state=resampleId)
-    elif name == "ps" or name == "proximityStump":
-        return ProximityStump(random_state=resampleId)
-    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
-    elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(distance="dtw")
-    elif name == "msm" or name == "1nn-msm":
-        return KNeighborsTimeSeriesClassifier(distance="msm")
-    elif name == "ee" or name == "elasticensemble":
-        return ElasticEnsemble()
-    elif name == "shapedtw":
-        return ShapeDTW()
-    # Dictionary based
-    elif name == "boss" or name == "bossensemble":
-        return BOSSEnsemble(random_state=resampleId)
-    elif name == "cboss" or name == "contractableboss":
-        return ContractableBOSS(random_state=resampleId)
-    elif name == "tde" or name == "temporaldictionaryensemble":
-        return TemporalDictionaryEnsemble(random_state=resampleId)
-    elif name == "weasel":
-        return WEASEL(random_state=resampleId)
-    elif name == "muse":
-        return MUSE(random_state=resampleId)
-    # Interval based
-    elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resampleId)
-    elif name == "tsf" or name == "timeseriesforestclassifier":
-        return TimeSeriesForestClassifier(random_state=resampleId)
-    elif name == "cif" or name == "canonicalintervalforest":
-        return CanonicalIntervalForest(random_state=resampleId)
-    elif name == "drcif":
-        return DrCIF(random_state=resampleId)
-    # Shapelet based
-    elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(
-            random_state=resampleId, transform_contract_in_mins=60
-        )
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
-    elif name == "rocket":
-        return ROCKETClassifier(random_state=resampleId)
-    elif name == "arsenal":
-        return Arsenal(random_state=resampleId)
-    # Hybrid
-    elif name == "catch22":
-        return Catch22ForestClassifier(random_state=resampleId)
-    elif name == "hivecotev1":
-        return HIVECOTEV1(random_state=resampleId)
+    if name == "kmeans" or name == "k-means":
+        return TimeSeriesKMeans(random_state=resampleId)
+
     else:
-        raise Exception("UNKNOWN CLASSIFIER")
+        raise Exception("UNKNOWN CLUSTERER")
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
@@ -326,7 +250,7 @@ def run_experiment(
     trainY = le.transform(trainY)
     testY = le.transform(testY)
     if classifier is None:
-        classifier = set_classifier(cls_name, resampleID)
+        classifier = set_clusterer(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time Series K-Means Clusterer."""
 
-__author__ = ["Chris Holder", "Matthew Middlehurst", "Tony Bagnall"]
+__author__ = ["Chris Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMeans"]
 
 from typing import List
@@ -27,6 +27,7 @@ __author__ = "Christopher Holder"
 
 class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
     """Time Series K-Means Clusterer.
+
     This is a work in progress.
     """
 
@@ -45,8 +46,7 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
         averaging_algorithm: Averaging_Algo = "auto",
         averaging_algorithm_iterations: int = 50,
     ):
-        """
-        Constructor for TimeSeiresKMeans clusterer
+        """Constructor for TimeSeiresKMeans clusterer
 
         Parameters
         ----------
