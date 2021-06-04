@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""Time Series K-Means Clusterer."""
+
+__author__ = ["Chris Holder", "Matthew Middlehurst", "Tony Bagnall"]
+__all__ = ["TimeSeriesKMeans"]
+
 from typing import List
 from sktime.clustering.base.base_types import (
     Metric_Parameter,
@@ -21,6 +26,9 @@ __author__ = "Christopher Holder"
 
 
 class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
+    """Time Series K-Means Clusterer.
+    This is a work in progress.
+    """
 
     __averaging_algorithm_dict: Averaging_Algo_Dict = {
         "dba": BarycenterAveraging,
