@@ -141,6 +141,7 @@ class NetworkPipelineForecaster(
     def fit(self, y, X=None, fh=None):
         self._set_y_X(y, X)
         self._set_fh(fh)
+
         for name, est, arguments in self._iter():
             processed_arguments = {}
 
@@ -162,6 +163,7 @@ class NetworkPipelineForecaster(
                 del processed_arguments["X"]
             # Transformers are instances of BaseTransformer and BaseEstimator
             # Estimators are only instances of BaseEstimator
+
             if hasattr(est, "fit_transform"):
                 t = clone(est)
                 out = t.fit_transform(**processed_arguments)
@@ -171,15 +173,15 @@ class NetworkPipelineForecaster(
             # estimators have fit and predict methods
             if hasattr(est, "fit") and hasattr(est, "predict"):
                 f = clone(est)
+
                 f.fit(**processed_arguments)
                 self._fitted_estimators[name] = f
 
         self._is_fitted = True
+
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        # self._set_fh(fh)
-
         if X is not None:
             self._X = X
         for name, est, arguments in self._iter():
@@ -198,6 +200,7 @@ class NetworkPipelineForecaster(
 
                 self._step_results[name] = est.transform(**processed_arguments)
             if hasattr(est, "predict"):
+
                 pred = est.predict(
                     **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
                 )
@@ -220,7 +223,9 @@ class NetworkPipelineForecaster(
         self : an instance of self
         """
         self.check_is_fitted()
+        y_index_frequency = self._y.index.freq
         self._update_y_X(y, X)
+        self._y = self._y.asfreq(y_index_frequency)
 
         for name, est, arguments in self._iter():
             # estimator in self.steps is not fitted.
@@ -231,7 +236,9 @@ class NetworkPipelineForecaster(
                 continue
             # assume update takes same arguments as fit
             elif "update" in arguments:
+
                 processed_arguments = self._process_arguments(arguments["update"])
+
             else:
                 processed_arguments = self._process_arguments(arguments)
             # Transformers are instances of BaseTransformer and BaseEstimator
@@ -244,7 +251,9 @@ class NetworkPipelineForecaster(
             # estimators have fit and predict methods
             if hasattr(est, "update") and hasattr(est, "predict"):
                 est.update(**processed_arguments)
+
         self._is_fitted = True
+
         return self
 
     def get_params(self, deep=True):
