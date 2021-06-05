@@ -22,8 +22,6 @@ from sktime.clustering.partitioning._averaging_metrics import (
 )
 from sktime.clustering.partitioning._time_series_k_partition import TimeSeriesKPartition
 
-__author__ = "Christopher Holder"
-
 
 class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
     """Time Series K-Means Clusterer.
@@ -43,7 +41,7 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
         max_iter: int = 300,
         verbose: bool = False,
         metric: Metric_Parameter = "dtw",
-        averaging_algorithm: Averaging_Algo = "auto",
+        averaging_algorithm: Averaging_Algo = "mean",
         averaging_algorithm_iterations: int = 50,
     ):
         """Constructor for TimeSeiresKMeans clusterer
