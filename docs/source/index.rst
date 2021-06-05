@@ -28,6 +28,7 @@ From here, you can navigate to:
    contributing
    developer_guide
    roadmap
+   estimator_overview
    mentoring
    code_of_conduct
    governance
