@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Toby Hodges", "Afzal Ansari", "Abdul"]
+
 import pandas as pd
 from sktime.utils import all_estimators
 from importlib import import_module
