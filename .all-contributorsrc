@@ -1012,6 +1012,15 @@
         "bug",
       ]
     },
+    {
+      "login": "tombh",
+      "name": "Thomas Buckley-Houston",
+      "avatar_url": "https://avatars.githubusercontent.com/u/160835?s=80&v=4",
+      "profile": "https://github.com/tombh",
+      "contributions": [
+        "bug",
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

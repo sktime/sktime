@@ -1,6 +1,13 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
+"""
+Auto-correlation transformations.
+
+Module :mod:`sktime.transformations.series` implements auto-correlation
+transformers.
+"""
+
 __author__ = ["Afzal Ansari"]
 __all__ = ["AutoCorrelationTransformer", "PartialAutoCorrelationTransformer"]
 
@@ -17,7 +24,7 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
     Auto-correlation transformer.
 
     Example
-    ----------
+    -------
     >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.datasets import load_airline
@@ -44,6 +51,20 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
         super(AutoCorrelationTransformer, self).__init__()
 
     def transform(self, Z, X=None):
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
 
@@ -67,7 +88,7 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    n_lags : int
+    n_lags : int, optional (default=None)
          largest lag for which pacf is returned
     method : str {'ywadjusted', 'ywmle', 'ols'}
          specifies which method for the calculations to use:
@@ -79,7 +100,7 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
         - ldb or ldbiased : Levinson-Durbin recursion without bias correction
 
     Example
-    ----------
+    -------
     >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.datasets import load_airline
@@ -100,11 +121,19 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
         super(PartialAutoCorrelationTransformer, self).__init__()
 
     def transform(self, Z, X=None):
-        """
-        pacf : 1d array
-            partial autocorrelations, nlags elements, including lag zero
-        confint : array, optional
-            Confidence intervals for the PACF. Returned if confint is not None.
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series
         """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)

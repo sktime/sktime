@@ -8,7 +8,6 @@ The :mod:`sktime.performance_metrics` module contains metrics for evaluating and
 
 .. automodule:: sktime.performance_metrics
     :no-members:
-    :no-inherited-members:
 
 Forecasting
 -----------
@@ -19,7 +18,7 @@ Tunable Classes
 ***************
 .. autosummary::
     :toctree: modules/auto_generated/
-    :template: class.rst
+    :template: class_with_call.rst
 
     MeanAbsoluteScaledError
     MedianAbsoluteScaledError
