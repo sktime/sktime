@@ -160,6 +160,9 @@ def plot_correlations(
 
     Parameters
     ----------
+    series : pd.Series
+        A time series.
+
     lags : int, default = 24
         Number of lags to include in ACF and PACF plots
 
@@ -201,10 +204,10 @@ def plot_correlations(
     axes : np.ndarray
         Array of the figure's Axe objects
     """
-    _check_soft_dependencies("matplotlib", "seaborn")
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
-    check_y(series)
+    series = check_y(series)
 
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))
@@ -217,8 +220,25 @@ def plot_correlations(
 
     # Create expected plots on their respective Axes
     plot_series(series, ax=f_ax1)
-    plot_acf(series, ax=f_ax2, lags=lags, zero=zero_lag, alpha=alpha, title=acf_title)
-    plot_pacf(series, ax=f_ax3, lags=lags, zero=zero_lag, alpha=alpha, title=pacf_title)
+    plot_acf(
+        series,
+        ax=f_ax2,
+        lags=lags,
+        zero=zero_lag,
+        alpha=alpha,
+        title=acf_title,
+        adjusted=acf_adjusted,
+        fft=acf_fft,
+    )
+    plot_pacf(
+        series,
+        ax=f_ax3,
+        lags=lags,
+        zero=zero_lag,
+        alpha=alpha,
+        title=pacf_title,
+        method=pacf_method,
+    )
     if suptitle is not None:
         fig.suptitle(suptitle, size="xx-large")
 
