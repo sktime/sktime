@@ -13,8 +13,11 @@ y_airline = load_airline()
 y_airline_true = y_airline.iloc[y_airline.index < "1960-01"]
 y_airline_test = y_airline.iloc[y_airline.index >= "1960-01"]
 series_to_test = [y_airline, (y_airline_true, y_airline_test)]
+invalid_input_types = [y_airline.values, pd.DataFrame(y_airline), "this_is_a_string"]
 
 
+# Need to use _plot_series to make it easy for test cases to pass either a
+# single series or a tuple of multiple series to be unpacked as argss
 def _plot_series(series, ax=None, **kwargs):
     if isinstance(series, tuple):
         return plot_series(*series, ax=ax, **kwargs)
@@ -24,25 +27,29 @@ def _plot_series(series, ax=None, **kwargs):
 
 @pytest.fixture
 def valid_data_types():
-    valid_data_types = tuple(filter(lambda x: x is not np.ndarray, VALID_DATA_TYPES))
+    valid_data_types = tuple(
+        filter(
+            lambda x: x is not np.ndarray and x is not pd.DataFrame, VALID_DATA_TYPES
+        )
+    )
     return valid_data_types
 
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_runs_without_error(series_to_plot):
-    _check_soft_dependencies("matplotlib", "seaborn")
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
     _plot_series(series_to_plot)
     plt.gcf().canvas.draw_idle()
 
 
-@pytest.mark.parametrize("series_to_plot", [y_airline.values, "this_is_a_string"])
+@pytest.mark.parametrize("series_to_plot", invalid_input_types)
 def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         _plot_series(series_to_plot)
 
 
@@ -67,8 +74,6 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
         # not match input number of input series
         if isinstance(series_to_plot, pd.Series):
             markers = ["o", "o"]
-        elif isinstance(series_to_plot, pd.DataFrame):
-            markers = ["o" for _ in range(series_to_plot.shape[1] - 1)]
         elif isinstance(series_to_plot, tuple):
             markers = ["o" for _ in range(len(series_to_plot) - 1)]
 
@@ -85,8 +90,6 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
         # not match input number of input series
         if isinstance(series_to_plot, pd.Series):
             labels = ["Series 1", "Series 2"]
-        elif isinstance(series_to_plot, pd.DataFrame):
-            labels = [f"Series {i}" for i in range(series_to_plot.shape[1] - 1)]
         elif isinstance(series_to_plot, tuple):
             labels = [f"Series {i}" for i in range(len(series_to_plot) - 1)]
 
@@ -95,7 +98,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
-    _check_soft_dependencies("matplotlib", "seaborn")
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
     # Test output case where kwarg ax=None
@@ -134,14 +137,14 @@ def test_plot_correlations_runs_without_error(series_to_plot):
     plt.gcf().canvas.draw_idle()
 
 
-@pytest.mark.parametrize("series_to_plot", [y_airline.values, "this_is_a_string"])
+@pytest.mark.parametrize("series_to_plot", invalid_input_types)
 def test_plot_correlations_invalid_input_type_raises_error(
     series_to_plot, valid_data_types
 ):
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         plot_correlations(series_to_plot)
 
 
