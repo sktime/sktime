@@ -25,6 +25,7 @@ class NetworkPipelineForecaster(
 
     Parameters
     ----------
+
     steps : array of lists
         list comprised of three elements:
             1. name of step (string),
@@ -34,46 +35,36 @@ class NetworkPipelineForecaster(
 
     Examples
     --------
+
     `original_X` and `original_y` are key words referring to the
-    X and y arguments of NetworkPipeline.fit
-    and NetworkPipeline.predict
+    X and y arguments of NetworkPipelineForecaster.fit
+    and NetworkPipelineForecaster.predict
 
     The arguments dictionary can refer to any of the previous
     steps in the pipline by its name.
 
     Forecasting example. Note convention for specifying
     different arguments depending on whether
-    NetworkPipeline.fit or NetworkPipeline.predict is called.
-    >>> pipe = NetworkPipeline(
-        steps=[
-            (
-                "imputer",
-                Imputer(method="drift"),
-                {"fit": {"Z": "original_y"}, "predict": None},
-            ),
-            (
-                "forecaster",
-                forecaster,
-                {"fit": {"y": "imputer"}, "predict": {"fh": "original_y"}},
-            ),
-        ]
-    )
-
-    Classification example.
-    >>>  pipe = NetworkPipeline(
-        steps=[
-            ("tabularizer", Tabularizer(), {"X": "original_X"}),
-            (
-                "classifier",
-                DummyClassifier(strategy="prior"),
-                {
-                    "fit": {"X": "tabularizer", "y": "original_y"},
-                    "predict": {"X": "tabularizer"},
-                },
-            ),
-        ])
-
-    See the tests folder for a working implementations of these examples.
+    NetworkPipelineForecaster.fit or
+    NetworkPipelineForecaster.predict is called.
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> pipe = NetworkPipelineForecaster(steps=[
+    ...        (
+    ...            "imputer",
+    ...            Imputer(method="drift"),
+    ...            {"fit": {"Z": "original_y"}, "predict": None, "update": None},
+    ...        ),
+    ...        (
+    ...            "forecaster",
+    ...            NaiveForecaster(strategy="mean"),
+    ...            {
+    ...                "fit": {"y": "imputer", "X": "original_X", "fh": "original_fh"},
+    ...                "predict": {"fh": "original_fh"},
+    ...                "update": {"y": "original_y"},
+    ...            },
+    ...        ),
+    ...    ])
     """
 
     _required_parameters = ["steps"]
@@ -226,7 +217,6 @@ class NetworkPipelineForecaster(
         y_index_frequency = self._y.index.freq
         self._update_y_X(y, X)
         self._y = self._y.asfreq(y_index_frequency)
-
         for name, est, arguments in self._iter():
             # estimator in self.steps is not fitted.
             # use fitted estimator in self._fitted_estimators
