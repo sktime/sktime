@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""Time series K-medoids clusterer"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["TimeSeriesKMedoids"]
+
 from typing import List
 from sktime.clustering.base.base_types import (
     Metric_Parameter,
@@ -10,9 +15,7 @@ from sktime.clustering.base.base import (
     Init_Algo,
 )
 from sktime.clustering.partitioning._time_series_k_partition import TimeSeriesKPartition
-from sktime.clustering.partitioning._dtw_approximations import Medoids
-
-__author__ = "Christopher Holder"
+from sktime.clustering.partitioning._cluster_approximations import Medoids
 
 
 class TimeSeriesKMedoids(TimeSeriesKPartition, BaseCluster):

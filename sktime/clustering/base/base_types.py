@@ -1,4 +1,20 @@
 # -*- coding: utf-8 -*-
+"""Base types for clustering"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = [
+    "Data_Frame",
+    "Series",
+    "Numpy_Array",
+    "Tuple_Of_Numpy",
+    "Numpy_Or_DF",
+    "Metric_Function",
+    "Metric_Parameter",
+    "Metric_Function_Dict",
+    "Data_Parameter",
+    "Data_Parameter_Arr",
+]
+
 import pandas as pd
 import numpy as np
 from typing import Callable, List, Tuple, Union, Mapping

@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+"""Base classes for clustering."""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = [
+    "BaseCluster",
+    "ClusterMixin",
+    "BaseClusterCenterInitializer",
+    "BaseClusterAverage",
+    "BaseApproximate",
+]
+
 from sktime.base import BaseEstimator
 from sktime.clustering.base.base_types import Data_Frame, Numpy_Array
 from typing import List, Union, Mapping

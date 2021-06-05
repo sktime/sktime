@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""Time Series K-Partition."""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["TimeSeriesKPartition"]
+
 from typing import List
 import pandas as pd
 
@@ -36,8 +41,6 @@ from sktime.clustering.partitioning._center_initializers import (
 from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.clustering.utils._utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
-
-__author__ = "Christopher Holder"
 
 
 class TimeSeriesKPartition(BaseCluster, ClusterMixin):

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Cluster center initializers"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["RandomCenterInitializer", "KMeansPlusPlusCenterInitializer"]
+
 from sktime.clustering.base.base import BaseClusterCenterInitializer
 from sktime.clustering.base.base_types import Data_Frame
-
-__author__ = "Christopher Holder"
 
 
 class RandomCenterInitializer(BaseClusterCenterInitializer):

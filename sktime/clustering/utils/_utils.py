@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+"""Utils for time series clusterer"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["compute_pairwise_distances"]
+
 from typing import Callable
 import numpy as np
 
 from sktime.clustering.base.base_types import Numpy_Array, Metric_Function
 from sklearn.metrics.pairwise import pairwise_distances
-
-__author__ = "Christopher Holder"
 
 
 def compute_pairwise_distances(

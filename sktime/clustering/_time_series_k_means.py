@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time Series K-Means Clusterer."""
 
-__author__ = ["Chris Holder", "Tony Bagnall"]
+__author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMeans"]
 
 from typing import List
