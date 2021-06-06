@@ -1,30 +1,18 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
-from sktime.annotation.base._base import BaseAnnotator
+from sktime.annotation.base._mock import MockAnnotator
+from sktime.utils._testing.annotation import make_annotation_problem
 
 
-class TestAnnotator(BaseAnnotator):
-    def __init__(self):
-        pass
-
-    def fit(self, Z, X=None):
-        return self
-
-    def transform(self, Z, X=None):
-        Zt = Z.copy()
-        Zt.iloc[:] = False
-        Zt.iloc[1] = True
-        return Zt
-
-
-test_annotator = TestAnnotator()
+def _construct_instance():
+    return MockAnnotator()
 
 
 def test_output_is_series():
 
-    data = pd.Series(range(5))
-
+    data = make_annotation_problem()
+    test_annotator = _construct_instance()
     test_annotator.fit(data)
     annotated_series = test_annotator.transform(data)
 
@@ -33,9 +21,13 @@ def test_output_is_series():
 
 def test_output_type():
 
-    data = pd.Series(range(5))
-
+    data = make_annotation_problem()
+    test_annotator = _construct_instance()
     test_annotator.fit(data)
     annotated_series = test_annotator.transform(data)
 
-    assert annotated_series.dtype == np.object
+    assert (
+        (annotated_series.dtype == np.object)
+        or (annotated_series.dtype == np.bool)
+        or (annotated_series.dtype == np.int)
+    )
