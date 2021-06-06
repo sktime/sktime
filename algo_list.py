@@ -61,5 +61,5 @@ for modname, modclass in all_estimators():
         pd.Series([modname, algorithm_type, author_info], index=colnames),
         ignore_index=True,
     )
-    # creates a table in html format
-    df.to_html("algorithm_overview.html", index=False, escape=False)
+# creates a table in html format
+df.to_html("algorithm_overview.html", index=False, escape=False)
