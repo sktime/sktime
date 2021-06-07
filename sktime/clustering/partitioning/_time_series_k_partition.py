@@ -36,6 +36,7 @@ from sktime.clustering.partitioning._center_initializers import (
 from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.clustering.utils._utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
+from sktime.utils.validation.panel import check_X
 
 __author__ = "Christopher Holder"
 
@@ -135,6 +136,7 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         X: Data_Frame
             sktime data_frame to train the model on
         """
+        check_X(X)
         center_algo: BaseClusterCenterInitializer = self.init_algorithm(
             X, self.n_clusters
         )

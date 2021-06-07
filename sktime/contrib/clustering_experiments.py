@@ -11,7 +11,10 @@ import os
 import sklearn.preprocessing
 import sklearn.utils
 
-from sktime.clustering import TimeSeriesKMeans
+from sktime.clustering import (
+    TimeSeriesKMeans,
+    TimeSeriesKMedoids,
+)
 
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -34,7 +37,6 @@ __author__ = ["Tony Bagnall"]
 
 """Prototype mechanism for testing clusterers on the UCR data, mirroring the 
 classification code. 
-
 """
 
 
@@ -251,8 +253,6 @@ def run_experiment(
             + dataset
             + " resample number "
             + str(resampleID)
-            + " test acc: "
-            + str(ac)
             + " time: "
             + str(test_time)
         )
@@ -268,11 +268,11 @@ def run_experiment(
         temp = np.array_repr(clusterer.classes_).replace("\n", "")
 
         third = (
-            + ","
+            ","
             + str(build_time)
             + ","
             + str(test_time)
-            + ",-1,-1,")
+            + ",-1,-1,"
         )
         write_results_to_uea_format(
             second_line=second,
