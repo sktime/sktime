@@ -34,7 +34,6 @@ from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
-
 """Prototype mechanism for testing clusterers on the UCR data, mirroring the 
 classification code. 
 """
@@ -59,11 +58,19 @@ def set_clusterer(cls, resampleId=None):
     name = cls.lower()
     # Distance based
     if name == "kmeans" or name == "k-means":
-        return TimeSeriesKMeans(n_clusters=5, max_iter=50,
-                                averaging_algorithm="mean", random_state=resampleId)
+        return TimeSeriesKMeans(
+            n_clusters=5,
+            max_iter=50,
+            averaging_algorithm="mean",
+            random_state=resampleId
+        )
     if name == "kmedoids" or name == "k-medoids":
-        return TimeSeriesKMedoids(n_clusters=5, max_iter=50,
-                                averaging_algorithm="mean", random_state=resampleId)
+        return TimeSeriesKMedoids(
+            n_clusters=5,
+            max_iter=50,
+            averaging_algorithm="mean",
+            random_state=resampleId
+        )
 
     else:
         raise Exception("UNKNOWN CLUSTERER")
@@ -267,13 +274,7 @@ def run_experiment(
         print(second)
         temp = np.array_repr(clusterer.classes_).replace("\n", "")
 
-        third = (
-            ","
-            + str(build_time)
-            + ","
-            + str(test_time)
-            + ",-1,-1,"
-        )
+        third = ("," + str(build_time) + "," + str(test_time) + ",-1,-1,")
         write_results_to_uea_format(
             second_line=second,
             third_line=third,
