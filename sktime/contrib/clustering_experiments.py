@@ -34,9 +34,6 @@ from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
-"""Prototype mechanism for testing clusterers on the UCR data, mirroring the 
-classification code.
-"""
 
 
 def set_clusterer(cls, resampleId=None):
