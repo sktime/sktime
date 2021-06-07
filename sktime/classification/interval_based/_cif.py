@@ -138,7 +138,7 @@ class CanonicalIntervalForest(BaseClassifier):
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
-         Uses random ntervals and catch22/tsf summary features.
+         Uses random intervals and catch22/tsf summary features.
 
         Parameters
         ----------
@@ -348,7 +348,7 @@ class CanonicalIntervalForest(BaseClassifier):
     def temporal_importance_curves(self):
         if not isinstance(self.tree, ContinuousIntervalTree):
             raise ValueError(
-                "DrCIF base estimator for temporal importance curves must"
+                "CIF base estimator for temporal importance curves must"
                 " be ContinuousIntervalTree."
             )
 
