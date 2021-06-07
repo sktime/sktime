@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-""" catch22 Forest Classifier
+"""Catch22 Forest Classifier.
+
 A forest classifier based on catch22 features
 """
 
@@ -16,41 +17,11 @@ from sktime.utils.validation.panel import check_X
 
 
 class Catch22ForestClassifier(BaseClassifier):
-    """Canonical Time-series Characteristics (catch22)
+    """Canonical Time-series Characteristics (catch22).
 
-    @article{lubba2019catch22,
-         title={catch22: CAnonical Time-series CHaracteristics},
-         author={Lubba, Carl H and Sethi, Sarab S and Knaute, Philip and
-                   Schultz, Simon R and Fulcher, Ben D and Jones, Nick S},
-         journal={Data Mining and Knowledge Discovery},
-         volume={33},
-         number={6},
-         pages={1821--1852},
-         year={2019},
-         publisher={Springer}
-    }
-
-    Overview: Input n series length m
-    Transforms series into the 22 catch22 features extracted from the hctsa
-    toolbox and builds a random forest classifier on them.
-
-    Fulcher, B. D., & Jones, N. S. (2017). hctsa: A computational framework
-    for automated time-series phenotyping using massive feature extraction.
-    Cell systems, 5(5), 527-531.
-
-    Fulcher, B. D., Little, M. A., & Jones, N. S. (2013). Highly comparative
-    time-series analysis: the empirical structure of time series and their
-    methods. Journal of the Royal Society Interface, 10(83), 20130048.
-
-    Original Catch22ForestClassifier:
-    https://github.com/chlubba/sktime-catch22
-
-    catch22 package implementations:
-    https://github.com/chlubba/catch22
-
-    For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/transformers/Catch22.java
+    Overview: Input n series length m. Transforms series into the 22 catch22
+    features [1] extracted from the hctsa toolbox[2] and builds a random forest
+    classifier on them.
 
     Parameters
     ----------
@@ -64,6 +35,23 @@ class Catch22ForestClassifier(BaseClassifier):
     ----------
     bagging_classifier      : trained forest classifier
 
+    Notes
+    -----
+    ..[1] Fulcher, B. D., & Jones, N. S. (2017). hctsa: A computational framework
+    for automated time-series phenotyping using massive feature extraction.
+    Cell systems, 5(5), 527-531.
+
+    ..[2] Fulcher, B. D., Little, M. A., & Jones, N. S. (2013). Highly comparative
+    time-series analysis: the empirical structure of time series and their
+    methods. Journal of the Royal Society Interface, 10(83), 20130048.
+
+    Original Catch22ForestClassifier:
+    https://github.com/chlubba/sktime-catch22
+    catch22 package implementations:
+    https://github.com/chlubba/catch22
+    For the Java version, see
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    /tsml/transformers/Catch22.java
     """
 
     # Capability tags
@@ -94,7 +82,7 @@ class Catch22ForestClassifier(BaseClassifier):
         super(Catch22ForestClassifier, self).__init__()
 
     def fit(self, X, y):
-        """Fit a random catch22 feature forest classifier
+        """Fit a random catch22 feature forest classifier.
 
         Parameters
         ----------
@@ -125,6 +113,16 @@ class Catch22ForestClassifier(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Make predictions for all cases in X.
+
+        Parameters
+        ----------
+        X : The testing input samples of shape [n_instances,1].
+
+        Returns
+        -------
+        output : numpy array of shape = [n_instances]
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
 
@@ -135,6 +133,17 @@ class Catch22ForestClassifier(BaseClassifier):
         return self.classifier.predict(X_c22)
 
     def predict_proba(self, X):
+        """Make class probability estimates on each case in X.
+
+        Parameters
+        ----------
+        X - pandas dataframe of testing data of shape [n_instances,1].
+
+        Returns
+        -------
+        output : numpy array of shape =
+                [n_instances, num_classes] of probabilities
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
 
