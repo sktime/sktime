@@ -206,7 +206,7 @@ class TreeNode:
 
         self.best_split = -1
         self.best_threshold = 0
-        self.best_gain = 0.0000001
+        self.best_gain = 0.000001
         self.best_margin = -1
         self.children = []
         self.leaf_distribution_cls = []
@@ -250,7 +250,7 @@ class TreeNode:
                     best_distributions_cls = distributions_cls
                     best_distributions = distributions
                     best_entropies = entropies
-                elif info_gain == self.best_gain and info_gain > 0.0000001:
+                elif info_gain == self.best_gain and info_gain > 0.000001:
                     margin = self.margin_gain(X, att, threshold)
                     if self.best_margin == -1:
                         self.best_margin = self.margin_gain(

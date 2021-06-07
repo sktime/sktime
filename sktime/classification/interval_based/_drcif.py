@@ -161,10 +161,10 @@ class DrCIF(BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        if self.base_estimator is None or self.base_estimator == "CIT":
-            self.tree = ContinuousIntervalTree()
-        elif self.base_estimator == "DTC":
+        if self.base_estimator is None or self.base_estimator == "DTC":
             self.tree = DecisionTreeClassifier(criterion="entropy")
+        elif self.base_estimator == "CIT":
+            self.tree = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self.tree = self.base_estimator
         else:
