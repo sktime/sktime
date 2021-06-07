@@ -13,4 +13,4 @@ Welcome to sktime's software development plan.
     better which can include status, references, etc.
 
 .. raw:: html
-   :file: ../../est_overview.html
+   :file: est_overview.html
