@@ -52,3 +52,12 @@ def compute_pairwise_distances(
     if Y is None:
         Y = X
     return pairwise_func(X=X, Y=Y, metric=dist_wrapper)
+
+
+def form_cluster_list(clusters, n) -> np.array:
+    """Form an array of cluster membership from the cluster lists."""
+    preds = np.zeros(n)
+    for i in range(len(clusters)):
+        for j in range(len(clusters[i])):
+            preds[clusters[i][j]] = i
+    return preds

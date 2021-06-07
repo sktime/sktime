@@ -112,7 +112,7 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
 
     def fit(self, X: Data_Frame) -> None:
         """
-        Method that is used to fit the time seires k
+        Method that is used to fit the time series k
         means model on dataset X
 
         Parameters
