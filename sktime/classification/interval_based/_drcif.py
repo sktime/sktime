@@ -415,6 +415,7 @@ class DrCIF(BaseClassifier):
         tree = clone(self.tree)
         tree.set_params(random_state=rs)
         transformed_x = transformed_x.T
+        transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
@@ -448,6 +449,7 @@ class DrCIF(BaseClassifier):
                     j += 1
 
             transformed_x = transformed_x.T
+            transformed_x.round(8)
             np.nan_to_num(transformed_x, False, 0, 0, 0)
 
             return classifier.predict_proba(transformed_x)
