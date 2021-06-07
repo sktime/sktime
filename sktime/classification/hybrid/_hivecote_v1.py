@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1
-"""
+"""Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1."""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["HIVECOTEV1"]
@@ -24,17 +23,14 @@ from sktime.utils.validation.panel import check_X_y, check_X
 
 
 class HIVECOTEV1(BaseClassifier):
-    """
-    Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1
-    as described in [1].
+    """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
-    representations using the CAWPE structure.
-
+    representations using the CAWPE structure as described in [1].
 
     Parameters
     ----------
-    verbose                             : int, level of output printed to
+    verbose                 : int, level of output printed to
     the console (for information only) (default = 0)
     n_jobs                  : int, optional (default=1)
     The number of jobs to run in parallel for both `fit` and `predict`.
@@ -66,6 +62,8 @@ class HIVECOTEV1(BaseClassifier):
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -79,11 +77,11 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {"time_contract_in_mins": 60}
+            stc_params = {}
         if tsf_params is None:
-            tsf_params = {}
+            tsf_params = {"n_estimators": 500}
         if rise_params is None:
-            rise_params = {}
+            rise_params = {"n_estimators": 500}
         if cboss_params is None:
             cboss_params = {}
 
@@ -112,6 +110,18 @@ class HIVECOTEV1(BaseClassifier):
         super(HIVECOTEV1, self).__init__()
 
     def fit(self, X, y):
+        """Fit a HIVE-COTEv1.0 classifier.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+        """
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         self.n_classes = np.unique(y).shape[0]
@@ -123,7 +133,10 @@ class HIVECOTEV1(BaseClassifier):
         if min_class < cv_size:
             cv_size = min_class
 
-        self.stc = ShapeletTransformClassifier(**self.stc_params)
+        self.stc = ShapeletTransformClassifier(
+            **self.stc_params,
+            random_state=self.random_state,
+        )
         self.stc.fit(X, y)
 
         if self.verbose > 0:
@@ -224,6 +237,16 @@ class HIVECOTEV1(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Make predictions for all cases in X.
+
+        Parameters
+        ----------
+        X : The testing input samples of shape [n_instances,1].
+
+        Returns
+        -------
+        output : numpy array of shape = [n_instances]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -233,6 +256,17 @@ class HIVECOTEV1(BaseClassifier):
         )
 
     def predict_proba(self, X):
+        """Make class probability estimates on each case in X.
+
+        Parameters
+        ----------
+        X - pandas dataframe of testing data of shape [n_instances,1].
+
+        Returns
+        -------
+        output : numpy array of shape =
+                [n_instances, num_classes] of probabilities
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
 
