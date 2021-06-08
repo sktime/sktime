@@ -58,7 +58,13 @@ def check_pred_int(pred_int):
 
 
 def plot_series(
-    *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
+    *series,
+    labels=None,
+    markers=None,
+    x_label=None,
+    y_label=None,
+    ax=None,
+    pred_int=pred_int,
 ):
     """Plot one or more time series.
 
