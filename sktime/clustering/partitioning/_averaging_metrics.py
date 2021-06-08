@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""Cluster averaging metrics"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["MeanAveraging", "BarycenterAveraging"]
+
 import numpy as np
 
 from functools import reduce
@@ -6,6 +11,7 @@ from sktime.clustering.base.base import BaseClusterAverage
 from sktime.clustering.base.base_types import Numpy_Array
 
 __author__ = "Christopher Holder"
+__all__ = ["BarycenterAveraging", "MeanAveraging"]
 
 
 class MeanAveraging(BaseClusterAverage):

@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
+
+"""Approximations for time series clusterers"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["Medoids"]
+
 import numpy as np
 
 from sktime.clustering.base.base_types import Numpy_Array, Metric_Function
 from sktime.clustering.base.base import BaseApproximate
 from sktime.clustering.utils._utils import compute_pairwise_distances
-
-__author__ = "Christopher Holder"
 
 
 class Medoids(BaseApproximate):

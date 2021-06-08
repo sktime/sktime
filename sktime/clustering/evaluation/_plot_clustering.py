@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+"""Cluster plotting tools"""
+
+__author__ = ["Christopher Holder", "Tony Bagnall"]
+__all__ = ["plot_cluster_algorithm"]
+
 # import matplotlib.pyplot as plt
 
 from sktime.clustering.base.base_types import Data_Frame
 from sktime.clustering.base.base import BaseCluster
-
-__author__ = "Christopher Holder"
 
 
 def __plot_test(clusters, center):
