@@ -29,7 +29,8 @@ sktime/forecasting/compose/_multiplexer.py @koralturkk
 
 sktime/forecasting/online_learning/ @magittan
 
-sktime/performance_metrics/forecasting/_functions.py @aiwalter
+sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
+sktime/performance_metrics/forecasting/_classes.py @rnkuhns
 
 sktime/forecasting/hcrystalball.py @MichalChromcak
 sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
