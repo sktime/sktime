@@ -64,7 +64,7 @@ def plot_series(
     x_label=None,
     y_label=None,
     ax=None,
-    pred_int=pred_int,
+    pred_int=None,
 ):
     """Plot one or more time series.
 
