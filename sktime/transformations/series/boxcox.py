@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["BoxCoxTransformer"]
@@ -24,9 +24,10 @@ from sktime.utils.validation.series import check_series
 
 
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
-    """
+    """Box-Cox power transform.
+
     Example
-    ----------
+    -------
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -44,6 +45,19 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, Z, X=None):
+        """Fit data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to fit.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        self
+        """
         z = check_series(Z, enforce_univariate=True)
         if self.method != "guerrero":
             self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
@@ -54,12 +68,40 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series.
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         zt = boxcox(z.to_numpy(), self.lambda_)
         return pd.Series(zt, index=z.index)
 
     def inverse_transform(self, Z, X=None):
+        """Inverse transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed data - the inverse of the Box-Cox transformation.
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         zt = inv_boxcox(z.to_numpy(), self.lambda_)
@@ -110,10 +152,6 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         xvals = distributions.norm.ppf(osm_uniform)
 
         def _eval_pearsonr(lmbda, xvals, samps):
-            # This function computes the x-axis values of the probability plot
-            # and computes a linear regression (including the correlation) and
-            # returns ``1 - r`` so that a minimization function maximizes the
-            # correlation.
             y = _boxcox(samps, lmbda)
             yvals = np.sort(y)
             r, prob = stats.pearsonr(xvals, yvals)
@@ -143,16 +181,17 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
 
 def _guerrero(x, sp, bounds=None):
-    r"""
-    Returns lambda estimated by the Guerrero method [Guerrero].
+    r"""Return lambda estimated by the Guerrero method [Guerrero].
+
     Parameters
     ----------
     x : ndarray
         Input array. Must be 1-dimensional.
     sp : integer
-        Seasonal periodicity value. Must be an integer >= 2
+        Seasonal periodicity value. Must be an integer >= 2.
     bounds : {None, (float, float)}, optional
         Bounds on lambda to be used in minimization.
+
     Returns
     -------
     lambda : float
@@ -163,10 +202,8 @@ def _guerrero(x, sp, bounds=None):
     References
     ----------
     [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
-    Transformations ", Journal of Forecasting, Vol. 12, 37-48 (1993)
-    https://doi.org/10.1002/for.3980120104
+    Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
     """
-
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
             "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
@@ -197,8 +234,8 @@ def _guerrero(x, sp, bounds=None):
 
 
 def _boxcox(x, lmbda=None, bounds=None, alpha=None):
-    r"""
-    Return a dataset transformed by a Box-Cox power transformation.
+    r"""Return a dataset transformed by a Box-Cox power transformation.
+
     Parameters
     ----------
     x : ndarray
@@ -211,6 +248,7 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         If ``alpha`` is not None, return the ``100 * (1-alpha)%`` confidence
         interval for `lmbda` as the third output argument.
         Must be between 0.0 and 1.0.
+
     Returns
     -------
     boxcox : ndarray
@@ -222,9 +260,11 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         If `lmbda` parameter is None and ``alpha`` is not None, this returned
         tuple of floats represents the minimum and maximum confidence limits
         given ``alpha``.
+
     See Also
     --------
     probplot, boxcox_normplot, boxcox_normmax, boxcox_llf
+
     Notes
     -----
     The Box-Cox transform is given by::
