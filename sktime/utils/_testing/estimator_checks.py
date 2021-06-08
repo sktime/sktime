@@ -560,7 +560,8 @@ def _make_fit_args(estimator, **kwargs):
         X = None
         return y, X, fh
     elif isinstance(estimator, BaseAnnotator):
-        return make_annotation_problem(**kwargs)
+        X = make_annotation_problem(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
