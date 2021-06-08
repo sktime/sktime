@@ -10,7 +10,7 @@ class MockAnnotator(BaseAnnotator):
         self._is_fitted = True
         return self
 
-    def transform(self, Z, X=None):
+    def predict(self, Z, X=None):
         self.check_is_fitted()
         Zt = Z.copy()
         Zt.iloc[:] = False

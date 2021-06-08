@@ -35,7 +35,7 @@ class BaseAnnotator(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def predict(self, fh=None, X=None):
+    def predict(self, Z, X=None):
         """Returns a transformed version of Z.
 
         Parameters

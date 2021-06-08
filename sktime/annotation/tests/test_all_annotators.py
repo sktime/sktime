@@ -1,32 +1,22 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
-from sktime.annotation.base._mock import MockAnnotator
-from sktime.utils._testing.annotation import make_annotation_problem
+import pytest
+from sktime.utils._testing.estimator_checks import _construct_instance, _make_args
+from sktime.utils import all_estimators
+
+ALL_ANNOTATORS = all_estimators(estimator_types="annotator", return_names=False)
 
 
-def _construct_instance():
-    return MockAnnotator()
+@pytest.mark.parametrize("Estimator", ALL_ANNOTATORS)
+def test_output_type(Estimator):
+    estimator = _construct_instance(Estimator)
 
-
-def test_output_is_series():
-
-    data = make_annotation_problem()
-    test_annotator = _construct_instance()
-    test_annotator.fit(data)
-    annotated_series = test_annotator.transform(data)
-
-    assert isinstance(annotated_series, pd.Series)
-
-
-def test_output_type():
-
-    data = make_annotation_problem()
-    test_annotator = _construct_instance()
-    test_annotator.fit(data)
-    annotated_series = test_annotator.transform(data)
-
-    assert (
+    args = _make_args(estimator, "fit")
+    estimator.fit(*args)
+    args = _make_args(estimator, "predict")
+    annotated_series = estimator.predict(*args)
+    assert (isinstance(annotated_series, pd.Series)) and (
         (annotated_series.dtype == np.object)
         or (annotated_series.dtype == np.bool)
         or (annotated_series.dtype == np.int)

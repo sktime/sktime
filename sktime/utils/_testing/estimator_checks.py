@@ -583,6 +583,9 @@ def _make_predict_args(estimator, **kwargs):
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
         X = _make_panel_X(**kwargs)
         return (X,)
+    elif isinstance(estimator, BaseAnnotator):
+        X = make_annotation_problem(n_timepoints=10, **kwargs)
+        return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
 
