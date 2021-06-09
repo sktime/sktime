@@ -24,20 +24,25 @@ from sktime.transformations.panel.signature_based._signature_method import (
 
 class SignatureClassifier(BaseClassifier):
     """Classification module using signature-based features.
+
     This simply initialises the GeneralisedSignatureMethod class which builds
     the feature extraction pipeline, then creates a new pipeline by
     appending a classifier after the feature extraction step.
+
     The default parameters are set to best practice parameters found "A
     Generalised Signature Method for Time-Series":
         [https://arxiv.org/pdf/2006.00873.pdf]
+
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
         - `depth` over [1, 2, 3, 4, 5, 6]
         - `window_depth` over [2, 3, 4]
         - RandomForestClassifier hyper-parameters.
     as these were found to be the most dataset dependent hyper-parameters.
+
     Thus, we recommend always tuning *at least* these parameters to any given
     dataset.
+
     Parameters
     ----------
     classifier: sklearn estimator, This should be any sklearn-type
@@ -56,6 +61,7 @@ class SignatureClassifier(BaseClassifier):
         ['signature', 'logsignature']).
     depth: int, Signature truncation depth.
     random_state: int, Random state initialisation.
+
     Attributes
     ----------------
     signature_method: sklearn.Pipeline, An sklearn pipeline that performs the
@@ -102,7 +108,7 @@ class SignatureClassifier(BaseClassifier):
         ).signature_method
 
     def setup_classification_pipeline(self):
-        """ Setup the full signature method pipeline. """
+        """Setup the full signature method pipeline."""
         # Use rf if no classifier is set
         if self.classifier is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
