@@ -6,7 +6,6 @@
 
 Functions
 ---------
-check_pred_int(pred_int)
 plot_series(*series, labels=None, markers=None, ax=None)
 plot_correlations(
     series,
@@ -28,33 +27,9 @@ __author__ = ["Markus Löning", "Ryan Kuhns", "Ifeanyi Eze"]
 import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y, check_pred_int
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import pandas as pd
-
-
-def check_pred_int(pred_int):
-    """Check the pred_int data type.
-
-    pred_int: pd.DataFrame
-        Prediction intervals of series
-
-    Raises
-    ------
-    TypeError: when pred_int is not a pd.DataFrame
-    Exception: when the number of columns is less or more than 2
-        and column labels are not ['lower', 'upper']
-    """
-    if isinstance(pred_int, pd.DataFrame):
-        if pred_int.shape[1] == 2:
-            if not pred_int.columns.isin(["lower", "upper"]).all():
-                raise ValueError(
-                    "Both DataFrame column labels must be 'lower' and 'upper'"
-                )
-        else:
-            raise Exception(f"{pred_int} must have exactly two columns")
-    else:
-        raise TypeError(f"{pred_int} must be a DataFrame")
 
 
 def plot_series(
