@@ -29,7 +29,6 @@ import numpy as np
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y, check_pred_int
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-import pandas as pd
 
 
 def plot_series(
