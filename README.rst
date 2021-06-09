@@ -51,6 +51,7 @@
 
 Welcome to sktime
 =================
+sktime-neuro
 
   A unified framework for machine learning with time series
 
