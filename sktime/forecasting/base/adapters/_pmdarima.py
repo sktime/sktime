@@ -130,7 +130,19 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.check_is_fitted()
         names = self._get_fitted_param_names()
         params = self._get_fitted_params()
-        return {name: param for name, param in zip(names, params)}
+        fitted_params = {name: param for name, param in zip(names, params)}
+
+        if hasattr(self._forecaster, "model_"):  # AutoARIMA
+            res = self._forecaster.model_.arima_res_
+        elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
+            res = self._forecaster.arima_res_
+        else:
+            res = None
+
+        for name in ["aic", "aicc", "bic", "hqic"]:
+            fitted_params[name] = getattr(res, name, None)
+
+        return fitted_params
 
     def _get_fitted_params(self):
         # Return parameter values under `arima_res_`
