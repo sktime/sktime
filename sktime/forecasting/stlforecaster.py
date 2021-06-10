@@ -6,7 +6,7 @@
 __all__ = ["STLForecaster"]
 __author__ = ["Taiwo Owoseni"]
 
-from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.detrend import Detrender
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -31,7 +31,6 @@ class STLForecaster(TransformedTargetForecaster):
     Example
     -------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.stlforecaster import STLForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.detrend import Deseasonalizer
@@ -40,7 +39,7 @@ class STLForecaster(TransformedTargetForecaster):
     >>> y = load_airline()
     >>> sp = Deseasonalizer()
     >>> dp = Detrender(forecaster=PolynomialTrendForecaster(degree=1))
-    >>> estimator = ARIMA(order=(1,1,1))
+    >>> estimator = NaiveForecaster(strategy="drift")
     >>> forecaster = STLForecaster(estimator, sp, dp)
     >>> forecaster.fit(y)
     STLForecaster(...)
@@ -53,7 +52,7 @@ class STLForecaster(TransformedTargetForecaster):
     steps = [
         ("deseasonalise", Deseasonalizer()),
         ("detrend", Detrender(forecaster=PolynomialTrendForecaster(degree=1))),
-        ("estimator", ARIMA()),
+        ("estimator", NaiveForecaster(strategy="drift")),
     ]
 
     def __init__(self, forecaster=steps[-1][1], sp=steps[0][1], dp=steps[1][1]):

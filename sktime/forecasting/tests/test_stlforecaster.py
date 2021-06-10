@@ -18,7 +18,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.stlforecaster import STLForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 
-naive_forecaster = NaiveForecaster(strategy="drift")
+
 n_timepoints = 30
 n_train = 20
 s = pd.Series(np.arange(n_timepoints))
@@ -27,7 +27,7 @@ y_test = s.iloc[n_train:]
 fh = [1, 3, 4]
 
 estimator = ARIMA(order=(1, 1, 1))
-
+naive_forecaster = NaiveForecaster(strategy="drift")
 transformed_target_forecaster_steps = [
     ("deseasonalise", Deseasonalizer()),
     ("detrend", Detrender(forecaster=PolynomialTrendForecaster(degree=1))),
