@@ -32,6 +32,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+
 # todo: add any necessary imports here
 
 
