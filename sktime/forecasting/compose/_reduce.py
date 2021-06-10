@@ -168,6 +168,8 @@ class _Reducer(_BaseWindowForecaster):
         self : Estimator
             An fitted instance of self.
         """
+        self._is_fitted = False
+
         n_timepoints = len(y)
         self._set_y_X(y, X)
         self._set_fh(fh)
