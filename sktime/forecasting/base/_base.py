@@ -150,7 +150,12 @@ class BaseForecaster(BaseEstimator):
         # todo: check_X should let a None argument pass here, but it doesn't
         if X is not None:
             X = check_X(X)
-        alpha = check_alpha(alpha)
+
+        # this should be here, but it breaks the ARIMA forecasters
+        #  that is because check_alpha converts to list, but ARIMA forecaster 
+        #  doesn't do the check, and needs it as a float or it breaks
+        # todo: needs fixing in ARIMA and AutoARIMA
+        #alpha = check_alpha(alpha)
 
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
