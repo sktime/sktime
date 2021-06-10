@@ -61,7 +61,7 @@ class TimeSeriesForestClassifier(
     >>> from sktime.datasets import load_arrow_head
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> clf = TimeSeriesForestClassifier(n_estimators=100)
+    >>> clf = TimeSeriesForestClassifier(n_estimators=10)
     >>> clf.fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
 
