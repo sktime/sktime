@@ -30,13 +30,13 @@ State:
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-from sktime.forecasting.base import BaseEstimator
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import DEFAULT_ALPHA
 
 # todo: add any necessary imports here
 
 
-class MyForecaster(BaseEstimator):
+class MyForecaster(BaseForecaster):
     """Custom forecaster. todo: write docstring.
 
     todo: describe your custom forecaster here
