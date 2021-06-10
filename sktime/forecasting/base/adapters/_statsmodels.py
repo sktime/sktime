@@ -95,7 +95,7 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:
-                fitted_params[name] = getattr(self._fitted_forecaster, name)
+                fitted_params[name] = getattr(self._fitted_forecaster, name, None)
             else:
                 fitted_params[name] = self._fitted_forecaster.params.get(name)
         return fitted_params
