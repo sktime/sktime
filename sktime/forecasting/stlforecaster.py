@@ -6,10 +6,10 @@
 __all__ = ["STLForecaster"]
 __author__ = ["Taiwo Owoseni"]
 
+
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.detrend import Detrender
-from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 
 
@@ -25,8 +25,8 @@ class STLForecaster(TransformedTargetForecaster):
     Parameter
     ---------
     forecaster: a forecaster
-    steps : list
-        Transformers: List of tuples like ("name", transformer)
+    dp : Detrender
+    sp : Deseasonalizer
 
     Example
     -------
@@ -46,17 +46,17 @@ class STLForecaster(TransformedTargetForecaster):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
-    _tags = {"univariate-only": True}
+    # _tags = {"univariate-only": True}
     _required_parameters = ["forecaster", "sp", "dp"]
 
     steps = [
         ("deseasonalise", Deseasonalizer()),
-        ("detrend", Detrender(forecaster=PolynomialTrendForecaster(degree=1))),
-        ("estimator", NaiveForecaster(strategy="drift")),
+        ("detrend", Detrender()),
+        ("estimator", NaiveForecaster()),
     ]
 
     def __init__(self, forecaster=steps[-1][1], sp=steps[0][1], dp=steps[1][1]):
+        super(STLForecaster, self).__init__(STLForecaster.steps)
         self.forecaster = forecaster
         self.sp = sp
         self.dp = dp
-        super(STLForecaster, self).__init__(STLForecaster.steps)
