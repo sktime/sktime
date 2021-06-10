@@ -701,7 +701,7 @@ class BaseForecaster(BaseEstimator):
         """
 
         # this should be the NotImplementedError
-        # but current interface assumes private method 
+        # but current interface assumes private method
         # _compute_pred_err(alphas), not _compute_pred_int
         # so looping this through in order for existing classes to work
         return self._compute_pred_err(alphas)
@@ -710,8 +710,7 @@ class BaseForecaster(BaseEstimator):
         # raise NotImplementedError("abstract method")
 
     def _compute_pred_err(self, alphas):
-        """ temporary loopthrough for _compute_pred_err
-        """
+        """ temporary loopthrough for _compute_pred_err"""
         raise NotImplementedError("abstract method")
 
     def _predict_moving_cutoff(
