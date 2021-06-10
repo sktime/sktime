@@ -152,10 +152,10 @@ class BaseForecaster(BaseEstimator):
             X = check_X(X)
 
         # this should be here, but it breaks the ARIMA forecasters
-        #  that is because check_alpha converts to list, but ARIMA forecaster 
+        #  that is because check_alpha converts to list, but ARIMA forecaster
         #  doesn't do the check, and needs it as a float or it breaks
         # todo: needs fixing in ARIMA and AutoARIMA
-        #alpha = check_alpha(alpha)
+        # alpha = check_alpha(alpha)
 
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
