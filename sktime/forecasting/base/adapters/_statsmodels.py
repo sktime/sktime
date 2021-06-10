@@ -92,10 +92,13 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
-        return {
-            name: self._fitted_forecaster.params.get(name)
-            for name in self._get_fitted_param_names()
-        }
+        fitted_params = {}
+        for name in self._get_fitted_param_names():
+            if name in ["aic", "aicc", "bic", "hqic"]:
+                fitted_params[name] = getattr(self._fitted_forecaster, name)
+            else:
+                fitted_params[name] = self._fitted_forecaster.params.get(name)
+        return fitted_params
 
     def _get_fitted_param_names(self):
         """Get names of fitted parameters"""
