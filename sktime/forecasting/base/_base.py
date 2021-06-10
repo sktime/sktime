@@ -704,7 +704,7 @@ class BaseForecaster(BaseEstimator):
         # but current interface assumes private method 
         # _compute_pred_err(alphas), not _compute_pred_int
         # so looping this through in order for existing classes to work
-        return self._compute_pred_err(self, alphas)
+        return self._compute_pred_err(alphas)
 
         # todo: fix this in descendants, and change to
         # raise NotImplementedError("abstract method")
