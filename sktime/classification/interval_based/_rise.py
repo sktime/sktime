@@ -108,6 +108,23 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     intervals : array of shape = [n_estimators][2]
         Stores indexes of start and end points for all classifiers.
 
+    Example
+    -------
+    >>> from sktime.classification.interval_based import SupervisedTimeSeriesForest
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = RandomIntervalSpectralForest(
+    ...     n_estimators=10,
+    ...     min_interval=8,
+    ...     acf_lag=50,
+    ...     acf_min_values=2,
+    ...     n_jobs = 2,
+    ...     random_state=42)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    
     Notes
     -----
     ..[1] Jason Lines, Sarah Taylor and Anthony Bagnall, "Time Series Classification
