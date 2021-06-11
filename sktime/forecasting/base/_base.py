@@ -571,8 +571,9 @@ class BaseForecaster(BaseEstimator):
             #  (to avoid side effects from estimator reset)
             if not self._fh or not self._is_fitted:
                 self._fh = fh
-            # if fh has already been stored, check against new one
-            elif self._fh and not np.array_equal(fh, self._fh):
+            # if fh has already been stored, and is not optional in fit:
+            # check against new one; if fh is optional in fit, this is fine
+            elif not optfh and self._fh and not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
