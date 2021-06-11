@@ -566,14 +566,19 @@ class BaseForecaster(BaseEstimator):
             # If fh is passed, validate (no matter the situation)
             fh = check_fh(fh)
 
-            # if fh has not been passed yet, then write fh to self
-            #  also do this if estimator has not been fitted yet
-            #  (to avoid side effects from estimator reset)
-            if not self._fh or not self._is_fitted:
+            # fh is written to self if one of the following is true
+            # - estimator has not been fitted yet (for safety from side effects)
+            # - fh has not been seen yet
+            # - fh has been seen, but was optional in fit,
+            #     this means fh needs not be same and can be overwritten
+            if optfh or not self._fh or not self._is_fitted:
                 self._fh = fh
-            # if fh has already been stored, and is not optional in fit:
-            # check against new one; if fh is optional in fit, this is fine
-            elif not optfh and self._fh and not np.array_equal(fh, self._fh):
+            # there is one error condition:
+            # - fh is mandatory in fit, i.e., fh in predict must be same if passed
+            # - fh already passed, and estimator is fitted
+            # - fh that was passed in fit is not the same as seen in predict
+            # note that elif means: optfh == False, and self._is_fitted == True
+            elif self._fh and not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
