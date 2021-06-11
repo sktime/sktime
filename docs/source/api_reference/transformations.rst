@@ -192,6 +192,17 @@ Box-cox
     BoxCoxTransformer
     LogTransformer
 
+Difference
+~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.difference
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    Differencer
+
 Auto-correlation
 ~~~~~~~~~~~~~~~~
 
