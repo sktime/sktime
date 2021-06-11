@@ -286,6 +286,7 @@ VALID_ESTIMATOR_TAGS = (
     "transform-returns-same-time-index",
     "handles-missing-data",
     "skip-inverse-transform",
+    "fhmixinflag",
 )
 
 # These methods should not change the state of the estimator, that is, they should
