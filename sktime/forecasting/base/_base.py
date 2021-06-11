@@ -669,7 +669,9 @@ class BaseForecaster(BaseEstimator):
                 f"`update` is called."
             )
             # refit with updated data, not only passed data
-            self._fit(self._y, self._X, self.fh)
+            self.fit(self._y, self._X, self.fh)
+            # todo: should probably be self._fit, not self.fit
+            # but looping to self.fit for now to avoid interface break
 
         return self
 
