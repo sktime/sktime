@@ -81,6 +81,7 @@ class Detrender(_SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
+        self._is_fitted = False
         z = check_series(Z, enforce_univariate=True)
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
