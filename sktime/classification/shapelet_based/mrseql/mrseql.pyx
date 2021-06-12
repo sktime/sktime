@@ -219,6 +219,20 @@ class MrSEQLClassifier(BaseClassifier):
     symrep          : list or tuple, should contains only 'sax' or 'sfa' or both. The symbolic representations to be used to transform the input time series.
 
     custom_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.shapelet_based import MrSEQLClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = MrSEQLClassifier(
+    ...     seql_mode='fs',
+    ...     symrep=('sax'),
+    ...     custom_config=None)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     '''
 
