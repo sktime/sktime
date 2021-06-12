@@ -95,6 +95,26 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     weight_sum              : sum of all weights
     prev_parameters_x       : parameter value of previous classifiers for GP
     prev_parameters_y       : accuracy of previous classifiers for GP
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+    >>> from sktime.datasets import load_basic_motions
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = TemporalDictionaryEnsemble(
+    ...     n_parameter_samples=250,
+    ...     max_ensemble_size=10,
+    ...     max_win_len_prop=1,
+    ...     min_window=10,
+    ...     randomly_selected_params=5,
+    ...     bigrams=None,
+    ...     dim_threshold=0.85,
+    ...     max_dims=20,
+    ...     n_jobs=2)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     Notes
     -----
