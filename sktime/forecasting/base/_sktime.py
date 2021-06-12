@@ -36,13 +36,13 @@ class _SktimeForecaster(BaseForecaster):
 class _OptionalForecastingHorizonMixin:
     """Mixin class for forecasters with optional fh in fit."""
 
-    fhmixinflag = "optional"
+    _tags = {"requires-fh-in-fit": False}
 
 
 class _RequiredForecastingHorizonMixin:
     """Mixin class for forecasters with required fh in fit."""
 
-    fhmixinflag = "required"
+    _tags = {"requires-fh-in-fit": True}
 
 
 class _BaseWindowForecaster(BaseForecaster):

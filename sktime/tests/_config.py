@@ -286,7 +286,7 @@ VALID_ESTIMATOR_TAGS = (
     "transform-returns-same-time-index",
     "handles-missing-data",
     "skip-inverse-transform",
-    "fh_in_fit",
+    "requires-fh-in-fit",
 )
 
 # These methods should not change the state of the estimator, that is, they should
