@@ -773,6 +773,21 @@ class ProximityStump(BaseClassifier):
         get_gain: function to score the quality of a split
         verbosity: logging verbosity
         n_jobs: number of jobs to run in parallel *across threads"
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.distance_based import ProximityStump
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = ProximityStump(
+    ...     random_state = 42,
+    ...     verbosity=2,
+    ...     n_jobs=2)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    
     """
 
     __author__ = "George Oastler (linkedin.com/goastler; github.com/goastler)"
