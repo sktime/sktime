@@ -110,7 +110,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     Example
     -------
-    >>> from sktime.classification.interval_based import SupervisedTimeSeriesForest
+    >>> from sktime.classification.interval_based import RandomIntervalSpectralForest
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
     >>> X, y = load_arrow_head(return_X_y=True)
