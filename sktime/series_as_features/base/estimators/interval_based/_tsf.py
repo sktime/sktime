@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Base Time Series Forest Class.
-
-An implementation of Deng's Time Series Forest, with minor changes.
-"""
+"""Time Series Forest (TSF) Classifier."""
 
 __author__ = [
     "Tony Bagnall",
@@ -37,11 +33,13 @@ from sktime.utils.validation.panel import check_X_y
 class BaseTimeSeriesForest:
     """Base time series forest classifier."""
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -72,10 +70,7 @@ class BaseTimeSeriesForest:
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Fit the classifier.
-
-        Build a forest of trees from the training set (X, y) using random
-        intervals and summary features.
+        """Build a forest of trees from the training set (X, y).
 
         Parameters
         ----------
