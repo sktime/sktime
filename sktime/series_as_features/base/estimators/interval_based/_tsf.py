@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-    Base Time Series Forest Class.
-    An implementation of Deng's Time Series Forest, with minor changes.
+Base Time Series Forest Class.
+
+An implementation of Deng's Time Series Forest, with minor changes.
 """
 
 __author__ = [
@@ -24,18 +25,17 @@ import math
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
-from sklearn.base import clone
-from sklearn.ensemble._base import _set_random_states
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
+from sktime.base._base import _clone_estimator
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
 class BaseTimeSeriesForest:
-    """Base Time series forest classifier."""
+    """Base time series forest classifier."""
 
     # Capabilities: data types this classifier can handle
     capabilities = {
@@ -72,21 +72,22 @@ class BaseTimeSeriesForest:
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y) using random
-        intervals and summary features
+        """Fit the classifier.
+
+        Build a forest of trees from the training set (X, y) using random
+        intervals and summary features.
+
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances,
-        series_length] or shape = [n_instances,n_columns]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification. TSF has no bespoke method for multivariate
-            classification as yet.
-        y : array-like, shape =  [n_instances]    The class labels.
+        Xt: np.ndarray or pd.DataFrame
+            Panel training data.
+        y : np.ndarray
+            The class labels.
 
         Returns
         -------
         self : object
+            An fitted instance of the classifier
         """
         X, y = check_X_y(
             X,
@@ -127,15 +128,21 @@ class BaseTimeSeriesForest:
 
 
 def _transform(X, intervals):
-    """Compute the mean, standard deviation and slope for given intervals
-    of input data X.
+    """Transform X for given intervals.
 
-    Args:
-        X (Array-like, int or float): Time series data X
-        intervals (Array-like, int or float): Time range intervals for series X
+    Compute the mean, standard deviation and slope for given intervals of input data X.
 
-    Returns:
-        int32 Array: transformed_x containing mean, std_deviation and slope
+    Parameters
+    ----------
+    Xt: np.ndarray or pd.DataFrame
+        Panel data to transform.
+    intervals : np.ndarray
+        Intervals containing start and end values.
+
+    Returns
+    -------
+    Xt: np.ndarray or pd.DataFrame
+     Transformed X, containing the mean, std and slope for each interval
     """
     n_instances, _ = X.shape
     n_intervals, _ = intervals.shape
@@ -153,9 +160,7 @@ def _transform(X, intervals):
 
 
 def _get_intervals(n_intervals, min_interval, series_length, rng):
-    """
-    Generate random intervals for given parameters.
-    """
+    """Generate random intervals for given parameters."""
     intervals = np.zeros((n_intervals, 2), dtype=int)
     for j in range(n_intervals):
         intervals[j][0] = rng.randint(series_length - min_interval)
@@ -167,18 +172,6 @@ def _get_intervals(n_intervals, min_interval, series_length, rng):
 
 
 def _fit_estimator(estimator, X, y, intervals):
-    """
-    Fit an estimator on input data (X, y) transformed using
-    the randomly generated intervals.
-    """
+    """Fit an estimator on input data (X, y)."""
     transformed_x = _transform(X, intervals)
     return estimator.fit(transformed_x, y)
-
-
-def _clone_estimator(base_estimator, random_state=None):
-    estimator = clone(base_estimator)
-
-    if random_state is not None:
-        _set_random_states(estimator, random_state)
-
-    return estimator
