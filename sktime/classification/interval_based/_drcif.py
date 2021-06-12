@@ -76,6 +76,21 @@ class DrCIF(ForestClassifier, BaseClassifier):
     indexes of all start and end points for all classifiers
     dims           : array of shape = [n_estimators][n_intervals] stores
     the dimension to extract from for each interval
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.interval_based._drcif import DrCIF
+    >>> from sktime.datasets import load_basic_motions
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = DrCIF(min_interval=3,
+    ...     n_estimators=100,
+    ...     att_subsample_size=10,
+    ...     n_jobs=1,
+    ...     random_state=42)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     Notes
     -----
