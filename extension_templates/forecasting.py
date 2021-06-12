@@ -60,20 +60,32 @@ class MyForecaster(BaseForecaster):
     and so on
     """
 
+    # todo: fill out estimator tags here
+        _tags = {
+            "fh_in_fit" : True, # is the forecasting horizon already required in fit?
+            "handles_missing_data" : False, # can the estimator handle missing data?
+            "univariate_only" : True, # can the estimator deal with multivariate series?
+        }
+        # in case of inheritance, concrete class should set all tags
+        #  alternatively, descendants can set tags in __init__ (avoid this if possible)
+
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
+    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+        # estimators should precede parameters
+        #  if estimators have default values, set None and initalize below
 
         # todo: write any hyper-parameters and components to self
+        self.est = est
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # important: no checking or other logic should happen here
 
-        # todo: initialize None parameters, where necessary
-        if paramc is None:
-            self.paramc = "42"
-
-        # todo: uncomment if forecast horizon is needed only in predict
-        # self._tags["fh_in_fit"] = "optional"
+        # todo: default estimators should have None arg defaults
+        #  and be initialized here
+        #  do this only with default estimators, not with parameters
+        # if est2 is None:
+        #     self.estimator = MyDefaultEstimator()
 
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
