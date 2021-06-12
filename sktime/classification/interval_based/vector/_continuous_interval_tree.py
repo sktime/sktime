@@ -526,47 +526,47 @@ def entropy(x, s):
     return e
 
 
-def _cif_feature(X, intervals, dims, att, c22):
+def _cif_feature(X, interval, dim, att, c22):
     if att == 22:
         # mean
-        return np.mean(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.mean(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 23:
         # std_dev
-        return np.std(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.std(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 24:
         # slope
-        return _slope(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return _slope(X[:, dim, interval[0] : interval[1]], axis=1)
     else:
         return c22._transform_single_feature(
-            X[:, dims, intervals[0] : intervals[1]],
+            X[:, dim, interval[0] : interval[1]],
             feature=att,
         )
 
 
-def _drcif_feature(X, intervals, dims, att, c22):
+def _drcif_feature(X, interval, dim, att, c22):
     if att == 22:
         # mean
-        return np.mean(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.mean(X[:, dim, interval[0] : interval[1]], axis=1)
     if att == 23:
         # median
-        return np.median(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.median(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 24:
         # std_dev
-        return np.std(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.std(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 25:
         # slope
-        return _slope(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return _slope(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 26:
         # iqr
-        return scipy.stats.iqr(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return scipy.stats.iqr(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 27:
         # min
-        return np.min(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.min(X[:, dim, interval[0] : interval[1]], axis=1)
     elif att == 28:
         # max
-        return np.max(X[:, dims, intervals[0] : intervals[1]], axis=1)
+        return np.max(X[:, dim, interval[0] : interval[1]], axis=1)
     else:
         return c22._transform_single_feature(
-            X[:, dims, intervals[0] : intervals[1]],
+            X[:, dim, interval[0] : interval[1]],
             feature=att,
         )

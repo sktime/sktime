@@ -789,12 +789,12 @@ def fluct_prop(X, og_length, dfa):
     smax = np.log(og_length / 2)
     inc = (smax - smin) / 49
     for i in range(1, 50):
-        val = int(np.round(np.exp(smin + inc * i)))
+        val = int(np.round(np.exp(smin + inc * i) + .000000000001))
         if val != a[len(a) - 1]:
             a.append(val)
     n_tau = len(a)
 
-    if len(a) < 12:
+    if n_tau < 12:
         return np.nan
 
     f = np.zeros(n_tau)
