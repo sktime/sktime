@@ -53,6 +53,17 @@ class TimeSeriesForestClassifier(
     n_classes    : int
     n_intervals  : int
     classes_    : List of classes for a given problem
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = TimeSeriesForestClassifier(n_estimators=10)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     References
     ----------
