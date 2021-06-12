@@ -35,6 +35,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
+from sktime.utils import _has_tag
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
@@ -66,16 +67,6 @@ class BaseForecaster(BaseEstimator):
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
-
-        # defaults for estimator tags
-        if not hasattr(self, "_tags"):
-            self._tags = dict()
-
-        if hasattr(self, "fhmixinflag"):
-            self._tags["fh_in_fit"] = self.fhmixinflag
-
-        if "fh_in_fit" not in self._tags.keys():
-            self._tags["fh_in_fit"] = "required"
 
         super(BaseForecaster, self).__init__()
 
@@ -521,7 +512,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        optfh = self._tags["fh_in_fit"] == "optional"
+        requires_fh = _has_tag(self, "requires-fh-in-fit")
 
         msg = (
             f"This is because fitting of the `"
@@ -540,23 +531,22 @@ class BaseForecaster(BaseEstimator):
             if self._is_fitted:
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
-                if optfh and self._fh is None:
+                if not requires_fh and self._fh is None:
                     raise ValueError(
                         "The forecasting horizon `fh` must be passed "
                         "either to `fit` or `predict`, "
                         "but was found in neither."
                     )
                 # in case C. fh is not optional in fit: this is fine
-                # any error would ahve already been caught in fit
+                # any error would have already been caught in fit
 
             # A. strategy not fitted (call of fit)
-            elif not optfh:
+            elif requires_fh:
                 # in case fh is not optional in fit:
                 # fh must be passed in fit
                 raise ValueError(
                     "The forecasting horizon `fh` must be passed to "
-                    "`fit`, "
-                    "but none was found. " + msg
+                    "`fit`, but none was found. " + msg
                 )
                 # in case C. fh is optional in fit:
                 # this is fine, nothing to check/raise
@@ -571,7 +561,7 @@ class BaseForecaster(BaseEstimator):
             # - fh has not been seen yet
             # - fh has been seen, but was optional in fit,
             #     this means fh needs not be same and can be overwritten
-            if optfh or not self._fh or not self._is_fitted:
+            if not requires_fh or not self._fh or not self._is_fitted:
                 self._fh = fh
             # there is one error condition:
             # - fh is mandatory in fit, i.e., fh in predict must be same if passed
