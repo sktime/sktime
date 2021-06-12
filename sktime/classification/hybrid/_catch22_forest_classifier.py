@@ -37,6 +37,17 @@ class Catch22ForestClassifier(BaseClassifier):
     Attributes
     ----------
     bagging_classifier      : trained forest classifier
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.hybrid._catch22_forest_classifier import Catch22ForestClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = Catch22ForestClassifier(n_estimators=100, n_jobs=10, random_state=0)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     Notes
     -----
