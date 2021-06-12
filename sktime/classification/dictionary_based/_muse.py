@@ -77,6 +77,23 @@ class MUSE(BaseClassifier):
     See Also
     --------
     WEASEL
+    
+    Example
+    -------
+    >>> from sktime.classification.dictionary_based import MUSE
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = MUSE(
+    ...     anova=True,
+    ...     bigrams=True,
+    ...     window_inc=2,
+    ...     p_threshold=0.05,
+    ...     use_first_order_differences=True,
+    ...     random_state=42)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     Notes
     -----
