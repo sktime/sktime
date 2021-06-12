@@ -86,7 +86,24 @@ class WEASEL(BaseClassifier):
     Attributes
     ----------
      classes_    : List of classes for a given problem
-
+     
+    Example
+    -------
+    >>> from sktime.classification.dictionary_based import WEASEL
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = WEASEL(
+    ...     anova=True,
+    ...     bigrams=True,
+    ...     binning_strategy="information-gain",
+    ...     window_inc=2,
+    ...     p_threshold=0.05,
+    ...     random_state=None)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    
     Notes
     -----
     ..[1]  Patrick Schäfer and Ulf Leser,    :
