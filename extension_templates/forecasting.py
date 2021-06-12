@@ -62,9 +62,9 @@ class MyForecaster(BaseForecaster):
 
     # todo: fill out estimator tags here
     _tags = {
-        "fh_in_fit" : True,  # is the forecasting horizon already required in fit?
-        "handles_missing_data" : False,  # can the estimator handle missing data?
-        "univariate_only" : True,  # can the estimator deal with multivariate series?
+        "fh_in_fit": True,  # is the forecasting horizon already required in fit?
+        "handles_missing_data": False,  # can the estimator handle missing data?
+        "univariate_only": True,  # can the estimator deal with multivariate series?
     }
     # in case of inheritance, concrete class should set all tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
