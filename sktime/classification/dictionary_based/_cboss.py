@@ -74,6 +74,22 @@ class ContractableBOSS(BaseClassifier):
     See Also
     --------
     BOSSEnsemble
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = ContractableBOSS(
+    ...     n_parameter_samples=100,
+    ...     max_ensemble_size=50,
+    ...     max_win_len_prop=1,
+    ...     min_window=10,
+    ...     n_jobs=1)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
 
     Notes
     -----
