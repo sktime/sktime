@@ -92,6 +92,17 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = KNeighborsTimeSeriesClassifier(n_neighbors=5)
+    >>> clf.fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
     """
 
     # Capability tags
