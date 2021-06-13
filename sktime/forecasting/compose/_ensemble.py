@@ -49,6 +49,8 @@ class EnsembleForecaster(
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
+
         self._set_y_X(y, X)
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()

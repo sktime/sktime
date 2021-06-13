@@ -43,6 +43,8 @@ class StackingForecaster(
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
+
         self._set_y_X(y, X)
         if X is not None:
             raise NotImplementedError()
