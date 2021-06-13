@@ -100,6 +100,7 @@ class HCrystalBallForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster
         super(HCrystalBallForecaster, self).__init__()
 
     def fit(self, y, X=None, fh=None):
+        self._is_fitted = False
         self._set_y_X(y, X)
         self._set_fh(fh)
 
