@@ -46,7 +46,7 @@ class STLForecaster(TransformedTargetForecaster):
     """
 
     _tags = {"univariate-only": True}
-    _required_parameters = ["forecaster", "degree", "sp", "steps"]
+    _required_parameters = ["forecaster", "degree", "sp"]
 
     def __init__(self, forecaster=None, degree=1, sp=1):
         if forecaster is None:
