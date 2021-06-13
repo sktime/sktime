@@ -111,7 +111,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
 
     Parameters
     ----------
-    y : pd.Series
+    y : pd.Series, np.ndarray(1)
     allow_empty : bool, optional (default=False)
         If False, empty `y` raises an error.
     allow_constant : bool, optional (default=True)
@@ -132,7 +132,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
         y,
         enforce_univariate=True,
         allow_empty=allow_empty,
-        allow_numpy=False,
+        allow_numpy=True,
         enforce_index_type=enforce_index_type,
     )
 
