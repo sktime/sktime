@@ -63,6 +63,7 @@ def _coerce_duration_to_int(duration, freq=None):
 def _get_freq(x):
     """Get unit for conversion of time deltas to integers"""
     if hasattr(x, "freqstr"):
+	#'W-SUN,W-SAT,etc'
         return x.freqstr[0]
     else:
         return None
