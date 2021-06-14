@@ -1,11 +1,9 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Class for apply iterative differences to a time series."""
+"""Class to iteratively apply differences to a time series."""
 __author__ = ["Ryan Kuhns"]
 __all__ = ["Differencer"]
-
-import math
 
 import numpy as np
 import pandas as pd
@@ -42,24 +40,10 @@ def _difference_info(series, lag, prior_cum_lags):
     }
 
 
-def _inverse_diff(series, start, stop, lag, first_n_timepoints, n_timepoints):
-    def _inverse_diff_slice_values(series, start, stop, lag):
-        return series[start:stop].values + series[start - lag : stop - lag].values
-
-    if lag == 1:
-        series.iloc[start:stop] = first_n_timepoints.values
-        series = series.cumsum()
-    else:
-        iterations = math.ceil((n_timepoints - start) / lag)
-        for it in range(iterations):
-            if it == 0:
-                series.iloc[start:stop] = first_n_timepoints.values
-            else:
-                start = np.clip(start + lag, 0, n_timepoints)
-                stop = np.clip(stop + lag, 0, n_timepoints)
-                series.iloc[start:stop] = _inverse_diff_slice_values(
-                    series, start, stop, lag
-                )
+def _inverse_diff(series, start, stop, lag, first_n_timepoints):
+    series.iloc[start:stop] = first_n_timepoints.values
+    for i in range(lag):
+        series.iloc[i::lag] = series.iloc[i::lag].cumsum()
 
     return series
 
@@ -163,8 +147,6 @@ class Differencer(_SeriesToSeriesTransformer):
         Z = check_series(Z, enforce_univariate=True)
         Z_inv = Z.copy()
 
-        n_timepoints = Z_inv.shape[0]
-
         for lag, fit, prior_cum_lag in zip(
             self.lags[::-1], self._lag_fit_info[::-1], self._prior_cum_lags[::-1]
         ):
@@ -172,16 +154,14 @@ class Differencer(_SeriesToSeriesTransformer):
                 start = 0
                 first_n_timepoints = fit["last_n_timepoints"]
                 Z_inv = pd.concat([pd.Series([np.nan] * lag), Z_inv])
-                n_timepoints = Z_inv.shape[0]
             else:
                 start = prior_cum_lag
                 first_n_timepoints = fit["first_n_timepoints"]
 
             stop = start + lag
 
-            Z_inv = _inverse_diff(
-                Z_inv, start, stop, lag, first_n_timepoints, n_timepoints
-            )
+            Z_inv = _inverse_diff(Z_inv, start, stop, lag, first_n_timepoints)
+
             if self.use_with_predict:
                 Z_inv = Z_inv.iloc[lag:]
 
