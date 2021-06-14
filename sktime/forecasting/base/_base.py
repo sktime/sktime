@@ -363,6 +363,7 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
+        y = pd.Series(y)
         # set initial training data
         self._y, self._X = check_y_X(
             y, X, allow_empty=False, enforce_index_type=enforce_index_type

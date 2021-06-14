@@ -56,8 +56,12 @@ def plot_series(
     from matplotlib.cbook import flatten
     import seaborn as sns
 
+    # creates a new series of type pd.Series
+    new_series = []
     for y in series:
-        check_y(y)
+        y = check_y(y)
+        new_series.append(y)
+    series = new_series
 
     n_series = len(series)
     _ax_kwarg_is_none = True if ax is None else False

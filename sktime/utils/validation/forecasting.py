@@ -140,7 +140,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
         if np.all(y == y.iloc[0]):
             raise ValueError("All values of `y` are the same.")
 
-    return y
+    return pd.Series(y)
 
 
 def check_cv(cv, enforce_start_with_window=False):

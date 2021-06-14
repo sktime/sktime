@@ -24,4 +24,4 @@ def test_check_fh_empty_input(arg):
 
 # @pytest.mark.parametrize("arg", bad_input)
 def test_check_y():
-    check_y(valid_numpy_input)
+    isinstance(check_y(valid_numpy_input), pd.Series)
