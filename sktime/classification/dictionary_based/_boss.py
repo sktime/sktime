@@ -72,7 +72,6 @@ class BOSSEnsemble(BaseClassifier):
     <= max_ensemble_size)
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
-    
     Example
     -------
     >>> from sklearn.model_selection import train_test_split
