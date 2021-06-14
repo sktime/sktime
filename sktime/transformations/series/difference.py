@@ -146,7 +146,7 @@ class Differencer(_SeriesToSeriesTransformer):
             A time series to apply the specified difference transformation on.
         """
         self.check_is_fitted()
-        Z = check_series(Z)
+        Z = check_series(Z, enforce_univariate=True)
         self._lag_fit_info = []
 
         return self._fit_difference(Z, self.lags)
@@ -160,7 +160,7 @@ class Differencer(_SeriesToSeriesTransformer):
             A time series to apply the specified difference transformation on.
         """
         self.check_is_fitted()
-        Z = check_series(Z)
+        Z = check_series(Z, enforce_univariate=True)
         Z_inv = Z.copy()
 
         n_timepoints = Z_inv.shape[0]
