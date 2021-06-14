@@ -92,7 +92,7 @@ def mean_asymmetric_error(
     multioutput="uniform_average",
     **kwargs,
 ):
-    """Calculate asymmetric loss function.
+    """Calculate mean of asymmetric loss function.
 
     Error values that are less than the asymmetric threshold have
     `left_error_function` applied. Error values greater than or equal to
@@ -198,16 +198,17 @@ def mean_absolute_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
-        Estimated target values.
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
-            where fh is the forecasting horizon
+    y_train : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Observed training values.
 
     sp : int
@@ -325,16 +326,17 @@ def median_absolute_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
-        Estimated target values.
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
-            where fh is the forecasting horizon
+    y_train : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Observed training values.
 
     sp : int
@@ -459,16 +461,17 @@ def mean_squared_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
-        Estimated target values.
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
-            where fh is the forecasting horizon
+    y_train : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Observed training values.
 
     sp : int
@@ -597,16 +600,17 @@ def median_squared_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
-        Estimated target values.
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
 
-    y_train : pandas Series of shape (fh,) or (fh, n_outputs), default = None
-            where fh is the forecasting horizon
+    y_train : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
+            default = None
         Observed training values.
 
     sp : int
