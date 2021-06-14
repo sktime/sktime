@@ -23,14 +23,18 @@ from sktime.utils.validation.panel import check_X
 
 
 class ContinuousIntervalTree(BaseEstimator):
-    """
+    """The 'Time Series Tree' described in the Time Series Forest (TSF) paper [1].
+    A simple information gain based tree for continuous attributes using a bespoke
+    margin gain metric for tie breaking.
 
     Parameters
     ----------
+    max_depth          : int, max depth for the tree (default no limit)
     random_state       : int, seed for random, optional (default to no seed)
 
     Attributes
     ----------
+    root               : tree root node
 
     Notes
     -----
@@ -39,9 +43,8 @@ class ContinuousIntervalTree(BaseEstimator):
      Java implementation
 
     Java implementation
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/interval_based/CIF.java
-
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    machine_learning/classifiers/ContinuousIntervalTree.java
     """
 
     def __init__(
@@ -65,6 +68,19 @@ class ContinuousIntervalTree(BaseEstimator):
         super(ContinuousIntervalTree, self).__init__()
 
     def fit(self, X, y):
+        """Build an information gain based tree for continuous attributes using the
+        margin gain metric for ties.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances,n_attributes]
+        The training input samples.
+        y : array-like, shape =  [n_instances]    The class labels.
+
+        Returns
+        -------
+        self : object
+        """
         if not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
                 "ContinuousIntervalTree is not a time series classifier. "
@@ -100,6 +116,17 @@ class ContinuousIntervalTree(BaseEstimator):
         return self
 
     def predict(self, X):
+        """Predict for all cases in X. Built on top of predict_proba.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances,n_attributes]
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -109,6 +136,18 @@ class ContinuousIntervalTree(BaseEstimator):
         )
 
     def predict_proba(self, X):
+        """Probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances,n_attributes]
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances, num_classes] of
+        probabilities
+        """
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "

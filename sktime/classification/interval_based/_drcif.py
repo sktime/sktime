@@ -43,13 +43,13 @@ class DrCIF(BaseClassifier):
     ensemble the trees with averaged probability estimates
 
     This implementation deviates from the original in minor ways. Predictions
-    are made using summed probabilites instead of majority vote
+    are made using summed probabilities instead of majority vote
     and it does not use the splitting criteria tiny refinement described in
-    deng13forest.
+    deng13forest by default.
 
     Parameters
     ----------
-    n_estimators       : int, ensemble size, optional (default to 500)
+    n_estimators       : int, ensemble size, optional (default to 200)
     n_intervals        : int or size 3 list, number of intervals to extract per
     representation, optional (default to 4 + (sqrt(representation_length)*sqrt(n_dims))
     / 3)
@@ -140,15 +140,13 @@ class DrCIF(BaseClassifier):
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
-         Uses random intervals and catch22/tsf summary features
+         Uses random intervals and catch22/basic summary features
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances,
+        X : array-like or sparse matrix of shape = [n_instances,n_dimensions,
         series_length] or shape = [n_instances,series_length]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification).
+        The training input samples.
         y : array-like, shape =  [n_instances]    The class labels.
 
         Returns
@@ -268,11 +266,8 @@ class DrCIF(BaseClassifier):
 
         Parameters
         ----------
-        X : The training input samples. array-like or pandas data frame.
-        If a Pandas data frame is passed, a check is performed that it only
-        has one column.
-        If not, an exception is thrown, since this classifier does not yet have
-        multivariate capability.
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances,n_dimensions,series_length]
 
         Returns
         -------
@@ -292,12 +287,7 @@ class DrCIF(BaseClassifier):
         Parameters
         ----------
         X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances, series_length]
-            If a Pandas data frame is passed (sktime format) a check is
-            performed that it only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
+        = [n_test_instances,n_dimensions,series_length]
 
         Local variables
         ----------

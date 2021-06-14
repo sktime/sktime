@@ -42,14 +42,14 @@ class CanonicalIntervalForest(BaseClassifier):
     ensemble the trees with averaged probability estimates
 
     This implementation deviates from the original in minor ways. Predictions
-    are made using summed probabilites instead of majority vote
+    are made using summed probabilities instead of majority vote
     and it does not use the splitting criteria tiny refinement described in
-    deng13forest.
+    deng13forest by default.
 
     Parameters
     ----------
-    n_estimators       : int, ensemble size, optional (default to 500)
-    n_intervals         : int, number of intervals to extract, optional (default to
+    n_estimators       : int, ensemble size, optional (default to 200)
+    n_intervals        : int, number of intervals to extract, optional (default to
     sqrt(series_length)*sqrt(n_dims))
     att_subsample_size : int, number of catch22/tsf attributes to subsample
     per classifier, optional (default to 8)
@@ -142,11 +142,9 @@ class CanonicalIntervalForest(BaseClassifier):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances,
+        X : array-like or sparse matrix of shape = [n_instances,n_dimensions,
         series_length] or shape = [n_instances,series_length]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification).
+        The training input samples.
         y : array-like, shape =  [n_instances]    The class labels.
 
         Returns
@@ -202,11 +200,8 @@ class CanonicalIntervalForest(BaseClassifier):
 
         Parameters
         ----------
-        X : The training input samples. array-like or pandas data frame.
-        If a Pandas data frame is passed, a check is performed that it only
-        has one column.
-        If not, an exception is thrown, since this classifier does not yet have
-        multivariate capability.
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances,n_dimensions,series_length]
 
         Returns
         -------
@@ -226,12 +221,7 @@ class CanonicalIntervalForest(BaseClassifier):
         Parameters
         ----------
         X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances, series_length]
-            If a Pandas data frame is passed (sktime format) a check is
-            performed that it only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
+        = [n_test_instances,n_dimensions,series_length]
 
         Local variables
         ----------

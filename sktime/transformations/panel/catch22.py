@@ -34,7 +34,7 @@ class Catch22(_PanelToTabularTransformer):
         publisher={Springer}
     }
 
-    Overview: Input n series length m
+    Overview: Input n series with d dimensions of length m
     Transforms series into the 22 catch22 features extracted from the hctsa
     toolbox.
 

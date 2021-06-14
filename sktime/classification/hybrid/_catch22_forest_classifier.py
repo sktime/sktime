@@ -25,15 +25,16 @@ class Catch22ForestClassifier(BaseClassifier):
 
     Parameters
     ----------
-    n_estimators            : int, number of trees in the random forest
-    bootstrap               : bool, if true draw samples with replacement
-    n_jobs                  : int or None, number of jobs to run in parallel
+    n_estimators            : int, number of trees in the random forest (default=200)
+    outlier_norm            : boolean, normalise each series for the outlier catch22
+    features which can take a while to process otherwise (default=True)
+    n_jobs                  : int or None, number of jobs to run in parallel (default=1)
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
     Attributes
     ----------
-    bagging_classifier      : trained forest classifier
+    classifier              : trained random forest classifier
 
     Notes
     -----
@@ -47,7 +48,7 @@ class Catch22ForestClassifier(BaseClassifier):
 
     Original Catch22ForestClassifier:
     https://github.com/chlubba/sktime-catch22
-    catch22 package implementations:
+    catch22 package C, MATLAB and wrapped Python implementations:
     https://github.com/chlubba/catch22
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
@@ -66,7 +67,7 @@ class Catch22ForestClassifier(BaseClassifier):
     def __init__(
         self,
         n_estimators=200,
-        outlier_norm=False,
+        outlier_norm=True,
         n_jobs=1,
         random_state=None,
     ):
