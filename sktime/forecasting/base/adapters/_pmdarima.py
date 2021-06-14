@@ -37,6 +37,7 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
         self._set_y_X(y, X)
         self._set_fh(fh)
         self._forecaster = self._instantiate_model()
