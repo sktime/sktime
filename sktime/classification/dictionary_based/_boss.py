@@ -83,7 +83,6 @@ class BOSSEnsemble(BaseClassifier):
     >>> clf = BOSSEnsemble(
     ...     threshold=0.92,
     ...     max_ensemble_size=100,
-    ...     max_win_len_prop=1,
     ...     min_window=10,
     ...     n_jobs=1,
     ...     random_state=42)
