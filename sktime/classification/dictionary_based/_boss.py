@@ -72,6 +72,7 @@ class BOSSEnsemble(BaseClassifier):
     <= max_ensemble_size)
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
+    
     Example
     -------
     >>> from sklearn.model_selection import train_test_split
@@ -82,7 +83,6 @@ class BOSSEnsemble(BaseClassifier):
     >>> clf = BOSSEnsemble(
     ...     threshold=0.92,
     ...     max_ensemble_size=100,
-    ...     min_window=10,
     ...     n_jobs=1,
     ...     random_state=42)
     >>> clf.fit(X_train, y_train)
