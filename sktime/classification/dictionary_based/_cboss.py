@@ -85,8 +85,6 @@ class ContractableBOSS(BaseClassifier):
     >>> clf = ContractableBOSS(
     ...     n_parameter_samples=100,
     ...     max_ensemble_size=50,
-    ...     max_win_len_prop=1,
-    ...     min_window=10,
     ...     n_jobs=1)
     >>> clf.fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
