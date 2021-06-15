@@ -1,11 +1,13 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
+from __future__ import annotations  # this is for type hinting
+from typing import Dict
 __author__ = ["Markus Löning"]
 __all__ = ["_HeterogenousMetaEstimator"]
 
 from abc import ABCMeta
+from typing import Any
 
 from sktime.base import BaseEstimator
 
@@ -17,13 +19,13 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
     from sklearn utils.metaestimator.py
     """
 
-    def get_params(self, deep=True):
+    def get_params(self, deep: bool = True):
         raise NotImplementedError("abstract method")
 
-    def set_params(self, **params):
+    def set_params(self, **params: Dict[str, Any]):
         raise NotImplementedError("abstract method")
 
-    def _get_params(self, attr, deep=True):
+    def _get_params(self, attr: str, deep: bool = True) -> Dict[str, Any]:
         out = super().get_params(deep=deep)
         if not deep:
             return out
@@ -35,7 +37,8 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
                     out["%s__%s" % (name, key)] = value
         return out
 
-    def _set_params(self, attr, **params):
+    def _set_params(self, attr: str,
+                    **params: Dict[str, Any]) -> _HeterogenousMetaEstimator:
         # Ensure strict ordering of parameter setting:
         # 1. All steps
         if attr in params:
@@ -52,7 +55,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         super().set_params(**params)
         return self
 
-    def _replace_estimator(self, attr, name, new_val):
+    def _replace_estimator(self, attr: str, name: str, new_val: BaseEstimator) -> None:
         # assumes `name` is a valid estimator name
         new_estimators = list(getattr(self, attr))
         for i, (estimator_name, _) in enumerate(new_estimators):
@@ -61,7 +64,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
                 break
         setattr(self, attr, new_estimators)
 
-    def _check_names(self, names):
+    def _check_names(self, names: str) -> None:
         if len(set(names)) != len(names):
             raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
         invalid_names = set(names).intersection(self.get_params(deep=False))

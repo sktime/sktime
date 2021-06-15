@@ -17,15 +17,15 @@ class BaseEstimator(_BaseEstimator):
     BaseEstimator.
     """
 
-    def __init__(self):
-        self._is_fitted = False
+    def __init__(self) -> None:
+        self._is_fitted: bool = False
 
     @property
-    def is_fitted(self):
+    def is_fitted(self) -> bool:
         """Has `fit` been called?"""
         return self._is_fitted
 
-    def check_is_fitted(self):
+    def check_is_fitted(self) -> None:
         """Check if the estimator has been fitted.
 
         Raises
