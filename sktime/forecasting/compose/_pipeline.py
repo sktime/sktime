@@ -10,7 +10,6 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
@@ -19,7 +18,6 @@ from sktime.utils import _has_tag
 
 
 class TransformedTargetForecaster(
-    _OptionalForecastingHorizonMixin,
     _SktimeForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
@@ -114,7 +112,7 @@ class TransformedTargetForecaster(
         """Map the steps to a dictionary"""
         return dict(self.steps)
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -129,11 +127,8 @@ class TransformedTargetForecaster(
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
 
         self.steps_ = self._check_steps()
-        self._set_y_X(y, X)
-        self._set_fh(fh)
 
         # transform
         yt = check_y(y)
@@ -147,8 +142,6 @@ class TransformedTargetForecaster(
         f = clone(forecaster)
         f.fit(yt, X, fh)
         self.steps_[-1] = (name, f)
-
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
