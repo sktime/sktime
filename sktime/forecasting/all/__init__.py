@@ -24,11 +24,11 @@ __all__ = [
     "Prophet",
     "PolynomialTrendForecaster",
     "TransformedTargetForecaster",
+    "STLForecaster",
     "MultiplexForecaster",
     "Deseasonalizer",
     "ReducedForecaster",
     "EnsembleForecaster",
-    "STLForecaster",
     "Detrender",
     "pd",
     "np",
@@ -93,6 +93,7 @@ from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose import ReducedForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import STLForecaster
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import CutoffSplitter

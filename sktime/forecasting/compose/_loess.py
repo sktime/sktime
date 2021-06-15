@@ -57,7 +57,7 @@ class STLForecaster(TransformedTargetForecaster):
         self.detrender = Detrender(
             forecaster=PolynomialTrendForecaster(degree=self.degree)
         )
-        self.deseasonalizer = Deseasonalizer(self.sp)
+        self.deseasonalizer = Deseasonalizer(self.sp, model="additive")
         self.steps = [
             ("deseasonalise", self.deseasonalizer),
             ("detrend", self.detrender),

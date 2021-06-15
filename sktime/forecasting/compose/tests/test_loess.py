@@ -15,7 +15,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.detrend import Detrender
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.forecasting.compose._stlforecaster import STLForecaster
+from sktime.forecasting.compose._loess import STLForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
