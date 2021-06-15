@@ -41,7 +41,7 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
             y, X = _coerce_int_to_range_index(y, X)
-
+        self._is_fitted = False
         self._set_y_X(y, X)
         self._set_fh(fh)
         self._fit_forecaster(y, X)
