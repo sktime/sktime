@@ -14,10 +14,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.classification.interval_based.vector import (
+from sktime.classification.interval_based._vector import (
     ContinuousIntervalTree,
 )
-from sktime.classification.interval_based.vector._continuous_interval_tree import (
+from sktime.classification.interval_based._vector._continuous_interval_tree import (
     _cif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
@@ -317,7 +317,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
         c22 = Catch22(outlier_norm=True)
-        if self.tree is ContinuousIntervalTree:
+        if isinstance(self.tree, ContinuousIntervalTree):
             return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
         else:
             transformed_x = np.empty(

@@ -3,6 +3,6 @@ __all__ = [
     "ContinuousIntervalTree",
 ]
 
-from sktime.classification.interval_based.vector._continuous_interval_tree import (
+from sktime.classification.interval_based._vector._continuous_interval_tree import (
     ContinuousIntervalTree,
 )
