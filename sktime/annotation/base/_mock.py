@@ -4,7 +4,7 @@ from sktime.annotation.base._base import BaseAnnotator
 
 class MockAnnotator(BaseAnnotator):
     def __init__(self):
-        pass
+        super().__init__()
 
     def fit(self, Z, X=None):
         self._is_fitted = True
