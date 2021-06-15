@@ -61,7 +61,7 @@ class NetworkPipelineForecaster(
     ...            {
     ...                "fit": {"y": "imputer", "X": "original_X", "fh": "original_fh"},
     ...                "predict": {"fh": "original_fh"},
-    ...                "update": {"y": "original_y"},
+    ...                "update": {"y": "imputer"},
     ...            },
     ...        ),
     ...    ])
@@ -71,7 +71,8 @@ class NetworkPipelineForecaster(
     _tags = {"univariate-only": True}
 
     def __init__(self, steps):
-        self.steps_ = steps
+        self.steps = steps
+        self.steps_ = None
         self._step_results = {}
         self._fitted_estimators = {}
         super().__init__()
@@ -89,6 +90,10 @@ class NetworkPipelineForecaster(
             return self._step_results[step_name]
 
         return None
+
+    def _check_steps_for_consistency(self):
+        # TODO implement checks for consistency
+        return self.steps
 
     def _process_arguments(self, arguments):
         """
@@ -134,6 +139,7 @@ class NetworkPipelineForecaster(
         return returned_arguments_kwarg
 
     def fit(self, y, X=None, fh=None):
+        self.steps_ = self._check_steps_for_consistency()
         self._set_y_X(y, X)
         self._set_fh(fh)
         for name, est, arguments in self._iter():
