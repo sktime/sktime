@@ -71,14 +71,18 @@ class NetworkPipelineForecaster(
     _tags = {"univariate-only": True}
 
     def __init__(self, steps):
-        self.steps = steps
+        self.steps_ = steps
         self._step_results = {}
         self._fitted_estimators = {}
         super().__init__()
 
-    def _iter(self):
-        for name, est, arguments in self.steps:
-            yield name, est, arguments
+    def _iter(self, reverse=False):
+        if reverse:
+            steps = reversed(self.steps_)
+        else:
+            steps = self.steps_
+        for (name, est, arguments) in steps:
+            yield (name, est, arguments)
 
     def _check_steps_for_values(self, step_name):
         if step_name in self._step_results:
@@ -132,8 +136,10 @@ class NetworkPipelineForecaster(
     def fit(self, y, X=None, fh=None):
         self._set_y_X(y, X)
         self._set_fh(fh)
-
         for name, est, arguments in self._iter():
+            # check arguments of pipeline.
+            # Inspect the `fit` key of the step arguments
+            # check and process corresponding values
             processed_arguments = {}
 
             if "fit" in arguments and arguments["fit"] is None:
@@ -152,16 +158,14 @@ class NetworkPipelineForecaster(
                 processed_arguments["X"] = check_X(processed_arguments["X"])
             if "X" in processed_arguments and processed_arguments["X"] is None:
                 del processed_arguments["X"]
-            # Transformers are instances of BaseTransformer and BaseEstimator
-            # Estimators are only instances of BaseEstimator
-
+            # if estimator has `fit_transform()` method it is a transformer
             if hasattr(est, "fit_transform"):
                 t = clone(est)
                 out = t.fit_transform(**processed_arguments)
                 self._step_results[name] = out
-                self._fitted_estimators[name] = t
+                self._fitted_estimators[name] = t  # TODO: delete
             processed_arguments["fh"] = self._fh
-            # estimators have fit and predict methods
+            # if estimator has `fit()` and `predict()` methods it s a forecaster
             if hasattr(est, "fit") and hasattr(est, "predict"):
                 f = clone(est)
 
@@ -175,11 +179,17 @@ class NetworkPipelineForecaster(
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if X is not None:
             self._X = X
-        for name, est, arguments in self._iter():
+        for name, est, arguments in self._iter(reverse=True):
+            # Iterates through the steps in the pipeline
+
             processed_arguments = {}
-            # estimator in self.steps is not fitted.
+            # get fitted estimator
+            # estimator in self.steps_ is not fitted.
             # use fitted estimator in self._fitted_estimators
             est = self._fitted_estimators[name]
+            # check arguments of pipeline.
+            # Inspect the `predict` key of the step arguments
+            # check and process corresponding values
             if "predict" in arguments and arguments["predict"] is None:
                 # this step must be skipped
                 continue
@@ -187,18 +197,22 @@ class NetworkPipelineForecaster(
                 processed_arguments = self._process_arguments(arguments["predict"])
             else:
                 processed_arguments = self._process_arguments(arguments)
+            # if estimator has a `transform()` method it is a transformer
             if hasattr(est, "transform"):
 
                 self._step_results[name] = est.transform(**processed_arguments)
+            # if estimator has a `predict()` method it is a forecaster
+
             if hasattr(est, "predict"):
 
-                pred = est.predict(
+                fitted_estimator = self._fitted_estimators[name]
+                pred = fitted_estimator.predict(
                     **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
                 )
                 # pred.index.freq = self._y.index.freq
                 self._step_results[name] = pred
 
-        return self._step_results[self.steps[-1][0]]
+        return pred
 
     def update(self, y, X=None, update_params=True):
         """Update fitted parameters
@@ -217,8 +231,13 @@ class NetworkPipelineForecaster(
         y_index_frequency = self._y.index.freq
         self._update_y_X(y, X)
         self._y = self._y.asfreq(y_index_frequency)
-        for name, est, arguments in self._iter():
-            # estimator in self.steps is not fitted.
+
+        for (name, est, arguments) in self._iter():
+            # check arguments of pipeline.
+            # Inspect the `update` key of the step arguments
+            # check and process corresponding values
+
+            # estimator in self.steps_ is not fitted.
             # use fitted estimator in self._fitted_estimators
             est = self._fitted_estimators[name]
             if "update" in arguments and arguments["update"] is None:
@@ -231,16 +250,21 @@ class NetworkPipelineForecaster(
 
             else:
                 processed_arguments = self._process_arguments(arguments)
-            # Transformers are instances of BaseTransformer and BaseEstimator
-            # Estimators are only instances of BaseEstimator
+
+            processed_arguments["update_params"] = update_params
+            # Transformers do not have `predict()`
 
             if hasattr(est, "update"):
+
                 out = est.update(**processed_arguments)
+                out._cutoff = self.cutoff
                 self._step_results[name] = out
-                self._is_fitted = True
-            # estimators have fit and predict methods
-            if hasattr(est, "update") and hasattr(est, "predict"):
-                est.update(**processed_arguments)
+            else:
+                raise ValueError(f"{name} has no update() method.")
+            #     continue
+            # forecasters have `update()` and `predict()` methods
+            # if hasattr(est, "update") and hasattr(est, "predict"):
+            #     est.update(**processed_arguments)
 
         self._is_fitted = True
 
