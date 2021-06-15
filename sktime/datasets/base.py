@@ -11,6 +11,8 @@ import pandas as pd
 
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
+from typing import Optional
+
 __all__ = [
     "load_airline",
     "load_arrow_head",
@@ -40,7 +42,7 @@ MODULE = os.path.dirname(__file__)
 
 
 # time series classification data sets
-def _download_and_extract(url, extract_path=None):
+def _download_and_extract(url: str, extract_path: str = None):
     """
     Download and unzip datasets (helper function).
 
@@ -88,7 +90,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_downloaded_datasets(extract_path):
+def _list_downloaded_datasets(extract_path: str):
     """
     Return a list of all the currently downloaded datasets.
 
@@ -114,7 +116,8 @@ def _list_downloaded_datasets(extract_path):
     return datasets
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
+def load_UCR_UEA_dataset(name: str, split: Optional[str] = None,
+                         return_X_y: bool = False, extract_path: Optional[str] = None):
     """
     Load dataset from UCR UEA time series archive.
 
@@ -147,7 +150,8 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
     return _load_dataset(name, split, return_X_y, extract_path)
 
 
-def _load_dataset(name, split, return_X_y, extract_path=None):
+def _load_dataset(name : str, split : str, return_X_y : bool,
+                  extract_path : Optional[str] = None):
     """Load time series classification datasets (helper funciton)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
@@ -197,7 +201,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
-def load_gunpoint(split=None, return_X_y=False):
+def load_gunpoint(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load the GunPoint time series classification problem and returns X and y.
 
@@ -248,7 +252,7 @@ def load_gunpoint(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_osuleaf(split=None, return_X_y=False):
+def load_osuleaf(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load the OSULeaf time series classification problem and returns X and y.
 
@@ -291,7 +295,7 @@ def load_osuleaf(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_italy_power_demand(split=None, return_X_y=False):
+def load_italy_power_demand(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load ItalyPowerDemand time series classification problem.
 
@@ -334,7 +338,7 @@ def load_italy_power_demand(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_japanese_vowels(split=None, return_X_y=False):
+def load_japanese_vowels(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load the JapaneseVowels time series classification problem.
 
@@ -387,7 +391,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=False):
+def load_arrow_head(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
@@ -435,7 +439,7 @@ def load_arrow_head(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_acsf1(split=None, return_X_y=False):
+def load_acsf1(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load dataset on power consumption of typical appliances.
 
@@ -480,7 +484,7 @@ def load_acsf1(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=False):
+def load_basic_motions(split : Optional[str] = None, return_X_y : bool = False):
     """
     Load the  BasicMotions time series classification problem and returns X and y.
 
@@ -560,7 +564,7 @@ def load_shampoo_sales():
     return y
 
 
-def load_longley(y_name="TOTEMP"):
+def load_longley(y_name : str = "TOTEMP"):
     """
     Load the Longley dataset for forecasting with exogenous variables.
 

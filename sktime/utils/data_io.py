@@ -2,11 +2,16 @@
 import itertools
 import os
 import textwrap
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score as acc
 from sktime.utils.data_processing import _make_column_names, from_long_to_nested
+# from typing import Union, Tuple
+
+# dataframe types
+dataframe = pd.DataFrame
 
 
 class TsFileParseException(Exception):
@@ -72,7 +77,7 @@ def load_from_tsfile_to_dataframe(
     prev_timestamp_was_timestamp = None
     num_dimensions = None
     is_first_case = True
-    instance_list = []
+    instance_list: List[Union[List, pd.Series[np.float], pd.Series[object]]] = []
     class_val_list = []
     line_num = 0
 
@@ -406,7 +411,7 @@ def load_from_tsfile_to_dataframe(
                                             )
 
                                         try:
-                                            value = tuple_data[last_comma_index + 1 :]
+                                            value = tuple_data[last_comma_index + 1:]
                                             value = float(value)
 
                                         except ValueError:
@@ -776,7 +781,7 @@ def load_from_arff_to_dataframe(
         associated class values.
     """
 
-    instance_list = []
+    instance_list: List[pd.Series[Union[float, object]]] = []
     class_val_list = []
 
     data_started = False
