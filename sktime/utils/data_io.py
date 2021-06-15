@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
+from sktime.utils.data_processing import _make_column_names, from_long_to_nested
+from sklearn.metrics import accuracy_score as acc
+import pandas as pd
+import numpy as np
 import itertools
 import os
 import textwrap
-from typing import List, Union
 
-import numpy as np
-import pandas as pd
-from sklearn.metrics import accuracy_score as acc
-from sktime.utils.data_processing import _make_column_names, from_long_to_nested
-# from typing import Union, Tuple
-
-# dataframe types
-dataframe = pd.DataFrame
+from sktime.utils._typing import Dataset
 
 
 class TsFileParseException(Exception):
@@ -35,7 +31,7 @@ def load_from_tsfile_to_dataframe(
     full_file_path_and_name,
     return_separate_X_and_y=True,
     replace_missing_vals_with="NaN",
-):
+) -> Dataset:
     """Loads data from a .ts file into a Pandas DataFrame.
 
     Parameters
@@ -77,7 +73,7 @@ def load_from_tsfile_to_dataframe(
     prev_timestamp_was_timestamp = None
     num_dimensions = None
     is_first_case = True
-    instance_list: List[Union[List, pd.Series[np.float], pd.Series[object]]] = []
+    instance_list = []
     class_val_list = []
     line_num = 0
 
@@ -746,11 +742,11 @@ def load_from_tsfile_to_dataframe(
 
 
 def load_from_arff_to_dataframe(
-    full_file_path_and_name,
-    has_class_labels=True,
-    return_separate_X_and_y=True,
-    replace_missing_vals_with="NaN",
-):
+    full_file_path_and_name: str,
+    has_class_labels: bool = True,
+    return_separate_X_and_y: bool = True,
+    replace_missing_vals_with: str = "NaN",
+) -> Dataset:
     """Loads data from a .ts file into a Pandas DataFrame.
 
     Parameters
@@ -781,7 +777,7 @@ def load_from_arff_to_dataframe(
         associated class values.
     """
 
-    instance_list: List[pd.Series[Union[float, object]]] = []
+    instance_list = []
     class_val_list = []
 
     data_started = False
@@ -867,7 +863,7 @@ def load_from_arff_to_dataframe(
 
 def load_from_ucr_tsv_to_dataframe(
     full_file_path_and_name, return_separate_X_and_y=True
-):
+) -> Dataset:
     """Loads data from a .tsv file into a Pandas DataFrame.
 
     Parameters
@@ -902,7 +898,7 @@ def load_from_ucr_tsv_to_dataframe(
     return X
 
 
-def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
+def load_from_long_to_dataframe(full_file_path_and_name: str, separator: str = ","):
     """Loads data from a long format file into a Pandas DataFrame.
 
     Parameters

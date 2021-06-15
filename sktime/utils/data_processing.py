@@ -423,7 +423,7 @@ def from_long_to_nested(
     dimension_column_name="dim_id",
     value_column_name="value",
     column_names=None,
-):
+) -> pd.DataFrame:
     """Convert long DataFrame to a nested DataFrame.
 
     Parameters

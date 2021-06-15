@@ -10,27 +10,9 @@ __all__ = [
     "_PanelToPanelTransformer",
 ]
 
-from typing import Union
-
-import numpy as np
-import pandas as pd
+from sktime.utils._typing import Series, Tabular, Panel, Primitives
 
 from sktime.base import BaseEstimator
-
-# single/multiple primitives
-Primitive = Union[np.integer, int, np.float, float, str]
-Primitives = np.ndarray
-
-# tabular/cross-sectional data
-Tabular = Union[pd.DataFrame, np.ndarray]  # 2d arrays
-
-# univariate/multivariate series
-UnivariateSeries = Union[pd.Series, np.ndarray]
-MultivariateSeries = Union[pd.DataFrame, np.ndarray]
-Series = Union[UnivariateSeries, MultivariateSeries]
-
-# panel/longitudinal/series-as-features data
-Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 
 
 class BaseTransformer(BaseEstimator):
