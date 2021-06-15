@@ -81,6 +81,8 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         self : returns an instance of self.
         """
         # X_train is ignored
+        self._is_fitted = False
+
         self._set_y_X(y, X)
         self._set_fh(fh)
         n_timepoints = y.shape[0]
