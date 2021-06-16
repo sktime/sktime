@@ -32,7 +32,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
@@ -47,7 +47,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
         X : pd.DataFrame, optional (default=None)
         return_pred_int : bool, optional (default=False)
         alpha : float or list, optional (default=0.95)
@@ -158,7 +158,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pd.Series
             Target time series to which to compare the forecasts.
-        fh : int, list or array-like, optional (default=None)
+        fh : int, list, array-like or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
