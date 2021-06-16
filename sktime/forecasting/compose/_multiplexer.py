@@ -4,16 +4,13 @@
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sklearn.base import clone
 
 __author__ = ["Kutay Koralturk"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(
-    _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
-):
+class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     """
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
@@ -81,6 +78,8 @@ class MultiplexForecaster(
     'arima'
     """
 
+    _tags = {"requires-fh-in-fit": False}
+
     def __init__(
         self,
         forecasters: list,
@@ -126,7 +125,7 @@ class MultiplexForecaster(
                 if self.selected_forecaster == name:
                     self._forecaster = clone(forecaster)
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
@@ -147,15 +146,10 @@ class MultiplexForecaster(
         self : returns an instance of self.
         """
 
-        self._is_fitted = False
-
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         self._check_forecasters()
         self._set_forecaster()
         forecaster_fit_params = self._check_fit_params(fit_params=fit_params)
         self._forecaster.fit(y, X=X, fh=fh, **forecaster_fit_params)
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):

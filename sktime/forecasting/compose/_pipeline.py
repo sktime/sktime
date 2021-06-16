@@ -53,7 +53,7 @@ class TransformedTargetForecaster(
     """
 
     _required_parameters = ["steps"]
-    _tags = {"univariate-only": True}
+    _tags = {"univariate-only": True, "requires-fh-in-fit": False}
 
     def __init__(self, steps):
         self.steps = steps

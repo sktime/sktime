@@ -26,6 +26,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _required_parameters = ["forecasters"]
+    _tags = {"requires-fh-in-fit": False}
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
