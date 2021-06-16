@@ -27,33 +27,6 @@ class _Pipeline(
     def __init__(self):
         super(_Pipeline, self).__init__()
 
-    def update(self, y, X=None, update_params=True):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
-
-        for step_idx, name, transformer in self._iter_transformers():
-            if hasattr(transformer, "update"):
-                # todo: add X
-                transformer.update(y, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
-
-        name, forecaster = self.steps_[-1]
-        forecaster.update(y, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
-        return self
-
     def _check_steps(self):
         names, estimators = zip(*self.steps)
 
@@ -191,6 +164,32 @@ class ForecastingPipeline(
         )
         return y_pred
 
+    def update(self, y, X=None, update_params=True):
+        """Update fitted parameters
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        self.check_is_fitted()
+        self._update_y_X(y, X)
+
+        for step_idx, name, transformer in self._iter_transformers():
+            if hasattr(transformer, "update"):
+                transformer.update(X, update_params=update_params)
+                self.steps_[step_idx] = (name, transformer)
+
+        name, forecaster = self.steps_[-1]
+        forecaster.update(y=y, X=X, update_params=update_params)
+        self.steps_[-1] = (name, forecaster)
+        return self
+
     def transform(self, Z, X=None):
         self.check_is_fitted()
         Zt = check_series(Z)
@@ -296,6 +295,32 @@ class TransformedTargetForecaster(
             if not _has_tag(transformer, "skip-inverse-transform"):
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
+
+    def update(self, y, X=None, update_params=True):
+        """Update fitted parameters
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        self.check_is_fitted()
+        self._update_y_X(y, X)
+
+        for step_idx, name, transformer in self._iter_transformers():
+            if hasattr(transformer, "update"):
+                transformer.update(y, update_params=update_params)
+                self.steps_[step_idx] = (name, transformer)
+
+        name, forecaster = self.steps_[-1]
+        forecaster.update(y=y, X=X, update_params=update_params)
+        self.steps_[-1] = (name, forecaster)
+        return self
 
     def transform(self, Z, X=None):
         self.check_is_fitted()
