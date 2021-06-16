@@ -12,23 +12,21 @@ from sklearn.base import is_regressor
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SingleWindowSplitter
 
 from warnings import warn
 
 
-class StackingForecaster(
-    _RequiredForecastingHorizonMixin, _HeterogenousEnsembleForecaster
-):
+class StackingForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters", "final_regressor"]
+    _tags = {"requires-fh-in-fit": True}
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.final_regressor = final_regressor
         self.final_regressor_ = None
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -43,12 +41,10 @@ class StackingForecaster(
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
 
         self._set_y_X(y, X)
         if X is not None:
             raise NotImplementedError()
-        self._set_fh(fh)
 
         names, forecasters = self._check_forecasters()
         self._check_final_regressor()
@@ -71,7 +67,6 @@ class StackingForecaster(
         # refit forecasters on entire training series
         self._fit_forecasters(forecasters, y, fh=self.fh, X=X)
 
-        self._is_fitted = True
         return self
 
     def update(self, y, X=None, update_params=True):
