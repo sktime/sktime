@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
-__all__ = ["TransformedTargetForecaster"]
+__author__ = ["Markus Löning", "Martin Walter"]
+__all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 
 from sklearn.base import clone
 
@@ -13,54 +13,46 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y_X, check_y, check_X
 from sktime.utils.validation.series import check_series
 from sktime.utils import _has_tag
 
 
-class TransformedTargetForecaster(
+class _Pipeline(
     _OptionalForecastingHorizonMixin,
     _SktimeForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
-    """
-    Meta-estimator for forecasting transformed time series.
-    Pipeline functionality to apply transformers to the target series.
+    def __init__(self):
+        super(_Pipeline, self).__init__()
 
-    Parameters
-    ----------
-    steps : list
-        List of tuples like ("name", forecaster/transformer)
+    def update(self, y, X=None, update_params=True):
+        """Update fitted parameters
 
-    Example
-    ----------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter)
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
-    >>> y = load_airline()
-    >>> pipe = TransformedTargetForecaster(steps=[
-    ...     ("imputer", Imputer(method="mean")),
-    ...     ("detrender", Deseasonalizer()),
-    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
-    >>> pipe.fit(y)
-    TransformedTargetForecaster(...)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
-    """
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional (default=True)
 
-    _required_parameters = ["steps"]
-    _tags = {"univariate-only": True}
+        Returns
+        -------
+        self : an instance of self
+        """
+        self.check_is_fitted()
+        self._update_y_X(y, X)
 
-    def __init__(self, steps):
-        self.steps = steps
-        self.steps_ = None
-        super(TransformedTargetForecaster, self).__init__()
+        for step_idx, name, transformer in self._iter_transformers():
+            if hasattr(transformer, "update"):
+                # todo: add X
+                transformer.update(y, update_params=update_params)
+                self.steps_[step_idx] = (name, transformer)
+
+        name, forecaster = self.steps_[-1]
+        forecaster.update(y, update_params=update_params)
+        self.steps_[-1] = (name, forecaster)
+        return self
 
     def _check_steps(self):
         names, estimators = zip(*self.steps)
@@ -114,6 +106,151 @@ class TransformedTargetForecaster(
         """Map the steps to a dictionary"""
         return dict(self.steps)
 
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("steps", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+        Valid parameter keys can be listed with ``get_params()``.
+        Returns
+        -------
+        self
+        """
+        self._set_params("steps", **kwargs)
+        return self
+
+
+class ForecastingPipeline(
+    _Pipeline,
+    _OptionalForecastingHorizonMixin,
+    _SktimeForecaster,
+    _HeterogenousMetaEstimator,
+    _SeriesToSeriesTransformer,
+):
+    _required_parameters = ["steps"]
+
+    def __init__(self, steps):
+        self.steps = steps
+        self.steps_ = None
+        super(ForecastingPipeline, self).__init__()
+
+    def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.steps_ = self._check_steps()
+        self._set_y_X(y, X)
+        self._set_fh(fh)
+
+        # transform X
+        y, Xt = check_y_X(y, X)
+        for step_idx, name, transformer in self._iter_transformers():
+            t = clone(transformer)
+            Xt = t.fit_transform(Xt)
+            self.steps_[step_idx] = (name, t)
+
+        # fit forecaster
+        name, forecaster = self.steps[-1]
+        f = clone(forecaster)
+        f.fit(y, Xt, fh)
+        self.steps_[-1] = (name, f)
+
+        self._is_fitted = True
+        return self
+
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        Xt = check_X(X)
+        forecaster = self.steps_[-1][1]
+        # transform X before doing prediction
+        for _, _, transformer in self._iter_transformers():
+            Xt = transformer.transform(Xt)
+        y_pred = forecaster.predict(
+            fh, Xt, return_pred_int=return_pred_int, alpha=alpha
+        )
+        return y_pred
+
+    def transform(self, Z, X=None):
+        self.check_is_fitted()
+        Zt = check_series(Z)
+        for _, _, transformer in self._iter_transformers():
+            Zt = transformer.transform(Zt)
+        return Zt
+
+    def inverse_transform(self, Z, X=None):
+        self.check_is_fitted()
+        Zt = check_series(Z)
+        for _, _, transformer in self._iter_transformers(reverse=True):
+            Zt = transformer.inverse_transform(Zt)
+        return Zt
+
+
+class TransformedTargetForecaster(
+    _Pipeline,
+    _OptionalForecastingHorizonMixin,
+    _SktimeForecaster,
+    _HeterogenousMetaEstimator,
+    _SeriesToSeriesTransformer,
+):
+    """
+    Meta-estimator for forecasting transformed time series.
+    Pipeline functionality to apply transformers to the target series.
+
+    Parameters
+    ----------
+    steps : list
+        List of tuples like ("name", forecaster/transformer)
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> y = load_airline()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer(method="mean")),
+    ...     ("detrender", Deseasonalizer()),
+    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    >>> pipe.fit(y)
+    TransformedTargetForecaster(...)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
+    """
+
+    _required_parameters = ["steps"]
+    _tags = {"univariate-only": True}
+
+    def __init__(self, steps):
+        self.steps = steps
+        self.steps_ = None
+        super(TransformedTargetForecaster, self).__init__()
+
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -160,32 +297,6 @@ class TransformedTargetForecaster(
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
 
-    def update(self, y, X=None, update_params=True):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
-
-        for step_idx, name, transformer in self._iter_transformers():
-            if hasattr(transformer, "update"):
-                transformer.update(y, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
-
-        name, forecaster = self.steps_[-1]
-        forecaster.update(y, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
-        return self
-
     def transform(self, Z, X=None):
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
@@ -199,27 +310,3 @@ class TransformedTargetForecaster(
         for _, _, transformer in self._iter_transformers(reverse=True):
             zt = transformer.inverse_transform(zt, X)
         return zt
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("steps", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-        Valid parameter keys can be listed with ``get_params()``.
-        Returns
-        -------
-        self
-        """
-        self._set_params("steps", **kwargs)
-        return self
