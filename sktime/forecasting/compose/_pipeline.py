@@ -24,9 +24,6 @@ class _Pipeline(
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
-    def __init__(self):
-        super(_Pipeline, self).__init__()
-
     def _check_steps(self):
         names, estimators = zip(*self.steps)
 
@@ -111,6 +108,17 @@ class ForecastingPipeline(
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
+    """
+    Pipeline for forecasting with exogenous data to apply transformers
+    to the exogenous serieses. The forecaster can be also a
+    TransformedTargetForecaster in case y should also be transformed.
+
+    Parameters
+    ----------
+    steps : list
+        List of tuples like ("name", forecaster/transformer)
+    """
+
     _required_parameters = ["steps"]
 
     def __init__(self, steps):
@@ -201,7 +209,8 @@ class ForecastingPipeline(
         self.check_is_fitted()
         Zt = check_series(Z)
         for _, _, transformer in self._iter_transformers(reverse=True):
-            Zt = transformer.inverse_transform(Zt)
+            if not _has_tag(transformer, "skip-inverse-transform"):
+                Zt = transformer.inverse_transform(Zt)
         return Zt
 
 
@@ -224,10 +233,6 @@ class TransformedTargetForecaster(
     Example
     ----------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.impute import Imputer
@@ -333,5 +338,6 @@ class TransformedTargetForecaster(
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers(reverse=True):
-            zt = transformer.inverse_transform(zt, X)
+            if not _has_tag(transformer, "skip-inverse-transform"):
+                zt = transformer.inverse_transform(zt, X)
         return zt
