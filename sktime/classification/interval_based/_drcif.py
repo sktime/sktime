@@ -14,11 +14,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.classification.interval_based._vector import (
-    ContinuousIntervalTree,
-)
-from sktime.classification.interval_based._vector._continuous_interval_tree import (
-    _drcif_feature,
+
+from sktime.contrib._continuous_interval_tree import (
+    _drcif_feature, ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
