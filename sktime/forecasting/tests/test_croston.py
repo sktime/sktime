@@ -11,8 +11,8 @@ import numpy as np
     "smoothing, fh, r_forecast",
     [
         (0.1, 10, 0.8688921),
-        (0.5, 10, 0.6754646),
-        (0.05, 10, 1.405808),
+        (0.5, 5, 0.6754646),
+        (0.05, 15, 1.405808),
     ],
 )
 def test_Croston_against_r_implementation(smoothing, fh, r_forecast):

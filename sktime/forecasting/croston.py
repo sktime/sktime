@@ -10,28 +10,32 @@ DEFAULT_ALPHA = 0.05
 
 
 class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
-    """
-    Implementation of Croston's Method
-    ----------------------------------
-    Useful for Forecasting Intermittent Demand Time Series.
-    The Croston() function produces forecasts using Croston’s method.
-    It simply uses α = 0.1 by default,
-    and p = 0 is set to be equal to the first observation in each of the series.
-    This is consistent with the way Croston envisaged the method being used.
+    """Croston's Forecasting Method.
 
-    Parameters:
+    This was designed for forecasting intermittent demand.
+
+    Parameters
     -----------
-        demand: array-like
-            Historical data
-        len_fh: int
-            Time period for which predictions are required
-        smoothing: float, optional(default=0.1)
-            smoothing parameter
+    smoothing : float, default = 0.1
+        Smoothing parameter
 
-    Returns:
+    Examples
     --------
-        forecast: array-like
-            Forecasted demand (on average per period) diff."""
+    >>> from sktime.forecasting.croston import Croston
+    >>> from sktime.datasets import load_PBS_dataset
+    >>> y = load_PBS_dataset()
+    >>> forecaster = Croston(smoothing=0.1)
+    >>> forecaster.fit(y)
+    Croston(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+
+    References
+    ----------
+    [1]  J. D. Croston. Forecasting and stock control for intermittent demands.
+        Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
+    [2]  Forecasting: Principles and Practice,
+        Otext book by Rob J Hyndman and George Athanasopoulos
+    """
 
     def __init__(self, smoothing=DEFAULT_SMOOTHING):
         # hyperparameter
@@ -40,6 +44,20 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         super(Croston, self).__init__()
 
     def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         if X is not None:
             raise NotImplementedError(
                 "Support for exogenous variables is not yet implemented"
@@ -85,6 +103,19 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
+        """Predict forecast.
+
+        Parameters
+        ----------
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        forecast : pd.series
+                   predicted forecasts
+        """
         if return_pred_int or X is not None:
             raise NotImplementedError()
 
