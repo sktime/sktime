@@ -32,6 +32,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
         self._instantiate_model()
         self._check_changepoints()
         self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
