@@ -69,6 +69,8 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
+
         if X is not None:
             raise NotImplementedError(
                 "Support for exogenous variables is not yet implemented"
