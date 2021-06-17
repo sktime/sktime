@@ -26,7 +26,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _required_parameters = ["forecasters"]
-    _tags = {"requires-fh-in-fit": False}
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
@@ -52,7 +56,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters

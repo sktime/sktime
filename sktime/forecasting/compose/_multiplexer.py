@@ -78,7 +78,11 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     'arima'
     """
 
-    _tags = {"requires-fh-in-fit": False}
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(
         self,
@@ -153,12 +157,42 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         return self._forecaster.predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
-    def update(self, y, X=None, update_params=True):
-        """Call predict on the forecaster with the best found parameters. """
+    def _update(self, y, X=None, update_params=True):
+        """Call predict on the forecaster with the best found parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame, optional (default=None)
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
+        """
         self.check_is_fitted()
         self._update_y_X(y, X)
         self._forecaster.update(y, X, update_params=update_params)
