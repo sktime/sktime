@@ -16,7 +16,8 @@ from sklearn.utils.multiclass import class_distribution
 
 
 from sktime.contrib._continuous_interval_tree import (
-    _drcif_feature, ContinuousIntervalTree,
+    _drcif_feature,
+    ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
