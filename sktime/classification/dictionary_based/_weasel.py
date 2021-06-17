@@ -86,7 +86,7 @@ class WEASEL(BaseClassifier):
     Attributes
     ----------
      classes_    : List of classes for a given problem
-     
+
     Example
     -------
     >>> from sktime.classification.dictionary_based import WEASEL
