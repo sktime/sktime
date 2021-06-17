@@ -110,13 +110,36 @@ class ForecastingPipeline(
 ):
     """
     Pipeline for forecasting with exogenous data to apply transformers
-    to the exogenous serieses. The forecaster can be also a
-    TransformedTargetForecaster in case y should also be transformed.
+    to the exogenous serieses. The forecaster can also be a
+    TransformedTargetForecaster containing transformers to
+    transform y. ForecastingPipeline is only applying the given transformers
+    to X.
 
     Parameters
     ----------
     steps : list
         List of tuples like ("name", forecaster/transformer)
+
+    Example
+    -------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> y, X = load_longley()
+    >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
+    >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
+    >>> pipe = ForecastingPipeline(steps=[
+    ...     ("imputer", Imputer(method="mean")),
+    ...     ("minmaxscaler", TabularToSeriesAdaptor(MinMaxScaler())),
+    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    >>> pipe.fit(y_train, X_train)
+        ForecastingPipeline(...)
+    >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
     _required_parameters = ["steps"]
