@@ -18,6 +18,20 @@ from warnings import warn
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
+    """StackingForecaster.
+
+    Stacks two or more Forecasters
+
+    Components
+    ----------
+    forecasters: Forecaster
+        List of forecasters
+    final_regressor: Regressor
+        Regressor
+    n_jobs: int
+        Number of Jobs
+    """
+
     _required_parameters = ["forecasters", "final_regressor"]
     _tags = {"requires-fh-in-fit": True}
 
@@ -69,7 +83,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         return self
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
+
         """Update fitted parameters
 
         Parameters
@@ -91,6 +106,25 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         if return_pred_int:
             raise NotImplementedError()
         y_preds = np.column_stack(self._predict_forecasters(X))
