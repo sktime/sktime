@@ -105,7 +105,7 @@ class ShapeDTW(BaseClassifier):
 
     metric_params               : dictionary for metric parameters
                                   (default = None).
-                                  
+                                                                
     Example
     -------
     >>> from sklearn.model_selection import train_test_split
