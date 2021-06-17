@@ -22,7 +22,6 @@ class _Pipeline(
     _OptionalForecastingHorizonMixin,
     _SktimeForecaster,
     _HeterogenousMetaEstimator,
-    _SeriesToSeriesTransformer,
 ):
     def _check_steps(self):
         names, estimators = zip(*self.steps)
@@ -101,13 +100,7 @@ class _Pipeline(
         return self
 
 
-class ForecastingPipeline(
-    _Pipeline,
-    _OptionalForecastingHorizonMixin,
-    _SktimeForecaster,
-    _HeterogenousMetaEstimator,
-    _SeriesToSeriesTransformer,
-):
+class ForecastingPipeline(_Pipeline):
     """
     Pipeline for forecasting with exogenous data to apply transformers
     to the exogenous serieses. The forecaster can also be a
@@ -221,29 +214,8 @@ class ForecastingPipeline(
         self.steps_[-1] = (name, forecaster)
         return self
 
-    def transform(self, Z, X=None):
-        self.check_is_fitted()
-        Zt = check_series(Z)
-        for _, _, transformer in self._iter_transformers():
-            Zt = transformer.transform(Zt)
-        return Zt
 
-    def inverse_transform(self, Z, X=None):
-        self.check_is_fitted()
-        Zt = check_series(Z)
-        for _, _, transformer in self._iter_transformers(reverse=True):
-            if not _has_tag(transformer, "skip-inverse-transform"):
-                Zt = transformer.inverse_transform(Zt)
-        return Zt
-
-
-class TransformedTargetForecaster(
-    _Pipeline,
-    _OptionalForecastingHorizonMixin,
-    _SktimeForecaster,
-    _HeterogenousMetaEstimator,
-    _SeriesToSeriesTransformer,
-):
+class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     """
     Meta-estimator for forecasting transformed time series.
     Pipeline functionality to apply transformers to the target series.
@@ -254,7 +226,7 @@ class TransformedTargetForecaster(
         List of tuples like ("name", forecaster/transformer)
 
     Example
-    ----------
+    -------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -342,7 +314,7 @@ class TransformedTargetForecaster(
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
-                transformer.update(y, update_params=update_params)
+                transformer.update(y, X, update_params=update_params)
                 self.steps_[step_idx] = (name, transformer)
 
         name, forecaster = self.steps_[-1]
