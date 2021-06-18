@@ -512,12 +512,12 @@ def matrix_acf(x, num_cases, max_lag):
         #            s2=np.sum(x[lag:])
         #            ss2=s2*s2
         #
-        l = length - lag
+        lag_length = length - lag
         x1, x2 = x[:, :-lag], x[:, lag:]
         s1 = np.sum(x1, axis=1)
         s2 = np.sum(x2, axis=1)
-        m1 = s1 / l
-        m2 = s2 / l
+        m1 = s1 / lag_length
+        m2 = s2 / lag_length
         s12 = np.sum(x1 * x2, axis=1)
         ss1 = np.sum(x1 * x1, axis=1)
         ss2 = np.sum(x2 * x2, axis=1)
