@@ -31,7 +31,7 @@ def _transform(X, interval, lag):
     ps_len = _round_to_nearest_power_of_two(interval[1] - interval[0])
     ps_x = np.empty(shape=(n_instances, ps_len))
     for j in range(n_instances):
-        interval_x = X[j, interval[0]: interval[1]]
+        interval_x = X[j, interval[0] : interval[1]]
         acf_x[j] = acf(interval_x, lag)
         ps_x[j] = ps(interval_x, n=ps_len * 2)
     # interval_x = X[:, interval[0]: interval[1]]
