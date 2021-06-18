@@ -33,7 +33,7 @@ def _transform(X, interval, lag):
     for j in range(n_instances):
         interval_x = X[j, interval[0]: interval[1]]
         acf_x[j] = acf(interval_x, lag)
-        ps_x[j] = ps(interval_x, n=ps_len*2)
+        ps_x[j] = ps(interval_x, n=ps_len * 2)
     # interval_x = X[:, interval[0]: interval[1]]
     # acf_x = matrix_acf(interval_x, n_instances, lag)
     # ps_x = _ps(interval_x, n=ps_len*2)
@@ -80,9 +80,7 @@ def _select_interval(min_interval, max_interval, series_length, rng, method=3):
     interval = np.empty(2, dtype=int)
     if method == 0:
         interval[0] = rng.randint(series_length - min_interval)
-        interval[1] = rng.randint(
-            interval[0] + min_interval, series_length
-        )
+        interval[1] = rng.randint(interval[0] + min_interval, series_length)
     else:
         if rng.randint(2):
             interval[0] = rng.randint(series_length - min_interval)
@@ -92,44 +90,43 @@ def _select_interval(min_interval, max_interval, series_length, rng, method=3):
         else:
             interval[1] = rng.randint(min_interval, series_length)
             interval_range = min(interval[1], max_interval)
-            length = 3 if interval_range == min_interval else \
-                rng.randint(min_interval, interval_range)
+            length = (
+                3
+                if interval_range == min_interval
+                else rng.randint(min_interval, interval_range)
+            )
             interval[0] = interval[1] - length
     return interval
 
 
-def _produce_intervals(n_estimators, min_interval, max_interval, series_length,
-                       rng, method=3):
+def _produce_intervals(
+    n_estimators, min_interval, max_interval, series_length, rng, method=3
+):
     """
     private function used to produce intervals for all trees
     """
     intervals = np.empty((n_estimators, 2), dtype=int)
     if method == 0:
         # just keep it as a backup, untested
-        intervals[:, 0] = rng.randint(series_length - min_interval,
-                                      size=n_estimators)
+        intervals[:, 0] = rng.randint(series_length - min_interval, size=n_estimators)
         intervals[:, 1] = rng.randint(
             intervals[:, 0] + min_interval, series_length, size=n_estimators
         )
     elif method == 3:
         bools = rng.randint(2, size=n_estimators)
         true = np.where(bools == 1)[0]
-        intervals[true, 0] = rng.randint(series_length - min_interval,
-                                         size=true.size)
-        interval_range = np.fmin(series_length - intervals[true, 0],
-                                 max_interval)
+        intervals[true, 0] = rng.randint(series_length - min_interval, size=true.size)
+        interval_range = np.fmin(series_length - intervals[true, 0], max_interval)
         length = rng.randint(min_interval, interval_range)
         intervals[true, 1] = intervals[true, 0] + length
 
         false = np.where(bools == 0)[0]
-        intervals[false, 1] = rng.randint(min_interval, series_length,
-                                          size=false.size)
+        intervals[false, 1] = rng.randint(min_interval, series_length, size=false.size)
         interval_range = np.fmin(intervals[false, 1], max_interval)
-        min_mask = (interval_range == min_interval)
+        min_mask = interval_range == min_interval
         length = np.empty(false.size)
         length[min_mask] = 3
-        length[~min_mask] = rng.randint(min_interval,
-                                        interval_range[~min_mask])
+        length[~min_mask] = rng.randint(min_interval, interval_range[~min_mask])
         intervals[false, 0] = intervals[false, 1] - length
 
     return intervals
@@ -197,14 +194,14 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     # problems
 
     def __init__(
-            self,
-            n_estimators=500,
-            max_interval=0,
-            min_interval=16,
-            acf_lag=100,
-            acf_min_values=4,
-            n_jobs=None,
-            random_state=None,
+        self,
+        n_estimators=500,
+        max_interval=0,
+        min_interval=16,
+        acf_lag=100,
+        acf_min_values=4,
+        n_jobs=None,
+        random_state=None,
     ):
         super(RandomIntervalSpectralForest, self).__init__(
             base_estimator=DecisionTreeClassifier(random_state=random_state),
@@ -272,10 +269,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.intervals = np.empty((self.n_estimators, 2), dtype=int)
         self.intervals[:] = [
             _select_interval(
-                self.min_interval,
-                self.max_interval,
-                self.series_length,
-                rng
+                self.min_interval, self.max_interval, self.series_length, rng
             )
             for _ in range(self.n_estimators)
         ]
@@ -290,8 +284,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
         trees = [
             _make_estimator(
-                self.base_estimator,
-                random_state=rng.randint(np.iinfo(np.int32).max)
+                self.base_estimator, random_state=rng.randint(np.iinfo(np.int32).max)
             )
             for _ in range(self.n_estimators)
         ]
@@ -410,12 +403,12 @@ def acf(x, max_lag):
     length = len(x)
     for lag in prange(1, max_lag + 1):
         # Do it ourselves to avoid zero variance warnings
-        l = length - lag
+        lag_length = length - lag
         x1, x2 = x[:-lag], x[lag:]
         s1 = np.sum(x1)
         s2 = np.sum(x2)
-        m1 = s1 / l
-        m2 = s2 / l
+        m1 = s1 / lag_length
+        m2 = s2 / lag_length
         ss1 = np.sum(x1 * x1)
         ss2 = np.sum(x2 * x2)
         v1 = ss1 - s1 * m1
@@ -577,8 +570,7 @@ def ps(x, sign=1, n=None, pad="mean"):
             n = _round_to_nearest_power_of_two(x_len)
         # pad series up to n when n is larger otherwise slice series up to n
         if n > x_len:
-            pad_length = (0, n - x_len) \
-                if x_is_1d else ((0, 0), (0, n - x_len))
+            pad_length = (0, n - x_len) if x_is_1d else ((0, 0), (0, n - x_len))
             x_in_power_2 = np.pad(x, pad_length, mode=pad)
         else:
             x_in_power_2 = x[:n] if x_is_1d else x[:, :n]
@@ -593,6 +585,6 @@ def ps(x, sign=1, n=None, pad="mean"):
     return np.abs(fft)
 
 
-@jit('int64(int64)', cache=True, nopython=True)
+@jit("int64(int64)", cache=True, nopython=True)
 def _round_to_nearest_power_of_two(n):
     return int64(1 << round(np.log2(n)))
