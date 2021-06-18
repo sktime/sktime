@@ -22,6 +22,7 @@ class _Pipeline(
     _OptionalForecastingHorizonMixin,
     _SktimeForecaster,
     _HeterogenousMetaEstimator,
+    _SeriesToSeriesTransformer,
 ):
     def _check_steps(self):
         names, estimators = zip(*self.steps)
@@ -214,8 +215,23 @@ class ForecastingPipeline(_Pipeline):
         self.steps_[-1] = (name, forecaster)
         return self
 
+    def transform(self, Z, X=None):
+        self.check_is_fitted()
+        Zt = check_series(Z, enforce_multivariate=True)
+        for _, _, transformer in self._iter_transformers():
+            Zt = transformer.transform(Zt)
+        return Zt
 
-class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
+    def inverse_transform(self, Z, X=None):
+        self.check_is_fitted()
+        Zt = check_series(Z, enforce_multivariate=True)
+        for _, _, transformer in self._iter_transformers(reverse=True):
+            if not _has_tag(transformer, "skip-inverse-transform"):
+                Zt = transformer.inverse_transform(Zt)
+        return Zt
+
+
+class TransformedTargetForecaster(_Pipeline):
     """
     Meta-estimator for forecasting transformed time series.
     Pipeline functionality to apply transformers to the target series.

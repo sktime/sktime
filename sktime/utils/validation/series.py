@@ -23,9 +23,20 @@ def _check_is_univariate(y):
         )
 
 
+def _check_is_multivariate(Z):
+    """Check if series is multivariate"""
+    if isinstance(Z, pd.Series):
+        raise ValueError("Data must be multivariate, but found a pd.Series")
+    if isinstance(Z, np.ndarray) and Z.ndim == 1:
+        raise ValueError(
+            "Data must be multivariate, but found np.array with one dimension"
+        )
+
+
 def check_series(
     Z,
     enforce_univariate=False,
+    enforce_multivariate=False,
     allow_empty=False,
     allow_numpy=True,
     enforce_index_type=None,
@@ -39,6 +50,8 @@ def check_series(
         if `allow_numpy` = True.
     enforce_univariate : bool, default = False
         If True, multivariate Z will raise an error.
+    enforce_multivariate: bool, default = False
+        If True, univariate Z will raise an error.
     allow_empty : bool, default = False
     allow_numpy : bool, default = True
     enforce_index_type : type, default = None
@@ -69,6 +82,9 @@ def check_series(
 
     if enforce_univariate:
         _check_is_univariate(Z)
+
+    if enforce_multivariate:
+        _check_is_multivariate(Z)
 
     # check time index if input data is not an NumPy ndarray
     if not isinstance(Z, np.ndarray):
