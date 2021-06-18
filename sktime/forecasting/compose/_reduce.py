@@ -142,14 +142,7 @@ def _sliding_window_transform(
 
 
 class _Reducer(_BaseWindowForecaster):
-    """Base class for reducing forecasting to regression.
-
-    Parameters
-    ----------
-    estimator : Estimator
-    window_length : int (Default = 10)
-        Window length
-    """
+    """Base class for reducing forecasting to regression."""
 
     _required_parameters = ["estimator"]
 
@@ -175,12 +168,16 @@ class _Reducer(_BaseWindowForecaster):
         self : Estimator
             An fitted instance of self.
         """
+        self._is_fitted = False
 
         n_timepoints = len(y)
+        self._set_y_X(y, X)
+        self._set_fh(fh)
 
         self.window_length_ = check_window_length(self.window_length, n_timepoints)
 
         self._fit(y, X)
+        self._is_fitted = True
         return self
 
     def _fit(self, y, X):
