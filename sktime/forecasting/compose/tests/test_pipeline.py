@@ -36,21 +36,19 @@ def test_forecasting_pipeline():
     )
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, X_train, fh=fh)
-    actual_Xt = forecaster.transform(X_test)
+    actual_Xt = forecaster.transform(X_train)
 
-    def compute_expected_X(X_train, X_test):
-        Xt = X_test.copy()
+    def compute_expected_X(X_train):
+        Xt = X_train.copy()
 
         t1 = TabularToSeriesAdaptor(MinMaxScaler())
-        t1.fit(X_train)
-        Xt = t1.transform(Xt)
+        Xt = t1.fit_transform(X_train)
 
         t2 = TabularToSeriesAdaptor(StandardScaler())
-        t2.fit(X_train)
-        Xt = t2.transform(Xt)
+        Xt = t2.fit_transform(X_train)
         return Xt
 
-    expected_Xt = compute_expected_X(X_train, X_test)
+    expected_Xt = compute_expected_X(X_train)
     np.testing.assert_array_equal(actual_Xt, expected_Xt)
 
 

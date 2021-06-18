@@ -132,7 +132,7 @@ class ForecastingPipeline(_Pipeline):
     ...     ("minmaxscaler", TabularToSeriesAdaptor(MinMaxScaler())),
     ...     ("forecaster", NaiveForecaster(strategy="drift"))])
     >>> pipe.fit(y_train, X_train)
-        ForecastingPipeline(...)
+    ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
