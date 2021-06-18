@@ -33,8 +33,6 @@ from sklearn.base import clone
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
@@ -145,6 +143,11 @@ class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
     _required_parameters = ["estimator"]
+    _tags = {
+        "univariate-only": True,
+        "handling-missing-data": False,
+        "requires-fh-in-fit": False,
+    }
 
     def __init__(self, estimator, window_length=10):
         super(_Reducer, self).__init__(window_length=window_length)
@@ -201,8 +204,13 @@ class _Reducer(_BaseWindowForecaster):
         )
 
 
-class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
+class _DirectReducer(_Reducer):
     strategy = "direct"
+    _tags = {
+        "univariate-only": True,
+        "handling-missing-data": False,
+        "requires-fh-in-fit": True,
+    }
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
@@ -285,8 +293,13 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         return y_pred
 
 
-class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
+class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
+    _tags = {
+        "univariate-only": True,
+        "handling-missing-data": False,
+        "requires-fh-in-fit": True,
+    }
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
@@ -361,8 +374,13 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
         return y_pred.ravel()
 
 
-class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
+class _RecursiveReducer(_Reducer):
     strategy = "recursive"
+    _tags = {
+        "univariate-only": True,
+        "handling-missing-data": False,
+        "requires-fh-in-fit": False,
+    }
 
     def _transform(self, y, X=None):
         # For the recursive strategy, the forecasting horizon for the sliding-window
@@ -437,8 +455,13 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
         return y_pred[fh_idx]
 
 
-class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
+class _DirRecReducer(_Reducer):
     strategy = "dirrec"
+    _tags = {
+        "univariate-only": True,
+        "handling-missing-data": False,
+        "requires-fh-in-fit": True,
+    }
 
     def _transform(self, y, X=None):
         # Note that the transform for dirrec is the same as in the direct
