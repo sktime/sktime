@@ -22,18 +22,22 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     Stacks two or more Forecasters
 
-    Components
+    Parameters
     ----------
-    forecasters: Forecaster
-        List of forecasters
+    forecasters : list of (str, estimator) tuples
     final_regressor: Regressor
-        Regressor
-    n_jobs: int
-        Number of Jobs
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to run in parallel for fit. None means 1 unless
+        in a joblib.parallel_backend context.
+        -1 means using all processors.
     """
 
     _required_parameters = ["forecasters", "final_regressor"]
-    _tags = {"requires-fh-in-fit": True}
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": True,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)

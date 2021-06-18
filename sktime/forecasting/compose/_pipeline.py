@@ -53,7 +53,11 @@ class TransformedTargetForecaster(
     """
 
     _required_parameters = ["steps"]
-    _tags = {"univariate-only": True, "requires-fh-in-fit": False}
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, steps):
         self.steps = steps
@@ -61,6 +65,17 @@ class TransformedTargetForecaster(
         super(TransformedTargetForecaster, self).__init__()
 
     def _check_steps(self):
+        """
+        Check Steps
+        Parameters
+        ----------
+        self : an instance of self
+
+        Returns
+        -------
+        step : Returns step.
+
+        """
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -145,6 +160,25 @@ class TransformedTargetForecaster(
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
@@ -161,7 +195,7 @@ class TransformedTargetForecaster(
         Parameters
         ----------
         y : pd.Series
-        X : pd.DataFrame
+        X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=True)
 
         Returns
