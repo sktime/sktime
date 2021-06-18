@@ -105,8 +105,8 @@ class Catch22(_PanelToTabularTransformer):
 
         nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
         fft = np.fft.fft(series - smean, n=nfft)
-        ac = autocorr(series, fft)
-        acfz = ac_first_zero(ac)
+        ac = _autocorr(series, fft)
+        acfz = _ac_first_zero(ac)
 
         c22 = np.zeros(22)
         c22[0] = Catch22.DN_HistogramMode_5(series, smin, smax)
@@ -201,14 +201,14 @@ class Catch22(_PanelToTabularTransformer):
             smean = np.mean(series)
             nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
             fft = np.fft.fft(series - smean, n=nfft)
-            ac = autocorr(series, fft)
+            ac = _autocorr(series, fft)
             args = [ac]
         elif feature == 16 or feature == 17 or feature == 20:
             smean = np.mean(series)
             nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
             fft = np.fft.fft(series - smean, n=nfft)
-            ac = autocorr(series, fft)
-            acfz = ac_first_zero(ac)
+            ac = _autocorr(series, fft)
+            acfz = _ac_first_zero(ac)
             args = [series, acfz]
 
         return features[feature](*args)
@@ -216,12 +216,12 @@ class Catch22(_PanelToTabularTransformer):
     @staticmethod
     def DN_HistogramMode_5(X, smin, smax):
         # Mode of z-scored distribution (5-bin histogram)
-        return histogram_mode(X, 5, smin, smax)
+        return _histogram_mode(X, 5, smin, smax)
 
     @staticmethod
     def DN_HistogramMode_10(X, smin, smax):
         # Mode of z-scored distribution (10-bin histogram)
-        return histogram_mode(X, 10, smin, smax)
+        return _histogram_mode(X, 10, smin, smax)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -232,18 +232,18 @@ class Catch22(_PanelToTabularTransformer):
             if X[i] - smean > 0:
                 mean_binary[i] = 1
 
-        return long_stretch(mean_binary, 1)
+        return _long_stretch(mean_binary, 1)
 
     @staticmethod
     def DN_OutlierInclude_p_001_mdrmd(X):
         # Time intervals between successive extreme events above the mean
-        return outlier_include(X)
+        return _outlier_include(X)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
     def DN_OutlierInclude_n_001_mdrmd(X):
         # Time intervals between successive extreme events below the mean
-        return outlier_include(-X)
+        return _outlier_include(-X)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -267,12 +267,12 @@ class Catch22(_PanelToTabularTransformer):
     @staticmethod
     def SP_Summaries_welch_rect_area_5_1(X, X_fft):
         # Total power in lowest fifth of frequencies in the Fourier power spectrum
-        return summaries_welch_rect(X, False, X_fft)
+        return _summaries_welch_rect(X, False, X_fft)
 
     @staticmethod
     def SP_Summaries_welch_rect_centroid(X, X_fft):
         # Centroid of the Fourier power spectrum
-        return summaries_welch_rect(X, True, X_fft)
+        return _summaries_welch_rect(X, True, X_fft)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -280,7 +280,7 @@ class Catch22(_PanelToTabularTransformer):
         # Mean error from a rolling 3-sample mean forecasting
         if len(X) - 3 < 3:
             return 0
-        res = local_simple_mean(X, 3)
+        res = _local_simple_mean(X, 3)
         return np.std(res)
 
     @staticmethod
@@ -365,7 +365,7 @@ class Catch22(_PanelToTabularTransformer):
             if X[i + 1] - X[i] >= 0:
                 diff_binary[i] = 1
 
-        return long_stretch(diff_binary, 0)
+        return _long_stretch(diff_binary, 0)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -416,14 +416,14 @@ class Catch22(_PanelToTabularTransformer):
         # Change in correlation length after iterative differencing
         if len(X) < 2:
             return 0
-        res = local_simple_mean(X, 1)
+        res = _local_simple_mean(X, 1)
         mean = np.mean(res)
 
         nfft = int(np.power(2, np.ceil(np.log(len(res)) / np.log(2))))
         fft = np.fft.fft(res - mean, n=nfft)
-        ac = autocorr(res, fft)
+        ac = _autocorr(res, fft)
 
-        return ac_first_zero(ac) / acfz
+        return _ac_first_zero(ac) / acfz
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -487,7 +487,7 @@ class Catch22(_PanelToTabularTransformer):
         for i in range(1, len(cs)):
             cs[i] = cs[i - 1] + X[i * 2]
 
-        return fluct_prop(cs, len(X), True)
+        return _fluct_prop(cs, len(X), True)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -499,7 +499,7 @@ class Catch22(_PanelToTabularTransformer):
         for i in range(1, len(X)):
             cs[i] = cs[i - 1] + X[i]
 
-        return fluct_prop(cs, len(X), False)
+        return _fluct_prop(cs, len(X), False)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -548,7 +548,7 @@ class Catch22(_PanelToTabularTransformer):
     @njit(fastmath=True, cache=True)
     def PD_PeriodicityWang_th0_01(X):
         # Periodicity measure of (Wang et al. 2007)
-        y_spline = spline_fit(X)
+        y_spline = _spline_fit(X)
 
         y_sub = np.zeros(len(X))
         for i in range(len(X)):
@@ -593,7 +593,7 @@ class Catch22(_PanelToTabularTransformer):
 
 
 @njit(fastmath=True, cache=True)
-def histogram_mode(X, num_bins, smin, smax):
+def _histogram_mode(X, num_bins, smin, smax):
     bin_width = (smax - smin) / num_bins
 
     if bin_width == 0:
@@ -626,7 +626,7 @@ def histogram_mode(X, num_bins, smin, smax):
 
 
 @njit(fastmath=True, cache=True)
-def long_stretch(X_binary, val):
+def _long_stretch(X_binary, val):
     last_val = 0
     max_stretch = 0
     for i in range(len(X_binary)):
@@ -640,7 +640,7 @@ def long_stretch(X_binary, val):
 
 
 @njit(fastmath=True, cache=True)
-def outlier_include(X):
+def _outlier_include(X):
     total = 0
     threshold = 0
     for v in X:
@@ -673,7 +673,7 @@ def outlier_include(X):
 
         means[i] = np.mean(diff) if len(diff) > 0 else 9999999999
         dists[i] = len(diff) * 100 / total
-        medians[i] = typed_list_median(r) / (len(X) / 2) - 1
+        medians[i] = _typed_list_median(r) / (len(X) / 2) - 1
 
     mj = 0
     fbi = num_thresholds - 1
@@ -689,7 +689,7 @@ def outlier_include(X):
 
 
 @njit(fastmath=True, cache=True)
-def typed_list_median(X):
+def _typed_list_median(X):
     X.sort()
     if len(X) % 2 == 1:
         return X[int(len(X) / 2)]
@@ -697,13 +697,13 @@ def typed_list_median(X):
         return (X[int(len(X) / 2) - 1] + X[int(len(X) / 2)]) / 2
 
 
-def autocorr(X, X_fft):
-    ca = np.fft.ifft(multiply_complex_arr(X_fft))
-    return get_acf(X, ca)
+def _autocorr(X, X_fft):
+    ca = np.fft.ifft(_multiply_complex_arr(X_fft))
+    return _get_acf(X, ca)
 
 
 @njit(fastmath=True, cache=True)
-def multiply_complex_arr(X_fft):
+def _multiply_complex_arr(X_fft):
     c = np.zeros(len(X_fft), dtype=np.complex128)
     for i, n in enumerate(X_fft):
         c[i] = n * (n.real + 1j * -n.imag)
@@ -711,7 +711,7 @@ def multiply_complex_arr(X_fft):
 
 
 @njit(fastmath=True, cache=True)
-def get_acf(X, ca):
+def _get_acf(X, ca):
     acf = np.zeros(len(X))
     if ca[0].real != 0:
         for i in range(len(X)):
@@ -720,15 +720,15 @@ def get_acf(X, ca):
 
 
 @njit(fastmath=True, cache=True)
-def summaries_welch_rect(X, centroid, X_fft):
+def _summaries_welch_rect(X, centroid, X_fft):
     new_length = int(len(X_fft) / 2) + 1
     p = np.zeros(new_length)
     pi2 = 2 * math.pi
-    p[0] = (np.power(complex_magnitude(X_fft[0]), 2) / len(X)) / pi2
+    p[0] = (np.power(_complex_magnitude(X_fft[0]), 2) / len(X)) / pi2
     for i in range(1, new_length - 1):
-        p[i] = ((np.power(complex_magnitude(X_fft[i]), 2) / len(X)) * 2) / pi2
+        p[i] = ((np.power(_complex_magnitude(X_fft[i]), 2) / len(X)) * 2) / pi2
     p[new_length - 1] = (
-        np.power(complex_magnitude(X_fft[new_length - 1]), 2) / len(X)
+        np.power(_complex_magnitude(X_fft[new_length - 1]), 2) / len(X)
     ) / pi2
 
     w = np.zeros(new_length)
@@ -757,12 +757,12 @@ def summaries_welch_rect(X, centroid, X_fft):
 
 
 @njit(fastmath=True, cache=True)
-def complex_magnitude(c):
+def _complex_magnitude(c):
     return np.sqrt(c.real * c.real + c.imag * c.imag)
 
 
 @njit(fastmath=True, cache=True)
-def local_simple_mean(X, train_length):
+def _local_simple_mean(X, train_length):
     res = np.zeros(len(X) - train_length)
     for i in range(len(res)):
         nsum = 0
@@ -773,7 +773,7 @@ def local_simple_mean(X, train_length):
 
 
 @njit(fastmath=True, cache=True)
-def ac_first_zero(X_ac):
+def _ac_first_zero(X_ac):
     for i in range(1, len(X_ac)):
         if X_ac[i] <= 0:
             return i
@@ -782,7 +782,7 @@ def ac_first_zero(X_ac):
 
 
 @njit(fastmath=True, cache=True)
-def fluct_prop(X, og_length, dfa):
+def _fluct_prop(X, og_length, dfa):
     a = List()
     a.append(5)
     smin = 1.6094379124341003  # Math.log(5);
@@ -818,7 +818,7 @@ def fluct_prop(X, og_length, dfa):
             d[n] = n + 1
 
         for n in range(buff_size):
-            c1, c2 = linear_regression(d, buffer[n], tau, 0)
+            c1, c2 = _linear_regression(d, buffer[n], tau, 0)
 
             for j in range(tau):
                 buffer[n][j] = buffer[n][j] - (c1 * (j + 1) + c2)
@@ -842,8 +842,8 @@ def fluct_prop(X, og_length, dfa):
 
     sserr = np.zeros(n_tau - 11)
     for i in range(6, n_tau - 5):
-        c1_1, c1_2 = linear_regression(log_a, log_f, i, 0)
-        c2_1, c2_2 = linear_regression(log_a, log_f, n_tau - i + 1, i - 1)
+        c1_1, c1_2 = _linear_regression(log_a, log_f, i, 0)
+        c2_1, c2_2 = _linear_regression(log_a, log_f, n_tau - i + 1, i - 1)
 
         sum1 = 0
         for n in range(i):
@@ -859,7 +859,7 @@ def fluct_prop(X, og_length, dfa):
 
 
 @njit(fastmath=True, cache=True)
-def linear_regression(X, y, n, lag):
+def _linear_regression(X, y, n, lag):
     sumx = 0
     sumx2 = 0
     sumxy = 0
@@ -878,7 +878,7 @@ def linear_regression(X, y, n, lag):
 
 
 @njit(fastmath=True, cache=True)
-def spline_fit(X):
+def _spline_fit(X):
     breaks = np.array([0, len(X) / 2 - 1, len(X) - 1])
     h0 = np.array([breaks[1] - breaks[0], breaks[2] - breaks[1]])
     h_copy = np.array([h0[0], h0[1], h0[0], h0[1]])
