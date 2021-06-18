@@ -3,7 +3,7 @@
 """copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
 __author__ = ["Guzal Bulatova", "Markus Löning"]
-# __all__ = ["ThetaLinesTransformer"]
+__all__ = ["ThetaLinesTransformer"]
 
 import numpy as np
 import pandas as pd
@@ -42,10 +42,9 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
 
         Returns
         -------
-        thetas: pd.DataFrame
-            Transformed series. DataFrame with Theta-lines[1]
-            where number of rows = len(Z), number of columns
-            = len(self.theta).
+        theta_lines: pd.DataFrame
+            Transformed series (Theta-lines[1]).
+            shape: len(Z)*len(self.theta).
 
         References
         ----------
@@ -55,24 +54,32 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
-
-        if len(self.theta) < 2:
-            raise ValueError("`len(theta)` must be >= 2.")
+        theta = _check_theta(self.theta)
 
         forecaster = PolynomialTrendForecaster()
         forecaster.fit(z)
         fh = ForecastingHorizon(z.index, is_relative=False)
         trend = forecaster.predict(fh)
 
-        thetas = np.zeros((z.shape[0], len(self.theta)))
-        for i, theta in enumerate(self.theta):
-            thetas[:, i] = _theta_transform(z, trend, theta)
-        return pd.DataFrame(thetas, columns=self.theta)
+        theta_lines = np.zeros((z.shape[0], len(theta)))
+        for i, theta in enumerate(theta):
+            theta_lines[:, i] = _theta_transform(z, trend, theta)
+        return pd.DataFrame(theta_lines, columns=theta)
 
 
 def _theta_transform(Z, trend, theta):
     # obtain one Theta-line
-    z = check_series(Z)
-
-    theta_line = z * theta + (1 - theta) * trend
+    theta_line = Z * theta + (1 - theta) * trend
     return theta_line
+
+
+def _check_theta(theta):
+    if not isinstance(theta, (tuple, list)):
+        theta = [theta]
+    for element in theta:
+        if not isinstance(element, (float, int)):
+            raise ValueError("`theta` elements must be of type int or float")
+        if element < 0:
+            raise ValueError("`theta` value must be non-negative")
+
+    return theta

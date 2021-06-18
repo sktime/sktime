@@ -17,6 +17,7 @@ sktime/transformations/panel/rocket @angus924
 sktime/transformations/series/impute.py @aiwalter
 sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
+sktime/transformations/series/theta.py @GuzalBulatova
 
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
