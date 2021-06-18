@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-""" experiments.py: code to run experiments as an alternative to orchestration.
+"""Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
-single debugging runs. Results
-are written in a standard format
-TO DO: Tidy up this file!
+single debugging runs. Results are written in a standard format
+todo: Tidy up this file!
 """
 
 import os
@@ -12,33 +11,34 @@ import os
 import sklearn.preprocessing
 import sklearn.utils
 
-# from sktime.classification.dictionary_based import (
-#     BOSSEnsemble,
-#     ContractableBOSS,
-#     TemporalDictionaryEnsemble,
-#     WEASEL,
-#     MUSE,
-# )
-# from sktime.classification.distance_based import (
-#     ElasticEnsemble,
-#     ProximityForest,
-#     ProximityTree,
-#     ProximityStump,
-#     KNeighborsTimeSeriesClassifier,
-#     ShapeDTW,
-# )
-# from sktime.classification.hybrid import HIVECOTEV1
-# from sktime.classification.hybrid._catch22_forest_classifier import (
-#     Catch22ForestClassifier,
-# )
+from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
+    ContractableBOSS,
+    TemporalDictionaryEnsemble,
+    WEASEL,
+    MUSE,
+)
+from sktime.classification.distance_based import (
+    ElasticEnsemble,
+    ProximityForest,
+    ProximityTree,
+    ProximityStump,
+    KNeighborsTimeSeriesClassifier,
+    ShapeDTW,
+)
+from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid._catch22_forest_classifier import (
+    Catch22ForestClassifier,
+)
 from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
 )
-# from sktime.classification.interval_based._cif import CanonicalIntervalForest
-# from sktime.classification.interval_based._drcif import DrCIF
-# from sktime.classification.shapelet_based import MrSEQLClassifier, ROCKETClassifier
-# from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based._drcif import DrCIF
+from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
+from sktime.classification.shapelet_based import MrSEQLClassifier
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -59,7 +59,7 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the
+"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method
@@ -86,22 +86,28 @@ classifier_list = [
     "CanonicalIntervalForest",
     # Shapelet based
     "ShapeletTransformClassifier",
-    "ROCKET",
     "MrSEQLClassifier",
+    # Kernel based
+    "ROCKET",
+    "Arsenal",
 ]
 
 
 def set_classifier(cls, resampleId=None):
-    """
+    """Construct a classifier.
+
     Basic way of creating the classifier to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy
     reproducability. You can set up bespoke classifier in many other ways.
 
-    :param cls: String indicating which classifier you want
-    :param resampleId: classifier random seed
+    Parameters
+    ----------
+    cls: String indicating which classifier you want
+    resampleId: classifier random seed
 
-    :return: A classifier.
-
+    Return
+    ------
+    A classifier.
     """
     name = cls.lower()
     # Distance based
@@ -134,7 +140,7 @@ def set_classifier(cls, resampleId=None):
         return MUSE(random_state=resampleId)
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resampleId, n_jobs=-1)
+        return RandomIntervalSpectralForest(random_state=resampleId)
     elif name == "tsf" or name == "timeseriesforestclassifier":
         return TimeSeriesForestClassifier(random_state=resampleId)
     elif name == "cif" or name == "canonicalintervalforest":
@@ -144,12 +150,14 @@ def set_classifier(cls, resampleId=None):
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
-            random_state=resampleId, time_contract_in_mins=1
+            random_state=resampleId, transform_contract_in_mins=60
         )
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     elif name == "rocket":
         return ROCKETClassifier(random_state=resampleId)
+    elif name == "arsenal":
+        return Arsenal(random_state=resampleId)
     # Hybrid
     elif name == "catch22":
         return Catch22ForestClassifier(random_state=resampleId)
@@ -160,6 +168,22 @@ def set_classifier(cls, resampleId=None):
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
+    """Resample data using a random state.
+
+    Reproducable resampling. Combines train and test, resamples to get the same class
+    distribution, then returns new trrain and test.
+
+    Parameters
+    ----------
+    X_train: train data attributes in sktime pandas format.
+    y_train: train data class labes as np array.
+    X_test: test data attributes in sktime pandas format.
+    y_test: test data class labes as np array.
+
+    Returns
+    -------
+    new train and test attributes and class labels.
+    """
     all_labels = np.concatenate((y_train, y_test), axis=None)
     all_data = pd.concat([X_train, X_test])
     random_state = sklearn.utils.check_random_state(random_state)
@@ -218,29 +242,31 @@ def run_experiment(
     format=".ts",
     train_file=False,
 ):
-    """
+    """Run a classification experiment.
+
     Method to run a basic experiment and write the results to files called
     testFold<resampleID>.csv and, if required, trainFold<resampleID>.csv.
-    :param problem_path: Location of problem files, full path.
-    :param results_path: Location of where to write results. Any required directories
+
+    Parameters
+    ----------
+    problem_path: Location of problem files, full path.
+    results_path: Location of where to write results. Any required directories
         will be created
-    :param cls_name: determines which classifier to use, as defined in set_classifier.
+    cls_name: determines which classifier to use, as defined in set_classifier.
         This assumes predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
-    :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
+    dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
                 "_TRAIN"+format, same for "_TEST"
-    :param resampleID: Seed for resampling. If set to 0, the default train/test split
+    resampleID: Seed for resampling. If set to 0, the default train/test split
                 from file is used. Also used in output file name.
-    :param overwrite: if set to False, this will only build results if there is not a
+    overwrite: if set to False, this will only build results if there is not a
                 result file already present. If
     True, it will overwrite anything already there
-    :param format: Valid formats are ".ts", ".arff" and ".long".
+    format: Valid formats are ".ts", ".arff" and ".long".
     For more info on format, see   examples/Loading%20Data%20Examples.ipynb
-    :param train_file: whether to generate train files or not. If true, it performs a
+    train_file: whether to generate train files or not. If true, it performs a
                 10xCV on the train and saves
-    :return:
     """
-
     build_test = True
     if not overwrite:
         full_path = (
@@ -420,23 +446,27 @@ def write_results_to_uea_format(
     third_line="N/A",
     class_labels=None,
 ):
-    """
-    This is very alpha and I will probably completely change the structure once train
-    fold is sorted, as that internally
-    does all this I think!
-    Output mirrors that produced by this Java
-    :param output_path:
-    :param classifier_name:
-    :param dataset_name:
-    :param actual_class_vals:
-    :param predicted_class_vals:
-    :param split:
-    :param resample_seed:
-    :param actual_probas:
-    :param second_line:
-    :param third_line:
-    :param class_labels:
-    :return:
+    """Write results to file.
+
+    Outputs the classifier results, mirrors that produced by tsml Java package.
+    Directories of the form
+    <output_path>/<classifier_name>/Predictions/<dataset_name>
+    Will automatically be created and results written.
+
+    Parameters
+    ----------
+    output_path:            string, root path where to put results.
+    classifier_name:        string, name of the classifier that made the predictions
+    dataset_name:           string, name of the problem the classifier was built on
+    actual_class_vals:      array, actual class labels
+    predicted_class_vals:   array, predicted class labels
+    split:                  string, wither TRAIN or TEST, depending on the results.
+    resample_seed:          int, makes resampling deterministic
+    actual_probas:          number of cases x number of classes 2d array
+    second_line:            unstructured, classifier parameters
+    third_line:             summary performance information (see comment below)
+    class_labels:           needed to equate to tsml output
+
     """
     if len(actual_class_vals) != len(predicted_class_vals):
         raise IndexError(
@@ -524,9 +554,7 @@ def write_results_to_uea_format(
 
 
 def test_loading():
-
-    # test multivariate
-    # Test univariate
+    """Test function to check dataset loading of univariate and multivaria problems."""
     for i in range(0, len(dataset_lists.univariate)):
         data_dir = "E:/tsc_ts/"
         dataset = dataset_lists.univariate[i]
@@ -680,35 +708,26 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "../datasets/Univariate_ts/"
-        results_dir = "C:/Users/valkyrie/OneDrive/桌面/result/"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
         dataset = "ArrowHead"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "rise"
+        classifier = "1NN-MSM"
         resample = 0
+        #         for i in range(0, len(univariate_datasets)):
+        #             dataset = univariate_datasets[i]
+        # #            print(i)
+        # #            print(" problem = "+dataset)
         tf = False
-        # for i in range(0, len(benchmark_datasets)):
-        #     dataset = benchmark_datasets[i]
-        #     run_experiment(
-        #         overwrite=True,
-        #         problem_path=data_dir,
-        #         results_path=results_dir,
-        #         cls_name=classifier,
-        #         dataset=dataset,
-        #         resampleID=resample,
-        #         train_file=tf,
-        #     )
-        for dataset in dataset_lists.univariate_equal_length:
-            try:
-                run_experiment(
-                    overwrite=True,
-                    problem_path=data_dir,
-                    results_path=results_dir,
-                    cls_name=classifier,
-                    dataset=dataset,
-                    resampleID=resample,
-                    train_file=tf,
-                )
-            except Exception as e:
-                print(dataset, 'raised exception: ', str(e))
+        for i in range(0, len(benchmark_datasets)):
+            dataset = benchmark_datasets[i]
+            run_experiment(
+                overwrite=True,
+                problem_path=data_dir,
+                results_path=results_dir,
+                cls_name=classifier,
+                dataset=dataset,
+                resampleID=resample,
+                train_file=tf,
+            )

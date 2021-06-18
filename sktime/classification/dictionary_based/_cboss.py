@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-""" ContractableBOSS classifier
-dictionary based cBOSS classifier based on SFA transform. Improves the
+"""ContractableBOSS classifier.
+
+Dictionary based cBOSS classifier based on SFA transform. Improves the
 ensemble structure of the original BOSS algorithm.
 """
 
@@ -21,8 +22,9 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
-    """Contractable Bag of SFA Symbols (cBOSS)
-    implementation of BOSS from [1] with refinements described in [2]
+    """Contractable Bag of SFA Symbols (cBOSS).
+
+    implementation of BOSS from [1] with refinements described in [2].
 
     Overview: Input n series length m
     cBOSS randomly samples n_parameter_samples parameter sets, evaluating
@@ -42,8 +44,6 @@ class ContractableBOSS(BaseClassifier):
 
     predict uses 1 nearest neighbour with a bespoke distance function.
 
-
-
     Parameters
     ----------
     n_parameter_samples     : int, if search is randomised, number of
@@ -52,7 +52,7 @@ class ContractableBOSS(BaseClassifier):
     classifiers, even if within threshold, optional (default = 50)
     max_win_len_prop        : maximum window length as a proportion of
     series length (default = 1)
-    time_limit              : time contract to limit build time in minutes
+    time_limit_in_minutes   : time contract to limit build time in minutes
     (default = 0, no limit)
     min_window              : minimum window size, (default = 10)
     n_jobs                  : int, optional (default=1)
@@ -90,14 +90,15 @@ class ContractableBOSS(BaseClassifier):
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/cBOSS.java
-
     """
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": True,
+        "contractable": True,
     }
 
     def __init__(
@@ -105,15 +106,15 @@ class ContractableBOSS(BaseClassifier):
         n_parameter_samples=250,
         max_ensemble_size=50,
         max_win_len_prop=1,
-        time_limit=0.0,
         min_window=10,
+        time_limit_in_minutes=0.0,
         n_jobs=1,
         random_state=None,
     ):
         self.n_parameter_samples = n_parameter_samples
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
-        self.time_limit = time_limit
+        self.time_limit_in_minutes = time_limit_in_minutes
 
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -135,7 +136,9 @@ class ContractableBOSS(BaseClassifier):
         super(ContractableBOSS, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of BOSS classifiers from the training set (X,
+        """Fit a c-boss ensemble on cases (X,y), where y is the target variable.
+
+        Build an ensemble of BOSS classifiers from the training set (X,
         y), through randomising over the para space to make a fixed size
         ensemble of the best.
 
@@ -152,7 +155,7 @@ class ContractableBOSS(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         start_time = time.time()
-        self.time_limit = self.time_limit * 60
+        time_limit = self.time_limit_in_minutes * 60
         self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -172,7 +175,7 @@ class ContractableBOSS(BaseClassifier):
             raise ValueError(
                 f"Error in ContractableBOSS, min_window ="
                 f"{self.min_window} is bigger"
-                f" than max_window ={self.max_window},"
+                f" than max_window ={max_window},"
                 f" series length is {self.series_length}"
                 f" try set min_window to be smaller than series length in "
                 f"the constructor, but the classifier may not work at "
@@ -187,11 +190,11 @@ class ContractableBOSS(BaseClassifier):
 
         rng = check_random_state(self.random_state)
 
-        if self.time_limit > 0:
+        if time_limit > 0:
             self.n_parameter_samples = 0
 
         while (
-            train_time < self.time_limit or num_classifiers < self.n_parameter_samples
+            train_time < time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
             parameters = possible_parameters.pop(
                 rng.randint(0, len(possible_parameters))
@@ -238,6 +241,16 @@ class ContractableBOSS(BaseClassifier):
         return self
 
     def predict(self, X):
+        """Predict class values of n instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, 1]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -247,6 +260,16 @@ class ContractableBOSS(BaseClassifier):
         )
 
     def predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, self.n_classes]
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
@@ -289,22 +312,22 @@ class ContractableBOSS(BaseClassifier):
             divisor = 0
             sums = np.zeros(self.n_classes)
 
-            cls_idx = []
+            clf_idx = []
             for n, clf in enumerate(self.classifiers):
                 idx = np.where(clf.subsample == i)
                 if len(idx[0]) > 0:
-                    cls_idx.append([n, idx[0][0]])
+                    clf_idx.append([n, idx[0][0]])
 
             preds = Parallel(n_jobs=self.n_jobs)(
                 delayed(self.classifiers[cls[0]]._train_predict)(
                     cls[1],
                 )
-                for cls in cls_idx
+                for cls in clf_idx
             )
 
             for n, pred in enumerate(preds):
-                sums[self.class_dictionary.get(pred, -1)] += self.weights[cls_idx[n][0]]
-                divisor += self.weights[cls_idx[n][0]]
+                sums[self.class_dictionary.get(pred, -1)] += self.weights[clf_idx[n][0]]
+                divisor += self.weights[clf_idx[n][0]]
 
             results[i] = (
                 np.ones(self.n_classes) * (1 / self.n_classes)
