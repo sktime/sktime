@@ -7,14 +7,17 @@ __all__ = ["BaseEstimator"]
 
 import inspect
 
+from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
+from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
 
 
 class BaseEstimator(_BaseEstimator):
-    """Base class for defining estimators in sktime. Extends scikit-learn's
-    BaseEstimator.
+    """Base class for defining estimators in sktime.
+
+    Extends scikit-learn's BaseEstimator.
     """
 
     def __init__(self):
@@ -22,7 +25,7 @@ class BaseEstimator(_BaseEstimator):
 
     @property
     def is_fitted(self):
-        """Has `fit` been called?"""
+        """Whether `fit` has been called."""
         return self._is_fitted
 
     def check_is_fitted(self):
@@ -41,7 +44,7 @@ class BaseEstimator(_BaseEstimator):
 
     @classmethod
     def _all_tags(cls):
-        """Get tags from estimator class and all its parent classes"""
+        """Get tags from estimator class and all its parent classes."""
         # We here create a separate estimator tag interface in addition to the one in
         # scikit-learn to make sure we do not interfere with scikit-learn's one
         # when we inherit from scikit-learn classes. We also make estimator tags a
@@ -59,3 +62,12 @@ class BaseEstimator(_BaseEstimator):
                 collected_tags.update(more_tags)
 
         return collected_tags
+
+
+def _clone_estimator(base_estimator, random_state=None):
+    estimator = clone(base_estimator)
+
+    if random_state is not None:
+        _set_random_states(estimator, random_state)
+
+    return estimator
