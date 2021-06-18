@@ -42,10 +42,10 @@ def test_forecasting_pipeline():
         Xt = X_train.copy()
 
         t1 = TabularToSeriesAdaptor(MinMaxScaler())
-        Xt = t1.fit_transform(X_train)
+        Xt = t1.fit_transform(Xt)
 
         t2 = TabularToSeriesAdaptor(StandardScaler())
-        Xt = t2.fit_transform(X_train)
+        Xt = t2.fit_transform(Xt)
         return Xt
 
     expected_Xt = compute_expected_X(X_train)
