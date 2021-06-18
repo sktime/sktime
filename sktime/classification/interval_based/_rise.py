@@ -12,10 +12,8 @@ from numba import int64, prange, jit
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
-
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
-from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -548,25 +546,6 @@ def matrix_acf(x, num_cases, max_lag):
     #     #     y[lag - 1] = 0
     return y
 
-# def ps(x):
-#     """
-#     Power spectrum transform, currently calculated using np function.
-#     It would be worth looking at ff implementation, see difference in speed
-#     to java.
-#
-#     Parameters
-#     ----------
-#     x : array-like shape = [interval_width]
-#
-#     Return
-#     ----------
-#     y : array-like shape = [len(x)/2]
-#     """
-#     fft = np.fft.fft(x)
-#     fft = fft.real * fft.real + fft.imag * fft.imag
-#     fft = fft[: int(len(x) / 2)]
-#     return np.array(fft)
-
 
 def ps(x, sign=1, n=None, pad="mean"):
     """
@@ -617,21 +596,3 @@ def ps(x, sign=1, n=None, pad="mean"):
 @jit('int64(int64)', cache=True, nopython=True)
 def _round_to_nearest_power_of_two(n):
     return int64(1 << round(np.log2(n)))
-
-
-if __name__ == '__main__':
-    from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-    import time
-    data_dir = "../../datasets/Univariate_ts/"
-    dataset = "ArrowHead" #"StarlightCurves"
-    trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-    testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-    rise = RandomIntervalSpectralForest(random_state=0, n_jobs=-1)
-    start = int(round(time.time() * 1000))
-    rise.fit(trainX, trainY)
-    probs = rise.predict_proba(testX)
-    preds = rise.classes_[np.argmax(probs, axis=1)]
-    ac = accuracy_score(testY, preds)
-    end = int(round(time.time() * 1000)) - start
-    print(ac)
-    print(end)
