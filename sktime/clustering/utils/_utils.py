@@ -54,4 +54,5 @@ def compute_pairwise_distances(
 
     if Y is None:
         Y = X
+
     return pairwise_func(X=X, Y=Y, metric=dist_wrapper)

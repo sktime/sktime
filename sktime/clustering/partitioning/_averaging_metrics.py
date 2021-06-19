@@ -10,9 +10,6 @@ from functools import reduce
 from sktime.clustering.base.base import BaseClusterAverage
 from sktime.clustering.base.base_types import Numpy_Array
 
-__author__ = "Christopher Holder"
-__all__ = ["BarycenterAveraging", "MeanAveraging"]
-
 
 class MeanAveraging(BaseClusterAverage):
     def __init__(self, series: Numpy_Array, n_iterations: int = 10):

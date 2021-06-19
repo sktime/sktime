@@ -5,7 +5,7 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKPartition"]
 
 from typing import List
-import pandas as pd
+import numpy as np
 
 from sklearn.metrics.pairwise import (
     pairwise_distances_argmin_min,
@@ -13,8 +13,6 @@ from sklearn.metrics.pairwise import (
 from sktime.clustering.base.base_types import (
     Metric_Parameter,
     Metric_Function_Dict,
-    Data_Frame,
-    Series,
     Numpy_Array,
 )
 from sktime.clustering.base.base import (
@@ -33,12 +31,10 @@ from sktime.distances.elastic_cython import (
     wddtw_distance,
     wdtw_distance,
 )
-from sktime.distances.mpdist import mpdist
 from sktime.clustering.base.base import BaseClusterCenterInitializer
 from sktime.clustering.partitioning._center_initializers import (
-    RandomCenterInitializer,
+    ForgyCenterInitializer,
 )
-from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.clustering.utils._utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
 
@@ -68,18 +64,17 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         "erp": erp_distance,
         "msm": msm_distance,
         "twe": twe_distance,
-        "mpdist": mpdist,
     }
 
     # "k_means_plus_plus": KMeansPlusPlusCenterInitializer,
     __init_algorithms: Init_Algo_Dict = {
-        "random": RandomCenterInitializer,
+        "forgy": ForgyCenterInitializer,
     }
 
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Init_Algo = "random",
+        init_algorithm: Init_Algo = "forgy",
         max_iter: int = 300,
         verbose: bool = False,
         metric: Metric_Parameter = "dtw",
@@ -93,12 +88,11 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
                 The number of clusters to form as the number of
                 centroids to generate.
 
-            init_algorithm: str, default = random
+            init_algorithm: Init_Algo, default = forgy
                 Algorithm that is used to initialise the cluster
-                centers. See clustering/base/base_types.py
-                for description of type. The following are the
-                str supported types:
-                'random' = random initialisation
+                centers. str options are "forgy", "random" or
+                "k-means++". If using custom center init algorithm
+                then must be of type Init_Algo
 
             max_iter: int, default = 300
                 Maximum number of iterations of time series k means
@@ -109,36 +103,37 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
 
             metric: Metric_Parameter, default = None
                 The distance metric that is used to calculate the
-                distance between points. See clustering/base/base_types.py
-                for description. The following are the str supported types:
-                'eucli' = euclidean distance,
-                'dtw' = DTW distance
+                distance between points.
+
         """
-        if isinstance(init_algorithm, str):
-            init_algorithm = TimeSeriesKPartition.__init_algorithms[init_algorithm]
+        super(TimeSeriesKPartition, self).__init__()
 
-        if isinstance(metric, str):
-            metric = TimeSeriesKPartition.__metric_dict[metric]
-
-        self.n_clusters: int = n_clusters
-        self.init_algorithm: BaseClusterCenterInitializer = init_algorithm
-        self.max_iter: int = max_iter
-        self.verbose: bool = verbose
+        self.n_clusters = n_clusters
+        self.max_iter = max_iter
+        self.verbose = verbose
         self.metric = metric
+        self.init_algorithm = init_algorithm
 
-        self.__centers: Data_Frame = None
+        self.__centers: Numpy_Array = None
+        self._init_algorithm = None
+        self._metric = None
 
-    def fit(self, X: Data_Frame) -> None:
+    def _fit(self, X: Numpy_Array) -> None:
         """
-        Method that is used to fit the time seires k
+        Method that is used to fit the time series k
         partition model on dataset X
 
         Parameters
         ----------
-        X: Data_Frame
-            sktime data_frame to train the model on
+        X: Numpy_Array
+            Numpy array of series to train the model on
+
+        Returns
+        -------
+        self
+            Fitted estimator
         """
-        center_algo: BaseClusterCenterInitializer = self.init_algorithm(
+        center_algo: BaseClusterCenterInitializer = self._init_algorithm(
             X, self.n_clusters
         )
         self.__centers = center_algo.initialize_centers()
@@ -146,38 +141,37 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         for _ in range(self.max_iter):
             self.__update_centers(X)
 
-    def predict(self, X: Data_Frame) -> Series:
+    def _predict(self, X: Numpy_Array) -> Numpy_Array:
         """
         Method used to perform a prediction from the trained
         time series k partition clustering algorithm
 
         Parameters
         ----------
-        X: Data_Frame
-            sktime data_frame to predict clusters for
+        X: Numpy_Array
+            Numpy_Array containing the time series to
+            predict clusters for
 
         Returns
         -------
-        List[List[int]]
-            2d array, each sub list contains the indexes that
-            belong to that cluster
+        Numpy_Array
+            Index of the cluster each sample belongs to
         """
+
         if self.__centers is None:
             raise Exception("Fit must be run before predict")
 
-        data = from_nested_to_2d_array(X, return_numpy=True)
-        return self.__cluster_data(data)
+        return self.__cluster_data(X)
 
-    def get_centers(self) -> Data_Frame:
+    def get_centers(self) -> Numpy_Array:
         """
         Method used to get the centers of the clustering
         algorithm
 
         Returns
         -------
-        Data_Frame
-            sktime data_frame containing the centers of the
-            clusters
+        Numpy_Array
+            Containing the values of the centers
         """
         return self.__centers
 
@@ -188,41 +182,69 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
 
         Parameters
         ----------
-        X: Numpy_Array
+        cluster_values: Numpy_Array
             Array of values that are part of the same cluster
             to calculate new centers from
         """
         raise NotImplementedError("abstract method")
 
-    def __cluster_data(self, X: Numpy_Array) -> List[List[int]]:
-        clusters_index = [[] for _ in range(len(self.__centers))]
+    def _check_params(self, X: Numpy_Array):
+        """
+        Method used to check the parameters passed
 
-        centers = from_nested_to_2d_array(self.__centers, return_numpy=True)
+        Parameters
+        ----------
+        X: Numpy_Array
+            Dataset to be validate parameters against
+        """
+        if isinstance(self.init_algorithm, str):
+            self._init_algorithm = TimeSeriesKPartition.__init_algorithms[
+                self.init_algorithm
+            ]
+
+        if isinstance(self.metric, str):
+            self._metric = TimeSeriesKPartition.__metric_dict[self.metric]
+
+        super(TimeSeriesKPartition, self)._check_params(X)
+
+    def __cluster_data(self, X: Numpy_Array) -> List[List[int]]:
+        cluster_indexes = []
 
         for i in range(len(X)):
             pairwise_min = compute_pairwise_distances(
-                metric=self.metric,
+                metric=self._metric,
                 X=[X[i]],
-                Y=centers,
+                Y=self.__centers,
                 pairwise_func=pairwise_distances_argmin_min,
             )
-            clusters_index[pairwise_min[0][0]].append(i)
+            index = pairwise_min[0][0]
+            cluster_indexes.append(index)
 
-        return clusters_index
+        return cluster_indexes
 
-    def __update_centers(self, X: Data_Frame):
-        data = from_nested_to_2d_array(X, return_numpy=True)
+    def __update_centers(self, data: Numpy_Array):
         cluster_indexes = self.__cluster_data(data)
 
+        cluster_values = TimeSeriesKPartition.get_cluster_values(
+            cluster_indexes, data, self.n_clusters
+        )
+
         new_centers = []
-        for i in range(len(cluster_indexes)):
-            cluster_index = cluster_indexes[i]
-            values = from_nested_to_2d_array(X.iloc[cluster_index], return_numpy=True)
-            new_centers_i = self.calculate_new_centers(values)
-            new_centers_i = [pd.Series(new_centers_i)]
+        for cluster_series in cluster_values:
+            new_centers_i = self.calculate_new_centers(cluster_series)
             new_centers.append(new_centers_i)
 
-        new_centers = pd.DataFrame(new_centers)
-        new_centers.columns = self.__centers.columns
+        self.__centers = np.array(new_centers)
 
-        self.__centers = new_centers
+    @staticmethod
+    def get_cluster_values(cluster_indexes: Numpy_Array, data: Numpy_Array, k: int):
+        cluster_values = [[] for _ in range(k)]
+
+        for i in range(len(cluster_indexes)):
+            index = cluster_indexes[i]
+            cluster_values[index].append(data[i])
+
+        values = []
+        for arr in cluster_values:
+            values.append(np.array(arr))
+        return np.array(values, dtype=object)

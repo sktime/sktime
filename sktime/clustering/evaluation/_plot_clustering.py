@@ -4,24 +4,48 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
-# import matplotlib.pyplot as plt
+import pandas as pd
 
-from sktime.clustering.base.base_types import Data_Frame
+from sktime.clustering.base.base_types import Numpy_Or_DF
 from sktime.clustering.base.base import BaseCluster
+from sktime.clustering.partitioning._time_series_k_partition import TimeSeriesKPartition
+from sktime.utils.data_processing import from_nested_to_2d_array
 
 
-def __plot_test(clusters, center):
-    for cluster in clusters["dim_0"]:
-        cluster.plot(color="b")
+def __plot(cluster_values, center, axes):
+    for cluster_series in cluster_values:
+        axes.plot(cluster_series, color="b")
 
-    center.iloc[0].plot(color="r")
-    # plt.show()
+    axes.plot(center, color="r")
 
 
-def plot_cluster_algorithm(model: BaseCluster, predict_series: Data_Frame):
+def plot_cluster_algorithm(
+    model: BaseCluster, predict_series: Numpy_Or_DF, k: int, plt, mpatches=None
+):
+    if isinstance(predict_series, pd.DataFrame):
+        predict_series = from_nested_to_2d_array(predict_series, return_numpy=True)
+    plt.figure(figsize=(5, 10))
+    plt.rcParams["figure.dpi"] = 100
     indexes = model.predict(predict_series)
     centers = model.get_centers()
-    for i in range(len(indexes)):
-        series = predict_series.iloc[indexes[i]]
-        center = centers.iloc[i]
-        __plot_test(series, center)
+
+    series_values = TimeSeriesKPartition.get_cluster_values(indexes, predict_series, k)
+    fig, axes = plt.subplots(nrows=k, ncols=1)
+    for i in range(k):
+        __plot(series_values[i], centers[i], axes[i])
+
+    if mpatches is not None:
+        blue_patch = mpatches.Patch(
+            color="blue", label="Series that belong to the cluster"
+        )
+        red_patch = mpatches.Patch(color="red", label="Cluster centers")
+        plt.legend(
+            handles=[red_patch, blue_patch],
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.40),
+            fancybox=True,
+            shadow=True,
+            ncol=5,
+        )
+    plt.tight_layout()
+    plt.show()
