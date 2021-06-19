@@ -22,6 +22,7 @@ def _window_getter(
 ):
     """Gets the window method correspondent to the given string and initialises
     with specified parameters.
+
     Parameters
     ----------
     window_name: str, String from ['global', 'sliding', 'expanding', 'dyadic']
@@ -32,6 +33,7 @@ def _window_getter(
         only if `window_name in ['sliding, 'expanding'].
     window_step: int, The step of the sliding/expanding window. (Active
         only if `window_name in ['sliding, 'expanding'].
+
     Returns
     -------
     list:
@@ -60,8 +62,10 @@ def _window_getter(
 
 class _Window:
     """Abstract base class for windows.
+
     Each subclass must implement a __call__ method that returns a list of lists
     of 2-tuples. Each 2-tuple specifies the start and end of each window.
+
     These windows are grouped into a list that will (usually) cover the full
     time series. These lists are grouped into another list for situations
     where we consider windows of multiple scales.
@@ -80,7 +84,7 @@ class _Window:
 
 
 class _Global(_Window):
-    """ A single window over the full data. """
+    """A single window over the full data."""
 
     def __call__(self, length=None):
         return [[_Pair(None, None)]]
@@ -135,7 +139,7 @@ class _Sliding(_ExpandingSliding):
 
 
 class _Expanding(_ExpandingSliding):
-    """ A window of fixed length, slid along the dataset. """
+    """A window of fixed length, slid along the dataset."""
 
     def __init__(self, length, step):
         """
@@ -151,6 +155,7 @@ class _Expanding(_ExpandingSliding):
 
 class _Dyadic(_Window):
     """Windows generated 'dyadically'.
+
     These are successive windows of increasing fineness. The windows are as
     follows:
         Depth 1: The global window over the full data.
@@ -161,8 +166,10 @@ class _Dyadic(_Window):
         Depth n: For a dataset of length L, we generate windows
             [0:L/(2^n), L/(2^n):(2L)/(2^n), ..., (2^(n-1))L/2^n:L].
     Each depth also contains all previous depths.
+
     Note: Ensure the depth, n, is chosen such that L/(2^n) >= 1, else it will
         be too high for the dataset.
+
     Parameters
     ----------
     depth: int, The depth of the dyadic window, explained in the class
