@@ -72,6 +72,8 @@ class BaseForecaster(BaseEstimator):
         self._fh = None
         self._cutoff = None  # reference point for relative fh
 
+        self.converter_store = dict()  # storage dictionary for input/output conversions
+
         super(BaseForecaster, self).__init__()
 
     def fit(self, y, X=None, fh=None):
@@ -110,7 +112,7 @@ class BaseForecaster(BaseEstimator):
         self._y = y
 
         self.y_in_type = type(y)
-        y_inner = convert_to(y, self._all_tags()['y_type'])
+        y_inner = convert_to(y, self._all_tags()['y_type'], store=self.converter_store)
 
         self._fit(y=y_inner, X=X, fh=fh)
 
@@ -157,7 +159,7 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-        y_out = convert_to(y_pred, self.y_in_type)
+        y_out = convert_to(y_pred, self.y_in_type, store=self.converter_store)
 
         return y_out
 
@@ -236,7 +238,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._update_y_X(y, X)
 
-        y_inner = convert_to(y, self._all_tags()['y_type'])
+        y_inner = convert_to(y, self._all_tags()['y_type'], store=self.converter_store)
 
         self._update(y=y_inner, X=X, update_params=update_params)
 
