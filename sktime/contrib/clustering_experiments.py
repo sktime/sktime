@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Experiments: code to run experiments as an alternative to orchestration.
+"""Experiments: code to run experiments for clustering.
 
 This file is configured for runs of the main method with command line arguments, or for
 single debugging runs. Results are written in a standard format
@@ -11,7 +11,10 @@ import os
 import sklearn.preprocessing
 import sklearn.utils
 
-from sktime.clustering import TimeSeriesKMeans
+from sktime.clustering import (
+    TimeSeriesKMeans,
+    TimeSeriesKMedoids,
+)
 
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -31,39 +34,6 @@ from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
-
-"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
-mechanism used in Java,
-https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
-but is not yet as engineered. However, if you generate results using the method
-recommended here, they can be directly and automatically compared to the results
-generated in java
-
-"""
-
-classifier_list = [
-    # Distance based
-    "ProximityForest",
-    "KNeighborsTimeSeriesClassifier",
-    "ElasticEnsemble",
-    "ShapeDTW",
-    # Dictionary based
-    "BOSS",
-    "ContractableBOSS",
-    "TemporalDictionaryEnsemble",
-    "WEASEL",
-    "MUSE",
-    # Interval based
-    "RandomIntervalSpectralForest",
-    "TimeSeriesForestClassifier",
-    "CanonicalIntervalForest",
-    # Shapelet based
-    "ShapeletTransformClassifier",
-    "MrSEQLClassifier",
-    # Kernel based
-    "ROCKET",
-    "Arsenal",
-]
 
 
 def set_clusterer(cls, resampleId=None):
@@ -85,7 +55,19 @@ def set_clusterer(cls, resampleId=None):
     name = cls.lower()
     # Distance based
     if name == "kmeans" or name == "k-means":
-        return TimeSeriesKMeans(random_state=resampleId)
+        return TimeSeriesKMeans(
+            n_clusters=5,
+            max_iter=50,
+            averaging_algorithm="mean",
+            random_state=resampleId,
+        )
+    if name == "kmedoids" or name == "k-medoids":
+        return TimeSeriesKMedoids(
+            n_clusters=5,
+            max_iter=50,
+            averaging_algorithm="mean",
+            random_state=resampleId,
+        )
 
     else:
         raise Exception("UNKNOWN CLUSTERER")
@@ -155,12 +137,20 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     return X_train, y_train, X_test, y_test
 
 
+def form_cluster_list(clusters, n) -> np.array:
+    preds = np.zeros(n)
+    for i in range(len(clusters)):
+        for j in range(len(clusters[i])):
+            preds[clusters[i][j]] = i
+    return preds
+
+
 def run_experiment(
     problem_path,
     results_path,
     cls_name,
     dataset,
-    classifier=None,
+    clusterer=None,
     resampleID=0,
     overwrite=False,
     format=".ts",
@@ -176,7 +166,7 @@ def run_experiment(
     problem_path: Location of problem files, full path.
     results_path: Location of where to write results. Any required directories
         will be created
-    cls_name: determines which classifier to use, as defined in set_classifier.
+    cls_name: determines which clusterer to use, as defined in set_classifier.
         This assumes predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
     dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
@@ -249,27 +239,24 @@ def run_experiment(
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    if classifier is None:
-        classifier = set_clusterer(cls_name, resampleID)
+    if clusterer is None:
+        clusterer = set_clusterer(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
         start = int(round(time.time() * 1000))
-        classifier.fit(trainX, trainY)
+        clusterer.fit(trainX)
         build_time = int(round(time.time() * 1000)) - start
         start = int(round(time.time() * 1000))
-        probs = classifier.predict_proba(testX)
-        preds = classifier.classes_[np.argmax(probs, axis=1)]
+        clusters = clusterer.predict(testX)
+        preds = form_cluster_list(clusters, len(testY))
         test_time = int(round(time.time() * 1000)) - start
-        ac = accuracy_score(testY, preds)
         print(
             cls_name
             + " on "
             + dataset
             + " resample number "
             + str(resampleID)
-            + " test acc: "
-            + str(ac)
             + " time: "
             + str(test_time)
         )
@@ -277,22 +264,14 @@ def run_experiment(
         if "Composite" in cls_name:
             second = "Para info too long!"
         else:
-            second = str(classifier.get_params())
+            second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
 
         print(second)
-        temp = np.array_repr(classifier.classes_).replace("\n", "")
+        temp = np.array_repr(clusterer.classes_).replace("\n", "")
 
-        third = (
-            str(ac)
-            + ","
-            + str(build_time)
-            + ","
-            + str(test_time)
-            + ",-1,-1,"
-            + str(len(classifier.classes_))
-        )
+        third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
         write_results_to_uea_format(
             second_line=second,
             third_line=third,
@@ -300,7 +279,6 @@ def run_experiment(
             classifier_name=cls_name,
             resample_seed=resampleID,
             predicted_class_vals=preds,
-            actual_probas=probs,
             dataset_name=dataset,
             actual_class_vals=testY,
             split="TEST",
@@ -308,15 +286,15 @@ def run_experiment(
     if train_file:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
-            classifier, "_get_train_probs"
+            clusterer, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
-            train_probs = classifier._get_train_probs(trainX)
+            train_probs = clusterer._get_train_probs(trainX)
         else:
             train_probs = cross_val_predict(
-                classifier, X=trainX, y=trainY, cv=10, method="predict_proba"
+                clusterer, X=trainX, y=trainY, cv=10, method="predict_proba"
             )
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
+        train_preds = clusterer.classes_[np.argmax(train_probs, axis=1)]
         train_acc = accuracy_score(trainY, train_preds)
         print(
             cls_name
@@ -332,16 +310,16 @@ def run_experiment(
         if "Composite" in cls_name:
             second = "Para info too long!"
         else:
-            second = str(classifier.get_params())
+            second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
-        temp = np.array_repr(classifier.classes_).replace("\n", "")
+        temp = np.array_repr(clusterer.classes_).replace("\n", "")
         third = (
             str(train_acc)
             + ","
             + str(train_time)
             + ",-1,-1,-1,"
-            + str(len(classifier.classes_))
+            + str(len(clusterer.classes_))
         )
         write_results_to_uea_format(
             second_line=second,

@@ -85,8 +85,8 @@ class TimeSeriesKMeans(TimeSeriesKPartition):
 
     def fit(self, X: Numpy_Or_DF) -> None:
         """
-        Method that is used to fit the clustering algorithm
-        on the dataset X
+        Method that is used to fit the time series k
+        means model on dataset X
 
         Parameters
         ----------
