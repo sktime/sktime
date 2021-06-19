@@ -172,30 +172,35 @@ class Imputer(_SeriesToSeriesTransformer):
 
 
 def _impute_with_forecaster(forecaster, Z):
-    """Use a given Forecaster to impute by insample predictions.
+    """Use a given forecaster for imputation by in-sample predictions.
 
-    :param forecaster: Forecaster
-    :type forecaster: Based on sktime.BaseForecaster
-    :param Z: Series
-    :type Z: pd.DataFrame or pd.Series
-    :return: Imputed time series
-    :rtype: pd.DataFrame or pd.Series
+    Parameters
+    ----------
+    forecaster: Forecaster
+        Forecaster to use for imputation
+    Z : pd.Series or pd.DataFrame
+        Series to impute.
+
+    Returns
+    -------
+    zt : pd.Series or pd.DataFrame
+        Series with imputed values.
     """
-    # univariate
     if isinstance(Z, pd.Series):
-        cols = [Z]
-    # multivariate
+        series = [Z]
     elif isinstance(Z, pd.DataFrame):
-        cols = [Z[col] for col in Z]
+        series = [Z[column] for column in Z]
 
-    for z in cols:
+    for z in series:
         # define fh based on index of missing values
-        naindex = z.index[z.isna()]
-        fh = ForecastingHorizon(values=naindex, is_relative=False)
+        na_index = z.index[z.isna()]
+        fh = ForecastingHorizon(values=na_index, is_relative=False)
+
         # fill NaN before fitting with ffill and backfill (heuristic)
         forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
+
         # replace missing values with predicted values
-        z[naindex] = forecaster.predict()
+        z[na_index] = forecaster.predict()
     return Z
 
 
