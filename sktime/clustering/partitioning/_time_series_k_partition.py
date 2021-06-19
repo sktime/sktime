@@ -37,7 +37,6 @@ from sktime.clustering.partitioning._center_initializers import (
 )
 from sktime.clustering.utils._utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
-from sktime.utils.validation.panel import check_X
 
 
 class TimeSeriesKPartition(BaseCluster, ClusterMixin):
@@ -134,7 +133,7 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         self
             Fitted estimator
         """
-        center_algo: BaseClusterCenterInitializer = self.init_algorithm(
+        center_algo: BaseClusterCenterInitializer = self._init_algorithm(
             X, self.n_clusters
         )
         self.__centers = center_algo.initialize_centers()

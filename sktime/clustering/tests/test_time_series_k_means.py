@@ -27,10 +27,10 @@ def __run_test(model: TimeSeriesKMeans):
 
     model.fit(X)
     model.predict(X_test)
-    import matplotlib.pyplot as plt
-    from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
-
-    plot_cluster_algorithm(model, X_test, model.n_clusters, plt)
+    # import matplotlib.pyplot as plt
+    # from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
+    #
+    # plot_cluster_algorithm(model, X_test, model.n_clusters, plt)
 
 
 def test_k_means():
