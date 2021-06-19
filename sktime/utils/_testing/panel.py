@@ -105,6 +105,17 @@ def make_regression_problem(
     return X, y
 
 
+def make_clustering_problem(
+    n_instances=20, series_size=20, return_numpy=True, random_state=None
+):
+    rng = check_random_state(random_state)
+    X = [rng.randn(n_instances, series_size)]
+    if return_numpy:
+        return X
+    else:
+        return pd.Series(X)
+
+
 def _make_nested_from_array(array, n_instances=20, n_columns=1):
     return pd.DataFrame(
         [[pd.Series(array) for _ in range(n_columns)] for _ in range(n_instances)],

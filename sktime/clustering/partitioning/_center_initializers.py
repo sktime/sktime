@@ -2,40 +2,45 @@
 """Cluster center initializers"""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["RandomCenterInitializer", "KMeansPlusPlusCenterInitializer"]
+__all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
+
+import numpy as np
 
 from sktime.clustering.base.base import BaseClusterCenterInitializer
-from sktime.clustering.base.base_types import Data_Frame
+from sktime.clustering.base.base_types import Numpy_Array
 
 
-class RandomCenterInitializer(BaseClusterCenterInitializer):
-    def __init__(self, df: Data_Frame, n_centers: int):
+class ForgyCenterInitializer(BaseClusterCenterInitializer):
+    def __init__(self, data_set: Numpy_Array, n_centers: int):
         """
-        Constructor for RandomCenterInitialiser that is used
-        to create n centers from a set of series randomly
+        Constructor for ForgyCenterInitializer that is used
+        to create n centers from a set of series using Forgys
+        technique
 
         Parameters
         ----------
-        df: Data_Frame
-            sktime data_frame containing values to generate
-            centers from
+        data_set: Numpy_Array
+            Numpy_Array that is the dataset to calculate the centers from
 
         n_centers: int
             Number of centers to be created
 
         """
-        super(RandomCenterInitializer, self).__init__(df, n_centers)
+        super(ForgyCenterInitializer, self).__init__(data_set, n_centers)
 
-    def initialize_centers(self) -> Data_Frame:
+    def initialize_centers(self) -> Numpy_Array:
         """
-        Method called to intialize centers randomly
+        Method called to initialize centers using Forgys
+        technique
 
         Returns
         -------
-        Data_Frame
-            sktime data_frame containing the centers
+        Numpy_Array
+            numpy array containing the centers
         """
-        return self.df.sample(n=self.n_centers)
+        return self.data_set[
+            np.random.choice(self.data_set.shape[0], self.n_centers, replace=False), :
+        ]
 
 
 class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
@@ -43,31 +48,55 @@ class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
     TODO: I need to have a look at this and see if you can use dtw for this
     """
 
-    def __init__(self, df: Data_Frame, n_centers: int):
+    def __init__(self, data_set: Numpy_Array, n_centers: int):
         """
-        Constructor for RandomCenterInitialiser that is used
+        Constructor for KMeansPlusPlusCenterInitializer that is used
         to create n centers from a set of series using the kmeans++
         algorithm
 
         Parameters
         ----------
-        df: Data_Frame
-            sktime data_frame containing values to generate
-            centers from
+        data_set: Numpy_Array
+            Numpy_Array that is the dataset to calculate the centers from
 
         n_centers: int
             Number of centers to be created
 
         """
-        super(KMeansPlusPlusCenterInitializer, self).__init__(df, n_centers)
+        super(KMeansPlusPlusCenterInitializer, self).__init__(data_set, n_centers)
 
-    def initialize_centers(self) -> Data_Frame:
+    def initialize_centers(self) -> Numpy_Array:
         """
-        Method called to intialize centers randomly
+        Returns
+        -------
+        Numpy_Array
+            numpy array containing the centers
+        """
+        pass
+
+
+class RandomCenterInitializer(BaseClusterCenterInitializer):
+    def __init__(self, data_set: Numpy_Array, n_centers: int):
+        """
+
+        Parameters
+        ----------
+        data_set: Numpy_Array
+            Numpy_Array that is the dataset to calculate the centers from
+
+        n_centers: int
+            Number of centers to be created
+
+        """
+        super(RandomCenterInitializer, self).__init__(data_set, n_centers)
+
+    def initialize_centers(self) -> Numpy_Array:
+        """
 
         Returns
         -------
-        Data_Frame
-            sktime data_frame containing the centers
+        Numpy_Array
+            numpy array containing the centers
+
         """
         pass

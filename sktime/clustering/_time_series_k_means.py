@@ -4,14 +4,8 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMeans"]
 
-from typing import List
-from sktime.clustering.base.base_types import (
-    Metric_Parameter,
-    Data_Frame,
-    Numpy_Array,
-)
+from sktime.clustering.base.base_types import Metric_Parameter, Numpy_Array, Numpy_Or_DF
 from sktime.clustering.base.base import (
-    BaseCluster,
     Init_Algo,
     Averaging_Algo,
     Averaging_Algo_Dict,
@@ -23,7 +17,7 @@ from sktime.clustering.partitioning._averaging_metrics import (
 from sktime.clustering.partitioning._time_series_k_partition import TimeSeriesKPartition
 
 
-class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
+class TimeSeriesKMeans(TimeSeriesKPartition):
     """Time Series K-Means Clusterer.
 
     This is a work in progress.
@@ -37,12 +31,12 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Init_Algo = "random",
+        init_algorithm: Init_Algo = "forgy",
         max_iter: int = 300,
         verbose: bool = False,
         metric: Metric_Parameter = "dtw",
         averaging_algorithm: Averaging_Algo = "mean",
-        averaging_algorithm_iterations: int = 50,
+        averaging_algorithm_iterations: int = 10,
     ):
         """Constructor for TimeSeiresKMeans clusterer
 
@@ -52,18 +46,11 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
                 The number of clusters to form as the number of
                 centroids to generate.
 
-            n_init: int, default = 10
-                Number of time the k-means algorithm will be run
-                with different centroid seeds. The final result
-                will be the best output of n_init consecutive runs
-                in terms of inertia.
-
-            init_algorithm: str, default = random
+            init_algorithm: Init_Algo, default = forgy
                 Algorithm that is used to initialise the cluster
-                centers. See clustering/base/base_types.py
-                for description of type. The following are the
-                str supported types:
-                'random' = random initialisation
+                centers. str options are "forgy", "random" or
+                "k-means++". If using custom center init algorithm
+                then must be of type Init_Algo
 
             max_iter: int, default = 300
                 Maximum number of iterations of time series k means
@@ -76,10 +63,12 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
                 The distance metric that is used to calculate the
                 distance between points.
 
-            averaging_algorithm: Averaging_Algo
-                The method used to create the average from a cluster
+            averaging_algorithm: Averaging_Algo, default = "mean"
+                The method used to create the average from a cluster.
+                str options are "dba" dtw barycenter averaging and
+                "means" for mean average.
 
-            averaging_algorithm_iterations: int
+            averaging_algorithm_iterations: int, default = 10
                 Where appropriate (i.e. DBA) the average is refined by
                 iterations. This is the number of times it is refined
         """
@@ -90,51 +79,42 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
             verbose=verbose,
             metric=metric,
         )
-        metric_str = None
-        if isinstance(metric, str):
-            metric_str = metric
-
-        if isinstance(averaging_algorithm, str):
-            if metric_str is not None and averaging_algorithm == "auto":
-                if metric_str == "dtw":
-                    averaging_algorithm = "dba"
-                else:
-                    averaging_algorithm = "mean"
-
-            self.averaging_algorithm = TimeSeriesKMeans.__averaging_algorithm_dict[
-                averaging_algorithm
-            ]
-        else:
-            self.averaging_algorithm = averaging_algorithm
+        self.averaging_algorithm = averaging_algorithm
         self.averaging_algorithm_iterations = averaging_algorithm_iterations
+        self._averaging_algorithm = None
 
-    def fit(self, X: Data_Frame) -> None:
+    def fit(self, X: Numpy_Or_DF) -> None:
         """
         Method that is used to fit the time series k
         means model on dataset X
 
         Parameters
         ----------
-        X: Data_Frame
-            sktime data_frame to train the model on
-        """
-        super(TimeSeriesKMeans, self).fit(X)
-
-    def predict(self, X: Data_Frame) -> List[List[int]]:
-        """
-        Method used to perform a prediction from the trained
-        time series k means
-
-        Parameters
-        ----------
-        X: Data_Frame
-            sktime data_frame to predict clusters for
+        X: Numpy array or Dataframe
+            sktime data_frame or numpy array to train the model on
 
         Returns
         -------
-        List[List[int]]
-            2d array, each sub list contains the indexes that
-            belong to that cluster
+        self
+            Fitted estimator
+        """
+        return super(TimeSeriesKMeans, self).fit(X)
+
+    def predict(self, X: Numpy_Or_DF) -> Numpy_Array:
+        """
+        Method used to perform a prediction from the already
+        trained clustering algorithm
+
+        Parameters
+        ----------
+        X: Numpy array or Dataframe
+            sktime data_frame or numpy array to predict
+            cluster for
+
+        Returns
+        -------
+        Numpy_Array: np.array
+            Index of the cluster each sample belongs to
         """
         return super(TimeSeriesKMeans, self).predict(X)
 
@@ -153,7 +133,33 @@ class TimeSeriesKMeans(TimeSeriesKPartition, BaseCluster):
             Single value that is determined to be the center of
             the series
         """
-        average_algorithm = self.averaging_algorithm(
+        average_algorithm = self._averaging_algorithm(
             cluster_values, self.averaging_algorithm_iterations
         )
         return average_algorithm.average()
+
+    def _check_params(self, X: Numpy_Array):
+        """
+        Method used to check the parameters passed
+
+        Parameters
+        ----------
+        X: Numpy_Array
+            Dataset to be validate parameters against
+        """
+        metric_str = None
+        if isinstance(self.metric, str):
+            metric_str = self.metric
+
+        averaging_algorithm = self.averaging_algorithm
+        if isinstance(averaging_algorithm, str):
+            if metric_str is not None and averaging_algorithm == "auto":
+                if metric_str == "dtw":
+                    averaging_algorithm = "dba"
+                else:
+                    averaging_algorithm = "mean"
+
+            self._averaging_algorithm = TimeSeriesKMeans.__averaging_algorithm_dict[
+                averaging_algorithm
+            ]
+        super(TimeSeriesKMeans, self)._check_params(X)

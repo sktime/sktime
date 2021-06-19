@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
+import numpy as np
 
-import sktime
-
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
-from sktime.clustering.partitioning._center_initializers import RandomCenterInitializer
-
-DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
-X, Y = load_from_tsfile_to_dataframe(
-    os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts")
-)
+from sktime.clustering.partitioning._center_initializers import ForgyCenterInitializer
 
 
 def test_random_cluster_center_initializer():
-    random_clusters = RandomCenterInitializer(X, 10)
-    random_clusters.initialize_centers()
+    n, sz = 100, 10
+    rng = np.random.RandomState(0)
+    time_series = rng.randn(n, sz)
+    ForgyCenterInitializer(time_series, 10)
