@@ -61,7 +61,7 @@ def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
-    match = "Found series with different index types."
+    match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
 
