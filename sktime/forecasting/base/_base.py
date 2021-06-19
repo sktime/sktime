@@ -111,6 +111,8 @@ class BaseForecaster(BaseEstimator):
         self._X = X
         self._y = y
 
+        self._set_cutoff(y.index[-1])
+
         self.y_in_type = type(y)
         y_inner = convert_to(y, self._all_tags()['y_type'], store=self.converter_store)
 
