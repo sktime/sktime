@@ -36,7 +36,7 @@
 .. |twitter| image:: https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social
 .. _twitter: https://twitter.com/sktime_toolbox
 
-.. |python| image:: https://img.shields.io/badge/python-3.6+-blue?logo=python
+.. |python| image:: https://img.shields.io/pypi/pyversions/sktime
 .. _python: https://www.python.org/
 
 .. |codestyle| image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -110,7 +110,11 @@ Forecasting
 
 .. code-block:: python
 
-    from sktime.forecasting.all import *
+    from sktime.datasets import load_airline
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -118,8 +122,8 @@ Forecasting
     forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    smape_loss(y_test, y_pred)
-    >>> 0.08661468139978168
+    mean_absolute_percentage_error(y_test, y_pred)
+    >>> 0.08661467738190656
 
 For more, check out the `forecasting tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting
 .ipynb>`__.
@@ -129,13 +133,14 @@ Time Series Classification
 
 .. code-block:: python
 
-    from sktime.classification.all import *
+    from sktime.classification.interval_based import TimeSeriesForestClassifier
+    from sktime.datasets import load_arrow_head
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import accuracy_score
 
     X, y = load_arrow_head(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    classifier = TimeSeriesForest()
+    classifier = TimeSeriesForestClassifier()
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     accuracy_score(y_test, y_pred)

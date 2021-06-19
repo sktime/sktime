@@ -29,7 +29,7 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
@@ -37,6 +37,7 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
         self._set_y_X(y, X)
         self._set_fh(fh)
         self._forecaster = self._instantiate_model()
