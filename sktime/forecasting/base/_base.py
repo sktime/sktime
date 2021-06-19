@@ -44,6 +44,8 @@ from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 
+from sktime.forecasting.base.convertIO import convert, convert_to
+
 
 DEFAULT_ALPHA = 0.05
 
@@ -57,6 +59,8 @@ class BaseForecaster(BaseEstimator):
     Specific implementations of these methods is deferred to concrete
     forecasters.
     """
+
+    _tags = {"y_type" : pd.Series}  # which types do _fit, _predict, assume for y?
 
     def __init__(self):
         self._is_fitted = False
@@ -78,7 +82,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame, or np.array
             Target time series to which to fit the forecaster.
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
@@ -105,7 +109,10 @@ class BaseForecaster(BaseEstimator):
         self._X = X
         self._y = y
 
-        self._fit(y=y, X=X, fh=fh)
+        self.y_in_type = type(y)
+        y_inner = convert_to(y, self._all_tags()['y_type'])
+
+        self._fit(y=y_inner, X=X, fh=fh)
 
         # this should happen last
         self._is_fitted = True
@@ -148,7 +155,11 @@ class BaseForecaster(BaseEstimator):
         # todo: needs fixing in ARIMA and AutoARIMA
         # alpha = check_alpha(alpha)
 
-        return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        y_pred = self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
+
+        y_out = convert_to(y_pred, self.y_in_type)
+
+        return y_out
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
@@ -225,7 +236,9 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._update_y_X(y, X)
 
-        self._update(y=y, X=X, update_params=update_params)
+        y_inner = convert_to(y, self._all_tags()['y_type'])
+
+        self._update(y=y_inner, X=X, update_params=update_params)
 
         return self
 
