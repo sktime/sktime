@@ -21,7 +21,7 @@ plot_correlations(
 )
 """
 __all__ = ["plot_series", "plot_correlations"]
-__author__ = ["Markus Löning", "Ryan Kuhns", "Drishti Bhasin "]
+__author__ = ["Markus Löning", "Ryan Kuhns", "Drishti Bhasin"]
 
 import numpy as np
 

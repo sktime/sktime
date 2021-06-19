@@ -3,7 +3,7 @@
 
 """Functions for checking input data."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "Drishti Bhasin"]
 __all__ = [
     "check_series",
     "check_time_index",
