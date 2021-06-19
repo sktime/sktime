@@ -15,14 +15,17 @@
       "profile": "https://github.com/fkiraly",
       "contributions": [
         "business",
+        "code",
         "doc",
         "design",
         "eventOrganizing",
         "financial",
         "fundingFinding",
         "ideas",
+        "mentoring",
         "projectManagement",
         "question",
+        "research",
         "review",
         "talk"
       ]
@@ -1009,6 +1012,15 @@
       "profile": "https://github.com/ckastner",
       "contributions": [
         "code",
+        "bug",
+      ]
+    },
+    {
+      "login": "tombh",
+      "name": "Thomas Buckley-Houston",
+      "avatar_url": "https://avatars.githubusercontent.com/u/160835?s=80&v=4",
+      "profile": "https://github.com/tombh",
+      "contributions": [
         "bug",
       ]
     },
