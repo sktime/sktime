@@ -20,7 +20,6 @@ from sktime.utils import _has_tag
 class _Pipeline(
     _BaseWindowForecaster,
     _HeterogenousMetaEstimator,
-    _SeriesToSeriesTransformer,
 ):
 
     _tags = {"requires-fh-in-fit": False}
@@ -159,6 +158,9 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
+        # Some transformers can not deal with X=None, therefore X is mandatory
+        if self._X is None:
+            raise NotImplementedError("X must be given to use ForecastingPipeline.")
         self._set_y_X(y, X)
 
         # transform X
@@ -208,23 +210,25 @@ class ForecastingPipeline(_Pipeline):
         self.steps_[-1] = (name, forecaster)
         return self
 
-    def transform(self, Z, X=None):
-        self.check_is_fitted()
-        Zt = check_series(Z, enforce_multivariate=True)
-        for _, _, transformer in self._iter_transformers():
-            Zt = transformer.transform(Zt)
-        return Zt
 
-    def inverse_transform(self, Z, X=None):
-        self.check_is_fitted()
-        Zt = check_series(Z, enforce_multivariate=True)
-        for _, _, transformer in self._iter_transformers(reverse=True):
-            if not _has_tag(transformer, "skip-inverse-transform"):
-                Zt = transformer.inverse_transform(Zt)
-        return Zt
+# removed transform and inverse_transform as long as y can only be a pd.Series
+# def transform(self, Z, X=None):
+#     self.check_is_fitted()
+#     Zt = check_series(Z, enforce_multivariate=True)
+#     for _, _, transformer in self._iter_transformers():
+#         Zt = transformer.transform(Zt)
+#     return Zt
+
+# def inverse_transform(self, Z, X=None):
+#     self.check_is_fitted()
+#     Zt = check_series(Z, enforce_multivariate=True)
+#     for _, _, transformer in self._iter_transformers(reverse=True):
+#         if not _has_tag(transformer, "skip-inverse-transform"):
+#             Zt = transformer.inverse_transform(Zt)
+#     return Zt
 
 
-class TransformedTargetForecaster(_Pipeline):
+class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     """
     Meta-estimator for forecasting transformed time series.
     Pipeline functionality to apply transformers to the target series.
