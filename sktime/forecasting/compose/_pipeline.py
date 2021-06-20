@@ -10,7 +10,7 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.series import check_series
@@ -18,7 +18,7 @@ from sktime.utils import _has_tag
 
 
 class _Pipeline(
-    _SktimeForecaster,
+    _BaseWindowForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
