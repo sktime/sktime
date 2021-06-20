@@ -22,12 +22,13 @@ plot_correlations(
 )
 """
 __all__ = ["plot_series", "plot_correlations"]
-__author__ = ["Markus Löning", "Ryan Kuhns", "Ifeanyi Eze"]
+__author__ = ["Markus Löning", "Ryan Kuhns", "Ifeanyi Eze", "Drishti Bhasin"]
 
 import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y, check_pred_int
+from sktime.utils.validation.series import check_consistent_index_type
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 
@@ -50,7 +51,7 @@ def plot_series(
         Names of series, will be displayed in figure legend
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
-        Lenght of list has to match with number of series
+        The length of the list has to match with the number of series.
     pred_int: pd.DataFrame, optional (default=None)
         Prediction intervals of series
 
@@ -98,10 +99,8 @@ def plot_series(
     # create combined index
     index = series[0].index
     for y in series[1:]:
-        # check types, note that isinstance() does not work here because index
-        # types inherit from each other, hence we check for type equality
-        if not type(index) is type(y.index):  # noqa
-            raise TypeError("Found series with different index types.")
+        # check index types
+        check_consistent_index_type(index, y.index)
         index = index.union(y.index)
 
     # generate integer x-values
