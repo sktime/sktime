@@ -275,6 +275,8 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
+
         self.steps_ = self._check_steps()
         self._set_y_X(y, X)
 
