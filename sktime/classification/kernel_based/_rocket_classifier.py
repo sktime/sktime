@@ -13,7 +13,6 @@ from sktime.series_as_features.base.estimators.shapelet_based._rocket_estimator 
 )
 
 
-
 class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
     """
     Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
