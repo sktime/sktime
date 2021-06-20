@@ -15,12 +15,14 @@
       "profile": "https://github.com/fkiraly",
       "contributions": [
         "business",
+        "code",
         "doc",
         "design",
         "eventOrganizing",
         "financial",
         "fundingFinding",
         "ideas",
+        "mentoring",
         "projectManagement",
         "question",
         "review",
@@ -1009,7 +1011,7 @@
       "profile": "https://github.com/ckastner",
       "contributions": [
         "code",
-        "bug",
+        "bug"
       ]
     },
     {
@@ -1018,9 +1020,36 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/160835?s=80&v=4",
       "profile": "https://github.com/tombh",
       "contributions": [
-        "bug",
+        "bug"
       ]
     },
+    {
+      "login": "julramos",
+      "name": "Juliana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19613567?v=4",
+      "profile": "https://www.linkedin.com/in/julianarn/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "SveaMeyer13",
+      "name": "Svea Marie Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46671894?v=4",
+      "profile": "https://github.com/SveaMeyer13",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "thayeylolu",
+      "name": "Taiwo Owoseni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13348874?v=4",
+      "profile": "https://thayeylolu.github.io/portfolio/",
+      "contributions": [
+        "code"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" RandOm Convolutional KErnel Transform (ROCKET)
-"""
+"""RandOm Convolutional KErnel Transform (ROCKET)."""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["ROCKETClassifier"]
@@ -14,10 +13,12 @@ from sktime.series_as_features.base.estimators.shapelet_based._rocket_estimator 
 )
 
 
+
 class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
     """
     Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
     base classifier.
+
 
     Parameters
     ----------
@@ -48,7 +49,6 @@ class ROCKETClassifier(BaseROCKETEstimator, BaseClassifier):
     Java version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/shapelet_based/ROCKETClassifier.java
-
     """
 
     @property

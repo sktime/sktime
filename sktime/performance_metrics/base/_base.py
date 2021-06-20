@@ -2,46 +2,30 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
-__all__ = ["BaseEstimator"]
+__author__ = ["Ryan Kuhns"]
+__all__ = ["BaseMetric"]
 
 import inspect
-
-from sklearn import clone
-from sklearn.base import BaseEstimator as _BaseEstimator
-from sklearn.ensemble._base import _set_random_states
-
-from sktime.exceptions import NotFittedError
+from sklearn.base import BaseEstimator
 
 
-class BaseEstimator(_BaseEstimator):
-    """Base class for defining estimators in sktime.
+class BaseMetric(BaseEstimator):
+    """Base class for defining metrics in sktime.
 
     Extends scikit-learn's BaseEstimator.
     """
 
-    def __init__(self):
-        self._is_fitted = False
+    def __init__(self, func, name=None):
+        self._func = func
+        self.name = name if name is not None else func.__name__
 
-    @property
-    def is_fitted(self):
-        """Whether `fit` has been called."""
-        return self._is_fitted
+    def __call__(self, y_true, y_pred, **kwargs):
+        """Calculate metric value using underlying metric function."""
+        NotImplementedError("abstract method")
 
-    def check_is_fitted(self):
-        """Check if the estimator has been fitted.
-
-        Raises
-        ------
-        NotFittedError
-            If the estimator has not been fitted yet.
-        """
-        if not self.is_fitted:
-            raise NotFittedError(
-                f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first."
-            )
-
+    # This is copied from sktime.base.BaseEstimator. Choice to copy was made to
+    # Avoid the not applicable functionality from BaseEstimator that tripped
+    # up unit tests (e.g. is_fitted, check_is_fitted).
     @classmethod
     def _all_tags(cls):
         """Get tags from estimator class and all its parent classes."""
@@ -62,12 +46,3 @@ class BaseEstimator(_BaseEstimator):
                 collected_tags.update(more_tags)
 
         return collected_tags
-
-
-def _clone_estimator(base_estimator, random_state=None):
-    estimator = clone(base_estimator)
-
-    if random_state is not None:
-        _set_random_states(estimator, random_state)
-
-    return estimator
