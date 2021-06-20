@@ -141,7 +141,7 @@ class ForecastingPipeline(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = None
+        self.steps_ = self._check_steps()
         super(ForecastingPipeline, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -159,7 +159,6 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        self.steps_ = self._check_steps()
         self._set_y_X(y, X)
 
         # transform X
@@ -257,7 +256,7 @@ class TransformedTargetForecaster(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = None
+        self.steps_ = self._check_steps()
         super(TransformedTargetForecaster, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -275,9 +274,6 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
-
-        self.steps_ = self._check_steps()
         self._set_y_X(y, X)
 
         # transform
