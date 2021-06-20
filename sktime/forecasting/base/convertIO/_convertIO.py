@@ -25,7 +25,7 @@ convert = dict()
 
 # assign identity function to type conversion to self
 for tp in [pd.Series, pd.DataFrame, np.array]:
-    convert[(tp, tp, "Series")] = lambda x : x
+    convert[(tp, tp, "Series")] = lambda x: x
 
 
 def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
@@ -91,8 +91,11 @@ def convert_np_to_MvS_as_Series(what: np.array, store=None) -> pd.DataFrame:
     if not isinstance(what, np.array) and len(what.shape) != 2:
         raise TypeError("input must be a np.array of dim 2")
 
-    if isinstance(store, dict) and "cols" in store.keys\
-            and len(store["cols"]) == what.shape[1]:
+    if (
+        isinstance(store, dict)
+        and "cols" in store.keys
+        and len(store["cols"]) == what.shape[1]
+    ):
         res = pd.DataFrame(what, columns=store["cols"])
     else:
         res = pd.DataFrame(what)
@@ -125,6 +128,7 @@ def convert_to(what, to_type: type, as_scitype: str, store=None):
 
     if key not in ckys:
         raise TypeError(
-            "no conversion defined from type " + from_type + " to " + to_type)
+            "no conversion defined from type " + from_type + " to " + to_type
+        )
 
     return convert[key](what, store=store)

@@ -60,7 +60,7 @@ class BaseForecaster(BaseEstimator):
     forecasters.
     """
 
-    _tags = {"y_type" : pd.Series}  # which types do _fit, _predict, assume for y?
+    _tags = {"y_type": pd.Series}  # which types do _fit, _predict, assume for y?
 
     def __init__(self):
         self._is_fitted = False
@@ -114,7 +114,7 @@ class BaseForecaster(BaseEstimator):
         self._set_cutoff(y.index[-1])
 
         self.y_in_type = type(y)
-        y_inner = convert_to(y, self._all_tags()['y_type'], store=self.converter_store)
+        y_inner = convert_to(y, self._all_tags()["y_type"], store=self.converter_store)
 
         self._fit(y=y_inner, X=X, fh=fh)
 
@@ -240,7 +240,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._update_y_X(y, X)
 
-        y_inner = convert_to(y, self._all_tags()['y_type'], store=self.converter_store)
+        y_inner = convert_to(y, self._all_tags()["y_type"], store=self.converter_store)
 
         self._update(y=y_inner, X=X, update_params=update_params)
 
