@@ -256,7 +256,7 @@ def mean_absolute_scaled_error(
 
     Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
     "The M4 Competition: 100,000 time series and 61 forecasting methods",
-    International Journal of Forecasting, Volume 3
+    International Journal of Forecasting, Volume 3.
 
     Examples
     --------
@@ -403,7 +403,7 @@ def median_absolute_scaled_error(
 
     Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
     "The M4 Competition: 100,000 time series and 61 forecasting methods",
-    International Journal of Forecasting, Volume 3
+    International Journal of Forecasting, Volume 3.
     """
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
@@ -588,7 +588,7 @@ def median_squared_scaled_error(
 ):
     """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
 
-If `square_root` is False then calculates MdSSE, otherwise calculates RMdSSE if
+    If `square_root` is False then calculates MdSSE, otherwise calculates RMdSSE if
     `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
