@@ -114,7 +114,9 @@ class BaseForecaster(BaseEstimator):
         self._set_cutoff(y.index[-1])
 
         self.y_in_type = type(y)
-        y_inner = convert_to(y, self._all_tags()["y_type"], store=self.converter_store)
+        y_inner = convert_to(y, self._all_tags()["y_type"], as_scitype="Series",
+                             store=self.converter_store
+                             )
 
         self._fit(y=y_inner, X=X, fh=fh)
 
@@ -161,7 +163,9 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-        y_out = convert_to(y_pred, self.y_in_type, store=self.converter_store)
+        y_out = convert_to(y_pred, self.y_in_type, as_scitype="Series",
+                           store=self.converter_store
+                           )
 
         return y_out
 
@@ -240,7 +244,9 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._update_y_X(y, X)
 
-        y_inner = convert_to(y, self._all_tags()["y_type"], store=self.converter_store)
+        y_inner = convert_to(y, self._all_tags()["y_type"], as_scitype="Series",
+                             store=self.converter_store
+                             )
 
         self._update(y=y_inner, X=X, update_params=update_params)
 
