@@ -23,9 +23,15 @@ import pandas as pd
 
 convert = dict()
 
+
+def convert_identity(what, store=None):
+
+    return what
+
+
 # assign identity function to type conversion to self
 for tp in [pd.Series, pd.DataFrame, np.array]:
-    convert[(tp, tp, "Series")] = lambda x: x
+    convert[(tp, tp, "Series")] = convert_identity
 
 
 def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
