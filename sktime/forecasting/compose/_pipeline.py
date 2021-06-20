@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -u
+#!/usr/bin/env pyhon3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -10,20 +10,21 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.forecasting import check_y_X, check_y, check_X
+from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.series import check_series
 from sktime.utils import _has_tag
 
 
 class _Pipeline(
-    _OptionalForecastingHorizonMixin,
     _SktimeForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
+
+    _tags = {"requires-fh-in-fit": False}
+
     def _check_steps(self):
         names, estimators = zip(*self.steps)
 
@@ -143,7 +144,7 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = None
         super(ForecastingPipeline, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -160,36 +161,31 @@ class ForecastingPipeline(_Pipeline):
         """
         self.steps_ = self._check_steps()
         self._set_y_X(y, X)
-        self._set_fh(fh)
 
         # transform X
-        y, Xt = check_y_X(y, X)
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            Xt = t.fit_transform(Xt)
+            X = t.fit_transform(X)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
         f = clone(forecaster)
-        f.fit(y, Xt, fh)
+        f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
 
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        Xt = check_X(X)
+        X = check_X(X)
         forecaster = self.steps_[-1][1]
         # transform X before doing prediction
         for _, _, transformer in self._iter_transformers():
-            Xt = transformer.transform(Xt)
-        y_pred = forecaster.predict(
-            fh, Xt, return_pred_int=return_pred_int, alpha=alpha
-        )
+            X = transformer.transform(X)
+        y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
         return y_pred
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
@@ -202,8 +198,6 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
@@ -266,7 +260,7 @@ class TransformedTargetForecaster(_Pipeline):
         self.steps_ = None
         super(TransformedTargetForecaster, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -283,22 +277,19 @@ class TransformedTargetForecaster(_Pipeline):
         """
         self.steps_ = self._check_steps()
         self._set_y_X(y, X)
-        self._set_fh(fh)
 
         # transform
-        yt = check_y(y)
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            yt = t.fit_transform(yt)
+            y = t.fit_transform(y)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
         f = clone(forecaster)
-        f.fit(yt, X, fh)
+        f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
 
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -312,7 +303,7 @@ class TransformedTargetForecaster(_Pipeline):
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
@@ -325,8 +316,6 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
