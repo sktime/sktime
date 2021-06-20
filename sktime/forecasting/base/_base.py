@@ -44,7 +44,7 @@ from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 
-from sktime.forecasting.base.convertIO import convert, convert_to
+from sktime.forecasting.base.convertIO import convert_to
 
 
 DEFAULT_ALPHA = 0.05
