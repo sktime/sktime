@@ -112,12 +112,12 @@ def mean_asymmetric_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     asymmetric_threshold : float, default = 0.0
@@ -138,8 +138,8 @@ def mean_asymmetric_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -147,18 +147,23 @@ def mean_asymmetric_error(
     -------
     asymmetric_loss : float
         Loss using asymmetric penalty of on errors.
+        If multioutput is 'raw_values', then asymmetric loss is returned for
+        each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average asymmetric loss of all output errors is returned.
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    ..[2]   Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)" ,
-            Thomson, South-Western: Ohio, US.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+    Thomson, South-Western: Ohio, US.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:
+
         check_consistent_length(y_true, horizon_weight)
 
     asymmetric_errors = _asymmetric_error(
@@ -185,8 +190,10 @@ def mean_absolute_scaled_error(
     """Mean absolute scaled error (MASE).
 
     MASE output is non-negative floating point. The best value is 0.0.
-    This scale-free error metric can be used to compare forecast methods on
-    a single series and also to compare forecast accuracy between series.
+
+    Like other scaled performance metrics, this scale-free error metric can be
+    used to compare forecast methods on a single series and also to compare
+    forecast accuracy between series.
 
     This metric is well suited to intermittent-demand series because it
     will not give infinite or undefined values unless the training data
@@ -198,17 +205,16 @@ def mean_absolute_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_train : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
+             (n_timepoints, n_outputs), default = None
         Observed training values.
 
     sp : int
@@ -219,10 +225,11 @@ def mean_absolute_scaled_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
 
     Returns
     -------
@@ -238,6 +245,18 @@ def mean_absolute_scaled_error(
     median_absolute_scaled_error
     mean_squared_scaled_error
     median_squared_scaled_error
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+    for intermittent demand", Foresight, Issue 4.
+
+    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+    "The M4 Competition: 100,000 time series and 61 forecasting methods",
+    International Journal of Forecasting, Volume 3
 
     Examples
     --------
@@ -258,17 +277,6 @@ def mean_absolute_scaled_error(
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])
     0.21935483870967742
-
-    References
-    ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    ..[2]   Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-            for intermittent demand", Foresight, Issue 4.
-    ..[3]   Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-            "The M4 Competition: 100,000 time series and 61 forecasting methods",
-            International Journal of Forecasting, Volume 3
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
 
@@ -312,9 +320,8 @@ def median_absolute_scaled_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    Like MASE, this scale-free error metric can be used to compare forecast
-    methods on a single series and also to compare forecast accuracy between
-    series.
+    Like MASE and other scaled performance metrics this scale-free metric can be
+    used to compare forecast methods on a single series or between series.
 
     Also like MASE, this metric is well suited to intermittent-demand series
     because it will not give infinite or undefined values unless the training
@@ -326,17 +333,16 @@ def median_absolute_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_train : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
+             (n_timepoints, n_outputs), default = None
         Observed training values.
 
     sp : int
@@ -347,8 +353,8 @@ def median_absolute_scaled_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -389,14 +395,15 @@ def median_absolute_scaled_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
-    ..[2]   Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-            for intermittent demand", Foresight, Issue 4.
-    ..[3]   Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-            "The M4 Competition: 100,000 time series and 61 forecasting methods",
-            International Journal of Forecasting, Volume 3
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+    for intermittent demand", Foresight, Issue 4.
+
+    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+    "The M4 Competition: 100,000 time series and 61 forecasting methods",
+    International Journal of Forecasting, Volume 3
     """
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
@@ -443,13 +450,13 @@ def mean_squared_scaled_error(
 ):
     """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
-    If `square_root` is False then calculates MSSE and RMSSE if
+    If `square_root` is False then calculates MSSE, otherwise calculates RMSSE if
     `square_root` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MASE loss metric. Like MASE this
-    scale-free metric can be used to copmare forecast methods on a single
-    series or between series.
+    This is a squared varient of the MASE loss metric.  Like MASE and other
+    scaled performance metrics this scale-free metric can be used to compare
+    forecast methods on a single series or between series.
 
     This metric is also suited for intermittent-demand series because it
     will not give infinite or undefined values unless the training data
@@ -461,17 +468,16 @@ def mean_squared_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_train : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
+             (n_timepoints, n_outputs), default = None
         Observed training values.
 
     sp : int
@@ -482,8 +488,8 @@ def mean_squared_scaled_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -529,11 +535,11 @@ def mean_squared_scaled_error(
 
     References
     ----------
-    ..[1]   M5 Competition Guidelines.
-            https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-    ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
 
@@ -582,13 +588,13 @@ def median_squared_scaled_error(
 ):
     """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
 
-    If `square_root` is False then calculates MdSSE and if `square_root` is True
-    then RMdSSE. Both MdSSE and RMdSSE output is non-negative floating point.
-    The best value is 0.0.
+If `square_root` is False then calculates MdSSE, otherwise calculates RMdSSE if
+    `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
+    point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE, MdASE, MSSE
-    and RMSSE this scale-free metric can be used to compare forecast methods on a
-    single series or between series.
+    This is a squared varient of the MdASE loss metric. Like MASE and other
+    scaled performance metrics this scale-free metric can be used to compare
+    forecast methods on a single series or between series.
 
     This metric is also suited for intermittent-demand series because it
     will not give infinite or undefined values unless the training data
@@ -600,17 +606,16 @@ def median_squared_scaled_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_train : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
+             (n_timepoints, n_outputs), default = None
         Observed training values.
 
     sp : int
@@ -621,8 +626,8 @@ def median_squared_scaled_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -663,11 +668,11 @@ def median_squared_scaled_error(
 
     References
     ----------
-    ..[1]   M5 Competition Guidelines.
-            https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-    ..[2]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
 
@@ -713,18 +718,18 @@ def mean_absolute_error(
 
     MAE output is non-negative floating point. The best value is 0.0.
 
-    MAE is on the same scale as the data. Because it takes the absolute value
-    of the forecast error rather than the square, it is less sensitive to
-    outliers than MSE or RMSE.
+    MAE is on the same scale as the data. Because MAE takes the absolute value
+    of the forecast error rather than squaring it, MAE penalizes large errors
+    to a lesser degree than MSE or RMSE.
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -732,8 +737,8 @@ def mean_absolute_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -770,9 +775,8 @@ def mean_absolute_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     return _mean_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
@@ -790,22 +794,22 @@ def mean_squared_error(
     """Mean squared error (MSE) or root mean squared error (RMSE).
 
     If `square_root` is False then calculates MSE and if `square_root` is True
-    then calculates RMSE.  Both MSE and RMSE are both non-negative floating point.
-    The best value is 0.0.
+    then RMSE is calculated.  Both MSE and RMSE are both non-negative floating
+    point. The best value is 0.0.
 
     MSE is measured in squared units of the input data, and RMSE is on the
-    same scale as the data. Because both metrics squares the
-    forecast error rather than taking the absolute value, they are more sensitive
-    to outliers than MAE or MdAE.
+    same scale as the data. Because MSE and RMSE square the forecast error
+    rather than taking the absolute value, they penalize large errors more than
+    MAE.
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -813,10 +817,10 @@ def mean_squared_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average' errors of all outputs are averaged with uniform weight.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
     square_root : bool, default=False
         Whether to take the square root of the mean squared error.
@@ -862,9 +866,8 @@ def mean_squared_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     # Scikit-learn argument `squared` returns MSE when True and RMSE when False
     # Scikit-time argument `square_root` returns RMSE when True and MSE when False
@@ -887,9 +890,9 @@ def median_absolute_error(
 
     MdAE output is non-negative floating point. The best value is 0.0.
 
-    Like MAE, MdAE is on the same scale as the data. Because it takes the
-    absolute value of the forecast error rather than the square, it is less
-    sensitive to outliers than MSE, MdSE, RMSE or RMdSE.
+    Like MAE, MdAE is on the same scale as the data. Because MAE takes the
+    absolute value of the forecast error rather than squaring it, MAE penalizes
+    large errors to a lesser degree than MdSE or RdMSE.
 
     Taking the median instead of the mean of the absolute errors also makes
     this metric more robust to error outliers since the median tends
@@ -897,12 +900,12 @@ def median_absolute_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -910,8 +913,8 @@ def median_absolute_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -948,9 +951,8 @@ def median_absolute_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     return _median_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
@@ -968,13 +970,13 @@ def median_squared_error(
     """Median squared error (MdSE) or root median squared error (RMdSE).
 
     If `square_root` is False then calculates MdSE and if `square_root` is True
-    then RMdSE. Both MdSE and RMdSE return non-negative floating point.
-    The best value is 0.0.
+    then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
+    point. The best value is 0.0.
 
-    Like MSE, MdSE is measured in squared units of the input data. RMdSe is
+    Like MSE, MdSE is measured in squared units of the input data. RMdSE is
     on the same scale as the input data like RMSE. Because MdSE and RMdSE
-    square the forecast error rather than taking the absolute value, they are
-    more sensitive to outliers than MAE or MdAE.
+    square the forecast error rather than taking the absolute value, they
+    penalize large errors more than MAE or MdAE.
 
     Taking the median instead of the mean of the squared errors makes
     this metric more robust to error outliers relative to a meean based metric
@@ -983,12 +985,12 @@ def median_squared_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -996,8 +998,8 @@ def median_squared_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1048,9 +1050,8 @@ def median_squared_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
@@ -1091,7 +1092,7 @@ def mean_absolute_percentage_error(
 
     sMAPE is measured in percentage error relative to the test data. Because it
     takes the absolute value rather than square the percentage forecast
-    error, it is less sensitive to outliers than MSPE, RMSPE, MdSPE or RMdSPE.
+    error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
     There is no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
@@ -1099,12 +1100,12 @@ def mean_absolute_percentage_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1112,8 +1113,8 @@ def mean_absolute_percentage_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1124,10 +1125,10 @@ def mean_absolute_percentage_error(
     -------
     loss : float
         MAPE or sMAPE loss.
-        If multioutput is 'raw_values', then sMAPE is returned for each
+        If multioutput is 'raw_values', then MAPE or sMAPE is returned for each
         output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average sMAPE of all output errors is returned.
+        weighted average MAPE or sMAPE of all output errors is returned.
 
     See Also
     --------
@@ -1164,9 +1165,8 @@ def mean_absolute_percentage_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -1204,7 +1204,7 @@ def median_absolute_percentage_error(
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
     Because it takes the absolute value rather than square the percentage forecast
-    error, it is less sensitive to outliers than MSPE, RMSPE, MdSPE or RMdSPE.
+    error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
     Taking the median instead of the mean of the absolute percentage errors also
     makes this metric more robust to error outliers since the median tends
@@ -1216,12 +1216,12 @@ def median_absolute_percentage_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1229,8 +1229,8 @@ def median_absolute_percentage_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1281,9 +1281,8 @@ def median_absolute_percentage_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
@@ -1316,16 +1315,17 @@ def mean_squared_percentage_error(
     symmetric=True,
     **kwargs,
 ):
-    """Mean squared percentage error (MSPE)  or square root version.
+    """Mean squared percentage error (MSPE) or square root version.
 
     If `square_root` is False then calculates MSPE and if `square_root` is True
-    then calculates root mean squared percentage error (RMSPE). Both
-    MSPE and RMSPE output is non-negative floating point. The best value is 0.0.
+    then calculates root mean squared percentage error (RMSPE). If `symmetric`
+    is True then calculates sMSPE or sRMSPE. Output is non-negative floating
+    point. The best value is 0.0.
 
     MSPE is measured in squared percentage error relative to the test data and
     RMSPE is measured in percentage error relative to the test data.
-    Because either calculation takes the square rather than absolute value of
-    the percentage forecast error, they are more sensitive to outliers than
+    Because the calculation takes the square rather than absolute value of
+    the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
     There is no limit on how large the error can be, particulalrly when `y_true`
@@ -1334,12 +1334,12 @@ def mean_squared_percentage_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1347,8 +1347,8 @@ def mean_squared_percentage_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1407,9 +1407,8 @@ def mean_squared_percentage_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.s
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -1446,13 +1445,14 @@ def median_squared_percentage_error(
     """Median squared percentage error (MdSPE)  or square root version.
 
     If `square_root` is False then calculates MdSPE and if `square_root` is True
-    then calculates root median squared percentage error (RMSPE). Both
-    MdSPE and RMdSPE output is non-negative floating point. The best value is 0.0.
+    then calculates root median squared percentage error (RMdSPE). If `symmetric`
+    is True then calculates sMdSPE or sRMdSPE. Output is non-negative floating
+    point. The best value is 0.0.
 
     MdSPE is measured in squared percentage error relative to the test data.
     RMdSPE is measured in percentage error relative to the test data.
-    Because it takes the square rather than absolute value of the percentage
-    forecast error, both calculations are more sensitive to outliers than
+    Because the calculation takes the square rather than absolute value of
+    the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
     Taking the median instead of the mean of the absolute percentage errors also
@@ -1465,12 +1465,12 @@ def median_squared_percentage_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1478,8 +1478,8 @@ def median_squared_percentage_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1539,9 +1539,8 @@ def median_squared_percentage_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.s
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
@@ -1576,19 +1575,25 @@ def mean_relative_absolute_error(
 ):
     """Mean relative absolute error (MRAE).
 
+    In relative error metrics, relative errors are first calculated by
+    scaling (dividing) the individual forecast errors by the error calculated
+    using a benchmark method at the same index position. If the error of the
+    benchmark method is zero then a large value is returned.
+
+    MRAE applies mean absolute error (MAE) to the resulting relative errors.
+
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1596,8 +1601,8 @@ def mean_relative_absolute_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1640,9 +1645,8 @@ def mean_relative_absolute_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="mean_relative_absolute_error", **kwargs
@@ -1677,21 +1681,27 @@ def mean_relative_absolute_error(
 def median_relative_absolute_error(
     y_true, y_pred, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
-    """Median relative absolute error (MdRAEs).
+    """Median relative absolute error (MdRAE).
+
+    In relative error metrics, relative errors are first calculated by
+    scaling (dividing) the individual forecast errors by the error calculated
+    using a benchmark method at the same index position. If the error of the
+    benchmark method is zero then a large value is returned.
+
+    MdRAE applies medan absolute error (MdAE) to the resulting relative errors.
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1699,8 +1709,8 @@ def median_relative_absolute_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1744,9 +1754,8 @@ def median_relative_absolute_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="median_relative_absolute_error", **kwargs
@@ -1786,19 +1795,26 @@ def geometric_mean_relative_absolute_error(
 ):
     """Geometric mean relative absolute error (GMRAE).
 
+    In relative error metrics, relative errors are first calculated by
+    scaling (dividing) the individual forecast errors by the error calculated
+    using a benchmark method at the same index position. If the error of the
+    benchmark method is zero then a large value is returned.
+
+    GMRAE applies geometric mean absolute error (GMAE) to the resulting relative
+    errors.
+
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1806,8 +1822,8 @@ def geometric_mean_relative_absolute_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1851,9 +1867,8 @@ def geometric_mean_relative_absolute_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark",
@@ -1901,19 +1916,27 @@ def geometric_mean_relative_squared_error(
     If `square_root` is False then calculates GMRSE and if `square_root` is True
     then calculates root geometric mean relative squared error (RGMRSE).
 
+    In relative error metrics, relative errors are first calculated by
+    scaling (dividing) the individual forecast errors by the error calculated
+    using a benchmark method at the same index position. If the error of the
+    benchmark method is zero then a large value is returned.
+
+    GMRSE applies geometric mean squared error (GMSE) to the resulting relative
+    errors. RGMRSE applies root geometric mean squared error (RGMSE) to the
+    resulting relative errors.
+
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1921,8 +1944,8 @@ def geometric_mean_relative_squared_error(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -1971,9 +1994,8 @@ def geometric_mean_relative_squared_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark",
@@ -2018,7 +2040,7 @@ def relative_loss(
     multioutput="uniform_average",
     **kwargs,
 ):
-    """Calculate relative loss of forecast versus benchmark forecast.
+    """Relative loss of forecast versus benchmark forecast for a given metric.
 
     Applies a forecasting performance metric to a set of forecasts and
     benchmark forecasts and reports ratio of the metric from the forecasts to
@@ -2031,28 +2053,29 @@ def relative_loss(
     This function allows the calculation of scale-free relative loss metrics.
     Unlike mean absolute scaled error (MASE) the function calculates the
     scale-free metric relative to a defined loss function on a benchmark
-    method. Like MASE, metrics created using this function can be used to compare
-    forecast methods on a single series and also to compare forecast accuracy
-    between series.
+    method instead of the in-sample training data. Like MASE, metrics created
+    using this function can be used to compare forecast methods on a single
+    series and also to compare forecast accuracy between series.
 
     This is useful when a scale-free comparison is beneficial but the training
-    used to generate some (or all) predictions is unknown such as when
+    data used to generate some (or all) predictions is unknown such as when
     comparing the loss of 3rd party forecasts or surveys of professional
-    forecastsers.
+    forecasters.
+
+    Only metrics that do not require y_train are curretnly supported.
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
-    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon,
-            default = None
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
     relative_loss_function : function
@@ -2063,8 +2086,8 @@ def relative_loss(
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
@@ -2073,12 +2096,15 @@ def relative_loss(
     relative_loss : float
         Loss for a method relative to loss for a benchmark method for a given
         loss metric.
+        If multioutput is 'raw_values', then relative loss is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average relative loss of all output errors is returned.
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="relative_loss", **kwargs
@@ -2111,12 +2137,12 @@ def _asymmetric_error(
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Forecasted values.
 
     asymmetric_threshold : float, default = 0.0
@@ -2125,10 +2151,10 @@ def _asymmetric_error(
         applied. Error values greater than or equal to asymmetric threshold
         have `right_error_function` applied.
 
-    left_error_function : str, {'squared', 'absolute'}
+    left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
 
-    right_error_function : str, {'squared', 'absolute'}
+    right_error_function : {'squared', 'absolute'}, default='absolute'
         Loss penalty to apply to error values greater than or equal to the
         asymmetric threshold.
 
@@ -2139,9 +2165,8 @@ def _asymmetric_error(
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     functions = {"squared": np.square, "absolute": np.abs}
     left_func, right_func = (
@@ -2170,8 +2195,8 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
             shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
         Forecasted values.
 
-    y_pred_benchmark : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
     Returns
@@ -2181,9 +2206,8 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     denominator = np.where(
         y_true - y_pred_benchmark >= 0,
@@ -2198,13 +2222,13 @@ def _percentage_error(y_true, y_pred, symmetric=True):
 
     Parameters
     ----------
-    y_true : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pandas Series of shape (fh,) or (fh, n_outputs)
-            where fh is the forecasting horizon
-        Estimated target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
 
     symmetric : bool, default = False
         Whether to calculate symmetric percentage error.
@@ -2215,9 +2239,8 @@ def _percentage_error(y_true, y_pred, symmetric=True):
 
     References
     ----------
-    ..[1]   Hyndman, R. J and Koehler, A. B. (2006).
-            "Another look at measures of forecast accuracy", International
-            Journal of Forecasting, Volume 22, Issue 4.
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     if symmetric:
         # Alternatively could use np.abs(y_true + y_pred) in denom
