@@ -284,7 +284,7 @@ def get_one_exemplar_per_class_proximity(proximity):
     result : function
         function choosing one exemplar per class
     """
-    return get_one_exemplar_per_class(proximity.X, proximity.y, proximity.random_state)
+    return get_one_exemplar_per_class(proximity.X, proximity.y, proximity._random_state)
 
 
 def get_one_exemplar_per_class(X, y, random_state):
@@ -604,7 +604,7 @@ def setup_all_distance_measure_getter(proximity):
         ranges and dataset
         :return: a distance measure with no parameters
         """
-        random_state = proximity.random_state
+        random_state = proximity._random_state
         X = proximity.X
         distance_measure_getter = random_state.choice(distance_measure_getters)
         distance_measure_perm = distance_measure_getter(X)
@@ -729,7 +729,7 @@ def best_of_n_stumps(n):
         for _ in range(n):
             # duplicate tree configuration
             stump = ProximityStump(
-                random_state=proximity.random_state,
+                random_state=proximity._random_state,
                 get_exemplars=proximity.get_exemplars,
                 distance_measure=proximity.distance_measure,
                 setup_distance_measure=proximity.setup_distance_measure,
@@ -743,7 +743,7 @@ def best_of_n_stumps(n):
             stump.grow()
             stumps.append(stump)
         # pick the best stump based upon gain
-        stump = _max(stumps, proximity.random_state, lambda stump: stump.entropy)
+        stump = _max(stumps, proximity._random_state, lambda stump: stump.entropy)
         return stump
 
     return find_best_stump

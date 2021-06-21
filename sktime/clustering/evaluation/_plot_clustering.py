@@ -5,23 +5,38 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import pandas as pd
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
-from sktime.clustering.base.base_types import Numpy_Or_DF
+
+from sktime.clustering.base._typing import NumpyOrDF
 from sktime.clustering.base.base import BaseCluster
-from sktime.clustering.partitioning._time_series_k_partition import TimeSeriesKPartition
+from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
 from sktime.utils.data_processing import from_nested_to_2d_array
 
 
-def __plot(cluster_values, center, axes):
+def _plot(cluster_values, center, axes):
     for cluster_series in cluster_values:
         axes.plot(cluster_series, color="b")
 
     axes.plot(center, color="r")
 
 
-def plot_cluster_algorithm(
-    model: BaseCluster, predict_series: Numpy_Or_DF, k: int, plt, mpatches=None
-):
+def plot_cluster_algorithm(model: BaseCluster, predict_series: NumpyOrDF, k: int):
+    """
+    Method that is used to plot a clustering algorithms output
+
+    Parameters
+    ----------
+    model: BaseCluster
+        Clustering model to plot
+
+    predict_series: Numpy or Dataframe
+        The series to predict the values for
+
+    k: int
+        Number of centers
+    """
     if isinstance(predict_series, pd.DataFrame):
         predict_series = from_nested_to_2d_array(predict_series, return_numpy=True)
     plt.figure(figsize=(5, 10))
@@ -32,20 +47,17 @@ def plot_cluster_algorithm(
     series_values = TimeSeriesKPartition.get_cluster_values(indexes, predict_series, k)
     fig, axes = plt.subplots(nrows=k, ncols=1)
     for i in range(k):
-        __plot(series_values[i], centers[i], axes[i])
+        _plot(series_values[i], centers[i], axes[i])
 
-    if mpatches is not None:
-        blue_patch = mpatches.Patch(
-            color="blue", label="Series that belong to the cluster"
-        )
-        red_patch = mpatches.Patch(color="red", label="Cluster centers")
-        plt.legend(
-            handles=[red_patch, blue_patch],
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.40),
-            fancybox=True,
-            shadow=True,
-            ncol=5,
-        )
+    blue_patch = mpatches.Patch(color="blue", label="Series that belong to the cluster")
+    red_patch = mpatches.Patch(color="red", label="Cluster centers")
+    plt.legend(
+        handles=[red_patch, blue_patch],
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.40),
+        fancybox=True,
+        shadow=True,
+        ncol=5,
+    )
     plt.tight_layout()
     plt.show()

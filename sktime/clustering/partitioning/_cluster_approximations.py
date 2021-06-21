@@ -7,16 +7,33 @@ __all__ = ["Medoids"]
 
 import numpy as np
 
-from sktime.clustering.base.base_types import Numpy_Array, Metric_Function
+from sktime.clustering.base._typing import NumpyArray, MetricFunction
 from sktime.clustering.base.base import BaseApproximate
-from sktime.clustering.utils._utils import compute_pairwise_distances
+from sktime.utils.clustering_utils import compute_pairwise_distances
 
 
 class Medoids(BaseApproximate):
-    def __init__(self, series: Numpy_Array, metric: Metric_Function):
+    """Medoids Approximate
+
+    Parameters
+    ----------
+    series: Numpy_Array
+        series to perform approximation on
+
+    """
+
+    def __init__(self, series: NumpyArray, metric: MetricFunction):
         super(Medoids, self).__init__(series)
         self.metric = metric
 
     def approximate(self) -> int:
+        """
+        Method called to get the approximation
+
+        Returns
+        -------
+        int
+            Index position of the approximation in the series
+        """
         distance_matrix = compute_pairwise_distances(X=self.series, metric=self.metric)
         return np.argmin(sum(distance_matrix))
