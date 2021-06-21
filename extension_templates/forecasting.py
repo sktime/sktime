@@ -67,7 +67,7 @@ class MyForecaster(BaseForecaster):
         "handles_missing_data": False,  # can estimator handle missing data?
         "univariate_only": True,  # can estimator deal with multivariate series y?
         "X-y_must_have_same_index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None  # index type that needs to be enforced in X/y
+        "enforce_index_type": None   # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
