@@ -19,12 +19,20 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series import ThetaLinesTransformer
+    >>> from sktime.transformations.series.theta import ThetaLinesTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ThetaLines([0, 0.25, 0.5, 0.75])
     >>> y_thetas = transformer.transform(y)
+
+    References
+    ----------
+    [1] E.Spiliotis et al., "Generalizing the Theta method for
+    automatic forecasting ", European Journal of Operational
+    Research, vol. 284, pp. 550-558, 2020.
     """
+
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
     def __init__(self, theta=(0, 2)):
         self.theta = theta
@@ -45,12 +53,6 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         theta_lines: pd.DataFrame
             Transformed series (Theta-lines[1]).
             shape: len(Z)*len(self.theta).
-
-        References
-        ----------
-        [1] E.Spiliotis et al., "Generalizing the Theta method for
-        automatic forecasting ", European Journal of Operational
-        Research, vol. 284, pp. 550-558, 2020.
         """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
@@ -74,12 +76,15 @@ def _theta_transform(Z, trend, theta):
 
 
 def _check_theta(theta):
-    if not isinstance(theta, (tuple, list)):
+    valid_theta_types = (list, tuple, int, float)
+
+    if not isinstance(theta, valid_theta_types):
+        raise ValueError(f"invalid input, please use one of {valid_theta_types}")
+
+    if isinstance(theta, (float, int)):
         theta = [theta]
-    for element in theta:
-        if not isinstance(element, (float, int)):
-            raise ValueError("`theta` elements must be of type int or float")
-        if element < 0:
-            raise ValueError("`theta` value must be non-negative")
+
+    if not all(element > 0 for element in theta):
+        raise ValueError("`theta` value must be non-negative")
 
     return theta
