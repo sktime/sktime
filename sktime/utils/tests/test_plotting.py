@@ -1,4 +1,6 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -59,7 +61,7 @@ def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
-    match = "Found series with different index types."
+    match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
 
@@ -165,3 +167,17 @@ def test_plot_correlations_output_type(series_to_plot):
             f"but returned: {type(fig)} and {type(ax)}",
         ]
     )
+
+
+def test_plot_series_uniform_treatment_of_int64_range_index_types():
+    # We test that int64 and range indices are treated uniformly and do not raise an
+    # error of inconsistent index types
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    y1 = pd.Series(np.arange(10))
+    y2 = pd.Series(np.random.normal(size=10))
+    y1.index = pd.Int64Index(y1.index)
+    y2.index = pd.RangeIndex(y2.index)
+    plot_series(y1, y2)
+    plt.gcf().canvas.draw_idle()
