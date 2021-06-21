@@ -150,7 +150,6 @@ class HCrystalBallForecaster(BaseForecaster):
         """
         if return_pred_int:
             raise NotImplementedError()
-        _check_fh(fh, self.cutoff)
 
         X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
         y_pred = self.model_.predict(X=X_pred)
