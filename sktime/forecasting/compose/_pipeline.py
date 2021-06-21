@@ -17,6 +17,7 @@ from sktime.utils import _has_tag
 
 
 class TransformedTargetForecaster(
+    BaseForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
