@@ -10,11 +10,11 @@ from sktime.clustering.base._typing import NumpyOrDF
 from sktime.clustering.base.base import BaseCluster
 from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
 from sktime.utils.data_processing import from_nested_to_2d_array
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib")
-import matplotlib.pyplot as plt  # noqa: E402
-import matplotlib.patches as mpatches  # noqa: E402
+# from sktime.utils.validation._dependencies import _check_soft_dependencies
+# _check_soft_dependencies("matplotlib")
+# import matplotlib.pyplot as plt  # noqa: E402
+# import matplotlib.patches as mpatches  # noqa: E402
 
 
 def _plot(cluster_values, center, axes):
@@ -24,7 +24,9 @@ def _plot(cluster_values, center, axes):
     axes.plot(center, color="r")
 
 
-def plot_cluster_algorithm(model: BaseCluster, predict_series: NumpyOrDF, k: int):
+def plot_cluster_algorithm(
+    model: BaseCluster, predict_series: NumpyOrDF, k: int, plt, mpatches
+):
     """
     Method that is used to plot a clustering algorithms output
 
