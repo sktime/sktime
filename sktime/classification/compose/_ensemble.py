@@ -431,7 +431,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         for estimator in self.estimators_:
             final_estimator = estimator.steps[-1][1]
             unsampled_indices = _generate_unsampled_indices(
-                final_estimator._random_state, n_samples, n_samples_bootstrap
+                final_estimator.random_state, n_samples, n_samples_bootstrap
             )
             p_estimator = estimator.predict_proba(X.iloc[unsampled_indices, :])
 

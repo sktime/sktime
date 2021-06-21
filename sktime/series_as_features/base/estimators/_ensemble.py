@@ -59,7 +59,7 @@ def _parallel_build_trees(
             curr_sample_weight = sample_weight.copy()
 
         indices = _generate_sample_indices(
-            final_estimator._random_state, n_samples, n_samples_bootstrap
+            final_estimator.random_state, n_samples, n_samples_bootstrap
         )
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts

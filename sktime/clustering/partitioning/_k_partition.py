@@ -129,7 +129,7 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         if isinstance(self.random_state, int):
             self._random_state = np.random.RandomState(self.random_state)
         center_algo: BaseClusterCenterInitializer = self._init_algorithm(
-            X, self.n_clusters, random_state=self._random_state
+            X, self.n_clusters, random_state=self.random_state
         )
         self._centers = center_algo.initialize_centers()
 
