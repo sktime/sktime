@@ -131,8 +131,8 @@ def check_estimator_tags(Estimator):
     assert isinstance(all_tags, dict)
     assert all(
         [
-            isinstance(key, str) and isinstance(value, bool)
-            for key, value in all_tags.items()
+            isinstance(key, str)
+            for key, _ in all_tags.items()
         ]
     )
 
