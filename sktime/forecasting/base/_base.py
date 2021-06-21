@@ -106,6 +106,7 @@ class BaseForecaster(BaseEstimator):
         self._y = y
 
         self._set_cutoff(y.index[-1])
+
         self._fit(y=y, X=X, fh=fh)
 
         # this should happen last
