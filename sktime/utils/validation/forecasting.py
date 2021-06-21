@@ -378,6 +378,6 @@ def check_pred_int(pred_int):
                     "Both DataFrame column labels must be 'lower' and 'upper'"
                 )
         else:
-            raise Exception(f"{pred_int} must have exactly two columns")
+            raise ValueError(f"{pred_int} must have exactly two columns")
     else:
         raise TypeError(f"{pred_int} must be a DataFrame")
