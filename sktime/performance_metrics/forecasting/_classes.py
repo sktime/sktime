@@ -134,7 +134,7 @@ class _PercentageErrorMixin:
         Returns
         -------
         loss : float
-            Calculated loss metric
+            Calculated loss metric.
         """
         return self._func(
             y_true,
@@ -174,7 +174,7 @@ class _SquaredErrorMixin:
         Returns
         -------
         loss : float
-            Calculated loss metric
+            Calculated loss metric.
         """
         return self._func(
             y_true,
@@ -217,8 +217,6 @@ class _SquaredPercentageErrorMixin:
         -------
         loss : float
             Calculated loss metric.
-            If square_root = True, tells .
-            I
         """
         return self._func(
             y_true,
@@ -251,7 +249,7 @@ class _AsymmetricErrorMixin:
         Returns
         -------
         loss : float
-            Calculated loss metric
+            Calculated loss metric.
         """
         return self._func(
             y_true,
@@ -285,13 +283,13 @@ class _RelativeLossMixin:
         Returns
         -------
         loss : float
-            Calculated loss metric
+            Calculated loss metric.
         """
         return self._func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
-            loss_function=self.relative_loss_function,
+            relative_loss_function=self.relative_loss_function,
             **kwargs,
         )
 
@@ -482,6 +480,28 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     MeanSquaredScaledError
     MedianSquaredScaledError
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
+    >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mase = MeanAbsoluteScaledError()
+    >>> mase(y_true, y_pred, y_train=y_train)
+    0.18333333333333335
+    >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mase(y_true, y_pred, y_train=y_train)
+    0.18181818181818182
+    >>> mase = MeanAbsoluteScaledError(multioutput='raw_values')
+    >>> mase(y_true, y_pred, y_train=y_train)
+    array([0.10526316, 0.28571429])
+    >>> mase = MeanAbsoluteScaledError(multioutput=[0.3, 0.7])
+    >>> mase(y_true, y_pred, y_train=y_train)
+    0.21935483870967742
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -554,6 +574,28 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     MeanAbsoluteScaledError
     MeanSquaredScaledError
     MedianSquaredScaledError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MedianAbsoluteScaledError
+    >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mdase = MedianAbsoluteScaledError()
+    >>> mdase(y_true, y_pred, y_train=y_train)
+    0.16666666666666666
+    >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mdase(y_true, y_pred, y_train=y_train)
+    0.18181818181818182
+    >>> mdase = MedianAbsoluteScaledError(multioutput='raw_values')
+    >>> mdase(y_true, y_pred, y_train=y_train)
+    array([0.10526316, 0.28571429])
+    >>> mdase = MedianAbsoluteScaledError(multioutput=[0.3, 0.7])
+    >>> mdase( y_true, y_pred, y_train=y_train)
+    0.21935483870967742
 
     References
     ----------
@@ -632,6 +674,28 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     MeanAbsoluteScaledError
     MedianAbsoluteScaledError
     MedianSquaredScaledError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanSquaredScaledError
+    >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> rmsse = MeanSquaredScaledError(square_root=True)
+    >>> rmsse(y_true, y_pred, y_train=y_train)
+    0.20568833780186058
+    >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> rmsse(y_true, y_pred, y_train=y_train)
+    0.15679361328058636
+    >>> rmsse = MeanSquaredScaledError(multioutput='raw_values', square_root=True)
+    >>> rmsse(y_true, y_pred, y_train=y_train)
+    array([0.11215443, 0.20203051])
+    >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
+    >>> rmsse(y_true, y_pred, y_train=y_train)
+    0.17451891814894502
 
     References
     ----------
@@ -713,6 +777,28 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     MedianAbsoluteScaledError
     MedianSquaredScaledError
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MedianSquaredScaledError
+    >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> rmdsse = MedianSquaredScaledError(square_root=True)
+    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    0.16666666666666666
+    >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    0.1472819539849714
+    >>> rmdsse = MedianSquaredScaledError(multioutput='raw_values', square_root=True)
+    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    array([0.08687445, 0.20203051])
+    >>> rmdsse = MedianSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
+    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    0.16914781383660782
+
     References
     ----------
     M5 Competition Guidelines.
@@ -771,6 +857,26 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     MeanSquaredError
     MedianSquaredError
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mae = MeanAbsoluteError()
+    >>> mae(y_true, y_pred)
+    0.55
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mae(y_true, y_pred)
+    0.75
+    >>> mae = MeanAbsoluteError(multioutput='raw_values')
+    >>> mae(y_true, y_pred)
+    array([0.5, 1. ])
+    >>> mae = MeanAbsoluteError(multioutput=[0.3, 0.7])
+    >>> mae(y_true, y_pred)
+    0.85
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -823,6 +929,26 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     MeanAbsoluteError
     MeanSquaredError
     MedianSquaredError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MedianAbsoluteError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mdae = MedianAbsoluteError()
+    >>> mdae(y_true, y_pred)
+    0.5
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mdae(y_true, y_pred)
+    0.75
+    >>> mdae = MedianAbsoluteError(multioutput='raw_values')
+    >>> mdae(y_true, y_pred)
+    array([0.5, 1. ])
+    >>> mdae = MedianAbsoluteError(multioutput=[0.3, 0.7])
+    >>> mdae(y_true, y_pred)
+    0.85
 
     References
     ----------
@@ -881,6 +1007,35 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     MeanAbsoluteError
     MedianAbsoluteError
     MedianSquaredError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanSquaredError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mse = MeanSquaredError()
+    >>> mse(y_true, y_pred)
+    0.4125
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mse(y_true, y_pred)
+    0.7083333333333334
+    >>> rmse = MeanSquaredError(square_root=True)
+    >>> rmse(y_true, y_pred)
+    0.8227486121839513
+    >>> rmse = MeanSquaredError(multioutput='raw_values')
+    >>> rmse(y_true, y_pred)
+    array([0.41666667, 1.        ])
+    >>> rmse = MeanSquaredError(multioutput='raw_values', square_root=True)
+    >>> rmse(y_true, y_pred)
+    array([0.64549722, 1.        ])
+    >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7])
+    >>> rmse(y_true, y_pred)
+    0.825
+    >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
+    >>> rmse(y_true, y_pred)
+    0.8936491673103708
 
     References
     ----------
@@ -950,6 +1105,37 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     MedianAbsoluteError
     MeanSquaredError
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MedianSquaredError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mdse = MedianSquaredError()
+    >>> mdse(y_true, y_pred)
+    0.25
+    >>> rmdse = MedianSquaredError(square_root=True)
+    >>> rmdse(y_true, y_pred)
+    0.5
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mdse(y_true, y_pred)
+    0.625
+    >>> rmdse(y_true, y_pred)
+    0.75
+    >>> mdse = MedianSquaredError(multioutput='raw_values')
+    >>> mdse(y_true, y_pred)
+    array([0.25, 1.  ])
+    >>> rmdse = MedianSquaredError(multioutput='raw_values', square_root=True)
+    >>> rmdse(y_true, y_pred)
+    array([0.5, 1. ])
+    >>> mdse = MedianSquaredError(multioutput=[0.3, 0.7])
+    >>> mdse(y_true, y_pred)
+    0.7749999999999999
+    >>> rmdse = MedianSquaredError(multioutput=[0.3, 0.7], square_root=True)
+    >>> rmdse(y_true, y_pred)
+    0.85
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -1015,6 +1201,38 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    MeanAbsolutePercentageError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mape = MeanAbsolutePercentageError(symmetric=False)
+    >>> mape(y_true, y_pred)
+    0.33690476190476193
+    >>> smape = MeanAbsolutePercentageError()
+    >>> smape(y_true, y_pred)
+    0.5553379953379953
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mape(y_true, y_pred)
+    0.5515873015873016
+    >>> smape(y_true, y_pred)
+    0.6080808080808081
+    >>> mape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=False)
+    >>> mape(y_true, y_pred)
+    array([0.38095238, 0.72222222])
+    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values')
+    >>> smape(y_true, y_pred)
+    array([0.71111111, 0.50505051])
+    >>> mape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
+    >>> mape(y_true, y_pred)
+    0.6198412698412699
+    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smape(y_true, y_pred)
+    0.5668686868686869
 
     References
     ----------
@@ -1085,6 +1303,38 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     MeanAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    MedianAbsolutePercentageError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mdape = MedianAbsolutePercentageError(symmetric=False)
+    >>> mdape(y_true, y_pred)
+    0.16666666666666666
+    >>> smdape = MedianAbsolutePercentageError()
+    >>> smdape(y_true, y_pred)
+    0.18181818181818182
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mdape(y_true, y_pred)
+    0.5714285714285714
+    >>> smdape(y_true, y_pred)
+    0.39999999999999997
+    >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
+    >>> mdape(y_true, y_pred)
+    array([0.14285714, 1.        ])
+    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values')
+    >>> smdape(y_true, y_pred)
+    array([0.13333333, 0.66666667])
+    >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
+    >>> mdape(y_true, y_pred)
+    0.7428571428571428
+    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smdape(y_true, y_pred)
+    0.5066666666666666
 
     References
     ----------
@@ -1160,6 +1410,40 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     MeanAbsolutePercentageError
     MedianAbsolutePercentageError
     MedianSquaredPercentageError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    MeanSquaredPercentageError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mspe = MeanSquaredPercentageError(symmetric=False)
+    >>> mspe(y_true, y_pred)
+    0.23776218820861678
+    >>> smspe = MeanSquaredPercentageError(square_root=True, symmetric=False)
+    >>> smspe(y_true, y_pred)
+    0.48760864246710883
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mspe(y_true, y_pred)
+    0.5080309901738473
+    >>> smspe(y_true, y_pred)
+    0.7026794936195895
+    >>> mspe = MeanSquaredPercentageError(multioutput='raw_values', symmetric=False)
+    >>> mspe(y_true, y_pred)
+    array([0.34013605, 0.67592593])
+    >>> smspe = MeanSquaredPercentageError(multioutput='raw_values', \
+    symmetric=False, square_root=True)
+    >>> smspe(y_true, y_pred)
+    array([0.58321184, 0.82214714])
+    >>> mspe = MeanSquaredPercentageError(multioutput=[0.3, 0.7], symmetric=False)
+    >>> mspe(y_true, y_pred)
+    0.5751889644746787
+    >>> smspe = MeanSquaredPercentageError(multioutput=[0.3, 0.7], \
+    symmetric=False, square_root=True)
+    >>> smspe(y_true, y_pred)
+    0.7504665536595034
 
     References
     ----------
@@ -1243,6 +1527,40 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    MedianSquaredPercentageError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mdspe = MedianSquaredPercentageError(symmetric=False)
+    >>> mdspe(y_true, y_pred)
+    0.027777777777777776
+    >>> smdspe = MedianSquaredPercentageError(square_root=True, symmetric=False)
+    >>> smdspe(y_true, y_pred)
+    0.16666666666666666
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mdspe(y_true, y_pred)
+    0.5102040816326531
+    >>> smdspe(y_true, y_pred)
+    0.5714285714285714
+    >>> mdspe = MedianSquaredPercentageError(multioutput='raw_values', symmetric=False)
+    >>> mdspe(y_true, y_pred)
+    array([0.02040816, 1.        ])
+    >>> smdspe = MedianSquaredPercentageError(multioutput='raw_values', \
+    symmetric=False, square_root=True)
+    >>> smdspe(y_true, y_pred)
+    array([0.14285714, 1.        ])
+    >>> mdspe = MedianSquaredPercentageError(multioutput=[0.3, 0.7], symmetric=False)
+    >>> mdspe(y_true, y_pred)
+    0.7061224489795918
+    >>> smdspe = MedianSquaredPercentageError(multioutput=[0.3, 0.7], \
+    symmetric=False, square_root=True)
+    >>> smdspe(y_true, y_pred)
+    0.7428571428571428
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -1301,6 +1619,28 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanRelativeAbsoluteError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> mrae = MeanRelativeAbsoluteError()
+    >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.9511111111111111
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.8703703703703702
+    >>> mrae = MeanRelativeAbsoluteError(multioutput='raw_values')
+    >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    array([0.51851852, 1.22222222])
+    >>> mrae = MeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
+    >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    1.0111111111111108
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -1356,6 +1696,28 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     MeanRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MedianRelativeAbsoluteError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> mdrae = MedianRelativeAbsoluteError()
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    1.0
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.6944444444444443
+    >>> mdrae = MedianRelativeAbsoluteError(multioutput='raw_values')
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    array([0.55555556, 0.83333333])
+    >>> mdrae = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.7499999999999999
 
     References
     ----------
@@ -1413,6 +1775,29 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    GeometricMeanRelativeAbsoluteError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> gmrae = GeometricMeanRelativeAbsoluteError()
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.0007839273064064755
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.5578632807409556
+    >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput='raw_values')
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    array([4.97801163e-06, 1.11572158e+00])
+    >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.7810066018326863
 
     References
     ----------
@@ -1480,6 +1865,29 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    GeometricMeanRelativeSquaredError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> gmrse = GeometricMeanRelativeSquaredError()
+    >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.0008303544925949156
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.622419372049448
+    >>> gmrse = GeometricMeanRelativeSquaredError(multioutput='raw_values')
+    >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    array([4.09227746e-06, 1.24483465e+00])
+    >>> gmrse = GeometricMeanRelativeSquaredError(multioutput=[0.3, 0.7])
+    >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.8713854839582426
 
     References
     ----------
@@ -1568,6 +1976,35 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanAsymmetricError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> masymmetric = MeanAsymmetricError()
+    >>> masymmetric(y_true, y_pred)
+    0.5
+    >>> masymmetric = MeanAsymmetricError(left_error_function='absolute', \
+    right_error_function='squared')
+    >>> masymmetric(y_true, y_pred)
+    0.4625
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> masymmetric = MeanAsymmetricError()
+    >>> masymmetric(y_true, y_pred)
+    0.75
+    >>> masymmetric = MeanAsymmetricError(left_error_function='absolute', \
+    right_error_function='squared')
+    >>> masymmetric(y_true, y_pred)
+    0.7083333333333334
+    >>> masymmetric = MeanAsymmetricError(multioutput='raw_values')
+    >>> masymmetric(y_true, y_pred)
+    array([0.5, 1. ])
+    >>> masymmetric = MeanAsymmetricError(multioutput=[0.3, 0.7])
+    >>> masymmetric(y_true, y_pred)
+    0.85
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -1649,11 +2086,32 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
-    Returns
-    -------
-    relative_loss : float
-        Loss for a method relative to loss for a benchmark method for a given
-        loss metric.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import RelativeLoss
+    >>> from sktime.performance_metrics.forecasting import mean_squared_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> relative_mae = RelativeLoss()
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.8148148148148147
+    >>> relative_mse = RelativeLoss(relative_loss_function=mean_squared_error)
+    >>> relative_mse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.5178095088655261
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> relative_mae = RelativeLoss()
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.8490566037735847
+    >>> relative_mae = RelativeLoss(multioutput='raw_values')
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    array([0.625     , 1.03448276])
+    >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.927272727272727
 
     References
     ----------
