@@ -12,7 +12,7 @@ from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
 from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib", "scikit_posthocs")
+_check_soft_dependencies("matplotlib")
 import matplotlib.pyplot as plt  # noqa: E402
 import matplotlib.patches as mpatches  # noqa: E402
 
