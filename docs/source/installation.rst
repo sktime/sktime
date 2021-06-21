@@ -224,9 +224,17 @@ And build sktime from this environment:
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
-Some users have experienced issues when installing NumPy, particuarly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
+.. warning::
 
-If you run into a problem installing the development version and are using Anaconda, try:
+    Some users have experienced issues when installing NumPy, particuarly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
+
+.. note::
+
+    If you want to use linux terminal on a window machine, you can download wsl-2 to experience the same features as linux Ubuntu OS,
+    Make sure you have Ubuntu 20.04 installed on your windows and follow the instructions to install wsl-2 from `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_ and run commands as mentioned above on LINUX section. Maybe you need to install fbprophet dependency at some point using
+    ``pip3 install fbprophet``.
+
+If you run into a problem installing the development version and are using Anaconda, plz, try out these steps as follows:
 
 1. Install Anaconda
 2. Create new environment: :code:`conda create -n sktime-dev python=3.8`
