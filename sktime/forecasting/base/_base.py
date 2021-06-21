@@ -170,11 +170,19 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
+        # todo: clean this up, predictive intervals should be returned by other method
+        if return_pred_int:
+            pred_int = y_pred[1]
+            y_pred = y_pred[0]
+
         y_out = convert_to(
             y_pred, self.y_in_type, as_scitype="Series", store=self.converter_store
         )
 
-        return y_out
+        if return_pred_int:
+            return (y_out, pred_int)
+        else:
+            return y_out
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
