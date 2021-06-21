@@ -74,6 +74,9 @@ class BaseForecaster(BaseEstimator):
 
         self.converter_store = dict()  # storage dictionary for input/output conversions
 
+        # "safe" initialization in case fit is overridden
+        self.y_in_type = pd.Series
+
         super(BaseForecaster, self).__init__()
 
     def fit(self, y, X=None, fh=None):
