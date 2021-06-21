@@ -159,6 +159,29 @@ def mean_asymmetric_error(
 
     Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
     Thomson, South-Western: Ohio, US.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import mean_asymmetric_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mean_asymmetric_error(y_true, y_pred)
+    0.5
+    >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
+    right_error_function='squared')
+    0.4625
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mean_asymmetric_error(y_true, y_pred)
+    0.75
+    >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
+    right_error_function='squared')
+    0.7083333333333334
+    >>> mean_asymmetric_error(y_true, y_pred, multioutput='raw_values')
+    array([0.5, 1. ])
+    >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.85
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
