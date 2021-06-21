@@ -74,7 +74,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
 
         if X is not None:
             raise NotImplementedError(
@@ -100,7 +99,6 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         # fit regressor
         self.regressor_.fit(X, y)
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
