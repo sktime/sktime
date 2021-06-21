@@ -58,6 +58,7 @@ class BaseForecaster(BaseEstimator):
     forecasters.
     """
 
+    # default tag values - these typically make the "safest" assumption
     _tags = {
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "handles_missing_data": False,  # can estimator handle missing data?
