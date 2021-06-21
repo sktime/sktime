@@ -80,7 +80,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
 
     _tags = {
         "univariate-only": True,
-        "requires-fh-in-fit": False,
+        "requires-fh-in-fit": True,
         "handles-missing-data": False,
     }
 
