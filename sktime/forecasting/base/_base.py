@@ -61,10 +61,10 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "handles_missing_data": False,  # can estimator handle missing data?
-        "univariate_only": True,  # can estimator deal with multivariate series y?
-        "X-y_must_have_same_index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
 
     def __init__(self):

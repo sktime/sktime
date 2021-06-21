@@ -64,10 +64,10 @@ class MyForecaster(BaseForecaster):
     #  delete the tags that you *didn't* change - these defaults are inherited
     _tags = {
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "handles_missing_data": False,  # can estimator handle missing data?
-        "univariate_only": True,  # can estimator deal with multivariate series y?
-        "X-y_must_have_same_index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
