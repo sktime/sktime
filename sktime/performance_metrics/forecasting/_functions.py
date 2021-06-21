@@ -2101,8 +2101,10 @@ def relative_loss(
              (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
-    relative_loss_function : function
-        Function to use in calculation relative loss
+    relative_loss_function : function, default=mean_absolute_error
+        Function to use in calculation relative loss. The function must comply
+        with API interface of sktime forecasting performance metrics. Metrics
+        requiring y_train or y_pred_benchmark are not supported.
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2128,6 +2130,31 @@ def relative_loss(
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import relative_loss
+    >>> from sktime.performance_metrics.forecasting import mean_squared_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.8148148148148147
+    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
+    relative_loss_function=mean_squared_error)
+    0.5178095088655261
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> y_pred_benchmark = y_pred*1.1
+    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    0.8490566037735847
+    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
+    multioutput='raw_values')
+    array([0.625     , 1.03448276])
+    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
+    multioutput=[0.3, 0.7])
+    0.927272727272727
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="relative_loss", **kwargs
