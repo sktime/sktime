@@ -134,7 +134,7 @@ def convert_to(what, to_type: type, as_scitype: str, store=None):
 
     if key not in ckys:
         raise TypeError(
-            "no conversion defined from type " + from_type + " to " + to_type
+            "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )
 
     return convert[key](what, store=store)
