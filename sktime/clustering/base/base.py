@@ -8,25 +8,31 @@ __all__ = [
     "BaseClusterCenterInitializer",
     "BaseClusterAverage",
     "BaseApproximate",
-    "Init_Algo",
-    "Averaging_Algo",
-    "Averaging_Algo_Dict",
-    "Init_Algo_Dict",
+    "DataFrame",
+    "NumpyArray",
+    "NumpyOrDF",
+    "NumpyRandomState",
 ]
 
 import pandas as pd
+import numpy as np
 from sktime.base import BaseEstimator
 from sktime.utils.data_processing import from_nested_to_2d_array
-from sktime.clustering.base.base_types import Numpy_Array, Numpy_Or_DF
-from typing import Union, Mapping
+from typing import Union
+
+DataFrame = pd.DataFrame
+NumpyArray = np.ndarray
+NumpyOrDF = Union[DataFrame, NumpyArray]
+NumpyRandomState = Union[np.random.RandomState, int]
 
 
 class BaseCluster(BaseEstimator):
+    """Base Clusterer"""
+
     def __init__(self):
-        self._is_fitted = False
         super(BaseCluster, self).__init__()
 
-    def fit(self, X: Numpy_Or_DF) -> None:
+    def fit(self, X: NumpyOrDF) -> None:
         """
         Method that is used to fit the clustering algorithm
         on the dataset X
@@ -52,7 +58,7 @@ class BaseCluster(BaseEstimator):
         self._is_fitted = True
         return self
 
-    def predict(self, X: Numpy_Or_DF) -> Numpy_Array:
+    def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
         Method used to perform a prediction from the already
         trained clustering algorithm
@@ -75,13 +81,23 @@ class BaseCluster(BaseEstimator):
 
         return self._predict(X)
 
-    def _fit(self, X: Numpy_Array) -> None:
+    def _fit(self, X: NumpyArray) -> None:
+        """
+        Method that contains the core logic to fit a cluster
+        to training data
+
+        Parameters
+        ----------
+        """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, X: Numpy_Array) -> Numpy_Array:
+    def _predict(self, X: NumpyArray) -> NumpyArray:
+        """
+        Method that is used
+        """
         raise NotImplementedError("abstract method")
 
-    def _check_params(self, X: Numpy_Array):
+    def _check_params(self, X: NumpyArray):
         """
         Method used to check the parameters passed
 
@@ -94,7 +110,9 @@ class BaseCluster(BaseEstimator):
 
 
 class ClusterMixin:
-    def fit_predict(self, X: Numpy_Or_DF) -> Numpy_Array:
+    """ClustererMixin"""
+
+    def fit_predict(self, X: NumpyOrDF) -> NumpyArray:
         """
         Method that calls fit and then returns a prediction
         for the value of X
@@ -110,22 +128,31 @@ class ClusterMixin:
 
 
 class BaseClusterCenterInitializer:
-    def __init__(self, data_set: Numpy_Array, n_centers: int):
-        """
-        Constructor for BaseClusterCenterInitializer
+    """Base Cluster Center Initializer
 
-        Parameters
-        ----------
-        data_set: Numpy_Array
-            Numpy_Array that is the dataset to calculate the centers from
+    Parameters
+    ----------
+    data_set: Numpy_Array
+        Numpy_Array that is the dataset to calculate the centers from
 
-        n_centers: int
-            Number of centers to be created
-        """
-        self.data_set = data_set
-        self.n_centers = n_centers
+    n_centers: int
+        Number of centers to be created
 
-    def initialize_centers(self) -> Numpy_Array:
+    random_state: NumpyRandomState, default = None
+        Generator used to initialise the centers.
+    """
+
+    def __init__(
+        self,
+        data_set: NumpyArray,
+        n_centers: int,
+        random_state: NumpyRandomState = None,
+    ):
+        self.data_set: data_set = data_set
+        self.n_centers: int = n_centers
+        self.random_state: NumpyRandomState = random_state
+
+    def initialize_centers(self) -> NumpyArray:
         """
         Method used to initialise centers
 
@@ -139,19 +166,19 @@ class BaseClusterCenterInitializer:
 
 
 class BaseClusterAverage:
-    def __init__(self, series: Numpy_Array, n_iterations: int = 10):
-        """
-        Constructor for BaseClusterAverage
+    """Base Cluster Average
 
-        Parameters
-        ----------
-        series: Numpy_Array
-            Set of series to generate a average from
-        """
+    Parameters
+    ----------
+    series: Numpy_Array
+        Set of series to generate a average from
+    """
+
+    def __init__(self, series: NumpyArray, n_iterations: int = 10):
         self.n_iterations = n_iterations
         self.series = series
 
-    def average(self) -> Numpy_Array:
+    def average(self) -> NumpyArray:
         """
         Method called to find the average for a distance metric
 
@@ -167,16 +194,16 @@ class BaseClusterAverage:
 
 
 class BaseApproximate:
-    def __init__(self, series: Numpy_Array):
-        """
-        Constructor for BaseAprroximate
+    """Base Approximate
 
-        Parameters
-        ----------
-        series: Numpy_Array
-            series to perform approximation on
+    Parameters
+    ----------
+    series: Numpy_Array
+        series to perform approximation on
 
-        """
+    """
+
+    def __init__(self, series: NumpyArray):
         self.series = series
 
     def approximate(self) -> int:
@@ -189,10 +216,3 @@ class BaseApproximate:
             Index position of the approximation in the series
         """
         raise NotImplementedError("abstract method")
-
-
-Init_Algo = Union[str, BaseClusterCenterInitializer]
-Init_Algo_Dict = Mapping[str, BaseClusterCenterInitializer]
-
-Averaging_Algo = Union[str, BaseClusterAverage]
-Averaging_Algo_Dict = Mapping[str, Averaging_Algo]

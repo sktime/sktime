@@ -350,11 +350,6 @@ def check_fit_idempotent(Estimator):
     # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
 
-    # Due to how clustering algorithms work, cant guarantee same
-    # output every time so skip test
-    if isinstance(estimator, BaseCluster):
-        return
-
     set_random_state(estimator)
 
     # Fit for the first time

@@ -4,63 +4,66 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMedoids"]
 
-from sktime.clustering.base.base_types import Metric_Parameter, Numpy_Array, Numpy_Or_DF
-from sktime.clustering.base.base import (
-    Init_Algo,
+from sktime.clustering.base._typing import (
+    MetricParameter,
+    NumpyArray,
+    NumpyOrDF,
+    InitAlgo,
+    NumpyRandomState,
 )
-from sktime.clustering.partitioning._time_series_k_partition import TimeSeriesKPartition
+from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
 from sktime.clustering.partitioning._cluster_approximations import Medoids
 
 
 class TimeSeriesKMedoids(TimeSeriesKPartition):
-    """Time Series K-Medoids Clusterer.
+    """Time Series K-Medoids Clusterer
 
-    This is a work in progress
+    Parameters
+    ----------
+    n_clusters: int, default = 8
+        The number of clusters to form as the number of
+        centroids to generate.
+
+    init_algorithm: Init_Algo or str, default = forgy
+        Algorithm that is used to initialise the cluster
+        centers. str options are "forgy", "random" or
+        "k-means++". If using custom center init algorithm
+        then must be of type Init_Algo
+
+    max_iter: int, default = 300
+        Maximum number of iterations of time series k means
+        for a single run.
+
+    verbose: bool, default = False
+        Verbosity mode.
+
+    metric: Metric_Parameter, default = None
+        The distance metric that is used to calculate the
+        distance between points.
+
+    random_state: NumpyRandomState, default = np.random.RandomState(1)
+        Generator used to initialise the centers.
     """
 
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Init_Algo = "forgy",
+        init_algorithm: InitAlgo = "forgy",
         max_iter: int = 300,
         verbose: bool = False,
-        metric: Metric_Parameter = "dtw",
+        metric: MetricParameter = "dtw",
+        random_state: NumpyRandomState = 1,
     ):
-        """
-        Constructor for TimeSeiresKMedoids clusterer
-
-        Parameters
-        ----------
-            n_clusters: int, default = 8
-                The number of clusters to form as the number of
-                centroids to generate.
-
-            init_algorithm: Init_Algo or str, default = forgy
-                Algorithm that is used to initialise the cluster
-                centers. str options are "forgy", "random" or
-                "k-means++". If using custom center init algorithm
-                then must be of type Init_Algo
-
-            max_iter: int, default = 300
-                Maximum number of iterations of time series k means
-                for a single run.
-
-            verbose: bool, default = False
-                Verbosity mode.
-
-            metric: Metric_Parameter, default = None
-                The distance metric that is used to calculate the
-                distance between points.
-        """
         super(TimeSeriesKMedoids, self).__init__(
             n_clusters=n_clusters,
             init_algorithm=init_algorithm,
             max_iter=max_iter,
             verbose=verbose,
             metric=metric,
+            random_state=random_state,
         )
 
-    def fit(self, X: Numpy_Or_DF) -> None:
+    def fit(self, X: NumpyOrDF) -> None:
         """
         Method that is used to fit the clustering algorithm
         on the dataset X
@@ -78,7 +81,7 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
 
         return super(TimeSeriesKMedoids, self).fit(X)
 
-    def predict(self, X: Numpy_Or_DF) -> Numpy_Array:
+    def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
         Method used to perform a prediction from the already
         trained clustering algorithm
@@ -97,7 +100,7 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
 
         return super(TimeSeriesKMedoids, self).predict(X)
 
-    def calculate_new_centers(self, cluster_values: Numpy_Array) -> Numpy_Array:
+    def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
         """
         Method used to define how the centers are calculated
 
