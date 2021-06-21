@@ -5,14 +5,16 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import pandas as pd
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
-
 
 from sktime.clustering.base._typing import NumpyOrDF
 from sktime.clustering.base.base import BaseCluster
 from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
 from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("matplotlib", "scikit_posthocs")
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.patches as mpatches  # noqa: E402
 
 
 def _plot(cluster_values, center, axes):
