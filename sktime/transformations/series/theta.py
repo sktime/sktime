@@ -84,7 +84,4 @@ def _check_theta(theta):
     if isinstance(theta, (float, int)):
         theta = [theta]
 
-    if not all(element > 0 for element in theta):
-        raise ValueError("`theta` value must be non-negative")
-
     return theta
