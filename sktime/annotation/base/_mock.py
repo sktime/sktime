@@ -12,8 +12,6 @@ class MockAnnotator(BaseAnnotator):
 
     def _fit(self, X, Y=None, Z=None):
 
-        print("I mock you")
-
         return self
 
     def _predict(self, X, Y=None, Z=None):
