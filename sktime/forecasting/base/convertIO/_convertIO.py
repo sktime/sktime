@@ -2,13 +2,59 @@
 """
 Machine type converters for scitypes
 
+Exports
+-------
+convert : dictionary of functions, with signature as below
+        indexed by triples of types
+         1st element = convert from - type
+         2nd element = convert to - type
+         3rd element = considered as this scitype - string
+        elements are conversion functions of machine type (1st) -> 2nd
+
+convert_to : function/dispatch version of convert, with 1st elt inferred
+
+
+-----------------------------------------
+
+Function signature of
+convert[(from_type, to_type, as_scitype)]
+
+Parameters
+----------
+what : from_type - object to convert
+store : reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_what : to_type - object what converted to to_type
+
+
+-----------------------------------------
+
+Function signature of convert_to
+
+Parameters
+----------
+what : object to convert (any type)
+to_type : type, the type to convert "what" to
+as_scitype : str - name of scitype the object "what" is considered as
+store : reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_what : to_type - object what converted to to_type
+
+Raises
+------
+TypeError if no suitable key in convert exists
+    i.e., (type(what), to_type, as_scitype)
+
+
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 
 __author__ = ["fkiraly"]
-
-__all__ = ["convert"]
 
 
 import numpy as np
