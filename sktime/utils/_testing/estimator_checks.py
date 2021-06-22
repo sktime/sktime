@@ -49,7 +49,7 @@ from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils.data_processing import is_nested_dataframe
 from sktime.utils import _has_tag
 
-from sktime.annotation.base import BaseAnnotator
+from sktime.annotation.base import BaseStreamAnnotator
 from sktime.utils._testing.annotation import make_annotation_problem
 
 
@@ -567,7 +567,7 @@ def _make_fit_args(estimator, **kwargs):
         fh = 1
         X = None
         return y, X, fh
-    elif isinstance(estimator, BaseAnnotator):
+    elif isinstance(estimator, BaseStreamAnnotator):
         X = make_annotation_problem(**kwargs)
         return (X,)
     elif isinstance(estimator, BaseClassifier):
@@ -592,7 +592,7 @@ def _make_predict_args(estimator, **kwargs):
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
         X = _make_panel_X(**kwargs)
         return (X,)
-    elif isinstance(estimator, BaseAnnotator):
+    elif isinstance(estimator, BaseStreamAnnotator):
         X = make_annotation_problem(n_timepoints=10, **kwargs)
         return (X,)
     else:
