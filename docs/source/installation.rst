@@ -230,11 +230,11 @@ Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
 .. note::
 
-    If you want to use linux terminal on a window machine, you can download wsl-2 to experience the same features as linux Ubuntu OS,
-    Make sure you have Ubuntu 20.04 installed on your windows and follow the instructions to install wsl-2 from `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_ and run commands as mentioned above on LINUX section. Maybe you need to install fbprophet dependency at some point using
-    ``pip3 install fbprophet``.
+    If you want to use linux terminal on a windows machine, you can download wsl-2 to experience the same features as linux Ubuntu OS,
+    Make sure you have Ubuntu 20.04 installed on your windows and follow the instructions/requirements to install wsl-2 from `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_ and then, run the commands as mentioned above on LINUX section. Maybe you need to install fbprophet dependency at some point using
+    ``pip3 install fbprophet``, if you find build error installing ``pip3 install --editable``.
 
-If you run into a problem installing the development version and are using Anaconda, plz, try out these steps as follows:
+If you run into a problem installing the development version and are using Anaconda, try:
 
 1. Install Anaconda
 2. Create new environment: :code:`conda create -n sktime-dev python=3.8`
