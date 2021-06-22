@@ -28,6 +28,10 @@ Returns
 -------
 converted_what : to_type - object what converted to to_type
 
+Raises
+------
+ValueError and TypeError, if requested conversion is not possible
+                            (depending on conversion logic)
 
 -----------------------------------------
 
