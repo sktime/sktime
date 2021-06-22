@@ -1,79 +1,107 @@
 # -*- coding: utf-8 -*-
 import warnings
 import numpy as np
-from sktime.annotation.base._base import BaseAnnotator
-from sktime.utils.validation.series import check_series
+from sktime.annotation.base._base import BaseStreamAnnotator
 
-__author__ = ["Markus Löning", "Satya Pattnaik"]
+__author__ = ["mloning", "satya-pattnaik", "fkiraly"]
+
+import pandas as pd
 
 
-class PyODOutlierDetector(BaseAnnotator):
-    """Transformer that applies Outlier Detection to a
-    univariate time series.
-
-    Provides a simple wrapper around ``PyOD``.
+class StreamAnnotatorPyOD(BaseStreamAnnotator):
+    """Transformer that applies outlier detector from pyOD
 
     Parameters
     ----------
     estimator : PyOD estimator
         See ``https://pyod.readthedocs.io/en/latest/`` documentation for a detailed
         description of all options.
+    annotation_format : str - one of "sparse" and "dense"
+        "sparse" - sub-series of outliers is returned, with value
+        "dense" - series of values is returned with X.index and entry
+    annotation_values : str - one of "indicator" and "score"
+        "indicator" - value is bool = is this an outlier
+        "score" - value is float = outlier score
     """
 
     _tags = {
-        "univariate-only": True,
-        "fit-in-transform": True,
-        "handles-missing-data": True,
+        "handles-panel": False,  # can handle panel annotations, i.e., list X/Y?
+        "handles-missing-data": False,  # can handle missing data in X, Y
+        "annotation-type": "point",  # can be point, segment or both
+        "annotation-labels": "outlier",  # can be one of, or list-subset of
+        #   "label", "outlier", "change"
     }
 
-    def __init__(self, estimator):
-        self.estimator = estimator  # pyod estimator
+    def __init__(self, estimator,
+                 annotation_format="sparse", annotation_values="indicator"
+                 ):
 
-    def fit(self, Z, X=None):
+        if annotation_format not in ["sparse", "dense"]:
+            raise ValueError('annotation_format must be "sparse" or "dense"')
+
+        if annotation_format not in ["indicator", "score"]:
+            raise ValueError('annotation_format must be "indicator" or "score"')
+
+        self.estimator = estimator  # pyod estimator
+        self.annotation_format = annotation_format
+
+        super(StreamAnnotatorPyOD, self).__init__()
+
+    def _fit(self, X, Y=None):
         """Fit to training data.
 
+        core logic
+
         Parameters
         ----------
-        Z : pd.Series
-            Target time series to which to fit the annotator.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        X : pd.DataFrame
+            training data to fit model to, time series
+        Y : pd.Series, optional
+            ground truth annotations for training if annotator is supervised
         Returns
         -------
-        self : returns an instance of self.
+        self : returns a reference to self
+
+        State change
+        ------------
+        creates fitted model (attributes ending in "_")
         """
-        z = check_series(Z, enforce_univariate=True)
-        z = z.to_numpy().reshape(-1, 1)
-        self.estimator_ = self.estimator.fit(z)
+
+        X_np = X.to_numpy()
+
+        self.estimator.fit(X_np)
+
         return self
 
-    def transform(self, Z, X=None):
-        """Returns a transformed version of Z.
+    def _predict(self, X):
+        """Create annotations on test/deployment data.
 
         Parameters
         ----------
-        Z : pd.Series
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        X : pd.DataFrame - data to annotate, time series
+
         Returns
         -------
-        Zt : pd.Series
-            Transformed(by PyOD Estimator) time series.
+        Y : pd.Series - annotations for sequence X
+            exact format depends on annotation type
         """
 
-        z = check_series(Z, enforce_univariate=True)
+        annotation_format = self.annotation_format
+        annotation_values = self.annotation_values
 
-        if z.isnull().values.any():
-            warnings.warn(
-                """Series contains nan values, more nan might be
-                added if there are outliers"""
-            )
+        X_np = X.to_numpy()
 
-        z = z.to_numpy().reshape(-1, 1)
-        outliers = self.estimator_.predict(z)
+        Y_np = self.estimator.predict(X_np)
 
-        outliers = np.where(outliers)
-        Zt = Z.copy()
-        Zt.iloc[:] = False
-        Zt.iloc[outliers] = True
-        return Zt
+        if annotation_values == "score":
+            Y_val_np = self.estimator.decision(X_np)
+        elif annotation_values == "indicator":
+            Y_val_np = Y_np
+
+        if annotation_format == "dense":
+            Y = pd.Series(Y_val_np, index=X.index)
+        elif annotation_format == "sparse":
+            Y_loc = np.where(Y_np)
+            Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
+
+        return Y
