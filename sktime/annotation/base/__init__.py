@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-__all__ = [
-    "ForecastingHorizon",
-    "BaseForecaster",
-]
+__all__ = ["BaseStreamAnnotator", "BasePanelAnnotator", "MockAnnotator"]
 
-from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.annotation.base._base import BaseStreamAnnotator, BasePanelAnnotator
+from sktime.annotation.base._mock import MockAnnotator

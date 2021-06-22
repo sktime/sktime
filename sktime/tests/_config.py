@@ -86,6 +86,7 @@ from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
+from sktime.annotation.base import BaseStreamAnnotator, BasePanelAnnotator
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -312,6 +313,8 @@ VALID_ESTIMATOR_BASE_TYPES = (
     BaseRegressor,
     BaseForecaster,
     BaseTransformer,
+    BaseStreamAnnotator,
+    BasePanelAnnotator,
 )
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
@@ -324,4 +327,6 @@ VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
     "transformer": BaseTransformer,
+    "stream-annotator": BaseStreamAnnotator,
+    "panel-annotator": BasePanelAnnotator,
 }
