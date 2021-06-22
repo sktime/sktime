@@ -23,6 +23,11 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _required_parameters = ["forecasters"]
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
 
@@ -31,7 +36,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -47,15 +52,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self : returns an instance of self.
         """
 
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
-        self._is_fitted = True
         return self
 
-    def _fit_ensemble(self, y, X=None):
+    def fit_ensemble(self, y, X=None):
         """Fits the ensemble by allowing forecasters to predict and
            compares to the actual parameters.
 
@@ -72,7 +74,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         self.ensemble_algorithm.update(estimator_predictions.T, y)
 
-    def update(self, y, X=None, update_params=False):
+    def _update(self, y, X=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
 
         Parameters
@@ -89,7 +91,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self._update_y_X(y, X)
 
         if len(y) >= 1 and self.ensemble_algorithm is not None:
-            self._fit_ensemble(y, X)
+            self.fit_ensemble(y, X)
 
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
