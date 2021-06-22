@@ -3,16 +3,28 @@ from sktime.annotation.base._base import BaseAnnotator
 
 
 class MockAnnotator(BaseAnnotator):
-    def __init__(self):
+
+    def __init__(self, n=1):
+
+        self.n = n
+
         super().__init__()
 
-    def fit(self, Z, X=None):
-        self._is_fitted = True
+    def _fit(self, X, Y=None, Z=None):
+
+        print("I mock you")
+
         return self
 
-    def predict(self, Z, X=None):
-        self.check_is_fitted()
-        Zt = Z.copy()
-        Zt.iloc[:] = False
-        Zt.iloc[1] = True
-        return Zt
+    def _predict(self, X, Y=None, Z=None):
+
+        n = self.n
+
+        Xt = X.copy()
+
+        for Xi in Xt:
+            Xi.iloc[:] = False
+            if len(Xi) > n:
+                Xt.iloc[n] = True
+
+        return Xt
