@@ -1,4 +1,4 @@
-.. sktime documentation master file, created by
+.. sktime documentation main file, created by
    sphinx-quickstart on Sat Jan 26 21:22:05 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -16,7 +16,7 @@ From here, you can navigate to:
    :maxdepth: 1
 
    installation
-   how_to_get_started
+   tutorials
    user_guide
    api_reference
    changelog
@@ -26,6 +26,7 @@ From here, you can navigate to:
    :maxdepth: 1
 
    contributing
+   developer_guide
    roadmap
    mentoring
    code_of_conduct

@@ -6,11 +6,14 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
+
+from sktime.classification.hybrid import HIVECOTEV1
 from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
@@ -23,19 +26,24 @@ from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
-from sktime.classification.shapelet_based import ROCKETClassifier
+from sktime.classification.kernel_based import ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.bats import BATS
-from sktime.forecasting.compose import DirectRegressionForecaster
+from sktime.forecasting.compose import DirectTabularRegressionForecaster
+from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import MultioutputRegressionForecaster
-from sktime.forecasting.compose import RecursiveRegressionForecaster
+from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
+from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -45,7 +53,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
-from sktime.performance_metrics.forecasting import sMAPE
+from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
@@ -74,14 +82,15 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
     "ShapeDTW",
-    "HIVECOTEV1",
     "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
@@ -91,6 +100,7 @@ EXCLUDE_ESTIMATORS = [
 EXCLUDED_TESTS = {
     "ShapeletTransformClassifier": ["check_fit_idempotent"],
     "ContractedShapeletTransform": ["check_fit_idempotent"],
+    "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -128,14 +138,21 @@ STEPS = [
 ESTIMATOR_TEST_PARAMS = {
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
-    DirectRegressionForecaster: {"regressor": REGRESSOR},
-    MultioutputRegressionForecaster: {"regressor": REGRESSOR},
-    RecursiveRegressionForecaster: {"regressor": REGRESSOR},
+    DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
+    MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
+    RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
+    DirRecTabularRegressionForecaster: {"estimator": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {
-        "regressor": make_pipeline(Tabularizer(), REGRESSOR)
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     RecursiveTimeSeriesRegressionForecaster: {
-        "regressor": make_pipeline(Tabularizer(), REGRESSOR)
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
+    },
+    MultioutputTimeSeriesRegressionForecaster: {
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
+    },
+    DirRecTimeSeriesRegressionForecaster: {
+        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
     TransformedTargetForecaster: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
@@ -145,13 +162,13 @@ ESTIMATOR_TEST_PARAMS = {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
-        "scoring": sMAPE(),
+        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     ForecastingRandomizedSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
         "param_distributions": {"window_length": [2, 5]},
-        "scoring": sMAPE(),
+        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
@@ -181,14 +198,32 @@ ESTIMATOR_TEST_PARAMS = {
         "max_q": 2,
         "seasonal": False,
     },
-    ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
-    ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
+    MultiplexForecaster: {
+        "forecasters": [
+            ("Naive_mean", NaiveForecaster(strategy="mean")),
+            ("Naive_last", NaiveForecaster(strategy="last")),
+            ("Naive_drift", NaiveForecaster(strategy="drift")),
+        ],
+        "selected_forecaster": "Naive_mean",
+    },
+    ShapeletTransformClassifier: {
+        "n_estimators": 3,
+        "transform_contract_in_mins": 0.075,
+    },
+    ContractedShapeletTransform: {"time_contract_in_mins": 0.075},
     ShapeletTransform: {
         "max_shapelets_to_store_per_class": 1,
         "min_shapelet_length": 3,
         "max_shapelet_length": 4,
     },
     ROCKETClassifier: {"num_kernels": 100},
+    Arsenal: {"num_kernels": 100},
+    HIVECOTEV1: {
+        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.025},
+        "tsf_params": {"n_estimators": 2},
+        "rise_params": {"n_estimators": 2},
+        "cboss_params": {"n_parameter_samples": 6, "max_ensemble_size": 2},
+    },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,
@@ -239,7 +274,20 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
 }
+
+# We use estimator tags in addition to class hierarchies to further distinguish
+# estimators into different categories. This is useful for defining and running
+# common tests for estimators with the same tags.
+VALID_ESTIMATOR_TAGS = (
+    "fit-in-transform",  # fitted in transform or non-fittable
+    "univariate-only",
+    "transform-returns-same-time-index",
+    "handles-missing-data",
+    "skip-inverse-transform",
+    "requires-fh-in-fit",
+)
 
 # These methods should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
@@ -250,16 +298,6 @@ NON_STATE_CHANGING_METHODS = (
     "decision_function",
     "transform",
     "inverse_transform",
-)
-
-# We use estimator tags in addition to class hierarchies to further distinguish
-# estimators into different categories. This is useful for defining and running
-# common tests for estimators with the same tags.
-VALID_ESTIMATOR_TAGS = (
-    "fit-in-transform",  # fitted in transform or non-fittable
-    "univariate-only",
-    "transform-returns-same-time-index",
-    "handles-missing-data",
 )
 
 # The following gives a list of valid estimator base classes.
