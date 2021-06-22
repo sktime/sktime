@@ -288,6 +288,9 @@ VALID_ESTIMATOR_TAGS = (
     "handles-missing-data",
     "skip-inverse-transform",
     "requires-fh-in-fit",
+    "handles-panel",  # annotators: can handle panel annotations, i.e., list X/y?
+    "annotation-type",  # annotators: can be point, segment or both
+    "annotation-labels",  # annotators: which labels are annotated with
 )
 
 # These methods should not change the state of the estimator, that is, they should
