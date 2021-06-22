@@ -24,6 +24,9 @@ from sktime.utils.validation.forecasting import check_y_X
 
 
 class BaseGridSearch(BaseForecaster):
+
+    _tags = {"fh_in_fit": True, "handles_missing_data": False, "univariate_only": True}
+
     def __init__(
         self,
         forecaster,
@@ -46,14 +49,13 @@ class BaseGridSearch(BaseForecaster):
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update(self, y, X=None, update_params=False):
+    def _update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("update")
-        self.best_forecaster_.update(y, X, update_params=update_params)
+        self.best_forecaster_._update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict(
+    def _update_predict(
         self,
         y,
         cv=None,
@@ -65,8 +67,7 @@ class BaseGridSearch(BaseForecaster):
         """Call update_predict on the forecaster with the best found
         parameters.
         """
-        self.check_is_fitted("update_predict")
-        return self.best_forecaster_.update_predict(
+        return self.best_forecaster_._update_predict(
             y,
             cv=cv,
             X=X,
@@ -76,7 +77,7 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict_single(
+    def _update_predict_single(
         self,
         y,
         fh=None,
@@ -86,8 +87,7 @@ class BaseGridSearch(BaseForecaster):
         alpha=DEFAULT_ALPHA,
     ):
         """Call predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("update_predict_single")
-        return self.best_forecaster_.update_predict_single(
+        return self.best_forecaster_._update_predict_single(
             y,
             fh=fh,
             X=X,
@@ -97,27 +97,24 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_.predict(
+        return self.best_forecaster_._predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+    def _compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """Call compute_pred_int on the forecaster with the best found parameters."""
-        self.check_is_fitted("compute_pred_int")
-        return self.best_forecaster_.compute_pred_int(y_pred, alpha=alpha)
+        return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def transform(self, y, X=None):
+    def _transform(self, y, X=None):
         """Call transform on the forecaster with the best found parameters."""
-        self.check_is_fitted("transform")
-        return self.best_forecaster_.transform(y, X)
+        return self.best_forecaster_._transform(y, X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters
 
         Returns
@@ -126,10 +123,10 @@ class BaseGridSearch(BaseForecaster):
         """
 
         self.check_is_fitted("get_fitted_params")
-        return self.best_forecaster_.get_fitted_params()
+        return self.best_forecaster_._get_fitted_params()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def inverse_transform(self, y, X=None):
+    def _inverse_transform(self, y, X=None):
         """Call inverse_transform on the forecaster with the best found params.
         Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
@@ -140,9 +137,9 @@ class BaseGridSearch(BaseForecaster):
             underlying forecaster.
         """
         self.check_is_fitted("inverse_transform")
-        return self.best_forecaster_.inverse_transform(y, X)
+        return self.best_forecaster_._inverse_transform(y, X)
 
-    def score(self, y, X=None, fh=None):
+    def _score(self, y, X=None, fh=None):
         """Returns the score on the given data, if the forecaster has been
         refit.
         This uses the score defined by ``scoring`` where provided, and the
@@ -159,19 +156,18 @@ class BaseGridSearch(BaseForecaster):
         -------
         score : float
         """
-        self.check_is_fitted("score")
 
         if self.scoring is None:
-            return self.best_forecaster_.score(y, X=X, fh=fh)
+            return self.best_forecaster_._score(y, X=X, fh=fh)
 
         else:
-            y_pred = self.best_forecaster_.predict(fh, X=X)
+            y_pred = self.best_forecaster_._predict(fh, X=X)
             return self.scoring(y, y_pred)
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, _evaluate_candidates):
         raise NotImplementedError("abstract method")
 
-    def check_is_fitted(self, method_name=None):
+    def _check_is_fitted(self, method_name=None):
         """Has `fit` been called?
 
         Parameters
@@ -184,7 +180,7 @@ class BaseGridSearch(BaseForecaster):
         NotFittedError
             If forecaster has not been fitted yet.
         """
-        super(BaseGridSearch, self).check_is_fitted()
+        super(BaseGridSearch, self)._check_is_fitted()
 
         # We additionally check if the tuned forecaster has been fitted.
         if method_name is not None:
@@ -198,9 +194,9 @@ class BaseGridSearch(BaseForecaster):
                     "attribute" % (type(self).__name__, method_name)
                 )
             else:
-                self.best_forecaster_.check_is_fitted()
+                self.best_forecaster_._check_is_fitted()
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
@@ -253,7 +249,7 @@ class BaseGridSearch(BaseForecaster):
 
             return out
 
-        def evaluate_candidates(candidate_params):
+        def _evaluate_candidates(candidate_params):
             candidate_params = list(candidate_params)
 
             if self.verbose > 0:
@@ -280,7 +276,7 @@ class BaseGridSearch(BaseForecaster):
             return out
 
         # Run grid-search cross-validation.
-        results = self._run_search(evaluate_candidates)
+        results = self._run_search(_evaluate_candidates)
 
         results = pd.DataFrame(results)
 
@@ -421,10 +417,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, _evaluate_candidates):
         """Search all candidates in param_grid"""
         _check_param_grid(self.param_grid)
-        return evaluate_candidates(ParameterGrid(self.param_grid))
+        return _evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -517,9 +513,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.n_iter = n_iter
         self.random_state = random_state
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, _evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
-        return evaluate_candidates(
+        return _evaluate_candidates(
             ParameterSampler(
                 self.param_distributions, self.n_iter, random_state=self.random_state
             )
