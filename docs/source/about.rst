@@ -41,7 +41,7 @@ citations to the following paper:
 Artwork
 -------
 
-High-quality logos are available in the `docs/source/images/ <https://github.com/alan-turing-institute/sktime/tree/master/docs/source/images>`_ directory.
+High-quality logos are available in the `docs/source/images/ <https://github.com/alan-turing-institute/sktime/tree/main/docs/source/images>`_ directory.
 
 .. image:: images/sktime-logo-no-text.jpg
    :align: center

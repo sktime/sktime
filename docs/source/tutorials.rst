@@ -1,18 +1,18 @@
-.. _how_to_get_started:
+.. _tutorials:
 
-How to get started
-==================
+Tutorials
+=========
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples/
-
-We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
-`getting-started guide`_.
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples/
 
 We have a number of tutorial notebooks. If you like to run them interactively, you can launch them on Binder without
 having to install anything.
 
 |Binder|_
+
+We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
+`getting-started guide`_.
 
 .. toctree::
     :maxdepth: 1
@@ -27,13 +27,15 @@ having to install anything.
     examples/catch22.ipynb
     examples/mrseql.ipynb
     examples/rocket.ipynb
+    examples/minirocket.ipynb
     examples/plateau_finder.ipynb
     examples/loading_data.ipynb
     examples/forecasting_with_hcrystalball.ipynb
     examples/dictionary_based_classification.ipynb
     examples/interpolation.ipynb
+    examples/window_splitter.ipynb
 
 .. _scikit-learn: https://scikit-learn.org/stable/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
 
-The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/master/examples>`_.
+The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/main/examples>`_.

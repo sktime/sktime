@@ -32,6 +32,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
         self._instantiate_model()
         self._check_changepoints()
         self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
@@ -187,7 +188,7 @@ def _merge_X(df, X):
     X.columns = X.columns.astype(str)
     if "ds" in X.columns:
         raise ValueError("Column name 'ds' is reserved in fbprophet")
-    X["ds"] = X.index
+    X.loc[:, "ds"] = X.index
     # df = df.merge(X, how="inner", on="ds", copy=False)
     df = df.merge(X, how="inner", on="ds")
     return df, X.drop(columns="ds")

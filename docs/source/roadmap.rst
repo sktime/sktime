@@ -1,7 +1,7 @@
 .. _roadmap:
 
-Development roadmap
--------------------
+Roadmap
+-------
 
 Welcome to sktime's software development plan.
 

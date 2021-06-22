@@ -9,6 +9,16 @@ __all__ = ["CosineTransformer"]
 
 
 class CosineTransformer(_SeriesToSeriesTransformer):
+    """
+    Example
+    ----------
+    >>> from sktime.transformations.series.cos import CosineTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = CosineTransformer()
+    >>> y_hat = transformer.fit_transform(y)
+    """
+
     _tags = {"transform-returns-same-time-index": True, "fit-in-transform": True}
 
     def transform(self, Z, X=None):

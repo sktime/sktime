@@ -4,6 +4,8 @@
 __author__ = ["Markus Löning"]
 __all__ = []
 
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -35,13 +37,21 @@ def _coerce_duration_to_int(duration, freq=None):
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
         if freq is None:
             raise ValueError("`unit` missing")
+        # Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
+        # extract the count and the unit. See
+        # https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+        m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
+        if not m:
+            raise ValueError("pandas frequency %s not understood." % freq)
+        count, unit = m.groups()
+        count = 1 if not count else int(count)
         # integer conversion only works reliably with non-ambiguous units (
         # e.g. days, seconds but not months, years)
         try:
             if isinstance(duration, pd.Timedelta):
-                return int(duration / pd.Timedelta(1, freq))
+                return int(duration / pd.Timedelta(count, unit))
             if isinstance(duration, pd.TimedeltaIndex):
-                return (duration / pd.Timedelta(1, freq)).astype(np.int)
+                return (duration / pd.Timedelta(count, unit)).astype(np.int)
         except ValueError:
             raise ValueError(
                 "Index type not supported. Please consider using pd.PeriodIndex."

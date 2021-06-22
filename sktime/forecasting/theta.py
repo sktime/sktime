@@ -86,6 +86,16 @@ class ThetaForecaster(ExponentialSmoothing):
            International J. Forecasting, 19, 287-290, 2003.
            <https://www.sciencedirect.com/science/article/pii
            /S0169207001001431>`_
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> y = load_airline()
+    >>> forecaster = ThetaForecaster(sp=12)
+    >>> forecaster.fit(y)
+    ThetaForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
@@ -94,7 +104,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         self.sp = sp
         self.deseasonalize = deseasonalize
-
         self.deseasonalizer_ = None
         self.trend_ = None
         self.initial_level_ = None
@@ -126,6 +135,7 @@ class ThetaForecaster(ExponentialSmoothing):
             self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
             y = self.deseasonalizer_.fit_transform(y)
 
+        self.initialization_method = "known" if self.initial_level else "estimated"
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super(ThetaForecaster, self).fit(y, fh=fh)
