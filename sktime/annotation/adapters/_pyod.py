@@ -33,9 +33,7 @@ class StreamAnnotatorPyOD(BaseStreamAnnotator):
     }
 
     def __init__(
-
         self, estimator, annotation_format="sparse", annotation_values="indicator"
-
     ):
 
         if annotation_format not in ["sparse", "dense"]:
