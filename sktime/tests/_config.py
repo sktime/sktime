@@ -314,7 +314,7 @@ VALID_ESTIMATOR_BASE_TYPES = (
     BaseForecaster,
     BaseTransformer,
     BaseStreamAnnotator,
-    BasePanelAnnotator
+    BasePanelAnnotator,
 )
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
