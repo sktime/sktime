@@ -51,6 +51,8 @@ __author__ = ["satya-pattnaik ", "fkiraly"]
 
 from sktime.base import BaseEstimator
 
+from sktime.utils.validation.series import check_series
+
 import pandas as pd
 
 
@@ -271,6 +273,11 @@ class BaseStreamAnnotator(BaseEstimator):
         sets _is_fitted flag to true
         """
 
+        X = check_series(X)
+
+        if Y is not None:
+            Y = check_series(Y)
+
         self._X = X
         self._Y = Y
 
@@ -298,6 +305,8 @@ class BaseStreamAnnotator(BaseEstimator):
 
         self.check_is_fitted()
 
+        X = check_series(X)
+
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         Y = self._predict(self, X=X)
@@ -323,6 +332,11 @@ class BaseStreamAnnotator(BaseEstimator):
         """
 
         self.check_is_fitted()
+
+        X = check_series(X)
+
+        if Y is not None:
+            Y = check_series(Y)
 
         self._X = self._X.append(X)
 
@@ -350,6 +364,8 @@ class BaseStreamAnnotator(BaseEstimator):
         ------------
         updates fitted model (attributes ending in "_")
         """
+
+        X = check_series(X)
 
         self.update(X=X)
         Y = self.predict(X)
