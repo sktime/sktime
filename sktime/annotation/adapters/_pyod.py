@@ -94,7 +94,7 @@ class StreamAnnotatorPyOD(BaseStreamAnnotator):
         Y_np = self.estimator.predict(X_np)
 
         if annotation_values == "score":
-            Y_val_np = self.estimator.decision(X_np)
+            Y_val_np = self.estimator.decision_function(X_np)
         elif annotation_values == "indicator":
             Y_val_np = Y_np
 
