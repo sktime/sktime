@@ -3,6 +3,16 @@ from sktime.annotation.base._base import BaseAnnotator
 
 
 class MockAnnotator(BaseAnnotator):
+    """Mock annotator
+
+    for testing purposes. This "silly" annotator annotates
+        the n-th time point as positive, everything else negative
+
+    Parameters
+    ----------
+    n : int, optional (default=1)
+        the iloc index of the sequence(s) to annotate as positive
+    """
 
     def __init__(self, n=1):
 
