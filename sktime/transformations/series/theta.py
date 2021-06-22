@@ -23,6 +23,7 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ThetaLines([0, 0.25, 0.5, 0.75])
+    >>> transformer.fit(y)
     >>> y_thetas = transformer.transform(y)
 
     References
@@ -50,8 +51,8 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
 
         Returns
         -------
-        theta_lines: pd.DataFrame
-            Transformed series (Theta-lines[1]).
+        theta_lines: ndarray or pd.DataFrame
+            Transformed series: single Theta-line or a pd.DataFrame of
             shape: len(Z)*len(self.theta).
         """
         self.check_is_fitted()
@@ -66,7 +67,10 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         theta_lines = np.zeros((z.shape[0], len(theta)))
         for i, theta in enumerate(theta):
             theta_lines[:, i] = _theta_transform(z, trend, theta)
-        return pd.DataFrame(theta_lines, columns=theta)
+        if isinstance(self.theta, (float, int)):
+            return theta_lines
+        else:
+            return pd.DataFrame(theta_lines, columns=[self.theta])
 
 
 def _theta_transform(Z, trend, theta):
