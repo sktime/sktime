@@ -47,7 +47,7 @@ class BaseAnnotator(BaseEstimator):
         "handles-missing-data": False,  # can handle missing data in X, Y, Z
         "annotation-type": "point",  # can be point, segment or both
         "annotation-labels": "none",  # can be one of, or list-subset of
-                                      #   "label", "outlier", "change"
+        #   "label", "outlier", "change"
     }
 
     def __init__(self):
