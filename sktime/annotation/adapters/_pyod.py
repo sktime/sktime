@@ -44,6 +44,7 @@ class StreamAnnotatorPyOD(BaseStreamAnnotator):
 
         self.estimator = estimator  # pyod estimator
         self.annotation_format = annotation_format
+        self.annotation_values = annotation_values
 
         super(StreamAnnotatorPyOD, self).__init__()
 
