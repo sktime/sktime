@@ -28,6 +28,8 @@ __author__ = ["satya-pattnaik ", "fkiraly"]
 
 from sktime.base import BaseEstimator
 
+import pandas as pd
+
 
 class BaseAnnotator(BaseEstimator):
     """Base annotator
@@ -76,6 +78,12 @@ class BaseAnnotator(BaseEstimator):
         sets _is_fitted flag to true
         """
 
+        if isinstance(X, pd.DataFrame):
+            X = [X]
+
+        if isinstance(Y, pd.Series):
+            Y = [Y]
+
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         self._fit(self, X=X, Y=Y, Z=Z)
@@ -101,9 +109,21 @@ class BaseAnnotator(BaseEstimator):
             exact format depends on annotation type
         """
 
+        self.check_is_fitted()
+
+        X_was_df = isinstance(X, pd.DataFrame)
+
+        if X_was_df:
+            X = [X]
+
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        return self._predict(self, X=X, Z=Z)
+        Y = self._predict(self, X=X, Z=Z)
+
+        if X_was_df:
+            Y = Y[0]
+
+        return Y
 
     def fit_predict(self, X, X_new=None, Y=None, Z=None, Z_new=None):
         """Create annotations on test/deployment data.
@@ -146,9 +166,9 @@ class BaseAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame or list of pd.DataFrame
+        X : list of pd.DataFrame
             training data to fit model to, one sequence or multiple sequences
-        Y : pd.Series or list of pd.Series, optional
+        Y : list of pd.Series, optional
             ground truth annotations for training if annotator is supervised
             feature/label pairs of sequence/annotation are (X[i], Y[i])
         Z : pd.DataFrame, optional
@@ -166,13 +186,13 @@ class BaseAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame or list of pd.DataFrame
+        X : list of pd.DataFrame
             training data to fit model to, one sequence or multiple sequences
         Z : pd.DataFrame, optional; required if passed in fit
             metadata, rows correspond to index of list in X/Y
         Returns
         -------
-        Y : pd.Series or list of pd.Series (list iff X is list)
+        Y : list of pd.Series (list iff X is list)
             annotations for sequence(s) in X
             exact format depends on annotation type
         """
