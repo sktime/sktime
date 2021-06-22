@@ -111,7 +111,7 @@ class BasePanelAnnotator(BaseEstimator):
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        self._fit(self, X=X, Y=Y, Z=Z)
+        self._fit(X=X, Y=Y, Z=Z)
 
         # this should happen last
         self._is_fitted = True
@@ -143,7 +143,7 @@ class BasePanelAnnotator(BaseEstimator):
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        Y = self._predict(self, X=X, Z=Z)
+        Y = self._predict(X=X, Z=Z)
 
         if X_was_df:
             Y = Y[0]
@@ -283,7 +283,7 @@ class BaseStreamAnnotator(BaseEstimator):
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        self._fit(self, X=X, Y=Y)
+        self._fit(X=X, Y=Y)
 
         # this should happen last
         self._is_fitted = True
@@ -309,7 +309,7 @@ class BaseStreamAnnotator(BaseEstimator):
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        Y = self._predict(self, X=X)
+        Y = self._predict(X=X)
 
         return Y
 
