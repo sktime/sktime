@@ -10,7 +10,7 @@
   "contributors": [
     {
       "login": "fkiraly",
-      "name": "fkiraly",
+      "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
@@ -19,6 +19,7 @@
         "doc",
         "design",
         "eventOrganizing",
+        "example",
         "financial",
         "fundingFinding",
         "ideas",
@@ -26,7 +27,8 @@
         "projectManagement",
         "question",
         "review",
-        "talk"
+        "talk",
+        "tutorial"
       ]
     },
     {
