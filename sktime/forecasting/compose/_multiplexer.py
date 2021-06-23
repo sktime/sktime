@@ -193,7 +193,5 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
         self._forecaster.update(y, X, update_params=update_params)
         return self

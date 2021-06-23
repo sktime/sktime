@@ -9,11 +9,13 @@ import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
 
-class EnsembleForecaster(_HeterogenousEnsembleForecaster):
+class EnsembleForecaster(
+    _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
+):
     """Ensemble of forecasters
-
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
@@ -26,19 +28,13 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _required_parameters = ["forecasters"]
-    _tags = {
-        "univariate-only": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-    }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
 
-    def _fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
-
         Parameters
         ----------
         y : pd.Series
@@ -51,20 +47,22 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
 
+        self._set_y_X(y, X)
+        self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y, X, fh)
+        self._is_fitted = True
         return self
 
-    def _update(self, y, X=None, update_params=True):
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters
-
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
         update_params : bool, optional (default=True)
-
         Returns
         -------
         self : an instance of self
@@ -77,14 +75,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """return the predicted reduction
-
         Parameters
         ----------
         fh : int, list or np.array, optional (default=None)
         X : pd.DataFrame
         return_pred_int : boolean, optional (default=False)
         alpha : fh : float, (default=DEFAULT_ALPHA)
-
         Returns
         -------
         y_pred : pd.Series

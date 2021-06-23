@@ -201,8 +201,6 @@ class TransformedTargetForecaster(
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
