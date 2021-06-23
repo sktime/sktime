@@ -1,4 +1,4 @@
-#!/usr/bin/env pyhon3 -u
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -11,7 +11,6 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.series import check_series
 from sktime.utils import _has_tag
 
@@ -158,8 +157,8 @@ class ForecastingPipeline(_Pipeline):
         self : returns an instance of self.
         """
         # Some transformers can not deal with X=None, therefore X is mandatory
-        if self._X is None:
-            raise NotImplementedError("X must be given to use ForecastingPipeline.")
+        # if self._X is None:
+        #     raise NotImplementedError("X must be given to use ForecastingPipeline.")
         self._set_y_X(y, X)
 
         # transform X
@@ -177,7 +176,6 @@ class ForecastingPipeline(_Pipeline):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        X = check_X(X)
         forecaster = self.steps_[-1][1]
         # transform X before doing prediction
         for _, _, transformer in self._iter_transformers():

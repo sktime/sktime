@@ -260,7 +260,9 @@ def test_update_predict_single(Forecaster, fh, update_params):
 def _check_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
 ):
-    y = make_forecasting_problem(all_positive=True, index_type="datetime", make_X=True)
+    y, X = make_forecasting_problem(
+        all_positive=True, index_type="datetime", make_X=True
+    )
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     cv = SlidingWindowSplitter(
         fh,
