@@ -157,8 +157,8 @@ class ForecastingPipeline(_Pipeline):
         self : returns an instance of self.
         """
         # Some transformers can not deal with X=None, therefore X is mandatory
-        # if self._X is None:
-        #     raise NotImplementedError("X must be given to use ForecastingPipeline.")
+        if self._X is None:
+            raise NotImplementedError("X must be given to use ForecastingPipeline.")
         self._set_y_X(y, X)
 
         # transform X
