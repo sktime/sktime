@@ -12,7 +12,6 @@ from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 from sklearn.model_selection import check_cv
-from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
@@ -25,7 +24,11 @@ from sktime.utils.validation.forecasting import check_y_X
 
 class BaseGridSearch(BaseForecaster):
 
-    _tags = {"fh_in_fit": True, "handles_missing_data": False, "univariate_only": True}
+    _tags = {
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "univariate-only": True,
+    }
 
     def __init__(
         self,
@@ -121,8 +124,6 @@ class BaseGridSearch(BaseForecaster):
         -------
         fitted_params : dict
         """
-
-        self.check_is_fitted("get_fitted_params")
         return self.best_forecaster_._get_fitted_params()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -136,7 +137,6 @@ class BaseGridSearch(BaseForecaster):
             Must fulfill the input assumptions of the
             underlying forecaster.
         """
-        self.check_is_fitted("inverse_transform")
         return self.best_forecaster_._inverse_transform(y, X)
 
     def _score(self, y, X=None, fh=None):
@@ -299,17 +299,6 @@ class BaseGridSearch(BaseForecaster):
         self._is_fitted = True
         return self
 
-    @property
-    def cutoff(self):
-        """The time point at which to make forecasts
-
-        Returns
-        -------
-        cutoff : pd.Period, pd.Timestamp, int
-        """
-        self.check_is_fitted()
-        return self.best_forecaster_.cutoff
-
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """
@@ -419,7 +408,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     def _run_search(self, _evaluate_candidates):
         """Search all candidates in param_grid"""
-        _check_param_grid(self.param_grid)
         return _evaluate_candidates(ParameterGrid(self.param_grid))
 
 
