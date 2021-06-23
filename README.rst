@@ -52,17 +52,34 @@
 Welcome to sktime
 =================
 
-  A unified framework for machine learning with time series
+The unified framework for machine learning with time series. Our vision:
 
-We provide specialized time series algorithms and `scikit-learn
-<https://github.com/scikit-learn/scikit-learn>`__ compatible tools
-to build, tune and validate time series models for multiple learning problems, including:
+* **by the community**, for the community. Developed by a friendly, decentral community - `we welcome all contributors <https://gitter.im/sktime/community>`__.
+* **without marketing bias** - sktime does not push "favourite algorithms" on its users, sktime is not a marketing activity.
+* the **right tool for the right task** - helping users to diagnose their "learning problem" and suitable "scientific model types"
+* **embedded in state-of-art OS ecosystems** - interoperable with scikit-learn, statsmodels, pmdarima, tsfresh, and other community favourites.
+* **rich composition and reduction functionality** - build tuning and feature extraction pipelines, solve forecasting tasks with scikit-learn regressors, etc
+* **clean, descriptive specification syntax** - based on modern object-oriented design principles for data science
+* an **integrator of functionality and provisioner of friendly interfaces**, not an "all-bells-and-whistles-one-stop-shop-the-package-that-replaces-everything"
+* **fair model assessment and benchmarking** - build your models, inspect your models, check your models, avoid pitfalls.
+* **easily extensible** - easy `blueprints to add your own algorithms interface-ready <https://github.com/alan-turing-institute/sktime/tree/main/extension_templates>`__, no tedious hacking of internals required
 
-* Forecasting,
-* Time series classification,
-* Time series regression.
 
-For deep learning, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
+sktime currently provides stable support for the following learning tasks:
+
+* `Forecasting <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting.ipynb>`__,
+* `Time series classification/regression <https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification_univariate.ipynb>`__,
+
+including feature extraction, pipelining, tuning, and model benchmarking functionality.
+
+Support for additional learning tasks is under development and/or experimental:
+
+* time series clustering
+* anomaly detection, change-point detection
+* outlier detection & removal, segmentation
+* segmentation (supervised and unsupervised, stream and panel)
+
+For deep learning strategies, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
 
 .. list-table::
    :header-rows: 0
@@ -167,14 +184,17 @@ We follow the `all-contributors specification <https://github.com/alan-turing-in
 
 If you have a question, `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__. Your help and feedback is extremely welcome!
 
+All new contributors are welcome. You can join to contribute by:
+
+* joining the developer slack - contact us on gitter or via info@sktime.org
+* making a pull request with a code/doc contribution directly
+* contributing to the `regular community meetings <https://github.com/sktime/community-council>`__
+* join one of the onboarding events or developer events (announced on issue tracker, gitter, and twitter)
+* sign up for our `community mentoring scheme <https://github.com/sktime/mentoring>`__
+
 
 Development roadmap
 -------------------
-
-1. Multivariate/panel forecasting,
-2. Time series clustering,
-3. Time series annotation (segmentation and anomaly detection),
-4. Probabilistic time series modelling, including survival and point processes.
 
 Read our detailed roadmap `here <https://www.sktime.org/en/latest/roadmap.html>`_.
 
