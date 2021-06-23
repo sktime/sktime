@@ -52,14 +52,14 @@ FH0 = 1
 INVALID_INPUT_TYPES = [np.empty(20), list(), tuple()]
 
 # testing data
-y, X = make_forecasting_problem(make_X=True)
-y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, train_size=0.75)
+y = make_forecasting_problem()
+y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_get_fitted_params(Forecaster):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, X_train, fh=FH0)
+    f.fit(y_train, fh=FH0)
     try:
         params = f.get_fitted_params()
         assert isinstance(params, dict)
@@ -79,7 +79,7 @@ def test_raises_not_fitted_error(Forecaster):
 
     with pytest.raises(NotFittedError):
         cv = SlidingWindowSplitter(fh=1, window_length=1, start_with_window=False)
-        f.update_predict(y_test, X_test, cv=cv)
+        f.update_predict(y_test, cv=cv)
 
     try:
         with pytest.raises(NotFittedError):
@@ -132,7 +132,7 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
     try:
-        f.fit(y_train, X_train, fh=fh)
+        f.fit(y_train, fh=fh)
         y_pred = f.predict()
         _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
     except NotImplementedError:
@@ -180,7 +180,7 @@ def test_predict_time_index_in_sample_full(
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
     try:
-        f.fit(y_train, X_train, fh=fh)
+        f.fit(y_train, fh=fh)
         y_pred = f.predict()
         _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
     except NotImplementedError:
@@ -217,7 +217,7 @@ def _check_pred_ints(pred_ints: list, y_train: pd.Series, y_pred: pd.Series, fh)
 def test_predict_pred_interval(Forecaster, fh, alpha):
     # Check prediction intervals.
     f = _construct_instance(Forecaster)
-    f.fit(y_train, X_train, fh=fh)
+    f.fit(y_train, fh=fh)
     try:
         y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
         _check_pred_ints(pred_ints, y_train, y_pred, fh)
@@ -231,18 +231,18 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 def test_score(Forecaster, fh):
     # Check score method
     f = _construct_instance(Forecaster)
-    f.fit(y_train, X_train, fh=fh)
-    fh_idx = check_fh(fh).to_indexer()  # get zero based index
-    y_pred = f.predict(X=X_test.iloc[fh_idx])
+    f.fit(y_train, fh=fh)
+    y_pred = f.predict()
 
+    fh_idx = check_fh(fh).to_indexer()  # get zero based index
     expected = mean_absolute_percentage_error(
         y_pred, y_test.iloc[fh_idx], symmetric=True
     )
 
     # compare with actual score
     f = _construct_instance(Forecaster)
-    f.fit(y_train, X_train, fh=fh)
-    actual = f.score(y_test.iloc[fh_idx], X_test.iloc[fh_idx], fh=fh)
+    f.fit(y_train, fh=fh)
+    actual = f.score(y_test.iloc[fh_idx], fh=fh)
     assert actual == expected
 
 
@@ -252,7 +252,7 @@ def test_score(Forecaster, fh):
 def test_update_predict_single(Forecaster, fh, update_params):
     # Check correct time index of update-predict
     f = _construct_instance(Forecaster)
-    f.fit(y_train, X_train, fh=fh)
+    f.fit(y_train, fh=fh)
     y_pred = f.update_predict_single(y_test, update_params=update_params)
     _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
@@ -260,10 +260,8 @@ def test_update_predict_single(Forecaster, fh, update_params):
 def _check_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
 ):
-    y, X = make_forecasting_problem(
-        all_positive=True, index_type="datetime", make_X=True
-    )
-    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    y = make_forecasting_problem(all_positive=True, index_type="datetime")
+    y_train, y_test = temporal_train_test_split(y)
     cv = SlidingWindowSplitter(
         fh,
         window_length=window_length,
@@ -271,8 +269,8 @@ def _check_update_predict_predicted_index(
         start_with_window=False,
     )
     f = _construct_instance(Forecaster)
-    f.fit(y_train, X_train, fh=fh)
-    y_pred = f.update_predict(y_test, X_test, cv=cv, update_params=update_params)
+    f.fit(y_train, fh=fh)
+    y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
 
     assert isinstance(y_pred, (pd.Series, pd.DataFrame))
     if isinstance(y_pred, pd.DataFrame):
