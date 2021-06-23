@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-__all__ = ["BaseStreamAnnotator", "BasePanelAnnotator", "MockStreamAnnotator"]
+__all__ = ["BasePanelAnnotator"]
 
-from sktime.annotation.base._base import BaseStreamAnnotator, BasePanelAnnotator
-from sktime.annotation.base._mock import MockStreamAnnotator
+from sktime.annotation.base._base_panel import BasePanelAnnotator
