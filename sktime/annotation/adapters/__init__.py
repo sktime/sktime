@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
-__all__ = ["StreamAnnotatorPyOD"]
+__all__ = ["SeriesAnnotatorPyOD"]
 
-from sktime.annotation.adapters._pyod import StreamAnnotatorPyOD
+from sktime.annotation.adapters._pyod import SeriesAnnotatorPyOD

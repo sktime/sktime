@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from sktime.annotation.base._base import BaseStreamAnnotator
+from sktime.annotation.base._base import BaseSeriesAnnotator
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
 
 
-class StreamAnnotatorPyOD(BaseStreamAnnotator):
+class SeriesAnnotatorPyOD(BaseSeriesAnnotator):
     """Transformer that applies outlier detector from pyOD
 
     Parameters
@@ -45,7 +45,7 @@ class StreamAnnotatorPyOD(BaseStreamAnnotator):
         self.annotation_format = annotation_format
         self.annotation_values = annotation_values
 
-        super(StreamAnnotatorPyOD, self).__init__()
+        super(SeriesAnnotatorPyOD, self).__init__()
 
     def _fit(self, X, Y=None):
         """Fit to training data.
