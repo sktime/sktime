@@ -68,9 +68,9 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         for i, theta in enumerate(theta):
             theta_lines[:, i] = _theta_transform(z, trend, theta)
         if isinstance(self.theta, (float, int)):
-            return theta_lines
+            return pd.Series(theta_lines.flatten(), index=z.index)
         else:
-            return pd.DataFrame(theta_lines, index=z.index)
+            return pd.DataFrame(theta_lines, columns=theta, index=z.index)
 
 
 def _theta_transform(Z, trend, theta):
@@ -80,12 +80,15 @@ def _theta_transform(Z, trend, theta):
 
 
 def _check_theta(theta):
-    valid_theta_types = (list, tuple, int, float)
+    valid_theta_types = (list, int, float, tuple)
 
     if not isinstance(theta, valid_theta_types):
         raise ValueError(f"invalid input, please use one of {valid_theta_types}")
 
     if isinstance(theta, (int, float)):
         theta = [theta]
+
+    if isinstance(theta, tuple):
+        theta = list(theta)
 
     return theta
