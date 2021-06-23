@@ -42,12 +42,25 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     ----------
     [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
         and practice. OTexts, 2014.
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> y = load_airline()
+    >>> forecaster = ExponentialSmoothing(trend='add', seasonal='multiplicative', sp=12)
+    >>> forecaster.fit(y)
+    ExponentialSmoothing(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = (
         "initial_level",
         "initial_slope",
         "initial_seasons",
+        "aic",
+        "bic",
+        "aicc",
     )
 
     def __init__(

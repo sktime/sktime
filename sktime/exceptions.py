@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = "Markus Löning"
@@ -30,7 +30,7 @@ class FitFailedWarning(RuntimeWarning):
     is an error while fitting the estimator.
 
     FitFailedWarning('Estimator fit failed. The score on this train-test
-    partition for these parameters will be set to 0.000000.
+    partition for these parameters will be set to 0.000000').
 
     References
     ----------

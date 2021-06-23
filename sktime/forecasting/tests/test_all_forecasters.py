@@ -34,7 +34,9 @@ from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
-from sktime.performance_metrics.forecasting import smape_loss
+from sktime.performance_metrics.forecasting import (
+    mean_absolute_percentage_error,
+)
 from sktime.utils import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
@@ -76,7 +78,7 @@ def test_raises_not_fitted_error(Forecaster):
         f.update(y_test, update_params=False)
 
     with pytest.raises(NotFittedError):
-        cv = SlidingWindowSplitter(fh=1, window_length=1)
+        cv = SlidingWindowSplitter(fh=1, window_length=1, start_with_window=False)
         f.update_predict(y_test, cv=cv)
 
     try:
@@ -233,7 +235,9 @@ def test_score(Forecaster, fh):
     y_pred = f.predict()
 
     fh_idx = check_fh(fh).to_indexer()  # get zero based index
-    expected = smape_loss(y_pred, y_test.iloc[fh_idx])
+    expected = mean_absolute_percentage_error(
+        y_pred, y_test.iloc[fh_idx], symmetric=True
+    )
 
     # compare with actual score
     f = _construct_instance(Forecaster)
@@ -258,7 +262,12 @@ def _check_update_predict_predicted_index(
 ):
     y = make_forecasting_problem(all_positive=True, index_type="datetime")
     y_train, y_test = temporal_train_test_split(y)
-    cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
+    cv = SlidingWindowSplitter(
+        fh,
+        window_length=window_length,
+        step_length=step_length,
+        start_with_window=False,
+    )
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)

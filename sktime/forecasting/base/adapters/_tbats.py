@@ -80,6 +80,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
         y, X = check_y_X(y, X)
         self._set_y_X(y, X)
         self._set_fh(fh)
@@ -117,3 +118,21 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             return y_pred, pred_int
         else:
             return y_pred
+
+    def get_fitted_params(self):
+        """Get fitted parameters
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        self.check_is_fitted()
+        fitted_params = {}
+        for name in self._get_fitted_param_names():
+            fitted_params[name] = getattr(self._forecaster, name, None)
+
+        return fitted_params
+
+    def _get_fitted_param_names(self):
+        """Get names of fitted parameters"""
+        return self._fitted_param_names

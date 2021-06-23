@@ -1,6 +1,13 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
+"""
+Auto-correlation transformations.
+
+Module :mod:`sktime.transformations.series` implements auto-correlation
+transformers.
+"""
+
 __author__ = ["Afzal Ansari"]
 __all__ = ["AutoCorrelationTransformer", "PartialAutoCorrelationTransformer"]
 
@@ -15,6 +22,15 @@ from sktime.utils.validation.series import check_series
 class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
     """
     Auto-correlation transformer.
+
+    Example
+    -------
+    >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = AutoCorrelationTransformer(n_lags=12)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}
@@ -35,6 +51,20 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
         super(AutoCorrelationTransformer, self).__init__()
 
     def transform(self, Z, X=None):
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
 
@@ -58,16 +88,25 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    n_lags : int
+    n_lags : int, optional (default=None)
          largest lag for which pacf is returned
-    method : str {'ywunbiased', 'ywmle', 'ols'}
+    method : str {'ywadjusted', 'ywmle', 'ols'}
          specifies which method for the calculations to use:
-        - yw or ywunbiased : yule walker with bias correction in denominator
+        - yw or ywadjusted : yule walker with bias correction in denominator
           for acovf. Default.
         - ywm or ywmle : yule walker without bias correction
         - ols - regression of time series on lags of it and on constant
         - ld or ldunbiased : Levinson-Durbin recursion with bias correction
         - ldb or ldbiased : Levinson-Durbin recursion without bias correction
+
+    Example
+    -------
+    >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = AutoCorrelationTransformer(n_lags=12)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}
@@ -75,18 +114,26 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
     def __init__(
         self,
         n_lags=None,
-        method="ywunbiased",
+        method="ywadjusted",
     ):
         self.n_lags = n_lags
         self.method = method
         super(PartialAutoCorrelationTransformer, self).__init__()
 
     def transform(self, Z, X=None):
-        """
-        pacf : 1d array
-            partial autocorrelations, nlags elements, including lag zero
-        confint : array, optional
-            Confidence intervals for the PACF. Returned if confint is not None.
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series
         """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
