@@ -287,6 +287,7 @@ VALID_ESTIMATOR_TAGS = (
     "handles-missing-data",
     "skip-inverse-transform",
     "requires-fh-in-fit",
+    "coerce-X-to-numpy",
 )
 
 # These methods should not change the state of the estimator, that is, they should
