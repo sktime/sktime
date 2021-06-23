@@ -16,7 +16,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.forecasting.fbprophet import Prophet
-from sktime.annotation.adapters import StreamAnnotatorPyOD
+from sktime.annotation.adapters import SeriesAnnotatorPyOD
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
@@ -279,7 +279,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
-    StreamAnnotatorPyOD: {"estimator": ANOMALY_DETECTOR},
+    SeriesAnnotatorPyOD: {"estimator": ANOMALY_DETECTOR},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
@@ -333,5 +333,5 @@ VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
     "transformer": BaseTransformer,
-    "panel-annotator": BasePanelAnnotator,
+    "series-annotator": BaseSeriesAnnotator,
 }
