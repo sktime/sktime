@@ -25,6 +25,8 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
 
+import pandas as pd
+
 from sktime.base import BaseEstimator
 
 
