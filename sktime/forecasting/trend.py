@@ -75,11 +75,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         self : returns an instance of self.
         """
 
-        if X is not None:
-            raise NotImplementedError(
-                "Support for exogenous variables is not yet implemented"
-            )
-
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
         if self.regressor is None:
