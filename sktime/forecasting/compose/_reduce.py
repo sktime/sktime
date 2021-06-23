@@ -149,38 +149,6 @@ class _Reducer(_BaseWindowForecaster):
         self.estimator = estimator
         self._cv = None
 
-    # def fit(self, y, X=None, fh=None):
-    #     """Fit to training data.
-
-    #     Parameters
-    #     ----------
-    #     y : pd.Series
-    #         Target time series to which to fit the forecaster.
-    #     X : pd.DataFrame, optional (default=None)
-    #         Exogenous variables are ignored
-    #     fh : int, list or np.array, optional (default=None)
-    #         The forecasters horizon with the steps ahead to to predict.
-
-    #     Returns
-    #     -------
-    #     self : Estimator
-    #         An fitted instance of self.
-    #     """
-    #     self._is_fitted = False
-
-    #     n_timepoints = len(y)
-    #     self._set_y_X(y, X)
-    #     self._set_fh(fh)
-
-    #     self.window_length_ = check_window_length(self.window_length, n_timepoints)
-
-    #     self._fit(y, X)
-    #     self._is_fitted = True
-    #     return self
-
-    # def _fit(self, y, X):
-    # raise NotImplementedError("abstract method")
-
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
         return (
