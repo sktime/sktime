@@ -16,6 +16,7 @@ class EnsembleForecaster(
     _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
 ):
     """Ensemble of forecasters
+
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
@@ -35,6 +36,7 @@ class EnsembleForecaster(
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
+
         Parameters
         ----------
         y : pd.Series
@@ -58,11 +60,13 @@ class EnsembleForecaster(
 
     def update(self, y, X=None, update_params=True):
         """Update fitted parameters
+
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
         update_params : bool, optional (default=True)
+
         Returns
         -------
         self : an instance of self
@@ -81,6 +85,7 @@ class EnsembleForecaster(
         X : pd.DataFrame
         return_pred_int : boolean, optional (default=False)
         alpha : fh : float, (default=DEFAULT_ALPHA)
+
         Returns
         -------
         y_pred : pd.Series
