@@ -48,10 +48,6 @@ Libraries
      - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
      - Scipy-based dynamic time warping
-   * - `GENDIS <https://github.com/IBCNServices/GENDIS>`_
-     - Shapelet discovery by genetic algorithms
-   * - `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_
-     - scikit-learn compatible wrapper around the GLM module in `statsmodels <https://github.com/statsmodels/statsmodels>`_
    * - `Featuretools <https://github.com/Featuretools/featuretools>`_
      - Time series feature extraction, with possible conditionality on other variables with a pandas compatible relational-database-like data container
    * - `fecon235 <https://github.com/rsvp/fecon235>`_
@@ -60,12 +56,20 @@ Libraries
      - financial function library
    * - `flint <https://github.com/twosigma/flint>`_
      - A Time Series Library for Apache Spark
+   * - `GENDIS <https://github.com/IBCNServices/GENDIS>`_
+     - Shapelet discovery by genetic algorithms
+   * - `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_
+     - scikit-learn compatible wrapper around the GLM module in `statsmodels <https://github.com/statsmodels/statsmodels>`_
    * - `gluon-ts <https://github.com/awslabs/gluon-ts>`_
      - Probabilistic forecasting and anomaly detection using deep learning by Amazon
+   * - `greykite <https://github.com/linkedin/greykite>`_
+     - A Time Series Library for rorecasting by LinkedIn which contains the interpretable "Silverkite" algorithm.
    * - `hctsa <https://github.com/benfulcher/hctsa>`_
      - Matlab based feature extraction which can be controlled from python
    * - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_
      - Hidden Markov Models with scikit-learn compatible API
+   * - `kats <https://github.com/facebookresearch/kats>`_
+     - A toolkit by Facebook for time series analysis, including detection, forecasting, feature extraction/embedding, multivariate analysis, etc.
    * - `khiva-python <https://github.com/shapelets/khiva-python>`_
      - A Time Series library with accelerated analytics on GPUS, it provides feature extraction and motif discovery among other functionalities.
    * - `lifelines <https://github.com/CamDavidsonPilon/lifelines>`_
