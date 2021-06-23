@@ -57,7 +57,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def fit_ensemble(self, y, X=None):
+    def _fit_ensemble(self, y, X=None):
         """Fits the ensemble by allowing forecasters to predict and
            compares to the actual parameters.
 
@@ -91,7 +91,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self._update_y_X(y, X)
 
         if len(y) >= 1 and self.ensemble_algorithm is not None:
-            self.fit_ensemble(y, X)
+            self._fit_ensemble(y, X)
 
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
