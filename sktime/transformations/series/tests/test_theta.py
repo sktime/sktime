@@ -18,8 +18,7 @@ def test_theta_0():
     y = load_airline()
     t = ThetaLinesTransformer(0)
     t.fit(y)
-    line = t.transform(y)
-    actual = line[:, 0]
+    actual = t.transform(y).flatten()
     x = np.arange(y.size) + 1
     lin_regress = linregress(x, y)
     expected = lin_regress.intercept + lin_regress.slope * x
@@ -32,15 +31,14 @@ def test_theta_1():
     y = load_airline()
     t = ThetaLinesTransformer(1)
     t.fit(y)
-    line = t.transform(y)
-    actual = line[:, 0]
+    actual = t.transform(y).flatten()
     np.testing.assert_array_equal(actual, y)
 
 
-@pytest.mark.parametrize("theta", [(0), (1, 1.5), (0.25, 0.5, 0.75, 1, 2)])
+@pytest.mark.parametrize("theta", [(1, 1.5), (0, 1, 2), (0.25, 0.5, 0.75, 1, 2)])
 def test_thetalines_shape(theta):
     y = load_airline()
     t = ThetaLinesTransformer(theta)
     t.fit(y)
     actual = t.transform(y)
-    assert np.shape(actual) == (actual.shape[0], len(theta))
+    assert actual.shape == (y.shape[0], len(theta))
