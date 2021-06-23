@@ -59,7 +59,7 @@ class _PredictionWeightedEnsembler:
         self.weights = self.weights * new_array
         self.weights /= np.sum(self.weights)
 
-    def update(self, y_pred, y_true):
+    def _update(self, y_pred, y_true):
         """Resets the weights over the estimators by passing previous observations
             to the weighting algorithm
 

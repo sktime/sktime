@@ -87,8 +87,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
 
         if len(y) >= 1 and self.ensemble_algorithm is not None:
             self._fit_ensemble(y, X)

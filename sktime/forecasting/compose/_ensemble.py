@@ -69,8 +69,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
+
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
