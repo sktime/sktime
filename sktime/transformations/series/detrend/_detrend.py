@@ -6,6 +6,7 @@ __all__ = ["Detrender"]
 __author__ = ["Markus Löning"]
 
 from sklearn.base import clone
+import pandas as pd
 
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import _SeriesToSeriesTransformer
@@ -59,7 +60,7 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {"transform-returns-same-time-index": True}
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster
@@ -82,11 +83,20 @@ class Detrender(_SeriesToSeriesTransformer):
         self : an instance of self
         """
         self._is_fitted = False
-        z = check_series(Z, enforce_univariate=True)
+        z = check_series(Z)
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
-        forecaster = clone(self.forecaster)
-        self.forecaster_ = forecaster.fit(z, X)
+
+        # multivariate
+        if isinstance(Z, pd.DataFrame):
+            self.forecaster_ = []
+            for col in Z:
+                forecaster = clone(self.forecaster)
+                self.forecaster_.append(forecaster.fit(Z[col], X))
+        # univariate
+        else:
+            forecaster = clone(self.forecaster)
+            self.forecaster_ = forecaster.fit(z, X)
         self._is_fitted = True
         return self
 
@@ -107,10 +117,19 @@ class Detrender(_SeriesToSeriesTransformer):
             De-trended series
         """
         self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        z = check_series(Z)
         fh = ForecastingHorizon(z.index, is_relative=False)
-        z_pred = self.forecaster_.predict(fh, X)
-        return z - z_pred
+
+        # multivariate
+        if isinstance(Z, pd.DataFrame):
+            for col, forecaster in enumerate(self.forecaster_):
+                z_pred = forecaster.predict(fh, X)
+                Z[col] = Z[col] - z_pred
+            return Z
+        # univariate
+        else:
+            z_pred = self.forecaster_.predict(fh, X)
+            return z - z_pred
 
     def inverse_transform(self, Z, X=None):
         """
@@ -129,10 +148,20 @@ class Detrender(_SeriesToSeriesTransformer):
             Series with the trend
         """
         self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        z = check_series(Z)
         fh = ForecastingHorizon(z.index, is_relative=False)
-        z_pred = self.forecaster_.predict(fh, X)
-        return z + z_pred
+
+        # multivariate
+        if isinstance(Z, pd.DataFrame):
+            for col, forecaster in enumerate(self.forecaster_):
+                z_pred = forecaster.predict(fh, X)
+                Z[col] = Z[col] + z_pred
+            return Z
+
+        # univariate
+        else:
+            z_pred = self.forecaster_.predict(fh, X)
+            return z + z_pred
 
     def update(self, Z, X=None, update_params=True):
         """
@@ -149,6 +178,12 @@ class Detrender(_SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-        z = check_series(Z, enforce_univariate=True, allow_empty=True)
-        self.forecaster_.update(z, X, update_params=update_params)
+        z = check_series(Z, allow_empty=True)
+        # multivariate
+        if isinstance(Z, pd.DataFrame):
+            for col, forecaster in enumerate(self.forecaster_):
+                forecaster.update(z[col], X, update_params=update_params)
+        # univariate
+        else:
+            self.forecaster_.update(z, X, update_params=update_params)
         return self
