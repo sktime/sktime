@@ -333,5 +333,5 @@ VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
     "transformer": BaseTransformer,
-    "stream-annotator": BaseSeriesAnnotator,
+    "panel-annotator": BasePanelAnnotator,
 }
