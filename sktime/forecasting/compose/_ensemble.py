@@ -79,6 +79,7 @@ class EnsembleForecaster(
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """return the predicted reduction
+
         Parameters
         ----------
         fh : int, list or np.array, optional (default=None)
