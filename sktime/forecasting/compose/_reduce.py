@@ -171,8 +171,6 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "handles-missing-data": False,  # can the estimator handle missing data?
-        "univariate-only": True,  # can the estimator deal with multivariate series?
     }
 
     def _transform(self, y, X=None):
@@ -266,8 +264,6 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "handles-missing-data": False,  # can the estimator handle missing data?
-        "univariate-only": True,  # can the estimator deal with multivariate series?
     }
 
     def _transform(self, y, X=None):
@@ -351,9 +347,7 @@ class _MultioutputReducer(_Reducer):
 class _RecursiveReducer(_Reducer):
     strategy = "recursive"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "handles-missing-data": False,  # can the estimator handle missing data?
-        "univariate-only": True,  # can the estimator deal with multivariate series?
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
     }
 
     def _transform(self, y, X=None):
@@ -452,8 +446,6 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "handles-missing-data": False,  # can the estimator handle missing data?
-        "univariate-only": True,  # can the estimator deal with multivariate series?
     }
 
     def _transform(self, y, X=None):
