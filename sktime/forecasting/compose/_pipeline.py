@@ -188,7 +188,7 @@ class TransformedTargetForecaster(
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters

@@ -59,8 +59,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-
-        self._set_y_X(y, X)
         if X is not None:
             raise NotImplementedError()
 
