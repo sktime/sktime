@@ -38,7 +38,7 @@ class SeriesAnnotatorPyOD(BaseSeriesAnnotator):
         if annotation_format not in ["sparse", "dense"]:
             raise ValueError('annotation_format must be "sparse" or "dense"')
 
-        if annotation_format not in ["indicator", "score"]:
+        if annotation_values not in ["indicator", "score"]:
             raise ValueError('annotation_format must be "indicator" or "score"')
 
         self.estimator = estimator  # pyod estimator
