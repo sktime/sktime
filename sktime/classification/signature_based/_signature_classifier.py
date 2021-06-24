@@ -16,19 +16,19 @@ from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
 )
 from sktime.transformations.panel.signature_based._signature_method import (
-    GeneralisedSignatureMethod,
+    SignatureTransformer,
 )
 
 
 class SignatureClassifier(BaseClassifier):
     """Classification module using signature-based features.
 
-    This simply initialises the GeneralisedSignatureMethod class which builds
+    This simply initialises the SignatureTransformer class which builds
     the feature extraction pipeline, then creates a new pipeline by
     appending a classifier after the feature extraction step.
 
-    The default parameters are set to best practice parameters found "A
-    Generalised Signature Method for Time-Series":
+    The default parameters are set to best practice parameters found in
+        "A Generalised Signature Method for Multivariate TimeSeries"
         [https://arxiv.org/pdf/2006.00873.pdf]
 
     Note that the final classifier used on the UEA datasets involved tuning
@@ -94,7 +94,7 @@ class SignatureClassifier(BaseClassifier):
         self.random_state = random_state
         np.random.seed(random_state)
 
-        self.signature_method = GeneralisedSignatureMethod(
+        self.signature_method = SignatureTransformer(
             augmentation_list,
             window_name,
             window_depth,

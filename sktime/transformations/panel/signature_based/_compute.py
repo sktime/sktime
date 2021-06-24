@@ -69,17 +69,11 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
             def transform(x):
                 return esig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
 
-            # def transform(x):
-            #     return iisignature.sig(x, self.depth).reshape(-1, 1)
         else:
 
             def transform(x):
                 return esig.stream2logsig(x, self.depth).reshape(1, -1)
 
-            # s = iisignature.prepare(data.shape[-1], self.depth)
-
-            # def transform(x):
-            #     return iisignature.logsig(x, s).reshape(1, -1)
         length = data.shape[1]
 
         # Compute signatures in each window returning the grouped structure

@@ -13,13 +13,18 @@ from sktime.utils.data_processing import from_nested_to_3d_numpy
 
 def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
     """Simple function for handling the sktime checks in signature modules.
+
     This decorator assumes that the input arguments to the function are either
     of the form:
         (self, data, labels)
     or
         (self, data).
-    If this is in sktime format data, it will check the data and labels are of
-    the correct form, and then
+
+    Signature classes require numpy format data with dimensions to be of the
+    form [batch, length channels]. This function performs the sktime checks,
+    converts to numpy, and then converts back to the original format of the
+    data.
+
     Args:
         check_fitted (bool): Set this to True to invoke sktimes `check_fitted`
             function. (For example when in a transform method).
@@ -30,7 +35,7 @@ def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
 
     def real_decorator(func):
         """Reusable decorator to handle the sktime checks and convert the data
-        to a torch Tensor.
+        to numpy.
         """
 
         @functools.wraps(func)

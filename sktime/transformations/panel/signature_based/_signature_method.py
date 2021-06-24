@@ -16,23 +16,28 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 _check_soft_dependencies("esig")
 
 
-class GeneralisedSignatureMethod(_PanelToTabularTransformer):
-    """The generalised signature method of feature extraction.
+class SignatureTransformer(_PanelToTabularTransformer):
+    """Transformation class from the signature method.
+
+    Follows the methodology laid out in the paper:
+        "A Generalised Signature Method for Multivariate Time Series"
+
     Parameters
     ----------
-    augmentation_list: list of tuple of strings, List of augmentations to be
-        applied before the signature transform is applied.
+    augmentation_list: tuple of strings, contains the augmentations to be
+        applied before application of the signature transform.
     window_name: str, The name of the window transform to apply.
     window_depth: int, The depth of the dyadic window. (Active only if
-        `window_name == 'dyadic']`.
+        `window_name == 'dyadic'`).
     window_length: int, The length of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding'].
+        only if `window_name in ['sliding, 'expanding']`.
     window_step: int, The step of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding'].
-    rescaling: str, The method of signature rescaling.
+        only if `window_name in ['sliding, 'expanding']`.
+    rescaling: str or None, The method of signature rescaling.
     sig_tfm: str, String to specify the type of signature transform. One of:
         ['signature', 'logsignature']).
     depth: int, Signature truncation depth.
+
     Attributes
     ----------
     signature_method: sklearn.Pipeline, A sklearn pipeline object that contains
@@ -50,7 +55,7 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
         sig_tfm="signature",
         depth=4,
     ):
-        super(GeneralisedSignatureMethod, self).__init__()
+        super(SignatureTransformer, self).__init__()
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -63,13 +68,13 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
         self.setup_feature_pipeline()
 
     def _assertions(self):
-        """ Some assertions to run on initialisation. """
-        assert not all([self.sig_tfm == "logsignature", self.rescaling == "post"]), (
-            "Cannot have post rescaling with the " "logsignature."
-        )
+        """Some assertions to run on initialisation."""
+        assert not all(
+            [self.sig_tfm == "logsignature", self.rescaling == "post"]
+        ), "Cannot have post rescaling with the logsignature."
 
     def setup_feature_pipeline(self):
-        """ Sets up the signature method as an sklearn pipeline. """
+        """Sets up the signature method as an sklearn pipeline."""
         augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
         transform_step = _WindowSignatureTransform(
             window_name=self.window_name,

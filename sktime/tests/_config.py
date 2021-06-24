@@ -72,6 +72,8 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelets import ContractedShapeletTransform
 from sktime.transformations.panel.shapelets import ShapeletTransform
+from sktime.transformations.panel.signature_based import SignatureTransformer
+from sktime.classification.signature_based import SignatureClassifier
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.transformations.panel.tsfresh import (
@@ -215,6 +217,16 @@ ESTIMATOR_TEST_PARAMS = {
         "max_shapelets_to_store_per_class": 1,
         "min_shapelet_length": 3,
         "max_shapelet_length": 4,
+    },
+    SignatureTransformer: {
+        "augmentation_list": ["addtime", "leadlag"],
+        "depth": [3],
+        "window": ["global"],
+    },
+    SignatureClassifier: {
+        "augmentation_list": ["addtime", "leadlag"],
+        "depth": [3],
+        "window": ["global"],
     },
     ROCKETClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 100},

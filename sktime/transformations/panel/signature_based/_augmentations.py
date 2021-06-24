@@ -2,38 +2,35 @@
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from collections.abc import Iterable
 
 
 def _make_augmentation_pipeline(aug_list):
-    """Buids an sklearn pipeline of augmentations from a list of strings.
+    """Buids an sklearn pipeline of augmentations from a tuple of strings.
+
     Parameters
     ----------
     aug_list: list of strings, A list of strings that determine the
         augmentations to apply, and in which order to apply them (the first
         string will be applied first). Possible augmentation strings are
         ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
+
     Returns
     -------
     sklearn.Pipeline
         The transforms, in order, as an sklearn pipeline.
+
     Examples
     --------
-        _make_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
-        # Returns
+        augementations = ('leadlag', 'ir', 'addtime')
+        _make_augmentation_pipeline(augmentations)
+        # Will return
         Pipeline([
             ('leadlag', LeadLag()),
             ('ir', InvisibilityReset()),
             ('addtime', AddTime())
         ])
     """
-    # Assertions
-    types = [tuple, list, None, str]
-    if aug_list is not None:
-        assert any(
-            [type(aug_list) == t for t in types]
-        ), "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
-    aug_list = [aug_list] if isinstance(aug_list, str) else aug_list
-
     # Dictionary of augmentations
     AUGMENTATIONS = {
         "leadlag": _LeadLag(),
@@ -43,6 +40,16 @@ def _make_augmentation_pipeline(aug_list):
         "basepoint": _BasePoint(),
     }
 
+    # Assertions, check we have an iterable with allowed strings
+    if aug_list is not None:
+        assert isinstance(
+            aug_list, Iterable
+        ), "aug_list must be an iterable, got {}".format(type(aug_list))
+    assert all(
+        [x in AUGMENTATIONS.keys() for x in aug_list]
+    ), "aug_list must only contain string elements from {}".format(AUGMENTATIONS.keys())
+
+    # Setup pipeline
     if aug_list is not None:
         pipeline = Pipeline([(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list])
     else:
@@ -53,6 +60,7 @@ def _make_augmentation_pipeline(aug_list):
 
 class _AddTime(_SeriesToSeriesTransformer):
     """Add time component to each path.
+
     For a path of shape [B, L, C] this adds a time channel to be placed at the
     first index. The time channel will be of length L and scaled to exist in
     [0, 1].
@@ -75,6 +83,7 @@ class _AddTime(_SeriesToSeriesTransformer):
 class _InvisibilityReset(_SeriesToSeriesTransformer):
     """Adds an 'invisibility-reset' dimension to the path. This adds
     sensitivity to translation.
+
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
 
@@ -103,9 +112,11 @@ class _InvisibilityReset(_SeriesToSeriesTransformer):
 
 class _LeadLag(_SeriesToSeriesTransformer):
     """Applies the lead-lag transformation to each path.
+
     We take the lead of an input stream, and augment it with the lag of the
     input stream. This enables us to capture the quadratic variation of the
     stream and is particularly useful for applications in finance.
+
     Used widely in signature literature, see for example:
         - https://arxiv.org/pdf/1603.03788.pdf
         - https://arxiv.org/pdf/1310.4054.pdf
@@ -132,7 +143,9 @@ class _LeadLag(_SeriesToSeriesTransformer):
 
 class _CumulativeSum(_SeriesToSeriesTransformer):
     """Cumulatively sums the values in the stream.
+
     Introduced in: https://arxiv.org/pdf/1603.03788.pdf
+
     Parameters
     ----------
     append_zero: bool
@@ -154,6 +167,7 @@ class _CumulativeSum(_SeriesToSeriesTransformer):
 
 class _BasePoint(_SeriesToSeriesTransformer):
     """Appends a zero starting vector to every path.
+
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
 
