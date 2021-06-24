@@ -5,7 +5,7 @@ import pytest
 from sktime.utils._testing.estimator_checks import _construct_instance, _make_args
 from sktime.utils import all_estimators
 
-ALL_ANNOTATORS = all_estimators(estimator_types="stream-annotator", return_names=False)
+ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names=False)
 
 
 @pytest.mark.parametrize("Estimator", ALL_ANNOTATORS)
