@@ -16,7 +16,11 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.forecasting.fbprophet import Prophet
+
 from sktime.base import BaseEstimator
+
+from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.annotation.adapters import SeriesAnnotatorPyOD
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
@@ -86,8 +90,6 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-
-from sktime.annotation.base import BaseSeriesAnnotator
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
