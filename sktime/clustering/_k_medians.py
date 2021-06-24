@@ -11,7 +11,9 @@ from sktime.clustering.base._typing import (
     InitAlgo,
     NumpyRandomState,
 )
-from sktime.clustering.partitioning._lloyds_partitioning import TimeSeriesLloydsPartitioning
+from sktime.clustering.partitioning._lloyds_partitioning import (
+    TimeSeriesLloydsPartitioning,
+)
 from sktime.clustering.partitioning._cluster_approximations import Medians
 
 
@@ -115,6 +117,9 @@ class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
             Single value that is determined to be the center of
             the series
         """
+        if self._metric is None:
+            self._check_params(cluster_values)
+
         medoid = Medians(cluster_values, self._metric)
         medoid_index = medoid.approximate()
         return cluster_values[medoid_index]

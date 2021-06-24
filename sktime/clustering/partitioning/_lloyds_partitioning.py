@@ -128,7 +128,7 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         """
         self._random_state = check_random_state(self.random_state)
         center_algo: BaseClusterCenterInitializer = self._init_algorithm(
-            X, self.n_clusters, random_state=self._random_state
+            X, self.n_clusters, self.calculate_new_centers, self._random_state
         )
         self._centers = center_algo.initialize_centers()
 
@@ -173,8 +173,13 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         Parameters
         ----------
         cluster_values: Numpy_Array
-            Array of values that are part of the same cluster
-            to calculate new centers from
+            Values to derive a center from (values in a cluster)
+
+        Returns
+        -------
+        Numpy_Array
+            Single value that is determined to be the center of
+            the series
         """
         raise NotImplementedError("abstract method")
 

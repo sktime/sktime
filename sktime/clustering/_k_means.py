@@ -17,7 +17,9 @@ from sktime.clustering.partitioning._averaging_metrics import (
     BarycenterAveraging,
     MeanAveraging,
 )
-from sktime.clustering.partitioning._lloyds_partitioning import TimeSeriesLloydsPartitioning
+from sktime.clustering.partitioning._lloyds_partitioning import (
+    TimeSeriesLloydsPartitioning,
+)
 
 
 class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
@@ -137,6 +139,9 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
             Single value that is determined to be the center of
             the series
         """
+        if self._metric is None:
+            self._check_params(cluster_values)
+
         average_algorithm = self._averaging_algorithm(
             cluster_values, self.averaging_algorithm_iterations
         )
