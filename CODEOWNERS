@@ -23,6 +23,7 @@ sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
 sktime/transformations/panel/signature_based/ @jambo6
 
+sktime/forecasting/base/ @fkiraly
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
 sktime/forecasting/fbprophet.py @aiwalter
