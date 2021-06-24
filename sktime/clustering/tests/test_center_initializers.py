@@ -6,7 +6,7 @@ from sktime.clustering.partitioning._center_initializers import (
     ForgyCenterInitializer,
     RandomCenterInitializer,
 )
-from sktime.clustering._k_medians import TimeSeriesKMedians
+from sktime.clustering._k_medoids import TimeSeriesKMedoids
 from sktime.clustering._k_means import TimeSeriesKMeans
 
 
@@ -26,7 +26,7 @@ def test_forgy_cluster_center_initializer():
 
 def test_random_cluster_center_initializer():
     n_clusters = 3
-    k_medians = TimeSeriesKMedians(n_clusters=n_clusters)
+    k_medians = TimeSeriesKMedoids(n_clusters=n_clusters)
     rng = np.random.RandomState(0)
     X = generate_univaritate_series(n=20, size=n_clusters, rng=rng, dtype=np.int64)
 

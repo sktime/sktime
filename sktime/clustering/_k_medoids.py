@@ -2,7 +2,7 @@
 """Time series K-medoids clusterer"""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["TimeSeriesKMedians"]
+__all__ = ["TimeSeriesKMedoids"]
 
 from sktime.clustering.base._typing import (
     MetricParameter,
@@ -14,11 +14,11 @@ from sktime.clustering.base._typing import (
 from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
-from sktime.clustering.partitioning._cluster_approximations import Medians
+from sktime.clustering.partitioning._cluster_approximations import Medoids
 
 
-class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
-    """Time Series K-Medians Clusterer
+class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
+    """Time Series K-Medoids Clusterer
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
         metric: MetricParameter = "dtw",
         random_state: NumpyRandomState = None,
     ):
-        super(TimeSeriesKMedians, self).__init__(
+        super(TimeSeriesKMedoids, self).__init__(
             n_clusters=n_clusters,
             init_algorithm=init_algorithm,
             max_iter=max_iter,
@@ -81,7 +81,7 @@ class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
             Fitted estimator
         """
 
-        return super(TimeSeriesKMedians, self).fit(X)
+        return super(TimeSeriesKMedoids, self).fit(X)
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
@@ -100,7 +100,7 @@ class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
             Index of the cluster each sample belongs to
         """
 
-        return super(TimeSeriesKMedians, self).predict(X)
+        return super(TimeSeriesKMedoids, self).predict(X)
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
         """
@@ -120,6 +120,6 @@ class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
         if self._metric is None:
             self._check_params(cluster_values)
 
-        medoid = Medians(cluster_values, self._metric)
+        medoid = Medoids(cluster_values, self._metric)
         medoid_index = medoid.approximate()
         return cluster_values[medoid_index]
