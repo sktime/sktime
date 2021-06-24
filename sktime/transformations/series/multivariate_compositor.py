@@ -81,6 +81,6 @@ class MultivariateCompositor(_SeriesToSeriesTransformer):
         apply any other function that is part of the transformer
         """
         for colname in self.columns:
-            self.transformers_[colname].function(**kwargs)
+            function(self.transformers_[colname], **kwargs)
 
         return self
