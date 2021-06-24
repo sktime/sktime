@@ -299,6 +299,16 @@ class BaseGridSearch(BaseForecaster):
         self._is_fitted = True
         return self
 
+    @property
+    def cutoff(self):
+        """The time point at which to make forecasts
+
+        Returns
+        -------
+        cutoff : pd.Period, pd.Timestamp, int
+        """
+        return self.best_forecaster_.cutoff
+
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """
