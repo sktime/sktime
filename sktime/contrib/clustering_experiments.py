@@ -13,7 +13,7 @@ import sklearn.utils
 
 from sktime.clustering import (
     TimeSeriesKMeans,
-    TimeSeriesKMedoids,
+    TimeSeriesKMedians,
 )
 
 
@@ -62,7 +62,7 @@ def set_clusterer(cls, resampleId=None):
             random_state=resampleId,
         )
     if name == "kmedoids" or name == "k-medoids":
-        return TimeSeriesKMedoids(
+        return TimeSeriesKMedians(
             n_clusters=5,
             max_iter=50,
             averaging_algorithm="mean",

@@ -2,7 +2,7 @@
 """Time Series K-Partition."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["TimeSeriesKPartition"]
+__all__ = ["TimeSeriesLloydsPartitioning"]
 
 from typing import List
 import numpy as np
@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.metrics.pairwise import (
     pairwise_distances_argmin_min,
 )
+from sklearn.utils import check_random_state
 from sktime.clustering.base._typing import (
     MetricParameter,
     MetricFunctionDict,
@@ -40,8 +41,8 @@ from sktime.utils.clustering_utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
 
 
-class TimeSeriesKPartition(BaseCluster, ClusterMixin):
-    """Time Series K Partition Clusterer
+class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
+    """Time Series Lloyds partitioning algorithm
 
     Parameters
     ----------
@@ -94,9 +95,9 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         max_iter: int = 300,
         verbose: bool = False,
         metric: MetricParameter = "dtw",
-        random_state: NumpyRandomState = 1,
+        random_state: NumpyRandomState = None,
     ):
-        super(TimeSeriesKPartition, self).__init__()
+        super(TimeSeriesLloydsPartitioning, self).__init__()
 
         self.n_clusters = n_clusters
         self.max_iter = max_iter
@@ -125,9 +126,7 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
         self
             Fitted estimator
         """
-        self._random_state = self.random_state
-        if isinstance(self.random_state, int):
-            self._random_state = np.random.RandomState(self.random_state)
+        self._random_state = check_random_state(self.random_state)
         center_algo: BaseClusterCenterInitializer = self._init_algorithm(
             X, self.n_clusters, random_state=self._random_state
         )
@@ -139,7 +138,7 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
     def _predict(self, X: NumpyArray) -> NumpyArray:
         """
         Method used to perform a prediction from the trained
-        time series k partition clustering algorithm
+        model
 
         Parameters
         ----------
@@ -189,14 +188,14 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
             Dataset to be validate parameters against
         """
         if isinstance(self.init_algorithm, str):
-            self._init_algorithm = TimeSeriesKPartition._init_algorithms[
+            self._init_algorithm = TimeSeriesLloydsPartitioning._init_algorithms[
                 self.init_algorithm
             ]
 
         if isinstance(self.metric, str):
-            self._metric = TimeSeriesKPartition._metric_dict[self.metric]
+            self._metric = TimeSeriesLloydsPartitioning._metric_dict[self.metric]
 
-        super(TimeSeriesKPartition, self)._check_params(X)
+        super(TimeSeriesLloydsPartitioning, self)._check_params(X)
 
     def __cluster_data(self, X: NumpyArray) -> List[List[int]]:
         cluster_indexes = []
@@ -216,7 +215,7 @@ class TimeSeriesKPartition(BaseCluster, ClusterMixin):
     def __update_centers(self, data: NumpyArray):
         cluster_indexes = self.__cluster_data(data)
 
-        cluster_values = TimeSeriesKPartition.get_cluster_values(
+        cluster_values = TimeSeriesLloydsPartitioning.get_cluster_values(
             cluster_indexes, data, self.n_clusters
         )
 

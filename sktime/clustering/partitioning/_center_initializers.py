@@ -5,6 +5,7 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
 
 import numpy as np
+from sklearn.utils import check_random_state
 
 from sktime.clustering.base.base import BaseClusterCenterInitializer
 from sktime.clustering.base._typing import NumpyArray, NumpyRandomState
@@ -27,10 +28,10 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
     """
 
     def __init__(
-        self,
-        data_set: NumpyArray,
-        n_centers: int,
-        random_state: NumpyRandomState = None,
+            self,
+            data_set: NumpyArray,
+            n_centers: int,
+            random_state: NumpyRandomState = None,
     ):
         super(ForgyCenterInitializer, self).__init__(data_set, n_centers, random_state)
 
@@ -44,14 +45,11 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
         Numpy_Array
             numpy array containing the centers
         """
-        if self.random_state is None:
-            self.random_state = np.random.RandomState()
+        random_state = check_random_state(self.random_state)
         return self.data_set[
-            self.random_state.choice(
-                self.data_set.shape[0], self.n_centers, replace=False
-            ),
-            :,
-        ]
+               random_state.choice(
+                   self.data_set.shape[0], self.n_centers, replace=False
+               ), :, ]
 
 
 class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
@@ -82,9 +80,10 @@ class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
 
 
 class RandomCenterInitializer(BaseClusterCenterInitializer):
-    """Random Center Initializer that is used to create n
-    centers from a set of series using the random center
-    initializer algorithm
+    """Random Center Initializer used to create n centers
+    from randomly assigning each time series in the dataset
+    to a random cluster and then taking the approximation
+    value
 
     Parameters
     ----------
@@ -94,18 +93,30 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
     n_centers: int
         Number of centers to be created
 
+    random_state: NumpyRandomState, default = None
+        Generator used to initialise the centers.
     """
 
-    def __init__(self, data_set: NumpyArray, n_centers: int):
-        super(RandomCenterInitializer, self).__init__(data_set, n_centers)
+    def __init__(
+            self,
+            data_set: NumpyArray,
+            n_centers: int,
+            random_state: NumpyRandomState = None,
+    ):
+        super(ForgyCenterInitializer, self).__init__(data_set, n_centers, random_state)
 
     def initialize_centers(self) -> NumpyArray:
         """
+        Method called to initialize centers using Forgys
+        technique
 
         Returns
         -------
         Numpy_Array
             numpy array containing the centers
-
         """
-        pass
+        random_state = check_random_state(self.random_state)
+        return self.data_set[
+               random_state.choice(
+                   self.data_set.shape[0], self.n_centers, replace=False
+               ), :, ]

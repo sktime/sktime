@@ -17,10 +17,10 @@ from sktime.clustering.partitioning._averaging_metrics import (
     BarycenterAveraging,
     MeanAveraging,
 )
-from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
+from sktime.clustering.partitioning._lloyds_partitioning import TimeSeriesLloydsPartitioning
 
 
-class TimeSeriesKMeans(TimeSeriesKPartition):
+class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
     """Time Series K-Means Clusterer
 
     Parameters
@@ -73,7 +73,7 @@ class TimeSeriesKMeans(TimeSeriesKPartition):
         metric: MetricParameter = "dtw",
         averaging_algorithm: AveragingAlgo = "mean",
         averaging_algorithm_iterations: int = 10,
-        random_state: NumpyRandomState = 1,
+        random_state: NumpyRandomState = None,
     ):
         super(TimeSeriesKMeans, self).__init__(
             n_clusters=n_clusters,

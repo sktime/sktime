@@ -4,7 +4,7 @@ import numpy as np
 
 from sktime.clustering import (
     TimeSeriesKMeans,
-    TimeSeriesKMedoids,
+    TimeSeriesKMedians,
 )
 from sktime.datasets import load_arrow_head
 
@@ -19,7 +19,7 @@ def form_cluster_list(clusters, n) -> np.array:
 
 if __name__ == "__main__":
     clusterer1 = TimeSeriesKMeans(n_clusters=5, max_iter=50, averaging_algorithm="mean")
-    clusterer2 = TimeSeriesKMedoids()
+    clusterer2 = TimeSeriesKMedians()
     X, y = load_arrow_head(return_X_y=True)
     clusterer1.fit(X)
     c = clusterer1.predict(X)

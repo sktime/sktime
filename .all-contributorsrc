@@ -10,7 +10,7 @@
   "contributors": [
     {
       "login": "fkiraly",
-      "name": "fkiraly",
+      "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
@@ -19,15 +19,16 @@
         "doc",
         "design",
         "eventOrganizing",
+        "example",
         "financial",
         "fundingFinding",
         "ideas",
         "mentoring",
         "projectManagement",
         "question",
-        "research",
         "review",
-        "talk"
+        "talk",
+        "tutorial"
       ]
     },
     {
@@ -1012,7 +1013,7 @@
       "profile": "https://github.com/ckastner",
       "contributions": [
         "code",
-        "bug",
+        "bug"
       ]
     },
     {
@@ -1021,10 +1022,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/160835?s=80&v=4",
       "profile": "https://github.com/tombh",
       "contributions": [
-        "bug",
+        "bug"
       ]
     },
     {
+<<<<<<< HEAD
       "login": "chrisholder",
       "name": "Christopher Holder",
       "avatar_url": "https://avatars.githubusercontent.com/u/4674372?s=400&u=159e0ee961a290e3a0b9d20434d98439ade6adbc&v=4",
@@ -1033,6 +1035,34 @@
         "clustering"
       ]
     },
+=======
+      "login": "julramos",
+      "name": "Juliana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19613567?v=4",
+      "profile": "https://www.linkedin.com/in/julianarn/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "SveaMeyer13",
+      "name": "Svea Marie Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46671894?v=4",
+      "profile": "https://github.com/SveaMeyer13",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "thayeylolu",
+      "name": "Taiwo Owoseni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13348874?v=4",
+      "profile": "https://thayeylolu.github.io/portfolio/",
+      "contributions": [
+        "code"
+      ]
+    }
+>>>>>>> upstream/main
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
