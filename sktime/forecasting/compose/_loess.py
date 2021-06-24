@@ -46,11 +46,12 @@ class STLForecaster(TransformedTargetForecaster):
     """
 
     _tags = {"univariate-only": True}
-    _required_parameters = ["forecaster", "degree", "sp"]
+    _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster=None, degree=1, sp=1):
         if forecaster is None:
             forecaster = NaiveForecaster()
+
         self.forecaster = forecaster
         self.sp = sp
         self.degree = degree
