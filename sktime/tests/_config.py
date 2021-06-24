@@ -219,12 +219,12 @@ ESTIMATOR_TEST_PARAMS = {
         "max_shapelet_length": 4,
     },
     SignatureTransformer: {
-        "augmentation_list": ["addtime", "leadlag"],
+        "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
         "window_name": "global",
     },
     SignatureClassifier: {
-        "augmentation_list": ("addtime", "leadlag"),
+        "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
         "window_name": "global",
     },
