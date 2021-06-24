@@ -1,0 +1,26 @@
+The problem is to detect whether a persons eyes are open or shut
+based on a 1 second reading of an EEG. This is a reformulation of
+the data on the UCI archive
+
+https://archive.ics.uci.edu/ml/machine-learning-databases/00264/
+
+original paper is here
+http://suendermann.com/su/pdf/aihls2013.pdf
+The data is recorded on
+a single patient for 117 seconds with a 14 channel EEG at 128 Hz.
+The original formulation treated each observation (1/28th of a
+second) as a case, and there were biases in the original
+experimentation See
+https://machinelearningmastery.com/how-to-predict-whether-eyes-are-open-or-closed-using-brain-waves/
+for a good discussion.
+
+We have reformulated it as MTSC. We remove obvious outliers
+(reading less than 3000 or more than 5000), segment the data into 1
+second interval and retain only the intervals where the eyes are
+either open (class 0) or shut (class 1). This gives a 14 dimension
+MTSC problem with 128 observations per dimension. There are 54
+class 0 and 44 class 1 (we have removed the 19 cases where the eyes
+were both open and shut).
+
+We created a default train test split, where the test has the last
+21 observations of each class

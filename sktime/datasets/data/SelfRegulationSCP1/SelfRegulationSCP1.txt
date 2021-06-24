@@ -1,0 +1,44 @@
+SelfRegulationSCP1.
+
+from 
+http://bbci.de/competition/ii/tuebingen_desc_i.html
+
+Data set Ia: Self-regulation of Slow Cortical Potentials
+
+Datasets provided by University of Tuebingen. 
+Correspondence to Thilo Hinterberger <thilo.Hinterberger@uni-tuebingen.de> 
+ 
+Description of Experiments:
+The datasets were taken from a healthy subject. 
+The subject was asked to move a cursor up and down on a computer screen, while his cortical potentials were taken. During the recording, the subject received visual feedback of his slow cortical potentials (Cz-Mastoids).  Cortical positivity lead to a downward movement of the cursor on the screen.  Cortical negativity lead to an upward movement of the cursor.  Each trial lasted 6s. 
+During every trial, the task was visually presented by a highlighted goal at either the top or bottom of the screen to indicate negativity or positivity from second 0.5 until the end of the trial. The visual feedback was presented from second 2 to second 5.5. Only this 3.5 second interval of every trial is provided for training and testing. The sampling rate of 256 Hz and the recording length of 3.5s results in 896 samples per channel for every trial.
+Trial structure overview: 
+Duration: 6 s, no inter trial intervals 
+Task presentation: from 0.5 s to 6.0 s 
+Feedback period: from 2.0 s to 5.5 s 
+ 
+
+Data:
+Amplifier: PsyLab EEG8 
+A/D-converter: Computer Boards PCIM-DAS1602/16 bit 
+Amplitude range: +/-1000 µV 
+Sampling rate: 256 S/s 
+EEG data was taken from the following positions: 
+Channel 1: A1-Cz (10/20 system) (A1 = left mastoid) 
+Channel 2: A2-Cz 
+Channel 3: 2 cm frontal of C3 
+Channel 4: 2 cm parietal of C3 
+Channel 5: 2 cm frontal of C4 
+Channel 6: 2 cm parietal of C4 
+All values are in µVolt. 
+ 
+The train data consists of 268 trials recorded on two different days and mixed randomly. 168 of the overall 268 trials origin from day 1, the remaining 100 trials from day 2. 
+The data is derived from the two train files Traindata_0.txt and Traindata_1.txt. 
+Each instance has six dimensions (EEG channels above) of length 896. Class labels are negativity or positivity. There are 293 test data, the labels of which were released after the competition. 
+Results are here
+http://bbci.de/competition/ii/results/index.html
+best has an error rate of 11.3% on the test data (presumably 33 incorrect). 
+Reference:
+Birbaumer, N., Flor, H., Ghanayim, N., Hinterberger, T., Iverson, I., Taub, E., Kotchoubey, B., Kübler, A., & Perelmouter, J, A Brain-Controlled Spelling Device for the Completely Paralyzed, Nature, 398, 297-298.
+
+ 
