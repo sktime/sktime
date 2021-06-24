@@ -7,6 +7,7 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 
+from pyod.models.knn import KNN
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -125,6 +126,7 @@ TRANSFORMERS = [
     ),
 ]
 REGRESSOR = LinearRegression()
+ANOMALY_DETECTOR = KNN()
 TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
@@ -276,6 +278,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    SeriesAnnotatorPyOD: {"estimator": ANOMALY_DETECTOR},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
