@@ -220,13 +220,13 @@ ESTIMATOR_TEST_PARAMS = {
     },
     SignatureTransformer: {
         "augmentation_list": ["addtime", "leadlag"],
-        "depth": [3],
-        "window_name": ["global"],
+        "depth": 3,
+        "window_name": "global",
     },
     SignatureClassifier: {
-        "augmentation_list": ["addtime", "leadlag"],
-        "depth": [3],
-        "window_name": ["global"],
+        "augmentation_list": ("addtime", "leadlag"),
+        "depth": 3,
+        "window_name": "global",
     },
     ROCKETClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 100},
