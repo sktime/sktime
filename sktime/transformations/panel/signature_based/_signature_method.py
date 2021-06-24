@@ -10,9 +10,6 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-
 
 
 class SignatureTransformer(_PanelToTabularTransformer):
