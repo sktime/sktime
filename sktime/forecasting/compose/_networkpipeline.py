@@ -185,7 +185,49 @@ class NetworkPipelineForecaster(
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if X is not None:
             self._X = X
+        # iterate in normal order
+        for name, est, arguments in self._iter():
+            processed_arguments = {}
+            # get fitted estimator
+            est = self._fitted_estimators[name]
+            if "predict" in arguments and arguments["predict"] is None:
+                # this step must be skipped
+                continue
+            elif "predict" in arguments:
+                # y is not used when the steps are executed in normal order.
+                if "y" in arguments["predict"]:
+                    arguments["predict"].pop("y", None)
+                processed_arguments = self._process_arguments(arguments["predict"])
+            else:
+                processed_arguments = self._process_arguments(arguments)
+
+            # if estimator has a `transform()` method, it is a transformer
+            if hasattr(est, "transform"):
+                if "X" not in arguments["predict"]:
+                    # process only exogenous variables, skip `y`
+                    continue
+                self._step_results[name] = est.transform(**processed_arguments)
+            # if estimator has a `predict()` method, it is a forecaster
+
+            if hasattr(est, "predict"):
+
+                fitted_estimator = self._fitted_estimators[name]
+                pred = fitted_estimator.predict(
+                    **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
+                )
+                # pred.index.freq = self._y.index.freq
+                self._step_results[name] = pred
+
+        # iterate in reverse order
+        i = 0  # used for skipping the first estimator when iterating in
+        # reverse order, i.e.
+        # the last estimator if iterating in normal order
         for name, est, arguments in self._iter(reverse=True):
+            if i == 0:
+                # skips the first step, i.e. the last step
+                # when iterating in reverse order
+                continue
+            i += 1
             # Iterates through the steps in the pipeline
 
             processed_arguments = {}
@@ -199,14 +241,25 @@ class NetworkPipelineForecaster(
             if "predict" in arguments and arguments["predict"] is None:
                 # this step must be skipped
                 continue
-            elif "predict" in arguments:
-                processed_arguments = self._process_arguments(arguments["predict"])
+            if (
+                ("predict" in arguments)
+                and ("X" in arguments["predict"])
+                and (len(arguments["predict"]) == 1)
+            ):
+                # not inverse transform steps that invovle only exogenous variables
+                continue
             else:
-                processed_arguments = self._process_arguments(arguments)
-            # if estimator has a `transform()` method it is a transformer
-            if hasattr(est, "transform"):
+                # drop X for inverse transform
+                if "X" in arguments["predict"]:
+                    arguments["predict"].pop("X", None)
+                # process arguments of dictionary without `X` argument
+                processed_arguments = self._process_arguments(arguments["predict"])
 
-                self._step_results[name] = est.transform(**processed_arguments)
+            # if estimator has a `transform()` method it is a transformer
+            if hasattr(est, "inverse_transform"):
+                if "y" not in processed_arguments["predict"]:
+                    continue
+                self._step_results[name] = est.inverse_transform(**processed_arguments)
             # if estimator has a `predict()` method it is a forecaster
 
             if hasattr(est, "predict"):
@@ -246,6 +299,7 @@ class NetworkPipelineForecaster(
             # estimator in self.steps_ is not fitted.
             # use fitted estimator in self._fitted_estimators
             est = self._fitted_estimators[name]
+
             if "update" in arguments and arguments["update"] is None:
                 # this step must be skipped
                 continue
