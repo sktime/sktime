@@ -123,8 +123,14 @@ class Detrender(_SeriesToSeriesTransformer):
         # multivariate
         if isinstance(z, pd.DataFrame):
             # check if all columns are known
-            if not all(k in self.forecaster_ for k in z.columns):
-                raise KeyError("not all columns are known")
+            Z_fit_keys = set(self.forecaster_.keys())
+            Z_new_keys = set(z.columns)
+            difference = Z_new_keys.difference(Z_fit_keys)
+            if len(difference) != 0:
+                raise ValueError(
+                    "Z contains columns that have not been "
+                    "seen in fit: " + str(difference)
+                )
             for colname in z.columns:
                 z_pred = self.forecaster_[colname].predict(fh, X)
                 z[colname] = z[colname] - z_pred
@@ -157,8 +163,14 @@ class Detrender(_SeriesToSeriesTransformer):
         # multivariate
         if isinstance(z, pd.DataFrame):
             # check if all columns are known
-            if not all(k in self.forecaster_ for k in z.columns):
-                raise KeyError("not all columns are known")
+            Z_fit_keys = set(self.forecaster_.keys())
+            Z_new_keys = set(z.columns)
+            difference = Z_new_keys.difference(Z_fit_keys)
+            if len(difference) != 0:
+                raise ValueError(
+                    "Z contains columns that have not been "
+                    "seen in fit: " + difference
+                )
             for colname in z.columns:
                 z_pred = self.forecaster_[colname].predict(fh, X)
                 z[colname] = z[colname] + z_pred
@@ -187,8 +199,14 @@ class Detrender(_SeriesToSeriesTransformer):
         # multivariate
         if isinstance(z, pd.DataFrame):
             # check if all columns are known
-            if not all(k in self.forecaster_ for k in z.columns):
-                raise KeyError("Not all columns are known")
+            Z_fit_keys = set(self.forecaster_.keys())
+            Z_new_keys = set(z.columns)
+            difference = Z_new_keys.difference(Z_fit_keys)
+            if len(difference) != 0:
+                raise ValueError(
+                    "Z contains columns that have not been "
+                    "seen in fit: " + str(difference)
+                )
             for colname in z.columns:
                 self.forecaster_[colname].update(
                     z[colname], X, update_params=update_params
