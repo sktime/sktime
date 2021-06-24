@@ -122,7 +122,7 @@ class SignatureClassifier(BaseClassifier):
     @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
         # Join the classifier onto the signature method pipeline
-        self.setup_classification_pipeline()
+        self._setup_classification_pipeline()
 
         # Fit the pre-initialised classification pipeline
         self.pipeline.fit(data, labels)
