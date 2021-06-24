@@ -4,7 +4,6 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
 
-import numpy as np
 from sklearn.utils import check_random_state
 
 from sktime.clustering.base.base import BaseClusterCenterInitializer
@@ -28,10 +27,10 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
     """
 
     def __init__(
-            self,
-            data_set: NumpyArray,
-            n_centers: int,
-            random_state: NumpyRandomState = None,
+        self,
+        data_set: NumpyArray,
+        n_centers: int,
+        random_state: NumpyRandomState = None,
     ):
         super(ForgyCenterInitializer, self).__init__(data_set, n_centers, random_state)
 
@@ -47,9 +46,9 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
         """
         random_state = check_random_state(self.random_state)
         return self.data_set[
-               random_state.choice(
-                   self.data_set.shape[0], self.n_centers, replace=False
-               ), :, ]
+            random_state.choice(self.data_set.shape[0], self.n_centers, replace=False),
+            :,
+        ]
 
 
 class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
@@ -98,10 +97,10 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
     """
 
     def __init__(
-            self,
-            data_set: NumpyArray,
-            n_centers: int,
-            random_state: NumpyRandomState = None,
+        self,
+        data_set: NumpyArray,
+        n_centers: int,
+        random_state: NumpyRandomState = None,
     ):
         super(ForgyCenterInitializer, self).__init__(data_set, n_centers, random_state)
 
@@ -117,6 +116,6 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
         """
         random_state = check_random_state(self.random_state)
         return self.data_set[
-               random_state.choice(
-                   self.data_set.shape[0], self.n_centers, replace=False
-               ), :, ]
+            random_state.choice(self.data_set.shape[0], self.n_centers, replace=False),
+            :,
+        ]
