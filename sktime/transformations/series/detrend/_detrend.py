@@ -88,11 +88,11 @@ class Detrender(_SeriesToSeriesTransformer):
             self.forecaster = PolynomialTrendForecaster(degree=1)
 
         # multivariate
-        if isinstance(Z, pd.DataFrame):
+        if isinstance(z, pd.DataFrame):
             self.forecaster_ = []
-            for col in Z:
+            for col in z:
                 forecaster = clone(self.forecaster)
-                self.forecaster_.append(forecaster.fit(Z[col], X))
+                self.forecaster_.append(forecaster.fit(z[col], X))
         # univariate
         else:
             forecaster = clone(self.forecaster)
@@ -121,11 +121,11 @@ class Detrender(_SeriesToSeriesTransformer):
         fh = ForecastingHorizon(z.index, is_relative=False)
 
         # multivariate
-        if isinstance(Z, pd.DataFrame):
+        if isinstance(z, pd.DataFrame):
             for col, forecaster in enumerate(self.forecaster_):
                 z_pred = forecaster.predict(fh, X)
-                Z[col] = Z[col] - z_pred
-            return Z
+                z[col] = z[col] - z_pred
+            return z
         # univariate
         else:
             z_pred = self.forecaster_.predict(fh, X)
@@ -152,10 +152,10 @@ class Detrender(_SeriesToSeriesTransformer):
         fh = ForecastingHorizon(z.index, is_relative=False)
 
         # multivariate
-        if isinstance(Z, pd.DataFrame):
+        if isinstance(z, pd.DataFrame):
             for col, forecaster in enumerate(self.forecaster_):
                 z_pred = forecaster.predict(fh, X)
-                Z[col] = Z[col] + z_pred
+                z[col] = z[col] + z_pred
             return Z
 
         # univariate
@@ -180,7 +180,7 @@ class Detrender(_SeriesToSeriesTransformer):
         """
         z = check_series(Z, allow_empty=True)
         # multivariate
-        if isinstance(Z, pd.DataFrame):
+        if isinstance(z, pd.DataFrame):
             for col, forecaster in enumerate(self.forecaster_):
                 forecaster.update(z[col], X, update_params=update_params)
         # univariate
