@@ -57,3 +57,18 @@ def test_k_means():
 
     # Need to add seeding to dba so this works
     assert clusters
+
+    clusters, _ = run_clustering_experiment(
+        TimeSeriesKMeans(
+            n_clusters=5,
+            max_iter=5,
+            init_algorithm="random",
+            averaging_algorithm="dba",
+            averaging_algorithm_iterations=2,
+            random_state=rng,
+        ),
+        X_train,
+        X_test,
+    )
+
+    assert np.array_equal(np.array([1, 4, 3, 3, 4, 4, 1, 1, 1, 4]), clusters)

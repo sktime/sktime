@@ -36,6 +36,7 @@ from sktime.distances.elastic_cython import (
 from sktime.clustering.base.base import BaseClusterCenterInitializer
 from sktime.clustering.partitioning._center_initializers import (
     ForgyCenterInitializer,
+    RandomCenterInitializer,
 )
 from sktime.utils.clustering_utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
@@ -86,6 +87,7 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
     # "k_means_plus_plus": KMeansPlusPlusCenterInitializer,
     _init_algorithms: InitAlgoDict = {
         "forgy": ForgyCenterInitializer,
+        "random": RandomCenterInitializer,
     }
 
     def __init__(
