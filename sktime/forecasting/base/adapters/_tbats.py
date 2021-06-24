@@ -8,15 +8,19 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_y_X
 
 
-class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms"""
+
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(
         self,
@@ -64,7 +68,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             context=self.context,
         )
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -80,18 +84,33 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
-        y, X = check_y_X(y, X)
-        self._set_y_X(y, X)
-        self._set_fh(fh)
 
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
 
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         fh = fh.to_relative(cutoff=self.cutoff)
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):

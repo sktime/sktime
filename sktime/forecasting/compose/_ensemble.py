@@ -9,12 +9,9 @@ import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
 
-class EnsembleForecaster(
-    _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
-):
+class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters
 
     Parameters
@@ -29,12 +26,17 @@ class EnsembleForecaster(
     """
 
     _required_parameters = ["forecasters"]
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -49,16 +51,12 @@ class EnsembleForecaster(
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
 
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y, X, fh)
-        self._is_fitted = True
         return self
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
@@ -71,8 +69,7 @@ class EnsembleForecaster(
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
+
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self

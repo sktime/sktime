@@ -13,7 +13,6 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_y_X
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -99,6 +98,11 @@ class ThetaForecaster(ExponentialSmoothing):
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
 
@@ -111,7 +115,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.se_ = None
         super(ThetaForecaster, self).__init__(initial_level=initial_level, sp=sp)
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -126,7 +130,7 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
-        y, _ = check_y_X(y, X)
+
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
             warn("`sp` is ignored when `deseasonalise`=False")
@@ -138,12 +142,11 @@ class ThetaForecaster(ExponentialSmoothing):
         self.initialization_method = "known" if self.initial_level else "estimated"
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
-        super(ThetaForecaster, self).fit(y, fh=fh)
+        super(ThetaForecaster, self)._fit(y, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute trend
         self.trend_ = self._compute_trend(y)
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -223,8 +226,8 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return errors
 
-    def update(self, y, X=None, update_params=True):
-        super(ThetaForecaster, self).update(
+    def _update(self, y, X=None, update_params=True):
+        super(ThetaForecaster, self)._update(
             y, X, update_params=False
         )  # use custom update_params routine
         if update_params:
