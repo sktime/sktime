@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
-DEFAULT_SMOOTHING = 0.1
-DEFAULT_ALPHA = 0.05
-
-
-class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class Croston(_OptionalForecastingHorizonMixin, BaseForecaster):
     """Croston's Forecasting Method.
 
     This was designed for forecasting intermittent demand.
@@ -37,13 +34,13 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         Otext book by Rob J Hyndman and George Athanasopoulos
     """
 
-    def __init__(self, smoothing=DEFAULT_SMOOTHING):
+    def __init__(self, smoothing=0.1):
         # hyperparameter
         self.smoothing = smoothing
-        self.f = None
+        self._f = None
         super(Croston, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -62,9 +59,6 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             raise NotImplementedError(
                 "Support for exogenous variables is not yet implemented"
             )
-        self._set_y_X(y, X)
-        self._set_fh(fh)
-        self._is_fitted = True
 
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
@@ -92,11 +86,11 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 a[t + 1] = a[t]
                 f[t + 1] = f[t]
                 p += 1
-        self.f = f
+        self._f = f
 
         return self
 
-    def predict(
+    def _predict(
         self,
         fh=None,
         X=None,
@@ -119,13 +113,11 @@ class Croston(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         if return_pred_int or X is not None:
             raise NotImplementedError()
 
-        self.check_is_fitted()
-        self._set_fh(fh)
         len_fh = len(self._fh.to_numpy())
-        f = self.f
+        f = self._f
 
         # Predicting future forecasts:
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self._cutoff)
+        index = self._fh.to_absolute(self._cutoff)
         return pd.Series(y_pred, index=index)

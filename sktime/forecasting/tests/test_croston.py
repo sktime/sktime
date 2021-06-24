@@ -10,9 +10,9 @@ import numpy as np
 @pytest.mark.parametrize(
     "smoothing, fh, r_forecast",
     [
-        (0.1, 10, 0.8688921),
-        (0.5, 5, 0.6754646),
-        (0.05, 15, 1.405808),
+        (0.1, np.array([10]), 0.8688921),
+        (0.5, np.array([5]), 0.6754646),
+        (0.05, np.array([15]), 1.405808),
     ],
 )
 def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
@@ -33,4 +33,4 @@ def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
     forecaster = Croston(smoothing)
     forecaster.fit(y)
     y_pred = forecaster.predict(fh=fh)
-    np.testing.assert_almost_equal(y_pred.item(), r_forecast, decimal=5)
+    np.testing.assert_almost_equal(y_pred, np.full(len(fh), r_forecast), decimal=5)
