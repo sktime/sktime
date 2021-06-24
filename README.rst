@@ -52,7 +52,7 @@
 Welcome to sktime
 =================
 
-The unified framework for machine learning with time series. Our vision:
+the scikit-learn-like unified framework for machine learning with time series. Our vision:
 
 * **by the community**, for the community. Developed by a friendly, decentral community - `we welcome all contributors <https://gitter.im/sktime/community>`__.
 * **without marketing bias** - sktime does not push "favourite algorithms" on its users, sktime is not a marketing activity.
@@ -76,7 +76,7 @@ Support for additional learning tasks is under development and/or experimental:
 
 * time series clustering
 * anomaly detection, change-point detection
-* outlier detection & removal, segmentation
+* outlier detection & removal
 * segmentation (supervised and unsupervised, stream and panel)
 
 For deep learning strategies, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
@@ -174,24 +174,21 @@ Documentation
 * `API reference <https://www.sktime.org/en/latest/api_reference.html>`__
 
 
-How to contribute
------------------
+How to get involved
+-------------------
 
-We follow the `all-contributors specification <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__ - and all kinds of contributions are welcome!
+There are many ways to join the sktime community:
 
-* `Contributing guide <https://www.sktime.org/en/latest/contributing.html>`__
-* `Enhancement proposals <https://github.com/sktime/enhancement-proposals>`__ (design discussions)
-
-If you have a question, `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__. Your help and feedback is extremely welcome!
-
-All new contributors are welcome. You can join to contribute by:
-
-* joining the developer slack - contact us on gitter or via info@sktime.org
-* making a pull request with a code/doc contribution directly
-* contributing to the `regular community meetings <https://github.com/sktime/community-council>`__
+* join the developer slack - contact us on gitter or via info@sktime.org
+* make a pull request with a code/doc contribution directly, see our `contributing guide <https://www.sktime.org/en/latest/contributing.html>`__
+* contribute ideas to the roadmap by making an `enhancement proposal <https://github.com/sktime/enhancement-proposals>`__
+* contribute to the `regular community meetings <https://github.com/sktime/community-council>`__
 * join one of the onboarding events or developer events (announced on issue tracker, gitter, and twitter)
 * sign up for our `community mentoring scheme <https://github.com/sktime/mentoring>`__
 
+For contributions, we follow the `all-contributors specification <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__ - and all kinds of contributions are welcome!
+
+If you have a question, `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__. Your help and feedback is extremely welcome!
 
 Development roadmap
 -------------------
