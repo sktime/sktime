@@ -38,7 +38,6 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     Specific implementations of these methods is deferred to concrete
     annotators.
-    """
 
     # default tags
     _tags = {
@@ -48,6 +47,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         "annotation-labels": "none",  # can be one of, or list-subset of
         #   "label", "outlier", "change"
     }
+    """
 
     def __init__(self):
 
@@ -175,6 +175,23 @@ class BaseSeriesAnnotator(BaseEstimator):
         Y = self.predict(X)
 
         return Y
+
+    def transform(self, Z, Y=None):
+        """transform series - interface alias for predict, for use as transformer
+
+        Parameters
+        ----------
+        Z : pd.DataFrame
+            training data to fit model to, time series
+        Y : pd.Series, optional
+            ground truth annotations for training if annotator is supervised
+
+        Returns
+        -------
+        self : returns a reference to self
+        """
+
+        return self.predict(X=Z, Y=Y)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
