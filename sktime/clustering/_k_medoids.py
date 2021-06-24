@@ -11,11 +11,13 @@ from sktime.clustering.base._typing import (
     InitAlgo,
     NumpyRandomState,
 )
-from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
+from sktime.clustering.partitioning._lloyds_partitioning import (
+    TimeSeriesLloydsPartitioning,
+)
 from sktime.clustering.partitioning._cluster_approximations import Medoids
 
 
-class TimeSeriesKMedoids(TimeSeriesKPartition):
+class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
     """Time Series K-Medoids Clusterer
 
     Parameters
@@ -52,7 +54,7 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
         max_iter: int = 300,
         verbose: bool = False,
         metric: MetricParameter = "dtw",
-        random_state: NumpyRandomState = 1,
+        random_state: NumpyRandomState = None,
     ):
         super(TimeSeriesKMedoids, self).__init__(
             n_clusters=n_clusters,
@@ -115,6 +117,9 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
             Single value that is determined to be the center of
             the series
         """
+        if self._metric is None:
+            self._check_params(cluster_values)
+
         medoid = Medoids(cluster_values, self._metric)
         medoid_index = medoid.approximate()
         return cluster_values[medoid_index]

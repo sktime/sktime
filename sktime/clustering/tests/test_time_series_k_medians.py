@@ -29,3 +29,17 @@ def test_k_medoids():
     )
 
     assert np.array_equal(np.array([1, 3, 3, 4, 4, 3, 4, 3, 2, 4]), clusters)
+
+    clusters, _ = run_clustering_experiment(
+        TimeSeriesKMedoids(
+            n_clusters=5,
+            max_iter=50,
+            init_algorithm="random",
+            metric="euclidean",
+            random_state=rng,
+        ),
+        X_train,
+        X_test,
+    )
+
+    assert np.array_equal(np.array([2, 1, 1, 3, 3, 0, 1, 0, 1, 3]), clusters)

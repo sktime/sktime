@@ -5,9 +5,14 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
 
 import numpy as np
+from sklearn.utils import check_random_state
 
 from sktime.clustering.base.base import BaseClusterCenterInitializer
-from sktime.clustering.base._typing import NumpyArray, NumpyRandomState
+from sktime.clustering.base._typing import (
+    NumpyArray,
+    NumpyRandomState,
+    CenterCalculatorFunc,
+)
 
 
 class ForgyCenterInitializer(BaseClusterCenterInitializer):
@@ -22,6 +27,9 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
     n_centers: int
         Number of centers to be created
 
+    center_calculator_func: CenterCalculatorFunc
+        Function that is used to calculate new centers
+
     random_state: NumpyRandomState, default = None
         Generator used to initialise the centers.
     """
@@ -30,9 +38,12 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
         self,
         data_set: NumpyArray,
         n_centers: int,
+        center_calculator_func: CenterCalculatorFunc = None,
         random_state: NumpyRandomState = None,
     ):
-        super(ForgyCenterInitializer, self).__init__(data_set, n_centers, random_state)
+        super(ForgyCenterInitializer, self).__init__(
+            data_set, n_centers, center_calculator_func, random_state
+        )
 
     def initialize_centers(self) -> NumpyArray:
         """
@@ -44,47 +55,18 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
         Numpy_Array
             numpy array containing the centers
         """
-        if self.random_state is None:
-            self.random_state = np.random.RandomState()
+        random_state = check_random_state(self.random_state)
         return self.data_set[
-            self.random_state.choice(
-                self.data_set.shape[0], self.n_centers, replace=False
-            ),
+            random_state.choice(self.data_set.shape[0], self.n_centers, replace=False),
             :,
         ]
 
 
-class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
-    """K-Means++ Center Initializers that is used to create n
-    centers from a set of series using the kmeans++ algorithm
-
-    Parameters
-    ----------
-    data_set: Numpy_Array
-        Numpy_Array that is the dataset to calculate the centers from
-
-    n_centers: int
-        Number of centers to be created
-
-    """
-
-    def __init__(self, data_set: NumpyArray, n_centers: int):
-        super(KMeansPlusPlusCenterInitializer, self).__init__(data_set, n_centers)
-
-    def initialize_centers(self) -> NumpyArray:
-        """
-        Returns
-        -------
-        Numpy_Array
-            numpy array containing the centers
-        """
-        pass
-
-
 class RandomCenterInitializer(BaseClusterCenterInitializer):
-    """Random Center Initializer that is used to create n
-    centers from a set of series using the random center
-    initializer algorithm
+    """Random Center Initializer used to create n centers
+    from randomly assigning each time series in the dataset
+    to a random cluster and then taking the approximation
+    value
 
     Parameters
     ----------
@@ -94,18 +76,86 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
     n_centers: int
         Number of centers to be created
 
+    center_calculator_func: CenterCalculatorFunc
+        Function that is used to calculate new centers
+
+    random_state: NumpyRandomState, default = None
+        Generator used to initialise the centers.
     """
 
-    def __init__(self, data_set: NumpyArray, n_centers: int):
-        super(RandomCenterInitializer, self).__init__(data_set, n_centers)
+    def __init__(
+        self,
+        data_set: NumpyArray,
+        n_centers: int,
+        center_calculator_func: CenterCalculatorFunc = None,
+        random_state: NumpyRandomState = None,
+    ):
+        super(RandomCenterInitializer, self).__init__(
+            data_set, n_centers, center_calculator_func, random_state
+        )
 
     def initialize_centers(self) -> NumpyArray:
         """
+        Method called to initialize centers using Forgys
+        technique
 
         Returns
         -------
         Numpy_Array
             numpy array containing the centers
-
         """
-        pass
+        if self.center_calculator_func is None:
+            raise ValueError(
+                "The parameter center_calculator_func must be "
+                "specified for this type of center initialisation"
+            )
+        indexes = self.random_state.choice(
+            range(0, self.n_centers), replace=True, size=self.data_set.shape[0]
+        )
+        temp = []
+        for k in range(self.n_centers):
+            cluster_values = np.take(self.data_set, np.where(indexes == k), axis=0)[0]
+            temp.append(self.center_calculator_func(cluster_values))
+        return np.array(temp, dtype=self.data_set.dtype)
+
+
+class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
+    """K-means++ center initializer algorithm
+
+    Parameters
+    ----------
+    data_set: Numpy_Array
+        Numpy_Array that is the dataset to calculate the centers from
+
+    n_centers: int
+        Number of centers to be created
+
+    center_calculator_func: CenterCalculatorFunc
+        Function that is used to calculate new centers
+
+    random_state: NumpyRandomState, default = None
+        Generator used to initialise the centers.
+    """
+
+    def __init__(
+        self,
+        data_set: NumpyArray,
+        n_centers: int,
+        center_calculator_func: CenterCalculatorFunc = None,
+        random_state: NumpyRandomState = None,
+    ):
+        super(KMeansPlusPlusCenterInitializer, self).__init__(
+            data_set, n_centers, center_calculator_func, random_state
+        )
+
+    def initialize_centers(self) -> NumpyArray:
+        """
+        Method called to initialize centers using Forgys
+        technique
+
+        Returns
+        -------
+        Numpy_Array
+            numpy array containing the centers
+        """
+        return

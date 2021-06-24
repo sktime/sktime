@@ -12,18 +12,20 @@ __all__ = [
     "NumpyArray",
     "NumpyOrDF",
     "NumpyRandomState",
+    "CenterCalculatorFunc",
 ]
 
 import pandas as pd
 import numpy as np
 from sktime.base import BaseEstimator
 from sktime.utils.data_processing import from_nested_to_2d_array
-from typing import Union
+from typing import Union, Callable
 
 DataFrame = pd.DataFrame
 NumpyArray = np.ndarray
 NumpyOrDF = Union[DataFrame, NumpyArray]
 NumpyRandomState = Union[np.random.RandomState, int]
+CenterCalculatorFunc = Callable[[NumpyArray], NumpyArray]
 
 
 class BaseCluster(BaseEstimator):
@@ -146,10 +148,12 @@ class BaseClusterCenterInitializer:
         self,
         data_set: NumpyArray,
         n_centers: int,
+        center_calculator_func: CenterCalculatorFunc = None,
         random_state: NumpyRandomState = None,
     ):
         self.data_set: data_set = data_set
         self.n_centers: int = n_centers
+        self.center_calculator_func: CenterCalculatorFunc = center_calculator_func
         self.random_state: NumpyRandomState = random_state
 
     def initialize_centers(self) -> NumpyArray:

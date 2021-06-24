@@ -18,6 +18,7 @@ __all__ = [
     "InitAlgoDict",
     "AveragingAlgo",
     "AveragingAlgoDict",
+    "CenterCalculatorFunc",
 ]
 
 import pandas as pd
@@ -29,6 +30,7 @@ from sktime.clustering.base.base import (
     BaseClusterCenterInitializer,
     BaseClusterAverage,
     NumpyRandomState,
+    CenterCalculatorFunc,
 )
 
 # General Purpose
