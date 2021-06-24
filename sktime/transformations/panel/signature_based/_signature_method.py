@@ -13,7 +13,6 @@ from sktime.transformations.panel.signature_based._checks import (
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
-_check_soft_dependencies("esig")
 
 
 class SignatureTransformer(_PanelToTabularTransformer):
