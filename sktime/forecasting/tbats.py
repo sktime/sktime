@@ -70,6 +70,8 @@ class TBATS(_TbatsAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _fitted_param_names = "aic"
+
     # both bats and tbats inherit the same interface from the base class and only
     # instantiate a different model class internally
     from tbats import TBATS as _TBATS
