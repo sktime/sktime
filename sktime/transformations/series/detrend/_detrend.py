@@ -89,10 +89,10 @@ class Detrender(_SeriesToSeriesTransformer):
 
         # multivariate
         if isinstance(z, pd.DataFrame):
-            self.forecaster_ = []
-            for col in z:
+            self.forecaster_ = {}
+            for colname in z.columns:
                 forecaster = clone(self.forecaster)
-                self.forecaster_.append(forecaster.fit(z[col], X))
+                self.forecaster_[colname] = forecaster.fit(z[colname], X)
         # univariate
         else:
             forecaster = clone(self.forecaster)
@@ -122,9 +122,12 @@ class Detrender(_SeriesToSeriesTransformer):
 
         # multivariate
         if isinstance(z, pd.DataFrame):
-            for col, forecaster in enumerate(self.forecaster_):
-                z_pred = forecaster.predict(fh, X)
-                z[col] = z[col] - z_pred
+            # check if all columns are known
+            if not all(k in self.forecaster_ for k in z.columns):
+                raise KeyError("not all columns are known")
+            for colname in z.columns:
+                z_pred = self.forecaster_[colname].predict(fh, X)
+                z[colname] = z[colname] - z_pred
             return z
         # univariate
         else:
@@ -153,11 +156,13 @@ class Detrender(_SeriesToSeriesTransformer):
 
         # multivariate
         if isinstance(z, pd.DataFrame):
-            for col, forecaster in enumerate(self.forecaster_):
-                z_pred = forecaster.predict(fh, X)
-                z[col] = z[col] + z_pred
-            return Z
-
+            # check if all columns are known
+            if not all(k in self.forecaster_ for k in z.columns):
+                raise KeyError("not all columns are known")
+            for colname in z.columns:
+                z_pred = self.forecaster_[colname].predict(fh, X)
+                z[colname] = z[colname] + z_pred
+            return z
         # univariate
         else:
             z_pred = self.forecaster_.predict(fh, X)
@@ -181,8 +186,13 @@ class Detrender(_SeriesToSeriesTransformer):
         z = check_series(Z, allow_empty=True)
         # multivariate
         if isinstance(z, pd.DataFrame):
-            for col, forecaster in enumerate(self.forecaster_):
-                forecaster.update(z[col], X, update_params=update_params)
+            # check if all columns are known
+            if not all(k in self.forecaster_ for k in z.columns):
+                raise KeyError("Not all columns are known")
+            for colname in z.columns:
+                self.forecaster_[colname].update(
+                    z[colname], X, update_params=update_params
+                )
         # univariate
         else:
             self.forecaster_.update(z, X, update_params=update_params)
