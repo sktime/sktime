@@ -70,7 +70,7 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         if isinstance(self.theta, (float, int)):
             return pd.Series(theta_lines.flatten(), index=z.index)
         else:
-            return pd.DataFrame(theta_lines, columns=theta, index=z.index)
+            return pd.DataFrame(theta_lines, columns=self.theta, index=z.index)
 
 
 def _theta_transform(Z, trend, theta):
