@@ -13,6 +13,8 @@ def generate_univaritate_series(
     """
     Method to generate univariate time series
     """
+    if dtype is np.int32 or dtype is np.int64:
+        return rng.randint(0, 1000, size=(n, size)).astype(dtype)
     return rng.randn(n, size).astype(dtype)
 
 

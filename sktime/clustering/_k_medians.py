@@ -2,7 +2,7 @@
 """Time series K-medoids clusterer"""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["TimeSeriesKMedoids"]
+__all__ = ["TimeSeriesKMedians"]
 
 from sktime.clustering.base._typing import (
     MetricParameter,
@@ -11,12 +11,14 @@ from sktime.clustering.base._typing import (
     InitAlgo,
     NumpyRandomState,
 )
-from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
-from sktime.clustering.partitioning._cluster_approximations import Medoids
+from sktime.clustering.partitioning._lloyds_partitioning import (
+    TimeSeriesLloydsPartitioning,
+)
+from sktime.clustering.partitioning._cluster_approximations import Medians
 
 
-class TimeSeriesKMedoids(TimeSeriesKPartition):
-    """Time Series K-Medoids Clusterer
+class TimeSeriesKMedians(TimeSeriesLloydsPartitioning):
+    """Time Series K-Medians Clusterer
 
     Parameters
     ----------
@@ -52,9 +54,9 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
         max_iter: int = 300,
         verbose: bool = False,
         metric: MetricParameter = "dtw",
-        random_state: NumpyRandomState = 1,
+        random_state: NumpyRandomState = None,
     ):
-        super(TimeSeriesKMedoids, self).__init__(
+        super(TimeSeriesKMedians, self).__init__(
             n_clusters=n_clusters,
             init_algorithm=init_algorithm,
             max_iter=max_iter,
@@ -79,7 +81,7 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
             Fitted estimator
         """
 
-        return super(TimeSeriesKMedoids, self).fit(X)
+        return super(TimeSeriesKMedians, self).fit(X)
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
@@ -98,7 +100,7 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
             Index of the cluster each sample belongs to
         """
 
-        return super(TimeSeriesKMedoids, self).predict(X)
+        return super(TimeSeriesKMedians, self).predict(X)
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
         """
@@ -115,6 +117,9 @@ class TimeSeriesKMedoids(TimeSeriesKPartition):
             Single value that is determined to be the center of
             the series
         """
-        medoid = Medoids(cluster_values, self._metric)
+        if self._metric is None:
+            self._check_params(cluster_values)
+
+        medoid = Medians(cluster_values, self._metric)
         medoid_index = medoid.approximate()
         return cluster_values[medoid_index]

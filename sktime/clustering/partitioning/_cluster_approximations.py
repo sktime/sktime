@@ -3,7 +3,7 @@
 """Approximations for time series clusterers"""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["Medoids"]
+__all__ = ["Medians"]
 
 import numpy as np
 
@@ -12,7 +12,7 @@ from sktime.clustering.base.base import BaseApproximate
 from sktime.utils.clustering_utils import compute_pairwise_distances
 
 
-class Medoids(BaseApproximate):
+class Medians(BaseApproximate):
     """Medoids Approximate
 
     Parameters
@@ -23,7 +23,7 @@ class Medoids(BaseApproximate):
     """
 
     def __init__(self, series: NumpyArray, metric: MetricFunction):
-        super(Medoids, self).__init__(series)
+        super(Medians, self).__init__(series)
         self.metric = metric
 
     def approximate(self) -> int:

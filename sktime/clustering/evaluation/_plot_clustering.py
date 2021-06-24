@@ -8,7 +8,9 @@ import pandas as pd
 
 from sktime.clustering.base._typing import NumpyOrDF
 from sktime.clustering.base.base import BaseCluster
-from sktime.clustering.partitioning._k_partition import TimeSeriesKPartition
+from sktime.clustering.partitioning._lloyds_partitioning import (
+    TimeSeriesLloydsPartitioning,
+)
 from sktime.utils.data_processing import from_nested_to_2d_array
 
 # from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -48,7 +50,9 @@ def plot_cluster_algorithm(
     indexes = model.predict(predict_series)
     centers = model.get_centers()
 
-    series_values = TimeSeriesKPartition.get_cluster_values(indexes, predict_series, k)
+    series_values = TimeSeriesLloydsPartitioning.get_cluster_values(
+        indexes, predict_series, k
+    )
     fig, axes = plt.subplots(nrows=k, ncols=1)
     for i in range(k):
         _plot(series_values[i], centers[i], axes[i])
