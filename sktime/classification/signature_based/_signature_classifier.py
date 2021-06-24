@@ -105,7 +105,7 @@ class SignatureClassifier(BaseClassifier):
             depth,
         ).signature_method
 
-    def setup_classification_pipeline(self):
+    def _setup_classification_pipeline(self):
         """Setup the full signature method pipeline."""
         # Use rf if no classifier is set
         if self.classifier is None:
