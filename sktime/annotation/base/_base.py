@@ -114,7 +114,6 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return self
 
-    @alias_X_as_Z
     def predict(self, X):
         """Create annotations on test/deployment data.
 
@@ -173,7 +172,6 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return self
 
-    @alias_X_as_Z
     def update_predict(self, X):
         """update model with new data and create annotations for it
 
@@ -199,22 +197,45 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
-    def transform(self, Z, Y=None):
+    def transform(self, Z):
         """transform series - interface alias for predict, for use as transformer
 
         Parameters
         ----------
         Z : pd.DataFrame
             training data to fit model to, time series
-        Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
 
         Returns
         -------
         self : returns a reference to self
         """
 
-        return self.predict(X=Z, Y=Y)
+        return self.predict(X=Z)
+
+    def update_transform(self, Z):
+        """update model with new data and create annotations for it
+
+        Parameters
+        ----------
+        Z : pd.DataFrame
+            training data to update model with, time series
+
+        Returns
+        -------
+        Y : pd.Series - annotations for sequence X
+            exact format depends on annotation type
+
+        State change
+        ------------
+        updates fitted model (attributes ending in "_")
+        """
+
+        Z = check_series(Z)
+
+        self.update(Z=Z)
+        Y = self.transform(Z)
+
+        return Y
 
     def _fit(self, X, Y=None):
         """Fit to training data.
