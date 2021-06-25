@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
-__all__ = ["SeriesAnnotatorPyOD"]
+__all__ = ["PyODAnnotator"]
 
-from sktime.annotation.adapters._pyod import SeriesAnnotatorPyOD
+from sktime.annotation.adapters._pyod import PyODAnnotator
