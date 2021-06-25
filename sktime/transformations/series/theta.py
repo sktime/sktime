@@ -22,7 +22,7 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.theta import ThetaLinesTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = ThetaLines([0, 0.25, 0.5, 0.75])
+    >>> transformer = ThetaLinesTransformer([0, 0.25, 0.5, 0.75])
     >>> transformer.fit(y)
     >>> y_thetas = transformer.transform(y)
 
@@ -33,7 +33,11 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     Research, vol. 284, pp. 550-558, 2020.
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+        "fit-in-transform": True,
+    }
 
     def __init__(self, theta=(0, 2)):
         self.theta = theta
