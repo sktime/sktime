@@ -117,17 +117,17 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.transform(y, X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _get_fitted_params(self):
+    def get_fitted_params(self):
         """Get fitted parameters
 
         Returns
         -------
         fitted_params : dict
         """
-        return self.best_forecaster_._get_fitted_params()
+        return self.best_forecaster_.get_fitted_params()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _inverse_transform(self, y, X=None):
+    def inverse_transform(self, y, X=None):
         """Call inverse_transform on the forecaster with the best found params.
         Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
@@ -137,9 +137,9 @@ class BaseGridSearch(BaseForecaster):
             Must fulfill the input assumptions of the
             underlying forecaster.
         """
-        return self.best_forecaster_._inverse_transform(y, X)
+        return self.best_forecaster_.inverse_transform(y, X)
 
-    def _score(self, y, X=None, fh=None):
+    def score(self, y, X=None, fh=None):
         """Returns the score on the given data, if the forecaster has been
         refit.
         This uses the score defined by ``scoring`` where provided, and the
@@ -158,7 +158,7 @@ class BaseGridSearch(BaseForecaster):
         """
 
         if self.scoring is None:
-            return self.best_forecaster_._score(y, X=X, fh=fh)
+            return self.best_forecaster_.score(y, X=X, fh=fh)
 
         else:
             y_pred = self.best_forecaster_._predict(fh, X=X)
@@ -249,7 +249,7 @@ class BaseGridSearch(BaseForecaster):
 
             return out
 
-        def _evaluate_candidates(candidate_params):
+        def evaluate_candidates(candidate_params):
             candidate_params = list(candidate_params)
 
             if self.verbose > 0:
@@ -276,7 +276,7 @@ class BaseGridSearch(BaseForecaster):
             return out
 
         # Run grid-search cross-validation.
-        results = self._run_search(_evaluate_candidates)
+        results = self._run_search(evaluate_candidates)
 
         results = pd.DataFrame(results)
 
@@ -416,9 +416,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-    def _run_search(self, _evaluate_candidates):
+    def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
-        return _evaluate_candidates(ParameterGrid(self.param_grid))
+        return evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
