@@ -202,10 +202,10 @@ class TransformedTargetForecaster(
         self : an instance of self
         """
 
-        for step_idx, name, transformer in self._iter_transformers():
-            if hasattr(transformer, "update"):
-                transformer.update(y, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
+        # for step_idx, name, transformer in self._iter_transformers():
+        #     if hasattr(transformer, "update"):
+        #         transformer.update(y, update_params=update_params)
+        #         self.steps_[step_idx] = (name, transformer)
 
         name, forecaster = self.steps_[-1]
         forecaster.update(y, update_params=update_params)

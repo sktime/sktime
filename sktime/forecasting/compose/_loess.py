@@ -33,14 +33,15 @@ class STLForecaster(TransformedTargetForecaster):
     Example
     -------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.stlforecaster import STLForecaster
-    >>> y = load_airline()
+    >>> import numpy as np
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose._loess import STLForecaster
     >>> estimator = NaiveForecaster(strategy="drift")
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = np.arange(len(y_test)) + 1
-    >>> forecaster = STLForecaster(estimator, degree, sp)
+    >>> forecaster = STLForecaster(estimator, degree=1, sp=1)
     >>> forecaster.fit(y_train, fh)
     >>> y_pred = forecaster.predict()
     """
@@ -49,9 +50,6 @@ class STLForecaster(TransformedTargetForecaster):
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster=None, degree=1, sp=1):
-        if forecaster is None:
-            forecaster = NaiveForecaster()
-
         self.forecaster = forecaster
         self.sp = sp
         self.degree = degree
@@ -59,6 +57,8 @@ class STLForecaster(TransformedTargetForecaster):
             forecaster=PolynomialTrendForecaster(degree=self.degree)
         )
         self.deseasonalizer = Deseasonalizer(self.sp, model="additive")
+        if self.forecaster is None:
+            self.forecaster = NaiveForecaster()
         self.steps = [
             ("deseasonalise", self.deseasonalizer),
             ("detrend", self.detrender),
