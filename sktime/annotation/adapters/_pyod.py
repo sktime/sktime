@@ -7,7 +7,7 @@ __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 import pandas as pd
 
 
-class SeriesAnnotatorPyOD(BaseSeriesAnnotator):
+class PyODAnnotator(BaseSeriesAnnotator):
     """Transformer that applies outlier detector from pyOD
 
     Parameters
@@ -45,7 +45,7 @@ class SeriesAnnotatorPyOD(BaseSeriesAnnotator):
         self.annotation_format = annotation_format
         self.annotation_values = annotation_values
 
-        super(SeriesAnnotatorPyOD, self).__init__()
+        super(PyODAnnotator, self).__init__()
 
     def _fit(self, X, Y=None):
         """Fit to training data.

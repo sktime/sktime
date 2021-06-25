@@ -14,18 +14,26 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.forecasting.fbprophet import Prophet
 
 from sktime.base import BaseEstimator
 
 from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.annotation.adapters import SeriesAnnotatorPyOD
 from sktime.classification.base import BaseClassifier
+from sktime.forecasting.base import BaseForecaster
+from sktime.regression.base import BaseRegressor
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import _SeriesToSeriesTransformer
+
+from sktime.annotation.adapters import PyODAnnotator
+from sktime.annotation.base import MockSeriesAnnotator
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
@@ -35,7 +43,6 @@ from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
 from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
@@ -50,6 +57,7 @@ from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
@@ -59,14 +67,8 @@ from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
-from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
@@ -280,7 +282,8 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
-    SeriesAnnotatorPyOD: {"estimator": ANOMALY_DETECTOR},
+    PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
+    MockSeriesAnnotator: {},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
