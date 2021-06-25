@@ -299,4 +299,3 @@ class BaseSeriesAnnotator(BaseEstimator):
         self._fit(self._X, self._Y)
 
         return self
-
