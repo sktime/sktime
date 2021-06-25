@@ -6,6 +6,8 @@ __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
 
+from sklearn import clone
+
 
 class PyODAnnotator(BaseSeriesAnnotator):
     """Transformer that applies outlier detector from pyOD
@@ -72,7 +74,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
         if len(X_np.shape) == 1:
             X_np = X_np.reshape(-1, 1)
 
-        self.estimator.fit(X_np)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X_np)
 
         return self
 
