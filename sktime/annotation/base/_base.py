@@ -193,7 +193,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         X = check_series(X)
 
         self.update(X=X)
-        Y = self.predict(X)
+        Y = self.predict(X=X)
 
         return Y
 
@@ -234,7 +234,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Z = check_series(Z)
 
         self.update(Z=Z)
-        Y = self.transform(Z)
+        Y = self.transform(Z=Z)
 
         return Y
 
