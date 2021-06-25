@@ -18,15 +18,17 @@ import esig  # noqa: E402
 def _rescale_path(path, depth):
     """Rescales the input path by depth! ** (1 / depth), so that the last
     signature term should be roughly O(1).
+
     Parameters
     ----------
-    path : torch.Tensor
+    path : np.ndarray
         Input path of shape [N, L, C].
     depth : int
         Depth the signature will be computed to.
+
     Returns
     -------
-    torch.Tensor:
+    np.ndarray:
         Tensor of the same shape as path, corresponding to the scaled path.
     """
     coeff = math.factorial(depth) ** (1 / depth)
@@ -36,24 +38,35 @@ def _rescale_path(path, depth):
 def _rescale_signature(signature, channels, depth):
     """Rescales the output signature by multiplying the depth-d term by d!,
     with the aim that every term become ~O(1).
+
     Parameters
     ----------
-    signature : torch.Tensor
+    signature : np.ndarray
         The signature of a path. Shape [N, Sig_dim].
     channels : int
         The number of channels of the path the signature was computed from.
     depth : int
         The depth the signature was computed to.
+
     Returns
     -------
-    torch.Tensor:
+    np.ndarray:
         The signature with factorial depth scaling.
     """
-    if (esig.sigdim(channels, depth) - 1) != signature.shape[-1]:
+    # Needed for weird esig fails
+    if depth == 1:
+        sigdim = channels
+    elif channels == 1:
+        sigdim = depth
+    else:
+        sigdim = esig.sigdim(channels, depth) - 1
+    # Verify shape
+    if sigdim != signature.shape[-1]:
         raise ValueError(
-            "Given a sigtensor with {} channels, a path with {} channels and "
-            "a depth of {}, which are not consistent.".format(
-                signature.shape[-1], channels, depth
+            "A path with {} channels to depth {} should yield a "
+            "signature with {} features. Input signature has {} "
+            "features which is inconsistent.".format(
+                channels, depth, sigdim, signature.shape[-1]
             )
         )
 

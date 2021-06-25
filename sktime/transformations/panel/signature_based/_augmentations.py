@@ -2,15 +2,14 @@
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from collections.abc import Iterable
 
 
-def _make_augmentation_pipeline(aug_list):
+def _make_augmentation_pipeline(augmentation_list):
     """Buids an sklearn pipeline of augmentations from a tuple of strings.
 
     Parameters
     ----------
-    aug_list: list of strings, A list of strings that determine the
+    augmentation_list: list of strings, A list of strings that determine the
         augmentations to apply, and in which order to apply them (the first
         string will be applied first). Possible augmentation strings are
         ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
@@ -40,18 +39,21 @@ def _make_augmentation_pipeline(aug_list):
         "basepoint": _BasePoint(),
     }
 
-    # Assertions, check we have an iterable with allowed strings
-    if aug_list is not None:
-        assert isinstance(
-            aug_list, Iterable
-        ), "aug_list must be an iterable, got {}".format(type(aug_list))
+    # Assertions, check we have a tuple/list
+    if augmentation_list is not None:
+        if isinstance(augmentation_list, str):
+            augmentation_list = (augmentation_list,)
     assert all(
-        [x in AUGMENTATIONS.keys() for x in aug_list]
-    ), "aug_list must only contain string elements from {}".format(AUGMENTATIONS.keys())
+        [x in list(AUGMENTATIONS.keys()) for x in augmentation_list]
+    ), "augmentation_list must only contain string elements from {}. Given: {}.".format(
+        list(AUGMENTATIONS.keys()), augmentation_list
+    )
 
     # Setup pipeline
-    if aug_list is not None:
-        pipeline = Pipeline([(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list])
+    if augmentation_list is not None:
+        pipeline = Pipeline(
+            [(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in augmentation_list]
+        )
     else:
         pipeline = None
 
