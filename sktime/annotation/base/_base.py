@@ -30,7 +30,6 @@ from sktime.utils.validation.series import check_series
 
 # decorator to alias "X" argument as "Z" for transformer use
 def alias_X_as_Z(inner):
-
     def outer(X=None, Z=None, **kwargs):
 
         if X is None and Z is None:
