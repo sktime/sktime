@@ -28,6 +28,25 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation.series import check_series
 
 
+# decorator to alias "X" argument as "Z" for transformer use
+def alias_X_as_Z(inner):
+
+    def outer(X=None, Z=None, **kwargs):
+
+        if X is None and Z is None:
+            raise ValueError("exactly one of X and Z must be passed, found none")
+
+        if X is not None and Z is not None:
+            raise ValueError("exactly one of X and Z must be passed, found both")
+
+        if X is None:
+            X = Z
+
+        return inner(X, **kwargs)
+
+    return outer
+
+
 class BaseSeriesAnnotator(BaseEstimator):
     """Base stream annotator
     assumes "predict" data is temporal future of "fit"
@@ -58,6 +77,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         super(BaseSeriesAnnotator, self).__init__()
 
+    @alias_X_as_Z
     def fit(self, X, Y=None):
         """Fit to training data.
 
@@ -94,6 +114,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return self
 
+    @alias_X_as_Z
     def predict(self, X):
         """Create annotations on test/deployment data.
 
@@ -117,6 +138,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
+    @alias_X_as_Z
     def update(self, X, Y=None):
         """update model with new data and optional ground truth annotations
 
@@ -151,6 +173,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return self
 
+    @alias_X_as_Z
     def update_predict(self, X):
         """update model with new data and create annotations for it
 
@@ -254,3 +277,4 @@ class BaseSeriesAnnotator(BaseEstimator):
         self._fit(self._X, self._Y)
 
         return self
+
