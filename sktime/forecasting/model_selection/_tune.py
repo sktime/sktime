@@ -70,7 +70,6 @@ class BaseGridSearch(BaseForecaster):
         """Call update_predict on the forecaster with the best found
         parameters.
         """
-        self.check_is_fitted("_update_predict")
         return self.best_forecaster_._update_predict(
             y,
             cv=cv,
