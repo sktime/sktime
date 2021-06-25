@@ -258,7 +258,7 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame
             Prediction intervals
         """
-        self.check_is_fitted("update_predict")
+        self.check_is_fitted()
 
         if return_pred_int:
             raise NotImplementedError()
