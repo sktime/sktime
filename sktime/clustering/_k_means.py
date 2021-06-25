@@ -13,6 +13,7 @@ from sktime.clustering.base._typing import (
     NumpyOrDF,
     NumpyRandomState,
 )
+from sktime.clustering.base import BaseCluster
 from sktime.clustering.partitioning._averaging_metrics import (
     BarycenterAveraging,
     MeanAveraging,
@@ -61,7 +62,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         Generator used to initialise the centers.
     """
 
-    __averaging_algorithm_dict: AveragingAlgoDict = {
+    _averaging_algorithm_dict: AveragingAlgoDict = {
         "dba": BarycenterAveraging,
         "mean": MeanAveraging,
     }
@@ -89,15 +90,19 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         self.averaging_algorithm_iterations = averaging_algorithm_iterations
         self._averaging_algorithm = None
 
-    def fit(self, X: NumpyOrDF) -> None:
+    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseCluster:
         """
-        Method that is used to fit the time series k
-        means model on dataset X
+        Method that is used to fit the clustering algorithm
+        on the dataset X
 
         Parameters
         ----------
         X: Numpy array or Dataframe
             sktime data_frame or numpy array to train the model on
+
+        y: Numpy array of Dataframe, default = None
+            sktime data_frame or numpy array that is the labels for training.
+            Unlikely to be used for clustering but kept for consistency
 
         Returns
         -------
@@ -168,7 +173,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
                 else:
                     averaging_algorithm = "mean"
 
-            self._averaging_algorithm = TimeSeriesKMeans.__averaging_algorithm_dict[
+            self._averaging_algorithm = TimeSeriesKMeans._averaging_algorithm_dict[
                 averaging_algorithm
             ]
         super(TimeSeriesKMeans, self)._check_params(X)

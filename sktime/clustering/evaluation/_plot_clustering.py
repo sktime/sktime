@@ -13,11 +13,6 @@ from sktime.clustering.partitioning._lloyds_partitioning import (
 )
 from sktime.utils.data_processing import from_nested_to_2d_array
 
-# from sktime.utils.validation._dependencies import _check_soft_dependencies
-# _check_soft_dependencies("matplotlib")
-# import matplotlib.pyplot as plt  # noqa: E402
-# import matplotlib.patches as mpatches  # noqa: E402
-
 
 def _plot(cluster_values, center, axes):
     for cluster_series in cluster_values:

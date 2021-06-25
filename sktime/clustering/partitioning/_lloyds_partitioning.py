@@ -19,7 +19,7 @@ from sktime.clustering.base._typing import (
     InitAlgoDict,
     NumpyRandomState,
 )
-from sktime.clustering.base.base import (
+from sktime.clustering.base import (
     BaseCluster,
     ClusterMixin,
 )
@@ -38,7 +38,7 @@ from sktime.clustering.partitioning._center_initializers import (
     ForgyCenterInitializer,
     RandomCenterInitializer,
 )
-from sktime.utils.clustering_utils import compute_pairwise_distances
+from sktime.clustering.base.clustering_utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
 
 
@@ -113,15 +113,19 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         self._metric = None
         self._random_state = None
 
-    def _fit(self, X: NumpyArray) -> None:
+    def _fit(self, X: NumpyArray, y: NumpyArray = None) -> BaseCluster:
         """
-        Method that is used to fit the time series k
-        partition model on dataset X
+        Method that contains the core logic to fit a cluster
+        to training data
 
         Parameters
         ----------
-        X: Numpy_Array
-            Numpy array of series to train the model on
+        X: Numpy array
+            Numpy array to train the model on
+
+        y: Numpy array, default = None
+            Numpy array that is the labels for training.
+            Unlikely to be used for clustering but kept for consistency
 
         Returns
         -------
@@ -135,7 +139,7 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         self._centers = center_algo.initialize_centers()
 
         for _ in range(self.max_iter):
-            self.__update_centers(X)
+            self._update_centers(X)
 
     def _predict(self, X: NumpyArray) -> NumpyArray:
         """
@@ -153,7 +157,7 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         Numpy_Array
             Index of the cluster each sample belongs to
         """
-        return self.__cluster_data(X)
+        return self._cluster_data(X)
 
     def get_centers(self) -> NumpyArray:
         """
@@ -204,7 +208,7 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
 
         super(TimeSeriesLloydsPartitioning, self)._check_params(X)
 
-    def __cluster_data(self, X: NumpyArray) -> List[List[int]]:
+    def _cluster_data(self, X: NumpyArray) -> List[List[int]]:
         cluster_indexes = []
 
         for i in range(len(X)):
@@ -219,8 +223,8 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
 
         return cluster_indexes
 
-    def __update_centers(self, data: NumpyArray):
-        cluster_indexes = self.__cluster_data(data)
+    def _update_centers(self, data: NumpyArray):
+        cluster_indexes = self._cluster_data(data)
 
         cluster_values = TimeSeriesLloydsPartitioning.get_cluster_values(
             cluster_indexes, data, self.n_clusters

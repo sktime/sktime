@@ -7,7 +7,7 @@ __all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
 import numpy as np
 from sklearn.utils import check_random_state
 
-from sktime.clustering.base.base import BaseClusterCenterInitializer
+from sktime.clustering.base import BaseClusterCenterInitializer
 from sktime.clustering.base._typing import (
     NumpyArray,
     NumpyRandomState,
@@ -27,7 +27,7 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
     n_centers: int
         Number of centers to be created
 
-    center_calculator_func: CenterCalculatorFunc
+    center_calculator_func: CenterCalculatorFunc, default = None
         Function that is used to calculate new centers
 
     random_state: NumpyRandomState, default = None
@@ -76,7 +76,7 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
     n_centers: int
         Number of centers to be created
 
-    center_calculator_func: CenterCalculatorFunc
+    center_calculator_func: CenterCalculatorFunc, default = None
         Function that is used to calculate new centers
 
     random_state: NumpyRandomState, default = None
@@ -112,10 +112,10 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
         indexes = self.random_state.choice(
             range(0, self.n_centers), replace=True, size=self.data_set.shape[0]
         )
-        temp = []
+        temp = np.zeros((self.n_centers, self.data_set.shape[1]))
         for k in range(self.n_centers):
             cluster_values = np.take(self.data_set, np.where(indexes == k), axis=0)[0]
-            temp.append(self.center_calculator_func(cluster_values))
+            temp[k] = self.center_calculator_func(cluster_values)
         return np.array(temp, dtype=self.data_set.dtype)
 
 
@@ -130,7 +130,7 @@ class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
     n_centers: int
         Number of centers to be created
 
-    center_calculator_func: CenterCalculatorFunc
+    center_calculator_func: CenterCalculatorFunc, default = None
         Function that is used to calculate new centers
 
     random_state: NumpyRandomState, default = None
