@@ -30,20 +30,6 @@ class STLForecaster(TransformedTargetForecaster):
     sp : int, optional (default=1)
         Seasonal periodicity
 
-    Example
-    -------
-    >>> from sktime.datasets import load_airline
-    >>> import numpy as np
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.compose._loess import STLForecaster
-    >>> estimator = NaiveForecaster(strategy="drift")
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y)
-    >>> fh = np.arange(len(y_test)) + 1
-    >>> forecaster = STLForecaster(estimator, degree=1, sp=1)
-    >>> forecaster.fit(y_train, fh)
-    >>> y_pred = forecaster.predict()
     """
 
     _tags = {"univariate-only": True}
