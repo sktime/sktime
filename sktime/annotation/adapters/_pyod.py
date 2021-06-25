@@ -70,7 +70,7 @@ class SeriesAnnotatorPyOD(BaseSeriesAnnotator):
         X_np = X.to_numpy()
 
         if len(X_np.shape) == 1:
-            X_np = X_np.reshape(1, -1)
+            X_np = X_np.reshape(-1, 1)
 
         self.estimator.fit(X_np)
 
@@ -95,7 +95,7 @@ class SeriesAnnotatorPyOD(BaseSeriesAnnotator):
         X_np = X.to_numpy()
 
         if len(X_np.shape) == 1:
-            X_np = X_np.reshape(1, -1)
+            X_np = X_np.reshape(-1, 1)
 
         Y_np = self.estimator.predict(X_np)
 
