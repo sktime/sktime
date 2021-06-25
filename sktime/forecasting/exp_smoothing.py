@@ -58,6 +58,9 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         "initial_level",
         "initial_slope",
         "initial_seasons",
+        "aic",
+        "bic",
+        "aicc",
     )
 
     def __init__(

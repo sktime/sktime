@@ -44,30 +44,24 @@ from sktime.distances.elastic import euclidean_distance
 
 class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
     """Time Series Lloyds partitioning algorithm
-
     Parameters
     ----------
     n_clusters: int, default = 8
         The number of clusters to form as the number of
         centroids to generate.
-
     init_algorithm: Init_Algo, default = forgy
         Algorithm that is used to initialise the cluster
         centers. str options are "forgy", "random" or
         "k-means++". If using custom center init algorithm
         then must be of type Init_Algo
-
     max_iter: int, default = 300
         Maximum number of iterations of time series k means
         for a single run.
-
     verbose: bool, default = False
         Verbosity mode.
-
     metric: Metric_Parameter, default = None
         The distance metric that is used to calculate the
         distance between points.
-
     random_state: NumpyRandomState, default = np.random.RandomState(1)
         Generator used to initialise the centers.
     """
@@ -117,16 +111,13 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         """
         Method that contains the core logic to fit a cluster
         to training data
-
         Parameters
         ----------
         X: Numpy array
             Numpy array to train the model on
-
         y: Numpy array, default = None
             Numpy array that is the labels for training.
             Unlikely to be used for clustering but kept for consistency
-
         Returns
         -------
         self
@@ -145,13 +136,11 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         """
         Method used to perform a prediction from the trained
         model
-
         Parameters
         ----------
         X: Numpy_Array
             Numpy_Array containing the time series to
             predict clusters for
-
         Returns
         -------
         Numpy_Array
@@ -163,7 +152,6 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         """
         Method used to get the centers of the clustering
         algorithm
-
         Returns
         -------
         Numpy_Array
@@ -175,12 +163,10 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         """
         Method to be implemented by parent defining how centers
         are calculated based on each iteration of k_partition
-
         Parameters
         ----------
         cluster_values: Numpy_Array
             Values to derive a center from (values in a cluster)
-
         Returns
         -------
         Numpy_Array
@@ -192,7 +178,6 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
     def _check_params(self, X: NumpyArray):
         """
         Method used to check the parameters passed
-
         Parameters
         ----------
         X: Numpy_Array

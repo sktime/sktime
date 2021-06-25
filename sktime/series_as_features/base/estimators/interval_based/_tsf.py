@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier."""
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
+__author__ = [
+    "Tony Bagnall",
+    "kkoziara",
+    "luiszugasti",
+    "kanand77",
+    "Markus Löning",
+    "Oleksii Kachaiev",
+]
 __all__ = [
     "BaseTimeSeriesForest",
     "_transform",
@@ -14,16 +21,17 @@ import math
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
-from sklearn.base import clone
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
+from sktime.base._base import _clone_estimator
 from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
 class BaseTimeSeriesForest:
-    """Base Time series forest classifier."""
+    """Base time series forest classifier."""
 
     # Capability tags
     capabilities = {
@@ -66,17 +74,15 @@ class BaseTimeSeriesForest:
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances,
-        series_length] or shape = [n_instances,n_columns]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification. TSF has no bespoke method for multivariate
-            classification as yet.
-        y : array-like, shape =  [n_instances]    The class labels.
+        Xt: np.ndarray or pd.DataFrame
+            Panel training data.
+        y : np.ndarray
+            The class labels.
 
         Returns
         -------
         self : object
+            An fitted instance of the classifier
         """
         X, y = check_X_y(
             X,
@@ -86,6 +92,8 @@ class BaseTimeSeriesForest:
         )
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
+
+        n_jobs = check_n_jobs(self.n_jobs)
 
         rng = check_random_state(self.random_state)
 
@@ -103,13 +111,9 @@ class BaseTimeSeriesForest:
             for _ in range(self.n_estimators)
         ]
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                X,
-                y,
-                self.base_estimator,
-                self.intervals_[i],
-                self.random_state,
+                _clone_estimator(self.base_estimator, rng), X, y, self.intervals_[i]
             )
             for i in range(self.n_estimators)
         )
@@ -119,16 +123,21 @@ class BaseTimeSeriesForest:
 
 
 def _transform(X, intervals):
-    """Compute the mean, std_dev and slope for given intervals of input data X.
+    """Transform X for given intervals.
+
+    Compute the mean, standard deviation and slope for given intervals of input data X.
 
     Parameters
     ----------
-        X (Array-like, int or float): Time series data X
-        intervals (Array-like, int or float): Time range intervals for series X
+    Xt: np.ndarray or pd.DataFrame
+        Panel data to transform.
+    intervals : np.ndarray
+        Intervals containing start and end values.
 
     Returns
     -------
-        int32 Array: transformed_x containing mean, std_deviation and slope
+    Xt: np.ndarray or pd.DataFrame
+     Transformed X, containing the mean, std and slope for each interval
     """
     n_instances, _ = X.shape
     n_intervals, _ = intervals.shape
@@ -157,14 +166,7 @@ def _get_intervals(n_intervals, min_interval, series_length, rng):
     return intervals
 
 
-def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
-    """Fit an estimator.
-
-     - a clone of base_estimator - on input data (X, y)
-    transformed using the randomly generated intervals.
-    """
-    estimator = clone(base_estimator)
-    estimator.set_params(random_state=random_state)
-
+def _fit_estimator(estimator, X, y, intervals):
+    """Fit an estimator on input data (X, y)."""
     transformed_x = _transform(X, intervals)
     return estimator.fit(transformed_x, y)
