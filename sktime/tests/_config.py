@@ -86,6 +86,7 @@ from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
+from sktime.annotation.base import BasePanelAnnotator
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -287,6 +288,9 @@ VALID_ESTIMATOR_TAGS = (
     "handles-missing-data",
     "skip-inverse-transform",
     "requires-fh-in-fit",
+    "handles-panel",  # annotators: can handle panel annotations, i.e., list X/y?
+    "annotation-type",  # annotators: can be point, segment or both
+    "annotation-labels",  # annotators: which labels are annotated with
 )
 
 # These methods should not change the state of the estimator, that is, they should
@@ -312,6 +316,7 @@ VALID_ESTIMATOR_BASE_TYPES = (
     BaseRegressor,
     BaseForecaster,
     BaseTransformer,
+    BasePanelAnnotator,
 )
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
@@ -324,4 +329,5 @@ VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
     "transformer": BaseTransformer,
+    "panel-annotator": BasePanelAnnotator,
 }

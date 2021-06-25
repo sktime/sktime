@@ -26,6 +26,7 @@ from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.validation import check_random_state
 
+from sktime.annotation.base import BasePanelAnnotator
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.exceptions import NotFittedError
@@ -48,6 +49,8 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils.data_processing import is_nested_dataframe
 from sktime.utils import _has_tag
+
+from sktime.utils._testing.annotation import make_annotation_problem
 
 
 def check_estimator(Estimator, exclude=None):
@@ -129,12 +132,7 @@ def check_estimator_tags(Estimator):
     assert hasattr(Estimator, "_all_tags")
     all_tags = Estimator._all_tags()
     assert isinstance(all_tags, dict)
-    assert all(
-        [
-            isinstance(key, str) and isinstance(value, bool)
-            for key, value in all_tags.items()
-        ]
-    )
+    assert all([isinstance(key, str) for key, _ in all_tags.items()])
 
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
@@ -564,6 +562,9 @@ def _make_fit_args(estimator, **kwargs):
         fh = 1
         X = None
         return y, X, fh
+    elif isinstance(estimator, BasePanelAnnotator):
+        X = make_annotation_problem(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
@@ -585,6 +586,9 @@ def _make_predict_args(estimator, **kwargs):
         return (fh,)
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BasePanelAnnotator):
+        X = make_annotation_problem(n_timepoints=10, **kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
