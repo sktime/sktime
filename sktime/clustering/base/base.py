@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Base classes for clustering."""
-from __future__ import annotations
-
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = [
     "BaseCluster",
@@ -35,7 +33,7 @@ class BaseCluster(BaseEstimator):
     def __init__(self):
         super(BaseCluster, self).__init__()
 
-    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseCluster:
+    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None):
         """
         Method that is used to fit the clustering algorithm
         on the dataset X
@@ -86,7 +84,7 @@ class BaseCluster(BaseEstimator):
 
         return self._predict(X)
 
-    def _fit(self, X: NumpyArray, y: NumpyArray = None) -> BaseCluster:
+    def _fit(self, X: NumpyArray, y: NumpyArray = None):
         """
         Method that contains the core logic to fit a cluster
         to training data
