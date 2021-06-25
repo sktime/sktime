@@ -207,7 +207,8 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        self : returns a reference to self
+        Y : pd.Series - annotations for sequence Z
+            exact format depends on annotation type
         """
 
         return self.predict(X=Z)
@@ -222,7 +223,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
+        Y : pd.Series - annotations for sequence Z
             exact format depends on annotation type
 
         State change
