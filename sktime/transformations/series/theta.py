@@ -23,8 +23,7 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ThetaLinesTransformer([0, 0.25, 0.5, 0.75])
-    >>> transformer.fit(y)
-    >>> y_thetas = transformer.transform(y)
+    >>> y_thetas = transformer.fit_transform(y)
 
     References
     ----------
