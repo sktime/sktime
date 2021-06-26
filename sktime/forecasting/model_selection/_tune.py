@@ -113,9 +113,10 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _transform(self, y, X=None):
+    def transform(self, y, X=None):
         """Call transform on the forecaster with the best found parameters."""
-        return self.best_forecaster_._transform(y, X)
+        self.check_is_fitted("transform")
+        return self.best_forecaster_.transform(y, X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
@@ -139,6 +140,7 @@ class BaseGridSearch(BaseForecaster):
             Must fulfill the input assumptions of the
             underlying forecaster.
         """
+        self.check_is_fitted("inverse_transform")
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
