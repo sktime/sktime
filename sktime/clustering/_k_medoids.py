@@ -15,6 +15,7 @@ from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
 from sktime.clustering.partitioning._cluster_approximations import Medoids
+from sktime.clustering.base import BaseCluster
 
 
 class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
@@ -65,7 +66,7 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
             random_state=random_state,
         )
 
-    def fit(self, X: NumpyOrDF) -> None:
+    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseCluster:
         """
         Method that is used to fit the clustering algorithm
         on the dataset X
@@ -74,6 +75,10 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
         ----------
         X: Numpy array or Dataframe
             sktime data_frame or numpy array to train the model on
+
+        y: Numpy array of Dataframe, default = None
+            sktime data_frame or numpy array that is the labels for training.
+            Unlikely to be used for clustering but kept for consistency
 
         Returns
         -------

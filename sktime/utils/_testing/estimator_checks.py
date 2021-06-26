@@ -579,7 +579,7 @@ def _make_fit_args(estimator, **kwargs):
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseCluster):
-        return make_clustering_problem(**kwargs)
+        return (make_clustering_problem(**kwargs),)
     else:
         raise ValueError(_get_err_msg(estimator))
 

@@ -7,7 +7,7 @@ __all__ = ["MeanAveraging", "BarycenterAveraging"]
 import numpy as np
 
 from functools import reduce
-from sktime.clustering.base.base import BaseClusterAverage
+from sktime.clustering.base import BaseClusterAverage
 from sktime.clustering.base._typing import NumpyArray
 
 

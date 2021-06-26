@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Base classes for clustering."""
-
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = [
     "BaseCluster",
@@ -34,7 +33,7 @@ class BaseCluster(BaseEstimator):
     def __init__(self):
         super(BaseCluster, self).__init__()
 
-    def fit(self, X: NumpyOrDF) -> None:
+    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None):
         """
         Method that is used to fit the clustering algorithm
         on the dataset X
@@ -44,13 +43,15 @@ class BaseCluster(BaseEstimator):
         X: Numpy array or Dataframe
             sktime data_frame or numpy array to train the model on
 
+        y: Numpy array of Dataframe, default = None
+            sktime data_frame or numpy array that is the labels for training.
+            Unlikely to be used for clustering but kept for consistency
+
         Returns
         -------
         self
             Fitted estimator
         """
-        self._is_fitted = False
-
         if isinstance(X, pd.DataFrame):
             X = from_nested_to_2d_array(X, return_numpy=True)
 
@@ -83,13 +84,24 @@ class BaseCluster(BaseEstimator):
 
         return self._predict(X)
 
-    def _fit(self, X: NumpyArray) -> None:
+    def _fit(self, X: NumpyArray, y: NumpyArray = None):
         """
         Method that contains the core logic to fit a cluster
         to training data
 
         Parameters
         ----------
+        X: Numpy array
+            Numpy array to train the model on
+
+        y: Numpy array, default = None
+            Numpy array that is the labels for training.
+            Unlikely to be used for clustering but kept for consistency
+
+        Returns
+        -------
+        self
+            Fitted estimator
         """
         raise NotImplementedError("abstract method")
 
@@ -139,6 +151,9 @@ class BaseClusterCenterInitializer:
 
     n_centers: int
         Number of centers to be created
+
+    center_calculator_func: CenterCalculatorFunc, default = None
+        Function that is used to calculate new centers
 
     random_state: NumpyRandomState, default = None
         Generator used to initialise the centers.
