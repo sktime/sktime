@@ -70,6 +70,7 @@ class BaseGridSearch(BaseForecaster):
         """Call update_predict on the forecaster with the best found
         parameters.
         """
+
         return self.best_forecaster_._update_predict(
             y,
             cv=cv,
@@ -112,9 +113,9 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def transform(self, y, X=None):
+    def _transform(self, y, X=None):
         """Call transform on the forecaster with the best found parameters."""
-        return self.best_forecaster_.transform(y, X)
+        return self.best_forecaster_._transform(y, X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
@@ -124,6 +125,7 @@ class BaseGridSearch(BaseForecaster):
         -------
         fitted_params : dict
         """
+        self.check_is_fitted("get_fitted_params")
         return self.best_forecaster_.get_fitted_params()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -156,6 +158,7 @@ class BaseGridSearch(BaseForecaster):
         -------
         score : float
         """
+        self.check_is_fitted("score")
 
         if self.scoring is None:
             return self.best_forecaster_.score(y, X=X, fh=fh)
