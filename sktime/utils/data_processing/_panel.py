@@ -466,7 +466,8 @@ def from_nested_to_long_adp(what, store=None):
         X=what,
         instance_column_name="case_id",
         time_column_name="reading_id",
-        dimension_column_name="dim_id")
+        dimension_column_name="dim_id",
+    )
 
 
 convert[("nested_univ", "pd-long", "Panel")] = from_nested_to_long_adp
