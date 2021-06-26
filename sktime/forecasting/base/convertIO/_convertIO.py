@@ -22,7 +22,7 @@ convert[(from_type, to_type, as_scitype)]
 Parameters
 ----------
 what : from_type - object to convert
-store : reference of storage for lossy conversions, default=None (no store)
+store : dictionary - reference of storage for lossy conversions, default=None (no store)
 
 Returns
 -------
