@@ -36,7 +36,7 @@ def plot_cluster_algorithm(model: BaseCluster, predict_series: NumpyOrDF, k: int
     k: int
         Number of centers
     """
-    _check_soft_dependencies("matplotlib", "seaborn")
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
 
