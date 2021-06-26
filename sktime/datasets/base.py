@@ -24,7 +24,6 @@ __all__ = [
     "load_lynx",
     "load_acsf1",
     "load_uschange",
-    "load_UCR_UEA_dataset",
 ]
 
 __author__ = [
@@ -112,39 +111,6 @@ def _list_downloaded_datasets(extract_path):
         if os.path.isdir(os.path.join(data_dir, path))
     ]
     return datasets
-
-
-def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
-    """
-    Load dataset from UCR UEA time series archive.
-
-    Datasets to be found here: http://www.timeseriesclassification.com/dataset.php
-    Downloads and extracts dataset if not already downloaded.
-
-    Parameters
-    ----------
-    name : str
-        Name of data set.
-        Possible strings can be found at:
-        http://www.timeseriesclassification.com/dataset.php .
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-    extract_path : str, optional (default=None)
-        Default extract path is `sktime/datasets/data/`
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-    """
-    return _load_dataset(name, split, return_X_y, extract_path)
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None):

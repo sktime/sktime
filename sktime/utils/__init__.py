@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 __author__ = "Markus Löning"
-__all__ = ["all_estimators"]
+__all__ = ["all_estimators","load_UCR_UEA_dataset"]
 
 import inspect
 import pkgutil
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
+from .data_io import load_UCR_UEA_dataset
 
 
 def _get_name(obj):

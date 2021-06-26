@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_UCR_UEA_dataset
+from sktime.utils.data_io import load_UCR_UEA_dataset
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_uschange
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal

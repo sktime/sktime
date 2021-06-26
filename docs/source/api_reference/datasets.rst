@@ -21,4 +21,3 @@ sktime.datasets: Datasets
     load_lynx
     load_acsf1
     load_uschange
-    load_UCR_UEA_dataset
