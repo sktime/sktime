@@ -28,24 +28,6 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation.series import check_series
 
 
-# decorator to alias "X" argument as "Z" for transformer use
-def alias_X_as_Z(inner):
-    def outer(X=None, Z=None, **kwargs):
-
-        if X is None and Z is None:
-            raise ValueError("exactly one of X and Z must be passed, found none")
-
-        if X is not None and Z is not None:
-            raise ValueError("exactly one of X and Z must be passed, found both")
-
-        if X is None:
-            X = Z
-
-        return inner(X, **kwargs)
-
-    return outer
-
-
 class BaseSeriesAnnotator(BaseEstimator):
     """Base stream annotator
     assumes "predict" data is temporal future of "fit"
@@ -76,7 +58,6 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         super(BaseSeriesAnnotator, self).__init__()
 
-    @alias_X_as_Z
     def fit(self, X, Y=None):
         """Fit to training data.
 
@@ -136,7 +117,6 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
-    @alias_X_as_Z
     def update(self, X, Y=None):
         """update model with new data and optional ground truth annotations
 
@@ -193,47 +173,6 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         self.update(X=X)
         Y = self.predict(X=X)
-
-        return Y
-
-    def transform(self, Z):
-        """transform series - interface alias for predict, for use as transformer
-
-        Parameters
-        ----------
-        Z : pd.DataFrame
-            training data to fit model to, time series
-
-        Returns
-        -------
-        Y : pd.Series - annotations for sequence Z
-            exact format depends on annotation type
-        """
-
-        return self.predict(X=Z)
-
-    def update_transform(self, Z):
-        """update model with new data and create annotations for it
-
-        Parameters
-        ----------
-        Z : pd.DataFrame
-            training data to update model with, time series
-
-        Returns
-        -------
-        Y : pd.Series - annotations for sequence Z
-            exact format depends on annotation type
-
-        State change
-        ------------
-        updates fitted model (attributes ending in "_")
-        """
-
-        Z = check_series(Z)
-
-        self.update(Z=Z)
-        Y = self.transform(Z=Z)
 
         return Y
 
