@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 __all__ = [
     "from_3d_numpy_to_2d_array",
     "from_3d_numpy_to_nested",
