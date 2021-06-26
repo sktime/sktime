@@ -100,10 +100,10 @@ class PyODAnnotator(BaseSeriesAnnotator):
         if len(X_np.shape) == 1:
             X_np = X_np.reshape(-1, 1)
 
-        Y_np = self.estimator.predict(X_np)
+        Y_np = self.estimator_.predict(X_np)
 
         if annotation_values == "score":
-            Y_val_np = self.estimator.decision_function(X_np)
+            Y_val_np = self.estimator_.decision_function(X_np)
         elif annotation_values == "indicator":
             Y_val_np = Y_np
 
