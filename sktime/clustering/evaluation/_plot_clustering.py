@@ -5,13 +5,13 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import pandas as pd
-
 from sktime.clustering.base._typing import NumpyOrDF
 from sktime.clustering.base.base import BaseCluster
 from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
 from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def _plot(cluster_values, center, axes):
@@ -21,9 +21,7 @@ def _plot(cluster_values, center, axes):
     axes.plot(center, color="r")
 
 
-def plot_cluster_algorithm(
-    model: BaseCluster, predict_series: NumpyOrDF, k: int, plt, mpatches
-):
+def plot_cluster_algorithm(model: BaseCluster, predict_series: NumpyOrDF, k: int):
     """
     Method that is used to plot a clustering algorithms output
 
@@ -38,6 +36,10 @@ def plot_cluster_algorithm(
     k: int
         Number of centers
     """
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+
     if isinstance(predict_series, pd.DataFrame):
         predict_series = from_nested_to_2d_array(predict_series, return_numpy=True)
     plt.figure(figsize=(5, 10))
