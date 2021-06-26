@@ -12,6 +12,7 @@ from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 from sklearn.model_selection import check_cv
+from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
@@ -423,6 +424,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
+        _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
 
