@@ -463,7 +463,9 @@ def from_nested_to_long(
 def from_nested_to_long_adp(what, store=None):
 
     return from_nested_to_long(
-        X=what, instance_column_name="case_id", time_column_name="reading_id",
+        X=what,
+        instance_column_name="case_id",
+        time_column_name="reading_id",
         dimension_column_name="dim_id")
 
 
@@ -628,7 +630,8 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
 def from_multi_index_to_3d_numpy_adp(what, store=None):
 
     return from_multi_index_to_3d_numpy(
-        X=what, instance_index="instances", time_index="timepoints")
+        X=what, instance_index="instances", time_index="timepoints"
+    )
 
 
 convert[("pd-multiindex", "numpy3D", "Panel")] = from_multi_index_to_3d_numpy_adp
@@ -764,8 +767,7 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(what, store=None):
 
-    return from_multi_index_to_nested(
-        X=what, instance_index_name="instances")
+    return from_multi_index_to_nested(X=what, instance_index_name="instances")
 
 
 convert[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
@@ -854,7 +856,8 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 def from_nested_to_multi_index_adp(what, store=None):
 
     return from_nested_to_multi_index(
-        X=what, instance_index_name="instances", time_index="timepoints")
+        X=what, instance_index_name="instances", time_index="timepoints"
+    )
 
 
 convert[("nested_univ", "pd-multiindex", "Panel")] = from_nested_to_multi_index_adp

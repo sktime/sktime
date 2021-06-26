@@ -35,5 +35,5 @@ from sktime.utils.data_processing._panel import (
     convert_from_dictionary,
     MTYPE_REGISTER_PANEL,
     MTYPE_LIST_PANEL,
-    convert
+    convert,
 )
