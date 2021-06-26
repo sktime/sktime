@@ -1051,6 +1051,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Dbhasin1",
+      "name": "Drishti Bhasin ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56479884?v=4",
+      "profile": "https://github.com/Dbhasin1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Yard1",
+      "name": "Antoni Baum",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10364161?v=4",
+      "profile": "https://www.linkedin.com/in/yard1/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
