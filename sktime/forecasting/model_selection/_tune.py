@@ -161,7 +161,7 @@ class BaseGridSearch(BaseForecaster):
             return self.best_forecaster_.score(y, X=X, fh=fh)
 
         else:
-            y_pred = self.best_forecaster_._predict(fh, X=X)
+            y_pred = self.best_forecaster_.predict(fh, X=X)
             return self.scoring(y, y_pred)
 
     def _run_search(self, evaluate_candidates):
