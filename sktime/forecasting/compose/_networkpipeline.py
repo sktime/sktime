@@ -77,13 +77,43 @@ class NetworkPipelineForecaster(
         self._fitted_estimators = {}
         super().__init__()
 
-    def _iter(self, reverse=False):
+    def _iter(self, method, reverse=False):
+        """
+        Iterates through steps of the pipeline
+
+        Parameters
+        ----------
+
+        method: str
+            method that called `_iter`.
+            Currently supported `fit`, `update` and `predict`
+
+        Returns
+        -------
+
+            iterator with steps
+        """
+        if method not in ["fit", "predict", "update"]:
+            raise ValueError(
+                f'Iterator called by {method}. \
+Iterator can be called by "fit", "predict" and "update" only.'
+            )
+
         if reverse:
             steps = reversed(self.steps_)
         else:
             steps = self.steps_
+
         for (name, est, arguments) in steps:
-            yield (name, est, arguments)
+            # if arguments were defined using the short form notation
+            # without specifying behaviour for fit, predict or update
+            # add the fit, predict or update, key in the arguments dictionary
+            if method not in arguments:
+                out = {}
+                out[method] = arguments
+                yield (name, est, out)
+            else:
+                yield (name, est, arguments)
 
     def _check_steps_for_values(self, step_name):
         if step_name in self._step_results:
@@ -142,7 +172,7 @@ class NetworkPipelineForecaster(
         self.steps_ = self._check_steps_for_consistency()
         self._set_y_X(y, X)
         self._set_fh(fh)
-        for name, est, arguments in self._iter():
+        for name, est, arguments in self._iter(method="fit"):
             # check arguments of pipeline.
             # Inspect the `fit` key of the step arguments
             # check and process corresponding values
@@ -187,7 +217,7 @@ class NetworkPipelineForecaster(
         if X is not None:
             self._X = X
         # iterate in normal order
-        for name, est, arguments in self._iter():
+        for name, est, arguments in self._iter(method="predict"):
             processed_arguments = {}
             # get fitted estimator
             est = self._fitted_estimators[name]
@@ -223,7 +253,7 @@ class NetworkPipelineForecaster(
         i = 0  # used for skipping the first estimator when iterating in
         # reverse order, i.e.
         # the last estimator if iterating in normal order
-        for name, est, arguments in self._iter(reverse=True):
+        for name, est, arguments in self._iter(method="predict", reverse=True):
             if i == 0:
                 # skips the first step, i.e. the last step
                 # when iterating in reverse order
@@ -292,7 +322,7 @@ class NetworkPipelineForecaster(
         self._update_y_X(y, X)
         self._y = self._y.asfreq(y_index_frequency)
 
-        for (name, est, arguments) in self._iter():
+        for (name, est, arguments) in self._iter(method="update"):
             # check arguments of pipeline.
             # Inspect the `update` key of the step arguments
             # check and process corresponding values
