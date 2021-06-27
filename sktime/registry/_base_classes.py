@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Register of estimator base classes.
+Register of estimator base classes corresponding to sktime scitypes.
 
 This module exports the following:
 
@@ -33,6 +33,7 @@ BASE_CLASS_LOOKUP - dictionary
 import pandas as pd
 
 from sktime.classification.base import BaseClassifier
+from sktime.clustering.base.base import BaseCluster
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import BaseTransformer
@@ -40,6 +41,7 @@ from sktime.transformations.base import BaseTransformer
 
 BASE_CLASS_REGISTER = [
     ("classifier", BaseClassifier, "time series classifier"),
+    ("clusterer", BaseCluster, "time series clusterer"),
     ("regressor", BaseRegressor, "time series regressor"),
     ("forecaster", BaseForecaster, "forecaster"),
     ("transformer", BaseTransformer, "time series transformer"),
