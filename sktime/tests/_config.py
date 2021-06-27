@@ -11,6 +11,7 @@ from sktime.registry import (
     ESTIMATOR_TAG_LIST,
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
+    TRANSFORMER_MIXIN_LIST,
 )
 
 from hcrystalball.wrappers import HoltSmoothingWrapper
@@ -60,10 +61,6 @@ from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
@@ -296,12 +293,8 @@ NON_STATE_CHANGING_METHODS = (
 )
 
 # The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = (
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-    _PanelToTabularTransformer,
-    _PanelToPanelTransformer,
-)
+VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
+
 VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
 
 VALID_ESTIMATOR_TYPES = (
