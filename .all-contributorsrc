@@ -10,7 +10,7 @@
   "contributors": [
     {
       "login": "fkiraly",
-      "name": "fkiraly",
+      "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
@@ -19,6 +19,7 @@
         "doc",
         "design",
         "eventOrganizing",
+        "example",
         "financial",
         "fundingFinding",
         "ideas",
@@ -26,7 +27,8 @@
         "projectManagement",
         "question",
         "review",
-        "talk"
+        "talk",
+        "tutorial"
       ]
     },
     {
@@ -1046,6 +1048,24 @@
       "name": "Taiwo Owoseni",
       "avatar_url": "https://avatars.githubusercontent.com/u/13348874?v=4",
       "profile": "https://thayeylolu.github.io/portfolio/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Dbhasin1",
+      "name": "Drishti Bhasin ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56479884?v=4",
+      "profile": "https://github.com/Dbhasin1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Yard1",
+      "name": "Antoni Baum",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10364161?v=4",
+      "profile": "https://www.linkedin.com/in/yard1/",
       "contributions": [
         "code"
       ]
