@@ -25,21 +25,48 @@ import pandas as pd
 
 
 ESTIMATOR_TAG_REGISTER = [
-    ("fit-in-transform", "transformer", "bool", "is there any fit logic in fit?"),
-    ("univariate_only", "forecaster", "bool",
-        "does forecaster use exogeneous data (X)?"),
-    ("transform-returns-same-time-index", "transformer", "bool",
-        "does transform return same time index as input?"),
-    ("handles-missing-data", "estimator", "bool",
-        "can the estimator handle missing data (NA, np.nan) in inputs?"),
-    ("skip-inverse-transform", "transformer", "bool",
-        "behaviour flag: skips inverse_transform when called yes/no"),
-    ("requires-fh-in-fit", "forecaster", "bool",
-        "does forecaster require fh passed already in fit? yes/no"),
-    ("X-y-must-have-same-index", "forecaster", "bool",
-        "do X/y in fit/update and X/fh in predict have to be same indices?"),
-    ("enforce_index_type", "forecaster", "type",
-        "passed to input checks, input conversion index type to enforce"),
+    (
+        "univariate_only",
+        "forecaster",
+        "bool",
+        "does forecaster use exogeneous data (X)?",
+    ),
+    (
+        "transform-returns-same-time-index",
+        "transformer",
+        "bool",
+        "does transform return same time index as input?",
+    ),
+    (
+        "handles-missing-data",
+        "estimator",
+        "bool",
+        "can the estimator handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "skip-inverse-transform",
+        "transformer",
+        "bool",
+        "behaviour flag: skips inverse_transform when called yes/no",
+    ),
+    (
+        "requires-fh-in-fit",
+        "forecaster",
+        "bool",
+        "does forecaster require fh passed already in fit? yes/no",
+    ),
+    (
+        "X-y-must-have-same-index",
+        "forecaster",
+        "bool",
+        "do X/y in fit/update and X/fh in predict have to be same indices?",
+    ),
+    (
+        "enforce_index_type",
+        "forecaster",
+        "type",
+        "passed to input checks, input conversion index type to enforce",
+    ),
 ]
 
 ESTIMATOR_TAG_LIST = pd.DataFrame(ESTIMATOR_TAG_REGISTER)[0].values
