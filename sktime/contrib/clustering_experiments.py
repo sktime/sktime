@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Experiments: code to run experiments as an alternative to orchestration.
+"""Experiments: code to run experiments for clustering.
 
 This file is configured for runs of the main method with command line arguments, or for
 single debugging runs. Results are written in a standard format
@@ -11,34 +11,10 @@ import os
 import sklearn.preprocessing
 import sklearn.utils
 
-from sktime.classification.dictionary_based import (
-    BOSSEnsemble,
-    ContractableBOSS,
-    TemporalDictionaryEnsemble,
-    WEASEL,
-    MUSE,
+from sktime.clustering import (
+    TimeSeriesKMeans,
+    TimeSeriesKMedoids,
 )
-from sktime.classification.distance_based import (
-    ElasticEnsemble,
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
-    ShapeDTW,
-)
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier,
-)
-from sktime.classification.interval_based import (
-    TimeSeriesForestClassifier,
-    RandomIntervalSpectralForest,
-)
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
-from sktime.classification.shapelet_based import MrSEQLClassifier
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -59,112 +35,42 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
 
-"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
-mechanism used in Java,
-https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
-but is not yet as engineered. However, if you generate results using the method
-recommended here, they can be directly and automatically compared to the results
-generated in java
 
-"""
+def set_clusterer(cls, resampleId=None):
+    """Construct a clusterer.
 
-classifier_list = [
-    # Distance based
-    "ProximityForest",
-    "KNeighborsTimeSeriesClassifier",
-    "ElasticEnsemble",
-    "ShapeDTW",
-    # Dictionary based
-    "BOSS",
-    "ContractableBOSS",
-    "TemporalDictionaryEnsemble",
-    "WEASEL",
-    "MUSE",
-    # Interval based
-    "RandomIntervalSpectralForest",
-    "TimeSeriesForestClassifier",
-    "CanonicalIntervalForest",
-    # Shapelet based
-    "ShapeletTransformClassifier",
-    "MrSEQLClassifier",
-    # Kernel based
-    "ROCKET",
-    "Arsenal",
-]
-
-
-def set_classifier(cls, resampleId=None):
-    """Construct a classifier.
-
-    Basic way of creating the classifier to build using the default settings. This
+    Basic way of creating the clusterer to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy
     reproducability. You can set up bespoke classifier in many other ways.
 
     Parameters
     ----------
-    cls: String indicating which classifier you want
+    cls: String indicating which clusterer you want
     resampleId: classifier random seed
 
     Return
     ------
-    A classifier.
+    A clusterer.
     """
     name = cls.lower()
     # Distance based
-    if name == "pf" or name == "proximityforest":
-        return ProximityForest(random_state=resampleId)
-    elif name == "pt" or name == "proximitytree":
-        return ProximityTree(random_state=resampleId)
-    elif name == "ps" or name == "proximityStump":
-        return ProximityStump(random_state=resampleId)
-    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
-    elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(distance="dtw")
-    elif name == "msm" or name == "1nn-msm":
-        return KNeighborsTimeSeriesClassifier(distance="msm")
-    elif name == "ee" or name == "elasticensemble":
-        return ElasticEnsemble()
-    elif name == "shapedtw":
-        return ShapeDTW()
-    # Dictionary based
-    elif name == "boss" or name == "bossensemble":
-        return BOSSEnsemble(random_state=resampleId)
-    elif name == "cboss" or name == "contractableboss":
-        return ContractableBOSS(random_state=resampleId)
-    elif name == "tde" or name == "temporaldictionaryensemble":
-        return TemporalDictionaryEnsemble(random_state=resampleId)
-    elif name == "weasel":
-        return WEASEL(random_state=resampleId)
-    elif name == "muse":
-        return MUSE(random_state=resampleId)
-    # Interval based
-    elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resampleId)
-    elif name == "tsf" or name == "timeseriesforestclassifier":
-        return TimeSeriesForestClassifier(random_state=resampleId)
-    elif name == "cif" or name == "canonicalintervalforest":
-        return CanonicalIntervalForest(random_state=resampleId)
-    elif name == "drcif":
-        return DrCIF(random_state=resampleId)
-    # Shapelet based
-    elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(
-            random_state=resampleId, transform_contract_in_mins=60
+    if name == "kmeans" or name == "k-means":
+        return TimeSeriesKMeans(
+            n_clusters=5,
+            max_iter=50,
+            averaging_algorithm="mean",
+            random_state=resampleId,
         )
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
-    elif name == "rocket":
-        return ROCKETClassifier(random_state=resampleId)
-    elif name == "arsenal":
-        return Arsenal(random_state=resampleId)
-    # Hybrid
-    elif name == "catch22":
-        return Catch22ForestClassifier(random_state=resampleId)
-    elif name == "hivecotev1":
-        return HIVECOTEV1(random_state=resampleId)
+    if name == "kmedoids" or name == "k-medoids":
+        return TimeSeriesKMedoids(
+            n_clusters=5,
+            max_iter=50,
+            averaging_algorithm="mean",
+            random_state=resampleId,
+        )
+
     else:
-        raise Exception("UNKNOWN CLASSIFIER")
+        raise Exception("UNKNOWN CLUSTERER")
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
@@ -231,12 +137,20 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     return X_train, y_train, X_test, y_test
 
 
+def form_cluster_list(clusters, n) -> np.array:
+    preds = np.zeros(n)
+    for i in range(len(clusters)):
+        for j in range(len(clusters[i])):
+            preds[clusters[i][j]] = i
+    return preds
+
+
 def run_experiment(
     problem_path,
     results_path,
     cls_name,
     dataset,
-    classifier=None,
+    clusterer=None,
     resampleID=0,
     overwrite=False,
     format=".ts",
@@ -252,7 +166,7 @@ def run_experiment(
     problem_path: Location of problem files, full path.
     results_path: Location of where to write results. Any required directories
         will be created
-    cls_name: determines which classifier to use, as defined in set_classifier.
+    cls_name: determines which clusterer to use, as defined in set_classifier.
         This assumes predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
     dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
@@ -325,27 +239,24 @@ def run_experiment(
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    if classifier is None:
-        classifier = set_classifier(cls_name, resampleID)
+    if clusterer is None:
+        clusterer = set_clusterer(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
         start = int(round(time.time() * 1000))
-        classifier.fit(trainX, trainY)
+        clusterer.fit(trainX)
         build_time = int(round(time.time() * 1000)) - start
         start = int(round(time.time() * 1000))
-        probs = classifier.predict_proba(testX)
-        preds = classifier.classes_[np.argmax(probs, axis=1)]
+        clusters = clusterer.predict(testX)
+        preds = form_cluster_list(clusters, len(testY))
         test_time = int(round(time.time() * 1000)) - start
-        ac = accuracy_score(testY, preds)
         print(
             cls_name
             + " on "
             + dataset
             + " resample number "
             + str(resampleID)
-            + " test acc: "
-            + str(ac)
             + " time: "
             + str(test_time)
         )
@@ -353,22 +264,14 @@ def run_experiment(
         if "Composite" in cls_name:
             second = "Para info too long!"
         else:
-            second = str(classifier.get_params())
+            second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
 
         print(second)
-        temp = np.array_repr(classifier.classes_).replace("\n", "")
+        temp = np.array_repr(clusterer.classes_).replace("\n", "")
 
-        third = (
-            str(ac)
-            + ","
-            + str(build_time)
-            + ","
-            + str(test_time)
-            + ",-1,-1,"
-            + str(len(classifier.classes_))
-        )
+        third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
         write_results_to_uea_format(
             second_line=second,
             third_line=third,
@@ -376,7 +279,6 @@ def run_experiment(
             classifier_name=cls_name,
             resample_seed=resampleID,
             predicted_class_vals=preds,
-            actual_probas=probs,
             dataset_name=dataset,
             actual_class_vals=testY,
             split="TEST",
@@ -384,15 +286,15 @@ def run_experiment(
     if train_file:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
-            classifier, "_get_train_probs"
+            clusterer, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
-            train_probs = classifier._get_train_probs(trainX)
+            train_probs = clusterer._get_train_probs(trainX)
         else:
             train_probs = cross_val_predict(
-                classifier, X=trainX, y=trainY, cv=10, method="predict_proba"
+                clusterer, X=trainX, y=trainY, cv=10, method="predict_proba"
             )
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
+        train_preds = clusterer.classes_[np.argmax(train_probs, axis=1)]
         train_acc = accuracy_score(trainY, train_preds)
         print(
             cls_name
@@ -408,16 +310,16 @@ def run_experiment(
         if "Composite" in cls_name:
             second = "Para info too long!"
         else:
-            second = str(classifier.get_params())
+            second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
-        temp = np.array_repr(classifier.classes_).replace("\n", "")
+        temp = np.array_repr(clusterer.classes_).replace("\n", "")
         third = (
             str(train_acc)
             + ","
             + str(train_time)
             + ",-1,-1,-1,"
-            + str(len(classifier.classes_))
+            + str(len(clusterer.classes_))
         )
         write_results_to_uea_format(
             second_line=second,
@@ -516,7 +418,7 @@ def write_results_to_uea_format(
         + str(train_or_test)
         + ","
         + str(resample_seed)
-        + ",MILLISECONDS,PREDICTIONS, Generated by experiments.py"
+        + ",MILLISECONDS,PREDICTIONS, Generated by classification_experiments.py"
     )
     file.write("\n")
 
