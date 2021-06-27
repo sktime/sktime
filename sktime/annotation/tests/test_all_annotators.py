@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
+import numpy as np
 
 import pytest
 from sktime.utils._testing.estimator_checks import _construct_instance, _make_args
@@ -16,4 +17,8 @@ def test_output_type(Estimator):
     estimator.fit(*args)
     args = _make_args(estimator, "predict")
     annotated_series = estimator.predict(*args)
-    assert isinstance(annotated_series, pd.Series)
+
+    assert (isinstance(annotated_series, pd.Series)) and (
+        (annotated_series.dtype == np.bool)  # annotation_values="indicator"
+        or (annotated_series.dtype == np.float)  # annotation_values="score"
+    )
