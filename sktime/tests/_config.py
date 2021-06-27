@@ -282,7 +282,7 @@ ESTIMATOR_TEST_PARAMS = {
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
 # common tests for estimators with the same tags.
-VALID_ESTIMATOR_TAGS = ESTIMATOR_TAG_LIST
+VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 
 # These methods should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
