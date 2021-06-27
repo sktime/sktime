@@ -95,10 +95,8 @@ TRANSFORMER_MIXIN_REGISTER = [
         _SeriesToSeriesTransformer,
         "time-series-to-time-series transformer",
     ),
-    (
-        "p-to-t-trafo", _PanelToTabularTransformer, "panel-to-tabular transformer"),
-    (
-        "p-to-p-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
+    ("p-to-t-trafo", _PanelToTabularTransformer, "panel-to-tabular transformer"),
+    ("p-to-p-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
 ]
 
 TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].values

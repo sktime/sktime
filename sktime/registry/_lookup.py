@@ -56,7 +56,7 @@ def all_estimators(estimator_types=None, return_names=True, exclude_estimators=N
     from sktime.registry import (
         BASE_CLASS_LIST,
         BASE_CLASS_LOOKUP,
-        TRANSFORMER_MIXIN_LIST
+        TRANSFORMER_MIXIN_LIST,
     )
 
     VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
