@@ -88,23 +88,17 @@ TRANSFORMER_MIXIN_REGISTER = [
     (
         "s-to-prim-trafo",
         _SeriesToPrimitivesTransformer,
-        "time-series-to-primitives transformer"
+        "time-series-to-primitives transformer",
     ),
     (
         "s-to-s-trafo",
         _SeriesToSeriesTransformer,
-        "time-series-to-time-series transformer"
+        "time-series-to-time-series transformer",
     ),
     (
-        "p-to-t-trafo",
-        _PanelToTabularTransformer,
-        "panel-to-tabular transformer"
-    ),
+        "p-to-t-trafo", _PanelToTabularTransformer, "panel-to-tabular transformer"),
     (
-        "p-to-p-trafo",
-        _PanelToPanelTransformer,
-        "panel-to-panel transformer"
-    ),
+        "p-to-p-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
 ]
 
 TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].values
@@ -112,5 +106,5 @@ TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].val
 TRANSFORMER_MIXIN_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[1].values
 
 TRANSFORMER_MIXIN_LOOKUP = dict(
-        zip(TRANSFORMER_MIXIN_SCITYPE_LIST, TRANSFORMER_MIXIN_LIST)
-    )
+    zip(TRANSFORMER_MIXIN_SCITYPE_LIST, TRANSFORMER_MIXIN_LIST)
+)
