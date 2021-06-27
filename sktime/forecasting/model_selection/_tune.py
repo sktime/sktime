@@ -313,6 +313,7 @@ class BaseGridSearch(BaseForecaster):
         -------
         cutoff : pd.Period, pd.Timestamp, int
         """
+        self.check_is_fitted()
         return self.best_forecaster_.cutoff
 
 
