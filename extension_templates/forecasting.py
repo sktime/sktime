@@ -61,12 +61,15 @@ class MyForecaster(BaseForecaster):
     """
 
     # todo: fill out estimator tags here
+    #  delete the tags that you *didn't* change - these defaults are inherited
     _tags = {
-        "fh_in_fit": True,  # is the forecasting horizon already required in fit?
-        "handles_missing_data": False,  # can the estimator handle missing data?
-        "univariate_only": True,  # can the estimator deal with multivariate series?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
-    # in case of inheritance, concrete class should set all tags
+    # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
