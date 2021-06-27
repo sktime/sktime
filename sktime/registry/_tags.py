@@ -26,7 +26,7 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "univariate_only",
+        "univariate-only",
         "forecaster",
         "bool",
         "does forecaster use exogeneous data (X)?",
