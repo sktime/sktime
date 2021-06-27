@@ -8,7 +8,7 @@ Purpose of this implementation template:
     This is to be used as a "fill-in" coding template.
 
 How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descritive name.
+- make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
 - you can add more private methods, but do not override BaseEstimator's private methods
