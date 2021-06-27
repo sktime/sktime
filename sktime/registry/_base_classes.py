@@ -33,7 +33,7 @@ BASE_CLASS_LOOKUP - dictionary
 import pandas as pd
 
 from sktime.classification.base import BaseClassifier
-from sktime.clustering.base.base import BaseCluster
+from sktime.clustering.base import BaseCluster
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import BaseTransformer
