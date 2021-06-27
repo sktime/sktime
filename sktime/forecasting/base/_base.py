@@ -522,7 +522,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = self._all_tags()["requires-fh-in-fit"]
+        requires_fh = self._all_tags().get("requires-fh-in-fit", True)
 
         msg = (
             f"This is because fitting of the `"
