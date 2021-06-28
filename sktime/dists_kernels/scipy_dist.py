@@ -38,7 +38,7 @@ class ScipyDist(BaseTrafoPw):
                 note: this will potentially align "non-matching" columns
     """
 
-    def __init__(self, metric='euclidean', p=2, colalign='intersect'):
+    def __init__(self, metric="euclidean", p=2, colalign="intersect"):
 
         self.metric = metric
         self.p = p
