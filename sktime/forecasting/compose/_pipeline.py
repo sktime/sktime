@@ -19,7 +19,6 @@ class _Pipeline(
     BaseForecaster,
     _HeterogenousMetaEstimator,
 ):
-
     def _check_steps(self):
         """Check Steps
 
@@ -146,7 +145,7 @@ class ForecastingPipeline(_Pipeline):
     _tags = {
         "univariate-only": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False
+        "handles-missing-data": False,
     }
 
     def __init__(self, steps):
@@ -293,7 +292,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     _tags = {
         "univariate-only": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False
+        "handles-missing-data": False,
     }
 
     def __init__(self, steps):
