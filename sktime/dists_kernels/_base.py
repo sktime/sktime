@@ -79,7 +79,7 @@ class BaseTrafoPw(BaseEstimator):
             X2 = check_series(X2)
             self.symmetric = False
 
-        return self.transform(X=X, X2=X2)
+        return self._transform(X=X, X2=X2)
 
     def _transform(self, X, X2=None):
         """
@@ -175,7 +175,7 @@ class BaseTrafoPwPanel(BaseEstimator):
                 X2[i] = check_series(X2i)
             self.symmetric = False
 
-        return self.transform(X=X, X2=X2)
+        return self._transform(X=X, X2=X2)
 
     def _transform(self, X, X2=None):
         """
