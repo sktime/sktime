@@ -65,6 +65,7 @@ class BaseForecaster(BaseEstimator):
         "univariate-only": True,  # can estimator deal with multivariate series y?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "multivariate-only": False,
     }
 
     def __init__(self):
@@ -109,7 +110,12 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = False
 
         self._set_fh(fh)
-        y, X = check_y_X(y, X)
+        y, X = check_y_X(
+            y,
+            X,
+            enforce_univariate=_has_tag(self, "univariate-only"),
+            enforce_multivariate=_has_tag(self, "multivariate-only"),
+        )
 
         self._X = X
         self._y = y

@@ -29,9 +29,22 @@ def _check_is_univariate(y):
         )
 
 
+def _check_is_multivariate(y):
+    """Check if series is univariate."""
+    if isinstance(y, pd.Series):
+        raise ValueError("Data must be multivariate, but found a pd.Series")
+    if isinstance(y, np.ndarray):
+        if y.ndim == 1 or (y.ndim == 2 and y.shape[1] == 1):
+            raise ValueError(
+                "Data must be multivariate, but found np.array with a single dimension "
+                "one dimension"
+            )
+
+
 def check_series(
     Z,
     enforce_univariate=False,
+    enforce_multivariate=False,
     allow_empty=False,
     allow_numpy=True,
     enforce_index_type=None,
@@ -44,7 +57,11 @@ def check_series(
         Univariate or multivariate time series. NumPy ndarray only allowed
         if `allow_numpy` = True.
     enforce_univariate : bool, default = False
-        If True, multivariate Z will raise an error.
+        If True, multivariate Z will raise an error. Cannot be True if
+        enforce_multivariate is also True.
+    enforce_multivariate : bool, default = False
+        If True, univariate Z will raise an error. Cannot be True if
+        enforce_univariate is also True.
     allow_empty : bool, default = False
     allow_numpy : bool, default = True
     enforce_index_type : type, default = None
@@ -61,6 +78,12 @@ def check_series(
         If Z is an invalid input
     """
     # Check if pandas series or numpy array
+    if enforce_univariate and enforce_multivariate:
+        raise ValueError(
+            "`enforce_univariate` and `enforce_multivariate` cannot both be set to "
+            "True."
+        )
+
     if not allow_numpy:
         valid_data_types = tuple(
             filter(lambda x: x is not np.ndarray, VALID_DATA_TYPES)
@@ -75,6 +98,9 @@ def check_series(
 
     if enforce_univariate:
         _check_is_univariate(Z)
+
+    if enforce_multivariate:
+        _check_is_multivariate(Z)
 
     # check time index if input data is not an NumPy ndarray
     if not isinstance(Z, np.ndarray):

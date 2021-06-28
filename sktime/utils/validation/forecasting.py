@@ -31,6 +31,8 @@ def check_y_X(
     allow_empty=False,
     allow_constant=True,
     enforce_index_type=None,
+    enforce_univariate=True,
+    enforce_multivariate=False,
 ):
     """Validate input data.
 
@@ -44,6 +46,12 @@ def check_y_X(
         If True, constant `y` does not raise an error.
     enforce_index_type : type, optional (default=None)
         type of time index
+    enforce_univariate : bool, default = False
+        If True, multivariate y will raise an error. Cannot be True if
+        enforce_multivariate is also True.
+    enforce_multivariate : bool, default = False
+        If True, univariate y will raise an error. Cannot be True if
+        enforce_univariate is also True.
 
     Raises
     ------
@@ -55,6 +63,8 @@ def check_y_X(
         allow_empty=allow_empty,
         allow_constant=allow_constant,
         enforce_index_type=enforce_index_type,
+        enforce_univariate=enforce_univariate,
+        enforce_multivariate=enforce_multivariate,
     )
 
     if X is not None:
@@ -106,7 +116,14 @@ def check_X(
     )
 
 
-def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
+def check_y(
+    y,
+    allow_empty=False,
+    allow_constant=True,
+    enforce_index_type=None,
+    enforce_univariate=False,
+    enforce_multivariate=False,
+):
     """Validate input data.
 
     Parameters
@@ -118,6 +135,12 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
         If True, constant `y` does not raise an error.
     enforce_index_type : type, optional (default=None)
         type of time index
+    enforce_univariate : bool, default = False
+        If True, multivariate y will raise an error. Cannot be True if
+        enforce_multivariate is also True.
+    enforce_multivariate : bool, default = False
+        If True, univariate y will raise an error. Cannot be True if
+        enforce_univariate is also True.
 
     Returns
     -------
@@ -130,7 +153,8 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     """
     y = check_series(
         y,
-        enforce_univariate=True,
+        enforce_univariate=enforce_univariate,
+        enforce_multivariate=enforce_multivariate,
         allow_empty=allow_empty,
         allow_numpy=False,
         enforce_index_type=enforce_index_type,

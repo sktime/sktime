@@ -290,6 +290,7 @@ VALID_ESTIMATOR_TAGS = (
     "requires-fh-in-fit",
     "X-y-must-have-same-index",
     "enforce-index-type",
+    "multivariate-only",
 )
 
 # These methods should not change the state of the estimator, that is, they should

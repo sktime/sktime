@@ -515,7 +515,7 @@ class ARIMA(_PmdArimaAdapter):
     Example
     ----------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.arima import ARIMA
     >>> y = load_airline()
     >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),
