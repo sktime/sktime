@@ -32,6 +32,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does forecaster use exogeneous data (X)?",
     ),
     (
+        "fit-in-transform",
+        "transformer",
+        "bool",
+        "does fit contain no logic and can be skipped? yes/no",
+    ),
+    (
         "transform-returns-same-time-index",
         "transformer",
         "bool",
