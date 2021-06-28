@@ -46,8 +46,10 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
+from sktime.utils._testing.panel import make_clustering_problem
 from sktime.utils.data_processing import is_nested_dataframe
 from sktime.utils import _has_tag
+from sktime.clustering.base.base import BaseCluster
 
 
 def check_estimator(Estimator, exclude=None):
@@ -129,12 +131,7 @@ def check_estimator_tags(Estimator):
     assert hasattr(Estimator, "_all_tags")
     all_tags = Estimator._all_tags()
     assert isinstance(all_tags, dict)
-    assert all(
-        [
-            isinstance(key, str) and isinstance(value, bool)
-            for key, value in all_tags.items()
-        ]
-    )
+    assert all([isinstance(key, str) for key, _ in all_tags.items()])
 
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
@@ -347,6 +344,7 @@ def check_raises_not_fitted_error(Estimator):
 def check_fit_idempotent(Estimator):
     # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
+
     set_random_state(estimator)
 
     # Fit for the first time
@@ -575,6 +573,8 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseCluster):
+        return (make_clustering_problem(**kwargs),)
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -584,6 +584,9 @@ def _make_predict_args(estimator, **kwargs):
         fh = 1
         return (fh,)
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+        X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseCluster):
         X = _make_panel_X(**kwargs)
         return (X,)
     else:

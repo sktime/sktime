@@ -18,6 +18,7 @@ We assume basic familiarity with `scikit-learn`_. If you haven’t worked with s
     :maxdepth: 1
 
     examples/01_forecasting.ipynb
+    examples/01a_forecasting_sklearn.ipynb
     examples/02_classification_univariate.ipynb
     examples/03_classification_multivariate.ipynb
     examples/04_benchmarking.ipynb

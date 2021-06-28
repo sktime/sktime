@@ -20,9 +20,17 @@ class _Pipeline(
     _HeterogenousMetaEstimator,
 ):
 
-    _tags = {"requires-fh-in-fit": False}
-
     def _check_steps(self):
+        """Check Steps
+
+        Parameters
+        ----------
+        self : an instance of self
+
+        Returns
+        -------
+        step : Returns step.
+        """
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -135,6 +143,11 @@ class ForecastingPipeline(_Pipeline):
     """
 
     _required_parameters = ["steps"]
+    _tags = {
+        "univariate-only": False,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False
+    }
 
     def __init__(self, steps):
         self.steps = steps
@@ -150,7 +163,7 @@ class ForecastingPipeline(_Pipeline):
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, required
             Exogenous variables are ignored
         Returns
         -------
@@ -177,6 +190,25 @@ class ForecastingPipeline(_Pipeline):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, required
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         if X is None:
             raise NotImplementedError("X must be given to use ForecastingPipeline.")
         forecaster = self.steps_[-1][1]
@@ -192,7 +224,7 @@ class ForecastingPipeline(_Pipeline):
         Parameters
         ----------
         y : pd.Series
-        X : pd.DataFrame
+        X : pd.DataFrame, required
         update_params : bool, optional (default=True)
 
         Returns
@@ -258,7 +290,11 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["steps"]
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False
+    }
 
     def __init__(self, steps):
         self.steps = steps
@@ -293,10 +329,28 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         f = clone(forecaster)
         f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
-
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
@@ -313,7 +367,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         Parameters
         ----------
         y : pd.Series
-        X : pd.DataFrame
+        X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=True)
 
         Returns
