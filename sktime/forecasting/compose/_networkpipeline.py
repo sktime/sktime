@@ -2,7 +2,7 @@
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.utils.validation.forecasting import check_y  # , check_X
+from sktime.utils.validation.forecasting import check_y, check_X
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
 
@@ -190,9 +190,14 @@ Iterator can be called by "fit", "predict" and "update" only.'
                 processed_arguments["y"] = check_y(processed_arguments["y"])
             # if "Z" in processed_arguments:
             #     processed_arguments["Z"] = check_y(processed_arguments["Z"])
-            # TODO write checks for X.
-            # if "X" in processed_arguments and processed_arguments["X"] is not None:
-            #     processed_arguments["X"] = check_X(processed_arguments["X"])
+            if "X" in processed_arguments and processed_arguments["X"] is not None:
+                if type(processed_arguments["X"]) is list:
+                    args = []
+                    for arg in processed_arguments["X"]:
+                        args.append(check_X(arg))
+                    processed_arguments["X"] = args
+                else:
+                    processed_arguments["X"] = check_X(processed_arguments["X"])
             if "X" in processed_arguments and processed_arguments["X"] is None:
                 del processed_arguments["X"]
             # if estimator has `fit_transform()` method it is a transformer
