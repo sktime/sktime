@@ -153,6 +153,10 @@ def check_estimator_tags(Estimator):
 
 
 def check_inheritance(Estimator):
+    # convert to class if object passed
+    if not isclass(Estimator):
+        Estimator = type(Estimator)
+
     # Check that estimator inherits from BaseEstimator
     assert issubclass(Estimator, BaseEstimator), (
         f"Estimator: {Estimator} " f"is not a sub-class of " f"BaseEstimator."
