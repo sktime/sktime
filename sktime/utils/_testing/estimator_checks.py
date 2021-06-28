@@ -54,7 +54,7 @@ from sktime.utils import _has_tag
 from sktime.clustering.base.base import BaseCluster
 
 
-def check_estimator(Estimator, exclude=[]):
+def check_estimator(Estimator, exclude=None):
     """Check whether estimator complies with common interface.
 
     Parameters
@@ -66,6 +66,9 @@ def check_estimator(Estimator, exclude=[]):
     AssertionError
         If Estimator does not comply
     """
+    if exclude is None:
+        exclude = []
+
     for check in yield_estimator_checks(exclude=exclude):
         check(Estimator)
 
