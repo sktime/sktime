@@ -38,6 +38,8 @@ class AggrDist(BaseTrafoPwPanel):
 
         self.transformer = transformer
 
+        super(AggrDist, self).__init__()
+
     def _transform(self, X, X2=None):
         """
         Behaviour: returns pairwise distance/kernel matrix

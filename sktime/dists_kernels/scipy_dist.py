@@ -44,6 +44,8 @@ class ScipyDist(BaseTrafoPw):
         self.p = p
         self.colalign = colalign
 
+        super(ScipyDist, self).__init__()
+
     def _transform(self, X, X2=None):
         """
         Behaviour: returns pairwise distance/kernel matrix
