@@ -84,7 +84,7 @@ def check_series_to_series_transform_univariate(Estimator):
         n_timepoints=n_timepoints,
         add_nan=_has_tag(Estimator, "handles-missing-data"),
     )
-    assert isinstance(out, (pd.Series, np.ndarray))
+    assert isinstance(out, (pd.Series, np.ndarray, pd.DataFrame))
 
 
 def check_series_to_series_transform_multivariate(Estimator):
