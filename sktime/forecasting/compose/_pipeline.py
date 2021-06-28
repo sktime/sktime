@@ -157,6 +157,7 @@ class ForecastingPipeline(_Pipeline):
         self : returns an instance of self.
         """
         # Some transformers can not deal with X=None, therefore X is mandatory
+        # todo: add this as if statement as optional passthrough
         if self._X is None:
             raise NotImplementedError("X must be given to use ForecastingPipeline.")
         self._set_y_X(y, X)
@@ -176,6 +177,8 @@ class ForecastingPipeline(_Pipeline):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        if X is None:
+            raise NotImplementedError("X must be given to use ForecastingPipeline.")
         forecaster = self.steps_[-1][1]
         # transform X before doing prediction
         for _, _, transformer in self._iter_transformers():
@@ -196,6 +199,8 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : an instance of self
         """
+        if X is None:
+            raise NotImplementedError("X must be given to use ForecastingPipeline.")
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
