@@ -54,7 +54,7 @@ from sktime.utils import _has_tag
 from sktime.clustering.base.base import BaseCluster
 
 
-def check_estimator(Estimator, exclude=None):
+def check_estimator(Estimator, exclude=[]):
     """Check whether estimator complies with common interface.
 
     Parameters
@@ -179,7 +179,10 @@ def check_has_common_interface(Estimator):
     # Check estimator implements the common interface
 
     # Check class for type of attribute
-    assert isinstance(Estimator.is_fitted, property)
+    if isclass(Estimator):
+        assert isinstance(Estimator.is_fitted, property)
+    else:
+        assert isinstance(type(Estimator).is_fitted, property)
 
     # Check instance
     estimator = _construct_instance(Estimator)
@@ -232,8 +235,15 @@ def check_repr(Estimator):
 
 
 def check_constructor(Estimator):
+
     # Check that the constructor behaves correctly
+    if not isclass(Estimator):
+        Estimator = type(Estimator)
+
     estimator = _construct_instance(Estimator)
+
+    if not isclass(Estimator):
+        Estimator = type(Estimator)
 
     # Check that init does not construct object of other class than itself
     assert isinstance(estimator, Estimator)
@@ -336,6 +346,10 @@ def check_fit_returns_self(Estimator):
 
 def check_raises_not_fitted_error(Estimator):
     # Check that we raise appropriate error for unfitted estimators
+
+    if not isclass(Estimator):
+        Estimator = type(Estimator)
+
     estimator = _construct_instance(Estimator)
 
     # call methods without prior fitting and check that they raise our
