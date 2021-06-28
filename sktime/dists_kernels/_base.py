@@ -181,6 +181,8 @@ class BaseTrafoPwPanel(BaseEstimator):
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
+            core logic
+
         Parameters
         ----------
         X: list of pd.DataFrame or 2D np.arrays, of length n
