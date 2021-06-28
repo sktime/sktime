@@ -17,6 +17,8 @@ import joblib
 import numpy as np
 import pandas as pd
 import pytest
+
+from inspect import isclass
 from pandas.testing import assert_frame_equal
 from sklearn import clone
 from sklearn.utils.estimator_checks import (
@@ -517,6 +519,23 @@ def _get_err_msg(estimator):
 
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible"""
+
+    est_is_class = isclass(Estimator)
+
+    # est_is_estimator = is Estimator subclass of BaseEstimator?
+    if est_is_class:
+        est_is_estimator = issubclass(Estimator, BaseEstimator)
+    else:
+        est_is_estimator = isinstance(Estimator, BaseEstimator)
+
+    if not est_is_estimator:
+        raise ValueError("Estimator must be a subclass of BaseEstimator")
+
+    # if is object, just return Estimator, no construction is needed
+    if not est_is_class:
+        return Estimator
+    # otherwise construct estimator using default parameter lookup, below
+
     # if non-default parameters are required, but none have been found,
     # raise error
     if hasattr(Estimator, "_required_parameters"):
@@ -532,6 +551,7 @@ def _construct_instance(Estimator):
     # construct with parameter configuration for testing, otherwise construct with
     # default parameters (empty param dict)
     params = ESTIMATOR_TEST_PARAMS.get(Estimator, {})
+
     return Estimator(**params)
 
 
