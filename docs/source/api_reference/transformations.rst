@@ -258,3 +258,14 @@ Composition
     :template: class.rst
 
     OptionalPassthrough
+
+Theta
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer
