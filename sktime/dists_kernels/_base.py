@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Abstract base class for pairwise transformers (such as distance/kernel matrix makers)
 """

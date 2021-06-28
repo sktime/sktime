@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 module exports for dist_kernels module
 """
@@ -11,4 +12,4 @@ __all__ = [
     "BaseTrafoPwPanel",
     "AggrDist",
     "ScipyDist",
-    ]
+]

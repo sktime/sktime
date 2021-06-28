@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Interface module to scipy.spatial's pairwise distance function cdist
     exposes parameters as scikit-learn hyper-parameters
@@ -37,10 +38,7 @@ class ScipyDist(BaseTrafoPw):
                 note: this will potentially align "non-matching" columns
     """
 
-    def __init__(self,
-                 metric='euclidean', p=2,
-                 colalign='intersect'
-                 ):
+    def __init__(self, metric='euclidean', p=2, colalign='intersect'):
 
         self.metric = metric
         self.p = p
@@ -70,10 +68,10 @@ class ScipyDist(BaseTrafoPw):
         metric = self.metric
 
         if isinstance(X, pd.DataFrame):
-            X = X.select_dtypes('number').to_numpy(dtype='float')
+            X = X.select_dtypes("number").to_numpy(dtype="float")
 
         if isinstance(X2, pd.DataFrame):
-            X2 = X2.select_dtypes('number').to_numpy(dtype='float')
+            X2 = X2.select_dtypes("number").to_numpy(dtype="float")
 
         distmat = cdist(XA=X, XB=X2, metric=metric, p=p)
 

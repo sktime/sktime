@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Composers that create panel pairwise transformers from table pairwise transformers
 """
@@ -24,10 +25,11 @@ class AggrDist(BaseTrafoPwPanel):
         default = np.mean
     """
 
-    def __init__(self,
-                 transformer,
-                 aggfun=None,
-                 ):
+    def __init__(
+        self,
+        transformer,
+        aggfun=None,
+    ):
 
         if aggfun is None:
             aggfun = np.mean
