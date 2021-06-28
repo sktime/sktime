@@ -85,7 +85,7 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.clustering.base.base import BaseCluster
+from sktime.clustering.base.base import BaseClusterer
 
 
 # The following estimators currently do not pass all unit tests
@@ -313,7 +313,7 @@ VALID_ESTIMATOR_BASE_TYPES = (
     BaseRegressor,
     BaseForecaster,
     BaseTransformer,
-    BaseCluster,
+    BaseClusterer,
 )
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
@@ -326,5 +326,5 @@ VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
     "transformer": BaseTransformer,
-    "clustering": BaseCluster,
+    "clustering": BaseClusterer,
 }
