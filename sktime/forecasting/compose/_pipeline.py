@@ -171,7 +171,7 @@ class ForecastingPipeline(_Pipeline):
         # Some transformers can not deal with X=None, therefore X is mandatory
         self._set_y_X(y, X)
         # copy to avoid transformation on original variable
-        Xt = self._X.copy()
+        Xt = _copy(self._X)
 
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
@@ -211,7 +211,7 @@ class ForecastingPipeline(_Pipeline):
         """
         forecaster = self.steps_[-1][1]
         # copy to avoid transformation on original variable
-        Xt = X.copy()
+        Xt = _copy(X)
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
             # transform X before doing prediction
@@ -322,7 +322,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self._set_y_X(y, X)
 
         # copy to avoid transformation on original variable
-        yt = self._y.copy()
+        yt = _copy(self._y)
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
@@ -404,3 +404,18 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             if not _has_tag(transformer, "skip-inverse-transform"):
                 zt = transformer.inverse_transform(zt, X)
         return zt
+
+
+def _copy(Z):
+    """Copy data to do transformation on it after
+
+    Parameters
+    ----------
+    Z : pd.Series or pd.DataFrame
+
+    Returns
+    -------
+    pd.Series or pd.DataFrame or None
+    """
+    Zt = Z.copy() if Z is not None else None
+    return Z
