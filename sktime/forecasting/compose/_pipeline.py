@@ -173,16 +173,18 @@ class ForecastingPipeline(_Pipeline):
 
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
+            # copy to avoid transformation on original variable
+            Xt = self._X.copy()
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = clone(transformer)
-                X = t.fit_transform(X)
+                Xt = t.fit_transform(Xt)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
         f = clone(forecaster)
-        f.fit(y, X, fh)
+        f.fit(y, Xt, fh)
         self.steps_[-1] = (name, f)
 
         return self
@@ -210,10 +212,14 @@ class ForecastingPipeline(_Pipeline):
         forecaster = self.steps_[-1][1]
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
+            # copy to avoid transformation on original variable
+            Xt = X.copy()
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                X = transformer.transform(X)
-        y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+                Xt = transformer.transform(Xt)
+        y_pred = forecaster.predict(
+            fh, Xt, return_pred_int=return_pred_int, alpha=alpha
+        )
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -315,16 +321,18 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         self._set_y_X(y, X)
 
+        # copy to avoid transformation on original variable
+        yt = self._y.copy()
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            y = t.fit_transform(y)
+            yt = t.fit_transform(yt)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
         f = clone(forecaster)
-        f.fit(y, X, fh)
+        f.fit(yt, X, fh)
         self.steps_[-1] = (name, f)
         return self
 
