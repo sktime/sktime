@@ -9,9 +9,9 @@ __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
     "test_predict_time_index",
-    "test_update_predict_predicted_index",
-    "test_update_predict_predicted_index_update_params",
-    "test_y_multivariate_raises_error",
+    "test_update_predict_predicted_index_univariate",
+    "test_update_predict_predicted_index_univariate_update_params",
+    "test_y_multivariate",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
     "test_predict_pred_interval",
@@ -37,6 +37,7 @@ from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import (
     mean_absolute_percentage_error,
 )
+from sktime.utils import _has_tag
 from sktime.utils import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
@@ -89,11 +90,14 @@ def test_raises_not_fitted_error(Forecaster):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_y_multivariate_raises_error(Forecaster):
+def test_y_multivariate(Forecaster):
     # Check that multivariate y raises an appropriate error message.
     y = _make_series(n_columns=2)
     f = _construct_instance(Forecaster)
-    with pytest.raises(ValueError, match=r"univariate"):
+    if _has_tag(f, "univariate-only"):
+        with pytest.raises(ValueError, match=r"univariate"):
+            f.fit(y, fh=FH0)
+    else:
         f.fit(y, fh=FH0)
 
 
@@ -271,10 +275,8 @@ def _check_update_predict_predicted_index(
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
-
     assert isinstance(y_pred, (pd.Series, pd.DataFrame))
-    if isinstance(y_pred, pd.DataFrame):
-        assert y_pred.shape[1] > 1
+
     expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
     actual = y_pred.index
     np.testing.assert_array_equal(actual, expected)
@@ -286,12 +288,13 @@ def _check_update_predict_predicted_index(
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("update_params", [False])
-def test_update_predict_predicted_index(
+def test_update_predict_predicted_index_univariate(
     Forecaster, fh, window_length, step_length, update_params
 ):
-    _check_update_predict_predicted_index(
-        Forecaster, fh, window_length, step_length, update_params
-    )
+    if _has_tag(Forecaster, "univariate-only"):
+        _check_update_predict_predicted_index(
+            Forecaster, fh, window_length, step_length, update_params
+        )
 
 
 # test with update_params=True and step_length=1
@@ -300,9 +303,10 @@ def test_update_predict_predicted_index(
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", [1])
 @pytest.mark.parametrize("update_params", [True])
-def test_update_predict_predicted_index_update_params(
+def test_update_predict_predicted_index_univariate_update_params(
     Forecaster, fh, window_length, step_length, update_params
 ):
-    _check_update_predict_predicted_index(
-        Forecaster, fh, window_length, step_length, update_params
-    )
+    if _has_tag(Forecaster, "univariate-only"):
+        _check_update_predict_predicted_index(
+            Forecaster, fh, window_length, step_length, update_params
+        )

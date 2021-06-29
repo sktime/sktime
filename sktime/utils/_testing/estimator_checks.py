@@ -149,6 +149,12 @@ def check_estimator_tags(Estimator):
             f"estimator tags."
         )
 
+    # Avoid mutually exclusive tags
+    assert not (
+        _has_tag(Estimator, "univariate-only")
+        and _has_tag(Estimator, "multivariate-only")
+    )
+
 
 def check_inheritance(Estimator):
     # Check that estimator inherits from BaseEstimator

@@ -21,24 +21,29 @@ VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIn
 def _check_is_univariate(y):
     """Check if series is univariate."""
     if isinstance(y, pd.DataFrame):
-        raise ValueError("Data must be univariate, but found a pd.DataFrame")
+        if y.shape[1] > 1:
+            raise ValueError("Data must be univariate, but found a pd.DataFrame")
+        else:
+            y = y.squeeze()
     if isinstance(y, np.ndarray) and y.ndim > 1:
         raise ValueError(
             "Data must be univariate, but found np.array with more than "
             "one dimension"
         )
+    return y
 
 
 def _check_is_multivariate(y):
     """Check if series is univariate."""
     if isinstance(y, pd.Series):
-        raise ValueError("Data must be multivariate, but found a pd.Series")
+        y = y.to_frame()
     if isinstance(y, np.ndarray):
         if y.ndim == 1 or (y.ndim == 2 and y.shape[1] == 1):
             raise ValueError(
                 "Data must be multivariate, but found np.array with a single dimension "
                 "one dimension"
             )
+    return y
 
 
 def check_series(
@@ -97,10 +102,10 @@ def check_series(
         )
 
     if enforce_univariate:
-        _check_is_univariate(Z)
+        Z = _check_is_univariate(Z)
 
     if enforce_multivariate:
-        _check_is_multivariate(Z)
+        Z = _check_is_multivariate(Z)
 
     # check time index if input data is not an NumPy ndarray
     if not isinstance(Z, np.ndarray):

@@ -14,6 +14,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.hybrid import HIVECOTEV1
+from sktime.forecasting.compose import ColumnForecaster
 from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
@@ -276,6 +277,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    ColumnForecaster: {"forecaster": FORECASTER},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

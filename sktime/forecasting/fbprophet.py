@@ -101,6 +101,8 @@ class Prophet(_ProphetAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _tags = {"univariate-only": True}
+
     def __init__(
         self,
         # Args due to wrapping

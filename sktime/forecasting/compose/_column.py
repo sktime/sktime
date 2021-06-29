@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
-__all__ = []
+__all__ = ["ColumnForecaster"]
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,7 @@ class ColumnForecaster(BaseForecaster):
     _tags = {
         "multivariate-only": True,
         "univariate-only": False,
+        "requires-fh-in-fit": False,
     }
 
     _required_parameters = ["forecaster"]
@@ -26,18 +27,21 @@ class ColumnForecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
 
-        n_columns = X.shape[1]
+        n_columns = y.shape[1]
         self.forecasters_ = []
 
         for i in range(n_columns):
             forecaster = clone(self.forecaster)
-            forecaster.fit(X.iloc[:, i], X, fh=self.fh)
+            forecaster.fit(y.iloc[:, i], X=X, fh=fh)
             self.forecasters_.append(forecaster)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
 
-        y_pred = np.zeros((len(fh), len(self.forecasters_)))
+        if return_pred_int:
+            raise NotImplementedError()
+
+        y_pred = np.zeros((len(self.fh), len(self.forecasters_)))
         for i, forecaster in enumerate(self.forecasters_):
-            y_pred[:, i] = forecaster.predict(self.fh, X=X)
+            y_pred[:, i] = forecaster.predict(fh=fh, X=X)
 
         return pd.DataFrame(y_pred, index=self.fh.to_absolute(self.cutoff))

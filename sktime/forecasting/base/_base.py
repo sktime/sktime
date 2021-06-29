@@ -405,9 +405,15 @@ class BaseForecaster(BaseEstimator):
             Exogenous time series
         """
         # update only for non-empty data
-        y, X = check_y_X(y, X, allow_empty=True, enforce_index_type=enforce_index_type)
-
-        if len(y) > 0:
+        y, X = check_y_X(
+            y,
+            X,
+            enforce_univariate=_has_tag(self, "univariate-only"),
+            enforce_multivariate=_has_tag(self, "multivariate-only"),
+            enforce_index_type=enforce_index_type,
+            allow_empty=True,
+        )
+        if y.shape[0] > 0:
             self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
@@ -517,7 +523,7 @@ class BaseForecaster(BaseEstimator):
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
+                "No `fh` has been set yet, please specify `fh` in `fit` or `predict`"
             )
 
         return self._fh
