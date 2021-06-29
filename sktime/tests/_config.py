@@ -85,6 +85,7 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.multivariate_compositor import MultivariateCompositor
 from sktime.clustering.base.base import BaseCluster
 
 
@@ -276,6 +277,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    MultivariateCompositor: {"transformer": BoxCoxTransformer()},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

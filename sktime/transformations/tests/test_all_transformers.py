@@ -57,7 +57,7 @@ def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
 
 
 def _check_raises_error(Estimator, **kwargs):
-    with pytest.raises(ValueError, match=r"univariate"):
+    with pytest.raises(ValueError, match=r"variate"):
         if _has_tag(Estimator, "fit-in-transform"):
             # As some estimators have an empty fit method, we here check if
             # they raise the appropriate error in transform rather than fit.
@@ -79,12 +79,15 @@ def check_series_to_primitive_transform_multivariate(Estimator):
 
 def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 15
-    out = _construct_fit_transform(
-        Estimator,
-        n_timepoints=n_timepoints,
-        add_nan=_has_tag(Estimator, "handles-missing-data"),
-    )
-    assert isinstance(out, (pd.Series, np.ndarray, pd.DataFrame))
+    if _has_tag(Estimator, "multivariate-only"):
+        _check_raises_error(Estimator, n_timepoints=n_timepoints)
+    else:
+        out = _construct_fit_transform(
+            Estimator,
+            n_timepoints=n_timepoints,
+            add_nan=_has_tag(Estimator, "handles-missing-data"),
+        )
+        assert isinstance(out, (pd.Series, np.ndarray, pd.DataFrame))
 
 
 def check_series_to_series_transform_multivariate(Estimator):
@@ -156,7 +159,10 @@ def check_transform_returns_same_time_index(Estimator):
 
 def check_transform_inverse_transform_equivalent(Estimator):
     estimator = _construct_instance(Estimator)
-    X = _make_args(estimator, "fit")[0]
+    if _has_tag(Estimator, "multivariate-only"):
+        X = _make_args(estimator, "fit", n_columns=3)[0]
+    else:
+        X = _make_args(estimator, "fit")[0]
     Xt = estimator.fit_transform(X)
     Xit = estimator.inverse_transform(Xt)
     _assert_array_almost_equal(X, Xit)
