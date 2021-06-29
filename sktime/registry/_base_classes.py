@@ -55,6 +55,8 @@ TRANSFORMER_MIXIN_LOOKUP - dictionary
 
 """
 
+__author__ = ["fkiraly"]
+
 import pandas as pd
 
 from sktime.classification.base import BaseClassifier
@@ -77,31 +79,35 @@ BASE_CLASS_REGISTER = [
     ("transformer", BaseTransformer, "time series transformer"),
 ]
 
-BASE_CLASS_SCITYPE_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[0].values
+BASE_CLASS_SCITYPE_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[0].tolist()
 
-BASE_CLASS_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[1].values
+BASE_CLASS_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[1].tolist()
 
 BASE_CLASS_LOOKUP = dict(zip(BASE_CLASS_SCITYPE_LIST, BASE_CLASS_LIST))
 
 
 TRANSFORMER_MIXIN_REGISTER = [
     (
-        "s-to-prim-trafo",
+        "series-to-primitive-trafo",
         _SeriesToPrimitivesTransformer,
         "time-series-to-primitives transformer",
     ),
     (
-        "s-to-s-trafo",
+        "series-to-series-trafo",
         _SeriesToSeriesTransformer,
         "time-series-to-time-series transformer",
     ),
-    ("p-to-t-trafo", _PanelToTabularTransformer, "panel-to-tabular transformer"),
-    ("p-to-p-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
+    (
+        "panel-to-tabular-trafo",
+        _PanelToTabularTransformer,
+        "panel-to-tabular transformer"
+    ),
+    ("panel-to-panel-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
 ]
 
-TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].values
+TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].tolist()
 
-TRANSFORMER_MIXIN_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[1].values
+TRANSFORMER_MIXIN_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[1].tolist()
 
 TRANSFORMER_MIXIN_LOOKUP = dict(
     zip(TRANSFORMER_MIXIN_SCITYPE_LIST, TRANSFORMER_MIXIN_LIST)

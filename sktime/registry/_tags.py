@@ -21,6 +21,8 @@ ESTIMATOR_TAG_LIST - list of string
 
 """
 
+__author__ = ["fkiraly"]
+
 import pandas as pd
 
 
@@ -75,4 +77,4 @@ ESTIMATOR_TAG_REGISTER = [
     ),
 ]
 
-ESTIMATOR_TAG_LIST = pd.DataFrame(ESTIMATOR_TAG_REGISTER)[0].values
+ESTIMATOR_TAG_LIST = pd.DataFrame(ESTIMATOR_TAG_REGISTER)[0].tolist()
