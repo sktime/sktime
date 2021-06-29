@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["Detrender"]
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "Svea Meyer"]
 
 from sklearn.base import clone
 import pandas as pd
@@ -122,6 +122,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         # multivariate
         if isinstance(z, pd.DataFrame):
+            z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -162,6 +163,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         # multivariate
         if isinstance(z, pd.DataFrame):
+            z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
