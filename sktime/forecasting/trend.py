@@ -11,13 +11,12 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
-from sktime.forecasting.base._sktime import _SktimeForecaster
-from sktime.forecasting.base._sktime import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.datetime import _get_duration
 
 
-class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class PolynomialTrendForecaster(BaseForecaster):
     """
     Forecast time series data with a polynomial trend.
     Default settings train a linear regression model with a 1st degree
@@ -46,6 +45,12 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, regressor=None, degree=1, with_intercept=True):
         self.regressor = regressor
         self.degree = degree
@@ -53,7 +58,7 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         self.regressor_ = None
         super(PolynomialTrendForecaster, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -69,14 +74,6 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
-
-        if X is not None:
-            raise NotImplementedError(
-                "Support for exogenous variables is not yet implemented"
-            )
-        self._set_y_X(y, X)
-        self._set_fh(fh)
 
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
@@ -97,7 +94,6 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
 
         # fit regressor
         self.regressor_.fit(X, y)
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
