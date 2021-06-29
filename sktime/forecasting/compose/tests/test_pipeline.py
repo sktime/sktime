@@ -19,44 +19,12 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 
 
-# this test works only once we allow y to be also a pd.DataFrame
-# (see ForecastingPipeline)
-
-# def test_forecasting_pipeline():
-#     y, X = load_longley()
-#     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-
-#     forecaster = ForecastingPipeline(
-#         steps=[
-#             ("t1", TabularToSeriesAdaptor(MinMaxScaler())),
-#             ("t2", TabularToSeriesAdaptor(StandardScaler())),
-#             ("forecaster", NaiveForecaster()),
-#         ]
-#     )
-#     fh = np.arange(len(y_test)) + 1
-#     forecaster.fit(y_train, X_train, fh=fh)
-#     actual_Xt = forecaster.transform(X_train)
-
-#     def compute_expected_X(X_train):
-#         Xt = X_train.copy()
-
-#         t1 = TabularToSeriesAdaptor(MinMaxScaler())
-#         Xt = t1.fit_transform(Xt)
-
-#         t2 = TabularToSeriesAdaptor(StandardScaler())
-#         Xt = t2.fit_transform(Xt)
-#         return Xt
-
-#     expected_Xt = compute_expected_X(X_train)
-#     np.testing.assert_array_equal(actual_Xt, expected_Xt)
-
-
-def test_transformed_target_forecaster():
+def test_pipeline():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
     forecaster = TransformedTargetForecaster(
-        steps=[
+        [
             ("t1", Deseasonalizer(sp=12, model="multiplicative")),
             ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
             ("forecaster", NaiveForecaster()),
