@@ -491,9 +491,9 @@ def check_methods_have_no_side_effects(Estimator):
     old_fit_args = deepcopy(fit_args)
     estimator.fit(*fit_args)
 
-    assert (
-        dict_equals(old_fit_args, fit_args)
-        ), f"Estimator: {estimator} has side effects on arguments of fit"
+    assert dict_equals(
+        old_fit_args, fit_args
+    ), f"Estimator: {estimator} has side effects on arguments of fit"
 
     old_args = dict()
     new_args = dict()
@@ -503,9 +503,9 @@ def check_methods_have_no_side_effects(Estimator):
             old_args[method] = deepcopy(new_args[method])
             getattr(estimator, method)(*new_args[method])
 
-            assert (
-                dict_equals(old_args[method], new_args[method])
-                ), f"Estimator: {estimator} has side effects on arguments of {method}"
+            assert dict_equals(
+                old_args[method], new_args[method]
+            ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
 def check_persistence_via_pickle(Estimator):
