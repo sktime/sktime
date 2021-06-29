@@ -115,11 +115,4 @@ class MultivariateCompositor(_SeriesToSeriesTransformer):
                 )
             return z
 
-    def apply(self, function, **kwargs):
-        """
-        apply any other function that is part of the transformer
-        """
-        for colname in self.columns:
-            function(self.transformers_[colname], **kwargs)
-
-        return self
+    # todo: add functionality for update
