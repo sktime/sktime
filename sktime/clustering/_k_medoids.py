@@ -15,7 +15,7 @@ from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
 from sktime.clustering.partitioning._cluster_approximations import Medoids
-from sktime.clustering.base import BaseCluster
+from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
@@ -66,7 +66,7 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
             random_state=random_state,
         )
 
-    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseCluster:
+    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseClusterer:
         """
         Method that is used to fit the clustering algorithm
         on the dataset X
