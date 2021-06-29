@@ -170,11 +170,11 @@ class ForecastingPipeline(_Pipeline):
         """
         # Some transformers can not deal with X=None, therefore X is mandatory
         self._set_y_X(y, X)
+        # copy to avoid transformation on original variable
+        Xt = self._X.copy()
 
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
-            # copy to avoid transformation on original variable
-            Xt = self._X.copy()
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = clone(transformer)
@@ -210,10 +210,10 @@ class ForecastingPipeline(_Pipeline):
             Prediction intervals
         """
         forecaster = self.steps_[-1][1]
+        # copy to avoid transformation on original variable
+        Xt = X.copy()
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
-            # copy to avoid transformation on original variable
-            Xt = X.copy()
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
                 Xt = transformer.transform(Xt)
