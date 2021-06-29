@@ -288,6 +288,8 @@ VALID_ESTIMATOR_TAGS = (
     "handles-missing-data",
     "skip-inverse-transform",
     "requires-fh-in-fit",
+    "X-y-must-have-same-index",
+    "enforce-index-type",
 )
 
 # These methods should not change the state of the estimator, that is, they should
