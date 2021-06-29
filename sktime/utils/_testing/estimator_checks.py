@@ -102,7 +102,7 @@ def tuple_equals(x, y):
     """Tests two tuples for equality.
 
     Correct if tuples contain != compatible native types,
-        or pd.Series, pd.DataFrame, np.array
+        or pd.Series, pd.DataFrame, np.ndarray
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def tuple_equals(x, y):
         if type(xi) in [pd.DataFrame, pd.Series]:
             if not xi.equals(yi):
                 return False
-        elif type(xi) is np.array:
+        elif type(xi) is np.ndarray:
             if xi.dtype != yi.dtype:
                 return False
             if not np.array_equal(x, y, equal_nan=True):
@@ -147,7 +147,7 @@ def dict_equals(x, y):
     """Tests two dicts for equality.
 
     Correct if dict contain != compatible native types,
-        or pd.Series, pd.DataFrame, np.array
+        or pd.Series, pd.DataFrame, np.ndarray
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def dict_equals(x, y):
         if type(xi) in [pd.DataFrame, pd.Series]:
             if not xi.equals(yi):
                 return False
-        elif type(xi) is np.array:
+        elif type(xi) is np.ndarray:
             if xi.dtype != yi.dtype:
                 return False
             if not np.array_equal(x, y, equal_nan=True):
