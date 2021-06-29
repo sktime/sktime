@@ -478,7 +478,6 @@ class BaseForecaster(BaseEstimator):
         -------
         cutoff : int
         """
-        self.check_is_fitted()
         return self._cutoff
 
     def _set_cutoff(self, cutoff):
