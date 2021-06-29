@@ -100,7 +100,7 @@ TRANSFORMER_MIXIN_REGISTER = [
     (
         "panel-to-tabular-trafo",
         _PanelToTabularTransformer,
-        "panel-to-tabular transformer"
+        "panel-to-tabular transformer",
     ),
     ("panel-to-panel-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
 ]
