@@ -98,6 +98,51 @@ def yield_estimator_checks(exclude=None):
         yield check
 
 
+def tuple_equals(x, y):
+    """Tests two tuples for equality.
+
+    Correct if tuples contain != compatible native types,
+        or pd.Series, pd.DataFrame, np.array
+
+    Parameters
+    ----------
+    x: tuple
+    y: tuple
+
+    Returns
+    -------
+    bool - True if x and y have equal keys and values
+    """
+
+    n = len(x)
+
+    if n != len(y):
+        return False
+
+    # we now know dicts are same length
+    for i in range(n):
+        xi = x[i]
+        yi = y[i]
+
+        if type(xi) != type(yi):
+            return False
+
+        # we now know all types are the same
+        # so now we compare values
+        if type(xi) in [pd.DataFrame, pd.Series]:
+            if not xi.equals(yi):
+                return False
+        elif type(xi) is np.array:
+            if xi.dtype != yi.dtype:
+                return False
+            if not np.array_equal(x, y, equal_nan=True):
+                return False
+        elif xi != yi:
+            return False
+
+    return True
+
+
 def dict_equals(x, y):
     """Tests two dicts for equality.
 
@@ -491,20 +536,18 @@ def check_methods_have_no_side_effects(Estimator):
     old_fit_args = deepcopy(fit_args)
     estimator.fit(*fit_args)
 
-    assert dict_equals(
+    assert tuple_equals(
         old_fit_args, fit_args
     ), f"Estimator: {estimator} has side effects on arguments of fit"
 
-    old_args = dict()
-    new_args = dict()
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            new_args[method] = _make_args(estimator, method)
-            old_args[method] = deepcopy(new_args[method])
-            getattr(estimator, method)(*new_args[method])
+            new_args = _make_args(estimator, method)
+            old_args = deepcopy(new_args)
+            getattr(estimator, method)(*new_args)
 
-            assert dict_equals(
-                old_args[method], new_args[method]
+            assert tuple_equals(
+                old_args, new_args
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
