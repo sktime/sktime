@@ -4,14 +4,14 @@
 
 # adapted from scikit-learn's estimator_checks
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["check_estimator"]
 
 import numbers
 import pickle
 import types
 from copy import deepcopy
-from inspect import signature
+from inspect import signature, isclass
 
 import joblib
 import numpy as np
@@ -86,6 +86,7 @@ def yield_estimator_checks(exclude=None):
         check_fit_idempotent,
         check_fit_does_not_overwrite_hyper_params,
         check_methods_do_not_change_state,
+        check_methods_have_no_side_effects,
         check_persistence_via_pickle,
         check_multiprocessing_idempotent,
         check_valid_estimator_tags,
@@ -95,6 +96,51 @@ def yield_estimator_checks(exclude=None):
         if check.__name__ in exclude:
             continue
         yield check
+
+
+def dict_equals(x, y):
+    """Tests two dicts for equality.
+
+    Correct if dict contain != compatible native types,
+        or pd.Series, pd.DataFrame, np.array
+
+    Parameters
+    ----------
+    x: dict
+    y: dict
+
+    Returns
+    -------
+    bool - True if x and y have equal keys and values
+    """
+    xkeys = set(x.keys())
+    ykeys = set(y.keys())
+
+    if xkeys != ykeys:
+        return False
+
+    # we now know all keys are the same
+    for key in xkeys:
+        xi = x[key]
+        yi = y[key]
+
+        if type(xi) != type(yi):
+            return False
+
+        # we now know all types are the same
+        # so now we compare values
+        if type(xi) in [pd.DataFrame, pd.Series]:
+            if not xi.equals(yi):
+                return False
+        elif type(xi) is np.array:
+            if xi.dtype != yi.dtype:
+                return False
+            if not np.array_equal(x, y, equal_nan=True):
+                return False
+        elif xi != yi:
+            return False
+
+    return True
 
 
 def check_required_params(Estimator):
@@ -428,6 +474,38 @@ def check_methods_do_not_change_state(Estimator):
             assert (
                 estimator.__dict__ == dict_before
             ), f"Estimator: {estimator} changes __dict__ during {method}"
+
+
+def check_methods_have_no_side_effects(Estimator):
+    # Check that calling methods has no side effects on args
+
+    if not isclass(Estimator):
+        Estimator = type(Estimator)
+
+    estimator = _construct_instance(Estimator)
+
+    set_random_state(estimator)
+
+    # Fit for the first time
+    fit_args = _make_args(estimator, "fit")
+    old_fit_args = deepcopy(fit_args)
+    estimator.fit(*fit_args)
+
+    assert (
+        dict_equals(old_fit_args, fit_args)
+        ), f"Estimator: {estimator} has side effects on arguments of fit"
+
+    old_args = dict()
+    new_args = dict()
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            new_args[method] = _make_args(estimator, method)
+            old_args[method] = deepcopy(new_args[method])
+            getattr(estimator, method)(*new_args[method])
+
+            assert (
+                dict_equals(old_args[method], new_args[method])
+                ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
 def check_persistence_via_pickle(Estimator):
