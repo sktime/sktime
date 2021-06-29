@@ -169,16 +169,15 @@ class ForecastingPipeline(_Pipeline):
         self : returns an instance of self.
         """
         # Some transformers can not deal with X=None, therefore X is mandatory
-        # todo: add this as if statement as optional passthrough
-        if self._X is None:
-            raise NotImplementedError("X must be given to use ForecastingPipeline.")
         self._set_y_X(y, X)
 
-        # transform X
-        for step_idx, name, transformer in self._iter_transformers():
-            t = clone(transformer)
-            X = t.fit_transform(X)
-            self.steps_[step_idx] = (name, t)
+        # If X is not given, just passthrough the data without transformation
+        if self._X is not None:
+            # transform X
+            for step_idx, name, transformer in self._iter_transformers():
+                t = clone(transformer)
+                X = t.fit_transform(X)
+                self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
@@ -208,12 +207,12 @@ class ForecastingPipeline(_Pipeline):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-        if X is None:
-            raise NotImplementedError("X must be given to use ForecastingPipeline.")
         forecaster = self.steps_[-1][1]
-        # transform X before doing prediction
-        for _, _, transformer in self._iter_transformers():
-            X = transformer.transform(X)
+        # If X is not given, just passthrough the data without transformation
+        if self._X is not None:
+            # transform X before doing prediction
+            for _, _, transformer in self._iter_transformers():
+                X = transformer.transform(X)
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
         return y_pred
 
@@ -230,13 +229,12 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : an instance of self
         """
-        if X is None:
-            raise NotImplementedError("X must be given to use ForecastingPipeline.")
-
-        for step_idx, name, transformer in self._iter_transformers():
-            if hasattr(transformer, "update"):
-                transformer.update(X, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
+        # If X is not given, just passthrough the data without transformation
+        if self._X is not None:
+            for step_idx, name, transformer in self._iter_transformers():
+                if hasattr(transformer, "update"):
+                    transformer.update(X, update_params=update_params)
+                    self.steps_[step_idx] = (name, transformer)
 
         name, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
