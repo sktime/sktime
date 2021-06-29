@@ -6,7 +6,7 @@ __all__ = ["plot_cluster_algorithm"]
 
 import pandas as pd
 from sktime.clustering.base._typing import NumpyOrDF
-from sktime.clustering.base.base import BaseCluster
+from sktime.clustering.base.base import BaseClusterer
 from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
@@ -21,13 +21,13 @@ def _plot(cluster_values, center, axes):
     axes.plot(center, color="r")
 
 
-def plot_cluster_algorithm(model: BaseCluster, predict_series: NumpyOrDF, k: int):
+def plot_cluster_algorithm(model: BaseClusterer, predict_series: NumpyOrDF, k: int):
     """
     Method that is used to plot a clustering algorithms output
 
     Parameters
     ----------
-    model: BaseCluster
+    model: BaseClusterer
         Clustering model to plot
 
     predict_series: Numpy or Dataframe

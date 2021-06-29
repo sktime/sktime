@@ -20,8 +20,7 @@ from sktime.clustering.base._typing import (
     NumpyRandomState,
 )
 from sktime.clustering.base import (
-    BaseCluster,
-    ClusterMixin,
+    BaseClusterer,
 )
 from sktime.distances.elastic_cython import (
     ddtw_distance,
@@ -42,7 +41,7 @@ from sktime.clustering.base.clustering_utils import compute_pairwise_distances
 from sktime.distances.elastic import euclidean_distance
 
 
-class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
+class TimeSeriesLloydsPartitioning(BaseClusterer):
     """Time Series Lloyds partitioning algorithm
     Parameters
     ----------
@@ -107,7 +106,7 @@ class TimeSeriesLloydsPartitioning(BaseCluster, ClusterMixin):
         self._metric = None
         self._random_state = None
 
-    def _fit(self, X: NumpyArray, y: NumpyArray = None) -> BaseCluster:
+    def _fit(self, X: NumpyArray, y: NumpyArray = None) -> BaseClusterer:
         """
         Method that contains the core logic to fit a cluster
         to training data

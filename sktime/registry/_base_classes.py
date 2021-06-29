@@ -60,7 +60,7 @@ __author__ = ["fkiraly"]
 import pandas as pd
 
 from sktime.classification.base import BaseClassifier
-from sktime.clustering.base import BaseCluster
+from sktime.clustering.base import BaseClusterer
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import BaseTransformer
@@ -73,7 +73,7 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 
 BASE_CLASS_REGISTER = [
     ("classifier", BaseClassifier, "time series classifier"),
-    ("clusterer", BaseCluster, "time series clusterer"),
+    ("clusterer", BaseClusterer, "time series clusterer"),
     ("regressor", BaseRegressor, "time series regressor"),
     ("forecaster", BaseForecaster, "forecaster"),
     ("transformer", BaseTransformer, "time series transformer"),
@@ -100,7 +100,7 @@ TRANSFORMER_MIXIN_REGISTER = [
     (
         "panel-to-tabular-trafo",
         _PanelToTabularTransformer,
-        "panel-to-tabular transformer"
+        "panel-to-tabular transformer",
     ),
     ("panel-to-panel-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
 ]
