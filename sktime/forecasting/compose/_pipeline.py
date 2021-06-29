@@ -406,16 +406,16 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         return zt
 
 
-def _copy(Z):
+def _copy(Z=None):
     """Copy data to do transformation on it after
 
     Parameters
     ----------
-    Z : pd.Series or pd.DataFrame
+    Z : pd.Series or pd.DataFrame or None
 
     Returns
     -------
     pd.Series or pd.DataFrame or None
     """
-    Zt = Z.copy() if Z is not None else None
+    Z = Z.copy() if Z is not None else None
     return Z
