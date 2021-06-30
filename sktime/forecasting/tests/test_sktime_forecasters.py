@@ -4,7 +4,7 @@
 
 # test API provided through BaseSktimeForecaster
 
-__author__ = ["Markus Löning"]
+__author__ = ["@mloning"]
 __all__ = [
     "test_different_fh_in_fit_and_predict_req",
     "test_fh_in_fit_opt",
