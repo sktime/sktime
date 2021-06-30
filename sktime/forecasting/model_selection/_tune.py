@@ -53,9 +53,9 @@ class BaseGridSearch(BaseForecaster):
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update(self, y, X=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
-        self.best_forecaster_._update(y, X, update_params=update_params)
+        self.best_forecaster_.update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -71,6 +71,7 @@ class BaseGridSearch(BaseForecaster):
         """Call update_predict on the forecaster with the best found
         parameters.
         """
+        self.check_is_fitted("update_predict")
 
         return self.best_forecaster_.update_predict(
             y,
@@ -82,7 +83,7 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict_single(
+    def update_predict_single(
         self,
         y,
         fh=None,
@@ -92,7 +93,7 @@ class BaseGridSearch(BaseForecaster):
         alpha=DEFAULT_ALPHA,
     ):
         """Call predict on the forecaster with the best found parameters."""
-        return self.best_forecaster_._update_predict_single(
+        return self.best_forecaster_.update_predict_single(
             y,
             fh=fh,
             X=X,
@@ -102,16 +103,16 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters."""
-        return self.best_forecaster_._predict(
+        return self.best_forecaster_.predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """Call compute_pred_int on the forecaster with the best found parameters."""
-        return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
+        return self.best_forecaster_.compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
