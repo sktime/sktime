@@ -63,7 +63,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
-    BasePairwiseTransformerPanel
+    BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
