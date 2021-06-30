@@ -27,7 +27,7 @@ from sktime.dists_kernels import BasePairwiseTransformerPanel
 # todo: add any necessary imports here
 
 
-class MyTrafoPw(BasePairwiseTransformerPanel):
+class MyTrafoPwPanel(BasePairwiseTransformerPanel):
     """Custom distance/kernel. todo: write docstring.
 
     todo: describe your custom distance/kernel here
@@ -77,8 +77,8 @@ class MyTrafoPw(BasePairwiseTransformerPanel):
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
 
-        # todo: change "MyTrafoPw" to the name of the class
-        super(MyTrafoPw, self).__init__()
+        # todo: change "MyTrafoPwPanel" to the name of the class
+        super(MyTrafoPwPanel, self).__init__()
 
     # todo: implement this, mandatory
     def _transform(self, X, X2=None):
