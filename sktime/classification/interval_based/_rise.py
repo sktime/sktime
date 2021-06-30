@@ -579,8 +579,12 @@ def ps(x, sign=1, n=None, pad="mean"):
     # use sign to determine inverse or normal fft
     # using the norm in numpy fft function
     # backward = normal fft, forward = inverse fft (divide by n after fft)
-    norm = "backward" if sign > 0 else "forward"
-    fft = np.fft.rfft(x_in_power_2, norm=norm)
+    # note: use the following code when upgrade numpy to 1.20
+    # norm = "backward" if sign > 0 else "forward"
+    # fft = np.fft.rfft(x_in_power_2, norm=norm)
+    if sign < 0:
+        x_in_power_2 /= n
+    fft = np.fft.rfft(x_in_power_2)
     fft = fft[:-1] if x_is_1d else fft[:, :-1]
     return np.abs(fft)
 
