@@ -2,9 +2,13 @@
 """
 Extension template for forecasters.
 
-How to use this:
-- this is meant as a "fill in" template for easy extension
-- do NOT import this file directly - it will break
+Purpose of this implementation template:
+    quick implementation of new estimators following the template
+    NOT a concrete class to import! This is NOT a base class or concrete class!
+    This is to be used as a "fill-in" coding template.
+
+How to use this implementation template to implement a new estimator:
+- make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
 - you can add more private methods, but do not override BaseEstimator's private methods
@@ -61,12 +65,15 @@ class MyForecaster(BaseForecaster):
     """
 
     # todo: fill out estimator tags here
+    #  delete the tags that you *didn't* change - these defaults are inherited
     _tags = {
-        "fh_in_fit": True,  # is the forecasting horizon already required in fit?
-        "handles_missing_data": False,  # can the estimator handle missing data?
-        "univariate_only": True,  # can the estimator deal with multivariate series?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
-    # in case of inheritance, concrete class should set all tags
+    # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
