@@ -21,10 +21,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
@@ -34,7 +32,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 FORECASTERS = [
     forecaster
     for (name, forecaster) in all_estimators(estimator_types="forecaster")
-    if issubclass(forecaster, _SktimeForecaster)
+    if issubclass(forecaster, BaseForecaster)
 ]
 FH0 = 1
 
@@ -76,10 +74,10 @@ def test_oh_setting(Forecaster):
 
 # divide Forecasters into groups
 FORECASTERS_REQUIRED = [
-    f for f in FORECASTERS if issubclass(f, _RequiredForecastingHorizonMixin)
+    f for f in FORECASTERS if f._all_tags()["requires-fh-in-fit"]
 ]
 FORECASTERS_OPTIONAL = [
-    f for f in FORECASTERS if issubclass(f, _OptionalForecastingHorizonMixin)
+    f for f in FORECASTERS if not f._all_tags()["requires-fh-in-fit"]
 ]
 
 
