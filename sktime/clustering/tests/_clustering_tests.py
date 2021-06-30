@@ -3,7 +3,7 @@
 __all__ = ["generate_univaritate_series", "run_clustering_experiment"]
 
 import numpy as np
-from sktime.clustering.base.base import BaseCluster
+from sktime.clustering.base.base import BaseClusterer
 from sktime.clustering.base._typing import NumpyRandomState, NumpyArray
 from sklearn.utils import check_random_state
 
@@ -21,7 +21,7 @@ def generate_univaritate_series(
 
 
 def run_clustering_experiment(
-    model: BaseCluster,
+    model: BaseClusterer,
     X_train: NumpyArray,
     X_test: NumpyArray,
 ):
@@ -30,7 +30,7 @@ def run_clustering_experiment(
 
     Parameters
     ----------
-    model: BaseCluster
+    model: BaseClusterer
         Model to get clustering test results for
 
     X_train: NumpyArray

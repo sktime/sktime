@@ -7,6 +7,13 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 
+from sktime.registry import (
+    ESTIMATOR_TAG_LIST,
+    BASE_CLASS_LIST,
+    BASE_CLASS_LOOKUP,
+    TRANSFORMER_MIXIN_LIST,
+)
+
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -16,7 +23,6 @@ from sklearn.preprocessing import StandardScaler
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
-from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
@@ -30,7 +36,6 @@ from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
 from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
@@ -54,14 +59,8 @@ from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
-from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
@@ -85,7 +84,6 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.clustering.base.base import BaseCluster
 
 
 # The following estimators currently do not pass all unit tests
@@ -281,16 +279,7 @@ ESTIMATOR_TEST_PARAMS = {
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
 # common tests for estimators with the same tags.
-VALID_ESTIMATOR_TAGS = (
-    "fit-in-transform",  # fitted in transform or non-fittable
-    "univariate-only",
-    "transform-returns-same-time-index",
-    "handles-missing-data",
-    "skip-inverse-transform",
-    "requires-fh-in-fit",
-    "X-y-must-have-same-index",
-    "enforce-index-type",
-)
+VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 
 # These methods should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
@@ -304,29 +293,14 @@ NON_STATE_CHANGING_METHODS = (
 )
 
 # The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = (
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-    _PanelToTabularTransformer,
-    _PanelToPanelTransformer,
-)
-VALID_ESTIMATOR_BASE_TYPES = (
-    BaseClassifier,
-    BaseRegressor,
-    BaseForecaster,
-    BaseTransformer,
-    BaseCluster,
-)
+VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
+
+VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
+
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
     *VALID_ESTIMATOR_BASE_TYPES,
     *VALID_TRANSFORMER_TYPES,
 )
 
-VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
-    "classifier": BaseClassifier,
-    "regressor": BaseRegressor,
-    "forecaster": BaseForecaster,
-    "transformer": BaseTransformer,
-    "clustering": BaseCluster,
-}
+VALID_ESTIMATOR_BASE_TYPE_LOOKUP = BASE_CLASS_LOOKUP

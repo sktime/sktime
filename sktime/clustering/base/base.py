@@ -2,8 +2,7 @@
 """Base classes for clustering."""
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = [
-    "BaseCluster",
-    "ClusterMixin",
+    "BaseClusterer",
     "BaseClusterCenterInitializer",
     "BaseClusterAverage",
     "BaseApproximate",
@@ -27,11 +26,11 @@ NumpyRandomState = Union[np.random.RandomState, int]
 CenterCalculatorFunc = Callable[[NumpyArray], NumpyArray]
 
 
-class BaseCluster(BaseEstimator):
+class BaseClusterer(BaseEstimator):
     """Base Clusterer"""
 
     def __init__(self):
-        super(BaseCluster, self).__init__()
+        super(BaseClusterer, self).__init__()
 
     def fit(self, X: NumpyOrDF, y: NumpyOrDF = None):
         """
@@ -121,10 +120,6 @@ class BaseCluster(BaseEstimator):
             Dataset to be validate parameters against
         """
         return
-
-
-class ClusterMixin:
-    """ClustererMixin"""
 
     def fit_predict(self, X: NumpyOrDF) -> NumpyArray:
         """

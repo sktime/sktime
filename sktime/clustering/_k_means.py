@@ -13,7 +13,7 @@ from sktime.clustering.base._typing import (
     NumpyOrDF,
     NumpyRandomState,
 )
-from sktime.clustering.base import BaseCluster
+from sktime.clustering.base import BaseClusterer
 from sktime.clustering.partitioning._averaging_metrics import (
     BarycenterAveraging,
     MeanAveraging,
@@ -90,7 +90,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         self.averaging_algorithm_iterations = averaging_algorithm_iterations
         self._averaging_algorithm = None
 
-    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseCluster:
+    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseClusterer:
         """
         Method that is used to fit the clustering algorithm
         on the dataset X

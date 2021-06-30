@@ -20,6 +20,7 @@ sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/series/impute.py @aiwalter
 sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
+sktime/transformations/series/theta.py @GuzalBulatova
 
 sktime/forecasting/base/ @fkiraly
 sktime/forecasting/ets.py @HYang1996
