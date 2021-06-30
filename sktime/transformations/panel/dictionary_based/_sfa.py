@@ -12,12 +12,13 @@ from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
+from sklearn.tree import DecisionTreeClassifier
 
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width or information gain
-binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
+binning_methods = {"equi-depth", "equi-width", "information-gain", "information-gain2", "kmeans"} #todo 2 information gains is temporary
 
 # TODO remove imag-part from dc-component component
 # todo more numba
@@ -271,6 +272,8 @@ class SFA(_PanelToPanelTransformer):
 
         if self.binning_method == "information-gain":
             return self._igb(dft, y)
+        if self.binning_method == "information-gain2":
+            return self._igb2(dft, y)
         elif self.binning_method == "kmeans":
             return self._KBinsDiscretizer(dft)
         else:
@@ -381,6 +384,25 @@ class SFA(_PanelToPanelTransformer):
         return breakpoints
 
     def _igb(self, dft, y):
+        breakpoints = np.zeros((self.word_length, self.alphabet_size))
+        clf = DecisionTreeClassifier(
+            criterion="entropy",
+            max_depth=np.log2(self.alphabet_size),
+            max_leaf_nodes=self.alphabet_size,
+            random_state=1,
+        )
+
+        for i in range(self.word_length):
+            clf.fit(dft[:, i][:, None], y)
+            threshold = clf.tree_.threshold[clf.tree_.children_left != -1]
+            for bp in range(len(threshold)):
+                breakpoints[i][bp] = threshold[bp]
+            for bp in range(len(threshold), self.alphabet_size):
+                breakpoints[i][bp] = sys.float_info.max
+
+        return np.sort(breakpoints, axis=1)
+
+    def _igb2(self, dft, y):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         total_num_windows = int(self.n_instances * num_windows_per_inst)
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
@@ -809,7 +831,7 @@ sfa = SFA(
     window_size=12,
     norm=False,
     levels=2,
-    binning_method="information-gain",
+    binning_method="information-gain2",
     bigrams=True,
     remove_repeat_words=True,
     save_words=False,
