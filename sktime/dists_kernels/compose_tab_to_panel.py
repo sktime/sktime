@@ -7,10 +7,10 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BaseTrafoPwPanel
+from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
-class AggrDist(BaseTrafoPwPanel):
+class AggrDist(BasePairwiseTransformerPanel):
     """
     pairwise distance based on aggregation function applied to sample-wise distance
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series

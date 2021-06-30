@@ -11,7 +11,7 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation.series import check_series
 
 
-class BaseTrafoPw(BaseEstimator):
+class BasePairwiseTransformer(BaseEstimator):
     """Base pairwise transformer for tabular or series data template class.
 
     The base pairwise transformer specifies the methods and method
@@ -101,8 +101,12 @@ class BaseTrafoPw(BaseEstimator):
         """
         raise NotImplementedError
 
+    def fit(self, X=None, X2=None):
+        # no fitting logic, but in case fit is called or expected
+        pass
 
-class BaseTrafoPwPanel(BaseEstimator):
+
+class BasePairwiseTransformerPanel(BaseEstimator):
     """Base pairwise transformer for panel data template class.
 
     The base pairwise transformer specifies the methods and method
@@ -196,3 +200,7 @@ class BaseTrafoPwPanel(BaseEstimator):
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
         raise NotImplementedError
+
+    def fit(self, X=None, X2=None):
+        # no fitting logic, but in case fit is called or expected
+        pass

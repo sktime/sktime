@@ -10,10 +10,10 @@ import pandas as pd
 
 from scipy.spatial.distance import cdist
 
-from sktime.dists_kernels._base import BaseTrafoPw
+from sktime.dists_kernels._base import BasePairwiseTransformer
 
 
-class ScipyDist(BaseTrafoPw):
+class ScipyDist(BasePairwiseTransformer):
     """
     computes pairwise distances using scipy.spatial.distance.cdist
         includes Euclidean distance and p-norm (Minkowski) distance
