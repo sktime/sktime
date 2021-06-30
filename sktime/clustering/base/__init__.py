@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 __all__ = [
-    "BaseCluster",
-    "ClusterMixin",
+    "BaseClusterer",
     "BaseClusterCenterInitializer",
     "BaseClusterAverage",
     "BaseApproximate",
 ]
 
 from sktime.clustering.base.base import (
-    BaseCluster,
-    ClusterMixin,
+    BaseClusterer,
     BaseClusterCenterInitializer,
     BaseClusterAverage,
     BaseApproximate,
