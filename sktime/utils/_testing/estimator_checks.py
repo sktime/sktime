@@ -46,8 +46,10 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
+from sktime.utils._testing.panel import make_clustering_problem
 from sktime.utils.data_processing import is_nested_dataframe
 from sktime.utils import _has_tag
+from sktime.clustering.base.base import BaseClusterer
 
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils._testing.annotation import make_annotation_problem
@@ -345,6 +347,7 @@ def check_raises_not_fitted_error(Estimator):
 def check_fit_idempotent(Estimator):
     # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
+
     set_random_state(estimator)
 
     # Fit for the first time
@@ -576,6 +579,8 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseClusterer):
+        return (make_clustering_problem(**kwargs),)
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -589,6 +594,8 @@ def _make_predict_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(n_timepoints=10, **kwargs)
+    elif isinstance(estimator, BaseClusterer):
+        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))

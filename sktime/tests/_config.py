@@ -7,6 +7,13 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 
+from sktime.registry import (
+    ESTIMATOR_TAG_LIST,
+    BASE_CLASS_LIST,
+    BASE_CLASS_LOOKUP,
+    TRANSFORMER_MIXIN_LIST,
+)
+
 from pyod.models.knn import KNN
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
@@ -16,16 +23,6 @@ from sklearn.preprocessing import StandardScaler
 
 
 from sktime.base import BaseEstimator
-
-from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.classification.base import BaseClassifier
-from sktime.forecasting.base import BaseForecaster
-from sktime.regression.base import BaseRegressor
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.base import MockSeriesAnnotator
@@ -289,17 +286,7 @@ ESTIMATOR_TEST_PARAMS = {
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
 # common tests for estimators with the same tags.
-VALID_ESTIMATOR_TAGS = (
-    "fit-in-transform",  # fitted in transform or non-fittable
-    "univariate-only",
-    "transform-returns-same-time-index",
-    "handles-missing-data",
-    "skip-inverse-transform",
-    "requires-fh-in-fit",
-    "handles-panel",  # annotators: can handle panel annotations, i.e., list X/y?
-    "annotation-type",  # annotators: can be point, segment or both
-    "annotation-labels",  # annotators: which labels are annotated with
-)
+VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 
 # These methods should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
@@ -313,29 +300,14 @@ NON_STATE_CHANGING_METHODS = (
 )
 
 # The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = (
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-    _PanelToTabularTransformer,
-    _PanelToPanelTransformer,
-)
-VALID_ESTIMATOR_BASE_TYPES = (
-    BaseClassifier,
-    BaseRegressor,
-    BaseForecaster,
-    BaseTransformer,
-    BaseSeriesAnnotator,
-)
+VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
+
+VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
+
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
     *VALID_ESTIMATOR_BASE_TYPES,
     *VALID_TRANSFORMER_TYPES,
 )
 
-VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
-    "classifier": BaseClassifier,
-    "regressor": BaseRegressor,
-    "forecaster": BaseForecaster,
-    "transformer": BaseTransformer,
-    "series-annotator": BaseSeriesAnnotator,
-}
+VALID_ESTIMATOR_BASE_TYPE_LOOKUP = BASE_CLASS_LOOKUP
