@@ -22,6 +22,7 @@ SOFT_DEPENDENCIES = {
     "sktime.regression.all": ["tsfresh"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
+    "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 
