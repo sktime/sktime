@@ -44,7 +44,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         "handles-panel": False,  # can handle panel annotations, i.e., list X/Y?
         "handles-missing-data": False,  # can handle missing data in X, Y
         "annotation-type": "point",  # can be point, segment or both
-        "annotation-labels": "none",  # can be one of, or list-subset of
+        "annotation-kind": "none",  # can be one of, or list-subset of
         #   "label", "outlier", "change"
     }
     """
