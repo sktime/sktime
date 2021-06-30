@@ -14,7 +14,8 @@ from collections import defaultdict
 
 import numpy as np
 from joblib import Parallel, delayed
-from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn import preprocessing
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
@@ -365,35 +366,58 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X):
+    def _get_train_probs(self, X, train_estimate_method="loocv"):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        for i in range(num_inst):
-            divisor = 0
-            sums = np.zeros(self.n_classes)
 
-            cls_idx = []
-            for n, clf in enumerate(self.classifiers):
-                idx = np.where(clf.subsample == i)
-                if len(idx[0]) > 0:
-                    cls_idx.append([n, idx[0][0]])
+        if train_estimate_method.lower() == "loocv":
+            for i in range(num_inst):
+                divisor = 0
+                sums = np.zeros(self.n_classes)
 
-            preds = Parallel(n_jobs=self.n_jobs)(
-                delayed(self.classifiers[cls[0]]._train_predict)(
-                    cls[1],
+                clf_idx = []
+                for n, clf in enumerate(self.classifiers):
+                    idx = np.where(clf.subsample == i)
+                    if len(idx[0]) > 0:
+                        clf_idx.append([n, idx[0][0]])
+
+                preds = Parallel(n_jobs=self.n_jobs)(
+                    delayed(self.classifiers[cls[0]]._train_predict)(
+                        cls[1],
+                    )
+                    for cls in clf_idx
                 )
-                for cls in cls_idx
-            )
 
-            for n, pred in enumerate(preds):
-                sums[self.class_dictionary.get(pred, -1)] += self.weights[cls_idx[n][0]]
-                divisor += self.weights[cls_idx[n][0]]
+                for n, pred in enumerate(preds):
+                    sums[self.class_dictionary.get(pred, -1)] += self.weights[
+                        clf_idx[n][0]]
+                    divisor += self.weights[clf_idx[n][0]]
 
-            results[i] = (
-                np.ones(self.n_classes) * (1 / self.n_classes)
-                if divisor == 0
-                else sums / (np.ones(self.n_classes) * divisor)
-            )
+                results[i] = (
+                    np.ones(self.n_classes) * (1 / self.n_classes)
+                    if divisor == 0
+                    else sums / (np.ones(self.n_classes) * divisor)
+                )
+        elif train_estimate_method.lower() == "oob":
+            #todo test and fix
+            indices = range(num_inst)
+            divisors = np.zeros(self.n_estimators)
+            results = np.zeros((num_inst, self.n_classes))
+
+            for i, clf in enumerate(self.classifiers):
+                oob = [n for n in indices if n not in clf.subsample]
+                X_oob = X[oob]
+                preds = clf.predict(X_oob)
+
+                for n, pred in enumerate(preds):
+                    results[oob[n], self.class_dictionary.get(pred, -1)] += \
+                        self.weights[i]
+                    divisors[oob[n]] += self.weights[i]
+
+            results = results / divisors
+        else:
+            raise ValueError("Invalid train_estimate_method. "
+                             "Available options: loocv oob")
 
         return results
 
