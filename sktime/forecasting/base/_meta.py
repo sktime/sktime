@@ -14,7 +14,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
 
 
-class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator):
+class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """Base class for heterogenous ensemble forecasters"""
 
     _required_parameters = ["forecasters"]
