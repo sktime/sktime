@@ -108,4 +108,4 @@ Signature-based
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    Signatureclassifier
+    SignatureClassifier
