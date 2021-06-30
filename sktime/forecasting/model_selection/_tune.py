@@ -55,6 +55,7 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
+        self.check_is_fitted("update")
         self.best_forecaster_.update(y, X, update_params=update_params)
         return self
 
@@ -93,6 +94,7 @@ class BaseGridSearch(BaseForecaster):
         alpha=DEFAULT_ALPHA,
     ):
         """Call predict on the forecaster with the best found parameters."""
+        self.check_is_fitted("update_predict_single")
         return self.best_forecaster_.update_predict_single(
             y,
             fh=fh,
@@ -105,6 +107,7 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
         return self.best_forecaster_.predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
@@ -112,6 +115,7 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """Call compute_pred_int on the forecaster with the best found parameters."""
+        self.check_is_fitted("compute_pred_int")
         return self.best_forecaster_.compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
