@@ -55,7 +55,7 @@ tsfresh
 Catch22
 ~~~~~~~
 
-.. currentmodule:: sktime.transformations.panel.catch22_features
+.. currentmodule:: sktime.transformations.panel.catch22
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -258,3 +258,14 @@ Composition
     :template: class.rst
 
     OptionalPassthrough
+
+Theta
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer

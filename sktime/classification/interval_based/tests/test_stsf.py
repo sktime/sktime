@@ -24,7 +24,7 @@ def test_stsf_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train STSF
-    stsf = SupervisedTimeSeriesForest(random_state=0, n_estimators=50)
+    stsf = SupervisedTimeSeriesForest(random_state=0, n_estimators=20)
     stsf.fit(X_train, y_train)
 
     score = stsf.score(X_test.iloc[indices], y_test[indices])

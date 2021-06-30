@@ -33,8 +33,6 @@ from sklearn.base import clone
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
@@ -151,38 +149,6 @@ class _Reducer(_BaseWindowForecaster):
         self.estimator = estimator
         self._cv = None
 
-    def fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-
-        Returns
-        -------
-        self : Estimator
-            An fitted instance of self.
-        """
-        self._is_fitted = False
-
-        n_timepoints = len(y)
-        self._set_y_X(y, X)
-        self._set_fh(fh)
-
-        self.window_length_ = check_window_length(self.window_length, n_timepoints)
-
-        self._fit(y, X)
-        self._is_fitted = True
-        return self
-
-    def _fit(self, y, X):
-        raise NotImplementedError("abstract method")
-
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
         return (
@@ -201,8 +167,11 @@ class _Reducer(_BaseWindowForecaster):
         )
 
 
-class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
+class _DirectReducer(_Reducer):
     strategy = "direct"
+    _tags = {
+        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+    }
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
@@ -214,7 +183,7 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -223,6 +192,8 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+             The forecasters horizon with the steps ahead to to predict.
 
         Returns
         -------
@@ -234,6 +205,10 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         # required for fitting.
         if not self.fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError("In-sample predictions are not implemented.")
+
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=len(y)
+        )
 
         yt, Xt = self._transform(y, X)
 
@@ -285,8 +260,11 @@ class _DirectReducer(_RequiredForecastingHorizonMixin, _Reducer):
         return y_pred
 
 
-class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
+class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
+    _tags = {
+        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+    }
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
@@ -298,17 +276,18 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+             The forecasters horizon with the steps ahead to to predict.
+
         Returns
         -------
         self : returns an instance of self.
@@ -318,6 +297,10 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
         # required for fitting.
         if not self.fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError("In-sample predictions are not implemented.")
+
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=len(y)
+        )
 
         yt, Xt = self._transform(y, X)
 
@@ -361,8 +344,11 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, _Reducer):
         return y_pred.ravel()
 
 
-class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
+class _RecursiveReducer(_Reducer):
     strategy = "recursive"
+    _tags = {
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+    }
 
     def _transform(self, y, X=None):
         # For the recursive strategy, the forecasting horizon for the sliding-window
@@ -373,7 +359,26 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
             y, self.window_length_, fh, X, scitype=self._estimator_scitype
         )
 
-    def _fit(self, y, X):
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+             The forecasters horizon with the steps ahead to to predict.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=len(y)
+        )
+
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
@@ -437,8 +442,11 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, _Reducer):
         return y_pred[fh_idx]
 
 
-class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
+class _DirRecReducer(_Reducer):
     strategy = "dirrec"
+    _tags = {
+        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+    }
 
     def _transform(self, y, X=None):
         # Note that the transform for dirrec is the same as in the direct
@@ -459,17 +467,17 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            For this estimator, exogenous variables are ignored
+            Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+             The forecasters horizon with the steps ahead to to predict.
 
         Returns
         -------
         self : Estimator
             An fitted instance of self.
         """
-        # Exogenous variables are not yet support for the dirrec strategy.
+        # Exogenous variables are not yet supported for the dirrec strategy.
         if X is not None:
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not yet support exogenous "
@@ -478,6 +486,10 @@ class _DirRecReducer(_RequiredForecastingHorizonMixin, _Reducer):
 
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
+
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=len(y)
+        )
 
         # Transform the data using sliding-window.
         yt, Xt = self._transform(y, X)

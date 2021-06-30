@@ -161,6 +161,8 @@ class AutoETS(_StatsModelsAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _fitted_param_names = ("aic", "aicc", "bic", "hqic")
+
     def __init__(
         self,
         error="add",
