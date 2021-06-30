@@ -59,7 +59,7 @@ class BaseGridSearch(BaseForecaster):
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict(
+    def update_predict(
         self,
         y,
         cv=None,
@@ -72,7 +72,7 @@ class BaseGridSearch(BaseForecaster):
         parameters.
         """
 
-        return self.best_forecaster_._update_predict(
+        return self.best_forecaster_.update_predict(
             y,
             cv=cv,
             X=X,
