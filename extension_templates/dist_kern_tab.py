@@ -22,12 +22,12 @@ State:
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-from sktime.dists_kernels import BaseTrafoPwPanel
+from sktime.dists_kernels import BasePairwiseTransformer
 
 # todo: add any necessary imports here
 
 
-class MyTrafoPwPanel(BaseTrafoPwPanel):
+class MyTrafoPwPanel(BasePairwiseTransformer):
     """Custom distance/kernel. todo: write docstring.
 
     todo: describe your custom distance/kernel here
