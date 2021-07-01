@@ -12,6 +12,7 @@ sktime/classification/interval_based/tests/ @MatthewMiddlehurst
 sktime/classification/kernel_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/tests/ @MatthewMiddlehurst
 sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
+sktime/classification/signature_based/ @jambo6
 
 sktime/transformations/panel/dictionary_based/ @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
@@ -20,6 +21,7 @@ sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/series/impute.py @aiwalter
 sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
+sktime/transformations/panel/signature_based/ @jambo6
 sktime/transformations/series/theta.py @GuzalBulatova
 
 sktime/forecasting/base/ @fkiraly
