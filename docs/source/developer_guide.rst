@@ -21,3 +21,4 @@ Welcome to sktime's developer guide!
    developer_guide/introduction
    developer_guide/forecasting
    developer_guide/classification
+   developer_guide/add_dataset
