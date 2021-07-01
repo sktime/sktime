@@ -26,7 +26,7 @@ from sktime.utils.validation.forecasting import check_y_X
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
-        "requires-fh-in-fit": False,
+        "requires-fh-in-fit": True,
         "handles-missing-data": False,
         "univariate-only": True,
     }
