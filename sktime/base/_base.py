@@ -95,8 +95,8 @@ class BaseEstimator(_BaseEstimator):
         """
         collected_tags = self.get_tags()
 
-        if "tag_name" in collected_tags.keys():
-            return collected_tags(tag_name)
+        if tag_name in collected_tags.keys():
+            return collected_tags[tag_name]
         else:
             return tag_value_default
 
