@@ -22,6 +22,7 @@ class BaseEstimator(_BaseEstimator):
 
     def __init__(self):
         self._is_fitted = False
+        self._tags_dynamic = dict()
 
     @property
     def is_fitted(self):
@@ -78,6 +79,40 @@ class BaseEstimator(_BaseEstimator):
             collected_tags.update(self._tags_dynamic)
 
         return collected_tags
+
+    def mirror_tags(self, estimator, tag_set=None):
+        """mirror tags from estimator as dynamic override
+
+        Arguments
+        ---------
+        estimator : an estimator inheriting from BaseEstimator
+        tag_set : list of str, or str; tag names
+            default = list of all tags in estimator
+
+        Returns
+        -------
+        reference to self
+
+        State change
+        ------------
+        sets tag values in tag_set from estimator as dynamic tags in self
+        """
+        tags_est = estimator.get_tags()
+
+        # if tag_set is not passed, default is all tags in estimator
+        if tag_set is None:
+            tag_set = tags_est.keys()
+        else:
+            # if tag_set is passed, intersect keys with tags in estimator
+            if not isinstance(tag_set, list):
+                tag_set = [tag_set]
+            tag_set = [key for key in tag_set if key in tags_est.keys()]
+
+        update_dict = {key : tags_est[key] for key in tag_set}
+
+        self._tags_dynamic.update(update_dict)
+
+        return self
 
 
 def _clone_estimator(base_estimator, random_state=None):
