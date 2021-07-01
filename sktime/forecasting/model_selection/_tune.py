@@ -45,8 +45,6 @@ class BaseGridSearch(BaseForecaster):
 
         self.forecaster = forecaster
 
-        self._tags_dynamic = dict()
-        self.mirror_tags(forecaster, "requires-fh-in-fit")
 
         self.cv = cv
         self.strategy = strategy
@@ -227,9 +225,9 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
-        y, X = check_y_X(y, X)
+
         cv = check_cv(self.cv)
+
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
@@ -312,7 +310,6 @@ class BaseGridSearch(BaseForecaster):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
 
-        self._is_fitted = True
         return self
 
     @property
@@ -433,6 +430,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
+        self.mirror_tags(forecaster, "requires-fh-in-fit")
+
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         _check_param_grid(self.param_grid)
@@ -528,6 +527,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
+
+        self.mirror_tags(forecaster, "requires-fh-in-fit")
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
