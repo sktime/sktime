@@ -163,6 +163,11 @@ class SFA(_PanelToPanelTransformer):
 
         self.n_jobs = n_jobs
 
+        self.letter_bits = 0
+        self.letter_max = 0
+        self.level_bits = 0
+        self.level_max = 0
+
         super(SFA, self).__init__()
 
     def fit(self, X, y=None):
@@ -211,8 +216,6 @@ class SFA(_PanelToPanelTransformer):
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
-
-        print(self.breakpoints)
 
         self._is_fitted = True
         return self
