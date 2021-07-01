@@ -42,7 +42,12 @@ class BaseGridSearch(BaseForecaster):
         scoring=None,
         verbose=0,
     ):
+
         self.forecaster = forecaster
+
+        self._tags_dynamic = dict()
+        self.mirror_tags(forecaster, "requires-fh-in-fit")
+
         self.cv = cv
         self.strategy = strategy
         self.n_jobs = n_jobs
