@@ -73,7 +73,7 @@ class BaseEstimator(_BaseEstimator):
             collected from _tags class attribute via nested inheritance
             then any overrides and new tags from _tags_dynamic object attribute
         """
-        collected_tags = type(self)._all_tags()
+        collected_tags = type(self)._all_tags().copy()
 
         if hasattr(self, "_tags_dynamic"):
             collected_tags.update(self._tags_dynamic)
@@ -115,7 +115,7 @@ class BaseEstimator(_BaseEstimator):
         ------------
         sets tag values in tag_dict as dynamic tags in self
         """
-        self._tags_dynamic.update(tag_dict)
+        self._tags_dynamic.update(tag_dict.copy())
 
         return self
 
@@ -136,7 +136,7 @@ class BaseEstimator(_BaseEstimator):
         ------------
         sets tag values in tag_set from estimator as dynamic tags in self
         """
-        tags_est = estimator.get_tags()
+        tags_est = estimator.get_tags().copy()
 
         # if tag_set is not passed, default is all tags in estimator
         if tag_set is None:
