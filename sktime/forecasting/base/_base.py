@@ -93,6 +93,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogeneous data
+
         Returns
         -------
         self : reference to self.
@@ -525,7 +526,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = _has_tag(self, "requires-fh-in-fit")
+        requires_fh = self.get_tag("requires-fh-in-fit", True)
 
         msg = (
             f"This is because fitting of the `"
