@@ -80,6 +80,26 @@ class BaseEstimator(_BaseEstimator):
 
         return collected_tags
 
+    def get_tag(self, tag_name, tag_value_default=None):
+        """Get tag value from estimator class and dynamic tag overrides.
+
+        Arguments
+        ---------
+        tag_name : str, name of tag value
+        tag_value_default : any type, default/fallback value if tag is not found
+
+        Returns
+        -------
+        tag_value : value of the tag tag_name in self if found
+                    if tag is not found, returns tag_value_default
+        """
+        collected_tags = self.get_tags()
+
+        if "tag_name" in collected_tags.keys():
+            return collected_tags(tag_name)
+        else:
+            return tag_value_default
+
     def set_tags(self, tag_dict):
         """set dynamic tags to given values
 
