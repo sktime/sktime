@@ -20,13 +20,12 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
-from sktime.utils.validation.forecasting import check_y_X
 
 
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "univariate-only": True,
     }
@@ -222,8 +221,6 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
-        y, X = check_y_X(y, X)
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
@@ -318,8 +315,33 @@ class BaseGridSearch(BaseForecaster):
         -------
         cutoff : pd.Period, pd.Timestamp, int
         """
-        self.check_is_fitted()
-        return self.best_forecaster_.cutoff
+        if self.is_fitted:
+            return self.best_forecaster_.cutoff
+        else:
+            return self.forecaster.cutoff
+
+    @property
+    def fh(self):
+        if self.is_fitted:
+            return self.best_forecaster_.fh
+        else:
+            return self.forecaster.fh
+
+    @property
+    def _y(self):
+        if self.is_fitted:
+            return self.best_forecaster_._y
+        else:
+            return self.forecaster._y
+
+    @_y.setter
+    def _y(self, value):
+        # We ignore values here, as we delegate the attribute
+        # to the best_forecaster_ which is available after fit,
+        # but need to allow the setting of the attribute to
+        # to be compatible with the BaseForecaster public fit
+        # method
+        pass
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
