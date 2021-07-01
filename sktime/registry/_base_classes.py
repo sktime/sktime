@@ -89,7 +89,7 @@ BASE_CLASS_REGISTER = [
     (
         "transformer-pairwise-ts",
         BasePairwiseTransformerPanel,
-        "pairwise transformer for tabular data, distance or kernel",
+        "pairwise transformer for panel data, distance or kernel",
     ),
 ]
 
