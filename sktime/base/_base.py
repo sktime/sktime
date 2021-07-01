@@ -63,6 +63,22 @@ class BaseEstimator(_BaseEstimator):
 
         return collected_tags
 
+    def get_tags(self):
+        """Get tags from estimator class and dynamic tag overrides.
+
+        Returns
+        -------
+        collected_tags : dictionary of tag names : tag values
+            collected from _tags class attribute via nested inheritance
+            then any overrides and new tags from _tags_dynamic object attribute
+        """
+        collected_tags = type(self)._all_tags()
+
+        if hasattr(self, "_tags_dynamic"):
+            collected_tags.update(self._tags_dynamic)
+
+        return collected_tags
+
 
 def _clone_estimator(base_estimator, random_state=None):
     estimator = clone(base_estimator)
