@@ -80,6 +80,25 @@ class BaseEstimator(_BaseEstimator):
 
         return collected_tags
 
+    def set_tags(self, tag_dict):
+        """set dynamic tags to given values
+
+        Arguments
+        ---------
+        tag_dict : dictionary of tag names : tag values
+
+        Returns
+        -------
+        reference to self
+
+        State change
+        ------------
+        sets tag values in tag_dict as dynamic tags in self
+        """
+        self._tags_dynamic.update(tag_dict)
+
+        return self
+
     def mirror_tags(self, estimator, tag_set=None):
         """mirror tags from estimator as dynamic override
 
@@ -110,7 +129,7 @@ class BaseEstimator(_BaseEstimator):
 
         update_dict = {key : tags_est[key] for key in tag_set}
 
-        self._tags_dynamic.update(update_dict)
+        self.set_tags(update_dict)
 
         return self
 
