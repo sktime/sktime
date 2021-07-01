@@ -147,7 +147,7 @@ class BaseEstimator(_BaseEstimator):
                 tag_set = [tag_set]
             tag_set = [key for key in tag_set if key in tags_est.keys()]
 
-        update_dict = {key : tags_est[key] for key in tag_set}
+        update_dict = {key: tags_est[key] for key in tag_set}
 
         self.set_tags(update_dict)
 

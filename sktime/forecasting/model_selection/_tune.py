@@ -20,7 +20,6 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
-from sktime.utils.validation.forecasting import check_y_X
 
 
 class BaseGridSearch(BaseForecaster):
@@ -44,7 +43,6 @@ class BaseGridSearch(BaseForecaster):
     ):
 
         self.forecaster = forecaster
-
 
         self.cv = cv
         self.strategy = strategy
