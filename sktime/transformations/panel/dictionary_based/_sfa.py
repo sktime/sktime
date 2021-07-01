@@ -18,7 +18,7 @@ from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width or information gain
-binning_methods = {"equi-depth", "equi-width", "information-gain", "information-gain2", "kmeans"} #todo 2 information gains is temporary
+binning_methods = {"equi-depth", "equi-width", "information-gain", "information-gain2", "kmeans"} #todo 2 information gains is temporary, compare both
 
 # TODO remove imag-part from dc-component component
 # todo more numba
@@ -337,7 +337,7 @@ class SFA(_PanelToPanelTransformer):
         return dft[start:]
 
     def _mcb(self, dft):
-        num_windows_per_inst = np.ceil(self.series_length / self.window_size)
+        num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         total_num_windows = int(self.n_instances * num_windows_per_inst)
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
@@ -670,16 +670,16 @@ class SFA(_PanelToPanelTransformer):
 
     def _add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word == last_word:
-            return False
+            return True
 
         # store the histogram of word counts
         bag[word] += 1
 
-        return True
+        return False
 
     def _add_to_pyramid(self, bag, word, last_word, window_ind):
         if self.remove_repeat_words and word == last_word:
-            return False
+            return True
 
         start = 0
         for i in range(self.levels):
@@ -687,7 +687,7 @@ class SFA(_PanelToPanelTransformer):
             bag[new_word] += num_quadrants
             start += num_quadrants
 
-        return True
+        return False
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -725,7 +725,7 @@ class SFA(_PanelToPanelTransformer):
         return (bigram << (letter_bits * word_len)) | other_word
 
     # TODO merge with transform???
-    # todo works with levels and bigrams??
+    # todo works with levels and bigrams?? general clean. another version for bag input
     # assumes saved words are of word length 'max_word_length'.
     def _shorten_bags(self, word_len):
         new_bags = pd.DataFrame() if self.return_pandas_data_series else [None]
