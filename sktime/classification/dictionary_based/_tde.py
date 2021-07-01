@@ -189,6 +189,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
+        if self.n_parameter_samples <= self.randomly_selected_params:
+            print( # noqa
+                "TDE Warning: n_parameter_samples <= randomly_selected_params, ",
+                "ensemble member parameters will be fully randomly selected.",
+            )
+
         time_limit = self.time_limit_in_minutes * 60
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
@@ -248,9 +254,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     rng.randint(0, len(possible_parameters))
                 )
             else:
-                gp = GaussianProcessRegressor(random_state=self.random_state)
-                gp.fit(self.prev_parameters_x, self.prev_parameters_y)
-                preds = gp.predict(possible_parameters)
+                scaler = preprocessing.StandardScaler().fit(self.prev_parameters_x)
+                gp_train = scaler.transform(self.prev_parameters_x)
+                gp_test = scaler.transform(possible_parameters)
+                gp = KernelRidge(kernel="poly", degree=2)
+                gp.fit(gp_train, self.prev_parameters_y)
+                preds = gp.predict(gp_test)
                 parameters = possible_parameters.pop(
                     rng.choice(np.flatnonzero(preds == preds.max()))
                 )
@@ -545,7 +554,7 @@ class IndividualTDE(BaseClassifier):
                     window_size=self.window_size,
                     norm=self.norm,
                     levels=self.levels,
-                    binning_method="information-gain" if self.igb else "equi-depth",
+                    binning_method="information-gain2" if self.igb else "equi-depth",
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
                     save_words=False,
@@ -648,7 +657,7 @@ class IndividualTDE(BaseClassifier):
                     window_size=self.window_size,
                     norm=self.norm,
                     levels=self.levels,
-                    binning_method="information-gain" if self.igb else "equi-depth",
+                    binning_method="information-gain2" if self.igb else "equi-depth",
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
                     save_words=False,

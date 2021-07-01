@@ -9,7 +9,8 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from numba import njit
+from numba import njit, types, typeof
+from numba.typed import Dict
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -210,6 +211,8 @@ class SFA(_PanelToPanelTransformer):
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
+
+        print(self.breakpoints)
 
         self._is_fitted = True
         return self
@@ -413,7 +416,7 @@ class SFA(_PanelToPanelTransformer):
             column.sort()
 
             splits = []
-            self._find_split_points(column, 0, len(column),
+            SFA._find_split_points(column, 0, len(column),
                                     self.alphabet_size, splits)
             splits.sort()
 
@@ -423,14 +426,15 @@ class SFA(_PanelToPanelTransformer):
         breakpoints[:, self.alphabet_size - 1] = sys.float_info.max
         return breakpoints
 
-    def _find_split_points(self, points, start, end, remaining_symbols,
-                           splits):
-        out_dict = {}
-        in_dict = {}
+    @staticmethod
+    def _find_split_points(points, start, end, remaining_symbols, splits):
+        out_dict = Dict.empty(key_type=typeof(points[0][1]), value_type=types.int64)
+        in_dict = Dict.empty(key_type=typeof(points[0][1]), value_type=types.int64)
+
         for p in range(start, end):
             out_dict[points[p][1]] = out_dict.get(points[p][1], 0) + 1
 
-        class_entropy = self._entropy(out_dict, end - start)
+        class_entropy = _entropy(out_dict, end - start)
 
         last_label = points[start][1]
         out_dict[points[start][1]] = out_dict.get(points[start][1], 0) - 1
@@ -445,7 +449,7 @@ class SFA(_PanelToPanelTransformer):
             in_dict[points[i][1]] = in_dict.get(points[i][1], 0) + 1
 
             if label != last_label:
-                gain = (round(self._information_gain(class_entropy, in_dict,
+                gain = (round(_information_gain(class_entropy, in_dict,
                                                      out_dict) * 1000) / 1000)
 
                 if gain >= best_gain:
@@ -460,43 +464,26 @@ class SFA(_PanelToPanelTransformer):
             remaining_symbols = int(remaining_symbols / 2)
             if remaining_symbols > 1:
                 if best_pos - start > 2 and end - best_pos > 2:
-                    self._find_split_points(points, start, best_pos,
+                    SFA._find_split_points(points, start, best_pos,
                                             remaining_symbols, splits)
-                    self._find_split_points(points, best_pos, end,
+                    SFA._find_split_points(points, best_pos, end,
                                             remaining_symbols, splits)
                 elif end - best_pos > 4:
-                    self._find_split_points(points, best_pos,
+                    SFA._find_split_points(points, best_pos,
                                             int((end - best_pos) / 2),
                                             remaining_symbols, splits)
-                    self._find_split_points(points,
+                    SFA._find_split_points(points,
                                             int((end - best_pos) / 2),
                                             end, remaining_symbols, splits)
                 elif best_pos - start > 4:
-                    self._find_split_points(points, start,
+                    SFA._find_split_points(points, start,
                                             int((best_pos - start) / 2),
                                             remaining_symbols, splits)
-                    self._find_split_points(points,
+                    SFA._find_split_points(points,
                                             int((best_pos - start) / 2),
                                             end, remaining_symbols, splits)
 
         return splits
-
-    def _entropy(self, frequency_dict, total=-1):
-        log2 = 0.6931471805599453
-        entropy = 0
-        for i in frequency_dict.values():
-            p = i/total
-            if p > 0:
-                entropy -= p * math.log(p) * log2
-        return entropy
-
-    def _information_gain(self, class_entropy, in_freq_dict, out_freq_dict):
-        in_total = len(in_freq_dict)
-        out_total = len(out_freq_dict)
-        total = in_total + out_total
-        return (class_entropy
-                - in_total / total * self._entropy(in_freq_dict, in_total)
-                - out_total / total * self._entropy(out_freq_dict, out_total))
 
     # transform functions
 
@@ -563,8 +550,6 @@ class SFA(_PanelToPanelTransformer):
                         if self.levels > 1:
                             skip_gram = (skip_gram << self.level_bits) | 0
                         bag[skip_gram] += 1
-
-        print(self.bag_to_string(bag))
 
         return [
             pd.Series(bag) if self.return_pandas_data_series else bag,
@@ -819,6 +804,28 @@ class SFA(_PanelToPanelTransformer):
             letters = (letters, level)
 
         return letters
+
+
+@njit(fastmath=True, cache=True)
+def _entropy(frequency_dict, total=-1):
+    log2 = 0.6931471805599453
+    entropy = 0
+    for i in frequency_dict.values():
+        p = i/total
+        if p > 0:
+            entropy -= p * math.log(p) * log2
+    return entropy
+
+
+@njit(fastmath=True, cache=True)
+def _information_gain(class_entropy, in_freq_dict, out_freq_dict):
+    in_total = len(in_freq_dict)
+    out_total = len(out_freq_dict)
+    total = in_total + out_total
+    return (class_entropy
+            - in_total / total * _entropy(in_freq_dict, in_total)
+            - out_total / total * _entropy(out_freq_dict, out_total))
+
 
 
 #todo look at tde/cboss for shorten, implement shorten levels
