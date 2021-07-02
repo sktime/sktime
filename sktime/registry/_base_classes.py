@@ -73,7 +73,7 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 
 
 BASE_CLASS_REGISTER = [
-    ("annotator", BaseSeriesAnnotator, "time series annotator"),
+    ("series-annotator", BaseSeriesAnnotator, "time series annotator"),
     ("classifier", BaseClassifier, "time series classifier"),
     ("clusterer", BaseClusterer, "time series clusterer"),
     ("regressor", BaseRegressor, "time series regressor"),
