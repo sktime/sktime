@@ -19,8 +19,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
         description of all options.
     fmt : str {"dense", "sparse"}, optional (default="dense")
         Annotation output format:
-        * If "sparse", a sub-series of outliers is returned, with value,
-        * If "dense", a series of values is returned with X.index and en
+        * If "sparse", a sub-series of labels for only the outliers in X is returned,
+        * If "dense", a series of labels for all values in X is returned.
     labels : str {"indicator", "score"}, optional (default="indicator")
         Annotation output labels:
         * If "indicator", returned values are boolean, indicating whether a value is an
