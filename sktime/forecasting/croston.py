@@ -113,11 +113,11 @@ class Croston(_OptionalForecastingHorizonMixin, BaseForecaster):
         if return_pred_int or X is not None:
             raise NotImplementedError()
 
-        len_fh = len(self._fh.to_numpy())
+        len_fh = len(self.fh)
         f = self._f
 
-        # Predicting future forecasts:
+        # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self._fh.to_absolute(self._cutoff)
+        index = self.fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
