@@ -153,10 +153,10 @@ class BaseSeriesAnnotator(BaseEstimator):
         if Y is not None:
             Y = check_series(Y)
 
-        self._X = self._X.combine_first(X)
+        self._X = X.combine_first(self._X)
 
         if Y is not None:
-            self._Y.combine_first(Y)
+            self._Y = Y.combine_first(self._Y)
 
         self._update(X=X, Y=Y)
 
