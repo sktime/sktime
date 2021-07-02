@@ -7,10 +7,20 @@ Interface module to scipy.spatial's pairwise distance function cdist
 __author__ = ["fkiraly"]
 
 import pandas as pd
+import numpy as np
 
 from scipy.spatial.distance import cdist
 
 from sktime.dists_kernels._base import BasePairwiseTransformer
+
+
+def check_numpy(X):
+    X = np.array(X, copy=True)
+    if X.ndim <= 1:
+        X = X.reshape((-1, 1))
+    if X.dtype != np.float:
+        X = X.astype(np.float)
+    return X
 
 
 class ScipyDist(BasePairwiseTransformer):
@@ -74,6 +84,12 @@ class ScipyDist(BasePairwiseTransformer):
 
         if isinstance(X2, pd.DataFrame):
             X2 = X2.select_dtypes("number").to_numpy(dtype="float")
+
+        if isinstance(X, np.ndarray):
+            X = check_numpy(X)
+
+        if isinstance(X2, np.ndarray):
+            X2 = check_numpy(X2)
 
         distmat = cdist(XA=X, XB=X2, metric=metric, p=p)
 

@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "make_classification_problem",
     "make_regression_problem",
+    "make_transformer_problem",
 ]
 
 import numpy as np
@@ -117,6 +118,19 @@ def make_clustering_problem(
         return X
     else:
         return pd.Series(X)
+
+
+def make_transformer_problem(
+    n_instances=20, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
+):
+    X = _make_panel_X(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_numpy=return_numpy,
+        random_state=random_state,
+    )
+    return X
 
 
 def _make_nested_from_array(array, n_instances=20, n_columns=1):
