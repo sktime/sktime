@@ -52,14 +52,14 @@ class BaseGridSearch(BaseForecaster):
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update(self, y, X=None, update_params=False):
+    def _update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
-        self.best_forecaster_.update(y, X, update_params=update_params)
+        self.best_forecaster_._update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict(
+    def _update_predict(
         self,
         y,
         cv=None,
@@ -73,7 +73,7 @@ class BaseGridSearch(BaseForecaster):
         """
         self.check_is_fitted("update_predict")
 
-        return self.best_forecaster_.update_predict(
+        return self.best_forecaster_._update_predict(
             y,
             cv=cv,
             X=X,
@@ -83,7 +83,7 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict_single(
+    def _update_predict_single(
         self,
         y,
         fh=None,
@@ -94,7 +94,7 @@ class BaseGridSearch(BaseForecaster):
     ):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update_predict_single")
-        return self.best_forecaster_.update_predict_single(
+        return self.best_forecaster_._update_predict_single(
             y,
             fh=fh,
             X=X,
@@ -104,18 +104,18 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
-        return self.best_forecaster_.predict(
+        return self.best_forecaster_._predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+    def _compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """Call compute_pred_int on the forecaster with the best found parameters."""
         self.check_is_fitted("compute_pred_int")
-        return self.best_forecaster_.compute_pred_int(y_pred, alpha=alpha)
+        return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -160,6 +160,8 @@ class BaseGridSearch(BaseForecaster):
             Target time series to which to compare the forecasts.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
+        fh : ForecastingHorizon, int, np.ndarray, pd.Index, optional (default=None)
+            Forecasting horizon
 
         Returns
         -------
@@ -304,44 +306,7 @@ class BaseGridSearch(BaseForecaster):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
 
-        self._is_fitted = True
         return self
-
-    @property
-    def cutoff(self):
-        """The time point at which to make forecasts
-
-        Returns
-        -------
-        cutoff : pd.Period, pd.Timestamp, int
-        """
-        if self.is_fitted:
-            return self.best_forecaster_.cutoff
-        else:
-            return self.forecaster.cutoff
-
-    @property
-    def fh(self):
-        if self.is_fitted:
-            return self.best_forecaster_.fh
-        else:
-            return self.forecaster.fh
-
-    @property
-    def _y(self):
-        if self.is_fitted:
-            return self.best_forecaster_._y
-        else:
-            return self.forecaster._y
-
-    @_y.setter
-    def _y(self, value):
-        # We ignore values here, as we delegate the attribute
-        # to the best_forecaster_ which is available after fit,
-        # but need to allow the setting of the attribute to
-        # to be compatible with the BaseForecaster public fit
-        # method
-        pass
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
