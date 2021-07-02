@@ -153,6 +153,17 @@ Shapelet
     ShapeletTransform
     ContractedShapeletTransform
 
+Signature
+~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.signature_based
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    SignatureTransformer
+
 Series transformers
 -------------------
 
