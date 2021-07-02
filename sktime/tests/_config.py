@@ -25,7 +25,6 @@ from sklearn.preprocessing import StandardScaler
 from sktime.base import BaseEstimator
 
 from sktime.annotation.adapters import PyODAnnotator
-from sktime.annotation.base import MockSeriesAnnotator
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
@@ -292,7 +291,6 @@ ESTIMATOR_TEST_PARAMS = {
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
-    MockSeriesAnnotator: {},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
