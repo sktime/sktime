@@ -4,7 +4,6 @@ import numpy as np
 from sktime.utils._testing.panel import make_transformer_problem
 from sktime.dists_kernels.scipy_dist import ScipyDist
 
-
 X1 = make_transformer_problem(
     n_instances=5, n_columns=5, n_timepoints=5, random_state=1, return_numpy=True
 )[0]
@@ -12,13 +11,40 @@ X2 = make_transformer_problem(
     n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=True
 )[0]
 
-
 X1_df = make_transformer_problem(
     n_instances=5, n_columns=5, n_timepoints=5, random_state=1, return_numpy=True
 )[0]
 X2_df = make_transformer_problem(
     n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=True
 )[0]
+
+# potential parameters
+METRIC_VALUES = [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "cityblock",
+    "correlation",
+    "cosine",
+    "dice",
+    "euclidean",
+    "hamming",
+    "jaccard",
+    "jensenshannon",
+    "kulsinski",
+    "mahalanobis",
+    "matching",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+]
+P_VALUES = [1, 2, 5, 10]
+COLALIGN_VALUES = ["intersect", "force-align", "none"]
 
 
 def test_scipydist():
@@ -48,37 +74,9 @@ def _run_scipy_dist_test(x, y):
         default_params_transformation,
     )
 
-    # potential parameters
-    metric_arr = [
-        "braycurtis",
-        "canberra",
-        "chebyshev",
-        "cityblock",
-        "correlation",
-        "cosine",
-        "dice",
-        "euclidean",
-        "hamming",
-        "jaccard",
-        "jensenshannon",
-        "kulsinski",
-        "mahalanobis",
-        "matching",
-        "minkowski",
-        "rogerstanimoto",
-        "russellrao",
-        "seuclidean",
-        "sokalmichener",
-        "sokalsneath",
-        "sqeuclidean",
-        "yule",
-    ]
-    p_values = [1, 2, 5, 10]
-    colalign_values = ["intersect", "force-align", "none"]
-
-    for metric in metric_arr:
-        for p in p_values:
-            for colalign in colalign_values:
+    for metric in METRIC_VALUES:
+        for p in P_VALUES:
+            for colalign in COLALIGN_VALUES:
                 metric_params = ScipyDist(metric=metric, p=p, colalign=colalign)
                 metric_params_transformation = metric_params.transform(x, y)
                 assert isinstance(metric_params_transformation, np.ndarray), (

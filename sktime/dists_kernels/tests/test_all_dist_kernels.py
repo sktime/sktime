@@ -38,7 +38,7 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab):
     transformer: BasePairwiseTransformer = pairwise_transformers_tab()
 
     # test return matrix
-    transformation = transformer.transform(X1, X2)
+    transformation = transformer.transform(x, y)
 
     assert transformer.symmetric is False, (
         f"Symmetric is set to wrong value for {pairwise_transformers_tab} "
