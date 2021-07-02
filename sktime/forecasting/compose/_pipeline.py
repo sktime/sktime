@@ -396,18 +396,3 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             if not _has_tag(transformer, "skip-inverse-transform"):
                 zt = transformer.inverse_transform(zt, X)
         return zt
-
-
-def _copy(Z=None):
-    """Copy data to do transformation on it after
-
-    Parameters
-    ----------
-    Z : pd.Series or pd.DataFrame or None
-
-    Returns
-    -------
-    pd.Series or pd.DataFrame or None
-    """
-    Z = Z.copy() if Z is not None else None
-    return Z
