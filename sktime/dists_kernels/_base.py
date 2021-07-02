@@ -73,7 +73,7 @@ class BasePairwiseTransformer(BaseEstimator):
         X = check_series(X)
 
         if X2 is None:
-            X = X2
+            X2 = X
             self.symmetric = True
         else:
             X2 = check_series(X2)
@@ -172,7 +172,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             X[i] = check_series(Xi)
 
         if X2 is None:
-            X = X2
+            X2 = X
             self.symmetric = True
         else:
             for i, X2i in enumerate(X2):

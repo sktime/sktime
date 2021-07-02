@@ -72,7 +72,7 @@ class ScipyDist(BasePairwiseTransformer):
 
         Returns:
             distmat: np.array of shape [n, m]
-                (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
+                (i,j)-th entry contains distance between X.iloc[i] and X2.iloc[j]
                     (non-numeric columns are removed before for DataFrame X/X2)
         """
 
