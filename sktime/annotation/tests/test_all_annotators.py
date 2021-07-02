@@ -15,5 +15,5 @@ def test_output_type(Estimator):
     args = _make_args(estimator, "fit")
     estimator.fit(*args)
     args = _make_args(estimator, "predict")
-    annotated_series = estimator.predict(*args)
-    assert isinstance(annotated_series, pd.Series)
+    y_pred = estimator.predict(*args)
+    assert isinstance(y_pred, pd.Series)

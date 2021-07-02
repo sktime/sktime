@@ -17,37 +17,20 @@ class PyODAnnotator(BaseSeriesAnnotator):
     estimator : PyOD estimator
         See ``https://pyod.readthedocs.io/en/latest/`` documentation for a detailed
         description of all options.
-    annotation_format : str - one of "sparse" and "dense"
-        "sparse" - sub-series of outliers is returned, with value
-        "dense" - series of values is returned with X.index and entry
-    annotation_values : str - one of "indicator" and "score"
-        "indicator" - value is bool = is this an outlier
-        "score" - value is float = outlier score
+    fmt : str {"dense", "sparse"}, optional (default="dense")
+        Annotation output format:
+        * If "sparse", a sub-series of outliers is returned, with value,
+        * If "dense", a series of values is returned with X.index and en
+    labels : str {"indicator", "score"}, optional (default="indicator")
+        Annotation output labels:
+        * If "indicator", returned values are boolean, indicating whether a value is an
+        outlier,
+        * If "score", returned values are floats, giving the outlier score.
     """
 
-    _tags = {
-        "handles-panel": False,  # can handle panel annotations, i.e., list X/Y?
-        "handles-missing-data": False,  # can handle missing data in X, Y
-        "annotation-type": "point",  # can be point, segment or both
-        "annotation-labels": "outlier",  # can be one of, or list-subset of
-        #   "label", "outlier", "change"
-    }
-
-    def __init__(
-        self, estimator, annotation_format="sparse", annotation_values="indicator"
-    ):
-
-        if annotation_format not in ["sparse", "dense"]:
-            raise ValueError('annotation_format must be "sparse" or "dense"')
-
-        if annotation_values not in ["indicator", "score"]:
-            raise ValueError('annotation_format must be "indicator" or "score"')
-
+    def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
-        self.annotation_format = annotation_format
-        self.annotation_values = annotation_values
-
-        super(PyODAnnotator, self).__init__()
+        super(PyODAnnotator, self).__init__(fmt=fmt, labels=labels)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -92,8 +75,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
             exact format depends on annotation type
         """
 
-        annotation_format = self.annotation_format
-        annotation_values = self.annotation_values
+        fmt = self.fmt
+        labels = self.labels
 
         X_np = X.to_numpy()
 
@@ -102,14 +85,14 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
         Y_np = self.estimator_.predict(X_np)
 
-        if annotation_values == "score":
+        if labels == "score":
             Y_val_np = self.estimator_.decision_function(X_np)
-        elif annotation_values == "indicator":
+        elif labels == "indicator":
             Y_val_np = Y_np
 
-        if annotation_format == "dense":
+        if fmt == "dense":
             Y = pd.Series(Y_val_np, index=X.index)
-        elif annotation_format == "sparse":
+        elif fmt == "sparse":
             Y_loc = np.where(Y_np)
             Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
 

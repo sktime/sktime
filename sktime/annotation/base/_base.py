@@ -24,32 +24,42 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 __author__ = ["satya-pattnaik ", "fkiraly"]
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation.annotation import check_fmt
+from sktime.utils.validation.annotation import check_labels
 
 from sktime.utils.validation.series import check_series
 
 
 class BaseSeriesAnnotator(BaseEstimator):
-    """Base stream annotator
-    assumes "predict" data is temporal future of "fit"
+    """Base series annotator.
+
+    Parameters
+    ----------
+    fmt : str {"dense", "sparse"}, optional (default="dense")
+        Annotation output format:
+        * If "sparse", a sub-series of outliers is returned, with value,
+        * If "dense", a series of values is returned with X.index and en
+    labels : str {"indicator", "score"}, optional (default="indicator")
+        Annotation output labels:
+        * If "indicator", returned values are boolean, indicating whether a value is an
+        outlier,
+        * If "score", returned values are floats, giving the outlier score.
+
+    Notes
+    -----
+    Assumes "predict" data is temporal future of "fit"
         single time series in both, no meta-data
 
-    The base stream annotator specifies the methods and method
+    The base series annotator specifies the methods and method
     signatures that all annotators have to implement.
 
     Specific implementations of these methods is deferred to concrete
     annotators.
-
-    # default tags
-    _tags = {
-        "handles-panel": False,  # can handle panel annotations, i.e., list X/Y?
-        "handles-missing-data": False,  # can handle missing data in X, Y
-        "annotation-type": "point",  # can be point, segment or both
-        "annotation-kind": "none",  # can be one of, or list-subset of
-        #   "label", "outlier", "change"
-    }
     """
 
-    def __init__(self):
+    def __init__(self, fmt="dense", labels="indicator"):
+        self.fmt = fmt
+        self.labels = labels
 
         self._is_fitted = False
 
@@ -76,7 +86,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         creates fitted model (attributes ending in "_")
         sets _is_fitted flag to true
         """
-
+        check_labels(self.labels)
+        check_fmt(self.fmt)
         X = check_series(X)
 
         if Y is not None:
@@ -142,10 +153,10 @@ class BaseSeriesAnnotator(BaseEstimator):
         if Y is not None:
             Y = check_series(Y)
 
-        self._X = self._X.append(X)
+        self._X = self._X.combine_first(X)
 
         if Y is not None:
-            self._Y.append(Y)
+            self._Y.combine_first(Y)
 
         self._update(X=X, Y=Y)
 

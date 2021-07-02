@@ -134,8 +134,12 @@ def check_estimator_tags(Estimator):
     assert hasattr(Estimator, "_all_tags")
     all_tags = Estimator._all_tags()
     assert isinstance(all_tags, dict)
-    assert all([isinstance(key, str) for key, _ in all_tags.items()])
-
+    assert all(
+        [
+            isinstance(key, str) and isinstance(value, bool)
+            for key, value in all_tags.items()
+        ]
+    )
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
         assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
@@ -594,6 +598,7 @@ def _make_predict_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(n_timepoints=10, **kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClusterer):
         X = _make_panel_X(**kwargs)
         return (X,)
