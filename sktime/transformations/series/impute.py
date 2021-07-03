@@ -92,6 +92,7 @@ class Imputer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         self._check_method()
         Z = check_series(Z)
+        Z = Z.copy()
 
         # replace missing_values with np.nan
         if self.missing_values:

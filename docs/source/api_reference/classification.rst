@@ -98,3 +98,14 @@ Kernel-based
 
     ROCKETClassifier
     Arsenal
+
+Signature-based
+---------------
+
+.. currentmodule:: sktime.classification.signature_based
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    SignatureClassifier
