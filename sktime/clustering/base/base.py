@@ -32,7 +32,7 @@ class BaseClusterer(BaseEstimator):
     def __init__(self):
         super(BaseClusterer, self).__init__()
 
-    def fit(self, X: NumpyOrDF):
+    def fit(self, X: NumpyOrDF, y=None):
         """
         Fit the clustering algorithm on the dataset X
 
@@ -41,6 +41,8 @@ class BaseClusterer(BaseEstimator):
         X: 2D np.array with shape (n_instances, n_timepoints)
            or pd.DataFrame in nested format
             panel of univariate time series to train the clustering model on
+
+        y: ignored, exists for API consistency reasons
 
         Returns
         -------
@@ -55,7 +57,7 @@ class BaseClusterer(BaseEstimator):
         self._is_fitted = True
         return self
 
-    def predict(self, X: NumpyOrDF) -> NumpyArray:
+    def predict(self, X: NumpyOrDF, y=None) -> NumpyArray:
         """
         Return cluster center index for data samples.
 
@@ -64,6 +66,8 @@ class BaseClusterer(BaseEstimator):
         X: 2D np.array with shape (n_instances, n_timepoints)
            or pd.DataFrame in nested format
             panel of time series to cluster
+
+        y: ignored, exists for API consistency reasons
 
         Returns
         -------
@@ -123,7 +127,7 @@ class BaseClusterer(BaseEstimator):
         """
         return
 
-    def fit_predict(self, X: NumpyOrDF) -> NumpyArray:
+    def fit_predict(self, X: NumpyOrDF, y=None) -> NumpyArray:
         """
         clusters time series and returns cluster labels
 
@@ -132,6 +136,8 @@ class BaseClusterer(BaseEstimator):
         X: 2D np.array with shape (n_instances, n_timepoints)
            or pd.DataFrame in nested format
             panel of univariate time series to cluster
+
+        y: ignored, exists for API consistency reasons
 
         Returns
         -------
