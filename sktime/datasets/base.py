@@ -25,6 +25,7 @@ __all__ = [
     "load_acsf1",
     "load_uschange",
     "load_UCR_UEA_dataset",
+    "load_PBS_dataset",
 ]
 
 __author__ = [
@@ -755,3 +756,47 @@ def load_uschange(y_name="Consumption"):
         data = data.drop("Quarter", axis=1)
     X = data.drop(y_name, axis=1)
     return y, X
+
+
+def load_PBS_dataset():
+    """
+    Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
+
+    Returns
+    -------
+    y : pd.Series
+     Time series
+
+    Details
+    -------
+    The Pharmaceutical Benefits Scheme (PBS) is the Australian government drugs
+    subsidy scheme.
+    Data comprises of the numbers of scripts sold each month for immune sera
+    and immunoglobulin products in Australia.
+
+
+    Dimensionality:     univariate
+    Series length:      204
+    Frequency:          Monthly
+    Number of cases:    1
+
+    Notes
+    -----
+    The time series is intermittent, i.e contains small counts,
+    with many months registering no sales at all,
+    and only small numbers of items sold in other months.
+
+    References
+    ----------
+    ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
+    """
+
+    name = "PBS_dataset"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+
+    # make sure time index is properly formatted
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of scripts"
+    return y
