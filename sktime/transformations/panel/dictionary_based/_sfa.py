@@ -128,7 +128,7 @@ class SFA(_PanelToPanelTransformer):
 
         # we cannot select more than window_size many letters in a word
         offset = 2 if norm else 0
-        self.word_length = min(word_length, window_size - offset)
+        self.word_length = word_length #min(word_length, window_size - offset)
         self.dft_length = window_size - offset if anova is True else self.word_length
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
@@ -185,13 +185,11 @@ class SFA(_PanelToPanelTransformer):
         self: object
         """
 
-        # todo look at removing 2nd part
-        if self.alphabet_size < 2 or self.alphabet_size > 4:
-            raise ValueError("Alphabet size must be an integer between 2 and 4")
+        if self.alphabet_size < 2:
+            raise ValueError("Alphabet size must be an integer greater than 2")
 
-        #todo look at removing 2nd part
-        if self.word_length < 1 or self.word_length > 16:
-            raise ValueError("Word length must be an integer between 1 and 16")
+        if self.word_length < 1:
+            raise ValueError("Word length must be an integer greater than 1")
 
         if self.binning_method == "information-gain" and y is None:
             raise ValueError(
@@ -303,15 +301,51 @@ class SFA(_PanelToPanelTransformer):
         result = np.zeros((len(split), self.dft_length), dtype=np.float64)
 
         for i, row in enumerate(split):
-            result[i] = self._discrete_fourier_transform(row)
+            result[i] = self._discrete_fourier_transform(row, extra=False)
 
         return result
 
-    def _discrete_fourier_transform(self, series):
-        """Performs a discrete fourier transform using the fast fourier
+    # def _discrete_fourier_transform(self, series):
+    #     """Performs a discrete fourier transform using the fast fourier
+    #     transform
+    #     if self.norm is True, then the first term of the DFT is ignored
+    #
+    #     Input
+    #     -------
+    #     X : The training input samples.  array-like or sparse matrix of
+    #     shape = [n_samps, num_atts]
+    #
+    #     Returns
+    #     -------
+    #     1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length
+    #     num_atts or
+    #     num_atts-2 if if self.norm is True
+    #     """
+    #     # first two are real and imaginary parts
+    #     start = 2 if self.norm else 0
+    #
+    #     s = np.std(series)
+    #     std = s if s > 1e-8 else 1
+    #
+    #     X_fft = np.fft.rfft(series)
+    #     reals = np.real(X_fft)
+    #     imags = np.imag(X_fft)
+    #
+    #     length = start + self.dft_length
+    #     dft = np.empty((length,), dtype=reals.dtype)
+    #     dft[0::2] = reals[: np.uint32(length / 2)]
+    #     dft[1::2] = imags[: np.uint32(length / 2)]
+    #     if not self.lower_bounding:
+    #         dft[1::2] = dft[1::2] * -1  # lower bounding
+    #     dft *= self.inverse_sqrt_win_size / std
+    #     return dft[start:]
+
+    def _discrete_fourier_transform(self, series, normalise=True, extra=True):
+        """ Performs a discrete fourier transform using standard O(n^2)
         transform
         if self.norm is True, then the first term of the DFT is ignored
 
+        TO DO: Use a fast fourier transform
         Input
         -------
         X : The training input samples.  array-like or sparse matrix of
@@ -323,24 +357,33 @@ class SFA(_PanelToPanelTransformer):
         num_atts or
         num_atts-2 if if self.norm is True
         """
-        # first two are real and imaginary parts
-        start = 2 if self.norm else 0
 
-        s = np.std(series)
-        std = s if s > 1e-8 else 1
+        length = len(series)
+        output_length = int(self.word_length / 2)
+        start = 1 if self.norm else 0
 
-        X_fft = np.fft.rfft(series)
-        reals = np.real(X_fft)
-        imags = np.imag(X_fft)
+        if normalise:
+            std = np.std(series)
+            if std == 0:
+                std = 1
 
-        length = start + self.dft_length
-        dft = np.empty((length,), dtype=reals.dtype)
-        dft[0::2] = reals[: np.uint32(length / 2)]
-        dft[1::2] = imags[: np.uint32(length / 2)]
-        if not self.lower_bounding:
-            dft[1::2] = dft[1::2] * -1  # lower bounding
-        dft *= self.inverse_sqrt_win_size / std
-        return dft[start:]
+        if extra:
+            dft = np.array(
+                [np.sum([[series[n] * math.cos(2 * math.pi * n * i / length),
+                          -series[n] * math.sin(2 * math.pi * n * i / length)] for
+                         n in range(length)], axis=0)
+                 for i in range(0, start + output_length)]).flatten()
+        else:
+            dft = np.array(
+                [np.sum([[series[n] * math.cos(2 * math.pi * n * i / length),
+                          -series[n] * math.sin(2 * math.pi * n * i / length)] for
+                         n in range(length)], axis=0)
+                 for i in range(start, start + output_length)]).flatten()
+
+        if normalise:
+            dft *= self.inverse_sqrt_win_size / std
+
+        return dft
 
     def _mcb(self, dft):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
@@ -585,12 +628,7 @@ class SFA(_PanelToPanelTransformer):
         transformed = np.zeros((end, length))
 
         # first run with fft
-        X_fft = np.fft.rfft(series[: self.window_size])
-        reals = np.real(X_fft)
-        imags = np.imag(X_fft)
-        mft_data = np.empty((length,), dtype=reals.dtype)
-        mft_data[0::2] = reals[: np.uint32(length / 2)]
-        mft_data[1::2] = imags[: np.uint32(length / 2)]
+        mft_data = self._discrete_fourier_transform(series[0:self.window_size], normalise=False)
         transformed[0] = mft_data * self.inverse_sqrt_win_size / stds[0]
 
         # other runs using mft
@@ -833,21 +871,21 @@ def _information_gain(class_entropy, in_freq_dict, out_freq_dict):
 
 #todo look at tde/cboss for shorten, implement shorten levels
 
-from sktime.datasets import load_italy_power_demand
-X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-sfa = SFA(
-    word_length=10,
-    alphabet_size=4,
-    window_size=12,
-    norm=False,
-    levels=2,
-    binning_method="information-gain2",
-    bigrams=True,
-    remove_repeat_words=True,
-    save_words=False,
-)
-sfa.fit(X_train, y_train)
-sfa.transform(X_train)
+# from sktime.datasets import load_italy_power_demand
+# X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+# sfa = SFA(
+#     word_length=14,
+#     alphabet_size=4,
+#     window_size=10,
+#     norm=False,
+#     levels=2,
+#     binning_method="information-gain2",
+#     bigrams=True,
+#     remove_repeat_words=True,
+#     save_words=False,
+# )
+# sfa.fit(X_train, y_train)
+# sfa.transform(X_train)
 
 #49489 =        00 00 00 11 00 00 01 01 01 00 + 01
 #12972995676 =  00 00 00 00 01 10 00 00 10 10 + 1 + 00 00 00 00 11 01 00 01 01 11 + 00

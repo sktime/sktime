@@ -45,21 +45,23 @@ def test_individual_tde_on_gunpoint():
 
 
 def test_tde_on_power_demand():
+    from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
     # load power demand data
-    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(100)
+    X_train, y_train = load_ts("D:/CMP Machine Learning/Datasets/UnivariateTS/ShapeletSim/ShapeletSim9_TRAIN.ts") #load_italy_power_demand(split="train", return_X_y=True)
+    X_test, y_test = load_ts("D:/CMP Machine Learning/Datasets/UnivariateTS/ShapeletSim/ShapeletSim9_TEST.ts") #load_italy_power_demand(split="test", return_X_y=True)
+    #indices = np.random.RandomState(0).permutation(100)
 
     # train TDE
     tde = TemporalDictionaryEnsemble(
-        n_parameter_samples=50,
-        max_ensemble_size=10,
-        randomly_selected_params=40,
-        random_state=0,
+        n_parameter_samples=250,
+        # max_ensemble_size=3,
+        # randomly_selected_params=40,
+        random_state=9,
     )
     tde.fit(X_train, y_train)
 
-    score = tde.score(X_test.iloc[indices], y_test[indices])
+    score = tde.score(X_test, y_test)
+    print(score)
     assert score >= 0.92
 
 
@@ -303,3 +305,21 @@ tde_basic_motions_probas = np.array(
 #     tde_m.fit(X_train.iloc[indices], y_train[indices])
 #     probas = tde_m.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
+
+# from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+# X_train, y_train = load_ts("D:/CMP Machine Learning/Datasets/UnivariateTS/ShapeletSim/ShapeletSim9_TRAIN.ts") #load_italy_power_demand(split="train", return_X_y=True)
+# X_test, y_test = load_ts("D:/CMP Machine Learning/Datasets/UnivariateTS/ShapeletSim/ShapeletSim9_TEST.ts") #load_italy_power_demand(split="test", return_X_y=True)
+# #indices = np.random.RandomState(0).permutation(100)
+#
+# # train TDE
+# tde = TemporalDictionaryEnsemble(
+#     n_parameter_samples=250,
+#     # max_ensemble_size=3,
+#     # randomly_selected_params=40,
+#     random_state=9,
+# )
+# tde.fit(X_train, y_train)
+#
+# score = tde.score(X_test, y_test)
+# print(score)
+

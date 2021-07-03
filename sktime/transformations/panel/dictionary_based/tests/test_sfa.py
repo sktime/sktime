@@ -2,6 +2,7 @@
 import sys
 
 import numpy as np
+import pytest
 
 from sktime.datasets import load_gunpoint
 from sktime.transformations.panel.dictionary_based._sfa import SFA
@@ -9,7 +10,8 @@ from sktime.utils.data_processing import from_nested_to_2d_array
 
 
 # Check the transformer has changed the data correctly.
-def test_transformer():
+@pytest.mark.parametrize("binning_method", ["equi-depth", "equi-width", "information-gain2", "kmeans"])
+def test_transformer(binning_method):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -20,43 +22,12 @@ def test_transformer():
         word_length=word_length,
         alphabet_size=alphabet_size,
         anova=False,
-        binning_method="equi-depth",
-    ).fit(X, y)
-
-    # print("Equi Depth")
-    # print(p.breakpoints)
+        binning_method=binning_method,
+    )
+    p.fit(X, y)
 
     assert p.breakpoints.shape == (word_length, alphabet_size)
     assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
-    _ = p.transform(X, y)
-
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        anova=False,
-        binning_method="equi-width",
-    ).fit(X, y)
-
-    # print("Equi Width")
-    # print(p.breakpoints)
-
-    assert p.breakpoints.shape == (word_length, alphabet_size)
-    assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
-    _ = p.transform(X, y)
-
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        anova=False,
-        binning_method="information-gain",
-    ).fit(X, y)
-    # print("Information Gain")
-    # print(p.breakpoints)
-
-    assert p.breakpoints.shape == (word_length, alphabet_size)
-
-    # print(p.breakpoints[1, :-1])
-    assert np.equal(sys.float_info.max, p.breakpoints[1, :-1]).all()
     _ = p.transform(X, y)
 
 
