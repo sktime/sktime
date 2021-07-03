@@ -61,7 +61,7 @@ class BaseClusterer(BaseEstimator):
 
         Parameters
         ----------
-        X: 3D np.array with shape (n_instances, n_columns, n_timepoints)
+        X: 2D np.array with shape (n_instances, n_timepoints)
            or pd.DataFrame in nested format
             panel of time series to cluster
 
