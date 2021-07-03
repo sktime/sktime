@@ -4,7 +4,7 @@
 
 """Base classes for defining estimators and other objects in sktime."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = [
     "BaseObject",
     "BaseEstimator",

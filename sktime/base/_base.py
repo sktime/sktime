@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
-__all__ = ["BaseEstimator"]
+__author__ = ["mloning", "RNKuhns", "fkiraly"]
+__all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
 
@@ -13,10 +13,14 @@ from sktime.exceptions import NotFittedError
 
 
 class BaseObject(_BaseEstimator):
-    """Base class for defining other classes in sktime.
+    """Base class for parametric objects with tags sktime.
 
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
     """
+
+    def __init__(self):
+        self._is_fitted = False
+        super(BaseEstimator, self).__init__()
 
     @classmethod
     def _all_tags(cls):
@@ -41,15 +45,105 @@ class BaseObject(_BaseEstimator):
 
         return collected_tags
 
+    def get_tags(self):
+        """Get tags from estimator class and dynamic tag overrides.
+
+        Returns
+        -------
+        collected_tags : dictionary of tag names : tag values
+            collected from _tags class attribute via nested inheritance
+            then any overrides and new tags from _tags_dynamic object attribute
+        """
+        collected_tags = type(self)._all_tags().copy()
+
+        if hasattr(self, "_tags_dynamic"):
+            collected_tags.update(self._tags_dynamic)
+
+        return collected_tags
+
+    def get_tag(self, tag_name, tag_value_default=None):
+        """Get tag value from estimator class and dynamic tag overrides.
+
+        Arguments
+        ---------
+        tag_name : str, name of tag value
+        tag_value_default : any type, default/fallback value if tag is not found
+
+        Returns
+        -------
+        tag_value : value of the tag tag_name in self if found
+                    if tag is not found, returns tag_value_default
+        """
+        collected_tags = self.get_tags()
+
+        if tag_name in collected_tags.keys():
+            return collected_tags[tag_name]
+        else:
+            return tag_value_default
+
+    def set_tags(self, tag_dict):
+        """Set dynamic tags to given values.
+
+        Arguments
+        ---------
+        tag_dict : dictionary of tag names : tag values
+
+        Returns
+        -------
+        reference to self
+
+        State change
+        ------------
+        sets tag values in tag_dict as dynamic tags in self
+        """
+        self._tags_dynamic.update(tag_dict.copy())
+
+        return self
+
+    def mirror_tags(self, estimator, tag_set=None):
+        """Mirror tags from estimator as dynamic override.
+
+        Arguments
+        ---------
+        estimator : an estimator inheriting from BaseEstimator
+        tag_set : list of str, or str; tag names
+            default = list of all tags in estimator
+
+        Returns
+        -------
+        reference to self
+
+        State change
+        ------------
+        sets tag values in tag_set from estimator as dynamic tags in self
+        """
+        tags_est = estimator.get_tags().copy()
+
+        # if tag_set is not passed, default is all tags in estimator
+        if tag_set is None:
+            tag_set = tags_est.keys()
+        else:
+            # if tag_set is passed, intersect keys with tags in estimator
+            if not isinstance(tag_set, list):
+                tag_set = [tag_set]
+            tag_set = [key for key in tag_set if key in tags_est.keys()]
+
+        update_dict = {key: tags_est[key] for key in tag_set}
+
+        self.set_tags(update_dict)
+
+        return self
+
 
 class BaseEstimator(BaseObject):
     """Base class for defining estimators in sktime.
 
-    Extends sktime's BaseObject to include basic functionality for fitted estimators.
+    Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
 
     def __init__(self):
         self._is_fitted = False
+        super(BaseEstimator, self).__init__()
 
     @property
     def is_fitted(self):
