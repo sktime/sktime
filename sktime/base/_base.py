@@ -13,16 +13,23 @@ Interface specifications below.
 
     class name: BaseObject
 
-Parameter inspection and manipulation methods:
-    hyper-parameter inspection  - get_params()
+Hyper-parameter inspection and setter methods:
+    inspect hyper-parameters    - get_params()
+    setting hyper-parameters    - set_params(**params)
 
-
+Tag inspection and setter methods
+    inspect tags (all)          - get_tags()
+    inspect tags (individual)   - get_tag(tag_name: str)
+    setting dynamic tags        - set_tag(tag_dict: dict)
+    set mirrored dynamic tags   - mirror_tags(estimator)
 
 ---
 
     class name: BaseEstimator
 
+Provides all interface points of BaseObject, plus:
 
+Parameter inspection:
     fitted parameter inspection - get_fitted_params()
 
 State:
