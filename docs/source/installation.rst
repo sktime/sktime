@@ -3,43 +3,112 @@
 Installation
 ============
 
-sktime is available via PyPI using:
+``sktime`` requires an environment with python version 3.6 or higher.
+
+Release versions
+----------------
+
+For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
+
+Installing sktime from PyPI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``sktime`` releases are available via PyPI and can be installed via ``pip`` using:
 
 .. code-block:: bash
 
     pip install sktime
 
-But note that the package is actively being developed and currently not feature stable.
+This will install ``sktime`` with core dependencies, excluding interfaced packages.
+
+To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier: 
+
+.. code-block:: bash
+
+    pip install sktime[all_extras]
+    
+
+Installing sktime from conda
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``sktime`` releases are available via ``conda`` from ``conda-forge``.
+Thy can be installed via ``conda`` using:
+
+.. code-block:: bash
+
+    conda install -c conda-forge sktime
+
+This will install ``sktime`` with core dependencies, excluding interfaced packages.
+
+To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier: 
+
+.. code-block:: bash
+
+    conda install -c conda-forge sktime[all_extras]
 
 
-Development version
--------------------
-To install the latest development version of sktime, follow these steps:
+Release versions - troubleshooting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
-2. Move into the root directory of the repository: :code:`cd sktime`
+Module not found
+""""""""""""""""
+
+The most frequent reason for "module not found" errors is installing ``sktime`` with minimum dependencies
+and using an estimator which interfaces a packages that has not been installed in the environment.
+To resolve this, install the missing package, or install ``sktime`` with maximum dependencies (see above).
+
+
+Facebook prophet
+""""""""""""""""
+
+A frequent issue arises with installation of facebook prophet when installing via ``pip``, especially on Windows systems.
+
+Potential workaround no.1, install manually via ``conda-forge``:
+
+.. code-block:: bash
+
+    conda install -c conda-forge pystan
+    conda install -c conda-forge prophet
+
+The remaining packages can be installed via ``pip`` or ``conda``.
+
+Potential workaround no.2, install ``pystan`` with ``no-cache`` parameter:
+
+.. code-block:: bash
+
+    pip install pystan --no-cache
+
+
+numpy or C related issues
+"""""""""""""""""""""""""
+
+``numpy`` and C related errors on Windows based systems are potentially resolved by installing Build Tools for Visual Studio 2019 or 2017.
+
+
+Development versions
+--------------------
+To install the the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
+
+Step 1 - ``git`` clone the ``sktime`` repository, the latest version or an earlier version.
+Step 2 - ensure build requirements are satisfied
+Step 3 - ``pip`` install the package from a ``git`` clone, with the ``editable`` parameter.
+
+Detail instructions for all steps are given below.
+For brevity, we discuss steps 1 and 3 first; step 2 is discussed at the end, as it will depend on the operating system.
+
+Step 1 - git cloning the repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``sktime`` repository should be cloned to a local directory, using a graphical user interface, or the command line.
+
+Using the ``git`` command line, the sequence of commands to install the latest version is as follows:
+
+1. Clone the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
+2. Move into the root directory of the local clone: :code:`cd sktime`
 3. Make sure you are on the main branch: :code:`git checkout main`
 4. Make sure your local version is up-to-date: :code:`git pull`
-5. Build package from source using: :code:`pip install --editable .` Please read below for more detailed instructions for specific operating systems.
 
-Building sktime from source also requires
-
-- Cython >= 0.28.5 (available through :code:`pip install cython`)
-- OpenMP (see below for instructions)
-
-.. note::
-
-   It is possible to build sktime without OpenMP support by setting the
-   ``SKTIME_NO_OPENMP`` environment variable (before cythonization). This is
-   not recommended since it will force some estimators to run in sequential
-   mode and their ``n_jobs`` parameter will be ignored.
-
-To run our tests and generate our documentation, you need to follow a few extra steps as described in our section on :ref:`contributing`.
-
-Retrieving other stable versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you want to build a previous version, you can run:
+To build a previous version, replace line 3 with:
 
 .. code-block:: bash
 
@@ -49,27 +118,26 @@ This will checkout the code for that particular version. To see which versions a
 
 You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
 
-Building from source
-~~~~~~~~~~~~~~~~~~~~
 
-Once you have all the build requirements installed (see below for details),
-you can build and install the package in the following way.
+Step 3 - building sktime from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. Therefore it's recommended that you
-install in editable mode, which allows you to edit the code in-place. This
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_):
+For a static install of ``sktime`` from source, navigate to the local clone's root directory and type:
+
+.. code-block:: bash
+
+    pip install .
+
+Alternatively, the ``.`` may be replaced with a full or relative path to the root directlry.
+
+For a developer install that updates the package each time the local source code is changed, install ``sktime`` in editable mode, via:
 
 .. code-block:: bash
 
     pip install --editable .
 
-.. note::
-
-    This is fundamentally similar to using the command ``python setup.py develop``
-    (see `the setuptool docs <https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
-    It is however preferred to use pip.
+This allows editing and extending the code in-place. See also
+`the pip reference on editable installs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
 
 .. note::
 
@@ -84,8 +152,63 @@ builds the extension in place and creates a link to the development directory
     Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
 
+Step 2 - build requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Building sktime from source requires, in addition to step 1:
+
+- Cython >= 0.28.5 (available through :code:`pip install cython`)
+- OpenMP and a working C compiler (see below for instructions)
+
+.. note::
+
+   It is possible to build sktime without OpenMP support by setting the
+   ``SKTIME_NO_OPENMP`` environment variable (before cythonization). This is
+   not recommended since it will force some estimators to run in sequential
+   mode and their ``n_jobs`` parameter will be ignored.
+
+For the advanced developer set-up which includes tests and documentation,
+see the advanced developer documentation in :ref:`contributing`.
+
+The following sections describe how to satisfy the build requirements, by operating system.
+We currently support:
+
+- `FreeBSD`_
+- `Mac OSX`_  
+- `Unix-like OS`_ 
+- `Windows 8.1 and higher`_ 
+
+
+FreeBSD
+"""""""
+
+The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
+include OpenMP support. You need to install the `openmp` library from packages
+(or ports):
+
+.. code-block:: bash
+
+    sudo pkg install openmp
+
+This will install header files in ``/usr/local/include`` and libs in
+``/usr/local/lib``. Since these directories are not searched by default, you
+can set the environment variables to these locations:
+
+.. code-block:: bash
+
+    export CFLAGS="$CFLAGS -I/usr/local/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/lib
+
+Finally you can build the package using the standard command.
+
+For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+the base system and these steps will not be necessary.
+
+
 Mac OSX
-*******
+"""""""
 
 The default C compiler, Apple-clang, on Mac OSX does not directly support
 OpenMP. The first solution to build sktime is to install another C
@@ -113,39 +236,9 @@ Then you need to set the following environment variables:
 
 Finally you can build the package using the standard command.
 
-FreeBSD
-*******
 
-The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
-include OpenMP support. You need to install the `openmp` library from packages
-(or ports):
-
-.. code-block:: bash
-
-    sudo pkg install openmp
-
-This will install header files in ``/usr/local/include`` and libs in
-``/usr/local/lib``. Since these directories are not searched by default, you
-can set the environment variables to these locations:
-
-.. code-block:: bash
-
-    export CFLAGS="$CFLAGS -I/usr/local/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/lib
-
-Finally you can build the package using the standard command.
-
-For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
-the base system and these steps will not be necessary.
-
-
-Installing build dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Linux
-*****
+Unix-like OS
+""""""""""""
 
 Installing from source without conda requires you to have installed the
 sktime runtime dependencies, Python development headers and a working
@@ -181,8 +274,9 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using:
     `scipy installation instructions
     <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
-Windows
-*******
+
+Windows 8.1 and higher
+""""""""""""""""""""""
 
 To build sktime on Windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
@@ -238,22 +332,6 @@ If you run into a problem installing the development version and are using Anaco
 
 In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
 
-Building binary packages and installers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``.whl`` package and ``.exe`` installers can be built with:
-
-.. code-block:: bash
-
-    pip install wheel
-    python setup.py bdist_wheel bdist_wininst
-
-The resulting packages are generated in the ``dist/`` folder.
-
-
-Using an alternative compiler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
 OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
 mingw32 can be redistributed as reusable packages as they depend on GCC runtime
@@ -267,6 +345,19 @@ build step:
     python setup.py build --compiler=my_compiler install
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+
+Building binary packages and installers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``.whl`` package and ``.exe`` installers can be built with:
+
+.. code-block:: bash
+
+    pip install wheel
+    python setup.py bdist_wheel bdist_wininst
+
+The resulting packages are generated in the ``dist/`` folder.
 
 
 References
