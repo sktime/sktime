@@ -10,8 +10,6 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_series
@@ -19,15 +17,46 @@ from sktime.utils import _has_tag
 
 
 class TransformedTargetForecaster(
-    _OptionalForecastingHorizonMixin,
-    _SktimeForecaster,
+    BaseForecaster,
     _HeterogenousMetaEstimator,
     _SeriesToSeriesTransformer,
 ):
-    """Meta-estimator for forecasting transformed time series."""
+    """
+    Meta-estimator for forecasting transformed time series.
+    Pipeline functionality to apply transformers to the target series.
+
+    Parameters
+    ----------
+    steps : list
+        List of tuples like ("name", forecaster/transformer)
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> y = load_airline()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer(method="mean")),
+    ...     ("detrender", Deseasonalizer()),
+    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    >>> pipe.fit(y)
+    TransformedTargetForecaster(...)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
+    """
 
     _required_parameters = ["steps"]
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, steps):
         self.steps = steps
@@ -35,6 +64,17 @@ class TransformedTargetForecaster(
         super(TransformedTargetForecaster, self).__init__()
 
     def _check_steps(self):
+        """
+        Check Steps
+        Parameters
+        ----------
+        self : an instance of self
+
+        Returns
+        -------
+        step : Returns step.
+
+        """
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -86,7 +126,7 @@ class TransformedTargetForecaster(
         """Map the steps to a dictionary"""
         return dict(self.steps)
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -101,9 +141,8 @@ class TransformedTargetForecaster(
         -------
         self : returns an instance of self.
         """
+
         self.steps_ = self._check_steps()
-        self._set_y_X(y, X)
-        self._set_fh(fh)
 
         # transform
         yt = check_y(y)
@@ -117,11 +156,28 @@ class TransformedTargetForecaster(
         f = clone(forecaster)
         f.fit(yt, X, fh)
         self.steps_[-1] = (name, f)
-
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=DEFAULT_ALPHA)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
@@ -132,21 +188,19 @@ class TransformedTargetForecaster(
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters
 
         Parameters
         ----------
         y : pd.Series
-        X : pd.DataFrame
+        X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=True)
 
         Returns
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):

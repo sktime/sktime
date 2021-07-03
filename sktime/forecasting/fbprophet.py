@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+"""Prophet forecaster by wrapping fbprophet."""
+
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
 
@@ -70,7 +72,9 @@ class Prophet(_ProphetAdapter):
         for the forecast. If mcmc_samples=0, this will be only the uncertainty
         in the trend using the MAP estimate of the extrapolated generative
         model. If mcmc.samples>0, this will be integrated over all model
-        parameters, which will include uncertainty in seasonality.
+        parameters, which will include uncertainty in seasonality. This
+        param replaces the interval_width param from prophet. We have
+        interval_width = 1 - alpha.
     uncertainty_samples: Number of simulated draws used to estimate
         uncertainty intervals. Settings this value to 0 or False will disable
         uncertainty estimation and speed up the calculation.
@@ -85,7 +89,7 @@ class Prophet(_ProphetAdapter):
     Example
     ----------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.fbprophet import Prophet
+    >>> from sktime.forecasting.prophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
     >>> forecaster = Prophet(
@@ -136,9 +140,9 @@ class Prophet(_ProphetAdapter):
         self.daily_seasonality = daily_seasonality
         self.holidays = holidays
         self.seasonality_mode = seasonality_mode
-        self.seasonality_prior_scale = float(seasonality_prior_scale)
-        self.changepoint_prior_scale = float(changepoint_prior_scale)
-        self.holidays_prior_scale = float(holidays_prior_scale)
+        self.seasonality_prior_scale = seasonality_prior_scale
+        self.changepoint_prior_scale = changepoint_prior_scale
+        self.holidays_prior_scale = holidays_prior_scale
         self.mcmc_samples = mcmc_samples
         self.alpha = alpha
         self.uncertainty_samples = uncertainty_samples
@@ -163,9 +167,9 @@ class Prophet(_ProphetAdapter):
             daily_seasonality=self.daily_seasonality,
             holidays=self.holidays,
             seasonality_mode=self.seasonality_mode,
-            seasonality_prior_scale=self.seasonality_prior_scale,
-            holidays_prior_scale=self.holidays_prior_scale,
-            changepoint_prior_scale=self.changepoint_prior_scale,
+            seasonality_prior_scale=float(self.seasonality_prior_scale),
+            holidays_prior_scale=float(self.holidays_prior_scale),
+            changepoint_prior_scale=float(self.changepoint_prior_scale),
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,

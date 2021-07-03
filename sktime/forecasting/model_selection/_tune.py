@@ -24,6 +24,13 @@ from sktime.utils.validation.forecasting import check_y_X
 
 
 class BaseGridSearch(BaseForecaster):
+
+    _tags = {
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "univariate-only": True,
+    }
+
     def __init__(
         self,
         forecaster,
@@ -66,6 +73,7 @@ class BaseGridSearch(BaseForecaster):
         parameters.
         """
         self.check_is_fitted("update_predict")
+
         return self.best_forecaster_.update_predict(
             y,
             cv=cv,
@@ -124,7 +132,6 @@ class BaseGridSearch(BaseForecaster):
         -------
         fitted_params : dict
         """
-
         self.check_is_fitted("get_fitted_params")
         return self.best_forecaster_.get_fitted_params()
 
@@ -200,7 +207,7 @@ class BaseGridSearch(BaseForecaster):
             else:
                 self.best_forecaster_.check_is_fitted()
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
@@ -215,6 +222,7 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._is_fitted = False
         y, X = check_y_X(y, X)
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring)
@@ -302,6 +310,17 @@ class BaseGridSearch(BaseForecaster):
         self._is_fitted = True
         return self
 
+    @property
+    def cutoff(self):
+        """The time point at which to make forecasts
+
+        Returns
+        -------
+        cutoff : pd.Period, pd.Timestamp, int
+        """
+        self.check_is_fitted()
+        return self.best_forecaster_.cutoff
+
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """
@@ -357,6 +376,30 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Time (seconds) to refit the best forecaster
     scorer_ : function
         Function used to score model
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+
+    >>> y = load_airline()
+    >>> fh = [1,2,3]
+    >>> cv = ExpandingWindowSplitter(
+    ...     start_with_window=True,
+    ...     fh=fh)
+    >>> forecaster = NaiveForecaster()
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_grid=param_grid,
+    ...     cv=cv)
+    >>> gscv.fit(y)
+    ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh)
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]

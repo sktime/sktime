@@ -10,21 +10,25 @@
   "contributors": [
     {
       "login": "fkiraly",
-      "name": "fkiraly",
+      "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
         "business",
+        "code",
         "doc",
         "design",
         "eventOrganizing",
+        "example",
         "financial",
         "fundingFinding",
         "ideas",
+        "mentoring",
         "projectManagement",
         "question",
         "review",
-        "talk"
+        "talk",
+        "tutorial"
       ]
     },
     {
@@ -928,6 +932,16 @@
       ]
     },
     {
+      "login": "kachayev",
+      "name": "Oleksii Kachaiev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/485647?v=4",
+      "profile": "https://github.com/kachayev",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
       "login": "Ifeanyi30",
       "name": "Ifeanyi30",
       "avatar_url": "https://avatars.githubusercontent.com/u/49926145?v=4",
@@ -950,6 +964,117 @@
       "name": "Aaron Smith",
       "avatar_url": "https://avatars.githubusercontent.com/u/21350310?v=4",
       "profile": "https://github.com/aaronreidsmith",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ltsaprounis",
+      "name": "Leonidas Tsaprounis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64217214?v=4",
+      "profile": "https://github.com/ltsaprounis",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "GuzalBulatova",
+      "name": "Guzal Bulatova",
+      "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
+      "profile": "https://github.com/GuzalBulatova",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "satya-pattnaik",
+      "name": "Satya Prakash Pattnaik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22102468?v=4",
+      "profile": "https://www.linkedin.com/in/satya-pattnaik-77a430144/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "yashlamba",
+      "name": "Yash Lamba",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44164398?v=4",
+      "profile": "https://github.com/yashlamba",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ckastner",
+      "name": "Christian Kastner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15859947?v=4",
+      "profile": "https://github.com/ckastner",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "tombh",
+      "name": "Thomas Buckley-Houston",
+      "avatar_url": "https://avatars.githubusercontent.com/u/160835?s=80&v=4",
+      "profile": "https://github.com/tombh",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "julramos",
+      "name": "Juliana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19613567?v=4",
+      "profile": "https://www.linkedin.com/in/julianarn/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "SveaMeyer13",
+      "name": "Svea Marie Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46671894?v=4",
+      "profile": "https://github.com/SveaMeyer13",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "thayeylolu",
+      "name": "Taiwo Owoseni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13348874?v=4",
+      "profile": "https://thayeylolu.github.io/portfolio/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jambo6",
+      "name": "James Morrill",
+      "avatar_url": "https://https://avatars.githubusercontent.com/jambo6",
+      "profile": "https://github.com/jambo6",
+      "contributions": [
+        "code",
+      ]
+    },
+    {
+      "login": "Dbhasin1",
+      "name": "Drishti Bhasin ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56479884?v=4",
+      "profile": "https://github.com/Dbhasin1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Yard1",
+      "name": "Antoni Baum",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10364161?v=4",
+      "profile": "https://www.linkedin.com/in/yard1/",
       "contributions": [
         "code"
       ]
