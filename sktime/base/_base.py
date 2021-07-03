@@ -59,8 +59,8 @@ class BaseObject(_BaseEstimator):
     """
 
     def __init__(self):
-        self._is_fitted = False
-        super(BaseEstimator, self).__init__()
+        self._tags_dynamic = dict()
+        super(BaseObject, self).__init__()
 
     @classmethod
     def _all_tags(cls):
