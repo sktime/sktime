@@ -26,7 +26,7 @@ To install ``sktime`` with maximum dependencies, including all interfaced packag
 .. code-block:: bash
 
     pip install sktime[all_extras]
-    
+
 
 Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
