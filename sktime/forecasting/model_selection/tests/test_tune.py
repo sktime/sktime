@@ -8,7 +8,6 @@ __all__ = ["test_gscv", "test_rscv"]
 import numpy as np
 import pytest
 from sklearn.base import clone
-from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 
@@ -26,9 +25,14 @@ from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_RANDOM_SEEDS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.performance_metrics.forecasting import make_forecasting_scorer
-from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+from sktime.performance_metrics.forecasting import (
+    MeanAbsolutePercentageError,
+    MeanSquaredError,
+)
 from sktime.transformations.series.detrend import Detrender
+
+
+TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 
 
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
@@ -76,13 +80,12 @@ CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
     SlidingWindowSplitter(fh=1, initial_window=15),
 ]
-MSE = make_forecasting_scorer(mean_squared_error, greater_is_better=False)
 
 
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
-@pytest.mark.parametrize("scoring", [MeanAbsolutePercentageError(symmetric=True), MSE])
+@pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
 def test_gscv(forecaster, param_grid, cv, scoring):
     y, X = load_longley()
@@ -98,7 +101,7 @@ def test_gscv(forecaster, param_grid, cv, scoring):
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
-@pytest.mark.parametrize("scoring", [MeanAbsolutePercentageError(symmetric=True), MSE])
+@pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 @pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)

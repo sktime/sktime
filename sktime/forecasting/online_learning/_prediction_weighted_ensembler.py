@@ -17,13 +17,19 @@ class _PredictionWeightedEnsembler:
         loss function which follows sklearn.metrics API, for updating weights
     """
 
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, n_estimators=10, loss_func=None):
         self.n_estimators = n_estimators
         self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
         super(_PredictionWeightedEnsembler, self).__init__()
 
-    def predict(self, y_pred):
+    def _predict(self, y_pred):
         """Performs prediction by taking a weighted average of the estimator
             predictions w.r.t the weights vector
 
@@ -53,7 +59,7 @@ class _PredictionWeightedEnsembler:
         self.weights = self.weights * new_array
         self.weights /= np.sum(self.weights)
 
-    def update(self, y_pred, y_true):
+    def _update(self, y_pred, y_true):
         """Resets the weights over the estimators by passing previous observations
             to the weighting algorithm
 
@@ -94,6 +100,12 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
         loss function which follows sklearn.metrics API, for updating weights
     """
 
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, n_estimators=10, T=10, a=1, loss_func=None):
         super().__init__(n_estimators=n_estimators, loss_func=loss_func)
         self.T = T
@@ -118,6 +130,12 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
     loss_func : function
         loss function which follows sklearn.metrics API, for updating weights
     """
+
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, n_estimators=10, a=1, loss_func=None):
         super().__init__(n_estimators=n_estimators, T=None, a=a, loss_func=loss_func)
@@ -219,6 +237,12 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
     loss_func : function
         loss function which follows sklearn.metrics API, for updating weights
     """
+
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, n_estimators=10, loss_func=None):
         super().__init__(n_estimators=n_estimators, loss_func=loss_func)

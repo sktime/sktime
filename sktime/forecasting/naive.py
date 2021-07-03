@@ -11,12 +11,11 @@ import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation import check_window_length
 
 
-class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
+class NaiveForecaster(_BaseWindowForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
@@ -59,13 +58,15 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _tags = {"requires-fh-in-fit": False}
+
     def __init__(self, strategy="last", window_length=None, sp=1):
         super(NaiveForecaster, self).__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -81,8 +82,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         self : returns an instance of self.
         """
         # X_train is ignored
-        self._set_y_X(y, X)
-        self._set_fh(fh)
+
         n_timepoints = y.shape[0]
 
         if self.strategy == "last":
@@ -150,7 +150,6 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                 f"the training series."
             )
 
-        self._is_fitted = True
         return self
 
     def _predict_last_window(

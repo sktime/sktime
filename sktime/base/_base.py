@@ -1,13 +1,46 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+Base class template for objects and fittable objects.
+
+templates in this module:
+
+    BaseObject - object with parameters and tags
+    BaseEstimator - BaseObject that can be fitted
+
+Interface specifications below.
+
+---
+
+    class name: BaseObject
+
+Parameter inspection and manipulation methods:
+    hyper-parameter inspection  - get_params()
+
+
+
+---
+
+    class name: BaseEstimator
+
+
+    fitted parameter inspection - get_fitted_params()
+
+State:
+    fitted model/strategy   - by convention, any attributes ending in "_"
+    fitted state flag       - is_fitted (property)
+    fitted state check      - check_is_fitted (raises error if not is_fitted)
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
 
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
 
+from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
+from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
 
@@ -147,7 +180,7 @@ class BaseEstimator(BaseObject):
 
     @property
     def is_fitted(self):
-        """Wheter `fit` been called."""
+        """Whether `fit` has been called."""
         return self._is_fitted
 
     def check_is_fitted(self):
@@ -163,3 +196,12 @@ class BaseEstimator(BaseObject):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
+
+
+def _clone_estimator(base_estimator, random_state=None):
+    estimator = clone(base_estimator)
+
+    if random_state is not None:
+        _set_random_states(estimator, random_state)
+
+    return estimator

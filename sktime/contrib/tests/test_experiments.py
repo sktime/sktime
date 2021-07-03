@@ -7,7 +7,7 @@ Loops through all classifiers in the list in experiments, trains,  Builds all
 import os
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 from sktime.classification.base import classifier_list
-from sktime.contrib.experiments import set_classifier
+from sktime.contrib.classification_experiments import set_classifier
 from sklearn.metrics import accuracy_score
 import sktime.datasets.base as sktime
 
