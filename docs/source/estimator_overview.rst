@@ -4,13 +4,7 @@
 Estimator Overview
 ==================
 
-Welcome to sktime's software development plan.
-
-.. note::
-
-    The estimator overview is under development. We have created a basic
-    structure and are looking for further improvements to develop the guide
-    better which can include status, references, etc.
+The table below gives an overview of all estimators in sktime.
 
 .. raw:: html
-   :file: est_overview.html
+   :file: estimator_overview/estimator_overview.html

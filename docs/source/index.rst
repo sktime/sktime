@@ -18,6 +18,7 @@ From here, you can navigate to:
    installation
    tutorials
    user_guide
+   estimator_overview
    api_reference
    changelog
 
@@ -28,7 +29,6 @@ From here, you can navigate to:
    contributing
    developer_guide
    roadmap
-   estimator_overview
    mentoring
    code_of_conduct
    governance
