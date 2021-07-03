@@ -32,24 +32,19 @@ class BaseClusterer(BaseEstimator):
     def __init__(self):
         super(BaseClusterer, self).__init__()
 
-    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None):
+    def fit(self, X: NumpyOrDF):
         """
-        Method that is used to fit the clustering algorithm
-        on the dataset X
+        Fit the clustering algorithm on the dataset X
 
         Parameters
         ----------
-        X: Numpy array or Dataframe
-            sktime data_frame or numpy array to train the model on
-
-        y: Numpy array of Dataframe, default = None
-            sktime data_frame or numpy array that is the labels for training.
-            Unlikely to be used for clustering but kept for consistency
+        X: 2D np.array with shape (n_instances, n_timepoints)
+           or pd.DataFrame in nested format
+            panel of univariate time series to train the clustering model on
 
         Returns
         -------
-        self
-            Fitted estimator
+        reference to self
         """
         if isinstance(X, pd.DataFrame):
             X = from_nested_to_2d_array(X, return_numpy=True)
@@ -62,18 +57,17 @@ class BaseClusterer(BaseEstimator):
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
-        Method used to perform a prediction from the already
-        trained clustering algorithm
+        Return cluster center index for data samples.
 
         Parameters
         ----------
-        X: Numpy array or Dataframe
-            sktime data_frame or numpy array to predict
-            cluster for
+        X: 3D np.array with shape (n_instances, n_columns, n_timepoints)
+           or pd.DataFrame in nested format
+            panel of time series to cluster
 
         Returns
         -------
-        Numpy_Array: np.array
+        Numpy_Array: 1D np.array of length n_instances
             Index of the cluster each sample belongs to
         """
         self.check_is_fitted()
@@ -81,59 +75,95 @@ class BaseClusterer(BaseEstimator):
         if isinstance(X, pd.DataFrame):
             X = from_nested_to_2d_array(X, return_numpy=True)
 
+        self._check_params(X)
         return self._predict(X)
 
-    def _fit(self, X: NumpyArray, y: NumpyArray = None):
+    def _fit(self, X: NumpyArray):
         """
-        Method that contains the core logic to fit a cluster
-        to training data
+        Fit the clustering algorithm on the dataset X
+
+            core logic
 
         Parameters
         ----------
-        X: Numpy array
-            Numpy array to train the model on
-
-        y: Numpy array, default = None
-            Numpy array that is the labels for training.
-            Unlikely to be used for clustering but kept for consistency
+        X: 2D np.array with shape (n_instances, n_timepoints)
+            panel of univariate time series to train the clustering model on
 
         Returns
         -------
-        self
-            Fitted estimator
+        reference to self
         """
         raise NotImplementedError("abstract method")
 
     def _predict(self, X: NumpyArray) -> NumpyArray:
         """
-        Method that is used
+        Return cluster center index for data samples.
+
+            core logic
+
+        Parameters
+        ----------
+        X: 2D np.array with shape (n_instances, n_timepoints)
+            panel of univariate time series to cluster
+
+        Returns
+        -------
+        Numpy_Array: 1D np.array of length n_instances
+            Index of the cluster each sample belongs to
         """
         raise NotImplementedError("abstract method")
 
     def _check_params(self, X: NumpyArray):
         """
-        Method used to check the parameters passed
+        Custom input checking, should raise errors
 
         Parameters
         ----------
-        X: Numpy_Array
-            Dataset to be validate parameters against
+        X: 2D np.array with shape (n_instances, n_timepoints)
         """
         return
 
     def fit_predict(self, X: NumpyOrDF) -> NumpyArray:
         """
-        Method that calls fit and then returns a prediction
-        for the value of X
+        clusters time series and returns cluster labels
 
         Parameters
         ----------
-        X: Numpy array or Dataframe
-            sktime data_frame or numpy array containing the values
-            to perform clustering algorithm on
+        X: 2D np.array with shape (n_instances, n_timepoints)
+           or pd.DataFrame in nested format
+            panel of univariate time series to cluster
+
+        Returns
+        -------
+        Numpy_Array: 1D np.array of length n_instances
+            Index of the cluster each sample belongs to
         """
         self.fit(X)
         return self.predict(X)
+
+    def get_fitted_params(self):
+        """
+        Retrieves fitted parameters of cluster model
+
+        returns
+        ----------
+        param_dict: dictionary of fitted parameters
+        """
+        self.check_is_fitted()
+
+        return self._get_fitted_params()
+
+    def _get_fitted_params(self):
+        """
+        Retrieves fitted parameters of cluster model
+
+            core logic
+
+        returns
+        ----------
+        param_dict: dictionary of fitted parameters
+        """
+        raise NotImplementedError
 
 
 class BaseClusterCenterInitializer:
