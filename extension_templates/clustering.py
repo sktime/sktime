@@ -14,8 +14,7 @@ How to use this implementation template to implement a new estimator:
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-- ensure interface compatibility by testing forecasting/tests/test_all_forecasters
-        and forecasting/tests/test_sktime_forecasters
+- ensure interface compatibility by testing clustering/tests
 - once complete: use as a local library, or contribute to sktime via PR
 
 Mandatory implements:
@@ -39,9 +38,9 @@ from sktime.clustering.base import BaseClusterer
 
 
 class MyClusterer(BaseClusterer):
-    """Custom forecaster. todo: write docstring.
+    """Custom clusterer. todo: write docstring.
 
-    todo: describe your custom forecaster here
+    todo: describe your custom clusterer here
 
     Hyper-parameters
     ----------------
