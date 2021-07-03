@@ -21,7 +21,7 @@ Installing sktime from PyPI
 
 This will install ``sktime`` with core dependencies, excluding interfaced packages.
 
-To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier: 
+To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier:
 
 .. code-block:: bash
 
@@ -40,7 +40,7 @@ Thy can be installed via ``conda`` using:
 
 This will install ``sktime`` with core dependencies, excluding interfaced packages.
 
-To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier: 
+To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier:
 
 .. code-block:: bash
 
@@ -174,9 +174,9 @@ The following sections describe how to satisfy the build requirements, by operat
 We currently support:
 
 - `FreeBSD`_
-- `Mac OSX`_  
-- `Unix-like OS`_ 
-- `Windows 8.1 and higher`_ 
+- `Mac OSX`_
+- `Unix-like OS`_
+- `Windows 8.1 and higher`_
 
 
 FreeBSD
