@@ -89,7 +89,7 @@ class Prophet(_ProphetAdapter):
     Example
     ----------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.prophet import Prophet
+    >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
     >>> forecaster = Prophet(
