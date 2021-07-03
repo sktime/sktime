@@ -19,13 +19,12 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["fbprophet"],
     "sktime.classification.all": ["tsfresh"],
-    "sktime.classification.hybrid._catch22_forest_classifier": ["catch22"],
-    "sktime.classification.interval_based._cif": ["catch22"],
-    "sktime.classification.interval_based._drcif": ["catch22"],
     "sktime.regression.all": ["tsfresh"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
-    "sktime.transformations.panel.catch22_features": ["catch22"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
+    "sktime.classification.signature_based": ["esig"],
+    "sktime.transformations.panel.signature_based": ["esig"],
+    "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 
