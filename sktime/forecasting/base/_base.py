@@ -85,9 +85,6 @@ class BaseForecaster(BaseEstimator):
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
-        public method including checks & utility
-        dispatches to core logic in _fit
-
         Parameters
         ----------
         y : pd.Series
@@ -129,9 +126,6 @@ class BaseForecaster(BaseEstimator):
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast time series at future horizon.
 
-            public method including checks & utility
-            dispatches to core logic in _predict
-
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
@@ -169,9 +163,6 @@ class BaseForecaster(BaseEstimator):
                     ):
         """Fit and forecast time series at future horizon.
 
-            public method including checks & utility
-            dispatches to core logic in _predict
-
         Parameters
         ----------
         y : pd.Series
@@ -197,7 +188,7 @@ class BaseForecaster(BaseEstimator):
 
         self.fit(y=y, X=X, fh=fh)
 
-        return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
