@@ -78,7 +78,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         d = self._forecaster.model_.order[1]
-        if start == 0:
+        if start < d:
             start = d
         result = self._forecaster.predict_in_sample(
             start=start,
@@ -93,16 +93,16 @@ class _PmdArimaAdapter(BaseForecaster):
         if return_pred_int:
             # unpack and format results
             y_pred, pred_int = result
-            y_pred = np.concatenate([np.zeros((d,)), y_pred], axis=0)
+            y_pred = np.concatenate([self._y.values[:d], y_pred], axis=0)
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = np.concatenate([np.zeros((d, 2)), pred_int], axis=0)
+            pred_int = np.concatenate([np.stack([self._y.values[:d], self._y.values[:d]], axis=1), pred_int], axis=0)
             pred_int = pd.DataFrame(
                 pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
             )
             return y_pred, pred_int
 
         else:
-            result = np.concatenate([np.zeros((d,)), result], axis=0)
+            result = np.concatenate([self._y.values[:d], result], axis=0)
             return pd.Series(result[fh_idx], index=fh_abs)
 
     def _predict_fixed_cutoff(
