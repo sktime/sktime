@@ -362,7 +362,7 @@ core developers.
 -  Major changes to the project require a more
    detailed analysis and a consensus that is both explicit and informed.
    A major change always require a worked out :ref:`steps`.
-   Major changes require fifteen working days excluding week-ends 
+   Major changes require twelve working days excluding week-ends 
    as reasonable time for consideration.
    A change is major in the above sense
    if at least three core developers explicitly state that the proposal is a major change
