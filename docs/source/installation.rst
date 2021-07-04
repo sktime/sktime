@@ -78,6 +78,8 @@ Potential workaround no.2, install ``pystan`` with ``no-cache`` parameter:
 
     pip install pystan --no-cache
 
+Potential workaround no.3, if on Windows: use WSL (Windows Subsystem for Linux), see end of section `Windows 8.1 and higher`_.
+
 
 numpy or C related issues
 """""""""""""""""""""""""
