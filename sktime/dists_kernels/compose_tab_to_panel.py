@@ -28,11 +28,8 @@ class AggrDist(BasePairwiseTransformerPanel):
     def __init__(
         self,
         transformer,
-        aggfunc=None,
+        aggfunc=np.mean,
     ):
-
-        if aggfunc is None:
-            aggfunc = np.mean
 
         self.aggfunc = aggfunc
 
@@ -72,7 +69,7 @@ class AggrDist(BasePairwiseTransformerPanel):
 
                 if symmetric and j < i:
                     distmat[i, j] = distmat[j, i]
-                else:
+                elif aggfunc is not None:
                     distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
 
         return distmat

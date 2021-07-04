@@ -84,6 +84,8 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+from sktime.dists_kernels.scipy_dist import ScipyDist
 
 
 # The following estimators currently do not pass all unit tests
@@ -96,10 +98,26 @@ EXCLUDE_ESTIMATORS = [
     "ProximityTree",
 ]
 
+
+# This is temporary until BaseObject is implemented
+DIST_KERNELS_IGNORE_TESTS = [
+    "check_fit_updates_state",
+    "_make_fit_args",
+    "check_fit_returns_self",
+    "check_raises_not_fitted_error",
+    "check_fit_idempotent",
+    "check_fit_does_not_overwrite_hyper_params",
+    "check_methods_do_not_change_state",
+    "check_persistence_via_pickle",
+]
+
+
 EXCLUDED_TESTS = {
     "ShapeletTransformClassifier": ["check_fit_idempotent"],
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
+    "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
+    "AggrDist": DIST_KERNELS_IGNORE_TESTS,
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -274,6 +292,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    AggrDist: {"transformer": ScipyDist()},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

@@ -5,18 +5,39 @@ from sktime.utils._testing.panel import make_transformer_problem
 from sktime.dists_kernels.scipy_dist import ScipyDist
 
 X1 = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=1, return_numpy=True
-)[0]
+    n_instances=5,
+    n_columns=5,
+    n_timepoints=5,
+    random_state=1,
+    return_numpy=True,
+    panel=False,
+)
 X2 = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=True
-)[0]
+    n_instances=5,
+    n_columns=5,
+    n_timepoints=5,
+    random_state=2,
+    return_numpy=True,
+    panel=False,
+)
 
 X1_df = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=1, return_numpy=True
-)[0]
+    n_instances=5,
+    n_columns=5,
+    n_timepoints=5,
+    random_state=1,
+    return_numpy=False,
+    panel=False,
+)
 X2_df = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=True
-)[0]
+    n_instances=5,
+    n_columns=5,
+    n_timepoints=5,
+    random_state=2,
+    return_numpy=False,
+    panel=False,
+)
+
 
 # potential parameters
 METRIC_VALUES = [
@@ -72,7 +93,7 @@ def _run_scipy_dist_test(x, y):
             ]
         ),
         default_params_transformation,
-    )
+    ), "Error occurred testing on default parameters, result is not correct"
 
     for metric in METRIC_VALUES:
         for p in P_VALUES:
