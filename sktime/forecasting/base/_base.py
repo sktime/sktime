@@ -158,9 +158,9 @@ class BaseForecaster(BaseEstimator):
 
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def fit_predict(self, y, X=None, fh=None,
-                    return_pred_int=False, alpha=DEFAULT_ALPHA
-                    ):
+    def fit_predict(
+        self, y, X=None, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
         """Fit and forecast time series at future horizon.
 
         Parameters
