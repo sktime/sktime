@@ -6,6 +6,7 @@ __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
+import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
@@ -76,6 +77,9 @@ class _PmdArimaAdapter(BaseForecaster):
         # for in-sample predictions, pmdarima requires zero-based
         # integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        d = self._forecaster.model_.order[1]
+        if start == 0:
+            start = d
         result = self._forecaster.predict_in_sample(
             start=start,
             end=end,
@@ -89,13 +93,16 @@ class _PmdArimaAdapter(BaseForecaster):
         if return_pred_int:
             # unpack and format results
             y_pred, pred_int = result
+            y_pred = np.concatenate([np.zeros((d,)), y_pred], axis=0)
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
+            pred_int = np.concatenate([np.zeros((d, 2)), pred_int], axis=0)
             pred_int = pd.DataFrame(
                 pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
             )
             return y_pred, pred_int
 
         else:
+            result = np.concatenate([np.zeros((d,)), result], axis=0)
             return pd.Series(result[fh_idx], index=fh_abs)
 
     def _predict_fixed_cutoff(
