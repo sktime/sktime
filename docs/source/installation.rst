@@ -332,19 +332,27 @@ If you run into a problem installing the development version and are using Anaco
 
 In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
 
-It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
-OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
-mingw32 can be redistributed as reusable packages as they depend on GCC runtime
-libraries typically not installed on end-users environment.
+.. note::
 
-To force the use of a particular compiler, pass the ``--compiler`` flag to the
-build step:
+    It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
+    OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
+    mingw32 can be redistributed as reusable packages as they depend on GCC runtime
+    libraries typically not installed on end-users environment.
 
-.. code-block:: bash
+    To force the use of a particular compiler, pass the ``--compiler`` flag to the
+    build step:
 
-    python setup.py build --compiler=my_compiler install
+    .. code-block:: bash
 
-where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+        python setup.py build --compiler=my_compiler install
+
+    where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+
+.. note::
+
+    Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
+    For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 
 
 Building binary packages and installers
