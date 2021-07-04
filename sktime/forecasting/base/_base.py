@@ -8,9 +8,11 @@ Scitype defining methods:
     fitting         - fit(self, y, X=None, fh=None)
     forecasting     - predict(self, fh=None, X=None, return_pred_int=False,
                               alpha=DEFAULT_ALPHA)
-    updating        - update(self, y, X=None, update_params=True):
-    update&predict  - update_predict(y, cv=None, X=None, update_params=True,
-                        return_pred_int=False, alpha=DEFAULT_ALPHA):
+    fit&forecast    - fit_predict(self, y, X=None, fh=None,
+                              return_pred_int=False, alpha=DEFAULT_ALPHA)
+    updating        - update(self, y, X=None, update_params=True)
+    update&forecast - update_predict(y, cv=None, X=None, update_params=True,
+                        return_pred_int=False, alpha=DEFAULT_ALPHA)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -18,7 +20,8 @@ Inspection methods:
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - check_is_fitted()
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -158,6 +161,41 @@ class BaseForecaster(BaseEstimator):
         #  doesn't do the check, and needs it as a float or it breaks
         # todo: needs fixing in ARIMA and AutoARIMA
         # alpha = check_alpha(alpha)
+
+        return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def fit_predict(self, y, X=None, fh=None,
+                    return_pred_int=False, alpha=DEFAULT_ALPHA
+                    ):
+        """Fit and forecast time series at future horizon.
+
+            public method including checks & utility
+            dispatches to core logic in _predict
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
+
+        if fh is None:
+            fh = y.index
+
+        self.fit(y=y, X=X, fh=fh)
 
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
