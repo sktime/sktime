@@ -323,38 +323,3 @@ class Differencer(_SeriesToSeriesTransformer):
         Z_inv = self._inverse_transform(Z, X=X)
 
         return Z_inv
-
-        # if self.remove_missing or inverse_index_case == 'future':
-        #     # start = 0
-        #     fh = ForecastingHorizon(np.array([*range(-1, -(lag+1), -1)]))
-        #     index = fh.to_absolute(Z_inv.index[0]).to_pandas()
-        #     index_diff = index.difference(self._Z.index)
-        #     if index_diff.shape[0] != 0:
-        #         msg = " ".join(
-        #             [
-        #                 f"Inverse transform requires indices {index}",
-        #                 "to have been stored in `fit()`,",
-        #                 f"but the indices {index_diff} were not found."
-        #             ]
-        #         )
-        #         raise ValueError(msg)
-        #     else:
-        #         if is_df:
-        #             prior_periods = _transformed.loc[index, :]
-        #         else:
-        #             prior_periods = _transformed.loc[index]
-        #     Z_inv = pd.concat([prior_periods, Z_inv])
-
-        # else:
-        #     start = prior_cum_lag
-
-        # stop = start + lag
-
-        # if is_df:
-        #     first_n_timepoints = _transformed.iloc[
-        #         prior_cum_lag : prior_cum_lag + lag, :
-        #     ]
-        #     Z_inv.iloc[start:stop, :] = first_n_timepoints
-        # else:
-        #     first_n_timepoints = _transformed[prior_cum_lag : prior_cum_lag + lag]
-        #     Z_inv.iloc[start:stop] = first_n_timepoints
