@@ -175,10 +175,21 @@ While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
 
-Core developers that have not contributed to the project (commits or
-GitHub comments) in the past 12 months will automatically become *inactive*
+Core developers that have not contributed to the project in the past 
+one-year-period will automatically become *inactive*
 and give up their rights and responsibilities. When they become active
 again, they can retake their role without having to be appointed.
+
+Becoming inactive in the above sense means not contributing for the period via:
+
+* creating pull requests
+* commenting on pull requests or issues
+* attending one of the regular meetings
+
+Becoming active (after becoming inactive) in the above sense requires one of:
+
+* an approved pull request authored by the core developer
+* a contribution to the community that is minuted in one of the regular meetings
 
 .. _coc-committee-members:
 
@@ -335,18 +346,45 @@ sktime uses a “consensus seeking” process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
--  To accept proposed changes, we require approval by one core developer
-   (lazy consensus) and no rejection by a core developer (veto right).
--  Approvals and rejections can be expressed as +1 and -1 comments,
-   respectively.
--  Core developers are expected to give reasonable time to others to
-   give their opinion on the pull request if they’re not confident
-   others would agree.
--  More important changes that impact the full project require a more
+-  For a proposed changes to be accepted via lazy consensus, one of the following
+   two conditions must be satisfied:
+    - approval by one core developer and no rejection by a core developer (veto right).
+      The approval required for this condition must be by a core developer different from a proposer.
+    - the proposer is a core developer, and no rejection by other core developrs was expressed 
+      by the earliest time point at which reasonable time has passed for consideration.
+-  Formal statements on proposed changes must be located with the proposal,
+   usually in the same pull request that contains the proposal, or the related issue.
+   Formal statements in this sense are approvals/rejections, and statements
+   about whether the proposal should be considered a "major change", as below.
+-  Approvals and rejections should be expressed as +1 and -1 comments,
+   respectively, or any written comments
+   containing "I formally approve/reject" in reference to the proposal.
+-  Major changes to the project require a more
    detailed analysis and a consensus that is both explicit and informed.
-   These changes require an :ref:`steps`.
+   A major change always require a worked out :ref:`steps`.
+   Major changes require fifteen working days excluding week-ends 
+   as reasonable time for consideration.
+   A change is major in the above sense
+   if at least three core developers explicitly state that the proposal is a major change
+   and requires especial consideration, in the location
+-  Core developers are expected to give reasonable time for consideration, that is,
+   time and opportunity to other core developers to
+   give their opinion on the contribution.
+   Three working days excluding week-ends constitute "reasonable time" in the above sense
+   if the proposal is not considered a major change. For major changes, fifteen working
+   days excluding week-ends are required.
+   For pull requests, the period starts at the latest checks-passing change to the PR
+   made by the proposer. 
+ 
+If lazy consensus is found, the proposer can ask for their contribution to be accepted.
+In the case of pull requests, the proposer is then entitled to their pull request 
+(at the latest checks-passing state) to be merged by a core developer,
+within three working days excluding week-ends, without further discussion.
 
-When no consensus can be found, the decision is escaled to :ref:`stage-2`.
+When no lazy consensus can be found, the decision is escaled to :ref:`stage-2`.
+The one condition on which this may happen is at least one core developer
+making use of their veto rights, rejecting the proposed change
+within the time frame given for consideration.
 
 .. _stage-2:
 
@@ -357,11 +395,12 @@ When no consensus can be found, any core developer can call for a vote
 at any point during the discussion.
 
 -  The vote will conclude 5 days excluding weekends from the call for the vote.
--  Votes are voluntary. Abstentions are allowed. You can
+-  Votes are voluntary. Abstentions are allowed. Core developers can
    abstain by simply not casting a vote.
 -  All votes are a binary vote: for or against accepting the proposed
    changes.
 -  Votes are casts as comments: +1 (approval) or -1 (rejection).
+-  Votes are cast publicly, in the location of the proposed change.
 
 For all types of changes, except appointments, votes take place on the
 related public issue or pull request. The winning condition is a 2/3
@@ -384,23 +423,31 @@ If the proposed change cannot gather a 2/3 majority of the votes cast,
 the CC tries to resolve the deadlock.
 
 -  The CC will use consensus seeking.
--  If no consensus can be found within a month, the decision is made
-   through a simple majority vote (with tie breaking) among the CC
+-  If no consensus can be found within twenty working days excluding week-ends
+   since the beginning of the stage-1 "reasonable time for consideration" period,
+   the decision is made through a simple majority vote (with tie breaking) among the CC
    members.
--  Any CC decision must be supported by an :ref:`steps`, which has been made public and discussed before the vote.
+-  If this vote is needed, the vote should take place within twenty-five working days after the beginning
+   of the stage-1 "reasonable time for consideration" period, during a regular, minuted CC meeting.
+-  CC decisions on major changes must be supported by an :ref:`steps`,
+   which has been made public and discussed before the vote.
 
 .. _steps:
 
 sktime enhancement proposal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For all decision of the CC, an sktime enhancement proposal (STEP) must have been made
+For all stage 3 decisions of the CC on major changes,
+an sktime enhancement proposal (STEP) must have been made
 public and discussed before the vote.
 
 An sktime enhancement proposal is a consolidated document, with a concise
 problem statement, a clear description of the proposed solution and a
 comparison with alternative solutions, as outlined in our
 `template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
+
+A complete STEP must always include at least a high-level design for the proposed change,
+not just a wishlist of features.
 
 We collect and discuss proposals in sktime’s `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
