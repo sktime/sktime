@@ -6,7 +6,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and anyone who has experienced discrimination in the past. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -175,7 +175,7 @@ While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
 
-Core developers that have not contributed to the project in the past 
+Core developers that have not contributed to the project in the past
 one-year-period will automatically become *inactive*
 and give up their rights and responsibilities. When they become active
 again, they can retake their role without having to be appointed.
@@ -350,7 +350,7 @@ core developers.
    two conditions must be satisfied:
     - approval by one core developer and no rejection by a core developer (veto right).
       The approval required for this condition must be by a core developer different from a proposer.
-    - the proposer is a core developer, and no rejection by other core developrs was expressed 
+    - the proposer is a core developer, and no rejection by other core developers was expressed
       by the earliest time point at which reasonable time has passed for consideration.
 -  Formal statements on proposed changes must be located with the proposal,
    usually in the same pull request that contains the proposal, or the related issue.
@@ -362,7 +362,7 @@ core developers.
 -  Major changes to the project require a more
    detailed analysis and a consensus that is both explicit and informed.
    A major change always require a worked out :ref:`steps`.
-   Major changes require twelve working days excluding week-ends 
+   Major changes require twelve working days excluding week-ends
    as reasonable time for consideration.
    A change is major in the above sense
    if at least three core developers explicitly state that the proposal is a major change
@@ -374,10 +374,10 @@ core developers.
    if the proposal is not considered a major change. For major changes, fifteen working
    days excluding week-ends are required.
    For pull requests, the period starts at the latest checks-passing change to the PR
-   made by the proposer. 
- 
+   made by the proposer.
+
 If lazy consensus is found, the proposer can ask for their contribution to be accepted.
-In the case of pull requests, the proposer is then entitled to their pull request 
+In the case of pull requests, the proposer is then entitled to their pull request
 (at the latest checks-passing state) to be merged by a core developer,
 within three working days excluding week-ends, without further discussion.
 
