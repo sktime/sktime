@@ -271,7 +271,6 @@ def _check_update_predict_predicted_index(
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
-
     assert isinstance(y_pred, (pd.Series, pd.DataFrame))
     if isinstance(y_pred, pd.DataFrame):
         assert y_pred.shape[1] > 1
