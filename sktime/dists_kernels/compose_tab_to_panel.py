@@ -21,6 +21,7 @@ class AggrDist(BasePairwiseTransformerPanel):
 
     Hyper-parameters
     ----------------
+
     aggfunc: aggregation function 2D np.array -> float
         default = np.mean
     """
@@ -30,12 +31,7 @@ class AggrDist(BasePairwiseTransformerPanel):
         transformer,
         aggfunc=None,
     ):
-
-        if aggfunc is None:
-            aggfunc = np.mean
-
         self.aggfunc = aggfunc
-
         self.transformer = transformer
 
         super(AggrDist, self).__init__()
@@ -63,7 +59,10 @@ class AggrDist(BasePairwiseTransformerPanel):
         m = len(X2)
 
         symmetric = self.symmetric
+
         aggfunc = self.aggfunc
+        if aggfunc is None:
+            aggfunc = np.mean
 
         distmat = np.zeros((n, m), dtype="float")
 
@@ -72,7 +71,7 @@ class AggrDist(BasePairwiseTransformerPanel):
 
                 if symmetric and j < i:
                     distmat[i, j] = distmat[j, i]
-                else:
+                elif aggfunc is not None:
                     distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
 
         return distmat

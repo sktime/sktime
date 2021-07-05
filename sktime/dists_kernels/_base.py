@@ -5,6 +5,8 @@ Abstract base class for pairwise transformers (such as distance/kernel matrix ma
 
 __author__ = ["fkiraly"]
 
+import numpy as np
+import pandas as pd
 
 from sktime.base import BaseEstimator
 
@@ -106,6 +108,54 @@ class BasePairwiseTransformer(BaseEstimator):
         pass
 
 
+def _pairwise_panel_x_check(X):
+    """
+    Method used to check the input and convert
+    numpy 3d or numpy list of df to list of dfs
+
+    Parameters
+    ----------
+    X: List of dfs, Numpy of dfs, 3d numpy
+        The value to be checked
+
+    Returns
+    -------
+    X:
+        Checked and converted to List of pd.Dataframe if one
+        of the other formats
+
+    """
+
+    def arr_check(arr):
+        for i, Xi in enumerate(arr):
+            if not isinstance(Xi, pd.DataFrame):
+                raise TypeError(
+                    "X must be a list of pd.DataFrame or numpy "
+                    "of pd.Dataframe or 3d numpy"
+                )
+            X[i] = check_series(Xi)
+
+    return_X = []
+
+    if isinstance(X, np.ndarray):
+        X_check = np.array(X, copy=True)
+        if X_check.ndim == 3:
+            for arr in X_check:
+                return_X.append(pd.DataFrame(arr))
+        else:
+            arr_check(X_check)
+            return_X = X_check.tolist()
+    elif isinstance(X, list):
+        arr_check(X)
+        return_X = X
+    else:
+        raise TypeError(
+            "X must be a list of pd.DataFrame or numpy of pd.Dataframe or 3d numpy"
+        )
+
+    return return_X
+
+
 class BasePairwiseTransformerPanel(BaseEstimator):
     """Base pairwise transformer for panel data template class.
 
@@ -114,6 +164,10 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     Specific implementations of these methods is deferred to concrete classes.
     """
+
+    def __init__(self):
+        self.symmetric = False
+        super(BasePairwiseTransformerPanel, self).__init__()
 
     def __call__(self, X, X2=None):
         """
@@ -162,22 +216,13 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             for use to make internal calculations efficient, e.g., in _transform
         """
 
-        if not isinstance(X, list):
-            raise TypeError("X must be a list of pd.DataFrame")
-
-        if not isinstance(X2, list):
-            raise TypeError("X2 must be a list of pd.DataFrame")
-
-        for i, Xi in enumerate(X):
-            X[i] = check_series(Xi)
+        X = _pairwise_panel_x_check(X)
 
         if X2 is None:
             X2 = X
             self.symmetric = True
         else:
-            for i, X2i in enumerate(X2):
-                X2[i] = check_series(X2i)
-            self.symmetric = False
+            X2 = _pairwise_panel_x_check(X2)
 
         return self._transform(X=X, X2=X2)
 

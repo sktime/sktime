@@ -75,6 +75,9 @@ class ScipyDist(BasePairwiseTransformer):
         if isinstance(X2, pd.DataFrame):
             X2 = X2.select_dtypes("number").to_numpy(dtype="float")
 
-        distmat = cdist(XA=X, XB=X2, metric=metric, p=p)
+        if metric == "minkowski":
+            distmat = cdist(XA=X, XB=X2, metric=metric, p=p)
+        else:
+            distmat = cdist(XA=X, XB=X2, metric=metric)
 
         return distmat
