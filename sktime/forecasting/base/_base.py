@@ -183,7 +183,6 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals
         """
 
-
         self.fit(y=y, X=X, fh=fh)
 
         return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
