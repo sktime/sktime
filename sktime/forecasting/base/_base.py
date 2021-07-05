@@ -183,8 +183,6 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals
         """
 
-        if fh is None:
-            fh = y.index
 
         self.fit(y=y, X=X, fh=fh)
 
