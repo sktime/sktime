@@ -95,7 +95,10 @@ class _PmdArimaAdapter(BaseForecaster):
             y_pred, pred_int = result
             y_pred = np.concatenate([self._y.values[:d], y_pred], axis=0)
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = np.concatenate([np.stack([self._y.values[:d], self._y.values[:d]], axis=1), pred_int], axis=0)
+            pred_int = np.concatenate(
+                [np.stack([self._y.values[:d], self._y.values[:d]], axis=1), pred_int],
+                axis=0,
+            )
             pred_int = pd.DataFrame(
                 pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
             )
