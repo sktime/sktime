@@ -77,7 +77,12 @@ class _PmdArimaAdapter(BaseForecaster):
         # for in-sample predictions, pmdarima requires zero-based
         # integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        d = self._forecaster.model_.order[1]
+        from pmdarima.arima import AutoARIMA
+
+        if isinstance(self._forecaster, AutoARIMA):
+            d = self._forecaster.model_.order[1]
+        else:
+            d = self._forecaster.order[1]
         if start < d:
             start = d
         result = self._forecaster.predict_in_sample(
