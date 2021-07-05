@@ -125,8 +125,8 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab, kwargs=
 
     transformation = transformer.transform(x)
     for i in range(len(x)):
-        row = (transformation[i, :]).T
-        column = transformation[:, i]
+        row = np.around((transformation[i, :]).T, decimals=5).astype(np.float)
+        column = np.around(transformation[:, i], decimals=5).astype(np.float)
         assert np.array_equal(row, column)
     assert transformer.symmetric, (
         f"Symmetric is set to wrong value for {pairwise_transformers_tab} "
