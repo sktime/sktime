@@ -28,8 +28,10 @@ class AggrDist(BasePairwiseTransformerPanel):
     def __init__(
         self,
         transformer,
-        aggfunc=np.mean,
+        aggfunc=None,
     ):
+        if aggfunc is None:
+            aggfunc = np.mean
 
         self.aggfunc = aggfunc
 
