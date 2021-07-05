@@ -35,7 +35,7 @@ class MultivariateCompositor(_SeriesToSeriesTransformer):
         Iterates over columns (series) and applies the fit function of the transformer
         """
         if not isinstance(Z, pd.DataFrame):
-            raise ValueError("Z needs to be a multivariate Pandas Series")
+            raise ValueError("Z needs to be a pd.DataFrame")
         self._is_fitted = False
         z = check_series(Z)
         if self.columns == "all":
