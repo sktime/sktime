@@ -33,7 +33,8 @@ class ScipyDist(BasePairwiseTransformer):
             columns between X and X2 are aligned via column names
             if 'intersect', distance is computed on columns occurring both in X and X2,
                 other columns are discarded; column ordering in X2 is copied from X
-            if 'force-align', raises an error if the set of columns in X, X2 differs
+            if 'force-align', raises an error if the set of columns in X, X2 differs;
+                column ordering in X2 is copied from X
             if 'none', X and X2 are passed through unmodified (no columns are aligned)
                 note: this will potentially align "non-matching" columns
     """
