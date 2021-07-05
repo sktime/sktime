@@ -125,6 +125,7 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab, kwargs=
 
     transformation = transformer.transform(x)
     for i in range(len(x)):
+        # Have to round or test breaks on github (even though works locally)
         row = np.around((transformation[i, :]).T, decimals=5).astype(np.float)
         column = np.around(transformation[:, i], decimals=5).astype(np.float)
         assert np.array_equal(row, column)
