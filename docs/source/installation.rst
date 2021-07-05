@@ -32,7 +32,7 @@ Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``sktime`` releases are available via ``conda`` from ``conda-forge``.
-Thy can be installed via ``conda`` using:
+They can be installed via ``conda`` using:
 
 .. code-block:: bash
 
