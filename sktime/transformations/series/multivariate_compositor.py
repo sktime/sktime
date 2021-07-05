@@ -90,10 +90,6 @@ class MultivariateCompositor(_SeriesToSeriesTransformer):
         if not isinstance(Z, pd.DataFrame):
             raise ValueError("Z needs to be a multivariate Pandas Series")
 
-        if not hasattr(self.transformer, "inverse_transform"):
-            raise NotImplementedError(
-                "this transform does not have an inverse_transform method"
-            )
         self.check_is_fitted()
         z = check_series(Z)
 
