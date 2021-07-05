@@ -105,7 +105,6 @@ class MultivariateCompositor(_SeriesToSeriesTransformer):
                 raise ValueError("Missing columns" + str(difference) + "in Z.")
             for colname in self.columns:
                 # self.columns : columns that are supposed to be transformed
-                self.transformers_[colname].check_is_fitted()
                 z[colname] = self.transformers_[colname].inverse_transform(
                     z[colname], X
                 )
