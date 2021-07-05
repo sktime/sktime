@@ -24,6 +24,13 @@ from sktime.utils.validation.forecasting import check_y_X
 
 
 class BaseGridSearch(BaseForecaster):
+
+    _tags = {
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "univariate-only": True,
+    }
+
     def __init__(
         self,
         forecaster,
@@ -66,6 +73,7 @@ class BaseGridSearch(BaseForecaster):
         parameters.
         """
         self.check_is_fitted("update_predict")
+
         return self.best_forecaster_.update_predict(
             y,
             cv=cv,
@@ -124,7 +132,6 @@ class BaseGridSearch(BaseForecaster):
         -------
         fitted_params : dict
         """
-
         self.check_is_fitted("get_fitted_params")
         return self.best_forecaster_.get_fitted_params()
 
@@ -200,7 +207,7 @@ class BaseGridSearch(BaseForecaster):
             else:
                 self.best_forecaster_.check_is_fitted()
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
