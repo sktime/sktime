@@ -51,7 +51,7 @@ from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils._testing.panel import make_clustering_problem
 from sktime.utils.data_processing import is_nested_dataframe
 from sktime.utils import _has_tag
-from sktime.clustering.base.base import BaseCluster
+from sktime.clustering.base.base import BaseClusterer
 
 
 def check_estimator(Estimator, exclude=None):
@@ -614,7 +614,7 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
-    elif isinstance(estimator, BaseCluster):
+    elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -627,7 +627,7 @@ def _make_predict_args(estimator, **kwargs):
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
         X = _make_panel_X(**kwargs)
         return (X,)
-    elif isinstance(estimator, BaseCluster):
+    elif isinstance(estimator, BaseClusterer):
         X = _make_panel_X(**kwargs)
         return (X,)
     else:
