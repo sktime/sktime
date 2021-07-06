@@ -101,6 +101,9 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
 class ColumnComposition(_SeriesToSeriesTransformer):
     """
+    Applies a transformer for univariate series
+    columnwise to multivariate series.
+
     Parameters
     ----------
     transformer : Estimator
@@ -119,7 +122,17 @@ class ColumnComposition(_SeriesToSeriesTransformer):
 
     def fit(self, Z, X=None):
         """
-        Iterates over columns (series) and applies the fit function of the transformer
+        Iterates over columns (series) and applies
+        the fit function of the transformer.
+
+        Parameters
+        ----------
+        Z : pd.Series, pd.DataFrame
+
+        Returns
+        -------
+        self : an instance of self
+
         """
         z = check_series(Z, allow_numpy=False)
         self._is_fitted = False
@@ -151,8 +164,18 @@ class ColumnComposition(_SeriesToSeriesTransformer):
             return self
 
     def transform(self, Z, X=None):
-        """
-        calls transform on every single transformer (one transformer per series)
+        """Transform data.
+        Returns a transformed version of Z by iterating over specified
+        columns and applying the univariate series transformer to them.
+
+        Parameters
+        ----------
+        Z : pd.Series, pd.DataFrame
+
+        Returns
+        -------
+        Z : pd.Series, pd.DataFrame
+            Transformed time series(es).
         """
         self.check_is_fitted()
         z = check_series(Z)
@@ -180,9 +203,20 @@ class ColumnComposition(_SeriesToSeriesTransformer):
 
     def inverse_transform(self, Z, X=None):
         """
-        If the base transformer has an inverse-transform this
-        inverse transform is called on every single transformer
-        (one transformer per series)
+        Inverse-transform data.
+
+        Returns an inverse-transformed version of Z by iterating over specified
+        columns and applying the univariate series transformer to them.
+        Only works if self.transformer has an inverse-transform method.
+
+        Parameters
+        ----------
+        Z : pd.Series, pd.DataFrame
+
+        Returns
+        -------
+        Z : pd.Series, pd.DataFrame
+            Inverse-transformed time series(es).
         """
         self.check_is_fitted()
         z = check_series(Z)
@@ -212,9 +246,19 @@ class ColumnComposition(_SeriesToSeriesTransformer):
 
     def update(self, Z, X=None, update_params=True):
         """
-        If the base transformer has an update function this
-        it is called on every single transformer
-        (one transformer per series)
+        Update the parameters of the estimator with new data
+        by iterating over specified columns.
+        Only works if self.transformer has an update method.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            New time series
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
         """
         z = check_series(Z)
 
