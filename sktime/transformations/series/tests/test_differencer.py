@@ -11,6 +11,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.difference import Differencer
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 y_airline = load_airline()
 y_airline_df = pd.concat([y_airline, y_airline], axis=1)
@@ -29,7 +30,7 @@ def test_differencer_same_series(y, lags):
 
     # Reconstruction should return the reconstructed series for same indices
     # that are in the `Z` timeseries passed to inverse_transform
-    np.testing.assert_array_almost_equal(y.loc[y_reconstructed.index], y_reconstructed)
+    _assert_array_almost_equal(y.loc[y_reconstructed.index], y_reconstructed)
 
 
 @pytest.mark.parametrize("y", test_cases)
@@ -39,7 +40,7 @@ def test_differencer_remove_missing_false(y, lags):
     y_transform = transformer.fit_transform(y)
     y_reconstructed = transformer.inverse_transform(y_transform)
 
-    np.testing.assert_array_almost_equal(y, y_reconstructed)
+    _assert_array_almost_equal(y, y_reconstructed)
 
 
 @pytest.mark.parametrize("y", test_cases)
@@ -63,4 +64,4 @@ def test_differencer_prediction(y, lags):
 
     y_pred_inv = transformer.inverse_transform(y_pred)
 
-    np.testing.assert_array_almost_equal(y_true, y_pred_inv)
+    _assert_array_almost_equal(y_true, y_pred_inv)
