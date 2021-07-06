@@ -159,7 +159,6 @@ class ColumnComposition(_SeriesToSeriesTransformer):
                 transformer = clone(self.transformer)
                 self.transformers_[colname] = transformer
                 self.transformers_[colname].fit(z[colname], X)
-                # self.transformers_[colname].is_fitted = True
             self._is_fitted = True
             return self
 
