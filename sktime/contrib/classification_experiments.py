@@ -1,40 +1,45 @@
 # -*- coding: utf-8 -*-
-""" experiments.py: method to run experiments as an alternative to orchestration.
+"""Experiments: code to run experiments as an alternative to orchestration.
 
-Note ProximityForest and ElasticEnsemble use cython implementations of the distance measures. You need a c++ compiler for this.
-These are notes mainly for me.
-On  windows:
-The easiest way to install visual studio. Then, from an anaconda prompt, change to the sktime dir, then
-python setup.py install
-python setup.py build_ext -i
-(may not be necessary with pipinstall).
-
-on the cluster
-copy source over then as above,
-enter interactive mode, got to sktime root
-IF not done before,
-
-1) >interactive
-2) change dir to sktime
-3) module add python/anaconda/2019.3/3.7
-4) conda init bash
-5) conda create -n sktime
-6) conda activate sktime
-7) conda install pip
-8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
-9) export PYTHONPATH=$(pwd)
-10) python <FULLPATH>setup.py install
-11) python <FULLPATH>setup.py build_ext -i
-
-then run sktime.sh script
-
-NOTE: do
+This file is configured for runs of the main method with command line arguments, or for
+single debugging runs. Results are written in a standard format
+todo: Tidy up this file!
 """
 
 import os
 
 import sklearn.preprocessing
 import sklearn.utils
+
+from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
+    ContractableBOSS,
+    TemporalDictionaryEnsemble,
+    WEASEL,
+    MUSE,
+)
+from sktime.classification.distance_based import (
+    ElasticEnsemble,
+    ProximityForest,
+    ProximityTree,
+    ProximityStump,
+    KNeighborsTimeSeriesClassifier,
+    ShapeDTW,
+)
+from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid._catch22_forest_classifier import (
+    Catch22ForestClassifier,
+)
+from sktime.classification.interval_based import (
+    TimeSeriesForestClassifier,
+    RandomIntervalSpectralForest,
+)
+from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based._drcif import DrCIF
+from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
+from sktime.classification.shapelet_based import MrSEQLClassifier
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
+
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -44,176 +49,141 @@ import sys
 import time
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 
+
+from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.tree import DecisionTreeClassifier
-from statsmodels.tsa.stattools import acf
-
-import sktime.classification.compose._ensemble as ensemble
-import sktime.classification.dictionary_based._boss as db
-import sktime.classification.interval_based._rise as fb
-import sktime.classification.interval_based._tsf as ib
-import sktime.classification.distance_based._elastic_ensemble as dist
-import sktime.classification.distance_based._time_series_neighbors as nn
-import sktime.classification.distance_based._proximity_forest as pf
-import sktime.classification.shapelet_based._stc as st
-from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-from sktime.transformations.panel.compose import make_row_transformer
-from sktime.transformations.panel.segment import RandomIntervalSegmenter
-
-from sktime.transformations.panel.reduce import Tabularizer
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import FeatureUnion
 import sktime.datasets.tsc_dataset_names as dataset_lists
 
-__author__ = "Anthony Bagnall"
+__author__ = ["Tony Bagnall"]
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism used in Java,
+"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
+mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
-but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
-and automatically compared to the results generated in java
+but is not yet as engineered. However, if you generate results using the method
+recommended here, they can be directly and automatically compared to the results
+generated in java
 
-Will have both low level version and high level orchestration version soon.
 """
 
+classifier_list = [
+    # Distance based
+    "ProximityForest",
+    "KNeighborsTimeSeriesClassifier",
+    "ElasticEnsemble",
+    "ShapeDTW",
+    # Dictionary based
+    "BOSS",
+    "ContractableBOSS",
+    "TemporalDictionaryEnsemble",
+    "WEASEL",
+    "MUSE",
+    # Interval based
+    "RandomIntervalSpectralForest",
+    "TimeSeriesForestClassifier",
+    "CanonicalIntervalForest",
+    # Shapelet based
+    "ShapeletTransformClassifier",
+    "MrSEQLClassifier",
+    # Kernel based
+    "ROCKET",
+    "Arsenal",
+]
 
-# Used on lines 410 and 411
-def _normalise_X(X):
-    """Helper function to normalise X using the z-score standardisation"""
-    # get the number of attributes and instances
-    num_atts = X.shape[1]
-    num_insts = X.shape[0]
 
-    df = pd.DataFrame()
+def set_classifier(cls, resampleId=None):
+    """Construct a classifier.
 
-    for x in X.columns:
-        col = X[x]
-        data = []
-        for y in range(num_insts):
-            ser = col.iloc[y]
-            ser = ser.to_numpy()
-            sd = np.std(ser)
-            avg = np.mean(ser)
-            ser = (ser - avg) / sd
-            data.append(pd.Series(ser))
-        df[x] = data
+    Basic way of creating the classifier to build using the default settings. This
+    set up is to help with batch jobs for multiple problems to facilitate easy
+    reproducability. You can set up bespoke classifier in many other ways.
 
-    return df
+    Parameters
+    ----------
+    cls: String indicating which classifier you want
+    resampleId: classifier random seed
 
-
-def set_classifier(cls, resampleId):
+    Return
+    ------
+    A classifier.
     """
-    Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
-    you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
-    This may well get superceded, it is just how e have always done it
-    :param cls: String indicating which classifier you want
-    :return: A classifier.
-
-    """
-    if cls.lower() == "pf":
-        return pf.ProximityForest(random_state=resampleId)
-    elif cls.lower() == "pt":
-        return pf.ProximityTree(random_state=resampleId)
-    elif cls.lower() == "ps":
-        return pf.ProximityStump(random_state=resampleId)
-    elif cls.lower() == "rise":
-        return fb.RandomIntervalSpectralForest(random_state=resampleId)
-    elif cls.lower() == "tsf":
-        return ib.TimeSeriesForest(random_state=resampleId)
-    elif cls.lower() == "boss":
-        return db.BOSSEnsemble()
-    elif cls.lower() == "st":
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
-    elif cls.lower() == "dtw":
-        return nn.KNeighborsTimeSeriesClassifier(distance="dtw")
-    elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
-        return dist.ElasticEnsemble()
-    elif cls.lower() == "shapedtw_raw":
-        return ShapeDTW(
-            subsequence_length=30, shape_descriptor_function="raw", metric_params=None
+    name = cls.lower()
+    # Distance based
+    if name == "pf" or name == "proximityforest":
+        return ProximityForest(random_state=resampleId)
+    elif name == "pt" or name == "proximitytree":
+        return ProximityTree(random_state=resampleId)
+    elif name == "ps" or name == "proximityStump":
+        return ProximityStump(random_state=resampleId)
+    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
+        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
+    elif name == "dtw" or name == "1nn-dtw":
+        return KNeighborsTimeSeriesClassifier(distance="dtw")
+    elif name == "msm" or name == "1nn-msm":
+        return KNeighborsTimeSeriesClassifier(distance="msm")
+    elif name == "ee" or name == "elasticensemble":
+        return ElasticEnsemble()
+    elif name == "shapedtw":
+        return ShapeDTW()
+    # Dictionary based
+    elif name == "boss" or name == "bossensemble":
+        return BOSSEnsemble(random_state=resampleId)
+    elif name == "cboss" or name == "contractableboss":
+        return ContractableBOSS(random_state=resampleId)
+    elif name == "tde" or name == "temporaldictionaryensemble":
+        return TemporalDictionaryEnsemble(random_state=resampleId)
+    elif name == "weasel":
+        return WEASEL(random_state=resampleId)
+    elif name == "muse":
+        return MUSE(random_state=resampleId)
+    # Interval based
+    elif name == "rise" or name == "randomintervalspectralforest":
+        return RandomIntervalSpectralForest(random_state=resampleId)
+    elif name == "tsf" or name == "timeseriesforestclassifier":
+        return TimeSeriesForestClassifier(random_state=resampleId)
+    elif name == "cif" or name == "canonicalintervalforest":
+        return CanonicalIntervalForest(random_state=resampleId)
+    elif name == "drcif":
+        return DrCIF(random_state=resampleId)
+    # Shapelet based
+    elif name == "stc" or name == "shapelettransformclassifier":
+        return ShapeletTransformClassifier(
+            random_state=resampleId, transform_contract_in_mins=60
         )
-    elif cls.lower() == "shapedtw_dwt":
-        return ShapeDTW(
-            subsequence_length=30,
-            shape_descriptor_function="dwt",
-            metric_params={"num_levels_dwt": 3},
-        )
-    elif cls.lower() == "shapedtw_paa":
-        return ShapeDTW(
-            subsequence_length=30,
-            shape_descriptor_function="paa",
-            metric_params={"num_intervals_paa": 5},
-        )
-    elif cls.lower() == "shapedtw_slope":
-        return ShapeDTW(
-            subsequence_length=30,
-            shape_descriptor_function="slope",
-            metric_params={"num_intervals_slope": 5},
-        )
-    elif cls.lower() == "shapedtw_hog1d":
-        return ShapeDTW(
-            subsequence_length=30,
-            shape_descriptor_function="hog1d",
-            metric_params={
-                "num_bins_hog1d": 8,
-                "num_intervals_hog1d": 2,
-                "scaling_factor_hog1d": 0.1,
-            },
-        )
-    elif cls.lower() == "tsfcomposite":
-        # It defaults to TSF
-        return ensemble.ComposableTimeSeriesForestClassifier()
-    elif cls.lower() == "risecomposite":
-        steps = [
-            ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-            (
-                "transform",
-                FeatureUnion(
-                    [
-                        (
-                            "acf",
-                            make_row_transformer(
-                                FunctionTransformer(func=acf_coefs, validate=False)
-                            ),
-                        ),
-                        (
-                            "ps",
-                            make_row_transformer(
-                                FunctionTransformer(func=powerspectrum, validate=False)
-                            ),
-                        ),
-                    ]
-                ),
-            ),
-            ("tabularise", Tabularizer()),
-            ("clf", DecisionTreeClassifier()),
-        ]
-        base_estimator = Pipeline(steps)
-        return ensemble.ComposableTimeSeriesForestClassifier(
-            estimator=base_estimator, n_estimators=100
-        )
+    elif name == "mrseql" or name == "mrseqlclassifier":
+        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
+    elif name == "rocket":
+        return ROCKETClassifier(random_state=resampleId)
+    elif name == "arsenal":
+        return Arsenal(random_state=resampleId)
+    # Hybrid
+    elif name == "catch22":
+        return Catch22ForestClassifier(random_state=resampleId)
+    elif name == "hivecotev1":
+        return HIVECOTEV1(random_state=resampleId)
     else:
         raise Exception("UNKNOWN CLASSIFIER")
 
 
-def acf_coefs(x, maxlag=100):
-    x = np.asarray(x).ravel()
-    nlags = np.minimum(len(x) - 1, maxlag)
-    return acf(x, nlags=nlags).ravel()
-
-
-def powerspectrum(x, **kwargs):
-    x = np.asarray(x).ravel()
-    fft = np.fft.fft(x)
-    ps = fft.real * fft.real + fft.imag * fft.imag
-    return ps[: ps.shape[0] // 2].ravel()
-
-
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
+    """Resample data using a random state.
+
+    Reproducable resampling. Combines train and test, resamples to get the same class
+    distribution, then returns new trrain and test.
+
+    Parameters
+    ----------
+    X_train: train data attributes in sktime pandas format.
+    y_train: train data class labes as np array.
+    X_test: test data attributes in sktime pandas format.
+    y_test: test data class labes as np array.
+
+    Returns
+    -------
+    new train and test attributes and class labels.
+    """
     all_labels = np.concatenate((y_train, y_test), axis=None)
     all_data = pd.concat([X_train, X_test])
     random_state = sklearn.utils.check_random_state(random_state)
@@ -272,23 +242,31 @@ def run_experiment(
     format=".ts",
     train_file=False,
 ):
-    """
-    Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
-    trainFold<resampleID>.csv.
-    :param problem_path: Location of problem files, full path.
-    :param results_path: Location of where to write results. Any required directories will be created
-    :param cls_name: determines which classifier to use, as defined in set_classifier. This assumes predict_proba is
-    implemented, to avoid predicting twice. May break some classifiers though
-    :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format, same for "_TEST"
-    :param resampleID: Seed for resampling. If set to 0, the default train/test split from file is used. Also used in output file name.
-    :param overwrite: if set to False, this will only build results if there is not a result file already present. If
-    True, it will overwrite anything already there
-    :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
-    https://github.com/alan-turing-institute/sktime/blob/master/examples/Loading%20Data%20Examples.ipynb
-    :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
-    :return:
-    """
+    """Run a classification experiment.
 
+    Method to run a basic experiment and write the results to files called
+    testFold<resampleID>.csv and, if required, trainFold<resampleID>.csv.
+
+    Parameters
+    ----------
+    problem_path: Location of problem files, full path.
+    results_path: Location of where to write results. Any required directories
+        will be created
+    cls_name: determines which classifier to use, as defined in set_classifier.
+        This assumes predict_proba is
+    implemented, to avoid predicting twice. May break some classifiers though
+    dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
+                "_TRAIN"+format, same for "_TEST"
+    resampleID: Seed for resampling. If set to 0, the default train/test split
+                from file is used. Also used in output file name.
+    overwrite: if set to False, this will only build results if there is not a
+                result file already present. If
+    True, it will overwrite anything already there
+    format: Valid formats are ".ts", ".arff" and ".long".
+    For more info on format, see   examples/Loading%20Data%20Examples.ipynb
+    train_file: whether to generate train files or not. If true, it performs a
+                10xCV on the train and saves
+    """
     build_test = True
     if not overwrite:
         full_path = (
@@ -327,20 +305,18 @@ def run_experiment(
         if train_file == False and build_test == False:
             return
 
-    # TO DO: Automatically differentiate between problem types, currently only works with .ts
+    # TO DO: Automatically differentiate between problem types,
+    # currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN" + format)
     testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
-
-    trainX = _normalise_X(trainX)
-    testX = _normalise_X(testX)
-
     if resampleID != 0:
         # allLabels = np.concatenate((trainY, testY), axis = None)
         # allData = pd.concat([trainX, testX])
         # train_size = len(trainY) / (len(trainY) + len(testY))
-        # trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-        #                                                                random_state=resampleID, shuffle=True,
-        #                                                                stratify=allLabels)
+        # trainX, testX, trainY, testY = train_test_split(allData, allLabels,
+        # train_size=train_size,
+        # random_state=resampleID, shuffle=True,
+        # stratify=allLabels)
         trainX, trainY, testX, testY = stratified_resample(
             trainX, trainY, testX, testY, resampleID
         )
@@ -409,7 +385,7 @@ def run_experiment(
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
             classifier, "_get_train_probs"
-        ):  # Normally Can only do this if test has been built ... well not necessarily true, but will do for now
+        ):  # Normally Can only do this if test has been built
             train_probs = classifier._get_train_probs(trainX)
         else:
             train_probs = cross_val_predict(
@@ -470,27 +446,32 @@ def write_results_to_uea_format(
     third_line="N/A",
     class_labels=None,
 ):
-    """
-    This is very alpha and I will probably completely change the structure once train fold is sorted, as that internally
-    does all this I think!
-    Output mirrors that produced by this Java
-    https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/experiments/Experiments.java
-    :param output_path:
-    :param classifier_name:
-    :param dataset_name:
-    :param actual_class_vals:
-    :param predicted_class_vals:
-    :param split:
-    :param resample_seed:
-    :param actual_probas:
-    :param second_line:
-    :param third_line:
-    :param class_labels:
-    :return:
+    """Write results to file.
+
+    Outputs the classifier results, mirrors that produced by tsml Java package.
+    Directories of the form
+    <output_path>/<classifier_name>/Predictions/<dataset_name>
+    Will automatically be created and results written.
+
+    Parameters
+    ----------
+    output_path:            string, root path where to put results.
+    classifier_name:        string, name of the classifier that made the predictions
+    dataset_name:           string, name of the problem the classifier was built on
+    actual_class_vals:      array, actual class labels
+    predicted_class_vals:   array, predicted class labels
+    split:                  string, wither TRAIN or TEST, depending on the results.
+    resample_seed:          int, makes resampling deterministic
+    actual_probas:          number of cases x number of classes 2d array
+    second_line:            unstructured, classifier parameters
+    third_line:             summary performance information (see comment below)
+    class_labels:           needed to equate to tsml output
+
     """
     if len(actual_class_vals) != len(predicted_class_vals):
         raise IndexError(
-            "The number of predicted class values is not the same as the number of actual class values"
+            "The number of predicted class values is not the same as the "
+            + "number of actual class values"
         )
 
     try:
@@ -526,8 +507,6 @@ def write_results_to_uea_format(
         "w",
     )
 
-    # print(classifier_name+" on "+dataset_name+" for resample "+str(resample_seed)+"   "+train_or_test+" data has line three "+third_line)
-    # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>,<Class Labels>
     file.write(
         str(dataset_name)
@@ -537,27 +516,29 @@ def write_results_to_uea_format(
         + str(train_or_test)
         + ","
         + str(resample_seed)
-        + ",MILLISECONDS,PREDICTIONS, Generated by experiments.py"
+        + ",MILLISECONDS,PREDICTIONS, Generated by classification_experiments.py"
     )
     file.write("\n")
 
-    # the second line of the output is free form and classifier-specific; usually this will record info
+    # the second line of the output is free form and classifier-specific;
+    # usually this will record info
     # such as parameter options used, any constituent model names for ensembles, etc.
     file.write(str(second_line) + "\n")
 
-    # the third line of the file is the accuracy (should be between 0 and 1 inclusive). If this is a train
-    # output file then it will be a training estimate of the classifier on the training data only (e.g.
-    # 10-fold cv, leave-one-out cv, etc.). If this is a test output file, it should be the output
-    # of the estimator on the test data (likely trained on the training data for a-priori parameter optimisation)
+    # the third line of the file is the accuracy (should be between 0 and 1 inclusive).
+    # If this is a train output file then it will be a training estimate of the
+    # classifier on the training data only (e.g. #10-fold cv, leave-one-out cv, etc.).
+    # If this is a test output file, it should be the output of the estimator on the
+    # test data (likely trained on the training data for a-priori para optimisation)
     file.write(str(third_line))
     file.write("\n")
 
-    # from line 4 onwards each line should include the actual and predicted class labels (comma-separated). If
-    # present, for each case, the probabilities of predicting every class value for this case should also be
-    # appended to the line (a space is also included between the predicted value and the predict_proba). E.g.:
-    #
+    # from line 4 onwards each line should include the actual and predicted class labels
+    # (comma-separated). If present, for each case, the probabilities of predicting
+    # every class value for this case should also be appended to the line (a space is
+    # also included between the predicted value and the predict_proba). E.g.:
     # if predict_proba data IS provided for case i:
-    #   actual_class_val[i], predicted_class_val[i],,prob_class_0[i],prob_class_1[i],...,prob_class_c[i]
+    #   actual_class_val[i], predicted_class_val[i],,
     #
     # if predict_proba data IS NOT provided for case i:
     #   actual_class_val[i], predicted_class_val[i]
@@ -573,9 +554,7 @@ def write_results_to_uea_format(
 
 
 def test_loading():
-
-    # test multivariate
-    # Test univariate
+    """Test function to check dataset loading of univariate and multivaria problems."""
     for i in range(0, len(dataset_lists.univariate)):
         data_dir = "E:/tsc_ts/"
         dataset = dataset_lists.univariate[i]
@@ -607,15 +586,110 @@ def test_loading():
         print(testY.shape)
 
 
+benchmark_datasets = [
+    "ACSF1",
+    "Adiac",
+    "ArrowHead",
+    "Beef",
+    "BeetleFly",
+    "BirdChicken",
+    "BME",
+    "Car",
+    "CBF",
+    "ChlorineConcentration",
+    "CinCECGTorso",
+    "Coffee",
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
+    "DiatomSizeReduction",
+    "DistalPhalanxOutlineCorrect",
+    "DistalPhalanxOutlineAgeGroup",
+    "DistalPhalanxTW",
+    "Earthquakes",
+    "ECG200",
+    "ECG5000",
+    "ECGFiveDays",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
+    "FaceAll",
+    "FaceFour",
+    "FacesUCR",
+    "FiftyWords",
+    "Fish",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Ham",
+    "Haptics",
+    "Herring",
+    "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
+    "ItalyPowerDemand",
+    "LargeKitchenAppliances",
+    "Lightning2",
+    "Lightning7",
+    "Mallat",
+    "Meat",
+    "MedicalImages",
+    "MiddlePhalanxOutlineCorrect",
+    "MiddlePhalanxOutlineAgeGroup",
+    "MiddlePhalanxTW",
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
+    "MoteStrain",
+    "OliveOil",
+    "OSULeaf",
+    "PhalangesOutlinesCorrect",
+    "Phoneme",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "Plane",
+    "PowerCons",
+    "ProximalPhalanxOutlineCorrect",
+    "ProximalPhalanxOutlineAgeGroup",
+    "ProximalPhalanxTW",
+    "RefrigerationDevices",
+    "Rock",
+    "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShapeletSim",
+    "SmallKitchenAppliances",
+    "SmoothSubspace",
+    "SonyAIBORobotSurface1",
+    "SonyAIBORobotSurface2",
+    "Strawberry",
+    "SwedishLeaf",
+    "Symbols",
+    "SyntheticControl",
+    "ToeSegmentation1",
+    "ToeSegmentation2",
+    "Trace",
+    "TwoLeadECG",
+    "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryX",
+    "UWaveGestureLibraryY",
+    "UWaveGestureLibraryZ",
+    "Wafer",
+    "Wine",
+    "WordSynonyms",
+    "Worms",
+    "WormsTwoClass",
+    "Yoga",
+]
+
+
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
-
-    #    test_loading()
-    #    sys.exit()
-    #    print('experimenting...')
-    # Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = sys.argv[1]
@@ -633,29 +707,27 @@ if __name__ == "__main__":
             train_file=tf,
         )
     else:  # Local run
-        #        data_dir = "/scratch/univariate_datasets/"
-        #        results_dir = "/scratch/results"
-        data_dir = "/bench/datasets/Univariate2018/"
-        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        # data_dir = "Z:/ArchiveData/Univariate_ts/"
-        # results_dir = "E:/Temp/"
-        #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "ItalyPowerDemand"
+        print(" Local Run")
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
+        dataset = "ArrowHead"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "TSF"
-        resample = 1
+        classifier = "1NN-MSM"
+        resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
         # #            print(i)
         # #            print(" problem = "+dataset)
         tf = False
-        run_experiment(
-            overwrite=True,
-            problem_path=data_dir,
-            results_path=results_dir,
-            cls_name=classifier,
-            dataset=dataset,
-            resampleID=resample,
-            train_file=tf,
-        )
+        for i in range(0, len(benchmark_datasets)):
+            dataset = benchmark_datasets[i]
+            run_experiment(
+                overwrite=True,
+                problem_path=data_dir,
+                results_path=results_dir,
+                cls_name=classifier,
+                dataset=dataset,
+                resampleID=resample,
+                train_file=tf,
+            )

@@ -83,6 +83,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
+        self._is_fitted = False
         z = check_series(Z, enforce_univariate=True)
         self._set_y_index(z)
         sp = check_sp(self.sp)

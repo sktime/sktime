@@ -8,21 +8,25 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 
 
-class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class _StatsModelsAdapter(BaseForecaster):
     """Base class for interfacing statsmodels forecasting algorithms"""
 
     _fitted_param_names = ()
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self):
         self._forecaster = None
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -41,11 +45,7 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
             y, X = _coerce_int_to_range_index(y, X)
-
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         self._fit_forecaster(y, X)
-        self._is_fitted = True
         return self
 
     def _fit_forecaster(self, y_train, X_train=None):
@@ -92,10 +92,13 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
-        return {
-            name: self._fitted_forecaster.params.get(name)
-            for name in self._get_fitted_param_names()
-        }
+        fitted_params = {}
+        for name in self._get_fitted_param_names():
+            if name in ["aic", "aicc", "bic", "hqic"]:
+                fitted_params[name] = getattr(self._fitted_forecaster, name, None)
+            else:
+                fitted_params[name] = self._fitted_forecaster.params.get(name)
+        return fitted_params
 
     def _get_fitted_param_names(self):
         """Get names of fitted parameters"""
