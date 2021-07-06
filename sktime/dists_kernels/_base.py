@@ -22,6 +22,11 @@ class BasePairwiseTransformer(BaseEstimator):
     Specific implementations of these methods is deferred to concrete classes.
     """
 
+    # default tag values - these typically make the "safest" assumption
+    _tags = {
+        "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
+    }
+
     def __call__(self, X, X2=None):
         """
         Behaviour: returns pairwise distance/kernel matrix
@@ -43,7 +48,7 @@ class BasePairwiseTransformer(BaseEstimator):
 
         Writes to self
         --------------
-        symmetric: bool = True if X2 was not passed, False if X2 was passed
+        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
         # no input checks or input logic here, these are done in transform
@@ -68,7 +73,7 @@ class BasePairwiseTransformer(BaseEstimator):
 
         Writes to self
         --------------
-        symmetric: bool = True if X2 was not passed, False if X2 was passed
+        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
 
@@ -76,10 +81,10 @@ class BasePairwiseTransformer(BaseEstimator):
 
         if X2 is None:
             X2 = X
-            self.symmetric = True
+            self.X_equals_X2 = True
         else:
             X2 = check_series(X2)
-            self.symmetric = False
+            self.X_equals_X2 = False
 
         return self._transform(X=X, X2=X2)
 
@@ -120,9 +125,8 @@ def _pairwise_panel_x_check(X):
 
     Returns
     -------
-    X:
-        Checked and converted to List of pd.Dataframe if one
-        of the other formats
+    X: List of pd.Dataframe, coerced to this format if one
+        of the other formats, otherwise identical to X
 
     """
 
@@ -165,6 +169,11 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     Specific implementations of these methods is deferred to concrete classes.
     """
 
+    # default tag values - these typically make the "safest" assumption
+    _tags = {
+        "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
+    }
+
     def __init__(self):
         self.symmetric = False
         super(BasePairwiseTransformerPanel, self).__init__()
@@ -187,7 +196,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Writes to self
         --------------
-        symmetric: bool = True if X2 was not passed, False if X2 was passed
+        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
         # no input checks or input logic here, these are done in transform
@@ -212,7 +221,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Writes to self
         --------------
-        symmetric: bool = True if X2 was not passed, False if X2 was passed
+        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
 
@@ -220,9 +229,10 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         if X2 is None:
             X2 = X
-            self.symmetric = True
+            self.X_equals_X2 = True
         else:
             X2 = _pairwise_panel_x_check(X2)
+            self.X_equals_X2 = False
 
         return self._transform(X=X, X2=X2)
 

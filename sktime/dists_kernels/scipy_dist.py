@@ -39,6 +39,10 @@ class ScipyDist(BasePairwiseTransformer):
                 note: this will potentially align "non-matching" columns
     """
 
+    _tags = {
+        "symmetric": True,  # all the distances are symmetric
+    }
+
     def __init__(self, metric="euclidean", p=2, colalign="intersect"):
 
         self.metric = metric
