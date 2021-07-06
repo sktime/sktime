@@ -40,37 +40,6 @@ def _check_lags(lags):
     return lags
 
 
-# TODO: INCORPORATE pd.Index.intersection/pd.Index.difference() IF POSSIBLE
-def _check_index_overlap(index1, index2):
-    first_idx_one, last_idx_one = index1.min(), index1.max()
-    first_idx_two, last_idx_two = index2.min(), index2.max()
-    # Check if index1 is entirely prior to index2
-    if last_idx_one < first_idx_two:
-        index1_vs_index2_case = "past"
-    # Check if index1 is at least partially before index2
-    elif first_idx_one < first_idx_two:
-        index1_vs_index2_case = "past with partial overlap"
-    # Check if index1 is entirely after index2
-    elif first_idx_one > last_idx_two:
-        index1_vs_index2_case = "future"
-    # Otherwise the input series at least partially overlaps fitted series
-    elif first_idx_one >= first_idx_two and last_idx_one <= last_idx_two:
-        index1_vs_index2_case = "total overlap"
-    # Otherwise the index1 is partially in the future
-    else:
-        index1_vs_index2_case = "future with partial overlap"
-
-    return index1_vs_index2_case
-
-
-def _inverse_diff2(series, start, stop, lag, first_n_timepoints):
-    series.iloc[start:stop] = first_n_timepoints.values
-    for i in range(lag):
-        series.iloc[i::lag] = series.iloc[i::lag].cumsum()
-
-    return series
-
-
 def _inverse_diff(series, lag):
     for i in range(lag):
         series.iloc[i::lag] = series.iloc[i::lag].cumsum()
@@ -82,13 +51,13 @@ class Differencer(_SeriesToSeriesTransformer):
     """Apply iterative differences to a timeseries.
 
     Difference transformations are applied at the specified lags in the order
-    given. For example, using lags=[1, 12] corresponds to first appying a
+    provided. For example, using lags=[1, 12] corresponds to applying a
     standard first difference, then differencing the first-differenced series
     at lag 12 (in the event the input data has a monthly periodicity, this
     would equate to a first difference followed by a seasonal difference).
 
     The transformation works for univariate and multivariate timeseries. However,
-    the multivariate case applies the same differencing to every series. If
+    the multivariate case applies the same differencing to every series.
 
     Parameters
     ----------
@@ -98,7 +67,7 @@ class Differencer(_SeriesToSeriesTransformer):
 
     remove_missing : bool, default = True
         Whether the differencer should remove the initial observations that
-        contain missing values as a result of the differncing operation(s).
+        contain missing values as a result of the differencing operation(s).
 
     Attributes
     ----------
@@ -114,41 +83,65 @@ class Differencer(_SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.difference import Differencer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = Differencer()
+    >>> transformer = Differencer(lags=[1, 12])
     >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
         "fit-in-transform": False,
-        "transform-returns-same-time-index": True,
+        "transform-returns-same-time-index": False,
         "univariate-only": False,
-        "multivariate-only": False,
     }
 
     def __init__(self, lags=1, remove_missing=True):
         self.lags = lags
         self.remove_missing = remove_missing
         self._Z = None
-        self._cumalative_lags = None
+        self._cumulative_lags = None
         self._prior_cum_lags = None
         self._prior_lags = None
         super(Differencer, self).__init__()
 
-    def _check_index_location(self, Z_inv):
-        first_idx, last_idx = Z_inv.index.min(), Z_inv.index.max()
+    def _check_inverse_transform_index(self, Z):
+        """"""
+        (first_idx,) = Z.index.min()
+        orig_first_idx, orig_last_idx = self._Z.index.min(), self._Z.index.max()
 
-        orig_first_idx_loc = self._Z.index.get_loc(first_idx)
-        orig_last_idx_loc = self._Z.index.get_loc(last_idx)
-        is_future = True
-        if orig_first_idx_loc < self._cumalative_lags[-1:]:
-            msg = " ".join(
-                [
-                    "Not enough indices in fitted series prior to first index",
-                    "of series to be inverse transformed",
-                ]
-            )
-            raise ValueError(msg)
-        return orig_first_idx_loc, orig_last_idx_loc, is_future
+        is_contained_by_fitted_z = False
+        is_future = False
+
+        if first_idx < orig_first_idx:
+            msg = [
+                "Some indices of `Z` are prior to timeseries used in `fit`.",
+                "Reconstruction via `inverse_transform` is not possible.",
+            ]
+            raise ValueError(" ".join(msg))
+
+        elif Z.index.difference(self._Z.index).shape[0] == 0:
+            is_contained_by_fitted_z = True
+
+        elif first_idx > orig_last_idx:
+            is_future = True
+
+        pad_z_inv = self.remove_missing or is_future
+
+        cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
+        fh = ForecastingHorizon(
+            np.array([*range(-1, -(self._cumulative_lags[-1] + 1), -1)])
+        )
+
+        index = fh.to_absolute(cutoff).to_pandas()
+        index_diff = index.difference(self._Z.index)
+
+        if index_diff.shape[0] != 0:
+            msg = [
+                f"Inverse transform requires indices {index}",
+                "to have been stored in `fit()`,",
+                f"but the indices {index_diff} were not found.",
+            ]
+            raise ValueError(" ".join(msg))
+
+        return is_contained_by_fitted_z, pad_z_inv, index
 
     def _fit(self, Z, X=None):
         """Logic used by fit method on `Z`.
@@ -165,9 +158,9 @@ class Differencer(_SeriesToSeriesTransformer):
         self.lags = _check_lags(self.lags)
         self._prior_lags = np.roll(self.lags, shift=1)
         self._prior_lags[0] = 0
-        self._cumalative_lags = self.lags.cumsum()
-        self._prior_cum_lags = np.zeros_like(self._cumalative_lags)
-        self._prior_cum_lags[1:] = self._cumalative_lags[:-1]
+        self._cumulative_lags = self.lags.cumsum()
+        self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
+        self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
         self._Z = Z.copy()
         return self
 
@@ -213,46 +206,45 @@ class Differencer(_SeriesToSeriesTransformer):
         Z_inv : pd.Series or pd.DataFrame
             The reconstructed timeseries after the transformation has been reversed.
         """
-        Z_inv = Z.copy()
+        is_df = isinstance(Z, pd.DataFrame)
+        (
+            is_contained_by_fitted_z,
+            pad_z_inv,
+        ) = self._check_inverse_transform_index(Z)
 
-        is_df = isinstance(Z_inv, pd.DataFrame)
+        # If `Z` is entirely contained in fitted `_Z` we can just return
+        # the values from the timeseires stored in `fit` as a shortcut
+        if is_contained_by_fitted_z:
+            Z_inv = self._Z.loc[Z.index, :] if is_df else self._Z.loc[Z.index]
 
-        inverse_index_case = _check_index_overlap(Z_inv.index, self._Z.index)
-        pad_z_inv = self.remove_missing or inverse_index_case == "future"
-        for i, lag_info in enumerate(zip(self.lags[::-1], self._prior_cum_lags[::-1])):
-            lag, prior_cum_lag = lag_info
-            _lags = self.lags[::-1][i + 1 :]
-            _transformed = self._transform(self._Z, _lags)
+        else:
+            Z_inv = Z.copy()
+            for i, lag_info in enumerate(
+                zip(self.lags[::-1], self._prior_cum_lags[::-1])
+            ):
+                lag, prior_cum_lag = lag_info
+                _lags = self.lags[::-1][i + 1 :]
+                _transformed = self._transform(self._Z, _lags)
 
-            if pad_z_inv:
-                cutoff = Z_inv.index[0]
-            else:
-                cutoff = Z_inv.index[prior_cum_lag + lag]
-
-            fh = ForecastingHorizon(np.array([*range(-1, -(lag + 1), -1)]))
-            index = fh.to_absolute(cutoff).to_pandas()
-            index_diff = index.difference(self._Z.index)
-            if index_diff.shape[0] != 0:
-                msg = " ".join(
-                    [
-                        f"Inverse transform requires indices {index}",
-                        "to have been stored in `fit()`,",
-                        f"but the indices {index_diff} were not found.",
-                    ]
-                )
-                raise ValueError(msg)
-
-            else:
-                if is_df:
-                    prior_periods = _transformed.loc[index, :]
+                # Determine index values for initial values needed to reverse
+                # the differencing for the specified lag
+                if pad_z_inv:
+                    cutoff = Z_inv.index[0]
                 else:
-                    prior_periods = _transformed.loc[index]
-            if pad_z_inv:
-                Z_inv = pd.concat([prior_periods, Z_inv])
-            else:
-                Z_inv.update(prior_periods)
+                    cutoff = Z_inv.index[prior_cum_lag + lag]
+                fh = ForecastingHorizon(np.array([*range(-1, -(lag + 1), -1)]))
+                index = fh.to_absolute(cutoff).to_pandas()
 
-            Z_inv = _inverse_diff(Z_inv, lag)
+                if is_df:
+                    prior_n_timepoint_values = _transformed.loc[index, :]
+                else:
+                    prior_n_timepoint_values = _transformed.loc[index]
+                if pad_z_inv:
+                    Z_inv = pd.concat([prior_n_timepoint_values, Z_inv])
+                else:
+                    Z_inv.update(prior_n_timepoint_values)
+
+                Z_inv = _inverse_diff(Z_inv, lag)
 
         if pad_z_inv:
             Z_inv = Z_inv.loc[Z.index, :] if is_df else Z_inv.loc[Z.index]
@@ -300,7 +292,7 @@ class Differencer(_SeriesToSeriesTransformer):
         Z_transform = self._transform(Z, self.lags)
 
         if self.remove_missing:
-            Z_transform = Z_transform.iloc[self._cumalative_lags[-1] :]
+            Z_transform = Z_transform.iloc[self._cumulative_lags[-1] :]
 
         return Z_transform
 
