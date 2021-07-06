@@ -103,8 +103,8 @@ class Differencer(_SeriesToSeriesTransformer):
         super(Differencer, self).__init__()
 
     def _check_inverse_transform_index(self, Z):
-        """"""
-        (first_idx,) = Z.index.min()
+        """Check fitted series contains indices needed in inverse_transform."""
+        first_idx = Z.index.min()
         orig_first_idx, orig_last_idx = self._Z.index.min(), self._Z.index.max()
 
         is_contained_by_fitted_z = False
@@ -141,7 +141,7 @@ class Differencer(_SeriesToSeriesTransformer):
             ]
             raise ValueError(" ".join(msg))
 
-        return is_contained_by_fitted_z, pad_z_inv, index
+        return is_contained_by_fitted_z, pad_z_inv
 
     def _fit(self, Z, X=None):
         """Logic used by fit method on `Z`.
