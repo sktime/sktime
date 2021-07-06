@@ -38,7 +38,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.utils import _has_tag
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
@@ -551,7 +550,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = _has_tag(self, "requires-fh-in-fit")
+        requires_fh = self._all_tags().get("requires-fh-in-fit", True)
 
         msg = (
             f"This is because fitting of the `"
