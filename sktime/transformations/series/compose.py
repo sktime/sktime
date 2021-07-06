@@ -103,7 +103,8 @@ class ColumnComposition(_SeriesToSeriesTransformer):
     """
     Parameters
     ----------
-    transformer : series-to-series transformer to be applied to each series
+    transformer : Estimator
+        scikit-learn-like or sktime-like transformer to fit and apply to series
     columns : list of str
             Names of columns that are supposed to be transformed
     """
