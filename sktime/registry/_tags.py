@@ -75,6 +75,12 @@ ESTIMATOR_TAG_REGISTER = [
         "type",
         "passed to input checks, input conversion index type to enforce",
     ),
+    (
+        "symmetric",
+        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        "bool",
+        "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
+    ),
     # (
     #     "handles-panel",
     #     "annotator",
