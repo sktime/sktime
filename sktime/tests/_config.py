@@ -87,8 +87,6 @@ from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.compose import ColumnComposition
-from sktime.clustering.base.base import BaseCluster
-
 
 
 # The following estimators currently do not pass all unit tests
