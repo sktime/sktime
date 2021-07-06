@@ -17,21 +17,30 @@ class AggrDist(BasePairwiseTransformerPanel):
 
     Components
     ----------
-    transformer: pairwise transformer of BaseTrafoPw scitype (tabular pairwise)
+    transformer: pairwise transformer of BasePairwiseTransformer scitype
 
     Hyper-parameters
     ----------------
-
     aggfunc: aggregation function 2D np.array -> float
         default = np.mean
+    aggfunc_symm: bool - whether aggregation function is symmetric
+            used for fast computation of the resultant matrix (if symmetric)
+        default = True (should be set according to choice of aggfunc)
     """
 
     def __init__(
         self,
         transformer,
         aggfunc=None,
+        aggfunc_symm=True,
     ):
+
+        if aggfunc is None:
+            aggfunc = np.mean
+            aggfunc_symm = True
+
         self.aggfunc = aggfunc
+        self.aggfunc_symm = aggfunc_symm
         self.transformer = transformer
 
         super(AggrDist, self).__init__()
@@ -58,18 +67,21 @@ class AggrDist(BasePairwiseTransformerPanel):
         n = len(X)
         m = len(X2)
 
-        symmetric = self.symmetric
+        X_equals_X2 = self.X_equals_X2
 
         aggfunc = self.aggfunc
-        if aggfunc is None:
-            aggfunc = np.mean
+        aggfunc_symm = self.aggfunc_symm
+        transformer_symm = self.transformer._all_tags()["symmetric"]
+
+        # whether we know that resulting matrix must be symmetric
+        all_symm = aggfunc_symm and transformer_symm and X_equals_X2
 
         distmat = np.zeros((n, m), dtype="float")
 
         for i in range(n):
             for j in range(m):
 
-                if symmetric and j < i:
+                if all_symm and j < i:
                     distmat[i, j] = distmat[j, i]
                 elif aggfunc is not None:
                     distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
