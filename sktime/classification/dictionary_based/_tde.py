@@ -14,6 +14,8 @@ from collections import defaultdict
 
 import numpy as np
 from joblib import Parallel, delayed
+from numba import njit, types
+from numba.typed import Dict
 from sklearn import preprocessing
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
@@ -152,7 +154,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.classifiers = []
         self.weights = []
-        self.weight_sum = 0
+        self._weight_sum = 0
         self.n_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
@@ -160,8 +162,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.series_length = 0
         self.n_dims = 0
         self.n_instances = 0
-        self.prev_parameters_x = []
-        self.prev_parameters_y = []
+        self._prev_parameters_x = []
+        self._prev_parameters_y = []
 
         self.word_lengths = [16, 14, 12, 10, 8]
         self.norm_options = [True, False]
@@ -204,8 +206,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.classifiers = []
         self.weights = []
-        self.prev_parameters_x = []
-        self.prev_parameters_y = []
+        self._prev_parameters_x = []
+        self._prev_parameters_y = []
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
@@ -255,9 +257,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
             else:
                 scaler = preprocessing.StandardScaler()
-                scaler.fit(self.prev_parameters_x)
+                scaler.fit(self._prev_parameters_x)
                 gp = KernelRidge(kernel="poly", degree=2)
-                gp.fit(scaler.transform(self.prev_parameters_x), self.prev_parameters_y)
+                gp.fit(scaler.transform(self._prev_parameters_x), self._prev_parameters_y)
                 preds = gp.predict(scaler.transform(possible_parameters))
                 parameters = possible_parameters.pop(
                     rng.choice(np.flatnonzero(preds == preds.max()))
@@ -269,13 +271,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
             tde = IndividualTDE(
                 *parameters,
-
-                # word_length=int(paras[num_classifiers][0]),
-                # window_size=int(paras[num_classifiers][2]),
-                # norm=paras[num_classifiers][3] == 1,
-                # levels=int(paras[num_classifiers][4]),
-                # igb=paras[num_classifiers][5] == 1,
-
                 alphabet_size=self.alphabet_size,
                 bigrams=use_bigrams,
                 dim_threshold=self.dim_threshold,
@@ -291,7 +286,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 subsample_size,
                 -999999 if num_classifiers < self.max_ensemble_size else lowest_acc,
             )
-            weight = math.pow(tde.accuracy, 4)
+            if tde.accuracy > 0:
+                weight = math.pow(tde.accuracy, 4)
+            else:
+                weight = 0.000000001
 
             if num_classifiers < self.max_ensemble_size:
                 if tde.accuracy < lowest_acc:
@@ -304,14 +302,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 self.classifiers[lowest_acc_idx] = tde
                 lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
 
-            self.prev_parameters_x.append(parameters)
-            self.prev_parameters_y.append(tde.accuracy)
+            self._prev_parameters_x.append(parameters)
+            self._prev_parameters_y.append(tde.accuracy)
 
             num_classifiers += 1
             train_time = time.time() - start_time
 
         self.n_estimators = len(self.classifiers)
-        self.weight_sum = np.sum(self.weights)
+        self._weight_sum = np.sum(self.weights)
 
         self._is_fitted = True
         return self
@@ -356,7 +354,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
-        return sums / (np.ones(self.n_classes) * self.weight_sum)
+        return sums / (np.ones(self.n_classes) * self._weight_sum)
 
     def _worst_ensemble_acc(self):
         min_acc = 1.0
@@ -372,67 +370,49 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def _unique_parameters(self, max_window, win_inc):
         possible_parameters = [
             [win_size, word_len, normalise, levels, igb]
-            for n, normalise in enumerate(self.norm_options)
+            for normalise in self.norm_options
             for win_size in range(self.min_window, max_window + 1, win_inc)
-            for w, word_len in enumerate(self.word_lengths)
-            for le, levels in enumerate(self.levels)
-            for i, igb in enumerate(self.igb_options)
+            for word_len in self.word_lengths
+            for levels in self.levels
+            for igb in self.igb_options
         ]
 
         return possible_parameters
 
-    def _get_train_probs(self, X, train_estimate_method="loocv"):
+    def _get_train_probs(self, X):
+        # todo check against train data
+        # todo flag for saving results
+
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
 
-        if train_estimate_method.lower() == "loocv":
-            for i in range(num_inst):
-                divisor = 0
-                sums = np.zeros(self.n_classes)
+        for i in range(num_inst):
+            divisor = 0
+            sums = np.zeros(self.n_classes)
 
-                clf_idx = []
-                for n, clf in enumerate(self.classifiers):
-                    idx = np.where(clf.subsample == i)
-                    if len(idx[0]) > 0:
-                        clf_idx.append([n, idx[0][0]])
+            clf_idx = []
+            for n, clf in enumerate(self.classifiers):
+                idx = np.where(clf.subsample == i)
+                if len(idx[0]) > 0:
+                    clf_idx.append([n, idx[0][0]])
 
-                preds = Parallel(n_jobs=self.n_jobs)(
-                    delayed(self.classifiers[cls[0]]._train_predict)(
-                        cls[1],
-                    )
-                    for cls in clf_idx
+            preds = Parallel(n_jobs=self.n_jobs)(
+                delayed(self.classifiers[cls[0]]._train_predict)(
+                    cls[1],
                 )
+                for cls in clf_idx
+            )
 
-                for n, pred in enumerate(preds):
-                    sums[self.class_dictionary.get(pred, -1)] += self.weights[
-                        clf_idx[n][0]]
-                    divisor += self.weights[clf_idx[n][0]]
+            for n, pred in enumerate(preds):
+                sums[self.class_dictionary.get(pred, -1)] += self.weights[
+                    clf_idx[n][0]]
+                divisor += self.weights[clf_idx[n][0]]
 
-                results[i] = (
-                    np.ones(self.n_classes) * (1 / self.n_classes)
-                    if divisor == 0
-                    else sums / (np.ones(self.n_classes) * divisor)
-                )
-        elif train_estimate_method.lower() == "oob":
-            #todo test and fix
-            indices = range(num_inst)
-            divisors = np.zeros(self.n_estimators)
-            results = np.zeros((num_inst, self.n_classes))
-
-            for i, clf in enumerate(self.classifiers):
-                oob = [n for n in indices if n not in clf.subsample]
-                X_oob = X[oob]
-                preds = clf.predict(X_oob)
-
-                for n, pred in enumerate(preds):
-                    results[oob[n], self.class_dictionary.get(pred, -1)] += \
-                        self.weights[i]
-                    divisors[oob[n]] += self.weights[i]
-
-            results = results / divisors
-        else:
-            raise ValueError("Invalid train_estimate_method. "
-                             "Available options: loocv oob")
+            results[i] = (
+                np.ones(self.n_classes) * (1 / self.n_classes)
+                if divisor == 0
+                else sums / (np.ones(self.n_classes) * divisor)
+            )
 
         return results
 
@@ -506,7 +486,6 @@ class IndividualTDE(BaseClassifier):
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
-        self.highest_dim_bit = 0
         self.dims = []
         self.class_vals = []
         self.num_classes = 0
@@ -540,16 +519,23 @@ class IndividualTDE(BaseClassifier):
         if self.n_dims > 1:
             self.dims, self.transformers = self._select_dims(X, y)
 
-            words = [defaultdict(int) for _ in range(self.n_instances)]
+            # words = [Dict.empty(
+            #     key_type=types.Tuple((types.Tuple((types.int64, types.int16)), types.uint16)),
+            #     value_type=types.uint32,
+            # ) if self.levels > 1 else Dict.empty(
+            #     key_type=types.Tuple((types.int64, types.uint16)),
+            #     value_type=types.uint32,
+            # ) for _ in range(self.n_instances)]
+            words = [{} for _ in range(self.n_instances)]
 
             for i, dim in enumerate(self.dims):
                 X_dim = X[:, dim, :].reshape(self.n_instances, 1, self.series_length)
                 dim_words = self.transformers[i].transform(X_dim, y)
                 dim_words = dim_words[0]
 
-                for i in range(self.n_instances):
-                    for word, count in dim_words[i].items():
-                        words[i][word << self.highest_dim_bit | dim] = count
+                for n in range(self.n_instances):
+                    for word, count in dim_words[n].items():
+                        words[n][(word, dim)] = count
 
             self.transformed_data = words
         else:
@@ -560,10 +546,13 @@ class IndividualTDE(BaseClassifier):
                     window_size=self.window_size,
                     norm=self.norm,
                     levels=self.levels,
-                    binning_method="information-gain2" if self.igb else "equi-depth",
+                    binning_method="information-gain" if self.igb else "equi-depth",
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
+                    lower_bounding=False,
                     save_words=False,
+                    fourier_transform="dft",
+                    typed_dict=False,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -589,16 +578,23 @@ class IndividualTDE(BaseClassifier):
         num_cases = X.shape[0]
 
         if self.n_dims > 1:
-            words = [defaultdict(int) for _ in range(num_cases)]
+            # words = [Dict.empty(
+            #     key_type=types.Tuple((types.Tuple((types.int64, types.int16)), types.uint16)),
+            #     value_type=types.uint32,
+            # ) if self.levels > 1 else Dict.empty(
+            #     key_type=types.Tuple((types.int64, types.uint16)),
+            #     value_type=types.uint32,
+            # ) for _ in range(num_cases)]
+            words = [{} for _ in range(num_cases)]
 
             for i, dim in enumerate(self.dims):
                 X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length)
                 dim_words = self.transformers[i].transform(X_dim)
                 dim_words = dim_words[0]
 
-                for i in range(num_cases):
-                    for word, count in dim_words[i].items():
-                        words[i][word << self.highest_dim_bit | dim] = count
+                for n in range(num_cases):
+                    for word, count in dim_words[n].items():
+                        words[n][(word, dim)] = count
 
             test_bags = words
         else:
@@ -642,14 +638,13 @@ class IndividualTDE(BaseClassifier):
         for n, bag in enumerate(self.transformed_data):
             sim = histogram_intersection(test_bag, bag)
 
-            if sim > best_sim:# or (sim == best_sim and rng.random() < 0.5):
+            if sim > best_sim or (sim == best_sim and rng.random() < 0.5):
                 best_sim = sim
                 nn = self.class_vals[n]
 
         return nn
 
     def _select_dims(self, X, y):
-        self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
         accs = []
         transformers = []
 
@@ -663,11 +658,14 @@ class IndividualTDE(BaseClassifier):
                     window_size=self.window_size,
                     norm=self.norm,
                     levels=self.levels,
-                    binning_method="information-gain2" if self.igb else "equi-depth",
+                    binning_method="information-gain" if self.igb else "equi-depth",
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
+                    lower_bounding=False,
                     save_words=False,
                     save_binning_dft=True,
+                    fourier_transform="dft",
+                    typed_dict=False,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -717,8 +715,6 @@ class IndividualTDE(BaseClassifier):
         best_sim = -1
         nn = None
 
-        # print(self.transformers[0].bag_to_string(test_bag))
-
         for n, bag in enumerate(bags):
             if n == train_num:
                 continue
@@ -733,274 +729,36 @@ class IndividualTDE(BaseClassifier):
 
 
 def histogram_intersection(first, second):
-    """Histogram intersection between two instannces.
+    """Histogram intersection between two instances.
 
-    Passed either dictionaries on numpy arrays.
+    Passed either dictionaries or numpy arrays.
     """
-    sim = 0
-
-    if isinstance(first, dict):
+    if isinstance(first, Dict):
+        return _histogram_intersection_dict(first, second)
+    elif isinstance(first, dict):
+        sim = 0
         for word, val_a in first.items():
             val_b = second.get(word, 0)
             sim += min(val_a, val_b)
+        return sim
     else:
-        sim = np.sum(
+        return _histogram_intersection_arr(first, second)
+
+
+@njit(fastmath=True, cache=True)
+def _histogram_intersection_dict(first, second):
+    sim = 0
+    for word, val_a in first.items():
+        val_b = second.get(word, types.uint32(0))
+        sim += min(val_a, val_b)
+    return sim
+
+
+@njit(fastmath=True, cache=True)
+def _histogram_intersection_arr(first, second):
+    return np.sum(
             [
                 0 if first[n] == 0 else np.min(first[n], second[n])
                 for n in range(len(first))
             ]
         )
-
-    return sim
-
-
-paras = [[10.0, 4.0, 115.0, 0.0, 1.0, 0.0, -1.0]   ,
-[14.0, 4.0, 169.0, 0.0, 2.0, 1.0, -1.0]   ,
-[14.0, 4.0, 160.0, 1.0, 3.0, 1.0, -1.0]   ,
-[8.0, 4.0, 211.0, 1.0, 3.0, 0.0, -1.0]    ,
-[8.0, 4.0, 373.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 424.0, 1.0, 3.0, 1.0, -1.0]   ,
-[10.0, 4.0, 349.0, 1.0, 1.0, 0.0, -1.0]   ,
-[10.0, 4.0, 103.0, 1.0, 3.0, 0.0, -1.0]   ,
-[12.0, 4.0, 421.0, 1.0, 2.0, 0.0, -1.0]   ,
-[8.0, 4.0, 289.0, 1.0, 3.0, 1.0, -1.0]    ,
-[12.0, 4.0, 478.0, 0.0, 3.0, 1.0, -1.0]   ,
-[16.0, 4.0, 16.0, 0.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 271.0, 0.0, 2.0, 1.0, -1.0]   ,
-[14.0, 4.0, 130.0, 1.0, 1.0, 1.0, -1.0]   ,
-[12.0, 4.0, 463.0, 0.0, 1.0, 1.0, -1.0]   ,
-[16.0, 4.0, 301.0, 0.0, 3.0, 0.0, -1.0]   ,
-[12.0, 4.0, 253.0, 0.0, 3.0, 1.0, -1.0]   ,
-[16.0, 4.0, 208.0, 0.0, 3.0, 0.0, -1.0]   ,
-[16.0, 4.0, 145.0, 1.0, 1.0, 0.0, -1.0]   ,
-[12.0, 4.0, 397.0, 1.0, 1.0, 0.0, -1.0]   ,
-[16.0, 4.0, 43.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 379.0, 1.0, 2.0, 0.0, -1.0]   ,
-[14.0, 4.0, 133.0, 1.0, 1.0, 0.0, -1.0]   ,
-[14.0, 4.0, 409.0, 0.0, 2.0, 0.0, -1.0]   ,
-[8.0, 4.0, 175.0, 1.0, 3.0, 0.0, -1.0]    ,
-[8.0, 4.0, 289.0, 1.0, 2.0, 0.0, -1.0]    ,
-[12.0, 4.0, 379.0, 1.0, 1.0, 1.0, -1.0]   ,
-[12.0, 4.0, 82.0, 0.0, 1.0, 0.0, -1.0]    ,
-[10.0, 4.0, 319.0, 1.0, 2.0, 0.0, -1.0]   ,
-[16.0, 4.0, 433.0, 1.0, 3.0, 0.0, -1.0]   ,
-[14.0, 4.0, 37.0, 1.0, 1.0, 1.0, -1.0]    ,
-[10.0, 4.0, 277.0, 1.0, 1.0, 0.0, -1.0]   ,
-[14.0, 4.0, 427.0, 0.0, 1.0, 1.0, -1.0]   ,
-[12.0, 4.0, 208.0, 0.0, 2.0, 1.0, -1.0]   ,
-[8.0, 4.0, 400.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 67.0, 0.0, 2.0, 1.0, -1.0]    ,
-[16.0, 4.0, 160.0, 1.0, 3.0, 0.0, -1.0]   ,
-[16.0, 4.0, 364.0, 1.0, 2.0, 0.0, -1.0]   ,
-[16.0, 4.0, 217.0, 1.0, 1.0, 0.0, -1.0]   ,
-[16.0, 4.0, 37.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 226.0, 1.0, 2.0, 0.0, -1.0]   ,
-[16.0, 4.0, 343.0, 1.0, 3.0, 0.0, -1.0]   ,
-[8.0, 4.0, 367.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 97.0, 0.0, 3.0, 1.0, -1.0]    ,
-[10.0, 4.0, 292.0, 1.0, 3.0, 0.0, -1.0]   ,
-[16.0, 4.0, 154.0, 0.0, 1.0, 1.0, -1.0]   ,
-[8.0, 4.0, 91.0, 0.0, 2.0, 1.0, -1.0]     ,
-[16.0, 4.0, 487.0, 0.0, 3.0, 0.0, -1.0]   ,
-[10.0, 4.0, 250.0, 0.0, 2.0, 1.0, -1.0]   ,
-[14.0, 4.0, 49.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 13.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 16.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 19.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 22.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 25.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 28.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 31.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 34.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 37.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 40.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 43.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 10.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 13.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 16.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 19.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 22.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 25.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 28.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 31.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 34.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 37.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 40.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 46.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 49.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 52.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 55.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 58.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 61.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 64.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 67.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 10.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 13.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 70.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 16.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 19.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 22.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 73.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 25.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 28.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 31.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 34.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 37.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 40.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 10.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 13.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 43.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 16.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 19.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 46.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 22.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 25.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 28.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 52.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 31.0, 1.0, 1.0, 0.0, -1.0]    ,
-[10.0, 4.0, 10.0, 1.0, 1.0, 0.0, -1.0]    ,
-[10.0, 4.0, 13.0, 1.0, 1.0, 0.0, -1.0]    ,
-[10.0, 4.0, 16.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 34.0, 1.0, 1.0, 0.0, -1.0]    ,
-[10.0, 4.0, 19.0, 1.0, 1.0, 0.0, -1.0]    ,
-[10.0, 4.0, 22.0, 1.0, 1.0, 0.0, -1.0]    ,
-[8.0, 4.0, 10.0, 1.0, 1.0, 0.0, -1.0]     ,
-[8.0, 4.0, 13.0, 1.0, 1.0, 0.0, -1.0]     ,
-[10.0, 4.0, 25.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 76.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 13.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 16.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 19.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 22.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 25.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 13.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 28.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 16.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 19.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 22.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 25.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 10.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 28.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 13.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 31.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 34.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 37.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 10.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 40.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 13.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 0.0, 1.0, 0.0, -1.0]    ,
-[8.0, 4.0, 16.0, 1.0, 1.0, 0.0, -1.0]     ,
-[16.0, 4.0, 43.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 16.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 19.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 46.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 22.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 31.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 34.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 37.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 16.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 40.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 19.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 22.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 43.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 25.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 46.0, 1.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 25.0, 1.0, 2.0, 0.0, -1.0]    ,
-[12.0, 4.0, 10.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 13.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 16.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 19.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 22.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 25.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 28.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 31.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 34.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 37.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 40.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 43.0, 0.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 0.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 55.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 49.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 10.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 79.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 49.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 82.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 28.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 31.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 52.0, 1.0, 2.0, 0.0, -1.0]    ,
-[12.0, 4.0, 37.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 13.0, 0.0, 2.0, 0.0, -1.0]    ,
-[8.0, 4.0, 19.0, 1.0, 1.0, 0.0, -1.0]     ,
-[16.0, 4.0, 55.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 13.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 46.0, 0.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 13.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 85.0, 1.0, 1.0, 0.0, -1.0]    ,
-[12.0, 4.0, 10.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 88.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 91.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 1.0, 3.0, 1.0, -1.0]    ,
-[16.0, 4.0, 94.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 97.0, 1.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 28.0, 1.0, 3.0, 0.0, -1.0]    ,
-[12.0, 4.0, 13.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 49.0, 0.0, 1.0, 0.0, -1.0]    ,
-[8.0, 4.0, 22.0, 1.0, 1.0, 0.0, -1.0]     ,
-[16.0, 4.0, 16.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 10.0, 0.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 58.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 46.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 100.0, 1.0, 1.0, 0.0, -1.0]   ,
-[16.0, 4.0, 52.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 103.0, 1.0, 1.0, 0.0, -1.0]   ,
-[8.0, 4.0, 10.0, 1.0, 3.0, 0.0, -1.0]     ,
-[16.0, 4.0, 499.0, 0.0, 1.0, 0.0, -1.0]   ,
-[14.0, 4.0, 16.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 58.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 34.0, 1.0, 2.0, 0.0, -1.0]    ,
-[12.0, 4.0, 16.0, 1.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 52.0, 0.0, 1.0, 0.0, -1.0]    ,
-[8.0, 4.0, 25.0, 1.0, 1.0, 0.0, -1.0]     ,
-[16.0, 4.0, 13.0, 0.0, 3.0, 0.0, -1.0]    ,
-[10.0, 4.0, 28.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 49.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 106.0, 1.0, 1.0, 0.0, -1.0]   ,
-[16.0, 4.0, 55.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 109.0, 1.0, 1.0, 0.0, -1.0]   ,
-[14.0, 4.0, 37.0, 1.0, 2.0, 0.0, -1.0]    ,
-[12.0, 4.0, 16.0, 1.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 112.0, 1.0, 1.0, 0.0, -1.0]   ,
-[16.0, 4.0, 52.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 499.0, 1.0, 3.0, 0.0, -1.0]   ,
-[14.0, 4.0, 61.0, 1.0, 1.0, 0.0, -1.0]    ,
-[16.0, 4.0, 16.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 19.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 22.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 25.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 28.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 31.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 34.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 37.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 40.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 43.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 46.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 49.0, 0.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 10.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 19.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 22.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 52.0, 0.0, 3.0, 0.0, -1.0]    ,
-[16.0, 4.0, 25.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 28.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 31.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 34.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 40.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 43.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 46.0, 0.0, 2.0, 0.0, -1.0]    ,
-[16.0, 4.0, 55.0, 0.0, 1.0, 0.0, -1.0]    ,
-[14.0, 4.0, 13.0, 0.0, 3.0, 0.0, -1.0]    ,
-[14.0, 4.0, 19.0, 1.0, 1.0, 1.0, -1.0]    ,
-[16.0, 4.0, 61.0, 1.0, 2.0, 0.0, -1.0]    ,
-[14.0, 4.0, 10.0, 0.0, 1.0, 0.0, -1.0]]
