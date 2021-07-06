@@ -21,7 +21,6 @@ def test_transformer(binning_method):
     p = SFA(
         word_length=word_length,
         alphabet_size=alphabet_size,
-        anova=False,
         binning_method=binning_method,
     )
     p.fit(X, y)
@@ -46,11 +45,10 @@ def test_dft_mft(fourier_transform, norm):
     window_size = np.shape(X_tab)[1]
 
     p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
+        word_length=6,
+        alphabet_size=4,
         window_size=window_size,
         norm=norm,
-        binning_method="equi-depth",
         fourier_transform=fourier_transform
     ).fit(X, y)
 
@@ -70,7 +68,6 @@ def test_dft_mft(fourier_transform, norm):
         alphabet_size=alphabet_size,
         window_size=window_size,
         norm=norm,
-        binning_method="equi-depth",
         fourier_transform=fourier_transform,
     ).fit(X, y)
 
@@ -123,33 +120,56 @@ def test_sfa_anova(binning_method):
 
 
 # test word lengths larger than the window-length
-def test_word_lengths():
+@pytest.mark.parametrize("word_length", [6, 7])
+@pytest.mark.parametrize("alphabet_size", [4, 5])
+@pytest.mark.parametrize("window_size", [5, 6])
+@pytest.mark.parametrize("bigrams", [True, False])
+@pytest.mark.parametrize("levels", [1, 2])
+@pytest.mark.parametrize("fourier_transform", ["fft", "dft"])
+def test_word_lengths(word_length, alphabet_size, window_size, bigrams, levels, fourier_transform):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
-    word_lengths = [6, 7]
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        bigrams=bigrams,
+        levels=levels,
+        fourier_transform=fourier_transform,
+    ).fit(X, y)
+
+    assert p.breakpoints is not None
+    _ = p.transform(X, y)
+
+
+def test_typed_dict():
+    # load training data
+    X, y = load_gunpoint(split="train", return_X_y=True)
+
+    word_length = 6
     alphabet_size = 4
-    window_sizes = [5, 6]
 
-    for binning in ["equi-depth", "information-gain"]:
-        for word_length in word_lengths:
-            for bigrams in [True, False]:
-                for norm in [True, False]:
-                    for anova in [True, False]:
-                        for window_size in window_sizes:
-                            p = SFA(
-                                word_length=word_length,
-                                anova=anova,
-                                alphabet_size=alphabet_size,
-                                bigrams=bigrams,
-                                window_size=window_size,
-                                norm=norm,
-                                binning_method=binning,
-                            ).fit(X, y)
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        levels=2,
+        typed_dict=True,
+    )
+    p.fit(X, y)
+    word_list = p.bag_to_string(p.transform(X, y)[0][0])
 
-                            assert p.breakpoints is not None
+    word_length = 6
+    alphabet_size = 4
 
-                            _ = p.transform(X, y)
+    p2 = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        levels=2,
+        typed_dict=False,
+    )
+    p2.fit(X, y)
+    word_list2 = p2.bag_to_string(p2.transform(X, y)[0][0])
 
+    assert word_list == word_list2
 
-#levels

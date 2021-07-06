@@ -47,7 +47,7 @@ def test_boss_on_power_demand():
     boss.fit(X_train, y_train)
 
     score = boss.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.88
+    assert score >= 0.9
 
 
 boss_gunpoint_probas = np.array(
@@ -57,36 +57,36 @@ boss_gunpoint_probas = np.array(
             1.0,
         ],
         [
-            0.05263157894736842,
-            0.9473684210526315,
+            0.16,
+            0.84,
         ],
         [
-            0.8421052631578947,
-            0.15789473684210525,
+            1.0,
+            0.0,
         ],
         [
-            0.8947368421052632,
-            0.10526315789473684,
+            0.92,
+            0.08,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.7368421052631579,
-            0.2631578947368421,
+            0.96,
+            0.04,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.8947368421052632,
-            0.10526315789473684,
+            1.0,
+            0.0,
         ],
         [
-            0.7368421052631579,
-            0.2631578947368421,
+            1.0,
+            0.0,
         ],
         [
             0.0,
@@ -109,16 +109,8 @@ individual_boss_gunpoint_probas = np.array(
             0.0,
         ],
         [
-            1.0,
-            0.0,
-        ],
-        [
             0.0,
             1.0,
-        ],
-        [
-            1.0,
-            0.0,
         ],
         [
             0.0,
@@ -131,6 +123,14 @@ individual_boss_gunpoint_probas = np.array(
         [
             0.0,
             1.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
         ],
         [
             0.0,
@@ -140,17 +140,17 @@ individual_boss_gunpoint_probas = np.array(
 )
 
 
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-#
+def print_array(array):
+    print('[')
+    for sub_array in array:
+        print('[')
+        for value in sub_array:
+            print(value.astype(str), end='')
+            print(', ')
+        print('],')
+    print(']')
+
+
 # if __name__ == "__main__":
 #     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
 #     X_test, y_test = load_gunpoint(split="test", return_X_y=True)

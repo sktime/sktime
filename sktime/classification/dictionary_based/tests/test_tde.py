@@ -25,7 +25,7 @@ def test_tde_on_gunpoint():
     tde.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = tde.predict_proba(X_test.iloc[indices])
+    probas = tde.predict_proba(X_test.iloc[indices]).round(6)
     testing.assert_array_equal(probas, tde_gunpoint_probas)
 
 
@@ -79,54 +79,51 @@ def test_tde_on_basic_motions():
     tde.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = tde.predict_proba(X_test.iloc[indices])
+    probas = tde.predict_proba(X_test.iloc[indices]).round(6)
     testing.assert_array_equal(probas, tde_basic_motions_probas)
-
-
-#todo test HI
 
 
 tde_gunpoint_probas = np.array(
     [
         [
-            0.18694,
-            0.81306,
+            0.0,
+            1.0,
         ],
         [
-            0.31306,
-            0.68694,
+            0.203726,
+            0.796274,
         ],
         [
-            0.565298,
-            0.434702,
+            0.698027,
+            0.301973,
         ],
         [
-            0.439179,
-            0.560821,
+            0.596164,
+            0.403836,
         ],
         [
-            0.18694,
-            0.81306,
+            0.188713,
+            0.811287,
         ],
         [
-            0.565298,
-            0.434702,
+            0.698027,
+            0.301973,
         ],
         [
-            0.18694,
-            0.81306,
+            0.0,
+            1.0,
         ],
         [
-            0.565298,
-            0.434702,
+            0.698027,
+            0.301973,
         ],
         [
-            0.565298,
-            0.434702,
+            0.596164,
+            0.403836,
         ],
         [
-            0.18694,
-            0.81306,
+            0.188713,
+            0.811287,
         ],
     ]
 )
@@ -177,133 +174,133 @@ individual_tde_gunpoint_probas = np.array(
 tde_basic_motions_probas = np.array(
     [
         [
-            0.8,
-            0.2,
-        ],
-        [
-            0.1,
-            0.9,
-        ],
-        [
-            0.7,
-            0.3,
-        ],
-        [
-            0.1,
-            0.9,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.1,
-            0.9,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.1,
-            0.9,
-        ],
-        [
-            0.1,
-            0.9,
+            1.0,
+            0.0,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.9,
-            0.1,
+            0.885977,
+            0.114023,
+        ],
+        [
+            0.084772,
+            0.915228,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.17557,
+            0.82443,
+        ],
+        [
+            0.885977,
+            0.114023,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.2,
-            0.8,
+            0.061547,
+            0.938453,
         ],
         [
-            0.9,
-            0.1,
+            0.084772,
+            0.915228,
         ],
         [
-            0.9,
-            0.1,
+            1.0,
+            0.0,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.2,
-            0.8,
+            0.198795,
+            0.801205,
         ],
         [
-            0.7,
-            0.3,
+            1.0,
+            0.0,
         ],
         [
-            0.9,
-            0.1,
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.17557,
+            0.82443,
+        ],
+        [
+            0.885977,
+            0.114023,
+        ],
+        [
+            1.0,
+            0.0,
         ],
     ]
 )
 
 
-def print_array(array):
-    print('[')
-    for sub_array in array:
-        print('[')
-        for value in sub_array:
-            print(value.astype(str), end='')
-            print(', ')
-        print('],')
-    print(']')
-
-
-if __name__ == "__main__":
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
-
-    tde_u = TemporalDictionaryEnsemble(
-        n_parameter_samples=20,
-        max_ensemble_size=10,
-        randomly_selected_params=10,
-        random_state=0
-    )
-    indiv_tde = IndividualTDE(random_state=0)
-
-    tde_u.fit(X_train.iloc[indices], y_train[indices])
-    probas = tde_u.predict_proba(X_test.iloc[indices]).round(6)
-    print_array(probas)
-
-    indiv_tde.fit(X_train.iloc[indices], y_train[indices])
-    probas = indiv_tde.predict_proba(X_test.iloc[indices])
-    print_array(probas)
-
-    # X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    # X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    # indices = np.random.RandomState(0).permutation(20)
-    #
-    # tde_m = TemporalDictionaryEnsemble(
-    #     n_parameter_samples=20,
-    #     max_ensemble_size=10,
-    #     randomly_selected_params=10,
-    #     random_state=0
-    # )
-    #
-    # tde_m.fit(X_train.iloc[indices], y_train[indices])
-    # probas = tde_m.predict_proba(X_test.iloc[indices]).round(6)
-    # print_array(probas)
+# def print_array(array):
+#     print('[')
+#     for sub_array in array:
+#         print('[')
+#         for value in sub_array:
+#             print(value.astype(str), end='')
+#             print(', ')
+#         print('],')
+#     print(']')
+#
+#
+# if __name__ == "__main__":
+#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).permutation(10)
+#
+#     tde_u = TemporalDictionaryEnsemble(
+#         n_parameter_samples=20,
+#         max_ensemble_size=10,
+#         randomly_selected_params=10,
+#         random_state=0,
+#     )
+#     indiv_tde = IndividualTDE(random_state=0)
+#
+#     tde_u.fit(X_train.iloc[indices], y_train[indices])
+#     probas = tde_u.predict_proba(X_test.iloc[indices]).round(6)
+#     print_array(probas)
+#
+#     indiv_tde.fit(X_train.iloc[indices], y_train[indices])
+#     probas = indiv_tde.predict_proba(X_test.iloc[indices])
+#     print_array(probas)
+#
+#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).permutation(20)
+#
+#     tde_m = TemporalDictionaryEnsemble(
+#         n_parameter_samples=20,
+#         max_ensemble_size=10,
+#         randomly_selected_params=10,
+#         random_state=0
+#     )
+#
+#     tde_m.fit(X_train.iloc[indices], y_train[indices])
+#     probas = tde_m.predict_proba(X_test.iloc[indices]).round(6)
+#     print_array(probas)
 

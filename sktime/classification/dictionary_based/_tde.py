@@ -486,6 +486,7 @@ class IndividualTDE(BaseClassifier):
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
+        self.highest_dim_bit = 0
         self.dims = []
         self.class_vals = []
         self.num_classes = 0
@@ -519,14 +520,7 @@ class IndividualTDE(BaseClassifier):
         if self.n_dims > 1:
             self.dims, self.transformers = self._select_dims(X, y)
 
-            # words = [Dict.empty(
-            #     key_type=types.Tuple((types.Tuple((types.int64, types.int16)), types.uint16)),
-            #     value_type=types.uint32,
-            # ) if self.levels > 1 else Dict.empty(
-            #     key_type=types.Tuple((types.int64, types.uint16)),
-            #     value_type=types.uint32,
-            # ) for _ in range(self.n_instances)]
-            words = [{} for _ in range(self.n_instances)]
+            words = [defaultdict(int) for _ in range(self.n_instances)]
 
             for i, dim in enumerate(self.dims):
                 X_dim = X[:, dim, :].reshape(self.n_instances, 1, self.series_length)
@@ -535,7 +529,7 @@ class IndividualTDE(BaseClassifier):
 
                 for n in range(self.n_instances):
                     for word, count in dim_words[n].items():
-                        words[n][(word, dim)] = count
+                        words[n][word << self.highest_dim_bit | dim] = count
 
             self.transformed_data = words
         else:
@@ -552,10 +546,10 @@ class IndividualTDE(BaseClassifier):
                     lower_bounding=False,
                     save_words=False,
                     fourier_transform="dft",
-                    typed_dict=False,
                     n_jobs=self.n_jobs,
                 )
             )
+            print(self.transformers[0])
             sfa = self.transformers[0].fit_transform(X, y)
             self.transformed_data = sfa[0]
 
@@ -578,14 +572,7 @@ class IndividualTDE(BaseClassifier):
         num_cases = X.shape[0]
 
         if self.n_dims > 1:
-            # words = [Dict.empty(
-            #     key_type=types.Tuple((types.Tuple((types.int64, types.int16)), types.uint16)),
-            #     value_type=types.uint32,
-            # ) if self.levels > 1 else Dict.empty(
-            #     key_type=types.Tuple((types.int64, types.uint16)),
-            #     value_type=types.uint32,
-            # ) for _ in range(num_cases)]
-            words = [{} for _ in range(num_cases)]
+            words = [defaultdict(int) for _ in range(num_cases)]
 
             for i, dim in enumerate(self.dims):
                 X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length)
@@ -594,7 +581,7 @@ class IndividualTDE(BaseClassifier):
 
                 for n in range(num_cases):
                     for word, count in dim_words[n].items():
-                        words[n][(word, dim)] = count
+                        words[n][word << self.highest_dim_bit | dim] = count
 
             test_bags = words
         else:
@@ -645,6 +632,7 @@ class IndividualTDE(BaseClassifier):
         return nn
 
     def _select_dims(self, X, y):
+        self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
         accs = []
         transformers = []
 
@@ -665,7 +653,6 @@ class IndividualTDE(BaseClassifier):
                     save_words=False,
                     save_binning_dft=True,
                     fourier_transform="dft",
-                    typed_dict=False,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -733,32 +720,27 @@ def histogram_intersection(first, second):
 
     Passed either dictionaries or numpy arrays.
     """
-    if isinstance(first, Dict):
-        return _histogram_intersection_dict(first, second)
-    elif isinstance(first, dict):
+    if isinstance(first, dict):
         sim = 0
         for word, val_a in first.items():
             val_b = second.get(word, 0)
             sim += min(val_a, val_b)
         return sim
+    if isinstance(first, Dict):
+        return _histogram_intersection_dict(first, second)
     else:
-        return _histogram_intersection_arr(first, second)
+        return np.sum(
+            [
+                0 if first[n] == 0 else np.min(first[n], second[n])
+                for n in range(len(first))
+            ]
+        )
 
 
-@njit(fastmath=True, cache=True)
+@njit(fastmath=True)
 def _histogram_intersection_dict(first, second):
     sim = 0
     for word, val_a in first.items():
         val_b = second.get(word, types.uint32(0))
         sim += min(val_a, val_b)
     return sim
-
-
-@njit(fastmath=True, cache=True)
-def _histogram_intersection_arr(first, second):
-    return np.sum(
-            [
-                0 if first[n] == 0 else np.min(first[n], second[n])
-                for n in range(len(first))
-            ]
-        )
