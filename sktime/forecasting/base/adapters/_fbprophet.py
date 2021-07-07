@@ -10,15 +10,20 @@ import os
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 from contextlib import contextmanager
 
 
-class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing fbprophet and neuralprophet"""
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    _tags = {
+        "univariate-only": False,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
         Parameters
         ----------
@@ -32,11 +37,9 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
         self._instantiate_model()
         self._check_changepoints()
         self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
-        self._set_fh(fh)
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
@@ -61,10 +64,9 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             with _suppress_stdout_stderr():
                 self._forecaster.fit(df=df, **fit_params)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict
 
         Parameters
@@ -90,8 +92,6 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         Exception
             Error when merging data
         """
-        self.check_is_fitted()
-        self._set_fh(fh)
         self._update_X(X, enforce_index_type=pd.DatetimeIndex)
 
         fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
