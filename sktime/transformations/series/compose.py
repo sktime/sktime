@@ -65,7 +65,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     _required_parameters = ["transformer"]
     _tags = {
-        "univariate-only": True,
+        "univariate-only": False,
         "fit-in-transform": True,
     }
 
@@ -85,7 +85,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
             z = self.transformer_.transform(z, X)
         return z
@@ -93,7 +93,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
         self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
             z = self.transformer_.inverse_transform(z, X=None)
         return z
