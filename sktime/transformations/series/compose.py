@@ -110,6 +110,21 @@ class ColumnComposition(_SeriesToSeriesTransformer):
         scikit-learn-like or sktime-like transformer to fit and apply to series
     columns : list of str
             Names of columns that are supposed to be transformed
+
+     Attributes
+    ----------
+    transformers_ : dict of {str : transformer}
+        Maps columns to transformers
+
+    Example
+    -------
+    >>> from sktime.datasets import base
+    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.series.compose import ColumnComposition
+
+    >>> y, X = base.load_longley()
+    >>> transformer = ColumnComposition(Detrender())
+    >>> y_hat = transformer.fit_transform(X)
     """
 
     _required_parameters = ["transformer"]
@@ -189,9 +204,9 @@ class ColumnComposition(_SeriesToSeriesTransformer):
             # make copy of z
             z = z.copy()
             # make sure z contains all columns that the user wants to transform
-            Z_wanted_keys = set(self.columns)
-            Z_new_keys = set(z.columns)
-            difference = Z_wanted_keys.difference(Z_new_keys)
+            z_wanted_keys = set(self.columns)
+            z_new_keys = set(z.columns)
+            difference = z_wanted_keys.difference(z_new_keys)
             if len(difference) != 0:
                 raise ValueError("Missing columns" + str(difference) + "in Z.")
             for colname in self.columns:
@@ -200,6 +215,7 @@ class ColumnComposition(_SeriesToSeriesTransformer):
                 z[colname] = self.transformers_[colname].transform(z[colname], X)
             return z
 
+    @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
         """
         Inverse-transform data.
@@ -231,9 +247,9 @@ class ColumnComposition(_SeriesToSeriesTransformer):
             z = z.copy()
 
             # make sure z contains all columns that the user wants to transform
-            Z_wanted_keys = set(self.columns)
-            Z_new_keys = set(z.columns)
-            difference = Z_wanted_keys.difference(Z_new_keys)
+            z_wanted_keys = set(self.columns)
+            z_new_keys = set(z.columns)
+            difference = z_wanted_keys.difference(z_new_keys)
             if len(difference) != 0:
                 raise ValueError("Missing columns" + str(difference) + "in Z.")
             for colname in self.columns:
@@ -243,6 +259,7 @@ class ColumnComposition(_SeriesToSeriesTransformer):
                 )
             return z
 
+    @if_delegate_has_method(delegate="transformer")
     def update(self, Z, X=None, update_params=True):
         """
         Update the parameters of the estimator with new data
@@ -272,9 +289,9 @@ class ColumnComposition(_SeriesToSeriesTransformer):
             z = z.copy()
 
             # make sure z contains all columns that the user wants to transform
-            Z_wanted_keys = set(self.columns)
-            Z_new_keys = set(z.columns)
-            difference = Z_wanted_keys.difference(Z_new_keys)
+            z_wanted_keys = set(self.columns)
+            z_new_keys = set(z.columns)
+            difference = z_wanted_keys.difference(z_new_keys)
             if len(difference) != 0:
                 raise ValueError("Missing columns" + str(difference) + "in Z.")
             for colname in self.columns:
