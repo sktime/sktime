@@ -593,7 +593,6 @@ class IndividualTDE(BaseClassifier):
                     n_jobs=self.n_jobs,
                 )
             )
-            print(self.transformers[0])
             sfa = self.transformers[0].fit_transform(X, y)
             self.transformed_data = sfa[0]
 
