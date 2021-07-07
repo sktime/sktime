@@ -178,4 +178,3 @@ def test_typed_dict():
     word_list2 = p2.bag_to_string(p2.transform(X, y)[0][0])
 
     assert word_list == word_list2
-

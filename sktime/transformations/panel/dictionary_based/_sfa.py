@@ -329,7 +329,7 @@ class SFA(_PanelToPanelTransformer):
                     self.norm,
                     self.inverse_sqrt_win_size,
                     self.lower_bounding,
-            )
+                )
                 if self.fourier_transform == "dft"
                 else self._fast_fourier_transform(row)
             )
@@ -507,11 +507,10 @@ class SFA(_PanelToPanelTransformer):
         if self.typed_dict:
             bag = (
                 Dict.empty(
-                    key_type=types.UniTuple(types.int64, 2),
-                    value_type=types.uint32
+                    key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
                 )
-                if self.levels > 1 else
-                Dict.empty(key_type=types.int64, value_type=types.uint32)
+                if self.levels > 1
+                else Dict.empty(key_type=types.int64, value_type=types.uint32)
             )
         else:
             bag = {}
@@ -708,7 +707,7 @@ class SFA(_PanelToPanelTransformer):
         for i in range(self.levels):
             if self.typed_dict:
                 new_word, num_quadrants = self._add_level_typed(
-                    word, start, i, window_ind, self.window_size, self.series_length,
+                    word, start, i, window_ind, self.window_size, self.series_length
                 )
             else:
                 new_word, num_quadrants = self._add_level(
@@ -728,7 +727,7 @@ class SFA(_PanelToPanelTransformer):
     @staticmethod
     @njit(fastmath=True, cache=True)
     def _add_level(
-            word, start, level, window_ind, window_size, series_length, level_bits
+        word, start, level, window_ind, window_size, series_length, level_bits
     ):
         num_quadrants = pow(2, level)
         quadrant = start + int(
@@ -792,8 +791,8 @@ class SFA(_PanelToPanelTransformer):
                     key_type=types.Tuple((types.int64, types.int16)),
                     value_type=types.uint32,
                 )
-                if self.levels > 1 else
-                Dict.empty(key_type=types.int64, value_type=types.uint32)
+                if self.levels > 1
+                else Dict.empty(key_type=types.int64, value_type=types.uint32)
             )
         else:
             new_bag = {}

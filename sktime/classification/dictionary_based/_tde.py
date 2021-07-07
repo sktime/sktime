@@ -146,7 +146,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.bigrams = bigrams
 
         self.time_limit_in_minutes = time_limit_in_minutes
-        self.save_train_predictions=save_train_predictions
+        self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -388,11 +388,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         n_instances, n_dims, series_length = X.shape
 
-        if n_instances != self.n_instances or n_dims != self.n_dims or \
-                series_length != self.series_length:
-            raise ValueError("n_instances, n_dims, series_length mismatch. X should be "
-                             "the same as training data used in fit for train "
-                             "probabilities.")
+        if (
+            n_instances != self.n_instances
+            or n_dims != self.n_dims
+            or series_length != self.series_length
+        ):
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
 
         # todo flag for saving results
         # todo test and fix
@@ -419,9 +424,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
 
                 for n, pred in enumerate(preds):
-                    sums[self.class_dictionary.get(pred, -1)] += (
-                        self.weights[clf_idx[n][0]]
-                    )
+                    sums[self.class_dictionary.get(pred, -1)] += self.weights[
+                        clf_idx[n][0]
+                    ]
                     divisor += self.weights[clf_idx[n][0]]
 
                 results[i] = (
@@ -440,15 +445,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 preds = clf.predict(X_oob)
 
                 for n, pred in enumerate(preds):
-                    results[oob[n], self.class_dictionary.get(pred, -1)] += (
-                        self.weights[i]
-                    )
+                    results[
+                        oob[n], self.class_dictionary.get(pred, -1)
+                    ] += self.weights[i]
                     divisors[oob[n]] += self.weights[i]
 
             results = results / divisors
         else:
-            raise ValueError("Invalid train_estimate_method. "
-                             "Available options: loocv, oob")
+            raise ValueError(
+                "Invalid train_estimate_method. Available options: loocv, oob"
+            )
 
         return results
 
