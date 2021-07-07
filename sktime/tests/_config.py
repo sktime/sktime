@@ -293,7 +293,6 @@ ESTIMATOR_TEST_PARAMS = {
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
     ColumnComposition: {"transformer": Detrender()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
-
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
