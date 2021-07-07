@@ -140,17 +140,17 @@ individual_boss_gunpoint_probas = np.array(
 )
 
 
-def print_array(array):
-    print('[')
-    for sub_array in array:
-        print('[')
-        for value in sub_array:
-            print(value.astype(str), end='')
-            print(', ')
-        print('],')
-    print(']')
-
-
+# def print_array(array):
+#     print('[')
+#     for sub_array in array:
+#         print('[')
+#         for value in sub_array:
+#             print(value.astype(str), end='')
+#             print(', ')
+#         print('],')
+#     print(']')
+#
+#
 # if __name__ == "__main__":
 #     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
 #     X_test, y_test = load_gunpoint(split="test", return_X_y=True)

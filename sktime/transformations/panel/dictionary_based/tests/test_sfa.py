@@ -10,7 +10,9 @@ from sktime.utils.data_processing import from_nested_to_2d_array
 
 
 # Check the transformer has changed the data correctly.
-@pytest.mark.parametrize("binning_method", ["equi-depth", "equi-width", "information-gain", "kmeans"])
+@pytest.mark.parametrize(
+    "binning_method", ["equi-depth", "equi-width", "information-gain", "kmeans"]
+)
 def test_transformer(binning_method):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
@@ -49,7 +51,7 @@ def test_dft_mft(fourier_transform, norm):
         alphabet_size=4,
         window_size=window_size,
         norm=norm,
-        fourier_transform=fourier_transform
+        fourier_transform=fourier_transform,
     ).fit(X, y)
 
     if fourier_transform == "fft":
@@ -76,7 +78,9 @@ def test_dft_mft(fourier_transform, norm):
         if fourier_transform == "fft":
             dft = p._fast_fourier_transform(X_tab[0, i : window_size + i])
         else:
-            dft = p._discrete_fourier_transform(X_tab[0, i : window_size + i], word_length, norm, 1, True)
+            dft = p._discrete_fourier_transform(
+                X_tab[0, i : window_size + i], word_length, norm, 1, True
+            )
 
         assert (mft[i] - dft < 0.001).all()
 
@@ -126,7 +130,9 @@ def test_sfa_anova(binning_method):
 @pytest.mark.parametrize("bigrams", [True, False])
 @pytest.mark.parametrize("levels", [1, 2])
 @pytest.mark.parametrize("fourier_transform", ["fft", "dft"])
-def test_word_lengths(word_length, alphabet_size, window_size, bigrams, levels, fourier_transform):
+def test_word_lengths(
+    word_length, alphabet_size, window_size, bigrams, levels, fourier_transform
+):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 

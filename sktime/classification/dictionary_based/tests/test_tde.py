@@ -303,4 +303,3 @@ tde_basic_motions_probas = np.array(
 #     tde_m.fit(X_train.iloc[indices], y_train[indices])
 #     probas = tde_m.predict_proba(X_test.iloc[indices]).round(6)
 #     print_array(probas)
-
