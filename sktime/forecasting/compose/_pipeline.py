@@ -11,7 +11,6 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils import _has_tag
 from sktime.utils.validation.series import check_series
 
 
