@@ -29,7 +29,8 @@ Optional implements:
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - check_is_fitted()
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
