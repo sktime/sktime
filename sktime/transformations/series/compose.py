@@ -124,7 +124,7 @@ class ColumnComposition(_SeriesToSeriesTransformer):
 
     >>> y, X = base.load_longley()
     >>> transformer = ColumnComposition(Detrender())
-    >>> y_hat = transformer.fit_transform(X)
+    >>> yt = transformer.fit_transform(y, X)
     """
 
     _required_parameters = ["transformer"]
