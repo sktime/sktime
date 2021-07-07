@@ -143,7 +143,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/vedazeren"><img src="https://avatars3.githubusercontent.com/u/63582874?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vedazeren</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vedazeren" title="Code">💻</a> <a href="https://github.com/alan-turing-institute/sktime/commits?author=vedazeren" title="Tests">⚠️</a></td>
     <td align="center"><a href="https://github.com/vincent-nich12"><img src="https://avatars3.githubusercontent.com/u/36476633?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vincent-nich12</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vincent-nich12" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/AngelPone"><img src="https://avatars.githubusercontent.com/u/32930283?v=4&s=100" width="100px;" alt=""><br /><sub><b>Bohan Zhang</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=AngelPone" title="Code">💻</a></td>
   </tr>
 </table>
 

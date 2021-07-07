@@ -1069,7 +1069,16 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "AngelPone",
+      "name": "Bohan Zhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32930283?v=4",
+      "profile": "https://github.com/AngelPone",
+      "contributions": [
+        "code"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
