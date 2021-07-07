@@ -393,6 +393,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers(reverse=True):
-            if not _has_tag(transformer, "skip-inverse-transform"):
+            if not transformer._all_tags()["skip-inverse-transform"]:
                 zt = transformer.inverse_transform(zt, X)
         return zt
