@@ -105,8 +105,8 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab, kwargs=
     # test return matrix
     transformation = transformer.transform(x, y)
 
-    assert transformer.symmetric is False, (
-        f"Symmetric is set to wrong value for {pairwise_transformers_tab} "
+    assert transformer.X_equals_X2 is False, (
+        f"X_equals_X2 is set to wrong value for {pairwise_transformers_tab} "
         f"when both X1 and X2 passed"
     )
     assert isinstance(
@@ -117,7 +117,7 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab, kwargs=
         5,
     ), f"Shape of matrix returned is wrong for {pairwise_transformers_tab}"
 
-    # test symmetric
+    # test X_equals_X2
     if kwargs is not None:
         transformer = pairwise_transformers_tab(**kwargs)
     else:
@@ -129,7 +129,7 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab, kwargs=
         row = np.around((transformation[i, :]).T, decimals=5).astype(np.float)
         column = np.around(transformation[:, i], decimals=5).astype(np.float)
         assert np.array_equal(row, column)
-    assert transformer.symmetric, (
-        f"Symmetric is set to wrong value for {pairwise_transformers_tab} "
+    assert transformer.X_equals_X2, (
+        f"X_equals_X2 is set to wrong value for {pairwise_transformers_tab} "
         f"when only X1"
     )
