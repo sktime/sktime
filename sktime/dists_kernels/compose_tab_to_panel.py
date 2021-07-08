@@ -35,10 +35,6 @@ class AggrDist(BasePairwiseTransformerPanel):
         aggfunc_symm=True,
     ):
 
-        if aggfunc is None:
-            aggfunc = np.mean
-            aggfunc_symm = True
-
         self.aggfunc = aggfunc
         self.aggfunc_symm = aggfunc_symm
         self.transformer = transformer
@@ -71,6 +67,10 @@ class AggrDist(BasePairwiseTransformerPanel):
 
         aggfunc = self.aggfunc
         aggfunc_symm = self.aggfunc_symm
+        if aggfunc is None:
+            aggfunc = np.mean
+            aggfunc_symm = True
+
         transformer_symm = self.transformer._all_tags()["symmetric"]
 
         # whether we know that resulting matrix must be symmetric
