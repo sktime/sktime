@@ -260,7 +260,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             else:
                 scaler = preprocessing.StandardScaler()
                 scaler.fit(self._prev_parameters_x)
-                gp = KernelRidge(kernel="poly", degree=2)
+                gp = KernelRidge(kernel="poly", degree=1)
                 gp.fit(
                     scaler.transform(self._prev_parameters_x), self._prev_parameters_y
                 )
@@ -283,6 +283,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             )
             tde.fit(X_subsample, y_subsample)
             tde.subsample = subsample
+
+            if self.save_train_predictions:
+                tde._train_predictions = np.zeros(self.n_instances - subsample_size)
 
             tde._accuracy = self._individual_train_acc(
                 tde,
@@ -383,77 +386,34 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X, train_estimate_method="loocv"):
-        self.check_is_fitted()
+    def _get_train_probs(self, X):
+        num_inst = X.shape[0]
+        results = np.zeros((num_inst, self.n_classes))
+        for i in range(num_inst):
+            divisor = 0
+            sums = np.zeros(self.n_classes)
 
-        n_instances, n_dims, series_length = X.shape
+            cls_idx = []
+            for n, clf in enumerate(self.classifiers):
+                idx = np.where(clf.subsample == i)
+                if len(idx[0]) > 0:
+                    cls_idx.append([n, idx[0][0]])
 
-        if (
-            n_instances != self.n_instances
-            or n_dims != self.n_dims
-            or series_length != self.series_length
-        ):
-            raise ValueError(
-                "n_instances, n_dims, series_length mismatch. X should be "
-                "the same as the training data used in fit for generating train "
-                "probabilities."
+            preds = Parallel(n_jobs=self.n_jobs)(
+                delayed(self.classifiers[cls[0]]._train_predict)(
+                    cls[1],
+                )
+                for cls in cls_idx
             )
 
-        # todo flag for saving results
-        # todo test and fix
-        # todo thread
+            for n, pred in enumerate(preds):
+                sums[self.class_dictionary.get(pred, -1)] += self.weights[cls_idx[n][0]]
+                divisor += self.weights[cls_idx[n][0]]
 
-        results = np.zeros((n_instances, self.n_classes))
-
-        if train_estimate_method.lower() == "loocv":
-            for i in range(n_instances):
-                divisor = 0
-                sums = np.zeros(self.n_classes)
-
-                clf_idx = []
-                for n, clf in enumerate(self.classifiers):
-                    idx = np.where(clf.subsample == i)
-                    if len(idx[0]) > 0:
-                        clf_idx.append([n, idx[0][0]])
-
-                preds = Parallel(n_jobs=self.n_jobs)(
-                    delayed(self.classifiers[cls[0]]._train_predict)(
-                        cls[1],
-                    )
-                    for cls in clf_idx
-                )
-
-                for n, pred in enumerate(preds):
-                    sums[self.class_dictionary.get(pred, -1)] += self.weights[
-                        clf_idx[n][0]
-                    ]
-                    divisor += self.weights[clf_idx[n][0]]
-
-                results[i] = (
-                    np.ones(self.n_classes) * (1 / self.n_classes)
-                    if divisor == 0
-                    else sums / (np.ones(self.n_classes) * divisor)
-                )
-        elif train_estimate_method.lower() == "oob":
-            indices = range(n_instances)
-            divisors = np.zeros(self.n_estimators)
-            results = np.zeros((n_instances, self.n_classes))
-
-            for i, clf in enumerate(self.classifiers):
-                oob = [n for n in indices if n not in clf.subsample]
-                X_oob = X[oob]
-                preds = clf.predict(X_oob)
-
-                for n, pred in enumerate(preds):
-                    results[
-                        oob[n], self.class_dictionary.get(pred, -1)
-                    ] += self.weights[i]
-                    divisors[oob[n]] += self.weights[i]
-
-            results = results / divisors
-        else:
-            raise ValueError(
-                "Invalid train_estimate_method. Available options: loocv, oob"
+            results[i] = (
+                np.ones(self.n_classes) * (1 / self.n_classes)
+                if divisor == 0
+                else sums / (np.ones(self.n_classes) * divisor)
             )
 
         return results
@@ -461,8 +421,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def _individual_train_acc(self, tde, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
-
-        # todo save results in indiv classifier to train probs if flag is set
 
         if self.n_jobs > 1:
             c = Parallel(n_jobs=self.n_jobs)(
@@ -477,6 +435,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     return -1
                 elif c[i] == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    tde._train_predictions[i] = c[i]
+
         else:
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
@@ -486,6 +448,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
                 if c == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    tde._train_predictions[i] = c
 
         return correct / train_size
 
