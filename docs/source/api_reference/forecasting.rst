@@ -125,6 +125,7 @@ Composition
 
     EnsembleForecaster
     TransformedTargetForecaster
+    ForecastingPipeline
     DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
     MultioutputTabularRegressionForecaster

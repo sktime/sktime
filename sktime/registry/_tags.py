@@ -81,6 +81,24 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "should X be coerced to numpy type in check_X? yes/no",
     ),
+    # (
+    #     "handles-panel",
+    #     "annotator",
+    #     "bool",
+    #     "can handle panel annotations, i.e., list X/y?",
+    # ),
+    # (
+    #     "annotation-type",
+    #     "annotator",
+    #     "str",
+    #     "which annotation type? can be 'point', 'segment' or 'both'",
+    # ),
+    # (
+    #     "annotation-kind",
+    #     "annotator",
+    #     "str",
+    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
+    # ),
 ]
 
 ESTIMATOR_TAG_LIST = pd.DataFrame(ESTIMATOR_TAG_REGISTER)[0].tolist()
