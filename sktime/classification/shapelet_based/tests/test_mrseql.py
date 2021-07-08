@@ -31,5 +31,5 @@ def test_mrseql_on_gunpoint():
 
     # test number of correct predictions
     np.testing.assert_equal((sax_predicted == y_test).sum(), 148)
-    np.testing.assert_equal((sfa_predicted == y_test).sum(), 150)
+    np.testing.assert_equal((sfa_predicted == y_test).sum(), 149)
     np.testing.assert_equal((ss_predicted == y_test).sum(), 150)
