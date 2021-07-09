@@ -77,7 +77,7 @@ class Differencer(_SeriesToSeriesTransformer):
 
     Attributes
     ----------
-    lags : np.ndarray
+    lags : int or array-like
         Lags used to perform the differencing of the input series.
 
     remove_missing : bool
@@ -103,6 +103,7 @@ class Differencer(_SeriesToSeriesTransformer):
         self.lags = lags
         self.remove_missing = remove_missing
         self._Z = None
+        self._lags = None
         self._cumulative_lags = None
         self._prior_cum_lags = None
         self._prior_lags = None
@@ -158,10 +159,10 @@ class Differencer(_SeriesToSeriesTransformer):
         -------
         self
         """
-        self.lags = _check_lags(self.lags)
-        self._prior_lags = np.roll(self.lags, shift=1)
+        self._lags = _check_lags(self.lags)
+        self._prior_lags = np.roll(self._lags, shift=1)
         self._prior_lags[0] = 0
-        self._cumulative_lags = self.lags.cumsum()
+        self._cumulative_lags = self._lags.cumsum()
         self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
         self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
         self._Z = Z.copy()
@@ -177,7 +178,7 @@ class Differencer(_SeriesToSeriesTransformer):
         Z : pd.Series or pd.DataFrame
             The timeseries to be differenced.
 
-        lags : np.ndarray
+        lags : 1-dimensional np.ndarray
             Lags to be used in applying differences.
 
         Returns
@@ -210,23 +211,20 @@ class Differencer(_SeriesToSeriesTransformer):
             The reconstructed timeseries after the transformation has been reversed.
         """
         is_df = isinstance(Z, pd.DataFrame)
-        (
-            is_contained_by_fitted_z,
-            pad_z_inv,
-        ) = self._check_inverse_transform_index(Z)
+        is_contained_by_fit_z, pad_z_inv = self._check_inverse_transform_index(Z)
 
         # If `Z` is entirely contained in fitted `_Z` we can just return
         # the values from the timeseires stored in `fit` as a shortcut
-        if is_contained_by_fitted_z:
+        if is_contained_by_fit_z:
             Z_inv = self._Z.loc[Z.index, :] if is_df else self._Z.loc[Z.index]
 
         else:
             Z_inv = Z.copy()
             for i, lag_info in enumerate(
-                zip(self.lags[::-1], self._prior_cum_lags[::-1])
+                zip(self._lags[::-1], self._prior_cum_lags[::-1])
             ):
                 lag, prior_cum_lag = lag_info
-                _lags = self.lags[::-1][i + 1 :]
+                _lags = self._lags[::-1][i + 1 :]
                 _transformed = self._transform(self._Z, _lags)
 
                 # Determine index values for initial values needed to reverse
@@ -292,7 +290,7 @@ class Differencer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         Z = check_series(Z)
 
-        Z_transform = self._transform(Z, self.lags)
+        Z_transform = self._transform(Z, self._lags)
 
         if self.remove_missing:
             Z_transform = Z_transform.iloc[self._cumulative_lags[-1] :]
