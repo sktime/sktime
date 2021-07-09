@@ -149,6 +149,29 @@ def test_word_lengths(
     _ = p.transform(X, y)
 
 
+def test_bit_size():
+    # load training data
+    X, y = load_gunpoint(split="train", return_X_y=True)
+
+    word_length = 40
+    alphabet_size = 12
+    window_size = 75
+
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        levels=2,
+        bigrams=True,
+        window_size=window_size,
+    ).fit(X, y)
+
+    w = p.transform(X)
+    lengths = [x.bit_length() for x in list(w[0][0].keys())]
+
+    assert np.min(lengths) > 128
+    assert len(p.word_list(list(w[0][0].keys())[0])[0]) == 40
+
+
 def test_typed_dict():
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
