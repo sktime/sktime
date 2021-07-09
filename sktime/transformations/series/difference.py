@@ -126,14 +126,11 @@ class Differencer(_SeriesToSeriesTransformer):
         pad_z_inv = self.remove_missing or is_future
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(
-            np.array([*range(-1, -(self._cumulative_lags[-1] + 1), -1)])
-        )
-
+        fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
         index = fh.to_absolute(cutoff).to_pandas()
         index_diff = index.difference(self._Z.index)
 
-        if index_diff.shape[0] != 0:
+        if index_diff.shape[0] != 0 and not is_contained_by_fitted_z:
             msg = [
                 f"Inverse transform requires indices {index}",
                 "to have been stored in `fit()`,",
@@ -182,16 +179,16 @@ class Differencer(_SeriesToSeriesTransformer):
         diff :
             Differenced series.
         """
-        diff = Z.copy()
+        Zt = Z.copy()
 
         if len(lags) == 0:
-            return diff
+            return Zt
 
         else:
             for lag in lags:
-                diff = diff.diff(lag)
+                Zt = Zt.diff(lag)
 
-            return diff
+            return Zt
 
     def _inverse_transform(self, Z, X=None):
         """Logic used by `inverse_transform` to reverse transformation on  `Z`.
