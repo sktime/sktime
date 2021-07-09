@@ -143,15 +143,16 @@ def check_panel_to_panel_transform_multivariate(Estimator):
 
 
 def check_transform_returns_same_time_index(Estimator):
-    assert issubclass(Estimator, _SeriesToSeriesTransformer)
-    estimator = _construct_instance(Estimator)
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
-    for method in ["transform", "inverse_transform"]:
-        if hasattr(estimator, method):
-            X = _make_args(estimator, method)[0]
-            Xt = estimator.transform(X)
-            np.testing.assert_array_equal(X.index, Xt.index)
+    if _has_tag(Estimator, "transform-returns-same-time-index"):
+        assert issubclass(Estimator, _SeriesToSeriesTransformer)
+        estimator = _construct_instance(Estimator)
+        fit_args = _make_args(estimator, "fit")
+        estimator.fit(*fit_args)
+        for method in ["transform", "inverse_transform"]:
+            if hasattr(estimator, method):
+                X = _make_args(estimator, method)[0]
+                Xt = estimator.transform(X)
+                np.testing.assert_array_equal(X.index, Xt.index)
 
 
 def check_transform_inverse_transform_equivalent(Estimator):
@@ -159,7 +160,10 @@ def check_transform_inverse_transform_equivalent(Estimator):
     X = _make_args(estimator, "fit")[0]
     Xt = estimator.fit_transform(X)
     Xit = estimator.inverse_transform(Xt)
-    _assert_array_almost_equal(X, Xit)
+    if _has_tag(Estimator, "transform-returns-same-time-index"):
+        _assert_array_almost_equal(X, Xit)
+    else:
+        _assert_array_almost_equal(X.loc[Xit.index], Xit)
 
 
 def check_transformer_type(Estimator):
