@@ -97,7 +97,8 @@ def check_series_to_series_transform_multivariate(Estimator):
             Estimator, n_timepoints=n_timepoints, n_columns=n_columns
         )
         assert isinstance(out, (pd.DataFrame, np.ndarray))
-        assert out.shape == (n_timepoints, n_columns)
+        if _has_tag(Estimator, "transform-returns-same-time-index"):
+            assert out.shape == (n_timepoints, n_columns)
 
 
 def check_panel_to_tabular_transform_univariate(Estimator):
