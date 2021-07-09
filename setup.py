@@ -35,11 +35,11 @@ EXTRAS_REQUIRE = {
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",
         "tsfresh>=0.17.0",
-        "catch22>=0.2.0",
         "hcrystalball>=0.1.9",
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
+        "pyod>=0.8.0",
     ],
 }
 

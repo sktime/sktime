@@ -251,7 +251,7 @@ If you add a new dependency or change the version of an existing one, you need t
  - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt) for building the documentation,
  - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/main/.binder/requirements.txt) for launching notebooks on Binder.
 
-If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/check_imports.py).
+If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py).
 
 We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it.
 

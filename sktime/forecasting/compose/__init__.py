@@ -7,12 +7,15 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "EnsembleForecaster",
     "TransformedTargetForecaster",
+    "ForecastingPipeline",
     "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
     "MultioutputTimeSeriesRegressionForecaster",
     "RecursiveTabularRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
+    "DirRecTabularRegressionForecaster",
+    "DirRecTimeSeriesRegressionForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
     "ReducedForecaster",
@@ -21,6 +24,9 @@ __all__ = [
 
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
+from sktime.forecasting.compose._pipeline import ForecastingPipeline
+from sktime.forecasting.compose._reduce import DirRecTabularRegressionForecaster
+from sktime.forecasting.compose._reduce import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import MultioutputTabularRegressionForecaster

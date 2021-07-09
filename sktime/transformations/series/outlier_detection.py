@@ -74,6 +74,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         Z = check_series(Z)
+        Z = Z.copy()
 
         # multivariate
         if isinstance(Z, pd.DataFrame):
