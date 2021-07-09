@@ -18,6 +18,7 @@ We assume basic familiarity with `scikit-learn`_. If you haven’t worked with s
     :maxdepth: 1
 
     examples/01_forecasting.ipynb
+    examples/01a_forecasting_sklearn.ipynb
     examples/02_classification_univariate.ipynb
     examples/03_classification_multivariate.ipynb
     examples/04_benchmarking.ipynb
@@ -27,11 +28,13 @@ We assume basic familiarity with `scikit-learn`_. If you haven’t worked with s
     examples/catch22.ipynb
     examples/mrseql.ipynb
     examples/rocket.ipynb
+    examples/minirocket.ipynb
     examples/plateau_finder.ipynb
     examples/loading_data.ipynb
     examples/forecasting_with_hcrystalball.ipynb
     examples/dictionary_based_classification.ipynb
     examples/interpolation.ipynb
+    examples/window_splitter.ipynb
 
 .. _scikit-learn: https://scikit-learn.org/stable/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
