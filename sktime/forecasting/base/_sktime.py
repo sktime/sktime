@@ -1,20 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Refactored base class hierarchy and window forecaster base class.
-
-_SktimeForecaster and _xxxForecastingHorizonMixin are now mainly passthrough
-    for downwards compatibility with rest of package
+sktime window forecaster base class
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["Markus Löning", "@big-o"]
-__all__ = [
-    "_SktimeForecaster",
-    "_BaseWindowForecaster",
-    "_OptionalForecastingHorizonMixin",
-    "_RequiredForecastingHorizonMixin",
-]
+__author__ = ["@mloning", "@big-o"]
+__all__ = ["_BaseWindowForecaster"]
 
 import numpy as np
 import pandas as pd
@@ -25,24 +17,6 @@ from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_cv
-
-
-# keeping the _SktimeForecaster for the time being for its current children
-class _SktimeForecaster(BaseForecaster):
-    """Base class for forecaster implemented in sktime."""
-
-
-# keeping the mixins for the time being for its current children
-class _OptionalForecastingHorizonMixin:
-    """Mixin class for forecasters with optional fh in fit."""
-
-    _tags = {"requires-fh-in-fit": False}
-
-
-class _RequiredForecastingHorizonMixin:
-    """Mixin class for forecasters with required fh in fit."""
-
-    _tags = {"requires-fh-in-fit": True}
 
 
 class _BaseWindowForecaster(BaseForecaster):
