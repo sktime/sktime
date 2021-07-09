@@ -50,14 +50,20 @@ def _inverse_diff(series, lag):
 class Differencer(_SeriesToSeriesTransformer):
     """Apply iterative differences to a timeseries.
 
-    Difference transformations are applied at the specified lags in the order
-    provided. For example, using lags=[1, 12] corresponds to applying a
-    standard first difference, then differencing the first-differenced series
-    at lag 12 (in the event the input data has a monthly periodicity, this
-    would equate to a first difference followed by a seasonal difference).
-
     The transformation works for univariate and multivariate timeseries. However,
     the multivariate case applies the same differencing to every series.
+
+    Difference transformations are applied at the specified lags in the order
+    provided.
+
+    For example, given a timeseries with monthly periodicity, using lags=[1, 12]
+    corresponds to applying a standard first difference to handle trend, and
+    followed by a seasonal difference (at lag 12) to attempt to account for
+    seasonal dependence.
+
+    To provide a higher-order difference at the same lag list the lag multiple
+    times. For example, lags=[1, 1] takes iterative first differences like may
+    be needed for a series that is integrated of order 2.
 
     Parameters
     ----------
@@ -84,7 +90,7 @@ class Differencer(_SeriesToSeriesTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = Differencer(lags=[1, 12])
-    >>> y_hat = transformer.fit_transform(y)
+    >>> y_transform = transformer.fit_transform(y)
     """
 
     _tags = {
