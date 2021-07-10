@@ -23,6 +23,7 @@ sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
 sktime/transformations/panel/signature_based/ @jambo6
 sktime/transformations/series/theta.py @GuzalBulatova
+sktime/transformations/series/sqrt.py @rnkuhns
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/ets.py @HYang1996
