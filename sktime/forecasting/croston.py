@@ -2,11 +2,10 @@
 import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
-class Croston(_OptionalForecastingHorizonMixin, BaseForecaster):
+class Croston(BaseForecaster):
     """Croston's Forecasting Method.
 
     This was designed for forecasting intermittent demand.
@@ -33,6 +32,10 @@ class Croston(_OptionalForecastingHorizonMixin, BaseForecaster):
     [2]  Forecasting: Principles and Practice,
         Otext book by Rob J Hyndman and George Athanasopoulos
     """
+
+    _tags = {
+        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+    }
 
     def __init__(self, smoothing=0.1):
         # hyperparameter
