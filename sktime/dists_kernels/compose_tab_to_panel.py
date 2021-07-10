@@ -12,7 +12,7 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 class AggrDist(BasePairwiseTransformerPanel):
     """
-    pairwise distance based on aggregation function applied to sample-wise distance
+    panel distance obtained by applying aggregation function to tabular distance matrix
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series
 
     Components
