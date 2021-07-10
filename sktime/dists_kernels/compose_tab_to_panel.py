@@ -22,7 +22,7 @@ class AggrDist(BasePairwiseTransformerPanel):
     Hyper-parameters
     ----------------
     aggfunc: aggregation function 2D np.array -> float
-        default = np.mean
+        default = None, however, if transform is called then defaults to np.mean
     aggfunc_symm: bool - whether aggregation function is symmetric
             used for fast computation of the resultant matrix (if symmetric)
         default = True (should be set according to choice of aggfunc)
@@ -83,7 +83,7 @@ class AggrDist(BasePairwiseTransformerPanel):
 
                 if all_symm and j < i:
                     distmat[i, j] = distmat[j, i]
-                elif aggfunc is not None:
+                else:
                     distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
 
         return distmat

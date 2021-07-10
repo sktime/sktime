@@ -27,6 +27,10 @@ class BasePairwiseTransformer(BaseEstimator):
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
     }
 
+    def __init__(self):
+        super().__init__()
+        self.X_equals_X2 = False
+
     def __call__(self, X, X2=None):
         """
         Behaviour: returns pairwise distance/kernel matrix
@@ -84,7 +88,16 @@ class BasePairwiseTransformer(BaseEstimator):
             self.X_equals_X2 = True
         else:
             X2 = check_series(X2)
-            self.X_equals_X2 = False
+
+            def input_as_numpy(val):
+                if isinstance(val, pd.DataFrame):
+                    return val.to_numpy(copy=True)
+                return val
+
+            temp_X = input_as_numpy(X)
+            temp_X2 = input_as_numpy(X2)
+            if np.array_equal(temp_X, temp_X2):
+                self.X_equals_X2 = True
 
         return self._transform(X=X, X2=X2)
 
@@ -175,8 +188,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     }
 
     def __init__(self):
-        self.symmetric = False
         super(BasePairwiseTransformerPanel, self).__init__()
+        self.X_equals_X2 = False
 
     def __call__(self, X, X2=None):
         """
@@ -232,7 +245,11 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             self.X_equals_X2 = True
         else:
             X2 = _pairwise_panel_x_check(X2)
-            self.X_equals_X2 = False
+            if len(X2) == len(X):
+                for i in range(len(X2)):
+                    if not X[i].equals(X2[i]):
+                        break
+                self.X_equals_X2 = True
 
         return self._transform(X=X, X2=X2)
 

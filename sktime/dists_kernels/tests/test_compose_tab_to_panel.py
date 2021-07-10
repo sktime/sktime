@@ -6,7 +6,7 @@ from sktime.utils._testing.panel import make_transformer_problem
 from sktime.utils import all_estimators
 
 PAIRWISE_TRANSFORMERS_TAB = all_estimators(
-    estimator_types="transformer-pairwise-tabular", return_names=False
+    estimator_types="transformer-pairwise", return_names=False
 )
 
 AGGFUNCS = [
@@ -41,7 +41,7 @@ X1_num_df = np.array(X1_list_df)
 X2_num_df = np.array(X2_list_df)
 
 
-def test_aggr_():
+def test_aggr():
     # test 3d numpy
     _run_aggr_dist_test(X1_num_pan, X2_num_pan)
 

@@ -84,7 +84,7 @@ BASE_CLASS_REGISTER = [
     ("forecaster", BaseForecaster, "forecaster"),
     ("transformer", BaseTransformer, "time series transformer"),
     (
-        "transformer-pairwise-tabular",
+        "transformer-pairwise",
         BasePairwiseTransformer,
         "pairwise transformer for tabular data, distance or kernel",
     ),
