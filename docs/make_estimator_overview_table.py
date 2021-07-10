@@ -6,16 +6,29 @@ from sktime.utils import all_estimators
 from importlib import import_module
 
 # creates dataframe as df
-colnames = ["Class_Name", "Estimator_Types", "Authors"]
-df = pd.DataFrame([], columns=colnames)
+COLNAMES = ["Class_Name", "Estimator_Types", "Authors"]
+df = pd.DataFrame([], columns=COLNAMES)
 
 
-def process_author_info(author_info):
+def _process_author_info(author_info):
     """
-    turn a list of author names into a string.
-    Multiple author names will be separated by a comma,
-    with the final name always preceded by "&"
+    Process author information from source code files.
 
+    Parameters
+    ----------
+    author_info : str
+        Author information string from source code files.
+
+    Returns
+    -------
+    author_info : str
+        Preprocessed author information.
+
+    Notes
+    -----
+    A list of author names is turned into a string.
+    Multiple author names will be separated by a comma,
+    with the final name always preceded by "&".
     """
     if isinstance(author_info, list):
         if len(author_info) > 1:
@@ -26,17 +39,17 @@ def process_author_info(author_info):
         return author_info
 
 
-def does_not_start_with_underscore(input_string):
+def _does_not_start_with_underscore(input_string):
     return not input_string.startswith("_")
 
 
 for modname, modclass in all_estimators():
     algorithm_type = "::".join(str(modclass).split(".")[1:-2])
     try:
-        author_info = process_author_info(modclass.__author__)
+        author_info = _process_author_info(modclass.__author__)
     except AttributeError:
         try:
-            author_info = process_author_info(
+            author_info = _process_author_info(
                 import_module(modclass.__module__).__author__
             )
         except AttributeError:
@@ -46,7 +59,7 @@ for modname, modclass in all_estimators():
     modpath = str(modclass)[8:-2]
     path_parts = modpath.split(".")
     # joins strings excluding starting with '_'
-    clean_path = ".".join(list(filter(does_not_start_with_underscore, path_parts)))
+    clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
     # adds html link reference
     modname = str(
         '<a href="https://www.sktime.org/en/latest/api_reference/modules'
@@ -58,8 +71,12 @@ for modname, modclass in all_estimators():
     )
 
     df = df.append(
-        pd.Series([modname, algorithm_type, author_info], index=colnames),
+        pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
         ignore_index=True,
     )
 # creates a table in html format
-df.to_html("algorithm_overview.html", index=False, escape=False)
+df.to_html(
+    "./source/estimator_overview/estimator_overview_table.html",
+    index=False,
+    escape=False,
+)
