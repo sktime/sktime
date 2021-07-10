@@ -74,6 +74,8 @@ class AggrDist(BasePairwiseTransformerPanel):
         transformer_symm = self.transformer._all_tags()["symmetric"]
 
         # whether we know that resulting matrix must be symmetric
+        # a sufficient condition for thisÖ
+        # transformer is symmetric; X equals X2; and aggfunc is symmetric
         all_symm = aggfunc_symm and transformer_symm and X_equals_X2
 
         distmat = np.zeros((n, m), dtype="float")
