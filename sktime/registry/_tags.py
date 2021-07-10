@@ -65,15 +65,21 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X-y-must-have-same-index",
-        "forecaster",
+        ["forecaster", "classifier", "regressor"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
     (
         "enforce-index-type",
-        "forecaster",
+        ["forecaster", "classifier", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
+    ),
+    (
+        "coerce-X-to-numpy",
+        ["forecaster", "classifier", "regressor"],
+        "bool",
+        "should X be coerced to numpy type in check_X? yes/no",
     ),
     (
         "symmetric",
