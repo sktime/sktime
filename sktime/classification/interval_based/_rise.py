@@ -249,10 +249,11 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         X = X.squeeze(1)
 
         n_instances, self.series_length = X.shape
-        if self.max_interval not in range(1, self.series_length):
-            self.max_interval = self.series_length
-        if self.min_interval not in range(1, self.series_length + 1):
-            self.min_interval = self.series_length // 2
+        self.min_interval_, self.max_interval_ = self.min_interval, self.max_interval
+        if self.max_interval_ not in range(1, self.series_length):
+            self.max_interval_ = self.series_length
+        if self.min_interval_ not in range(1, self.series_length + 1):
+            self.min_interval_ = self.series_length // 2
 
         rng = check_random_state(self.random_state)
 
@@ -269,7 +270,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.intervals = np.empty((self.n_estimators, 2), dtype=int)
         self.intervals[:] = [
             _select_interval(
-                self.min_interval, self.max_interval, self.series_length, rng
+                self.min_interval_, self.max_interval_, self.series_length, rng
             )
             for _ in range(self.n_estimators)
         ]
