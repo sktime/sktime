@@ -40,11 +40,23 @@ def _check_lags(lags):
     return lags
 
 
-def _inverse_diff(series, lag):
-    for i in range(lag):
-        series.iloc[i::lag] = series.iloc[i::lag].cumsum()
+def _diff_transform(Z, lags):
+    Zt = Z.copy()
 
-    return series
+    if len(lags) == 0:
+        return Zt
+
+    else:
+        for lag in lags:
+            Zt = Zt.diff(lag)
+        return Zt
+
+
+def _inverse_diff(Z, lag):
+    for i in range(lag):
+        Z.iloc[i::lag] = Z.iloc[i::lag].cumsum()
+
+    return Z
 
 
 class Differencer(_SeriesToSeriesTransformer):
@@ -186,16 +198,10 @@ class Differencer(_SeriesToSeriesTransformer):
         diff :
             Differenced series.
         """
-        Zt = Z.copy()
-
-        if len(lags) == 0:
-            return Zt
-
-        else:
-            for lag in lags:
-                Zt = Zt.diff(lag)
-
-            return Zt
+        Zt = _diff_transform(Z, lags)
+        if self.remove_missing:
+            Zt = Zt.iloc[self._cumulative_lags[-1] :]
+        return Zt
 
     def _inverse_transform(self, Z, X=None):
         """Logic used by `inverse_transform` to reverse transformation on  `Z`.
@@ -225,7 +231,7 @@ class Differencer(_SeriesToSeriesTransformer):
             ):
                 lag, prior_cum_lag = lag_info
                 _lags = self._lags[::-1][i + 1 :]
-                _transformed = self._transform(self._Z, _lags)
+                _transformed = _diff_transform(self._Z, _lags)
 
                 # Determine index values for initial values needed to reverse
                 # the differencing for the specified lag
@@ -233,7 +239,7 @@ class Differencer(_SeriesToSeriesTransformer):
                     cutoff = Z_inv.index[0]
                 else:
                     cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.array([*range(-1, -(lag + 1), -1)]))
+                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
                 index = fh.to_absolute(cutoff).to_pandas()
 
                 if is_df:
@@ -284,18 +290,15 @@ class Differencer(_SeriesToSeriesTransformer):
 
         Returns
         -------
-        Z_transform : pd.Series
+        Zt : pd.Series or pd.DataFrame
             Transformed version of input series `Z`.
         """
         self.check_is_fitted()
         Z = check_series(Z)
 
-        Z_transform = self._transform(Z, self._lags)
+        Zt = self._transform(Z, self._lags)
 
-        if self.remove_missing:
-            Z_transform = Z_transform.iloc[self._cumulative_lags[-1] :]
-
-        return Z_transform
+        return Zt
 
     def inverse_transform(self, Z, X=None):
         """Reverse transformation on input series `Z`.
