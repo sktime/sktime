@@ -25,14 +25,15 @@ class AggrDist(BasePairwiseTransformerPanel):
         default = None, however, if transform is called then defaults to np.mean
     aggfunc_symm: bool - whether aggregation function is symmetric
             used for fast computation of the resultant matrix (if symmetric)
-        default = True (should be set according to choice of aggfunc)
+        default = True if aggfunc default is used
+            False otherwise (should be set according to choice of aggfunc)
     """
 
     def __init__(
         self,
         transformer,
         aggfunc=None,
-        aggfunc_symm=True,
+        aggfunc_symm=False,  # False for safety, but set to True later if aggfunc=None
     ):
 
         self.aggfunc = aggfunc
@@ -74,7 +75,7 @@ class AggrDist(BasePairwiseTransformerPanel):
         transformer_symm = self.transformer._all_tags()["symmetric"]
 
         # whether we know that resulting matrix must be symmetric
-        # a sufficient condition for thisÖ
+        # a sufficient condition for this:
         # transformer is symmetric; X equals X2; and aggfunc is symmetric
         all_symm = aggfunc_symm and transformer_symm and X_equals_X2
 
