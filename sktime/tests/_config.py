@@ -14,19 +14,22 @@ from sktime.registry import (
     TRANSFORMER_MIXIN_LIST,
 )
 
+from pyod.models.knn import KNN
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.forecasting.fbprophet import Prophet
+
 from sktime.base import BaseEstimator
+
+from sktime.annotation.adapters import PyODAnnotator
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
@@ -48,8 +51,10 @@ from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
@@ -86,7 +91,6 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -125,6 +129,7 @@ TRANSFORMERS = [
     ),
 ]
 REGRESSOR = LinearRegression()
+ANOMALY_DETECTOR = KNN()
 TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
@@ -132,8 +137,12 @@ TIME_SERIES_CLASSIFIERS = [
 ]
 FORECASTER = ExponentialSmoothing()
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
-STEPS = [
+STEPS_y = [
     ("transformer", Detrender(ThetaForecaster())),
+    ("forecaster", NaiveForecaster()),
+]
+STEPS_X = [
+    ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
@@ -155,7 +164,8 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS},
+    TransformedTargetForecaster: {"steps": STEPS_y},
+    ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
     Detrender: {"forecaster": FORECASTER},
@@ -286,6 +296,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

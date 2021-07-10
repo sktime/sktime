@@ -39,6 +39,7 @@ EXTRAS_REQUIRE = {
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
+        "pyod>=0.8.0",
     ],
 }
 
