@@ -226,6 +226,17 @@ Cosine
 
     CosineTransformer
 
+Square Root
+~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.sqrt
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    SqrtTransformer
+
 Matrix Profile
 ~~~~~~~~~~~~~~
 
