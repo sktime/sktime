@@ -1,9 +1,10 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Class to iteratively apply differences to a time series."""
+"""Classes to raise timeseries to a user provied exponent."""
+
 __author__ = ["Ryan Kuhns"]
-__all__ = ["SqrtTransformer"]
+__all__ = ["ExponentTransformer", "SqrtTransformer"]
 
 import numpy as np
 import pandas as pd
@@ -12,8 +13,13 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
-class PowerTransformer(_SeriesToSeriesTransformer):
-    """Apply power transformation to a timeseries.
+class ExponentTransformer(_SeriesToSeriesTransformer):
+    """Apply exponent transformation to a timeseries.
+
+    Transformation raises input series to the `power` provided. By default,
+    when offset="auto", a series with negative values is shifted prior to the
+    exponentiation to avoid potential errors of applying certain fractional
+    exponents to negative values.
 
     Parameters
     ----------
@@ -38,10 +44,10 @@ class PowerTransformer(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series.power import PowerTransformer
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = PowerTransformer()
+    >>> transformer = ExponentTransformer()
     >>> y_transform = transformer.fit_transform(y)
     """
 
@@ -56,7 +62,7 @@ class PowerTransformer(_SeriesToSeriesTransformer):
         self.offset = offset
         self._offset_value = None
 
-        super(PowerTransformer, self).__init__()
+        super(ExponentTransformer, self).__init__()
 
     def _fit(self, Z, X=None):
         """Logic used by fit method on `Z`.
@@ -187,8 +193,13 @@ class PowerTransformer(_SeriesToSeriesTransformer):
         return Z_inv
 
 
-class SqrtTransformer(PowerTransformer):
+class SqrtTransformer(ExponentTransformer):
     """Apply square root transformation to a timeseries.
+
+    Transformation raises input series to the `power` provided. By default,
+    when offset="auto", a series with negative values is shifted prior to the
+    exponentiation to avoid potential errors of applying certain fractional
+    exponents to negative values.
 
     Parameters
     ----------
@@ -207,10 +218,10 @@ class SqrtTransformer(PowerTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series.power import PowerTransformer
+    >>> from sktime.transformations.series.exponent import SqrtTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = PowerTransformer()
+    >>> transformer = SqrtTransformer()
     >>> y_transform = transformer.fit_transform(y)
     """
 

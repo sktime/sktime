@@ -8,9 +8,9 @@ __all__ = []
 import pytest
 
 from sktime.utils._testing.series import _make_series
-from sktime.transformations.series.power import PowerTransformer, SqrtTransformer
+from sktime.transformations.series.exponent import ExponentTransformer, SqrtTransformer
 
-power_transformers = [PowerTransformer, SqrtTransformer]
+power_transformers = [ExponentTransformer, SqrtTransformer]
 
 
 @pytest.mark.parametrize("power_transformer", power_transformers)
