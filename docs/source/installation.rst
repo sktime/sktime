@@ -365,7 +365,7 @@ The ``.whl`` package and ``.exe`` installers can be built with:
 .. code-block:: bash
 
     pip install wheel
-    python setup.py bdist_wheel bdist_wininst
+    python setup.py bdist_wheel
 
 The resulting packages are generated in the ``dist/`` folder.
 
