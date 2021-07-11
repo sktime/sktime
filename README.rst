@@ -52,34 +52,22 @@
 Welcome to sktime
 =================
 
-the scikit-learn-like unified framework for machine learning with time series. Our vision:
+sktime is an extensible, composable scikit-learn-like framework toolbox for machine learning and AI with time series.
+sktime provides unified interfaces for different time series related learning tasks and compositors for
+easy pipelining, tuning, and learning task reduction.
+sktime aims to be an interface integrative and community-led nexus, in a friendly and collaborative ecosystem of data science & AI.
 
-* **by the community**, for the community. Developed by a friendly, decentral community - `we welcome all contributors <https://gitter.im/sktime/community>`__.
-* **without marketing bias** - sktime does not push "favourite algorithms" on its users, sktime is not a marketing activity.
-* the **right tool for the right task** - helping users to diagnose their "learning problem" and suitable "scientific model types"
-* **embedded in state-of-art OS ecosystems** - interoperable with scikit-learn, statsmodels, pmdarima, tsfresh, and other community favourites.
-* **rich composition and reduction functionality** - build tuning and feature extraction pipelines, solve forecasting tasks with scikit-learn regressors, etc
-* **clean, descriptive specification syntax** - based on modern object-oriented design principles for data science
-* an **integrator of functionality and provisioner of friendly interfaces**, not an "all-bells-and-whistles-one-stop-shop-the-package-that-replaces-everything"
-* **fair model assessment and benchmarking** - build your models, inspect your models, check your models, avoid pitfalls.
-* **easily extensible** - easy `blueprints to add your own algorithms interface-ready <https://github.com/alan-turing-institute/sktime/tree/main/extension_templates>`__, no tedious hacking of internals required
+The sktime community is open to anyone, with regular events and a `mentorship programme <https://github.com/sktime/mentoring>`_.
 
+.. list-table::
+   :header-rows: 0
 
-sktime currently provides stable support for the following learning tasks:
-
-* `Forecasting <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting.ipynb>`__,
-* `Time series classification/regression <https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification_univariate.ipynb>`__,
-
-including feature extraction, pipelining, tuning, and model benchmarking functionality.
-
-Support for additional learning tasks is under development and/or experimental:
-
-* time series clustering
-* anomaly detection, change-point detection
-* outlier detection & removal
-* segmentation (supervised and unsupervised, stream and panel)
-
-For deep learning strategies, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
+   * - `Features`_
+     - `Vision`_
+     - `Installation`_
+     - `Quickstart`_
+     - `Documentation`_
+     - `Get involved`_
 
 .. list-table::
    :header-rows: 0
@@ -93,6 +81,102 @@ For deep learning strategies, see our companion package: `sktime-dl <https://git
    * - **Code**
      - |pypi|_ |conda|_ |python|_ |codestyle|_ |zenodo|_
 
+Features
+--------
+
+sktime currently provides support for the following learning tasks, including pipelining, tuning, and composition:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Learning task
+     - status
+     - tutorial
+     - API ref
+     - ext.template
+     - code
+     - roadmap
+   * - Forecasting
+     - stable
+     - `tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting.ipynb>`__
+     - `API ref <https://www.sktime.org/en/latest/api_reference.html#sktime-forecasting-time-series-forecasting>`__
+     - `ext.template <https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/forecasting.py>`__
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/forecasting>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+   * - Time series annotation
+     - experimental
+     - n/a
+     - n/a
+     - n/a
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/annotation>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+   * - Time series clustering
+     - experimental
+     - n/a
+     - n/a
+     - `ext.template <https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py>`__
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/clustering>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+   * - Time series classification
+     - stable/refactor
+     - `tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification_univariate.ipynb>`__
+     - `API ref <https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-classification>`__
+     - `ext.template <https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/classification.py>`__
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/classification>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+   * - Time series regression
+     - experimental
+     - n/a
+     - `API ref <https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-regression>`__
+     - n/a
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/regression>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+
+sktime further provides unified interfaces for the following time series related objects:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Object type
+     - status
+     - tutorial
+     - API ref
+     - ext.template
+     - code
+     - roadmap
+   * - transformers, feature extractors
+     - stable/refactor
+     - n/a
+     - `API ref <https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers>`__
+     - n/a
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/transformations>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+   * - time series distances, kernels
+     - experimental
+     - n/a
+     - n/a
+     - n/a
+     - `code <https://github.com/alan-turing-institute/sktime/tree/main/sktime/dist_kernels>`__
+     - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
+
+Community contributions to stable and experimental tasks are welcome - especially
+implementing estimators on the roadmap, contributing tutorials, documentation, improving the interface. 
+See below for contributing.
+
+For deep learning strategies, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
+
+Vision
+------
+
+* **by the community**, for the community. Developed by a friendly, decentral community - `we welcome all contributors <https://gitter.im/sktime/community>`__.
+* **without marketing bias** - sktime does not push "favourite algorithms" on its users, sktime is not a marketing activity.
+* the **right tool for the right task** - helping users to diagnose their learning problem and suitable scientific model types
+* **embedded in state-of-art OS ecosystems** - interoperable with scikit-learn, statsmodels, pmdarima, tsfresh, and other community favourites.
+* **rich composition and reduction functionality** - build tuning and feature extraction pipelines, solve forecasting tasks with scikit-learn regressors, etc
+* **clean, descriptive specification syntax** - based on modern object-oriented design principles for data science
+* an **integrator of functionality and provisioner of friendly interfaces**, not an "all-bells-and-whistles-one-stop-shop-the-package-that-replaces-everything"
+* **fair model assessment and benchmarking** - build your models, inspect your models, check your models, avoid pitfalls.
+* **easily extensible** - easy `blueprints to add your own algorithms interface-ready <https://github.com/alan-turing-institute/sktime/tree/main/extension_templates>`__, no tedious hacking of internals required
 
 Installation
 ------------
@@ -174,8 +258,8 @@ Documentation
 * `API reference <https://www.sktime.org/en/latest/api_reference.html>`__
 
 
-How to get involved
--------------------
+Get involved
+------------
 
 There are many ways to join the sktime community:
 
