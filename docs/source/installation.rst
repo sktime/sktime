@@ -3,9 +3,14 @@
 Installation
 ============
 
-``sktime`` requires an environment with python version 3.6, 3.7, or 3.8.
+``sktime`` currently supports:
 
-We appreciate community contributions towards 3.9 compatibility.
+* environments with python version 3.6, 3.7, or 3.8.
+* operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
+
+See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
+
+We appreciate community contributions towards compatibility with python 3.9, or other operating systems.
 
 Release versions
 ----------------
