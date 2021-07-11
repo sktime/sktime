@@ -127,7 +127,7 @@ Step 2 - satisfying build requirements
 Before carrying out step 3, the ``sktime`` build requirements need to be satisfied.
 Details for this differ by operating system, and can be found in the `sktime build requirements`_ section below.
 
-Typically, the set-up steps needs to be carried out only once per system. 
+Typically, the set-up steps needs to be carried out only once per system.
 That is, the steps usually do not need to be followed again on the same system
 when installing an ``sktime`` development version for the second or third time.
 Similarly, the advanced developer set-up requires the same build requirements,
