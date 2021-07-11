@@ -63,7 +63,7 @@ class TimeSeriesForestClassifier(
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> clf = TimeSeriesForestClassifier(n_estimators=10)
     >>> clf.fit(X_train, y_train)
-    TimeSeriesForestClassifier(...)
+    TimeSeriesForestClassifier(n_estimators=10)
     >>> score = clf.score(X_test, y_test)
 
     References
