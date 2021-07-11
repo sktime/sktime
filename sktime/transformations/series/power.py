@@ -227,8 +227,4 @@ class SqrtTransformer(PowerTransformer):
     }
 
     def __init__(self, offset="auto"):
-        self.power = 0.5
-        self.offset = offset
-        self._offset_value = None
-
-        super(SqrtTransformer, self).__init__()
+        super().__init__(power=0.5, offset=offset)
