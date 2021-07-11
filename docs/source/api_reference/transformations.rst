@@ -226,15 +226,16 @@ Cosine
 
     CosineTransformer
 
-Square Root
-~~~~~~~~~~~
+Power
+~~~~~
 
-.. currentmodule:: sktime.transformations.series.sqrt
+.. currentmodule:: sktime.transformations.series.power
 
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class.rst
 
+    PowerTransformer
     SqrtTransformer
 
 Matrix Profile
