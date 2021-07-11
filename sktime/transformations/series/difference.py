@@ -165,7 +165,7 @@ class Differencer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series or pd.DataFrame
-            A time series to apply the specified difference transformation on.
+            A timeseries to apply the specified transformation on.
 
         Returns
         -------
@@ -180,7 +180,7 @@ class Differencer(_SeriesToSeriesTransformer):
         self._Z = Z.copy()
         return self
 
-    def _transform(self, Z, lags):
+    def _transform(self, Z, X=None):
         """Logic used by `transform` to apply transformation to `Z`.
 
         Differences are applied at lags specified in `lags`.
@@ -188,17 +188,14 @@ class Differencer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series or pd.DataFrame
-            The timeseries to be differenced.
-
-        lags : 1-dimensional np.ndarray
-            Lags to be used in applying differences.
+            The timeseries to apply the specified transformation on.
 
         Returns
         -------
-        diff :
-            Differenced series.
+        Zt : pd.Series or pd.DataFrame
+            The transformed timeseries.
         """
-        Zt = _diff_transform(Z, lags)
+        Zt = _diff_transform(Z, self._lags)
         if self.remove_missing:
             Zt = Zt.iloc[self._cumulative_lags[-1] :]
         return Zt
@@ -209,7 +206,7 @@ class Differencer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series or pd.DataFrame
-            A time series to apply the specified difference transformation on.
+            A time series to reverse the transformation on.
 
         Returns
         -------
@@ -264,7 +261,7 @@ class Differencer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series or pd.DataFrame
-            A time series to apply the specified difference transformation on.
+            A time series to apply the specified transformation on.
 
         Returns
         -------
@@ -280,13 +277,10 @@ class Differencer(_SeriesToSeriesTransformer):
     def transform(self, Z, X=None):
         """Return transformed version of input series `Z`.
 
-        Difference transformations are applied to a series iteratively.
-        Differences are applied at lags specified in `lags`.
-
         Parameters
         ----------
         Z : pd.Series or pd.DataFrame
-            A time series to apply the specified difference transformation on.
+            A time series to apply the specified transformation on.
 
         Returns
         -------
@@ -296,7 +290,7 @@ class Differencer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         Z = check_series(Z)
 
-        Zt = self._transform(Z, self._lags)
+        Zt = self._transform(Z, X=X)
 
         return Zt
 
@@ -306,7 +300,7 @@ class Differencer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series or pd.DataFrame
-            A time series to apply the specified difference transformation on.
+            A time series to reverse the transformation on.
 
         Returns
         -------
