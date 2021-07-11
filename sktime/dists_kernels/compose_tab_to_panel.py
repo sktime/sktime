@@ -24,7 +24,10 @@ class AggrDist(BasePairwiseTransformerPanel):
     aggfunc: aggregation function 2D np.array -> float
         default = None, however, if transform is called then defaults to np.mean
     aggfunc_is_symm: bool - whether aggregation function is symmetric
+                i.e., invariant under transposing argument, it always holds that
+                    aggfunc(matrix) = aggfunc(np.transpose(matrix))
             used for fast computation of the resultant matrix (if symmetric)
+            if unknown, False is the "safe" option that ensures correctness
         default = True if aggfunc default is used
             False otherwise (should be set according to choice of aggfunc)
     """
