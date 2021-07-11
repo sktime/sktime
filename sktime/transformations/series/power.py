@@ -192,9 +192,6 @@ class SqrtTransformer(PowerTransformer):
 
     Parameters
     ----------
-    power : int or float, default=0.5
-        The power to raise the input timeseries to.
-
     offset : "auto", int or float, default="auto"
         Offset to be added to the input timeseries prior to raising
         the timeseries to the given `power`. If "auto" the series is checked to
@@ -205,9 +202,6 @@ class SqrtTransformer(PowerTransformer):
 
     Attributes
     ----------
-    power : int or float
-        User supplied power.
-
     offset : int or float
         User supplied offset value.
 
