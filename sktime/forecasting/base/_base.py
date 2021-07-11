@@ -8,9 +8,11 @@ Scitype defining methods:
     fitting         - fit(self, y, X=None, fh=None)
     forecasting     - predict(self, fh=None, X=None, return_pred_int=False,
                               alpha=DEFAULT_ALPHA)
-    updating        - update(self, y, X=None, update_params=True):
-    update&predict  - update_predict(y, cv=None, X=None, update_params=True,
-                        return_pred_int=False, alpha=DEFAULT_ALPHA):
+    fit&forecast    - fit_predict(self, y, X=None, fh=None,
+                              return_pred_int=False, alpha=DEFAULT_ALPHA)
+    updating        - update(self, y, X=None, update_params=True)
+    update&forecast - update_predict(y, cv=None, X=None, update_params=True,
+                        return_pred_int=False, alpha=DEFAULT_ALPHA)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -18,7 +20,8 @@ Inspection methods:
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - check_is_fitted()
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -35,7 +38,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.utils import _has_tag
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
@@ -58,6 +60,15 @@ class BaseForecaster(BaseEstimator):
     forecasters.
     """
 
+    # default tag values - these typically make the "safest" assumption
+    _tags = {
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+    }
+
     def __init__(self):
         self._is_fitted = False
 
@@ -72,9 +83,6 @@ class BaseForecaster(BaseEstimator):
 
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
-
-        public method including checks & utility
-        dispatches to core logic in _fit
 
         Parameters
         ----------
@@ -117,9 +125,6 @@ class BaseForecaster(BaseEstimator):
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast time series at future horizon.
 
-            public method including checks & utility
-            dispatches to core logic in _predict
-
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
@@ -151,6 +156,35 @@ class BaseForecaster(BaseEstimator):
         # alpha = check_alpha(alpha)
 
         return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def fit_predict(
+        self, y, X=None, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        """Fit and forecast time series at future horizon.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
+
+        self.fit(y=y, X=X, fh=fh)
+
+        return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
@@ -258,6 +292,8 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame
             Prediction intervals
         """
+        self.check_is_fitted()
+
         if return_pred_int:
             raise NotImplementedError()
         y = check_y(y)
@@ -514,7 +550,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = _has_tag(self, "requires-fh-in-fit")
+        requires_fh = self._all_tags().get("requires-fh-in-fit", True)
 
         msg = (
             f"This is because fitting of the `"

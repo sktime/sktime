@@ -10,7 +10,7 @@
   "contributors": [
     {
       "login": "fkiraly",
-      "name": "fkiraly",
+      "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
@@ -19,15 +19,16 @@
         "doc",
         "design",
         "eventOrganizing",
+        "example",
         "financial",
         "fundingFinding",
         "ideas",
         "mentoring",
         "projectManagement",
         "question",
-        "research",
         "review",
-        "talk"
+        "talk",
+        "tutorial"
       ]
     },
     {
@@ -1012,7 +1013,7 @@
       "profile": "https://github.com/ckastner",
       "contributions": [
         "code",
-        "bug",
+        "bug"
       ]
     },
     {
@@ -1021,9 +1022,74 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/160835?s=80&v=4",
       "profile": "https://github.com/tombh",
       "contributions": [
-        "bug",
+        "bug"
       ]
     },
+    {
+      "login": "julramos",
+      "name": "Juliana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19613567?v=4",
+      "profile": "https://www.linkedin.com/in/julianarn/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "SveaMeyer13",
+      "name": "Svea Marie Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46671894?v=4",
+      "profile": "https://github.com/SveaMeyer13",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "flix6x",
+      "name": "Felix Claessen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30658763?v=4",
+      "profile": "https://github.com/flix6x",
+      "contributions": [
+        "code",
+        "bug",
+        "test",
+      ]
+    },
+    {
+      "login": "thayeylolu",
+      "name": "Taiwo Owoseni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13348874?v=4",
+      "profile": "https://thayeylolu.github.io/portfolio/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jambo6",
+      "name": "James Morrill",
+      "avatar_url": "https://https://avatars.githubusercontent.com/jambo6",
+      "profile": "https://github.com/jambo6",
+      "contributions": [
+        "code",
+      ]
+    },
+    {
+      "login": "Dbhasin1",
+      "name": "Drishti Bhasin ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56479884?v=4",
+      "profile": "https://github.com/Dbhasin1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Yard1",
+      "name": "Antoni Baum",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10364161?v=4",
+      "profile": "https://www.linkedin.com/in/yard1/",
+      "contributions": [
+        "code"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
