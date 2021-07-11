@@ -53,6 +53,7 @@ Welcome to sktime
 =================
 
 sktime is an extensible, composable scikit-learn-like framework toolbox for machine learning and AI with time series.
+
 sktime provides unified interfaces for different time series related learning tasks and compositors for
 easy pipelining, tuning, and learning task reduction.
 sktime aims to be an interface integrative and community-led nexus, in a friendly and collaborative ecosystem of data science & AI.
