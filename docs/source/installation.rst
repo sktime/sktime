@@ -3,7 +3,9 @@
 Installation
 ============
 
-``sktime`` requires an environment with python version 3.6 or higher.
+``sktime`` requires an environment with python version 3.6, 3.7, or 3.8.
+
+We appreciate community contributions towards 3.9 compatibility.
 
 Release versions
 ----------------
@@ -19,9 +21,9 @@ Installing sktime from PyPI
 
     pip install sktime
 
-This will install ``sktime`` with core dependencies, excluding interfaced packages.
+This will install ``sktime`` with core dependencies, excluding soft dependencies.
 
-To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier:
+To install ``sktime`` with maximum dependencies, including soft dependencies, install with the ``all_extras`` modifier:
 
 .. code-block:: bash
 
@@ -38,13 +40,11 @@ They can be installed via ``conda`` using:
 
     conda install -c conda-forge sktime
 
-This will install ``sktime`` with core dependencies, excluding interfaced packages.
+This will install ``sktime`` with core dependencies, excluding soft dependencies.
 
-To install ``sktime`` with maximum dependencies, including all interfaced packages, install with the ``all_extras`` modifier:
+Currently, there is no easy route to install ``sktime`` with maximum dependencies via ``conda``.
 
-.. code-block:: bash
-
-    conda install -c conda-forge sktime[all_extras]
+Community contributions towards this, e.g., via conda metapackages, would be appreciated.
 
 
 Release versions - troubleshooting
