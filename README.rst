@@ -160,7 +160,7 @@ sktime further provides unified interfaces for the following time series related
      - `roadmap <https://github.com/alan-turing-institute/sktime/issues/228>`__
 
 Community contributions to stable and experimental tasks are welcome - especially
-implementing estimators on the roadmap, contributing tutorials, documentation, improving the interface. 
+implementing estimators on the roadmap, contributing tutorials, documentation, improving the interface.
 See below for contributing.
 
 For deep learning strategies, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
