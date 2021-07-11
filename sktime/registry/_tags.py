@@ -65,16 +65,40 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X-y-must-have-same-index",
-        "forecaster",
+        ["forecaster", "classifier", "regressor"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
     (
         "enforce-index-type",
-        "forecaster",
+        ["forecaster", "classifier", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
     ),
+    (
+        "coerce-X-to-numpy",
+        ["forecaster", "classifier", "regressor"],
+        "bool",
+        "should X be coerced to numpy type in check_X? yes/no",
+    ),
+    # (
+    #     "handles-panel",
+    #     "annotator",
+    #     "bool",
+    #     "can handle panel annotations, i.e., list X/y?",
+    # ),
+    # (
+    #     "annotation-type",
+    #     "annotator",
+    #     "str",
+    #     "which annotation type? can be 'point', 'segment' or 'both'",
+    # ),
+    # (
+    #     "annotation-kind",
+    #     "annotator",
+    #     "str",
+    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
+    # ),
 ]
 
 ESTIMATOR_TAG_LIST = pd.DataFrame(ESTIMATOR_TAG_REGISTER)[0].tolist()
