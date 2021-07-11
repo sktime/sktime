@@ -121,6 +121,19 @@ This will checkout the code for that particular version. To see which versions a
 You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
 
 
+Step 2 - satisfying build requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before carrying out step 3, the ``sktime`` build requirements need to be satisfied.
+Details for this differ by operating system, and can be found in the `sktime build requirements`_ section below.
+
+Typically, the set-up steps needs to be carried out only once per system. 
+That is, the steps usually do not need to be followed again on the same system
+when installing an ``sktime`` development version for the second or third time.
+Similarly, the advanced developer set-up requires the same build requirements,
+so typically no additional steps are required if the advanced developer set-up has already been completed.
+
+
 Step 3 - building sktime from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -153,11 +166,31 @@ This allows editing and extending the code in-place. See also
     instance when switching branches or pulling changes from upstream).
     Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
+Building binary packages and installers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Step 2 - build requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``.whl`` package and ``.exe`` installers can be built with:
 
-Building sktime from source requires, in addition to step 1:
+.. code-block:: bash
+
+    pip install wheel
+    python setup.py bdist_wheel
+
+The resulting packages are generated in the ``dist/`` folder.
+
+
+sktime build requirements
+-------------------------
+
+This section outlines the ``sktime`` build requirements. These are required for:
+
+* installing ``sktime`` from source, e.g., development versions
+* the advanced developer set-up
+
+Build requirements summary
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The core build requirement for ``sktime`` are:
 
 - Cython >= 0.28.5 (available through :code:`pip install cython`)
 - OpenMP and a working C compiler (see below for instructions)
@@ -182,7 +215,7 @@ We currently support:
 
 
 FreeBSD
-"""""""
+~~~~~~~
 
 The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
 include OpenMP support. You need to install the `openmp` library from packages
@@ -210,7 +243,7 @@ the base system and these steps will not be necessary.
 
 
 Mac OSX
-"""""""
+~~~~~~~
 
 The default C compiler, Apple-clang, on Mac OSX does not directly support
 OpenMP. The first solution to build sktime is to install another C
@@ -240,7 +273,7 @@ Finally you can build the package using the standard command.
 
 
 Unix-like OS
-""""""""""""
+~~~~~~~~~~~~
 
 Installing from source without conda requires you to have installed the
 sktime runtime dependencies, Python development headers and a working
@@ -278,7 +311,7 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using:
 
 
 Windows 8.1 and higher
-""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~
 
 To build sktime on Windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
@@ -355,19 +388,6 @@ In step 5, you may optionally install the packages in build_tools/requirements.t
 
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
-
-
-Building binary packages and installers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``.whl`` package and ``.exe`` installers can be built with:
-
-.. code-block:: bash
-
-    pip install wheel
-    python setup.py bdist_wheel bdist_wininst
-
-The resulting packages are generated in the ``dist/`` folder.
 
 
 References
