@@ -88,6 +88,8 @@ Libraries
      - Time series analysis for neuroscience data
    * - `NoLiTSA <https://github.com/manu-mannattil/nolitsa>`_
      - Non-linear time series analysis
+   * - `orbit <https://github.com/uber/orbit>`_
+     - Bayesian time series forecasting package by uber
    * - `pomegranate <https://pomegranate.readthedocs.io/en/latest/index.html>`_
      - Probabilistic models ranging from individual probability distributions to compositional models such as Bayesian networks and hidden Markov models.
    * - `Pastas <https://github.com/pastas/pastas>`_
