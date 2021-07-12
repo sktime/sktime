@@ -12,7 +12,7 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 class AggrDist(BasePairwiseTransformerPanel):
     """
-    pairwise distance based on aggregation function applied to sample-wise distance
+    panel distance obtained by applying aggregation function to tabular distance matrix
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series
 
     Components
@@ -23,20 +23,24 @@ class AggrDist(BasePairwiseTransformerPanel):
     ----------------
     aggfunc: aggregation function 2D np.array -> float
         default = None, however, if transform is called then defaults to np.mean
-    aggfunc_symm: bool - whether aggregation function is symmetric
+    aggfunc_is_symm: bool - whether aggregation function is symmetric
+                i.e., invariant under transposing argument, it always holds that
+                    aggfunc(matrix) = aggfunc(np.transpose(matrix))
             used for fast computation of the resultant matrix (if symmetric)
-        default = True (should be set according to choice of aggfunc)
+            if unknown, False is the "safe" option that ensures correctness
+        default = True if aggfunc default is used
+            False otherwise (should be set according to choice of aggfunc)
     """
 
     def __init__(
         self,
         transformer,
         aggfunc=None,
-        aggfunc_symm=True,
+        aggfunc_is_symm=False,  # False for safety, but set True later if aggfunc=None
     ):
 
         self.aggfunc = aggfunc
-        self.aggfunc_symm = aggfunc_symm
+        self.aggfunc_is_symm = aggfunc_is_symm
         self.transformer = transformer
 
         super(AggrDist, self).__init__()
@@ -66,15 +70,17 @@ class AggrDist(BasePairwiseTransformerPanel):
         X_equals_X2 = self.X_equals_X2
 
         aggfunc = self.aggfunc
-        aggfunc_symm = self.aggfunc_symm
+        aggfunc_is_symm = self.aggfunc_is_symm
         if aggfunc is None:
             aggfunc = np.mean
-            aggfunc_symm = True
+            aggfunc_is_symm = True
 
         transformer_symm = self.transformer._all_tags()["symmetric"]
 
         # whether we know that resulting matrix must be symmetric
-        all_symm = aggfunc_symm and transformer_symm and X_equals_X2
+        # a sufficient condition for this:
+        # transformer is symmetric; X equals X2; and aggfunc is symmetric
+        all_symm = aggfunc_is_symm and transformer_symm and X_equals_X2
 
         distmat = np.zeros((n, m), dtype="float")
 
