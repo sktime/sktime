@@ -66,7 +66,7 @@ class NetworkPipelineForecaster(BaseForecaster):
     """
 
     _required_parameters = ["steps"]
-    _tags = {"univariate-only": True}
+    _tags = {"univariate-only": False, "requires-fh-in-fit": False}
 
     def __init__(self, steps):
         self.steps = steps
@@ -373,12 +373,13 @@ Iterator can be called by "fit", "predict" and "update" only.'
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        out = {}
-        for name, estimator, _ in self.steps:
-            if hasattr(estimator, "get_params"):
-                for key, value in estimator.get_params(deep=deep).items():
-                    out[f"{name}__{key}"] = value
-        return out
+        # out = {}
+        # for name, estimator, _ in self.steps:
+        #     if hasattr(estimator, "get_params"):
+        #         for key, value in estimator.get_params(deep=deep).items():
+        #             out[f"{name}__{key}"] = value
+        # return out
+        return {"steps": self.steps}
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
