@@ -14,6 +14,22 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters
 
+    EnsembleForecaster can ensemble point forecasts generated
+    by multiples forecasters using aggfunc.
+
+    .fit() fits forecasters seperately.
+
+    .predict() generates forecasts using each forecaster
+    and then uses aggfunc to combine the forecasts.
+
+    aggfunc can be mean, median, min or max.
+
+    Note that objects passed into EnsembleForecaster
+    should be instances of forecasters.
+
+    Combination of prediction interval(i.e. return_pred_int=True
+    in .predict) is not implemented for now.
+
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
@@ -23,6 +39,32 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -1 means using all processors.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, (default='mean')
         The function to aggregate prediction from individual forecasters.
+
+    Example
+    ---------
+    >>> from sktime.forecasting.all import (
+    ...     EnsembleForecaster,
+    ...     ExponentialSmoothing,
+    ...     mean_absolute_percentage_error,
+    ...     temporal_train_test_split,
+    ...     ForecastingHorizon,
+    ...     load_airline)
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=36)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> ses = ExponentialSmoothing(sp=12)
+    >>> holt = ExponentialSmoothing(trend="add", damped_trend=False, sp=12)
+    >>> damped = ExponentialSmoothing(trend="add", damped_trend=True, sp=12)
+    >>> forecaster = EnsembleForecaster(
+    ...     [
+    ...         ("ses", ses),
+    ...         ("holt", holt),
+    ...         ("damped", damped),
+    ...     ]
+    ... )
+    >>> forecaster.fit(y_train)
+    EnsembleForecaster(...)
+    >>> y_pred = forecaster.predict(fh)
     """
 
     _required_parameters = ["forecasters"]
