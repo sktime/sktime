@@ -2,8 +2,7 @@
 __all__ = ["ResultCollator"]
 
 from typing import List, Any
-from httpx import AsyncClient, Response
-import asyncio
+import requests
 
 
 class ResultCollator:
@@ -47,25 +46,8 @@ class ResultCollator:
         formatted_response: List[Any]
             List of formatted responses
         """
-        responses: Response = asyncio.run(self.async_request(self.urls))
-
-        formatted_responses: List[Any] = []
-        for response in responses:
-            formatted_responses.append(self._format_result(response.text))
-        return formatted_responses
-
-    @staticmethod
-    async def async_request(urls) -> List[Response]:
-        """
-        Method used to asynchronously request data from urls
-
-        Returns
-        -------
-        response: List[Responses]
-            List contains the response objects
-        """
-        async with AsyncClient() as client:
-            tasks = (client.get(url) for url in urls)
-            responses = await asyncio.gather(*tasks)
-
+        responses: List[Any] = []
+        for url in self.urls:
+            response = requests.get(url).text
+            responses.append(self._format_result(response))
         return responses
