@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Martin Walter", "Svea Meyer"]
-__all__ = ["OptionalPassthrough", "ColumnComposition"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
 
 import pandas as pd
 from sktime.transformations.base import _SeriesToSeriesTransformer
@@ -99,7 +99,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         return z
 
 
-class ColumnComposition(_SeriesToSeriesTransformer):
+class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     """
     Applies a transformer for univariate series
     columnwise to multivariate series.
@@ -120,20 +120,29 @@ class ColumnComposition(_SeriesToSeriesTransformer):
     -------
     >>> from sktime.datasets import base
     >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.compose import ColumnComposition
+    >>> from sktime.transformations.series.compose import ColumnwiseTransformer
 
     >>> y, X = base.load_longley()
-    >>> transformer = ColumnComposition(Detrender())
-    >>> yt = transformer.fit_transform(y, X)
+    >>> transformer = ColumnwiseTransformer(Detrender())
+    >>> yt = transformer.fit_transform(X)
     """
 
     _required_parameters = ["transformer"]
 
-    def __init__(self, transformer, columns="all"):
+    def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
+
+        # check that columns are None or list of strings
+        if columns is not None:
+            if not isinstance(columns, list) and all(
+                isinstance(s, str) for s in columns
+            ):
+                raise ValueError("Columns need to be a list of strings or None.")
+
+        self.columns_ = columns
         self.transformers_ = None
-        super(ColumnComposition, self).__init__()
+        super(ColumnwiseTransformer, self).__init__()
 
     def fit(self, Z, X=None):
         """
@@ -154,28 +163,21 @@ class ColumnComposition(_SeriesToSeriesTransformer):
 
         # univariate case
         if isinstance(z, pd.Series):
-            self.transformer.fit(z, X)
-            self._is_fitted = True
-            return self
-        # multivariate case
-        else:
-            if self.columns == "all":
-                self.columns = z.columns
+            z = z.to_frame()
 
-            # make sure z contains all columns that the user wants to transform
-            Z_wanted_keys = set(self.columns)
-            Z_new_keys = set(z.columns)
-            difference = Z_wanted_keys.difference(Z_new_keys)
-            if len(difference) != 0:
-                raise ValueError("Missing columns" + str(difference) + "in Z.")
+        if self.columns_ is None:
+            self.columns_ = z.columns
 
-            self.transformers_ = {}
-            for colname in self.columns:
-                transformer = clone(self.transformer)
-                self.transformers_[colname] = transformer
-                self.transformers_[colname].fit(z[colname], X)
-            self._is_fitted = True
-            return self
+        # make sure z contains all columns that the user wants to transform
+        self._check_columns(z)
+
+        self.transformers_ = {}
+        for colname in self.columns_:
+            transformer = clone(self.transformer)
+            self.transformers_[colname] = transformer
+            self.transformers_[colname].fit(z[colname], X)
+        self._is_fitted = True
+        return self
 
     def transform(self, Z, X=None):
         """Transform data.
@@ -193,26 +195,27 @@ class ColumnComposition(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         z = check_series(Z)
+        is_series = False
 
         # univariate case
         if isinstance(z, pd.Series):
-            z = self.transformer.transform(z, X)
-            return z
+            is_series = True
+            name_of_z = z.name
+            z = z.to_frame()
 
-        # multivariate case
-        else:
-            # make copy of z
-            z = z.copy()
-            # make sure z contains all columns that the user wants to transform
-            z_wanted_keys = set(self.columns)
-            z_new_keys = set(z.columns)
-            difference = z_wanted_keys.difference(z_new_keys)
-            if len(difference) != 0:
-                raise ValueError("Missing columns" + str(difference) + "in Z.")
-            for colname in self.columns:
-                # self.columns : columns that are supposed to be transformed
-                z[colname] = self.transformers_[colname].transform(z[colname], X)
-            return z
+        # make copy of z
+        z = z.copy()
+
+        # make sure z contains all columns that the user wants to transform
+        self._check_columns(z)
+        for colname in self.columns_:
+            # self.columns_ : columns that are supposed to be transformed
+            z[colname] = self.transformers_[colname].transform(z[colname], X)
+
+        # make z a series again in univariate case
+        if is_series:
+            z = self._revert_to_series(name_of_z, z)
+        return z
 
     @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
@@ -235,28 +238,26 @@ class ColumnComposition(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z)
 
+        is_series = False
         # univariate case
         if isinstance(z, pd.Series):
-            z = self.transformer.inverse_transform(z, X)
-            return z
+            name_of_z = z.name
+            z = z.to_frame()
+            is_series = True
 
-        # multivariate case
-        else:
-            # make copy of z
-            z = z.copy()
+        # make copy of z
+        z = z.copy()
 
-            # make sure z contains all columns that the user wants to transform
-            z_wanted_keys = set(self.columns)
-            z_new_keys = set(z.columns)
-            difference = z_wanted_keys.difference(z_new_keys)
-            if len(difference) != 0:
-                raise ValueError("Missing columns" + str(difference) + "in Z.")
-            for colname in self.columns:
-                # self.columns : columns that are supposed to be transformed
-                z[colname] = self.transformers_[colname].inverse_transform(
-                    z[colname], X
-                )
-            return z
+        # make sure z contains all columns that the user wants to transform
+        self._check_columns(z)
+
+        for colname in self.columns_:
+            # self.columns_ : columns that are supposed to be transformed
+            z[colname] = self.transformers_[colname].inverse_transform(z[colname], X)
+        # make z a series again in univariate case
+        if is_series:
+            z = self._revert_to_series(name_of_z, z)
+        return z
 
     @if_delegate_has_method(delegate="transformer")
     def update(self, Z, X=None, update_params=True):
@@ -279,21 +280,27 @@ class ColumnComposition(_SeriesToSeriesTransformer):
 
         # univariate case
         if isinstance(z, pd.Series):
-            self.transformer.update(z, X)
-            return self
+            z = z.to_frame()
 
-        # multivariate case
+        # make sure z contains all columns that the user wants to transform
+        self._check_columns(z)
+        for colname in self.columns_:
+            # self.columns_ : columns that are supposed to be transformed
+            self.transformers_[colname].update(z[colname], X)
+        return self
+
+    def _check_columns(self, z):
+        # make sure z contains all columns that the user wants to transform
+        z_wanted_keys = set(self.columns_)
+        z_new_keys = set(z.columns)
+        difference = z_wanted_keys.difference(z_new_keys)
+        if len(difference) != 0:
+            raise ValueError("Missing columns" + str(difference) + "in Z.")
+
+    def _revert_to_series(self, name_of_z, z):
+        if name_of_z is not None:
+            z = z[name_of_z]
         else:
-            # make copy of z
-            z = z.copy()
-
-            # make sure z contains all columns that the user wants to transform
-            z_wanted_keys = set(self.columns)
-            z_new_keys = set(z.columns)
-            difference = z_wanted_keys.difference(z_new_keys)
-            if len(difference) != 0:
-                raise ValueError("Missing columns" + str(difference) + "in Z.")
-            for colname in self.columns:
-                # self.columns : columns that are supposed to be transformed
-                z[colname] = self.transformers_[colname].update(z[colname], X)
-            return self
+            z = z[0]
+            z.name = None
+        return z

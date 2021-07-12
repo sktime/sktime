@@ -90,7 +90,7 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.compose import ColumnComposition
+from sktime.transformations.series.compose import ColumnwiseTransformer
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -291,7 +291,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
-    ColumnComposition: {"transformer": Detrender()},
+    ColumnwiseTransformer: {"transformer": Detrender()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
 }
 
