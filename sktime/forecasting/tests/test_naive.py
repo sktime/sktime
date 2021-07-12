@@ -178,10 +178,14 @@ def test_strategy_drift_window_length(fh, window_length):
 @pytest.mark.parametrize("n", [3, 5])
 @pytest.mark.parametrize("window_length", list({4, 5, *TEST_WINDOW_LENGTHS}))
 @pytest.mark.parametrize("sp", list({3, 4, 8, *TEST_SPS}))
-def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
+@pytest.mark.parametrize("strategy", ["last", "mean"])
+def test_strategy_mean_and_last_seasonal_additional_combinations(
+    n, window_length, sp, strategy
+):
     """Check time series of n * window_length with a 1:n-1 train/test split,
     for different combinations of the period and seasonal periodicity.
-    The time series contains perfectly cyclic data.
+    The time series contains perfectly cyclic data,
+    so switching between the "mean" and "last" strategies should not make a difference.
     """
 
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
@@ -195,6 +199,11 @@ def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
         ],
     )
 
+    # For selected cases, remove a redundant data point by making it NaN
+    if window_length > sp:
+        # create a trailing NaN value in the training set
+        data[window_length - 1] = np.nan
+
     # Split into train and test data
     train_data = data[:window_length]
     test_data = data[window_length:]
@@ -202,25 +211,25 @@ def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
     # Forecast data does not retain the original frequency
     test_data.index.freq = None
 
-    # For example, for n=2, periods=4 and sp=3:
+    # For example, for n=2, window_length=4, sp=3:
 
     # print(train_data)
     # 2021-06-01 00:00:00    1.0
     # 2021-06-01 01:00:00    2.0
     # 2021-06-01 02:00:00    3.0
-    # 2021-06-01 03:00:00    1.0
+    # 2021-06-01 03:00:00    NaN
     # Freq: H, dtype: int64
 
     # print(test_data)
     # 2021-06-01 04:00:00    2.0  # (value of 3 hours earlier)
     # 2021-06-01 05:00:00    3.0  # (value of 3 hours earlier)
-    # 2021-06-01 06:00:00    1.0  # (mean value of 3 and 6 hours earlier)
+    # 2021-06-01 06:00:00    1.0  # (value of 6 hours earlier)
     # 2021-06-01 07:00:00    2.0  # (value of 6 hours earlier)
     # dtype: float64
 
-    # let's forecast the next <2 x period> hours with a periodicity of <sp> hours
+    # let's forecast the next <(n-1) x window_length> hours with a periodicity of <sp> hours
     fh = ForecastingHorizon(test_data.index, is_relative=False)
-    model = NaiveForecaster(strategy="mean", sp=sp)
+    model = NaiveForecaster(strategy=strategy, sp=sp)
     model.fit(train_data)
     forecast_data = model.predict(fh)
 
