@@ -51,7 +51,7 @@ X2_tab_df = make_transformer_problem(
 
 
 @pytest.mark.parametrize("pairwise_transformers", PAIRWISE_TRANSFORMERS)
-def test_pairwise_transformers_tab(pairwise_transformers):
+def test_pairwise_transformers_tabular(pairwise_transformers):
     # Test numpy tabular
     _general_pairwise_transformer_tests(X1_tab, X2_tab, pairwise_transformers)
 
@@ -78,7 +78,7 @@ X2_num_df = np.array(X2_list_df)
 
 
 @pytest.mark.parametrize("pairwise_transformers", PAIRWISE_TRANSFORMERS_PANEL)
-def test_pairwise_transformers_pan(pairwise_transformers):
+def test_pairwise_transformers_panel(pairwise_transformers):
     test_params = ESTIMATOR_TEST_PARAMS[pairwise_transformers]
 
     # Test numpy panel (3d numpy)
@@ -97,27 +97,27 @@ def test_pairwise_transformers_pan(pairwise_transformers):
     )
 
 
-def _general_pairwise_transformer_tests(x, y, pairwise_transformers_tab, kwargs=None):
+def _general_pairwise_transformer_tests(x, y, pairwise_transformers, kwargs=None):
     def create_transformer():
         if kwargs is not None:
-            return pairwise_transformers_tab(**kwargs)
+            return pairwise_transformers(**kwargs)
         else:
-            return pairwise_transformers_tab()
+            return pairwise_transformers()
 
     # test return matrix
     transformer = create_transformer()
     transformation = transformer.transform(x, y)
 
     assert transformer.X_equals_X2 is False, (
-        f"X_equals_X2 is set to wrong value for {pairwise_transformers_tab} "
+        f"X_equals_X2 is set to wrong value for {pairwise_transformers} "
         f"when both X1 and X2 passed"
     )
     assert isinstance(
         transformation, np.ndarray
-    ), f"Shape of matrix returned is wrong for {pairwise_transformers_tab}"
+    ), f"Shape of matrix returned is wrong for {pairwise_transformers}"
     assert (
         transformation.shape == EXPECTED_SHAPE
-    ), f"Shape of matrix returned is wrong for {pairwise_transformers_tab}"
+    ), f"Shape of matrix returned is wrong for {pairwise_transformers}"
     assert transformer.X_equals_X2 is False, (
         f"X_equals_X2 is set to wrong value for {transformer} " f"when only X passed"
     )
