@@ -12,10 +12,9 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._sktime import _SktimeForecaster
 
 
-class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstimator):
+class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """Base class for heterogenous ensemble forecasters"""
 
     _required_parameters = ["forecasters"]
