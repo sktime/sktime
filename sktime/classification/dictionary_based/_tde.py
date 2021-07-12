@@ -291,7 +291,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 tde,
                 y_subsample,
                 subsample_size,
-                -999999 if num_classifiers < self.max_ensemble_size else lowest_acc,
+                0 if num_classifiers < self.max_ensemble_size else lowest_acc,
             )
             if tde._accuracy > 0:
                 weight = math.pow(tde._accuracy, 4)

@@ -130,17 +130,13 @@ class SFA(_PanelToPanelTransformer):
 
         # we cannot select more than window_size many letters in a word
         offset = 2 if norm else 0
-        self.word_length = (
-            word_length
-            if fourier_transform == "dft"
-            else min(word_length, window_size - offset)
-        )
-        self.dft_length = window_size - offset if anova is True else self.word_length
+        self.dft_length = window_size - offset if anova is True else word_length
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
 
-        self.support = np.array(list(range(self.word_length)))
+        self.support = np.array(list(range(word_length)))
 
+        self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
         self.lower_bounding = lower_bounding
@@ -163,7 +159,9 @@ class SFA(_PanelToPanelTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.fourier_transform = fourier_transform
+        self.fourier_transform = (
+            fourier_transform if word_length < window_size - offset else "dft"
+        )
         self.typed_dict = typed_dict
 
         self.n_jobs = n_jobs
