@@ -51,6 +51,7 @@ from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
@@ -137,8 +138,12 @@ TIME_SERIES_CLASSIFIERS = [
 ]
 FORECASTER = ExponentialSmoothing()
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
-STEPS = [
+STEPS_y = [
     ("transformer", Detrender(ThetaForecaster())),
+    ("forecaster", NaiveForecaster()),
+]
+STEPS_X = [
+    ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
@@ -160,7 +165,8 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS},
+    TransformedTargetForecaster: {"steps": STEPS_y},
+    ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
     Detrender: {"forecaster": FORECASTER},
