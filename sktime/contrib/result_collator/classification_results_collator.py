@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ["ClassificationResultCollator"]
 
-from typing import List, Any, Union, TypedDict
+from typing import List, Any, Union
 from functools import lru_cache
 
 import pandas as pd
@@ -11,38 +11,6 @@ from sktime.contrib.result_collator import ResultCollator
 
 # Types
 ListOrStr = Union[List[str], str]
-
-TSClassProblemDict = TypedDict(
-    "TSClassProblemDict",
-    {
-        "Dataset_id": int,
-        "Dataset": str,
-        "Train_size": str,
-        "Test_size": str,
-        "Length": str,
-        "Number_of_classes": int,
-        "Type": str,
-    },
-    total=False,
-)
-
-TSClassClassifiersDict = TypedDict(
-    "TSClassClassifiersDict",
-    {
-        "algorithm_id": int,
-        "Name": str,
-        "Acronym": str,
-        "Type": str,
-        "Cite_key": str,
-        "Year": int,
-        "Publication": str,
-        "Description": str,
-        "Algorithm_code": str,
-        "Source_code": str,
-        "External_link": str,
-    },
-    total=False,
-)
 
 # Request urls
 PROBLEM_REQUEST_URL = (
@@ -67,9 +35,7 @@ def get_enum_from_url(url: str, key: str):
         json key that will be the values
     """
     enum_arr = []
-    responses: List[Union[TSClassClassifiersDict, TSClassProblemDict]] = requests.get(
-        url
-    ).json()
+    responses: List[Any] = requests.get(url).json()
     for response in responses:
         enum_arr.append(response[key])
     return enum_arr
@@ -227,7 +193,7 @@ class ClassificationResultCollator(ResultCollator):
                 )
 
         if isinstance(check_values, str):
-            if check_values is "*":
+            if check_values == "*":
                 return valid_list
             check(check_values)
         else:
