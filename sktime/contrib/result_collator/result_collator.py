@@ -3,7 +3,6 @@ __all__ = ["ResultCollator"]
 
 from typing import List, Any
 from httpx import AsyncClient, Response
-import requests
 import asyncio
 
 
