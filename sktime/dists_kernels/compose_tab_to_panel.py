@@ -75,7 +75,7 @@ class AggrDist(BasePairwiseTransformerPanel):
             aggfunc = np.mean
             aggfunc_is_symm = True
 
-        transformer_symm = self.transformer._all_tags()["symmetric"]
+        transformer_symm = self.transformer.get_tag("symmetric", False)
 
         # whether we know that resulting matrix must be symmetric
         # a sufficient condition for this:

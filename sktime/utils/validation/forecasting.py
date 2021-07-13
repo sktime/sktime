@@ -19,7 +19,6 @@ __author__ = ["Markus Löning", "@big-o"]
 import numpy as np
 import pandas as pd
 
-from sktime.utils import _has_tag
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_series
@@ -346,7 +345,9 @@ def check_scoring(scoring, allow_y_pred_benchmark=False):
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    if _has_tag(scoring, "requires-y-pred-benchmark") and not allow_y_pred_benchmark:
+    scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+
+    if scoring_req_bench and not allow_y_pred_benchmark:
         msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
                  fully supported yet. Please use a performance metric that does not
                  require y_pred_benchmark as a keyword argument in its call signature.
