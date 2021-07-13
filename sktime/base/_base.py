@@ -19,8 +19,10 @@ Hyper-parameter inspection and setter methods:
 
 Tag inspection and setter methods
     inspect tags (all)          - get_tags()
-    inspect tags (individual)   - get_tag(tag_name: str)
-    setting dynamic tags        - set_tag(tag_dict: dict)
+    inspect tags (one tag)      - get_tag(tag_name: str, tag_value_default=None)
+    inspect tags (class only)   - get_class_tags()
+    inspect tags (class, one)   - get_class_tag(tag_name:str, tag_value_default=None)
+    setting dynamic tags        - set_tag(**tag_dict: dict)
     set mirrored dynamic tags   - mirror_tags(estimator)
 
 ---
@@ -63,13 +65,14 @@ class BaseObject(_BaseEstimator):
         super(BaseObject, self).__init__()
 
     @classmethod
-    def _all_tags(cls):
-        """Get tags from estimator class and all its parent classes.
+    def get_class_tags(cls):
+        """Get class tags from estimator class and all its parent classes.
 
-        Creates a separate sktime tag interface in addition to the one in
-        scikit-learn to make sure it does not interfere with scikit-learn's tag
-        interface when inheriting from scikit-learn classes. Sktime's
-        estimator tags are class rather than object attribute as in scikit-learn.
+        Returns
+        -------
+        collected_tags : dictionary of tag names : tag values
+            collected from _tags class attribute via nested inheritance
+            NOT overridden by dynamic tags set by set_tags or mirror_tags
         """
         collected_tags = dict()
 
@@ -85,6 +88,27 @@ class BaseObject(_BaseEstimator):
 
         return collected_tags
 
+    @classmethod
+    def get_class_tag(cls, tag_name, tag_value_default=None):
+        """Get tag value from estimator class (only class tags).
+
+        Arguments
+        ---------
+        tag_name : str, name of tag value
+        tag_value_default : any type, default/fallback value if tag is not found
+
+        Returns
+        -------
+        tag_value : value of the tag tag_name in self if found
+                    if tag is not found, returns tag_value_default
+        """
+        collected_tags = cls.get_static_tags()
+
+        if tag_name in collected_tags.keys():
+            return collected_tags[tag_name]
+        else:
+            return tag_value_default
+
     def get_tags(self):
         """Get tags from estimator class and dynamic tag overrides.
 
@@ -94,7 +118,7 @@ class BaseObject(_BaseEstimator):
             collected from _tags class attribute via nested inheritance
             then any overrides and new tags from _tags_dynamic object attribute
         """
-        collected_tags = type(self)._all_tags().copy()
+        collected_tags = type(self).get_static_tags().copy()
 
         if hasattr(self, "_tags_dynamic"):
             collected_tags.update(self._tags_dynamic)
@@ -121,7 +145,7 @@ class BaseObject(_BaseEstimator):
         else:
             return tag_value_default
 
-    def set_tags(self, tag_dict):
+    def set_tags(self, **tag_dict):
         """Set dynamic tags to given values.
 
         Arguments
