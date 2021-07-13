@@ -11,7 +11,7 @@ from sktime.base import BaseObject
 class BaseMetric(BaseObject):
     """Base class for defining metrics in sktime.
 
-    Extends scikit-learn's BaseEstimator.
+    Extends sktime BaseObject.
     """
 
     def __init__(self, func, name=None):
