@@ -75,7 +75,7 @@ def test_oh_setting(Forecaster):
 # divide Forecasters into groups based on when fh is required
 FORECASTERS_REQUIRED = [
     f for f in FORECASTERS if f.get_class_tag("requires-fh-in-fit", True)
-    ]
+]
 
 FORECASTERS_OPTIONAL = [
     f for f in FORECASTERS if not f.get_class_tag("requires-fh-in-fit", True)
