@@ -102,7 +102,7 @@ class BaseObject(_BaseEstimator):
         tag_value : value of the tag tag_name in self if found
                     if tag is not found, returns tag_value_default
         """
-        collected_tags = cls.get_static_tags()
+        collected_tags = cls.get_class_tags()
 
         if tag_name in collected_tags.keys():
             return collected_tags[tag_name]
@@ -118,7 +118,7 @@ class BaseObject(_BaseEstimator):
             collected from _tags class attribute via nested inheritance
             then any overrides and new tags from _tags_dynamic object attribute
         """
-        collected_tags = type(self).get_static_tags().copy()
+        collected_tags = type(self).get_class_tags().copy()
 
         if hasattr(self, "_tags_dynamic"):
             collected_tags.update(self._tags_dynamic)
