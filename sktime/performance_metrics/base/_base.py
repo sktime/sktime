@@ -5,7 +5,7 @@
 __author__ = ["Ryan Kuhns"]
 __all__ = ["BaseMetric"]
 
-from sklearn.base import BaseObject
+from sktime.base import BaseObject
 
 
 class BaseMetric(BaseObject):
