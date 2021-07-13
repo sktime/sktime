@@ -81,6 +81,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "should X be coerced to numpy type in check_X? yes/no",
     ),
+    (
+        "symmetric",
+        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        "bool",
+        "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
+    ),
     # (
     #     "handles-panel",
     #     "annotator",
