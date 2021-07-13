@@ -269,6 +269,7 @@ Composition
     :template: class.rst
 
     OptionalPassthrough
+    ColumnwiseTransformer
 
 Theta
 ~~~~~
