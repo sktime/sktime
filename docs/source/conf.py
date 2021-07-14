@@ -211,11 +211,8 @@ texinfo_documents = [
 
 
 def make_estimator_overview(app):
-    # creates dataframe as df
-    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
     import pandas as pd
-
-    df = pd.DataFrame([], columns=COLNAMES)
+    from sktime.utils import all_estimators
 
     def _process_author_info(author_info):
         """
@@ -248,7 +245,10 @@ def make_estimator_overview(app):
     def _does_not_start_with_underscore(input_string):
         return not input_string.startswith("_")
 
-    from sktime.utils import all_estimators
+    # creates dataframe as df
+    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
+
+    df = pd.DataFrame([], columns=COLNAMES)
 
     for modname, modclass in all_estimators():
         algorithm_type = "::".join(str(modclass).split(".")[1:-2])
@@ -282,8 +282,8 @@ def make_estimator_overview(app):
             ignore_index=True,
         )
     # creates a table in html format
-    with open("./source/estimator_overview_table.md", "w") as f:
-        df.to_markdown(f, index=False)
+    with open("estimator_overview_table.md", "w") as file:
+        df.to_markdown(file, index=False)
 
 
 def setup(app):
