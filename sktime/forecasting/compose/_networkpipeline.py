@@ -361,38 +361,5 @@ Iterator can be called by "fit", "predict" and "update" only.'
 
         return self
 
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        # out = {}
-        # for name, estimator, _ in self.steps:
-        #     if hasattr(estimator, "get_params"):
-        #         for key, value in estimator.get_params(deep=deep).items():
-        #             out[f"{name}__{key}"] = value
-        # return out
-        return {"steps": self.steps}
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-        Valid parameter keys can be listed with ``get_params()``.
-        Returns
-        -------
-        self
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        return self
-        # super().set_params(**kwargs)
-        # self._set_params("steps", **kwargs)
-
     def get_fitted_params(self):
         raise NotImplementedError()
