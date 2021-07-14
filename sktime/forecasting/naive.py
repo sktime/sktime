@@ -209,7 +209,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     def _reshape_last_window_for_sp(self, last_window):
         """Internal util function"""
 
-        # if the window length is not a multiple of sp, we backward fill the window with nan values
+        # if window length is not multiple of sp, backward fill window with nan values
         remainder = self.window_length_ % self.sp_
         if remainder > 0:
             pad_width = self.sp_ - remainder
