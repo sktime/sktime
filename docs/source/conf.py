@@ -212,7 +212,7 @@ texinfo_documents = [
 
 def make_estimator_overview(app):
     # creates dataframe as df
-    COLNAMES = ["Class_Name", "Estimator_Types", "Authors"]
+    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
     import pandas as pd
 
     df = pd.DataFrame([], columns=COLNAMES)
@@ -282,10 +282,8 @@ def make_estimator_overview(app):
             ignore_index=True,
         )
     # creates a table in html format
-    df.to_markdown(
-        "./source/estimator_overview_table.md",
-        index=False,
-    )
+    with open("./source/estimator_overview_table.md", "w") as f:
+        df.to_markdown(f, index=False)
 
 
 def setup(app):
