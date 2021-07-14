@@ -554,7 +554,7 @@ class IndividualTDE(BaseClassifier):
                     remove_repeat_words=True,
                     lower_bounding=False,
                     save_words=False,
-                    fourier_transform="dft",
+                    use_fallback_dft=True,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -659,8 +659,8 @@ class IndividualTDE(BaseClassifier):
                     remove_repeat_words=True,
                     lower_bounding=False,
                     save_words=False,
-                    save_binning_dft=True,
-                    fourier_transform="dft",
+                    keep_binning_dft=True,
+                    use_fallback_dft=True,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -671,8 +671,8 @@ class IndividualTDE(BaseClassifier):
             sfa = transformers[i].transform(
                 X_dim,
                 y,
-                transformers[i].binning_dft,
             )
+            transformers[i].keep_binning_dft = False
             transformers[i].binning_dft = None
 
             correct = 0

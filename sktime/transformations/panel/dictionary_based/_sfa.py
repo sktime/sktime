@@ -119,9 +119,9 @@ class SFA(_PanelToPanelTransformer):
         levels=1,
         lower_bounding=True,
         save_words=False,
-        save_binning_dft=False,
+        keep_binning_dft=False,
         return_pandas_data_series=False,
-        fourier_transform="fft",
+        use_fallback_dft=False,
         typed_dict=False,
         n_jobs=1,
     ):
@@ -148,7 +148,7 @@ class SFA(_PanelToPanelTransformer):
         self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words
-        self.save_binning_dft = save_binning_dft
+        self.keep_binning_dft = keep_binning_dft
         self.binning_dft = None
 
         self.levels = levels
@@ -159,8 +159,8 @@ class SFA(_PanelToPanelTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.fourier_transform = (
-            fourier_transform if word_length < window_size - offset else "dft"
+        self.use_fallback_dft = (
+            use_fallback_dft if word_length < window_size - offset else True
         )
         self.typed_dict = typed_dict
 
@@ -242,7 +242,7 @@ class SFA(_PanelToPanelTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y=None, supplied_dft=None):
+    def transform(self, X, y=None):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -253,7 +253,7 @@ class SFA(_PanelToPanelTransformer):
         transform = Parallel(n_jobs=self.n_jobs)(
             delayed(self._transform_case)(
                 X[i, :],
-                supplied_dft=None if supplied_dft is None else supplied_dft[i],
+                supplied_dft=self.binning_dft[i] if self.keep_binning_dft else None,
             )
             for i in range(X.shape[0])
         )
@@ -323,17 +323,8 @@ class SFA(_PanelToPanelTransformer):
 
             if self.bigrams:
                 if window - self.window_size >= 0:
-                    bigram = (
-                        SFA._create_bigram_word(
-                            words[window - self.window_size],
-                            word_raw,
-                            self.word_bits,
-                        )
-                        if self.max_bits <= 64
-                        else self._create_bigram_word_large(
-                            words[window - self.window_size],
-                            word_raw,
-                        )
+                    bigram = self._create_bigram_words(
+                        word_raw, words[window - self.window_size]
                     )
 
                     if self.levels > 1:
@@ -347,17 +338,8 @@ class SFA(_PanelToPanelTransformer):
                 # creates skip-grams, skipping every (s-1)-th word in-between
                 for s in range(2, 4):
                     if window - s * self.window_size >= 0:
-                        skip_gram = (
-                            SFA._create_bigram_word(
-                                words[window - s * self.window_size],
-                                word_raw,
-                                self.word_bits,
-                            )
-                            if self.max_bits <= 64
-                            else self._create_bigram_word_large(
-                                words[window - s * self.window_size],
-                                word_raw,
-                            )
+                        skip_gram = self._create_bigram_words(
+                            word_raw, words[window - s * self.window_size]
                         )
 
                         if self.levels > 1:
@@ -380,7 +362,7 @@ class SFA(_PanelToPanelTransformer):
                 for i in range(self.n_instances)
             ]
         )
-        if self.save_binning_dft:
+        if self.keep_binning_dft:
             self.binning_dft = dft
         dft = dft.reshape(len(X) * num_windows_per_inst, self.dft_length)
 
@@ -501,7 +483,7 @@ class SFA(_PanelToPanelTransformer):
                     self.inverse_sqrt_win_size,
                     self.lower_bounding,
                 )
-                if self.fourier_transform == "dft"
+                if self.use_fallback_dft
                 else self._fast_fourier_transform(row)
             )
 
@@ -573,25 +555,19 @@ class SFA(_PanelToPanelTransformer):
 
         if cut_start_if_norm:
             c = int(start / 2)
-            dft = np.zeros(output_length - start)
-            for i in range(c, int(output_length / 2)):
-                for n in range(len(series)):
-                    dft[(i - c) * 2] += series[n] * math.cos(
-                        2 * math.pi * n * i / len(series)
-                    )
-                    dft[(i - c) * 2 + 1] += -series[n] * math.sin(
-                        2 * math.pi * n * i / len(series)
-                    )
         else:
-            dft = np.zeros(output_length)
-            for i in range(int(output_length / 2)):
-                for n in range(len(series)):
-                    dft[i * 2] += series[n] * math.cos(
-                        2 * math.pi * n * i / len(series)
-                    )
-                    dft[i * 2 + 1] += -series[n] * math.sin(
-                        2 * math.pi * n * i / len(series)
-                    )
+            c = 0
+            start = 0
+
+        dft = np.zeros(output_length - start)
+        for i in range(c, int(output_length / 2)):
+            for n in range(len(series)):
+                dft[(i - c) * 2] += series[n] * math.cos(
+                    2 * math.pi * n * i / len(series)
+                )
+                dft[(i - c) * 2 + 1] += -series[n] * math.sin(
+                    2 * math.pi * n * i / len(series)
+                )
 
         if apply_normalising_factor:
             if lower_bounding:
@@ -619,7 +595,7 @@ class SFA(_PanelToPanelTransformer):
         transformed = np.zeros((end, length))
 
         # first run with dft
-        if self.fourier_transform == "dft":
+        if self.use_fallback_dft:
             mft_data = self._discrete_fourier_transform(
                 series[0 : self.window_size],
                 self.dft_length,
@@ -723,11 +699,7 @@ class SFA(_PanelToPanelTransformer):
         repeat_words = 0
 
         for window, word in enumerate(self.words[i]):
-            new_word = (
-                SFA._shorten_word(word, self.word_length - word_len, self.letter_bits)
-                if self.word_bits <= 64
-                else self._shorten_word_large(word, self.word_length - word_len)
-            )
+            new_word = SFA._shorten_words(word, word_len)
 
             repeat_word = (
                 self._add_to_pyramid(
@@ -745,30 +717,11 @@ class SFA(_PanelToPanelTransformer):
 
             if self.bigrams:
                 if window - self.window_size >= 0:
-                    bigram = (
-                        SFA._create_bigram_word(
-                            SFA._shorten_word(
-                                self.words[i][window - self.window_size],
-                                self.word_length - word_len,
-                                self.letter_bits,
-                            ),
-                            new_word,
-                            self.word_bits,
-                        )
-                        if self.max_bits <= 64
-                        else self._create_bigram_word_large(
-                            SFA._shorten_word(
-                                self.words[i][window - self.window_size],
-                                self.word_length - word_len,
-                                self.letter_bits,
-                            )
-                            if self.word_bits <= 64
-                            else self._shorten_word_large(
-                                self.words[i][window - self.window_size],
-                                self.word_length - word_len,
-                            ),
-                            new_word,
-                        )
+                    bigram = self._create_bigram_words(
+                        new_word,
+                        self._shorten_words(
+                            self.words[i][window - self.window_size], word_len
+                        ),
                     )
 
                     if self.levels > 1:
@@ -782,30 +735,12 @@ class SFA(_PanelToPanelTransformer):
                 # creates skip-grams, skipping every (s-1)-th word in-between
                 for s in range(2, 4):
                     if window - s * self.window_size >= 0:
-                        skip_gram = (
-                            SFA._create_bigram_word(
-                                SFA._shorten_word(
-                                    self.words[i][window - s * self.window_size],
-                                    self.word_length - word_len,
-                                    self.letter_bits,
-                                ),
-                                new_word,
-                                self.word_bits,
-                            )
-                            if self.max_bits <= 64
-                            else self._create_bigram_word_large(
-                                SFA._shorten_word(
-                                    self.words[i][window - s * self.window_size],
-                                    self.word_length - word_len,
-                                    self.letter_bits,
-                                )
-                                if self.word_bits <= 64
-                                else self._shorten_word_large(
-                                    self.words[i][window - s * self.window_size],
-                                    self.word_length - word_len,
-                                ),
-                                new_word,
-                            )
+                        skip_gram = self._create_bigram_words(
+                            new_word,
+                            self._shorten_words(
+                                self.words[i][window - s * self.window_size],
+                                word_len,
+                            ),
                         )
 
                         if self.levels > 1:
@@ -935,6 +870,20 @@ class SFA(_PanelToPanelTransformer):
 
         return stds
 
+    def _create_bigram_words(self, word_raw, word):
+        return (
+            SFA._create_bigram_word(
+                word,
+                word_raw,
+                self.word_bits,
+            )
+            if self.max_bits <= 64
+            else self._create_bigram_word_large(
+                word,
+                word_raw,
+            )
+        )
+
     @staticmethod
     @njit(fastmath=True, cache=True)
     def _create_bigram_word(word, other_word, word_bits):
@@ -942,6 +891,13 @@ class SFA(_PanelToPanelTransformer):
 
     def _create_bigram_word_large(self, word, other_word):
         return (word << self.word_bits) | other_word
+
+    def _shorten_words(self, word, word_len):
+        return (
+            SFA._shorten_word(word, self.word_length - word_len, self.letter_bits)
+            if self.word_bits <= 64
+            else self._shorten_word_large(word, self.word_length - word_len)
+        )
 
     @staticmethod
     @njit(fastmath=True, cache=True)
