@@ -9,7 +9,7 @@ python:
   version: 3.8
   install:
     # install build requirements
-    - requirements: build_tools/hard_dependencies.txt
+    - requirements: build_tools/requirements.txt
     # build sktime using `python ./setup.py install --force`
     - method: setuptools
       path: .
