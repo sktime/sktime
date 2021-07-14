@@ -699,7 +699,7 @@ class SFA(_PanelToPanelTransformer):
         repeat_words = 0
 
         for window, word in enumerate(self.words[i]):
-            new_word = SFA._shorten_words(word, word_len)
+            new_word = self._shorten_words(word, word_len)
 
             repeat_word = (
                 self._add_to_pyramid(
