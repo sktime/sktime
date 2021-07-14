@@ -3,9 +3,9 @@ __all__ = ["ClassificationResultCollator"]
 
 from typing import List, Any, Union
 from functools import lru_cache
-
 import pandas as pd
 import requests
+import warnings
 
 from sktime.contrib.result_collator import ResultCollator
 
@@ -20,6 +20,62 @@ CLASSIFIERS_REQUEST_URL = (
     "https://timeseriesclassification.com/JSON/algorithmTable.json?order=asc"
 )
 
+# Small subsection of datasets to fall back on in case server not available
+FALLBACK_PROBLEM_LIST = [
+    "EigenWorms",
+    "GunPoint",
+    "GunPointAgeSpan",
+    "GunPointMaleVersusFemale",
+    "GunPointOldVersusYoung",
+    "Haptics",
+    "InlineSkate",
+    "ToeSegmentation1",
+    "ToeSegmentation2",
+    "UWaveGestureLibraryAll",
+    "UWaveGestureLibraryX",
+    "UWaveGestureLibraryY",
+    "UWaveGestureLibraryZ",
+    "Worms",
+    "WormsTwoClass",
+]
+# Small subsection of classifiers to fall back on in case server not available
+FALLBACK_CLASSIFIER_LIST = [
+    "BOSS",
+    "cBOSS",
+    "S-BOSS",
+    "WEASEL",
+    "TSF",
+    "RISE",
+    "STC",
+    "PF",
+    "ResNet",
+    "HIVE-COTE",
+    "TS-CHIEF",
+    "ROCKET",
+    "TWED",
+    "WDTW",
+    "CID",
+    "BOP",
+    "MSM",
+    "TSBF",
+    "FS",
+    "SAXVSM",
+    "ST",
+    "EE",
+    "DTD_C",
+    "Flat-COTE",
+    "DD_DTW",
+    "LPS",
+    "LS",
+    "DTW_F",
+    "Catch22",
+]
+
+FALLBACK_DICT = {
+    PROBLEM_REQUEST_URL: FALLBACK_PROBLEM_LIST,
+    CLASSIFIERS_REQUEST_URL: FALLBACK_CLASSIFIER_LIST,
+}
+
 
 @lru_cache(maxsize=None)
 def get_enum_from_url(url: str, key: str):
@@ -33,9 +89,25 @@ def get_enum_from_url(url: str, key: str):
 
     key: str
         json key that will be the values
+
     """
     enum_arr = []
-    responses: List[Any] = requests.get(url).json()
+    try:
+        responses: List[Any] = (ResultCollator.request_resource(url)).json()
+    except (
+        requests.exceptions.TooManyRedirects,
+        requests.exceptions.Timeout,
+        requests.exceptions.RequestException,
+    ) as e:
+        if url not in FALLBACK_DICT:
+            raise e
+        warnings.warn(
+            f"\nAn error has occurred while getting the latest list of problems and or datasets. \n"
+            f"To resolve this a limited fallback subset of problems and dataset will be used. \n"
+            f"As a result this will not contain the most up to date results."
+        )
+        return FALLBACK_DICT[url]
+
     for response in responses:
         enum_arr.append(response[key])
     return enum_arr

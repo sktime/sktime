@@ -46,8 +46,46 @@ class ResultCollator:
         formatted_response: List[Any]
             List of formatted responses
         """
-        responses: List[Any] = []
+        responses: List[str] = []
         for url in self.urls:
-            response = requests.get(url).text
+            response: str = (ResultCollator.request_resource(url)).text
             responses.append(self._format_result(response))
         return responses
+
+    @staticmethod
+    def request_resource(url: str, num_attempts: int = 3) -> requests.Response:
+        """
+        Method used to request a resource
+
+        Parameters
+        ----------
+        url: str
+            Str that is the url to request resource from
+
+        num_attempts: int, defaults = 3
+            Int that is the number of times to retry requesting
+            the resource
+
+        Returns
+        -------
+        response: Any
+            Response from the resource
+        """
+        try:
+            response: requests.Response = requests.get(url)
+        except (requests.exceptions.Timeout, requests.exceptions.RequestException) as e:
+            if num_attempts >= 1:
+                ResultCollator.request_resource(url, num_attempts=num_attempts - 1)
+            else:
+                raise requests.exceptions.RequestException(
+                    "Request continued to fail after "
+                    "multiple retries. Please try a new "
+                    "url or try again later"
+                )
+        except requests.exceptions.TooManyRedirects:
+            raise requests.exceptions.TooManyRedirects(
+                "Either the url is bad or "
+                "the server is down. Change the "
+                "url or try again later"
+            )
+        return response
