@@ -139,7 +139,7 @@ def plot_series(
         else:
             raise ValueError("pred_int and x axis indices does not match")
     else:
-        raise ValueError("pred_int has a value of None")
+        raise ValueError("The pred_int has a value of None")
 
     # combine data points for all series
     xs_flat = list(flatten(xs))
