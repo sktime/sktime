@@ -104,10 +104,7 @@ class BaseObject(_BaseEstimator):
         """
         collected_tags = cls.get_class_tags()
 
-        if tag_name in collected_tags.keys():
-            return collected_tags[tag_name]
-        else:
-            return tag_value_default
+        return collected_tags.get(tag_name, tag_value_default)
 
     def get_tags(self):
         """Get tags from estimator class and dynamic tag overrides.
