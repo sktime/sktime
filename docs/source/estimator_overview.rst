@@ -6,5 +6,4 @@ Estimator Overview
 
 The table below gives an overview of all estimators in sktime.
 
-.. raw:: html
-   :file: estimator_overview/estimator_overview.html
+.. mdinclude:: estimator_overview_table.md

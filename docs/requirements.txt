@@ -4,6 +4,7 @@ m2r2
 matplotlib
 nbsphinx
 numpydoc
+pandas
 # include pygments due to dependency compatibility issue https://github.com/jupyterlab/jupyterlab_pygments/issues/5
 pygments>=2.4.1
 seaborn
