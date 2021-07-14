@@ -4,5 +4,6 @@ matplotlib
 nbsphinx
 numpydoc
 pandas
+sphinx==3.2.*
 sphinx_rtd_theme
 tabulate
