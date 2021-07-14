@@ -23,7 +23,7 @@ Tag inspection and setter methods
     inspect tags (class only)   - get_class_tags()
     inspect tags (class, one)   - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags        - set_tag(**tag_dict: dict)
-    set mirrored dynamic tags   - mirror_tags(estimator)
+    set/clone dynamic tags      - clone_tags(estimator, tag_names=None)
 
 ---
 
@@ -158,13 +158,13 @@ class BaseObject(_BaseEstimator):
 
         return self
 
-    def mirror_tags(self, estimator, tag_set=None):
-        """Mirror tags from estimator as dynamic override.
+    def clone_tags(self, estimator, tag_names=None):
+        """clone/mirror tags from another estimator as dynamic override.
 
         Arguments
         ---------
         estimator : an estimator inheriting from BaseEstimator
-        tag_set : list of str, or str; tag names
+        tag_names : list of str, or str; names of tags to clone
             default = list of all tags in estimator
 
         Returns
@@ -178,15 +178,15 @@ class BaseObject(_BaseEstimator):
         tags_est = estimator.get_tags().copy()
 
         # if tag_set is not passed, default is all tags in estimator
-        if tag_set is None:
-            tag_set = tags_est.keys()
+        if tag_names is None:
+            tag_names = tags_est.keys()
         else:
             # if tag_set is passed, intersect keys with tags in estimator
-            if not isinstance(tag_set, list):
-                tag_set = [tag_set]
-            tag_set = [key for key in tag_set if key in tags_est.keys()]
+            if not isinstance(tag_names, list):
+                tag_names = [tag_names]
+            tag_names = [key for key in tag_names if key in tags_est.keys()]
 
-        update_dict = {key: tags_est[key] for key in tag_set}
+        update_dict = {key: tags_est[key] for key in tag_names}
 
         self.set_tags(update_dict)
 
