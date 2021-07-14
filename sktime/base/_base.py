@@ -115,7 +115,7 @@ class BaseObject(_BaseEstimator):
             collected from _tags class attribute via nested inheritance
             then any overrides and new tags from _tags_dynamic object attribute
         """
-        collected_tags = type(self).get_class_tags().copy()
+        collected_tags = self.get_class_tags().copy()
 
         if hasattr(self, "_tags_dynamic"):
             collected_tags.update(self._tags_dynamic)
