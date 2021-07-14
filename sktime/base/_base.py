@@ -92,8 +92,8 @@ class BaseObject(_BaseEstimator):
     def get_class_tag(cls, tag_name, tag_value_default=None):
         """Get tag value from estimator class (only class tags).
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         tag_name : str, name of tag value
         tag_value_default : any type, default/fallback value if tag is not found
 
@@ -125,8 +125,8 @@ class BaseObject(_BaseEstimator):
     def get_tag(self, tag_name, tag_value_default=None):
         """Get tag value from estimator class and dynamic tag overrides.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         tag_name : str, name of tag value
         tag_value_default : any type, default/fallback value if tag is not found
 
@@ -142,8 +142,8 @@ class BaseObject(_BaseEstimator):
     def set_tags(self, **tag_dict):
         """Set dynamic tags to given values.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         tag_dict : dictionary of tag names : tag values
 
         Returns
@@ -161,8 +161,8 @@ class BaseObject(_BaseEstimator):
     def clone_tags(self, estimator, tag_names=None):
         """clone/mirror tags from another estimator as dynamic override.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         estimator : an estimator inheriting from BaseEstimator
         tag_names : list of str, or str; names of tags to clone
             default = list of all tags in estimator
