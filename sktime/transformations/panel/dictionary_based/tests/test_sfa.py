@@ -33,9 +33,9 @@ def test_transformer(binning_method):
     _ = p.transform(X, y)
 
 
-@pytest.mark.parametrize("fourier_transform", ["fft", "dft"])
+@pytest.mark.parametrize("use_fallback_dft", [True, False])
 @pytest.mark.parametrize("norm", [True, False])
-def test_dft_mft(fourier_transform, norm):
+def test_dft_mft(use_fallback_dft, norm):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
     X_tab = from_nested_to_2d_array(X, return_numpy=True)
@@ -51,13 +51,14 @@ def test_dft_mft(fourier_transform, norm):
         alphabet_size=4,
         window_size=window_size,
         norm=norm,
-        fourier_transform=fourier_transform,
+        use_fallback_dft=use_fallback_dft,
     ).fit(X, y)
 
-    if fourier_transform == "fft":
-        dft = p._fast_fourier_transform(X_tab[0])
-    else:
+    if use_fallback_dft:
         dft = p._discrete_fourier_transform(X_tab[0], word_length, norm, 1, True)
+    else:
+        dft = p._fast_fourier_transform(X_tab[0])
+
     mft = p._mft(X_tab[0])
 
     assert (mft - dft < 0.0001).all()
@@ -70,17 +71,17 @@ def test_dft_mft(fourier_transform, norm):
         alphabet_size=alphabet_size,
         window_size=window_size,
         norm=norm,
-        fourier_transform=fourier_transform,
+        use_fallback_dft=use_fallback_dft,
     ).fit(X, y)
 
     mft = p._mft(X_tab[0])
     for i in range(len(X_tab[0]) - window_size + 1):
-        if fourier_transform == "fft":
-            dft = p._fast_fourier_transform(X_tab[0, i : window_size + i])
-        else:
+        if use_fallback_dft:
             dft = p._discrete_fourier_transform(
                 X_tab[0, i : window_size + i], word_length, norm, 1, True
             )
+        else:
+            dft = p._fast_fourier_transform(X_tab[0, i : window_size + i])
 
         assert (mft[i] - dft < 0.001).all()
 
@@ -129,9 +130,9 @@ def test_sfa_anova(binning_method):
 @pytest.mark.parametrize("window_size", [5, 6])
 @pytest.mark.parametrize("bigrams", [True, False])
 @pytest.mark.parametrize("levels", [1, 2])
-@pytest.mark.parametrize("fourier_transform", ["fft", "dft"])
+@pytest.mark.parametrize("use_fallback_dft", [True, False])
 def test_word_lengths(
-    word_length, alphabet_size, window_size, bigrams, levels, fourier_transform
+    word_length, alphabet_size, window_size, bigrams, levels, use_fallback_dft
 ):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
@@ -142,7 +143,7 @@ def test_word_lengths(
         window_size=window_size,
         bigrams=bigrams,
         levels=levels,
-        fourier_transform=fourier_transform,
+        use_fallback_dft=use_fallback_dft,
     ).fit(X, y)
 
     assert p.breakpoints is not None
