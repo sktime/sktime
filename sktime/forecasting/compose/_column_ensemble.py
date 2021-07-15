@@ -6,6 +6,7 @@ __author__ = ["Guzal Bulatova", "Markus Löning"]
 __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
+import pandas as pd
 
 from sklearn.base import clone
 
@@ -43,8 +44,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters):
+    def __init__(self, forecasters, aggfunc="mean"):
         self.forecasters = forecasters
+        self.aggfunc = aggfunc
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
 
     def fit(self, y, X=None, fh=None):
@@ -122,7 +124,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         for (_, forecaster, index) in self.forecasters_:
             y_pred[:, index] = forecaster.predict(fh)
 
-        return y_pred.mean(axis=1)
+        y_pred = pd.DataFrame(data=y_pred)
+        return _aggregate(y=y_pred, aggfunc=self.aggfunc)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -147,3 +150,28 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         self._set_params("forecasters", **kwargs)
         return self
+
+
+def _aggregate(y, aggfunc, X=None):
+    """Apply aggregation function by row.
+
+    Parameters
+    ----------
+    y : pd.DataFrame
+        Multivariate series to transform.
+    X : pd.DataFrame, optional (default=None)
+        Exogenous data used in transformation.
+
+    Returns
+    -------
+    column_ensemble: pd.Series
+        Transformed univariate series.
+    """
+
+    valid_aggfuncs = {"mean": np.mean, "median": np.median}
+    if aggfunc not in valid_aggfuncs.keys():
+        raise ValueError("Aggregation function %s not recognized." % aggfunc)
+
+    column_ensemble = y.apply(func=valid_aggfuncs[aggfunc], axis=1)
+
+    return pd.Series(column_ensemble, index=y.index)
