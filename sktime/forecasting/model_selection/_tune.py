@@ -296,8 +296,6 @@ class BaseGridSearch(BaseForecaster):
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
             ascending=~scoring.greater_is_better
         )
-        # Sort values according to rank
-        results = results.sort_values(by=f"rank_{scoring_name}", ascending=True)
 
         self.cv_results_ = results
 
@@ -311,6 +309,8 @@ class BaseGridSearch(BaseForecaster):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
 
+        # Sort values according to rank
+        results = results.sort_values(by=f"rank_{scoring_name}", ascending=True)
         # Select n best forecaster
         self.n_best_forecasters_ = []
         for i in range(self.return_n_best_forecasters):
