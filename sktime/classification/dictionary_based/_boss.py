@@ -21,10 +21,6 @@ from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
-# from numba import njit
-# from numba.typed import Dict
-
-
 class BOSSEnsemble(BaseClassifier):
     """Bag of SFA Symbols (BOSS).
 
@@ -210,7 +206,6 @@ class BOSSEnsemble(BaseClassifier):
                     best_classifier_for_win_size._set_word_len(best_word_len)
                     self.classifiers.append(best_classifier_for_win_size)
 
-                    # print("appending", best_acc_for_win_size, win_size)
                     if best_acc_for_win_size > max_acc:
                         max_acc = best_acc_for_win_size
                         self.classifiers = list(
