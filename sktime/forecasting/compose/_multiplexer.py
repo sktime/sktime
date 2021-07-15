@@ -74,8 +74,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ...     forecaster=forecaster)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
-    >>> gscv.best_forecaster_.selected_forecaster
-    'arima'
     """
 
     _tags = {
