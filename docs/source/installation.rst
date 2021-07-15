@@ -119,9 +119,10 @@ To build a previous version, replace line 3 with:
 
 .. code-block:: bash
 
- ``git checkout <VERSION>``
+    git checkout <VERSION>
 
-This will checkout the code for that particular version. To see which versions are available, run ``git tag``.
+This will checkout the code for the version ``<VERSION>``, where ``<VERSION>`` is a valid version string.
+Valid version strings are the repository's ``git`` tags, which can be inspected by running ``git tag``.
 
 You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
 
