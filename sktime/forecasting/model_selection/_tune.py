@@ -40,6 +40,7 @@ class BaseGridSearch(BaseForecaster):
         refit=False,
         scoring=None,
         verbose=0,
+        return_n_best_forecasters=1,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -49,6 +50,7 @@ class BaseGridSearch(BaseForecaster):
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
+        self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -294,6 +296,9 @@ class BaseGridSearch(BaseForecaster):
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
             ascending=~scoring.greater_is_better
         )
+        # Sort values according to rank
+        results = results.sort_values(by=f"rank_{scoring_name}", ascending=True)
+
         self.cv_results_ = results
 
         # Select best parameters.
@@ -305,6 +310,18 @@ class BaseGridSearch(BaseForecaster):
         # Refit model with best parameters.
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
+
+        # Select n best forecaster
+        self.n_best_forecasters_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = clone(self.forecaster).set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
 
         return self
 
@@ -341,6 +358,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     refit: bool, optional (default=True)
         Refit the forecaster with the best parameters on all the data
     verbose: int, optional (default=0)
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
     pre_dispatch: str, optional (default='2*n_jobs')
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
@@ -363,6 +383,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Time (seconds) to refit the best forecaster
     scorer_ : function
         Function used to score model
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
 
     Example
     ----------
@@ -401,6 +423,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         n_jobs=None,
         refit=True,
         verbose=0,
+        return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
     ):
         super(ForecastingGridSearchCV, self).__init__(
@@ -411,6 +434,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             cv=cv,
             strategy=strategy,
             verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
         )
         self.param_grid = param_grid
@@ -461,6 +485,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     refit: bool, optional (default=True)
         Refit the forecaster with the best parameters on all the data
     verbose: int, optional (default=0)
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch: str, optional (default='2*n_jobs')
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -479,6 +507,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Fitted estimator with the best parameters
     cv_results_ : dict
         Results from grid search cross validation
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
     """
 
     _required_parameters = ["forecaster", "cv", "param_distributions"]
@@ -494,6 +524,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         n_jobs=None,
         refit=True,
         verbose=0,
+        return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
     ):
@@ -505,6 +536,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             refit=refit,
             cv=cv,
             verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
         )
         self.param_distributions = param_distributions
