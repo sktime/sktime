@@ -47,6 +47,8 @@ __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
 
+from copy import deepcopy
+
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
@@ -86,7 +88,7 @@ class BaseObject(_BaseEstimator):
                 more_tags = parent_class._tags
                 collected_tags.update(more_tags)
 
-        return collected_tags
+        return deepcopy(collected_tags)
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -120,7 +122,7 @@ class BaseObject(_BaseEstimator):
         if hasattr(self, "_tags_dynamic"):
             collected_tags.update(self._tags_dynamic)
 
-        return collected_tags
+        return deepcopy(collected_tags)
 
     def get_tag(self, tag_name, tag_value_default=None):
         """Get tag value from estimator class and dynamic tag overrides.
@@ -154,7 +156,7 @@ class BaseObject(_BaseEstimator):
         ------------
         sets tag values in tag_dict as dynamic tags in self
         """
-        self._tags_dynamic.update(tag_dict.copy())
+        self._tags_dynamic.update(deepcopy(tag_dict))
 
         return self
 
@@ -175,7 +177,7 @@ class BaseObject(_BaseEstimator):
         ------------
         sets tag values in tag_set from estimator as dynamic tags in self
         """
-        tags_est = estimator.get_tags().copy()
+        tags_est = deepcopy(estimator.get_tags())
 
         # if tag_set is not passed, default is all tags in estimator
         if tag_names is None:
