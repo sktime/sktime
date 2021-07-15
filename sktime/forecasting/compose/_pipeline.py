@@ -76,6 +76,27 @@ class _Pipeline(
         """
         return len(self.steps)
 
+    def _get_inverse_transform(self, y):
+        """Iterate over transformers and inverse transform y
+        (used for y_pred and pred_int)
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        y : pd.Series
+            Inverse transformed y
+        """
+        for _, _, transformer in self._iter_transformers(reverse=True):
+            # skip sktime transformers where inverse transform
+            # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
+            skip_trafo = transformer._all_tags().get("skip-inverse-transform", False)
+            if not skip_trafo:
+                y = transformer.inverse_transform(y)
+        return y
+
     @property
     def named_steps(self):
         """Map the steps to a dictionary"""
@@ -354,16 +375,17 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             y_pred, pred_int = forecaster.predict(
                 fh, X, return_pred_int=return_pred_int, alpha=alpha
             )
+            # inverse transform pred_int
+            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"])
+            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"])
         else:
             y_pred = forecaster.predict(
                 fh, X, return_pred_int=return_pred_int, alpha=alpha
             )
-        for _, _, transformer in self._iter_transformers(reverse=True):
-            # skip sktime transformers where inverse transform
-            # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
-            skip_trafo = transformer._all_tags().get("skip-inverse-transform", False)
-            if not skip_trafo:
-                y_pred = transformer.inverse_transform(y_pred)
+
+        # inverse transform y_pred
+        y_pred = self._get_inverse_transform(y_pred)
+
         if return_pred_int:
             return y_pred, pred_int
         else:
