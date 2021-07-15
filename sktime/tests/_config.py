@@ -92,6 +92,7 @@ from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
+from sktime.transformations.panel.selector import Selector
 from sktime.forecasting.compose import NetworkPipelineForecaster
 
 # The following estimators currently do not pass all unit tests
@@ -316,6 +317,7 @@ ESTIMATOR_TEST_PARAMS = {
             ),
         ]
     },
+    Selector: {"columns": 0},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
 }
 # We use estimator tags in addition to class hierarchies to further distinguish
