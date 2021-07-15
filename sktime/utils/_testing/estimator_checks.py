@@ -28,6 +28,7 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
+from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
@@ -701,6 +702,10 @@ def _make_fit_args(estimator, **kwargs):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
+    elif isinstance(estimator, BasePairwiseTransformer):
+        return None, None
+    elif isinstance(estimator, BasePairwiseTransformerPanel):
+        return None, None
     else:
         raise ValueError(_get_err_msg(estimator))
 
