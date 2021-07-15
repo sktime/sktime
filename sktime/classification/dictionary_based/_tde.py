@@ -14,7 +14,10 @@ from collections import defaultdict
 
 import numpy as np
 from joblib import Parallel, delayed
-from sklearn.gaussian_process import GaussianProcessRegressor
+from numba import njit, types
+from numba.typed import Dict
+from sklearn import preprocessing
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
@@ -131,6 +134,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         dim_threshold=0.85,
         max_dims=20,
         time_limit_in_minutes=0.0,
+        save_train_predictions=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -142,6 +146,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.bigrams = bigrams
 
         self.time_limit_in_minutes = time_limit_in_minutes
+        self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -151,7 +156,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.classifiers = []
         self.weights = []
-        self.weight_sum = 0
+        self._weight_sum = 0
         self.n_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
@@ -159,8 +164,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.series_length = 0
         self.n_dims = 0
         self.n_instances = 0
-        self.prev_parameters_x = []
-        self.prev_parameters_y = []
+        self._prev_parameters_x = []
+        self._prev_parameters_y = []
 
         self.word_lengths = [16, 14, 12, 10, 8]
         self.norm_options = [True, False]
@@ -188,6 +193,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
+        if self.n_parameter_samples <= self.randomly_selected_params:
+            print(  # noqa
+                "TDE Warning: n_parameter_samples <= randomly_selected_params, ",
+                "ensemble member parameters will be fully randomly selected.",
+            )
+
         time_limit = self.time_limit_in_minutes * 60
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
@@ -197,8 +208,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.classifiers = []
         self.weights = []
-        self.prev_parameters_x = []
-        self.prev_parameters_y = []
+        self._prev_parameters_x = []
+        self._prev_parameters_y = []
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
@@ -247,9 +258,13 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     rng.randint(0, len(possible_parameters))
                 )
             else:
-                gp = GaussianProcessRegressor(random_state=self.random_state)
-                gp.fit(self.prev_parameters_x, self.prev_parameters_y)
-                preds = gp.predict(possible_parameters)
+                scaler = preprocessing.StandardScaler()
+                scaler.fit(self._prev_parameters_x)
+                gp = KernelRidge(kernel="poly", degree=1)
+                gp.fit(
+                    scaler.transform(self._prev_parameters_x), self._prev_parameters_y
+                )
+                preds = gp.predict(scaler.transform(possible_parameters))
                 parameters = possible_parameters.pop(
                     rng.choice(np.flatnonzero(preds == preds.max()))
                 )
@@ -269,33 +284,39 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde.fit(X_subsample, y_subsample)
             tde.subsample = subsample
 
-            tde.accuracy = self._individual_train_acc(
+            if self.save_train_predictions:
+                tde._train_predictions = np.zeros(self.n_instances - subsample_size)
+
+            tde._accuracy = self._individual_train_acc(
                 tde,
                 y_subsample,
                 subsample_size,
-                -999999 if num_classifiers < self.max_ensemble_size else lowest_acc,
+                0 if num_classifiers < self.max_ensemble_size else lowest_acc,
             )
-            weight = math.pow(tde.accuracy, 4)
+            if tde._accuracy > 0:
+                weight = math.pow(tde._accuracy, 4)
+            else:
+                weight = 0.000000001
 
             if num_classifiers < self.max_ensemble_size:
-                if tde.accuracy < lowest_acc:
-                    lowest_acc = tde.accuracy
+                if tde._accuracy < lowest_acc:
+                    lowest_acc = tde._accuracy
                     lowest_acc_idx = num_classifiers
                 self.weights.append(weight)
                 self.classifiers.append(tde)
-            elif tde.accuracy > lowest_acc:
+            elif tde._accuracy > lowest_acc:
                 self.weights[lowest_acc_idx] = weight
                 self.classifiers[lowest_acc_idx] = tde
                 lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
 
-            self.prev_parameters_x.append(parameters)
-            self.prev_parameters_y.append(tde.accuracy)
+            self._prev_parameters_x.append(parameters)
+            self._prev_parameters_y.append(tde._accuracy)
 
             num_classifiers += 1
             train_time = time.time() - start_time
 
         self.n_estimators = len(self.classifiers)
-        self.weight_sum = np.sum(self.weights)
+        self._weight_sum = np.sum(self.weights)
 
         self._is_fitted = True
         return self
@@ -340,15 +361,15 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
-        return sums / (np.ones(self.n_classes) * self.weight_sum)
+        return sums / (np.ones(self.n_classes) * self._weight_sum)
 
     def _worst_ensemble_acc(self):
         min_acc = 1.0
         min_acc_idx = 0
 
         for c, classifier in enumerate(self.classifiers):
-            if classifier.accuracy < min_acc:
-                min_acc = classifier.accuracy
+            if classifier._accuracy < min_acc:
+                min_acc = classifier._accuracy
                 min_acc_idx = c
 
         return min_acc, min_acc_idx
@@ -356,11 +377,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def _unique_parameters(self, max_window, win_inc):
         possible_parameters = [
             [win_size, word_len, normalise, levels, igb]
-            for n, normalise in enumerate(self.norm_options)
+            for normalise in self.norm_options
             for win_size in range(self.min_window, max_window + 1, win_inc)
-            for w, word_len in enumerate(self.word_lengths)
-            for le, levels in enumerate(self.levels)
-            for i, igb in enumerate(self.igb_options)
+            for word_len in self.word_lengths
+            for levels in self.levels
+            for igb in self.igb_options
         ]
 
         return possible_parameters
@@ -414,6 +435,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     return -1
                 elif c[i] == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    tde._train_predictions[i] = c[i]
+
         else:
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
@@ -423,6 +448,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
                 if c == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    tde._train_predictions[i] = c
 
         return correct / train_size
 
@@ -461,14 +489,14 @@ class IndividualTDE(BaseClassifier):
 
         self.transformers = []
         self.transformed_data = []
-        self.accuracy = 0
+        self.dims = []
+        self._highest_dim_bit = 0
         self.subsample = []
-
+        self._accuracy = 0
+        self._train_predictions = []
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
-        self.highest_dim_bit = 0
-        self.dims = []
         self.class_vals = []
         self.num_classes = 0
         self.classes_ = []
@@ -508,9 +536,9 @@ class IndividualTDE(BaseClassifier):
                 dim_words = self.transformers[i].transform(X_dim, y)
                 dim_words = dim_words[0]
 
-                for i in range(self.n_instances):
-                    for word, count in dim_words[i].items():
-                        words[i][word << self.highest_dim_bit | dim] = count
+                for n in range(self.n_instances):
+                    for word, count in dim_words[n].items():
+                        words[n][word << self._highest_dim_bit | dim] = count
 
             self.transformed_data = words
         else:
@@ -524,7 +552,9 @@ class IndividualTDE(BaseClassifier):
                     binning_method="information-gain" if self.igb else "equi-depth",
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
+                    lower_bounding=False,
                     save_words=False,
+                    use_fallback_dft=True,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -557,9 +587,9 @@ class IndividualTDE(BaseClassifier):
                 dim_words = self.transformers[i].transform(X_dim)
                 dim_words = dim_words[0]
 
-                for i in range(num_cases):
-                    for word, count in dim_words[i].items():
-                        words[i][word << self.highest_dim_bit | dim] = count
+                for n in range(num_cases):
+                    for word, count in dim_words[n].items():
+                        words[n][word << self._highest_dim_bit | dim] = count
 
             test_bags = words
         else:
@@ -610,7 +640,7 @@ class IndividualTDE(BaseClassifier):
         return nn
 
     def _select_dims(self, X, y):
-        self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
+        self._highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
         accs = []
         transformers = []
 
@@ -627,8 +657,10 @@ class IndividualTDE(BaseClassifier):
                     binning_method="information-gain" if self.igb else "equi-depth",
                     bigrams=self.bigrams,
                     remove_repeat_words=True,
+                    lower_bounding=False,
                     save_words=False,
-                    save_binning_dft=True,
+                    keep_binning_dft=True,
+                    use_fallback_dft=True,
                     n_jobs=self.n_jobs,
                 )
             )
@@ -639,8 +671,8 @@ class IndividualTDE(BaseClassifier):
             sfa = transformers[i].transform(
                 X_dim,
                 y,
-                transformers[i].binning_dft,
             )
+            transformers[i].keep_binning_dft = False
             transformers[i].binning_dft = None
 
             correct = 0
@@ -692,22 +724,31 @@ class IndividualTDE(BaseClassifier):
 
 
 def histogram_intersection(first, second):
-    """Histogram intersection between two instannces.
+    """Histogram intersection between two instances.
 
-    Passed either dictionaries on numpy arrays.
+    Passed either dictionaries or numpy arrays.
     """
-    sim = 0
-
     if isinstance(first, dict):
+        sim = 0
         for word, val_a in first.items():
             val_b = second.get(word, 0)
             sim += min(val_a, val_b)
+        return sim
+    if isinstance(first, Dict):
+        return _histogram_intersection_dict(first, second)
     else:
-        sim = np.sum(
+        return np.sum(
             [
                 0 if first[n] == 0 else np.min(first[n], second[n])
                 for n in range(len(first))
             ]
         )
 
+
+@njit(fastmath=True)
+def _histogram_intersection_dict(first, second):
+    sim = 0
+    for word, val_a in first.items():
+        val_b = second.get(word, types.uint32(0))
+        sim += min(val_a, val_b)
     return sim
