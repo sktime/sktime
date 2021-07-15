@@ -745,7 +745,8 @@ def _make_transform_args(estimator, **kwargs):
     elif isinstance(estimator, BasePairwiseTransformer):
         return _make_series(**kwargs), _make_series(**kwargs)
     elif isinstance(estimator, BasePairwiseTransformerPanel):
-        return _make_panel_X(**kwargs), _make_panel_X(**kwargs)
+        X = [_make_series(**kwargs), _make_series(**kwargs)]
+        return X, X
     else:
         raise ValueError(_get_err_msg(estimator))
 
