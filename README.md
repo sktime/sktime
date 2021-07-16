@@ -72,7 +72,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 | **[Time Series Regression]** | stable | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-regression) |
 | **[Transformations]** | maturing | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) |
 | **[Time Series Clustering]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py) |
-| **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
+| **[Time Series Distances]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Annotation]** | experimental | |
 
 [forecasting]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/forecasting
