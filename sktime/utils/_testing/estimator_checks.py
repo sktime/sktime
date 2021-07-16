@@ -42,6 +42,7 @@ from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
@@ -100,96 +101,6 @@ def yield_estimator_checks(exclude=None):
         if check.__name__ in exclude:
             continue
         yield check
-
-
-def tuple_equals(x, y):
-    """Tests two tuples for equality.
-
-    Correct if tuples contain != compatible native types,
-        or pd.Series, pd.DataFrame, np.ndarray
-
-    Parameters
-    ----------
-    x: tuple
-    y: tuple
-
-    Returns
-    -------
-    bool - True if x and y have equal keys and values
-    """
-
-    n = len(x)
-
-    if n != len(y):
-        return False
-
-    # we now know dicts are same length
-    for i in range(n):
-        xi = x[i]
-        yi = y[i]
-
-        if type(xi) != type(yi):
-            return False
-
-        # we now know all types are the same
-        # so now we compare values
-        if type(xi) in [pd.DataFrame, pd.Series]:
-            if not xi.equals(yi):
-                return False
-        elif type(xi) is np.ndarray:
-            if xi.dtype != yi.dtype:
-                return False
-            if not np.array_equal(x, y, equal_nan=True):
-                return False
-        elif xi != yi:
-            return False
-
-    return True
-
-
-def dict_equals(x, y):
-    """Tests two dicts for equality.
-
-    Correct if dict contain != compatible native types,
-        or pd.Series, pd.DataFrame, np.ndarray
-
-    Parameters
-    ----------
-    x: dict
-    y: dict
-
-    Returns
-    -------
-    bool - True if x and y have equal keys and values
-    """
-    xkeys = set(x.keys())
-    ykeys = set(y.keys())
-
-    if xkeys != ykeys:
-        return False
-
-    # we now know all keys are the same
-    for key in xkeys:
-        xi = x[key]
-        yi = y[key]
-
-        if type(xi) != type(yi):
-            return False
-
-        # we now know all types are the same
-        # so now we compare values
-        if type(xi) in [pd.DataFrame, pd.Series]:
-            if not xi.equals(yi):
-                return False
-        elif type(xi) is np.ndarray:
-            if xi.dtype != yi.dtype:
-                return False
-            if not np.array_equal(x, y, equal_nan=True):
-                return False
-        elif xi != yi:
-            return False
-
-    return True
 
 
 def check_required_params(Estimator):
@@ -539,7 +450,7 @@ def check_methods_have_no_side_effects(Estimator):
     old_fit_args = deepcopy(fit_args)
     estimator.fit(*fit_args)
 
-    assert tuple_equals(
+    assert deep_equals(
         old_fit_args, fit_args
     ), f"Estimator: {estimator} has side effects on arguments of fit"
 
@@ -549,7 +460,7 @@ def check_methods_have_no_side_effects(Estimator):
             old_args = deepcopy(new_args)
             getattr(estimator, method)(*new_args)
 
-            assert tuple_equals(
+            assert deep_equals(
                 old_args, new_args
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
