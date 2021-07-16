@@ -17,11 +17,11 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 @pytest.mark.parametrize(
     "forecasters",
     [
-        (
+        [
             ("trend", PolynomialTrendForecaster(), 0),
             ("naive", NaiveForecaster(), 1),
             ("ses", ExponentialSmoothing(), 2),
-        )
+        ]
     ],
 )
 @pytest.mark.parametrize(

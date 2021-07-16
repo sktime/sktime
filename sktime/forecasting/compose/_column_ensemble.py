@@ -11,6 +11,7 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 from sktime.utils.validation.forecasting import check_X
@@ -76,7 +77,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._is_fitted = False
 
         self._set_fh(fh)
-        y = check_series(y)
+        y = check_series(y, enforce_multivariate=True)
 
         if X is not None:
             X = check_X(X)
@@ -108,6 +109,17 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        names, forecasters, indices = self._check_forecasters()
+        if len(set(indices)) != len(indices):
+            raise ValueError(
+                "One estimator per column required. Found %s unique"
+                " estimators" % len(set(indices))
+            )
+        elif len(set(indices)) != len(y.columns):
+            raise ValueError(
+                "One estimator per column required. Found %s" % len(indices)
+            )
+
         self.forecasters_ = []
 
         for (name, forecaster, index) in self.forecasters:
@@ -150,6 +162,37 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         self._set_params("forecasters", **kwargs)
         return self
+
+    def _check_forecasters(self):
+        if (
+            self.forecasters is None
+            or len(self.forecasters) == 0
+            or not isinstance(self.forecasters, list)
+        ):
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                " of (string, estimator, int) tuples."
+            )
+        names, forecasters, indices = zip(*self.forecasters)
+        # OBS defined by MetaEstimatorMixin
+        self._check_names(names)
+
+        has_estimator = any(est not in (None, "drop") for est in forecasters)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        for forecaster in forecasters:
+            if forecaster not in (None, "drop") and not isinstance(
+                forecaster, BaseForecaster
+            ):
+                raise ValueError(
+                    f"The estimator {forecaster.__class__.__name__} should be a "
+                    f"Forecaster."
+                )
+        return names, forecasters, indices
 
 
 def _aggregate(y, aggfunc, X=None):
