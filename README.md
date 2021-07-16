@@ -49,8 +49,8 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] · [Gitter] · [Discord]          |
 
-[github issue tracker]: https://github.com/explosion/spaCy/issues
-[github discussions]: https://github.com/explosion/spaCy/discussions
+[github issue tracker]: https://github.com/alan-turing-institute/sktime/issues
+[github discussions]: https://github.com/alan-turing-institute/sktime/discussions
 [stack overflow]: https://stackoverflow.com/questions/tagged/sktime
 [gitter]: https://gitter.im/sktime/community
 [discord]: https://discord.com/invite/gqSab2K
@@ -94,8 +94,8 @@ For trouble shooting and detailed installation instructions, see the [documentat
 - **Python version**: Python 3.6, 3.7 and 3.8 (only 64 bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
-[pip]: https://pypi.org/project/spacy/
-[conda]: https://anaconda.org/conda-forge/spacy
+[pip]: https://pip.pypa.io/en/stable/
+[conda]: https://docs.conda.io/en/latest/
 
 ### pip
 Using pip, sktime releases are available as source packages and binary wheels. You can see all available wheels [here](https://pypi.org/simple/sktime/).
