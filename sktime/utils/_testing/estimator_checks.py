@@ -743,10 +743,10 @@ def _make_transform_args(estimator, **kwargs):
         X = _make_panel_X(**kwargs)
         return (X,)
     elif isinstance(estimator, BasePairwiseTransformer):
-        d = {'col1': [1, 2], 'col2': [3, 4]}
+        d = {"col1": [1, 2], "col2": [3, 4]}
         return pd.DataFrame(d), pd.DataFrame(d)
     elif isinstance(estimator, BasePairwiseTransformerPanel):
-        d = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+        d = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
         X = [d, d]
         return X, X
     else:
