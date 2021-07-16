@@ -6,7 +6,7 @@
 
 :rocket: **Version 0.7.0 out now!** [Check out the release notes here.](https://github.com/alan-turing-institute/sktime/releases)
 
-sktime is a library for time series analyis in Python. It provides a unified interface for multiple time series learning tasks, including time series classification, regression, clustering, annotation and forecasting. It comes with time series algorithms and [scikit-learn] compatible tools to build, tune and validate time series models.
+sktime is a library for time series analsyis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with time series algorithms and [scikit-learn] compatible tools to build, tune and validate time series models.
 
 [scikit-learn]: https://scikit-learn.org/stable/
 
@@ -55,11 +55,10 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 [gitter]: https://gitter.im/sktime/community
 [discord]: https://discord.com/invite/gqSab2K
 
-
 ## :stars: Features
-sktime provides a __unified interface for distinct but related time series learning tasks__. It features __dedicated time series algorithms__ and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
+Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features __dedicated time series algorithms__ and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
 
-sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet], among others. Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole.
+sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet], among others.
 
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
@@ -85,7 +84,6 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [transformations]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/transformations
 
 For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
-
 
 ## :hourglass_flowing_sand: Install sktime
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.org/en/latest/installation.html).
@@ -172,7 +170,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [meetings]: https://github.com/sktime/community-council
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
 
-## :bulb: Vision
+## :bulb: Project vision
 
 * **by the community, for the community** -- developed by a friendly and collaborative community.
 * the **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
