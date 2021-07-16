@@ -10,6 +10,9 @@ Objects compared can have one of the following valid types:
 
 __author__ = ["fkiraly"]
 
+__all__ = ["deep_equals"]
+
+
 import numpy as np
 import pandas as pd
 
@@ -48,16 +51,16 @@ def deep_equals(x, y):
             return False
     # recursion through lists, tuples and dicts
     elif type(x) in [list, tuple]:
-        return tuple_equals(x, y)
+        return _tuple_equals(x, y)
     elif type(x) is dict:
-        return dict_equals(x, y)
+        return _dict_equals(x, y)
     elif x != y:
         return False
 
     return True
 
 
-def tuple_equals(x, y):
+def _tuple_equals(x, y):
     """Tests two tuples or lists for equality.
 
     Correct if tuples/lists contain the following valid types:
@@ -93,7 +96,7 @@ def tuple_equals(x, y):
     return True
 
 
-def dict_equals(x, y):
+def _dict_equals(x, y):
     """Tests two dicts for equality.
 
     Correct if dicts contain the following valid types:
