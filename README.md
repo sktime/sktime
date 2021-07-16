@@ -72,7 +72,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 | **[Time Series Regression]** | stable | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-regression) |
 | **[Transformations]** | maturing | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) |
 | **[Time Series Clustering]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py) |
-| **[Time Series Distances]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
+| **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Annotation]** | experimental | |
 
 [forecasting]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/forecasting
@@ -80,7 +80,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [time series regression]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/regression
 [time series clustering]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/clustering
 [annotation]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/annotation
-[time series distances]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/distances
+[time series distances/kernels]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/dists_kernels
 [transformations]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/transformations
 
 For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
