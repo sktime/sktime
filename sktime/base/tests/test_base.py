@@ -8,7 +8,7 @@ tests in this module:
     test_get_class_tag  - tests get_class_tag logic, incl default value
     test_get_tags       - tests get_tags inheritance logic
     test_get_tag        - tests get_tag logic, incl default value
-    test_set_tag        - tests set_tag logic and related get_tags inheritance
+    test_set_tags       - tests set_tags logic and related get_tags inheritance
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -129,20 +129,20 @@ def test_get_tag():
 
 
 FIXTURE_TAG_SET = {"A": 42424243, "E": 3}
-FIXTURE_OBJECT_SET = deepcopy(FIXTURE_OBJECT).set_tag(**FIXTURE_TAG_SET)
+FIXTURE_OBJECT_SET = deepcopy(FIXTURE_OBJECT).set_tags(**FIXTURE_TAG_SET)
 FIXTURE_OBJECT_SET_TAGS = {"A": 42424243, "B": 3, "C": [], 3: "E", "E": 3}
 FIXTURE_OBJECT_SET_DYN = {"A": 42424243, "B": 3, "E": 3}
 
 
-def test_set_tag():
-    """Tests get_set method of BaseObject for correctness
+def test_set_tags():
+    """Tests set_tags method of BaseObject for correctness
 
     Raises
     ------
-    AssertError if set_tag override logic in set_tag is incorrect
+    AssertError if override logic in set_tags is incorrect
     """
 
-    msg = "Setter/override in BaseObject.set_tag is incorrect"
+    msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
     assert deep_equals(FIXTURE_OBJECT_SET._tags_dynamic, FIXTURE_OBJECT_SET_DYN), msg
     assert deep_equals(FIXTURE_OBJECT_SET.get_tags(), FIXTURE_OBJECT_SET_TAGS), msg
