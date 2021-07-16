@@ -37,6 +37,7 @@ FIXTURE_CLASSCHILD = FixtureClassChild
 
 FIXTURE_CLASSCHILD_TAGS = {"A": 42, "B": 2, "C": [], 3: "E"}
 
+# Fixture class for testing tag system, object overrides class tags
 FIXTURE_OBJECT = FixtureClassChild()
 FIXTURE_OBJECT._tags_dynamic = {"A": 42424241, "B": 3}
 
