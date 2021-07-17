@@ -45,11 +45,15 @@ from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
+from sktime.utils.validation.series import check_series, check_equal_time_index
 
-from sktime.forecasting.base.convertIO import convert_to
+from sktime.forecasting.base.convertIO import convert_to, mtype
 
 
 DEFAULT_ALPHA = 0.05
+
+# turns off output conversions, can remove if we need them again
+OUTPUT_CONVERSIONS = "off"
 
 
 class BaseForecaster(BaseEstimator):
@@ -64,10 +68,11 @@ class BaseForecaster(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
-        "y_type": pd.Series,  # which types do _fit, _predict, assume for y?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "univariate-only": True,  # does estimator use the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
-        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
@@ -85,7 +90,7 @@ class BaseForecaster(BaseEstimator):
         self.converter_store = dict()  # storage dictionary for input/output conversions
 
         # "safe" initialization in case fit is overridden
-        self.y_in_type = pd.Series
+        self.y_in_type = "pd.Series"
 
         super(BaseForecaster, self).__init__()
 
@@ -116,21 +121,57 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = False
 
         self._set_fh(fh)
-        y, X = check_y_X(y, X)
+
+        # checking y
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_y_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_multivariate": enforce_multivariate,
+            "enforce_index_type": enforce_index_type,
+        }
+
+        y = check_series(y, **check_y_args)
+        # end checking y
+
+        # checking X
+        if X is not None:
+            X = check_series(X, enforce_index_type=enforce_index_type)
+            if self.get_tags("X-y-must-have-same-index"):
+                check_equal_time_index(X, y)
+        # end checking X
 
         self._X = X
         self._y = y
 
         self._set_cutoff(y.index[-1])
 
-        self.y_in_type = type(y)
+        y_in_mtype = mtype(y, "Series")
+        self.y_in_mtype = y_in_mtype
 
-        y_inner = convert_to(
-            y,
-            self._all_tags()["y_type"],
-            as_scitype="Series",
-            store=self.converter_store,
-        )
+        # retrieve supported y_mtypes for _fit
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+
+        # is the input mtype supported by _fit?
+        y_in_mtype_supported = y_in_mtype in set(y_inner_mtype)
+
+        # if not, we convert
+        if not y_in_mtype_supported:
+            # if multiple types supported, convert to first
+            if isinstance(y_inner_mtype, list):
+                y_inner_mtype = y_inner_mtype[0]
+
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype="Series",  # we are dealing with series
+                store=self.converter_store,
+            )
+        # if supported, we just pass through y
+        else:
+            y_inner = y
 
         self._fit(y=y_inner, X=X, fh=fh)
 
@@ -162,9 +203,11 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._set_fh(fh)
 
+        enforce_index_type = self.get_tag("enforce_index_type")
+
         # todo: check_X should let a None argument pass here, but it doesn't
         if X is not None:
-            X = check_X(X)
+            X = check_X(X, enforce_index_type=enforce_index_type)
 
         # this should be here, but it breaks the ARIMA forecasters
         #  that is because check_alpha converts to list, but ARIMA forecaster
@@ -179,9 +222,22 @@ class BaseForecaster(BaseEstimator):
             pred_int = y_pred[1]
             y_pred = y_pred[0]
 
-        y_out = convert_to(
-            y_pred, self.y_in_type, as_scitype="Series", store=self.converter_store
-        )
+        if not OUTPUT_CONVERSIONS == "off":
+            y_out = convert_to(
+                y_pred, self.y_in_mtype, as_scitype="Series", store=self.converter_store
+            )
+        else:
+            scitype_y = self.get_tag("scitype:y")
+            to_dict = {
+                "univariate": "pd.Series",
+                "multivariate": "pd.DataFrame",
+                "both": "pd.DataFrame",
+                }
+            y_out = convert_to(
+                y_pred, to_dict[scitype_y],
+                as_scitype="Series",
+                store=self.converter_store
+            )
 
         if return_pred_int:
             return (y_out, pred_int)
@@ -271,7 +327,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame, or np.array
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogeneous data
@@ -289,6 +345,29 @@ class BaseForecaster(BaseEstimator):
         if update_params=True, updates model (attributes ending in "_")
         """
         self.check_is_fitted()
+
+        # checking y
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_y_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_multivariate": enforce_multivariate,
+            "enforce_index_type": enforce_index_type,
+        }
+
+        # update only for non-empty data
+        y = check_series(y, allow_empty=True, **check_y_args)
+        # end checking y
+
+        # checking X
+        if X is not None:
+            X = check_series(X, enforce_index_type=enforce_index_type)
+            if self.get_tags("X-y-must-have-same-index"):
+                check_equal_time_index(X, y)
+        # end checking X
+
         self._update_y_X(y, X)
 
         y_inner = convert_to(
@@ -457,14 +536,11 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series or pd.DataFrame
             Endogenous time series
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        # update only for non-empty data
-        y, X = check_y_X(y, X, allow_empty=True, enforce_index_type=enforce_index_type)
-
         if len(y) > 0:
             self._y = y.combine_first(self._y)
 

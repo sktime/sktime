@@ -68,9 +68,11 @@ class MyForecaster(BaseForecaster):
     # todo: fill out estimator tags here
     #  delete the tags that you *didn't* change - these defaults are inherited
     _tags = {
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "univariate-only": True,  # does estimator use the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
-        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "y_inner_type": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
