@@ -156,7 +156,6 @@ def check_tag_is_valid(tag_name, tag_value):
     KeyError - if tag_name is not a valid tag in ESTIMATOR_TAG_LIST
     ValueError - if the tag_valid is not a valid for the tag with name tag_name
     """
-
     if tag_name not in ESTIMATOR_TAG_LIST:
         raise KeyError(tag_name + " is not a valid tag")
 
