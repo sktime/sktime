@@ -3,22 +3,35 @@
 import numpy as np
 import pandas as pd
 
-__all__ = [
-    "from_3d_numpy_to_2d_array",
-    "from_3d_numpy_to_nested",
-    "from_nested_to_2d_array",
-    "from_2d_array_to_nested",
-    "from_nested_to_3d_numpy",
-    "from_nested_to_long",
-    "from_long_to_nested",
-    "from_multi_index_to_3d_numpy",
-    "from_3d_numpy_to_multi_index",
-    "from_multi_index_to_nested",
-    "from_nested_to_multi_index",
-    "are_columns_nested",
-    "is_nested_dataframe",
-    "convert_from_dictionary",
+
+MTYPE_REGISTER_PANEL = [
+    ("nested_univ", "pd.DataFrame with one column per variable, pd.Series in cells"),
+    ("numpy3D", "3D np.array of format (n_instances, n_columns, n_timepoints)"),
+    ("numpyflat", "2D np.array of format (n_instances, n_columns*n_timepoints)"),
+    ("pd-multiindex", "pd.DataFrame with multi-index (instance, time point)"),
+    ("pd-wide", "pd.DataFrame in wide format, cols = (instance*time point)"),
+    ("pd-long", "pd.DataFrame in long format, cols = (index, time_index, column)"),
 ]
+
+MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values
+
+# dictionary indexed by triples of types
+#  1st element = convert from - type
+#  2nd element = convert to - type
+#  3rd element = considered as this scitype - string
+# elements are conversion functions of machine type (1st) -> 2nd
+
+convert = dict()
+
+
+def convert_identity(what, store=None):
+
+    return what
+
+
+# assign identity function to type conversion to self
+for tp in MTYPE_LIST_PANEL:
+    convert[(tp, tp, "Panel")] = convert_identity
 
 
 def _cell_is_series_or_array(cell):
@@ -132,6 +145,14 @@ def from_3d_numpy_to_2d_array(X):
     return array_2d
 
 
+def from_3d_numpy_to_2d_array_adp(what, store=None):
+
+    return from_3d_numpy_to_2d_array(what)
+
+
+convert[("numpy3D", "numpyflat", "Panel")] = from_3d_numpy_to_2d_array_adp
+
+
 def from_nested_to_2d_array(X, return_numpy=False):
     """Convert nested pandas DataFrame or Series with NumPy arrays or
     pandas Series in cells into tabular
@@ -216,6 +237,21 @@ def from_nested_to_2d_array(X, return_numpy=False):
     return Xt
 
 
+def from_nested_to_pdwide(what, store=None):
+
+    return from_nested_to_2d_array(X=what, return_numpy=False)
+
+
+def from_nested_to_2d_np_array(what, store=None):
+
+    return from_nested_to_2d_array(X=what, return_numpy=True)
+
+
+convert[("nested_univ", "pd-wide", "Panel")] = from_nested_to_pdwide
+
+convert[("nested_univ", "numpyflat", "Panel")] = from_nested_to_2d_np_array
+
+
 def from_2d_array_to_nested(
     X, index=None, columns=None, time_index=None, cells_as_numpy=False
 ):
@@ -268,6 +304,14 @@ def from_2d_array_to_nested(
     if columns is not None:
         Xt.columns = columns
     return Xt
+
+
+def from_pd_wide_to_nested(what, store=None):
+
+    return from_2d_array_to_nested(X=what)
+
+
+convert[("pd-wide", "nested_univ", "Panel")] = from_pd_wide_to_nested
 
 
 def convert_from_dictionary(ts_dict):
@@ -416,6 +460,19 @@ def from_nested_to_long(
     return long_df
 
 
+def from_nested_to_long_adp(what, store=None):
+
+    return from_nested_to_long(
+        X=what,
+        instance_column_name="case_id",
+        time_column_name="reading_id",
+        dimension_column_name="dim_id",
+    )
+
+
+convert[("nested_univ", "pd-long", "Panel")] = from_nested_to_long_adp
+
+
 def from_long_to_nested(
     X_long,
     instance_column_name="case_id",
@@ -516,6 +573,14 @@ def from_long_to_nested(
     return X_nested
 
 
+def from_long_to_nested_adp(what, store=None):
+
+    return from_long_to_nested(X_long=what)
+
+
+convert[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
+
+
 def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     """Convert panel data stored as pandas multi-index DataFrame to
     Numpy 3-dimensional NumPy array (n_instances, n_columns, n_timepoints).
@@ -561,6 +626,16 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     X_3d = X.values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
 
     return X_3d
+
+
+def from_multi_index_to_3d_numpy_adp(what, store=None):
+
+    return from_multi_index_to_3d_numpy(
+        X=what, instance_index="instances", time_index="timepoints"
+    )
+
+
+convert[("pd-multiindex", "numpy3D", "Panel")] = from_multi_index_to_3d_numpy_adp
 
 
 def from_3d_numpy_to_multi_index(
@@ -624,6 +699,14 @@ def from_3d_numpy_to_multi_index(
     return X_mi
 
 
+def from_3d_numpy_to_multi_index_adp(what, store=None):
+
+    return from_3d_numpy_to_multi_index(X=what)
+
+
+convert[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_index_adp
+
+
 def from_multi_index_to_nested(
     multi_ind_dataframe, instance_index=None, cells_as_numpy=False
 ):
@@ -681,6 +764,14 @@ def from_multi_index_to_nested(
     assert (x_nested.columns == multi_ind_dataframe.columns).all(), col_msg
 
     return x_nested
+
+
+def from_multi_index_to_nested_adp(what, store=None):
+
+    return from_multi_index_to_nested(X=what, instance_index_name="instances")
+
+
+convert[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
 
 
 def from_nested_to_multi_index(X, instance_index=None, time_index=None):
@@ -763,6 +854,16 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     return X_mi
 
 
+def from_nested_to_multi_index_adp(what, store=None):
+
+    return from_nested_to_multi_index(
+        X=what, instance_index_name="instances", time_index="timepoints"
+    )
+
+
+convert[("nested_univ", "pd-multiindex", "Panel")] = from_nested_to_multi_index_adp
+
+
 def _convert_series_cell_to_numpy(cell):
     if isinstance(cell, pd.Series):
         return cell.to_numpy()
@@ -818,6 +919,14 @@ def from_nested_to_3d_numpy(X):
     return X_3d
 
 
+def from_nested_to_3d_numpy_adp(what, store=None):
+
+    return from_nested_to_3d_numpy(X=what)
+
+
+convert[("nested_univ", "numpy3D", "Panel")] = from_nested_to_3d_numpy_adp
+
+
 def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     """Convert NumPy ndarray with shape (n_instances, n_columns, n_timepoints)
     into nested pandas DataFrame (with time series as pandas Series in cells)
@@ -861,6 +970,14 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     for j, column in enumerate(column_names):
         df[column] = [container(X[instance, j, :]) for instance in range(n_instances)]
     return df
+
+
+def from_3d_numpy_to_nested_adp(what, store=None):
+
+    return from_3d_numpy_to_nested(X=what)
+
+
+convert[("numpy3D", "nested_univ", "Panel")] = from_3d_numpy_to_nested_adp
 
 
 def is_nested_dataframe(X):
