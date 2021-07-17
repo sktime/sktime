@@ -15,6 +15,14 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
 
+__all__ = [
+    "test_get_class_tags",
+    "test_get_class_tag",
+    "test_get_tags",
+    "test_get_tag",
+    "test_set_tags",
+]
+
 from copy import deepcopy
 
 from sktime.base import BaseObject
