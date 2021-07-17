@@ -638,21 +638,33 @@ def _(estimator, **kwargs):
     return (X,)
 
 
+@singledispatch
 def _make_inverse_transform_args(estimator, **kwargs):
-    if isinstance(estimator, _SeriesToPrimitivesTransformer):
-        X = _make_primitives(**kwargs)
-        return (X,)
-    elif isinstance(estimator, _SeriesToSeriesTransformer):
-        X = _make_series(**kwargs)
-        return (X,)
-    elif isinstance(estimator, _PanelToTabularTransformer):
-        X = _make_tabular_X(**kwargs)
-        return (X,)
-    elif isinstance(estimator, _PanelToPanelTransformer):
-        X = _make_panel_X(**kwargs)
-        return (X,)
-    else:
-        raise ValueError(_get_err_msg(estimator))
+    raise ValueError(_get_err_msg(estimator))
+
+
+@_make_transform_args.register(_SeriesToPrimitivesTransformer)
+def _(estimator, **kwargs):
+    X = _make_primitives(**kwargs)
+    return (X,)
+
+
+@_make_transform_args.register(_SeriesToSeriesTransformer)
+def _(estimator, **kwargs):
+    X = _make_series(**kwargs)
+    return (X,)
+
+
+@_make_transform_args.register(_PanelToTabularTransformer)
+def _(estimator, **kwargs):
+    X = _make_tabular_X(**kwargs)
+    return (X,)
+
+
+@_make_transform_args.register(_PanelToPanelTransformer)
+def _(estimator, **kwargs):
+    X = _make_panel_X(**kwargs)
+    return (X,)
 
 
 def _make_primitives(n_columns=1, random_state=None):
