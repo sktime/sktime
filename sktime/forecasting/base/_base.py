@@ -122,6 +122,9 @@ class BaseForecaster(BaseEstimator):
 
         self._set_fh(fh)
 
+        # input checks and minor coercions on X, y
+        ###########################################
+
         # checking y
         enforce_univariate = self.get_tag("scitype:y") == "univariate"
         enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
@@ -148,30 +151,23 @@ class BaseForecaster(BaseEstimator):
 
         self._set_cutoff(y.index[-1])
 
+        # convert y to supported inner type, if necessary
+        ##################################################
         y_in_mtype = mtype(y, "Series")
         self.y_in_mtype = y_in_mtype
 
         # retrieve supported y_mtypes for _fit
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
-        # is the input mtype supported by _fit?
-        y_in_mtype_supported = y_in_mtype in set(y_inner_mtype)
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self.converter_store,
+        )
 
-        # if not, we convert
-        if not y_in_mtype_supported:
-            # if multiple types supported, convert to first
-            if isinstance(y_inner_mtype, list):
-                y_inner_mtype = y_inner_mtype[0]
-
-            y_inner = convert_to(
-                y,
-                to_type=y_inner_mtype,
-                as_scitype="Series",  # we are dealing with series
-                store=self.converter_store,
-            )
-        # if supported, we just pass through y
-        else:
-            y_inner = y
+        # checks and conversions complete, pass to inner fit
+        #####################################################
 
         self._fit(y=y_inner, X=X, fh=fh)
 
@@ -346,6 +342,9 @@ class BaseForecaster(BaseEstimator):
         """
         self.check_is_fitted()
 
+        # input checks and minor coercions on X, y
+        ###########################################
+
         # checking y
         enforce_univariate = self.get_tag("scitype:y") == "univariate"
         enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
@@ -369,13 +368,23 @@ class BaseForecaster(BaseEstimator):
         # end checking X
 
         self._update_y_X(y, X)
+        # convert y to supported inner type, if necessary
+        ##################################################
+        y_in_mtype = mtype(y, "Series")
+        self.y_in_mtype = y_in_mtype
+
+        # retrieve supported y_mtypes for _fit
+        y_inner_mtype = self.get_tag("y_inner_mtype")
 
         y_inner = convert_to(
             y,
-            self._all_tags()["y_type"],
-            as_scitype="Series",
+            to_type=y_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
             store=self.converter_store,
         )
+
+        # checks and conversions complete, pass to inner fit
+        #####################################################
 
         self._update(y=y_inner, X=X, update_params=update_params)
 

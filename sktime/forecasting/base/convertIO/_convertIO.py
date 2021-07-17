@@ -283,12 +283,15 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
     ----------
     what : object to convert - any type, should comply with mtype spec for as_scitype
     to_type : str - the type to convert "what" to, a valid mtype string
+              or list - admissible types for conversion to
     as_scitype : str - name of scitype the object "what" is considered as
     store : reference of storage for lossy conversions, default=None (no store)
 
     Returns
     -------
-    converted_what : to_type - object what converted to to_type
+    converted_what : to_type - object what converted to to_type, if to_type is str
+                     if to_type is list, converted to to_type[0],
+                        unless from_type in to_type, in this case converted_what=what
 
     Raises
     ------
@@ -296,6 +299,15 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
     KeyError if conversion is not implemented
     """
     from_type = mtype(what=what, as_scitype=as_scitype)
+
+    # if to_type is a list:
+    if isinstance(to_type, list):
+        # no conversion of from_type is in the list
+        if from_type in to_type:
+            to_type = from_type
+        # otherwise convert to first element
+        else:
+            to_type = to_type[0]
 
     key = (from_type, to_type, as_scitype)
 
