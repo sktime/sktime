@@ -116,7 +116,13 @@ ESTIMATOR_TAG_REGISTER = [
         "y_inner_mtype",
         "forecaster",
         ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
-        "which machine type(s) is the internal _fit able to deal with?",
+        "which machine type(s) is the internal _fit/_predict able to deal with?",
+    ),
+    (
+        "X_inner_mtype",
+        "forecaster",
+        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     # (
     #     "handles-panel",
