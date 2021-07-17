@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Composers that create panel pairwise transformers from table pairwise transformers
+Composers that create panel pairwise transformers from table pairwise transformers.
+
+Currently implemented composers in this module:
+
+    AggrDist - panel distance from aggregation of tabular distance matrix entries
 """
 
 __author__ = ["fkiraly"]
@@ -11,7 +15,8 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
 class AggrDist(BasePairwiseTransformerPanel):
-    """
+    """Panel distance from tabular distance aggregation.
+
     panel distance obtained by applying aggregation function to tabular distance matrix
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series
 
@@ -46,24 +51,27 @@ class AggrDist(BasePairwiseTransformerPanel):
         super(AggrDist, self).__init__()
 
     def _transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix.
+
+            Core logic.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2
                 if X2 is not passed, is equal to X
                 if X/X2 is a pd.DataFrame and contains non-numeric columns,
                     these are removed before computation
 
-        Args:
-            X: list of pd.DataFrame or 2D np.arrays, of length n
+        Parameters
+        ----------
+        X: pd.DataFrame of length n, or 2D np.array with n rows
+        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
+            default X2 = X
 
-        Optional args:
-            X2: list of pd.DataFrame or 2D np.arrays, of length m
-
-        Returns:
-            distmat: np.array of shape [n, m]
-                (i,j)-th entry contains distance/kernel between X[i] and X2[j]
+        Returns
+        -------
+        distmat: np.array of shape [n, m]
+            (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-
         n = len(X)
         m = len(X2)
 
