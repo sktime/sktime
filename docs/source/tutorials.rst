@@ -15,6 +15,7 @@ We assume basic familiarity with `scikit-learn`_. If you haven’t worked with s
 `getting-started guide`_.
 
 .. nbgallery::
+
     examples/01_forecasting
     examples/01a_forecasting_sklearn
     examples/02_classification_univariate
