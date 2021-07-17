@@ -725,7 +725,7 @@ def _get_args(function, varargs=False):
         return args
 
 
-METHOD_MAP: Dict[str, Union[Callable, Exception]] = {
+METHOD_LOOKUP: Dict[str, Union[Callable, Exception]] = {
     "fit": _make_fit_args,
     "update": NotImplementedError,
     "predict": _make_predict_args,
@@ -739,7 +739,7 @@ METHOD_MAP: Dict[str, Union[Callable, Exception]] = {
 def _make_args(estimator, method, **kwargs):
     """Helper function to generate appropriate arguments for testing different
     estimator types and their methods"""
-    callable_or_exception = METHOD_MAP.get(method)
+    callable_or_exception = METHOD_LOOKUP.get(method)
     if not callable_or_exception:
         raise ValueError(f"Method: {method} not supported")
     elif isinstance(callable_or_exception, Exception):
