@@ -48,7 +48,6 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils._testing.panel import make_clustering_problem
 from sktime.utils.data_processing import is_nested_dataframe
-from sktime.utils import _has_tag
 from sktime.clustering.base.base import BaseClusterer
 
 from sktime.annotation.base import BaseSeriesAnnotator
@@ -131,8 +130,8 @@ def check_required_params(Estimator):
 
 
 def check_estimator_tags(Estimator):
-    assert hasattr(Estimator, "_all_tags")
-    all_tags = Estimator._all_tags()
+    assert hasattr(Estimator, "get_class_tags")
+    all_tags = Estimator.get_class_tags()
     assert isinstance(all_tags, dict)
     assert all([isinstance(key, str) for key in all_tags.keys()])
     if hasattr(Estimator, "_tags"):
@@ -421,7 +420,7 @@ def check_methods_do_not_change_state(Estimator):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if method == "transform" and _has_tag(Estimator, "fit-in-transform"):
+            if method == "transform" and Estimator.get_class_tag("fit-in-transform"):
                 # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.
@@ -506,7 +505,7 @@ def check_multiprocessing_idempotent(Estimator):
 
 def check_valid_estimator_tags(Estimator):
     # check if Estimator tags are in VALID_ESTIMATOR_TAGS
-    for tag in Estimator._all_tags().keys():
+    for tag in Estimator.get_class_tags().keys():
         assert tag in VALID_ESTIMATOR_TAGS
 
 

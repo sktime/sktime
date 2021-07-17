@@ -1,6 +1,35 @@
 # -*- coding: utf-8 -*-
 """
-Abstract base class for pairwise transformers (such as distance/kernel matrix makers)
+Base class templates for distances or kernels between time series, and for tabular data.
+
+templates in this module:
+
+    BasePairwiseTransformer - distances/kernels for tabular data
+    BasePairwiseTransformerPanel - distances/kernels for time series
+
+Interface specifications below.
+
+---
+    class name: BasePairwiseTransformer
+
+Scitype defining methods:
+    computing distance/kernel matrix (shorthand) - __call__(self, X, X2=X)
+    computing distance/kernel matrix             - transform(self, X, X2=X)
+
+Inspection methods:
+    hyper-parameter inspection  - get_params()
+
+---
+    class name: BasePairwiseTransformerPanel
+
+Scitype defining methods:
+    computing distance/kernel matrix (shorthand) - __call__(self, X, X2=X)
+    computing distance/kernel matrix             - transform(self, X, X2=X)
+
+Inspection methods:
+    hyper-parameter inspection  - get_params()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
@@ -32,7 +61,8 @@ class BasePairwiseTransformer(BaseEstimator):
         self.X_equals_X2 = False
 
     def __call__(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix, call shorthand.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2
                 if X2 is not passed, is equal to X
@@ -60,7 +90,8 @@ class BasePairwiseTransformer(BaseEstimator):
         return self.transform(X=X, X2=X2)
 
     def transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
@@ -80,7 +111,6 @@ class BasePairwiseTransformer(BaseEstimator):
         X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
-
         X = check_series(X)
 
         if X2 is None:
@@ -102,11 +132,12 @@ class BasePairwiseTransformer(BaseEstimator):
         return self._transform(X=X, X2=X2)
 
     def _transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix.
+
+            Core logic
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
-
-            core logic
 
         Parameters
         ----------
@@ -122,12 +153,14 @@ class BasePairwiseTransformer(BaseEstimator):
         raise NotImplementedError
 
     def fit(self, X=None, X2=None):
+        """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
         pass
 
 
 def _pairwise_panel_x_check(X):
-    """
+    """Check and coerce input data.
+
     Method used to check the input and convert
     numpy 3d or numpy list of df to list of dfs
 
@@ -192,7 +225,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         self.X_equals_X2 = False
 
     def __call__(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix, call shorthand.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
@@ -217,7 +251,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         return self.transform(X=X, X2=X2)
 
     def transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
@@ -237,7 +272,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
-
         X = _pairwise_panel_x_check(X)
 
         if X2 is None:
@@ -254,11 +288,12 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         return self._transform(X=X, X2=X2)
 
     def _transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix.
+
+            Core logic
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
-
-            core logic
 
         Parameters
         ----------
@@ -274,5 +309,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         raise NotImplementedError
 
     def fit(self, X=None, X2=None):
+        """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
         pass
