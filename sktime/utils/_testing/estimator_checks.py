@@ -613,7 +613,7 @@ def _(estimator, **kwargs):
     return (X,)
 
 
-@_make_predict_args.register(BaseSeriesAnnotator)
+@_make_predict_args.register(BaseClusterer)
 def _(estimator, **kwargs):
     X = _make_panel_X(**kwargs)
     return (X,)
