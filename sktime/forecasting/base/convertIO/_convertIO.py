@@ -204,7 +204,7 @@ def infer_mtype_Series(what):
     infer_dict = {
         pd.Series: "pd.Series",
         pd.DataFrame: "pd.DataFrame",
-        np.ndarray: "np.ndarray"
+        np.ndarray: "np.ndarray",
     }
 
     if what_type not in infer_dict.keys():
@@ -328,6 +328,7 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
         from_type=from_type,
         to_type=to_type,
         as_scitype=as_scitype,
-        store=store)
+        store=store
+        )
 
     return converted_what

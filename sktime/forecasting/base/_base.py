@@ -232,7 +232,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred,
                 self.y_in_mtype,
                 as_scitype="Series",
-                store=self.converter_store_y
+                store=self.converter_store_y,
             )
         else:
             scitype_y = self.get_tag("scitype:y")
@@ -242,9 +242,10 @@ class BaseForecaster(BaseEstimator):
                 "both": "pd.DataFrame",
                 }
             y_out = convert_to(
-                y_pred, to_dict[scitype_y],
+                y_pred,
+                to_dict[scitype_y],
                 as_scitype="Series",
-                store=self.converter_store_y
+                store=self.converter_store_y,
             )
 
         if return_pred_int:

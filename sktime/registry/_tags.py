@@ -179,9 +179,9 @@ def check_tag_is_valid(tag_name, tag_value):
     if tag_type[0] == "str" and tag_value not in tag_type[1]:
         raise ValueError(
             tag_name + " must be one of " + tag_type[1] + " found " + tag_value
-            )
+        )
 
     if tag_type[0] == "list" and not set(tag_value).issubset(tag_type[1]):
         raise ValueError(
             tag_name + " must be subest of " + tag_type[1] + " found " + tag_value
-            )
+        )
