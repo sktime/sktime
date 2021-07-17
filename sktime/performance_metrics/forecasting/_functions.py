@@ -47,7 +47,7 @@ EPS = np.finfo(np.float64).eps
 
 
 def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
-    """Pop a kwarg from kwargs and raise warning if kwarg not present."""
+    """Pop a kwarg from kwargs and raise error if kwarg not present."""
     kwarg_ = kwargs.pop(kwarg, None)
     if kwarg_ is None:
         msg = "".join(
@@ -80,6 +80,27 @@ def _weighted_geometric_mean(x, sample_weight=None, axis=None):
     return np.exp(
         np.sum(sample_weight * np.log(x), axis=axis) / np.sum(sample_weight, axis=axis)
     )
+
+
+def _check_y_train(y_true, y_train, sp=None):
+    if sp is None:
+        raise ValueError(f"`sp` should be an integer between 1 and {y_train.shape[0]}")
+    y_train = check_series(y_train, enforce_univariate=False)
+    # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
+    if y_train.ndim == 1:
+        y_train = np.expand_dims(y_train, 1)
+
+    # Check test and train have same dimensions
+    if y_true.ndim != y_train.ndim:
+        raise ValueError("Equal dimension required for y_true and y_train")
+
+    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
+        raise ValueError("Equal number of columns required for y_true and y_train")
+
+    # naive seasonal prediction
+    y_train = np.asarray(y_train)
+    y_pred_naive = y_train[:-sp]
+    return y_pred_naive, y_train
 
 
 def mean_asymmetric_error(
@@ -307,21 +328,9 @@ def mean_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
-    # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
-    if y_train.ndim == 1:
-        y_train = np.expand_dims(y_train, 1)
 
-    # Check test and train have same dimensions
-    if y_true.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_true and y_train")
-
-    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_true and y_train")
-
-    # naive seasonal prediction
-    y_train = np.asarray(y_train)
-    y_pred_naive = y_train[:-sp]
+    # Check y_train and return naive seasonal prediction
+    y_pred_naive, y_train = _check_y_train(y_true, y_train, sp=sp)
 
     # mean absolute error of naive seasonal prediction
     mae_naive = mean_absolute_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
@@ -436,20 +445,9 @@ def median_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
-    if y_train.ndim == 1:
-        y_train = np.expand_dims(y_train, 1)
 
-    # Check test and train have same dimensions
-    if y_true.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_true and y_train")
-
-    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_true and y_train")
-
-    # naive seasonal prediction
-    y_train = np.asarray(y_train)
-    y_pred_naive = y_train[:-sp]
+    # Check y_train and return naive seasonal prediction
+    y_pred_naive, y_train = _check_y_train(y_true, y_train, sp=sp)
 
     # mean absolute error of naive seasonal prediction
     mdae_naive = median_absolute_error(
@@ -570,20 +568,9 @@ def mean_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
-    if y_train.ndim == 1:
-        y_train = np.expand_dims(y_train, 1)
 
-    # Check test and train have same dimensions
-    if y_true.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_true and y_train")
-
-    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_true and y_train")
-
-    # naive seasonal prediction
-    y_train = np.asarray(y_train)
-    y_pred_naive = y_train[:-sp]
+    # Check y_train and return naive seasonal prediction
+    y_pred_naive, y_train = _check_y_train(y_true, y_train, sp=sp)
 
     # mean squared error of naive seasonal prediction
     mse_naive = mean_squared_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
@@ -703,20 +690,9 @@ def median_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
-    if y_train.ndim == 1:
-        y_train = np.expand_dims(y_train, 1)
 
-    # Check test and train have same dimensions
-    if y_true.ndim != y_train.ndim:
-        raise ValueError("Equal dimension required for y_true and y_train")
-
-    if (y_true.ndim > 1) and (y_true.shape[1] != y_train.shape[1]):
-        raise ValueError("Equal number of columns required for y_true and y_train")
-
-    # naive seasonal prediction
-    y_train = np.asarray(y_train)
-    y_pred_naive = y_train[:-sp]
+    # Check y_train and return naive seasonal prediction
+    y_pred_naive, y_train = _check_y_train(y_true, y_train, sp=sp)
 
     # median squared error of naive seasonal prediction
     mdse_naive = median_squared_error(
@@ -1196,7 +1172,7 @@ def mean_absolute_percentage_error(
         check_consistent_length(y_true, horizon_weight)
 
     output_errors = np.average(
-        np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)),
+        _absolute_percentage_error(y_true, y_pred, symmetric=symmetric),
         weights=horizon_weight,
         axis=0,
     )
@@ -1310,12 +1286,12 @@ def median_absolute_percentage_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(
-            np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)), axis=0
+            _absolute_percentage_error(y_true, y_pred, symmetric=symmetric), axis=0
         )
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
-            np.abs(_percentage_error(y_pred, y_true, symmetric=symmetric)),
+            _absolute_percentage_error(y_true, y_pred, symmetric=symmetric),
             sample_weight=horizon_weight,
         )
 
@@ -1438,7 +1414,7 @@ def mean_squared_percentage_error(
         check_consistent_length(y_true, horizon_weight)
 
     output_errors = np.average(
-        np.square(_percentage_error(y_true, y_pred, symmetric=symmetric)),
+        _squared_percentage_error(y_true, y_pred, symmetric=symmetric),
         weights=horizon_weight,
         axis=0,
     )
@@ -1566,13 +1542,13 @@ def median_squared_percentage_error(
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
+    squared_per_err = _squared_percentage_error(y_true, y_pred, symmetric=symmetric)
     if horizon_weight is None:
-        output_errors = np.median(np.square(perc_err), axis=0)
+        output_errors = np.median(squared_per_err, axis=0)
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
-            np.square(perc_err),
+            squared_per_err,
             sample_weight=horizon_weight,
         )
 
@@ -1681,12 +1657,12 @@ def mean_relative_absolute_error(
 
     if horizon_weight is None:
         output_errors = np.mean(
-            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
+            _absolute_relative_error(y_true, y_pred, y_pred_benchmark), axis=0
         )
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = np.average(
-            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)),
+            _absolute_relative_error(y_true, y_pred, y_pred_benchmark),
             weights=horizon_weight,
             axis=0,
         )
@@ -1790,12 +1766,12 @@ def median_relative_absolute_error(
 
     if horizon_weight is None:
         output_errors = np.median(
-            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)), axis=0
+            _absolute_relative_error(y_true, y_pred, y_pred_benchmark), axis=0
         )
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
-            np.abs(_relative_error(y_true, y_pred, y_pred_benchmark)),
+            _absolute_relative_error(y_true, y_pred, y_pred_benchmark),
             sample_weight=horizon_weight,
         )
 
@@ -1903,15 +1879,14 @@ def geometric_mean_relative_absolute_error(
         y_true, y_pred_benchmark, multioutput
     )
 
-    relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
+    relative_errors = _absolute_relative_error(y_true, y_pred, y_pred_benchmark)
+    relative_errors = np.where(relative_errors == 0.0, EPS, relative_errors)
     if horizon_weight is None:
-        output_errors = gmean(
-            np.where(relative_errors == 0.0, EPS, relative_errors), axis=0
-        )
+        output_errors = gmean(relative_errors, axis=0)
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.where(relative_errors == 0.0, EPS, relative_errors),
+            relative_errors,
             sample_weight=horizon_weight,
             axis=0,
         )
@@ -2029,15 +2004,14 @@ def geometric_mean_relative_squared_error(
     _, y_true, y_pred_benchmark, multioutput = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
     )
-    relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
+    relative_errors = _squared_relative_error(y_true, y_pred, y_pred_benchmark)
+    relative_errors = np.where(relative_errors == 0.0, EPS, relative_errors)
     if horizon_weight is None:
-        output_errors = gmean(
-            np.where(relative_errors == 0.0, EPS, relative_errors), axis=0
-        )
+        output_errors = gmean(relative_errors, axis=0)
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.where(relative_errors == 0.0, EPS, relative_errors),
+            relative_errors,
             sample_weight=horizon_weight,
             axis=0,
         )
@@ -2176,6 +2150,54 @@ def relative_loss(
     return np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
 
 
+def _squared_error(y_true, y_pred):
+    """Calculates squared error.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+
+    Returns
+    -------
+    squared_error : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+        (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
+    """
+    squared_error = np.square(y_true - y_pred)
+
+    return squared_error
+
+
+def _absolute_error(y_true, y_pred):
+    """Calculates squared error.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+
+    Returns
+    -------
+    absolute_error : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+        (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
+    """
+    absolute_error = np.abs(y_true - y_pred)
+
+    return absolute_error
+
+
 def _asymmetric_error(
     y_true,
     y_pred,
@@ -2210,15 +2232,25 @@ def _asymmetric_error(
 
     Returns
     -------
-    asymmetric_errors : float
-        Array of assymetric errors.
+    asymmetric_errors : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                        (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
 
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
-    functions = {"squared": np.square, "absolute": np.abs}
+
+    functions = {"squared": _squared_error, "absolute": _absolute_error}
+    if left_error_function not in functions or right_error_function not in functions:
+        msg = " ".join(
+            [
+                "`left_error_function` and `right_error_function`",
+                f"must be one of {functions.keys()}.",
+            ]
+        )
+        raise ValueError(msg)
     left_func, right_func = (
         functions[left_error_function],
         functions[right_error_function],
@@ -2226,8 +2258,8 @@ def _asymmetric_error(
 
     errors = np.where(
         y_true - y_pred < asymmetric_threshold,
-        left_func(y_true - y_pred),
-        right_func(y_true - y_pred),
+        left_func(y_true, y_pred),
+        right_func(y_true, y_pred),
     )
     return errors
 
@@ -2251,8 +2283,9 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
 
     Returns
     -------
-    relative_error : float
-        relative error
+    relative_error : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                    (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
 
     References
     ----------
@@ -2267,7 +2300,71 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
     return (y_true - y_pred) / denominator
 
 
-def _percentage_error(y_true, y_pred, symmetric=True):
+def _absolute_relative_error(y_true, y_pred, y_pred_benchmark):
+    """Absolute relative error for observations to benchmark method.
+
+    Parameters
+    ----------
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
+
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
+        Forecasted values from benchmark method.
+
+    Returns
+    -------
+    abs_rel_err : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                    (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    """
+    abs_rel_err = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
+    return abs_rel_err
+
+
+def _squared_relative_error(y_true, y_pred, y_pred_benchmark):
+    """Absolute relative error for observations to benchmark method.
+
+    Parameters
+    ----------
+    y_true : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pandas Series, pandas DataFrame or NumPy array of
+            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values.
+
+    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+             (fh, n_outputs) where fh is the forecasting horizon, default=None
+        Forecasted values from benchmark method.
+
+    Returns
+    -------
+    sq_rel_err : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                    (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    """
+    sq_rel_err = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
+    return sq_rel_err
+
+
+def _absolute_percentage_error(y_true, y_pred, symmetric=True):
     """Percentage error.
 
     Parameters
@@ -2285,7 +2382,9 @@ def _percentage_error(y_true, y_pred, symmetric=True):
 
     Returns
     -------
-    percentage_error : float
+    abs_perc_err : pd.Series, pd.DataFrame or np.array of shape (fh,) \
+                   or (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
 
     References
     ----------
@@ -2295,11 +2394,51 @@ def _percentage_error(y_true, y_pred, symmetric=True):
     if symmetric:
         # Alternatively could use np.abs(y_true + y_pred) in denom
         # Results will be different if y_true and y_pred have different signs
-        percentage_error = (
+        abs_perc_err = (
             2
-            * np.abs(y_true - y_pred)
+            * _absolute_error(y_true, y_pred)
             / np.maximum(np.abs(y_true) + np.abs(y_pred), EPS)
         )
     else:
-        percentage_error = (y_true - y_pred) / np.maximum(np.abs(y_true), EPS)
-    return percentage_error
+        abs_perc_err = _absolute_error(y_true, y_pred) / np.maximum(np.abs(y_true), EPS)
+    return abs_perc_err
+
+
+def _squared_percentage_error(y_true, y_pred, symmetric=True):
+    """Squared percentage error.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+
+    symmetric : bool, default = False
+        Whether to calculate symmetric percentage error.
+
+    Returns
+    -------
+    sq_perc_err : pd.Series, pd.DataFrame or np.array of shape (fh,) \
+                  or (fh, n_outputs) where fh is the forecasting horizon
+        Forecast errors for each sample.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    """
+    if symmetric:
+        # Alternatively could use np.abs(y_true + y_pred) in denom
+        # Results will be different if y_true and y_pred have different signs
+        sq_perc_err = np.square(
+            2
+            * _absolute_error(y_true, y_pred)
+            / np.maximum(np.abs(y_true) + np.abs(y_pred), EPS)
+        )
+    else:
+        sq_perc_err = np.square((y_true - y_pred) / np.maximum(np.abs(y_true), EPS))
+    return sq_perc_err
