@@ -92,6 +92,16 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
+    
+    Example
+    -------
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(return_X_y=True, split="train")
+    >>> X_test, y_test = load_basic_motions(return_X_y=True, split="test")
+    >>> classifier = KNeighborsTimeSeriesClassifier()
+    >>> classifier.fit(X_train, y_train)
+    >>> y_pred = classifier.predict(X_test)
     """
 
     # Capability tags
