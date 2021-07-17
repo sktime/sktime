@@ -241,7 +241,7 @@ def mtype(what, as_scitype: str):
     if as_scitype not in valid_as_scitypes:
         raise TypeError(as_scitype + " is not a valid scitype")
 
-    return infer_mtype_Series[as_scitype](what=what)
+    return infer_mtype_dict[as_scitype](what=what)
 
 
 def convert(what, from_type: str, to_type: str, as_scitype: str, store=None):
