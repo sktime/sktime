@@ -11,6 +11,7 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
+from functools import singledispatch
 from inspect import signature
 from typing import Callable, Union, Dict
 
@@ -537,34 +538,55 @@ def _construct_instance(Estimator):
     return Estimator(**params)
 
 
+@singledispatch
 def _make_fit_args(estimator, **kwargs):
-    if isinstance(estimator, BaseForecaster):
-        # we need to handle the TransformedTargetForecaster separately
-        if isinstance(estimator, _SeriesToSeriesTransformer):
-            y = _make_series(**kwargs)
-        else:
-            y = make_forecasting_problem(**kwargs)
-        fh = 1
-        X = None
-        return y, X, fh
-    elif isinstance(estimator, BaseSeriesAnnotator):
-        X = make_annotation_problem(**kwargs)
-        return (X,)
-    elif isinstance(estimator, BaseClassifier):
-        return make_classification_problem(**kwargs)
-    elif isinstance(estimator, BaseRegressor):
-        return make_regression_problem(**kwargs)
-    elif isinstance(
-        estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
-    ):
-        X = _make_series(**kwargs)
-        return (X,)
-    elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
-        return make_classification_problem(**kwargs)
-    elif isinstance(estimator, BaseClusterer):
-        return (make_clustering_problem(**kwargs),)
+    raise ValueError(_get_err_msg(estimator))
+
+
+@_make_fit_args.register(BaseForecaster)
+def _(estimator, **kwargs):
+    # we need to handle the TransformedTargetForecaster separately
+    if isinstance(estimator, _SeriesToSeriesTransformer):
+        y = _make_series(**kwargs)
     else:
-        raise ValueError(_get_err_msg(estimator))
+        y = make_forecasting_problem(**kwargs)
+    fh = 1
+    X = None
+    return y, X, fh
+
+
+@_make_fit_args.register(BaseSeriesAnnotator)
+def _(estimator, **kwargs):
+    X = make_annotation_problem(**kwargs)
+    return (X,)
+
+
+@_make_fit_args.register(BaseClassifier)
+def _(estimator, **kwargs):
+    return make_classification_problem(**kwargs)
+
+
+@_make_fit_args.register(BaseRegressor)
+def _(estimator, **kwargs):
+    return make_regression_problem(**kwargs)
+
+
+@_make_fit_args.register(_SeriesToPrimitivesTransformer)
+@_make_fit_args.register(_SeriesToSeriesTransformer)
+def _(estimator, **kwargs):
+    X = _make_series(**kwargs)
+    return (X,)
+
+
+@_make_fit_args.register(_PanelToTabularTransformer)
+@_make_fit_args.register(_PanelToPanelTransformer)
+def _(estimator, **kwargs):
+    return make_classification_problem(**kwargs)
+
+
+@_make_fit_args.register(BaseClusterer)
+def _(estimator, **kwargs):
+    return (make_clustering_problem(**kwargs),)
 
 
 def _make_predict_args(estimator, **kwargs):
