@@ -225,6 +225,27 @@ nbsphinx_execute = "never"  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 
+# since we don't execute the notebooks, we need to manually set the thumbnails here
+nbsphinx_thumbnails = {
+    "examples/01_forecasting": "",
+    "examples/01a_forecasting_sklearn": "",
+    "examples/02_classification_univariate": "",
+    "examples/03_classification_multivariate": "",
+    "examples/04_benchmarking": "",
+    "examples/feature_extraction_with_tsfresh": "",
+    "examples/shapelet_transform": "",
+    "examples/interval_based_classification": "",
+    "examples/catch22": "",
+    "examples/mrseql": "",
+    "examples/rocket": "",
+    "examples/minirocket": "",
+    "examples/plateau_finder": "",
+    "examples/loading_data": "",
+    "examples/forecasting_with_hcrystalball": "",
+    "examples/dictionary_based_classification": "",
+    "examples/interpolation": "",
+    "examples/window_splitter": "",
+}
 # add Binder launch buttom at the top
 CURRENT_FILE = "{{ env.doc2path( env.docname, base=None) }}"
 

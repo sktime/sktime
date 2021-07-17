@@ -3,16 +3,16 @@
 Tutorials
 =========
 
-.. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples/
-
 We have a number of tutorial notebooks. If you like to run them interactively, you can launch them on Binder without
 having to install anything.
 
-|Binder|_
-
 We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
 `getting-started guide`_.
+
+The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/main/examples>`_.
+
+.. _scikit-learn: https://scikit-learn.org/stable/
+.. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
 
 .. nbgallery::
 
@@ -34,8 +34,3 @@ We assume basic familiarity with `scikit-learn`_. If you haven’t worked with s
     examples/dictionary_based_classification
     examples/interpolation
     examples/window_splitter
-
-.. _scikit-learn: https://scikit-learn.org/stable/
-.. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
-
-The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/main/examples>`_.
