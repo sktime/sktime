@@ -1,22 +1,76 @@
 # -*- coding: utf-8 -*-
-"""
-Machine type converters for scitypes
+"""Machine type converters for scitypes.
 
 Exports
 -------
-convert : dictionary of functions, with signature as below
-        indexed by triples of types
-         1st element = convert from - type
-         2nd element = convert to - type
-         3rd element = considered as this scitype - string
-        elements are conversion functions of machine type (1st) -> 2nd
+convert_to(what, to_type: str, as_scitype: str, store=None)
+    converts object "what" to type "to_type", considerd as "as_scitype"
 
-convert_to : function/dispatch version of convert, with 1st elt inferred
+convert(what, from_type: str, to_type: str, as_scitype: str, store=None)
+    same as convert_to, without automatic identification of "from_type"
+
+identify_mtype(what, as_scitype: str)
+    identifies "from_type" of what, considered as "as_scitype"
+---
+
+Function signature of convert
+
+Parameters
+----------
+what : object to convert - any type, should comply with mtype spec for as_scitype
+from_type : str - the type to convert "what" to, a valid mtype string
+to_type : str - the type to convert "what" to, a valid mtype string
+as_scitype : str - name of scitype the object "what" is considered as
+store : reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_what : to_type - object what converted to to_type
+
+---
+
+Function signature of convert_to
+
+Parameters
+----------
+what : object to convert - any type, should comply with mtype spec for as_scitype
+to_type : str - the type to convert "what" to, a valid mtype string
+as_scitype : str - name of scitype the object "what" is considered as
+store : reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_what : to_type - object what converted to to_type
+
+"""
 
 
------------------------------------------
+__author__ = ["fkiraly"]
 
-Function signature of
+__all__ = [
+    "convert",
+    "convert_to",
+    "infer_mtype",
+]
+
+
+import numpy as np
+import pandas as pd
+
+
+##############################################################
+# methods to convert one machine type to another machine type
+##############################################################
+
+""" key objects in this section:
+
+convert: dict indexed by triples of str
+  1st element = convert from - str
+  2nd element = convert to - str
+  3rd element = considered as this scitype - str
+elements are conversion functions of machine type (1st) -> 2nd
+
+Function signature of all elements
 convert[(from_type, to_type, as_scitype)]
 
 Parameters
@@ -32,46 +86,9 @@ Raises
 ------
 ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
-
------------------------------------------
-
-Function signature of convert_to
-
-Parameters
-----------
-what : object to convert (any type)
-to_type : type, the type to convert "what" to
-as_scitype : str - name of scitype the object "what" is considered as
-store : reference of storage for lossy conversions, default=None (no store)
-
-Returns
--------
-converted_what : to_type - object what converted to to_type
-
-Raises
-------
-TypeError if no suitable key in convert exists
-    i.e., (type(what), to_type, as_scitype)
-
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-
-__author__ = ["fkiraly"]
-
-
-import numpy as np
-import pandas as pd
-
-
-# dictionary indexed by triples of types
-#  1st element = convert from - type
-#  2nd element = convert to - type
-#  3rd element = considered as this scitype - string
-# elements are conversion functions of machine type (1st) -> 2nd
-
-convert = dict()
+convert_dict = dict()
 
 
 def convert_identity(what, store=None):
@@ -80,8 +97,8 @@ def convert_identity(what, store=None):
 
 
 # assign identity function to type conversion to self
-for tp in [pd.Series, pd.DataFrame, np.array]:
-    convert[(tp, tp, "Series")] = convert_identity
+for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
+    convert_dict[(tp, tp, "Series")] = convert_identity
 
 
 def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
@@ -97,7 +114,7 @@ def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
     return res
 
 
-convert[(pd.Series, pd.DataFrame, "Series")] = convert_UvS_to_MvS_as_Series
+convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Series
 
 
 def convert_MvS_to_UvS_as_Series(what: pd.DataFrame, store=None) -> pd.Series:
@@ -114,7 +131,7 @@ def convert_MvS_to_UvS_as_Series(what: pd.DataFrame, store=None) -> pd.Series:
     return what[what.columns[0]]
 
 
-convert[(pd.Series, pd.DataFrame, "Series")] = convert_MvS_to_UvS_as_Series
+convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_MvS_to_UvS_as_Series
 
 
 def convert_MvS_to_np_as_Series(what: pd.DataFrame, store=None) -> np.array:
@@ -128,7 +145,7 @@ def convert_MvS_to_np_as_Series(what: pd.DataFrame, store=None) -> np.array:
     return what.to_numpy()
 
 
-convert[(pd.DataFrame, np.array, "Series")] = convert_MvS_to_np_as_Series
+convert_dict[("pd.DataFrame", "np.array", "Series")] = convert_MvS_to_np_as_Series
 
 
 def convert_UvS_to_np_as_Series(what: pd.Series, store=None) -> np.array:
@@ -139,7 +156,7 @@ def convert_UvS_to_np_as_Series(what: pd.Series, store=None) -> np.array:
     return pd.DataFrame(what).to_numpy()
 
 
-convert[(pd.Series, np.array, "Series")] = convert_UvS_to_np_as_Series
+convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
 
 
 def convert_np_to_MvS_as_Series(what: np.array, store=None) -> pd.DataFrame:
@@ -159,7 +176,7 @@ def convert_np_to_MvS_as_Series(what: np.array, store=None) -> pd.DataFrame:
     return res
 
 
-convert[(np.array, pd.DataFrame, "Series")] = convert_np_to_MvS_as_Series
+convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
 
 
 def convert_np_to_UvS_as_Series(what: np.array, store=None) -> pd.Series:
@@ -170,13 +187,111 @@ def convert_np_to_UvS_as_Series(what: np.array, store=None) -> pd.Series:
     return pd.Series(what)
 
 
-convert[(np.array, pd.Series, "Series")] = convert_np_to_UvS_as_Series
+convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
+
+
+#########################################################
+# methods to infer the machine type subject to a scitype
+#########################################################
+
+infer_mtype_dict = dict()
+
+
+def infer_mtype_Series(what):
+
+    what_type = type(what)
+
+    infer_dict = {
+        pd.Series: "pd.Series",
+        pd.DataFrame: "pd.DataFrame",
+        np.ndarray: "np.ndarray"
+    }
+
+    if what_type not in infer_dict.keys():
+        raise TypeError("scitype cannot be inferred")
+
+    return infer_dict[what_type]
+
+
+infer_mtype_dict["Series"] = infer_mtype_Series
+
+
+def infer_mtype(what, as_scitype: str):
+    """Infer the mtype of an object considered as a specific scitype.
+
+    Parameters
+    ----------
+    what : object to convert - any type, should comply with mtype spec for as_scitype
+    as_scitype : str - name of scitype the object "what" is considered as
+
+    Returns
+    -------
+    str - the type to convert "what" to, a valid mtype string
+
+    Raises
+    ------
+    TypeError if no type can be identified
+    """
+    valid_as_scitypes = infer_mtype_dict.keys()
+
+    if as_scitype not in valid_as_scitypes:
+        raise TypeError(as_scitype + " is not a valid scitype")
+
+    return infer_mtype_Series[as_scitype](what=what)
+
+
+def convert(what, from_type: str, to_type: str, as_scitype: str, store=None):
+    """Convert objects between different machine representations, subject to scitype.
+
+    Parameters
+    ----------
+    what : object to convert - any type, should comply with mtype spec for as_scitype
+    from_type : str - the type to convert "what" to, a valid mtype string
+    to_type : str - the type to convert "what" to, a valid mtype string
+    as_scitype : str - name of scitype the object "what" is considered as
+    store : reference of storage for lossy conversions, default=None (no store)
+
+    Returns
+    -------
+    converted_what : to_type - object what converted to to_type
+
+    Raises
+    ------
+    KeyError if conversion is not implemented
+    """
+    key = (from_type, to_type, as_scitype)
+
+    ckys = list(convert_dict.keys())
+
+    if key not in ckys:
+        raise TypeError(
+            "no conversion defined from type " + str(from_type) + " to " + str(to_type)
+        )
+
+    return convert[key](what, store=store)
 
 
 # conversion based on queriable type to specified target
-def convert_to(what, to_type: type, as_scitype: str, store=None):
+def convert_to(what, to_type: str, as_scitype: str, store=None):
+    """Convert object to a different machine representation, subject to scitype.
 
-    from_type = type(what)
+    Parameters
+    ----------
+    what : object to convert - any type, should comply with mtype spec for as_scitype
+    to_type : str - the type to convert "what" to, a valid mtype string
+    as_scitype : str - name of scitype the object "what" is considered as
+    store : reference of storage for lossy conversions, default=None (no store)
+
+    Returns
+    -------
+    converted_what : to_type - object what converted to to_type
+
+    Raises
+    ------
+    TypeError if machine type of input "what" is not recognized
+    KeyError if conversion is not implemented
+    """
+    from_type = infer_mtype(what=what, as_scitype=as_scitype)
 
     key = (from_type, to_type, as_scitype)
 
