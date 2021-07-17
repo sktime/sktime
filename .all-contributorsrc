@@ -1090,6 +1090,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "D3f0",
+      "name": "Nahuel Defossé",
+      "avatar_url": "https://github.com/D3f0.png",
+      "profile": "https://www.linkedin.com/in/nahueldefosse/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
