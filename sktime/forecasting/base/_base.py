@@ -181,7 +181,6 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-
         self.fit(y=y, X=X, fh=fh)
 
         return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
@@ -735,7 +734,6 @@ class BaseForecaster(BaseEstimator):
             Each series in the list will contain the errors for each point in
             the forecast for the corresponding alpha.
         """
-
         # this should be the NotImplementedError
         # but current interface assumes private method
         # _compute_pred_err(alphas), not _compute_pred_int
@@ -746,7 +744,7 @@ class BaseForecaster(BaseEstimator):
         # raise NotImplementedError("abstract method")
 
     def _compute_pred_err(self, alphas):
-        """ temporary loopthrough for _compute_pred_err"""
+        """Temporary loopthrough for _compute_pred_err."""
         raise NotImplementedError("abstract method")
 
     def _predict_moving_cutoff(
