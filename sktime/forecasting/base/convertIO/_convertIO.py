@@ -328,7 +328,7 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
         from_type=from_type,
         to_type=to_type,
         as_scitype=as_scitype,
-        store=store
-        )
+        store=store,
+    )
 
     return converted_what

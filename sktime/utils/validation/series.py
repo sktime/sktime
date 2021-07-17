@@ -30,7 +30,7 @@ def _check_is_univariate(y):
 
 
 def _check_is_multivariate(Z):
-    """Check if series is multivariate"""
+    """Check if series is multivariate."""
     if isinstance(Z, pd.Series):
         raise ValueError("Data must be multivariate, but found a pd.Series")
     if isinstance(Z, np.ndarray) and Z.ndim == 1:

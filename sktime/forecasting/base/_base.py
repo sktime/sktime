@@ -240,7 +240,7 @@ class BaseForecaster(BaseEstimator):
                 "univariate": "pd.Series",
                 "multivariate": "pd.DataFrame",
                 "both": "pd.DataFrame",
-                }
+            }
             y_out = convert_to(
                 y_pred,
                 to_dict[scitype_y],
