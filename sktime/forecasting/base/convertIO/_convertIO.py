@@ -272,7 +272,9 @@ def convert(what, from_type: str, to_type: str, as_scitype: str, store=None):
             "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )
 
-    return convert[key](what, store=store)
+    converted_what = convert_dict[key](what, store=store)
+
+    return converted_what
 
 
 # conversion based on queriable type to specified target
@@ -309,13 +311,11 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
         else:
             to_type = to_type[0]
 
-    key = (from_type, to_type, as_scitype)
+    converted_what = convert(
+        what=what,
+        from_type=from_type,
+        to_type=to_type,
+        as_scitype=as_scitype,
+        store=store)
 
-    ckys = list(convert.keys())
-
-    if key not in ckys:
-        raise TypeError(
-            "no conversion defined from type " + str(from_type) + " to " + str(to_type)
-        )
-
-    return convert[key](what, store=store)
+    return converted_what
