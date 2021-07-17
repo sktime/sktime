@@ -9,8 +9,8 @@ convert_to(what, to_type: str, as_scitype: str, store=None)
 convert(what, from_type: str, to_type: str, as_scitype: str, store=None)
     same as convert_to, without automatic identification of "from_type"
 
-identify_mtype(what, as_scitype: str)
-    identifies "from_type" of what, considered as "as_scitype"
+mtype(what, as_scitype: str)
+    returns "from_type" of what, considered as "as_scitype"
 ---
 
 Function signature of convert
@@ -50,7 +50,7 @@ __author__ = ["fkiraly"]
 __all__ = [
     "convert",
     "convert_to",
-    "infer_mtype",
+    "mtype",
 ]
 
 
@@ -216,7 +216,11 @@ def infer_mtype_Series(what):
 infer_mtype_dict["Series"] = infer_mtype_Series
 
 
-def infer_mtype(what, as_scitype: str):
+##################################################
+# public functions - mtype inspection, conversion
+##################################################
+
+def mtype(what, as_scitype: str):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
@@ -291,7 +295,7 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
     TypeError if machine type of input "what" is not recognized
     KeyError if conversion is not implemented
     """
-    from_type = infer_mtype(what=what, as_scitype=as_scitype)
+    from_type = mtype(what=what, as_scitype=as_scitype)
 
     key = (from_type, to_type, as_scitype)
 

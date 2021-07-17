@@ -47,7 +47,7 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "univariate-only",
+        "univariate-only",  # todo: rename to "scitype:handles_exogeneous"
         "forecaster",
         "bool",
         "does forecaster use exogeneous data (X)?",
@@ -113,7 +113,7 @@ ESTIMATOR_TAG_REGISTER = [
         "which series type does the forecaster support? multivariate means >1 vars",
     ),
     (
-        "y_inner_type",
+        "y_inner_mtype",
         "forecaster",
         ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
         "which machine type(s) is the internal _fit able to deal with?",
