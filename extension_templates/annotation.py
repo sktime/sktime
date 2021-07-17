@@ -39,9 +39,9 @@ from sktime.annotation.base import BaseSeriesAnnotator
 
 
 class MySeriesAnnotator(BaseSeriesAnnotator):
-    """Custom forecaster. todo: write docstring.
+    """Custom series annotator.
 
-    todo: describe your custom forecaster here
+    todo: write docstring, describing your custom forecaster
 
     Parameters
     ----------
@@ -99,7 +99,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
 
-        # todo: change "MyForecaster" to the name of the class
+        # todo: change "MySeriesAnnotator" to the name of the class
         super(MySeriesAnnotator, self).__init__(fmt=fmt, labels=labels)
 
     # todo: implement this, mandatory
@@ -148,7 +148,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
     # todo: consider implementing this, optional
     # if not implementing, delete the _update method
     def _update(self, X, Y=None):
-        """update model with new data and optional ground truth annotations
+        """Update model with new data and optional ground truth annotations.
 
         core logic
 
