@@ -232,7 +232,9 @@ class _PercentageErrorMixin:
 
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-        scored_samples = _absolute_percentage_error(y_true, y_pred, self.symmetric)
+        scored_samples = _absolute_percentage_error(
+            y_true, y_pred, symmetric=self.symmetric
+        )
         scored_samples = np.average(scored_samples, weights=multioutput)
         return scored_samples
 
