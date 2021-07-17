@@ -652,9 +652,9 @@ class BaseForecaster(BaseEstimator):
         ------------
         self._cutoff is set to last index seen in y
         """
-        if mtype(y) in ["pd.Series", "pd.DataFrame"]:
+        if mtype(y, as_scitype="Series") in ["pd.Series", "pd.DataFrame"]:
             self._cutoff = y.index[-1]
-        elif mtype(y) == "np.npdarray":
+        elif mtype(y, as_scitype="Series") == "np.ndarray":
             self._cutoff = len(y)
         else:
             raise TypeError("y does not have a supported type")
