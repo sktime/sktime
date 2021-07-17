@@ -220,6 +220,7 @@ infer_mtype_dict["Series"] = infer_mtype_Series
 # public functions - mtype inspection, conversion
 ##################################################
 
+
 def mtype(what, as_scitype: str):
     """Infer the mtype of an object considered as a specific scitype.
 
