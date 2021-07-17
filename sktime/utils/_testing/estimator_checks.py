@@ -589,21 +589,34 @@ def _(estimator, **kwargs):
     return (make_clustering_problem(**kwargs),)
 
 
+@singledispatch
 def _make_predict_args(estimator, **kwargs):
-    if isinstance(estimator, BaseForecaster):
-        fh = 1
-        return (fh,)
-    elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
-        X = _make_panel_X(**kwargs)
-        return (X,)
-    elif isinstance(estimator, BaseSeriesAnnotator):
-        X = make_annotation_problem(n_timepoints=10, **kwargs)
-        return (X,)
-    elif isinstance(estimator, BaseClusterer):
-        X = _make_panel_X(**kwargs)
-        return (X,)
-    else:
-        raise ValueError(_get_err_msg(estimator))
+    raise ValueError(_get_err_msg(estimator))
+
+
+@_make_predict_args.register(BaseForecaster)
+def _(estimator, **kwargs):
+    fh = 1
+    return (fh,)
+
+
+@_make_predict_args.register(BaseClassifier)
+@_make_predict_args.register(BaseRegressor)
+def _(estimator, **kwargs):
+    X = _make_panel_X(**kwargs)
+    return (X,)
+
+
+@_make_predict_args.register(BaseSeriesAnnotator)
+def _(estimator, **kwargs):
+    X = make_annotation_problem(n_timepoints=10, **kwargs)
+    return (X,)
+
+
+@_make_predict_args.register(BaseSeriesAnnotator)
+def _(estimator, **kwargs):
+    X = _make_panel_X(**kwargs)
+    return (X,)
 
 
 def _make_transform_args(estimator, **kwargs):
