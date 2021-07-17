@@ -18,13 +18,12 @@ __author__ = ["fkiraly"]
 from copy import deepcopy
 
 from sktime.base import BaseObject
-from sktime.utils._testing.deep_equals import deep_equals
 
 
 # Fixture class for testing tag system
 class FixtureClassParent(BaseObject):
 
-    _tags = {"A": "1", "B": 2, "C": [], 3: "D"}
+    _tags = {"A": "1", "B": 2, "C": 1234, 3: "D"}
 
 
 # Fixture class for testing tag system, child overrides tags
@@ -35,13 +34,13 @@ class FixtureClassChild(FixtureClassParent):
 
 FIXTURE_CLASSCHILD = FixtureClassChild
 
-FIXTURE_CLASSCHILD_TAGS = {"A": 42, "B": 2, "C": [], 3: "E"}
+FIXTURE_CLASSCHILD_TAGS = {"A": 42, "B": 2, "C": 1234, 3: "E"}
 
 # Fixture class for testing tag system, object overrides class tags
 FIXTURE_OBJECT = FixtureClassChild()
 FIXTURE_OBJECT._tags_dynamic = {"A": 42424241, "B": 3}
 
-FIXTURE_OBJECT_TAGS = {"A": 42424241, "B": 3, "C": [], 3: "E"}
+FIXTURE_OBJECT_TAGS = {"A": 42424241, "B": 3, "C": 1234, 3: "E"}
 
 
 def test_get_class_tags():
@@ -55,7 +54,7 @@ def test_get_class_tags():
 
     msg = "Inheritance logic in BaseObject.get_class_tags is incorrect"
 
-    assert deep_equals(child_tags, FIXTURE_CLASSCHILD_TAGS), msg
+    assert child_tags == FIXTURE_CLASSCHILD_TAGS, msg
 
 
 def test_get_class_tag():
@@ -78,11 +77,11 @@ def test_get_class_tag():
     msg = "Inheritance logic in BaseObject.get_class_tag is incorrect"
 
     for key in child_tags_keys:
-        assert deep_equals(child_tags[key], FIXTURE_CLASSCHILD_TAGS[key]), msg
+        assert child_tags[key] == FIXTURE_CLASSCHILD_TAGS[key], msg
 
     msg = "Default override logic in BaseObject.get_class_tag is incorrect"
 
-    assert deep_equals(child_tag_default, "bar"), msg
+    assert child_tag_default == "bar", msg
     assert child_tag_defaultNone is None, msg
 
 
@@ -97,7 +96,7 @@ def test_get_tags():
 
     msg = "Inheritance logic in BaseObject.get_tags is incorrect"
 
-    assert deep_equals(object_tags, FIXTURE_OBJECT_TAGS), msg
+    assert object_tags == FIXTURE_OBJECT_TAGS, msg
 
 
 def test_get_tag():
@@ -120,17 +119,17 @@ def test_get_tag():
     msg = "Inheritance logic in BaseObject.get_tag is incorrect"
 
     for key in object_tags_keys:
-        assert deep_equals(object_tags[key], FIXTURE_OBJECT_TAGS[key]), msg
+        assert object_tags[key] == FIXTURE_OBJECT_TAGS[key], msg
 
     msg = "Default override logic in BaseObject.get_tag is incorrect"
 
-    assert deep_equals(object_tag_default, "bar"), msg
+    assert object_tag_default == "bar", msg
     assert object_tag_defaultNone is None, msg
 
 
 FIXTURE_TAG_SET = {"A": 42424243, "E": 3}
 FIXTURE_OBJECT_SET = deepcopy(FIXTURE_OBJECT).set_tags(**FIXTURE_TAG_SET)
-FIXTURE_OBJECT_SET_TAGS = {"A": 42424243, "B": 3, "C": [], 3: "E", "E": 3}
+FIXTURE_OBJECT_SET_TAGS = {"A": 42424243, "B": 3, "C": 1234, 3: "E", "E": 3}
 FIXTURE_OBJECT_SET_DYN = {"A": 42424243, "B": 3, "E": 3}
 
 
@@ -144,5 +143,5 @@ def test_set_tags():
 
     msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
-    assert deep_equals(FIXTURE_OBJECT_SET._tags_dynamic, FIXTURE_OBJECT_SET_DYN), msg
-    assert deep_equals(FIXTURE_OBJECT_SET.get_tags(), FIXTURE_OBJECT_SET_TAGS), msg
+    assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
+    assert FIXTURE_OBJECT_SET.get_tags() == FIXTURE_OBJECT_SET_TAGS, msg
