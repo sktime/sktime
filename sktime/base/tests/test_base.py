@@ -52,7 +52,7 @@ FIXTURE_OBJECT_TAGS = {"A": 42424241, "B": 3, "C": 1234, 3: "E"}
 
 
 def test_get_class_tags():
-    """Tests get_class_tags class method of BaseObject for correctness
+    """Tests get_class_tags class method of BaseObject for correctness.
 
     Raises
     ------
@@ -66,7 +66,7 @@ def test_get_class_tags():
 
 
 def test_get_class_tag():
-    """Tests get_class_tag class method of BaseObject for correctness
+    """Tests get_class_tag class method of BaseObject for correctness.
 
     Raises
     ------
@@ -94,7 +94,7 @@ def test_get_class_tag():
 
 
 def test_get_tags():
-    """Tests get_tags method of BaseObject for correctness
+    """Tests get_tags method of BaseObject for correctness.
 
     Raises
     ------
@@ -108,7 +108,7 @@ def test_get_tags():
 
 
 def test_get_tag():
-    """Tests get_tag method of BaseObject for correctness
+    """Tests get_tag method of BaseObject for correctness.
 
     Raises
     ------
@@ -142,13 +142,12 @@ FIXTURE_OBJECT_SET_DYN = {"A": 42424243, "B": 3, "E": 3}
 
 
 def test_set_tags():
-    """Tests set_tags method of BaseObject for correctness
+    """Tests set_tags method of BaseObject for correctness.
 
     Raises
     ------
     AssertError if override logic in set_tags is incorrect
     """
-
     msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
     assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
