@@ -127,7 +127,6 @@ class _BaseForecastingErrorMetric(BaseMetric):
 
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-
         sample_metric_func = _make_sample_metric_func(
             self.func, y_true, y_pred, multioutput=multioutput
         )
@@ -233,7 +232,6 @@ class _PercentageErrorMixin:
 
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-
         scored_samples = _absolute_percentage_error(y_true, y_pred, self.symmetric)
         scored_samples = np.average(scored_samples, weights=multioutput)
         return scored_samples
@@ -280,7 +278,6 @@ class _SquaredErrorMixin:
 
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-
         scored_samples = _squared_error(y_true, y_pred)
         scored_samples = np.average(scored_samples, weights=multioutput)
         return scored_samples
@@ -330,7 +327,6 @@ class _SquaredPercentageErrorMixin:
 
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-
         scored_samples = _squared_percentage_error(
             y_true, y_pred, symmetric=self.symmetric
         )
@@ -373,7 +369,6 @@ class _AsymmetricErrorMixin:
 
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-
         scored_samples = _asymmetric_error(
             y_true,
             y_pred,
@@ -459,7 +454,6 @@ class _SquaredScaledErrorMixIn(_SquaredErrorMixin):
 class _AbsoluteErrorMixIn:
     def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
         """Apply metric's underlying loss function to each sample."""
-
         scored_samples = _absolute_error(y_true, y_pred)
         scored_samples = np.average(scored_samples, weights=multioutput)
         return scored_samples

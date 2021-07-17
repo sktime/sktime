@@ -2151,7 +2151,7 @@ def relative_loss(
 
 
 def _squared_error(y_true, y_pred):
-    """Calculates squared error.
+    """Calculate squared error.
 
     Parameters
     ----------
@@ -2175,7 +2175,7 @@ def _squared_error(y_true, y_pred):
 
 
 def _absolute_error(y_true, y_pred):
-    """Calculates squared error.
+    """Calculate squared error.
 
     Parameters
     ----------
@@ -2241,7 +2241,6 @@ def _asymmetric_error(
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
-
     functions = {"squared": _squared_error, "absolute": _absolute_error}
     if left_error_function not in functions or right_error_function not in functions:
         msg = " ".join(
