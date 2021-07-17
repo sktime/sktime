@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import numpy as np
+import pandas as pd
+from sklearn.metrics._regression import _check_reg_targets
+
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
     relative_loss,
@@ -19,6 +23,15 @@ from sktime.performance_metrics.forecasting._functions import (
     median_relative_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    _absolute_percentage_error,
+    _squared_percentage_error,
+    _squared_error,
+    _absolute_error,
+    _asymmetric_error,
+    _relative_error,
+    _get_kwarg,
+    _check_y_train,
+    EPS,
 )
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
@@ -43,6 +56,25 @@ __all__ = [
     "MeanAsymmetricError",
     "RelativeLoss",
 ]
+
+
+# This allows a sktime metric function to be calculated elementwise on input
+# np.vectorize is not for performance, but allows the metric function to be
+# calculated for each row in input y_true, y_pred. Since aggregation on
+# single row will return the row itself (it is its own mean, median, etc)
+# This effectively applies the function to each sample.
+# Note that this is just added as a default option for use when someone
+# uses make_forecasting metric. Individual metric classes should include
+# a more performant implementation in _score_samples
+def _make_sample_metric_func(func, y_true, y_pred, multioutput):
+    def _metric_func_accepts_samples(func, y_true, y_pred):
+        if isinstance(y_true, (float, int)):
+            y_true = np.array([y_true])
+        if isinstance(y_pred, (float, int)):
+            y_pred = np.array([y_pred])
+        return func(y_true, y_pred, multioutput=multioutput)
+
+    return np.vectorize(_metric_func_accepts_samples)
 
 
 class _BaseForecastingErrorMetric(BaseMetric):
@@ -92,6 +124,61 @@ class _BaseForecastingErrorMetric(BaseMetric):
             Calculated loss metric.
         """
         return self._func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
+
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+
+        sample_metric_func = _make_sample_metric_func(
+            self.func, y_true, y_pred, multioutput=multioutput
+        )
+        return sample_metric_func(y_true, y_pred)
+
+    def score_samples(self, y_true, y_pred, **kwargs):
+        """Apply forecasting loss function to individual samples.
+
+        The loss function is applied to each sample without applying the
+        aggregation (e.g. mean, median, etc).
+
+        Parameters
+        ----------
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+                (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
+                (n_timepoints, n_outputs), default = None
+            Optional keyword argument to pass training data.
+
+        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
+             or (fh, n_outputs) where fh is the forecasting horizon
+            Optional keyword argument to pass benchmark predictions.
+
+        Returns
+        -------
+        scored_samples : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                         (fh, n_outputs) where fh is the forecasting horizon
+            Scored samples.
+        """
+        if isinstance(y_true, pd.DataFrame):
+            index = y_true.index
+            return_type = pd.DataFrame
+        elif isinstance(y_true, pd.Series):
+            index = y_true.index
+            return_type = pd.Series
+
+        _, y_true, y_pred, multioutput = _check_reg_targets(
+            y_true, y_pred, self.multioutput
+        )
+
+        scored_samples = self._score_samples(y_true, y_pred, multioutput, **kwargs)
+
+        if index is not None:
+            scored_samples = return_type(scored_samples, index=index)
+        return scored_samples
 
 
 class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
@@ -144,6 +231,13 @@ class _PercentageErrorMixin:
             **kwargs,
         )
 
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+
+        scored_samples = _absolute_percentage_error(y_true, y_pred, self.symmetric)
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
+
 
 class _SquaredErrorMixin:
     def __call__(self, y_true, y_pred, **kwargs):
@@ -183,6 +277,13 @@ class _SquaredErrorMixin:
             square_root=self.square_root,
             **kwargs,
         )
+
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+
+        scored_samples = _squared_error(y_true, y_pred)
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
 
 
 class _SquaredPercentageErrorMixin:
@@ -227,6 +328,15 @@ class _SquaredPercentageErrorMixin:
             **kwargs,
         )
 
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+
+        scored_samples = _squared_percentage_error(
+            y_true, y_pred, symmetric=self.symmetric
+        )
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
+
 
 class _AsymmetricErrorMixin:
     def __call__(self, y_true, y_pred, **kwargs):
@@ -261,6 +371,19 @@ class _AsymmetricErrorMixin:
             **kwargs,
         )
 
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+
+        scored_samples = _asymmetric_error(
+            y_true,
+            y_pred,
+            asymmetric_threshold=self.asymmetric_threshold,
+            left_error_function=self.left_error_function,
+            right_error_function=self.right_error_function,
+        )
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
+
 
 class _RelativeLossMixin:
     def __call__(self, y_true, y_pred, **kwargs):
@@ -293,15 +416,63 @@ class _RelativeLossMixin:
             **kwargs,
         )
 
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+        y_pred_benchmark = _get_kwarg(
+            "y_pred_benchmark", metric_name=self.name, **kwargs
+        )
+        scored_samples = _relative_error(y_true, y_pred, y_pred_benchmark)
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
 
-class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
-    """Base class for defining forecasting success metrics in sktime.
 
-    Extends sktime's BaseMetric to the forecasting interface. Forecasting success
-    metrics measure the agreement between forecasts and true values. Higher
-    values are better.
-    """
+class _AbsoluteScaledErrorMixIn:
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+        y_train = _get_kwarg("y_train", metric_name=self.name, **kwargs)
+        # Check y_train and return naive seasonal prediction
+        y_pred_naive, y_train = _check_y_train(y_true, y_train, sp=self.sp)
 
+        train_error = mean_absolute_error(
+            y_train[self.sp :], y_pred_naive, multioutput=multioutput
+        )
+        scored_samples = np.abs(y_true - y_pred) / np.maximum(train_error, EPS)
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
+
+
+class _SquaredScaledErrorMixIn(_SquaredErrorMixin):
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+        y_train = _get_kwarg("y_train", metric_name=self.name, **kwargs)
+        # Check y_train and return naive seasonal prediction
+        y_pred_naive, y_train = _check_y_train(y_true, y_train, sp=self.sp)
+
+        train_error = mean_squared_error(
+            y_train[self.sp :], y_pred_naive, multioutput=multioutput
+        )
+        scored_samples = np.square(y_true - y_pred) / np.maximum(train_error, EPS)
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
+
+
+class _AbsoluteErrorMixIn:
+    def _score_samples(self, y_true, y_pred, multioutput, **kwargs):
+        """Apply metric's underlying loss function to each sample."""
+
+        scored_samples = _absolute_error(y_true, y_pred)
+        scored_samples = np.average(scored_samples, weights=multioutput)
+        return scored_samples
+
+
+class _AbsoluteForecastingErrorMetric(_AbsoluteErrorMixIn, _BaseForecastingErrorMetric):
+    def __init__(self, func, name=None, multioutput="uniform_average"):
+        super().__init__(func=func, name=name, multioutput=multioutput)
+
+
+class _ScaledForecastingErrorMetric(
+    _AbsoluteScaledErrorMixIn, _BaseForecastingErrorMetric
+):
     _tags = {
         "requires-y-train": True,
         "requires-y-pred-benchmark": False,
@@ -314,7 +485,7 @@ class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
 
 
 class _ScaledSquaredForecastingErrorMetric(
-    _SquaredErrorMixin, _ScaledForecastingErrorMetric
+    _SquaredScaledErrorMixIn, _ScaledForecastingErrorMetric
 ):
     def __init__(
         self, func, name=None, multioutput="uniform_average", sp=1, square_root=False
@@ -820,7 +991,7 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
         )
 
 
-class MeanAbsoluteError(_BaseForecastingErrorMetric):
+class MeanAbsoluteError(_AbsoluteForecastingErrorMetric):
     """Mean absolute error (MAE).
 
     MAE output is non-negative floating point. The best value is 0.0.
@@ -889,7 +1060,7 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
         super().__init__(func=func, name=name, multioutput=multioutput)
 
 
-class MedianAbsoluteError(_BaseForecastingErrorMetric):
+class MedianAbsoluteError(_AbsoluteForecastingErrorMetric):
     """Median absolute error (MdAE).
 
     MdAE output is non-negative floating point. The best value is 0.0.
