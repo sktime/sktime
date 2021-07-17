@@ -19,13 +19,11 @@ How to use this implementation template to implement a new estimator:
 - once complete: use as a local library, or contribute to sktime via PR
 
 Mandatory implements:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None, return_pred_int=False,
-                               alpha=DEFAULT_ALPHA)
+    fitting         - _fit(self, X, Y=None)
+    annotating     - _predict(self, X)
 
 Optional implements:
-    updating        - _update(self, y, X=None, update_params=True):
-    fitted parameter inspection - get_fitted_params()
+    updating        - _update(self, X, Y=None)
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
