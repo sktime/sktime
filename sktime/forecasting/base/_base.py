@@ -71,7 +71,8 @@ class BaseForecaster(BaseEstimator):
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "univariate-only": True,  # does estimator use the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
-        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
+        "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
@@ -87,10 +88,8 @@ class BaseForecaster(BaseEstimator):
         self._fh = None
         self._cutoff = None  # reference point for relative fh
 
-        self.converter_store = dict()  # storage dictionary for input/output conversions
-
-        # "safe" initialization in case fit is overridden
-        self.y_in_type = "pd.Series"
+        self.converter_store_y = dict()  # storage dictionary for in/output conversion
+        self.converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseForecaster, self).__init__()
 
@@ -153,23 +152,33 @@ class BaseForecaster(BaseEstimator):
 
         # convert y to supported inner type, if necessary
         ##################################################
-        y_in_mtype = mtype(y, "Series")
-        self.y_in_mtype = y_in_mtype
 
-        # retrieve supported y_mtypes for _fit
+        self.y_in_mtype = mtype(y, "Series")
+
+        # retrieve supported mtypes for _fit
         y_inner_mtype = self.get_tag("y_inner_mtype")
+        X_inner_mtype = self.get_tag("X_inner_mtype")
 
+        # convert y and X to a supported internal type
+        #  it y/X type is already supported, no conversion takes place
         y_inner = convert_to(
             y,
             to_type=y_inner_mtype,
             as_scitype="Series",  # we are dealing with series
-            store=self.converter_store,
+            store=self.converter_store_y,
+        )
+
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self.converter_store_X,
         )
 
         # checks and conversions complete, pass to inner fit
         #####################################################
 
-        self._fit(y=y_inner, X=X, fh=fh)
+        self._fit(y=y_inner, X=X_inner, fh=fh)
 
         # this should happen last
         self._is_fitted = True
@@ -220,7 +229,10 @@ class BaseForecaster(BaseEstimator):
 
         if not OUTPUT_CONVERSIONS == "off":
             y_out = convert_to(
-                y_pred, self.y_in_mtype, as_scitype="Series", store=self.converter_store
+                y_pred,
+                self.y_in_mtype,
+                as_scitype="Series",
+                store=self.converter_store_y
             )
         else:
             scitype_y = self.get_tag("scitype:y")
@@ -232,7 +244,7 @@ class BaseForecaster(BaseEstimator):
             y_out = convert_to(
                 y_pred, to_dict[scitype_y],
                 as_scitype="Series",
-                store=self.converter_store
+                store=self.converter_store_y
             )
 
         if return_pred_int:
@@ -368,25 +380,36 @@ class BaseForecaster(BaseEstimator):
         # end checking X
 
         self._update_y_X(y, X)
+
         # convert y to supported inner type, if necessary
         ##################################################
-        y_in_mtype = mtype(y, "Series")
-        self.y_in_mtype = y_in_mtype
 
-        # retrieve supported y_mtypes for _fit
+        self.y_in_mtype = mtype(y, "Series")
+
+        # retrieve supported mtypes for _fit
         y_inner_mtype = self.get_tag("y_inner_mtype")
+        X_inner_mtype = self.get_tag("X_inner_mtype")
 
+        # convert y and X to a supported internal type
+        #  it y/X type is already supported, no conversion takes place
         y_inner = convert_to(
             y,
             to_type=y_inner_mtype,
             as_scitype="Series",  # we are dealing with series
-            store=self.converter_store,
+            store=self.converter_store_y,
+        )
+
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self.converter_store_X,
         )
 
         # checks and conversions complete, pass to inner fit
         #####################################################
 
-        self._update(y=y_inner, X=X, update_params=update_params)
+        self._update(y=y_inner, X=X_inner, update_params=update_params)
 
         return self
 
