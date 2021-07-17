@@ -12,6 +12,7 @@ import pickle
 import types
 from copy import deepcopy
 from inspect import signature
+from typing import Callable, Union, Dict
 
 import joblib
 import numpy as np
@@ -536,23 +537,6 @@ def _construct_instance(Estimator):
     return Estimator(**params)
 
 
-def _make_args(estimator, method, **kwargs):
-    """Helper function to generate appropriate arguments for testing different
-    estimator types and their methods"""
-    if method == "fit":
-        return _make_fit_args(estimator, **kwargs)
-    if method == "update":
-        raise NotImplementedError()
-    elif method in ("predict", "predict_proba", "decision_function"):
-        return _make_predict_args(estimator, **kwargs)
-    elif method == "transform":
-        return _make_transform_args(estimator, **kwargs)
-    elif method == "inverse_transform":
-        return _make_inverse_transform_args(estimator, **kwargs)
-    else:
-        raise ValueError(f"Method: {method} not supported")
-
-
 def _make_fit_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         # we need to handle the TransformedTargetForecaster separately
@@ -739,3 +723,27 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
+
+
+METHOD_MAP: Dict[str, Union[Callable, Exception]] = {
+    "fit": _make_fit_args,
+    "update": NotImplementedError,
+    "predict": _make_predict_args,
+    "predict_proba": _make_predict_args,
+    "decision_function": _make_predict_args,
+    "transform": _make_transform_args,
+    "inverse_transform": _make_inverse_transform_args,
+}
+
+
+def _make_args(estimator, method, **kwargs):
+    """Helper function to generate appropriate arguments for testing different
+    estimator types and their methods"""
+    callable_or_exception = METHOD_MAP.get(method)
+    if not callable_or_exception:
+        raise ValueError(f"Method: {method} not supported")
+    elif isinstance(callable_or_exception, Exception):
+        exception_type = callable_or_exception
+        raise exception_type()
+
+    return callable_or_exception(estimator, **kwargs)
