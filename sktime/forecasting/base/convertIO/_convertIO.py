@@ -231,11 +231,15 @@ def mtype(what, as_scitype: str):
     Returns
     -------
     str - the type to convert "what" to, a valid mtype string
+        or None, if what is None
 
     Raises
     ------
     TypeError if no type can be identified
     """
+    if what is None:
+        return None
+
     valid_as_scitypes = infer_mtype_dict.keys()
 
     if as_scitype not in valid_as_scitypes:
@@ -258,11 +262,15 @@ def convert(what, from_type: str, to_type: str, as_scitype: str, store=None):
     Returns
     -------
     converted_what : to_type - object what converted to to_type
+                    if what was None, returns None
 
     Raises
     ------
     KeyError if conversion is not implemented
     """
+    if what is None:
+        return None
+
     key = (from_type, to_type, as_scitype)
 
     ckys = list(convert_dict.keys())
@@ -294,12 +302,16 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
     converted_what : to_type - object what converted to to_type, if to_type is str
                      if to_type is list, converted to to_type[0],
                         unless from_type in to_type, in this case converted_what=what
+                    if what was None, returns None
 
     Raises
     ------
     TypeError if machine type of input "what" is not recognized
     KeyError if conversion is not implemented
     """
+    if what is None:
+        return None
+
     from_type = mtype(what=what, as_scitype=as_scitype)
 
     # if to_type is a list:
