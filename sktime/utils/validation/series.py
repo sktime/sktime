@@ -157,7 +157,7 @@ def check_equal_time_index(*ys):
 
     Parameters
     ----------
-    ys : pd.Series, pd.DataFrame or np.ndarray
+    *ys : tuple of pd.Series, pd.DataFrame or np.ndarray
         One or more time series
 
     Raises
@@ -166,13 +166,22 @@ def check_equal_time_index(*ys):
         If (time) indices are not the same
     """
     # only validate indices if data is passed as pd.Series
-    first_index = ys[0].index
+    if isinstance(ys[0], np.ndarray):
+        first_index = pd.Index(range(len(ys[0])))
+    else:
+        first_index = ys[0].index
+
     check_time_index(first_index)
 
     for y in ys[1:]:
-        check_time_index(y.index)
+        if isinstance(y, np.ndarray):
+            y_index = pd.Index(y)
+        else:
+            y_index = y.index
 
-        if not first_index.equals(y.index):
+        check_time_index(y_index)
+
+        if not first_index.equals(y_index):
             raise ValueError("Some (time) indices are not the same.")
 
 
