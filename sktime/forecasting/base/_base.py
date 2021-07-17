@@ -149,7 +149,7 @@ class BaseForecaster(BaseEstimator):
         self._X = X
         self._y = y
 
-        self._set_cutoff(y.index[-1])
+        self._set_cutoff_from_y(y)
 
         # convert y to supported inner type, if necessary
         ##################################################
@@ -532,7 +532,7 @@ class BaseForecaster(BaseEstimator):
         )
 
         # set initial cutoff to the end of the training data
-        self._set_cutoff(y.index[-1])
+        self._set_cutoff_from_y(y)
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None:
@@ -554,7 +554,7 @@ class BaseForecaster(BaseEstimator):
             self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
-            self._set_cutoff(y.index[-1])
+            self._set_cutoff_from_y(y)
 
             # update X if given
             if X is not None:
@@ -632,9 +632,32 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        cutoff : int
+        cutoff: pandas compatible index element
+
+        State change
+        ------------
+        self._cutoff is set to cutoff
         """
         self._cutoff = cutoff
+
+    def _set_cutoff_from_y(self, y):
+        """Set and update cutoff from series y.
+
+        Parameters
+        ----------
+        y: pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+
+        State change
+        ------------
+        self._cutoff is set to last index seen in y
+        """
+        if mtype(y) in ["pd.Series", "pd.DataFrame"]:
+            self._cutoff = y.index[-1]
+        elif mtype(y) == "np.npdarray":
+            self._cutoff = len(y)
+        else:
+            raise TypeError("y does not have a supported type")
 
     @contextmanager
     def _detached_cutoff(self):

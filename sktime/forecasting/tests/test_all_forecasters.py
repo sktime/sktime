@@ -4,7 +4,7 @@
 
 # test API provided through BaseForecaster
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
@@ -49,7 +49,8 @@ from sktime.utils.validation.forecasting import check_fh
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
 FH0 = 1
-INVALID_INPUT_TYPES = [np.empty(20), list(), tuple()]
+INVALID_X_INPUT_TYPES = [np.empty(20), list(), tuple()]
+INVALID_y_INPUT_TYPES = [list(), tuple()]
 
 # testing data
 y = make_forecasting_problem()
@@ -98,7 +99,7 @@ def test_y_multivariate_raises_error(Forecaster):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("y", INVALID_INPUT_TYPES)
+@pytest.mark.parametrize("y", INVALID_y_INPUT_TYPES)
 def test_y_invalid_type_raises_error(Forecaster, y):
     f = _construct_instance(Forecaster)
     with pytest.raises(TypeError, match=r"type"):
@@ -106,7 +107,7 @@ def test_y_invalid_type_raises_error(Forecaster, y):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("X", INVALID_INPUT_TYPES)
+@pytest.mark.parametrize("X", INVALID_X_INPUT_TYPES)
 def test_X_invalid_type_raises_error(Forecaster, X):
     f = _construct_instance(Forecaster)
     try:
