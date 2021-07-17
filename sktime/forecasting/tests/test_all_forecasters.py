@@ -49,7 +49,7 @@ from sktime.utils.validation.forecasting import check_fh
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
 FH0 = 1
-INVALID_X_INPUT_TYPES = [np.empty(20), list(), tuple()]
+INVALID_X_INPUT_TYPES = [list(), tuple()]
 INVALID_y_INPUT_TYPES = [list(), tuple()]
 
 # testing data
