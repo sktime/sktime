@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_SPS
@@ -83,7 +84,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         last_window = y_train.iloc[-window_length:].to_numpy().astype(float)
         last_window = np.pad(
             last_window,
-            (0, sp - len(last_window) % sp),
+            (sp - len(last_window) % sp, 0),
             "constant",
             constant_values=np.nan,
         )
@@ -172,3 +173,62 @@ def test_strategy_drift_window_length(fh, window_length):
         expected = values[-1] + slope * fh
 
         np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("n", [3, 5])
+@pytest.mark.parametrize("window_length", list({4, 5, *TEST_WINDOW_LENGTHS}))
+@pytest.mark.parametrize("sp", list({3, 4, 8, *TEST_SPS}))
+def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
+    """Check time series of n * window_length with a 1:n-1 train/test split,
+    for different combinations of the period and seasonal periodicity.
+    The time series contains perfectly cyclic data.
+    """
+
+    # given <window_length> hours of data with a seasonal periodicity of <sp> hours
+    freq = pd.Timedelta("1H")
+    data = pd.Series(
+        index=pd.date_range(
+            "2021-06-01 00:00", periods=n * window_length, freq=freq, closed="left"
+        ),
+        data=([float(i) for i in range(1, sp + 1)] * n * window_length)[
+            : n * window_length
+        ],
+    )
+
+    # Split into train and test data
+    train_data = data[:window_length]
+    test_data = data[window_length:]
+
+    # Forecast data does not retain the original frequency
+    test_data.index.freq = None
+
+    # For example, for n=2, periods=4 and sp=3:
+
+    # print(train_data)
+    # 2021-06-01 00:00:00    1.0
+    # 2021-06-01 01:00:00    2.0
+    # 2021-06-01 02:00:00    3.0
+    # 2021-06-01 03:00:00    1.0
+    # Freq: H, dtype: int64
+
+    # print(test_data)
+    # 2021-06-01 04:00:00    2.0  # (value of 3 hours earlier)
+    # 2021-06-01 05:00:00    3.0  # (value of 3 hours earlier)
+    # 2021-06-01 06:00:00    1.0  # (mean value of 3 and 6 hours earlier)
+    # 2021-06-01 07:00:00    2.0  # (value of 6 hours earlier)
+    # dtype: float64
+
+    # let's forecast the next <2 x period> hours with a periodicity of <sp> hours
+    fh = ForecastingHorizon(test_data.index, is_relative=False)
+    model = NaiveForecaster(strategy="mean", sp=sp)
+    model.fit(train_data)
+    forecast_data = model.predict(fh)
+
+    if sp < window_length:
+        # We expect a perfect forecast given our perfectly cyclic data
+        pd.testing.assert_series_equal(forecast_data, test_data)
+    else:
+        # We expect a few forecasts yield NaN values
+        for i in range(1 + len(test_data) // sp):
+            test_data[i * sp : i * sp + sp - window_length] = np.nan
+        pd.testing.assert_series_equal(forecast_data, test_data)

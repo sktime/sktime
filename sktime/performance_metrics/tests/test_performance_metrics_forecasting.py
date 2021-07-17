@@ -6,6 +6,7 @@ __author__ = ["Tomasz Chodakowski", "Ryan Kuhns"]
 
 import pytest
 import numpy as np
+import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from sktime.utils._testing.series import _make_series
 from sktime.performance_metrics.forecasting import (
@@ -95,7 +96,7 @@ Y1 = np.array(
     ]
 )
 
-Y2 = np.array(
+Y2 = pd.Series(
     [
         0.982136629140069,
         1.45950325745833,

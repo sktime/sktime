@@ -46,8 +46,12 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
+from sktime.utils._testing.panel import make_clustering_problem
 from sktime.utils.data_processing import is_nested_dataframe
-from sktime.utils import _has_tag
+from sktime.clustering.base.base import BaseClusterer
+
+from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.utils._testing.annotation import make_annotation_problem
 
 
 def check_estimator(Estimator, exclude=None):
@@ -126,11 +130,10 @@ def check_required_params(Estimator):
 
 
 def check_estimator_tags(Estimator):
-    assert hasattr(Estimator, "_all_tags")
-    all_tags = Estimator._all_tags()
+    assert hasattr(Estimator, "get_class_tags")
+    all_tags = Estimator.get_class_tags()
     assert isinstance(all_tags, dict)
-    assert all([isinstance(key, str) for key, _ in all_tags.items()])
-
+    assert all([isinstance(key, str) for key in all_tags.keys()])
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
         assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
@@ -342,6 +345,7 @@ def check_raises_not_fitted_error(Estimator):
 def check_fit_idempotent(Estimator):
     # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
+
     set_random_state(estimator)
 
     # Fit for the first time
@@ -416,7 +420,7 @@ def check_methods_do_not_change_state(Estimator):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if method == "transform" and _has_tag(Estimator, "fit-in-transform"):
+            if method == "transform" and Estimator.get_class_tag("fit-in-transform"):
                 # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.
@@ -501,7 +505,7 @@ def check_multiprocessing_idempotent(Estimator):
 
 def check_valid_estimator_tags(Estimator):
     # check if Estimator tags are in VALID_ESTIMATOR_TAGS
-    for tag in Estimator._all_tags().keys():
+    for tag in Estimator.get_class_tags().keys():
         assert tag in VALID_ESTIMATOR_TAGS
 
 
@@ -559,6 +563,9 @@ def _make_fit_args(estimator, **kwargs):
         fh = 1
         X = None
         return y, X, fh
+    elif isinstance(estimator, BaseSeriesAnnotator):
+        X = make_annotation_problem(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
@@ -570,6 +577,8 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseClusterer):
+        return (make_clustering_problem(**kwargs),)
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -579,6 +588,12 @@ def _make_predict_args(estimator, **kwargs):
         fh = 1
         return (fh,)
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+        X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseSeriesAnnotator):
+        X = make_annotation_problem(n_timepoints=10, **kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseClusterer):
         X = _make_panel_X(**kwargs)
         return (X,)
     else:

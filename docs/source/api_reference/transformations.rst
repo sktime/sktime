@@ -153,6 +153,17 @@ Shapelet
     ShapeletTransform
     ContractedShapeletTransform
 
+Signature
+~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.signature_based
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    SignatureTransformer
+
 Series transformers
 -------------------
 
@@ -258,3 +269,14 @@ Composition
     :template: class.rst
 
     OptionalPassthrough
+
+Theta
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer

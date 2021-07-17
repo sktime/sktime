@@ -154,7 +154,6 @@ class ContractableBOSS(BaseClassifier):
         """
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
-        start_time = time.time()
         time_limit = self.time_limit_in_minutes * 60
         self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
@@ -183,6 +182,7 @@ class ContractableBOSS(BaseClassifier):
             )
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
+        start_time = time.time()
         train_time = 0
         subsample_size = int(self.n_instances * 0.7)
         lowest_acc = 1
@@ -215,9 +215,15 @@ class ContractableBOSS(BaseClassifier):
             boss.subsample = subsample
 
             boss.accuracy = self._individual_train_acc(
-                boss, y_subsample, subsample_size, lowest_acc
+                boss,
+                y_subsample,
+                subsample_size,
+                0 if num_classifiers < self.max_ensemble_size else lowest_acc,
             )
-            weight = math.pow(boss.accuracy, 4)
+            if boss.accuracy > 0:
+                weight = math.pow(boss.accuracy, 4)
+            else:
+                weight = 0.000000001
 
             if num_classifiers < self.max_ensemble_size:
                 if boss.accuracy < lowest_acc:
@@ -225,7 +231,6 @@ class ContractableBOSS(BaseClassifier):
                     lowest_acc_idx = num_classifiers
                 self.weights.append(weight)
                 self.classifiers.append(boss)
-
             elif boss.accuracy > lowest_acc:
                 self.weights[lowest_acc_idx] = weight
                 self.classifiers[lowest_acc_idx] = boss
