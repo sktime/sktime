@@ -58,6 +58,7 @@ extensions = [
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
     "sphinx.ext.napoleon",
     "nbsphinx",  # integrates example notebooks
+    "sphinx_gallery.load_style",
     "m2r2",  # markdown rendering
 ]
 

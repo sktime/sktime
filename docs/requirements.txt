@@ -8,4 +8,5 @@ numpydoc
 pygments>=2.4.1
 seaborn
 sphinx==3.2.*
+sphinx-gallery>=0.6
 sphinx_rtd_theme
