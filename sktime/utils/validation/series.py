@@ -160,23 +160,32 @@ def check_equal_time_index(*ys):
 
     Parameters
     ----------
-    *ys : tuple of pd.Series, pd.DataFrame or np.ndarray
+    *ys : tuple of pd.Series, pd.DataFrame or np.ndarray, or None
         One or more time series
 
     Raises
     ------
     ValueError
-        If (time) indices are not the same
+        If there are at least two no=-None entries of ys
+            of which pandas indices are not the same
+            np.ndarray are considered having integer range index on axis 0
     """
+    # None entries are ignored
+    y_not_None = [y for y in ys if y is not None]
+
+    # if there is no or just one element, there is nothing to compare
+    if len(y_not_None) < 2:
+        return None
+
     # only validate indices if data is passed as pd.Series
-    if isinstance(ys[0], np.ndarray):
-        first_index = pd.Index(range(len(ys[0])))
+    if isinstance(y_not_None[0], np.ndarray):
+        first_index = pd.Index(range(len(y_not_None[0])))
     else:
-        first_index = ys[0].index
+        first_index = y_not_None[0].index
 
     check_time_index(first_index)
 
-    for y in ys[1:]:
+    for y in y_not_None[1:]:
         if isinstance(y, np.ndarray):
             y_index = pd.Index(y)
         else:

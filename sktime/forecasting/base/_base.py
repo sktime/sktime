@@ -139,10 +139,9 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
-        if X is not None:
-            X = check_series(X, enforce_index_type=enforce_index_type)
-            if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+        X = check_series(X, enforce_index_type=enforce_index_type)
+        if self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
         # end checking X
 
         self._X = X
@@ -386,10 +385,9 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
-        if X is not None:
-            X = check_series(X, enforce_index_type=enforce_index_type)
-            if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+        X = check_series(X, enforce_index_type=enforce_index_type)
+        if self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
         # end checking X
 
         self._update_y_X(y, X)
