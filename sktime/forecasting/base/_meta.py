@@ -15,7 +15,7 @@ from sktime.forecasting.base._base import BaseForecaster
 
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Base class for heterogenous ensemble forecasters"""
+    """Base class for heterogeneous ensemble forecasters."""
 
     _required_parameters = ["forecasters"]
 
@@ -81,8 +81,28 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         ]
 
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **params):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
         self._set_params("forecasters", **params)
         return self

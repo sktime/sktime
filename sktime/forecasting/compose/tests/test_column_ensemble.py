@@ -30,7 +30,6 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 def test_column_ensemble_shape(forecasters, fh):
     y = pd.DataFrame(np.random.randint(0, 100, size=(100, 3)), columns=list("ABC"))
     forecaster = ColumnEnsembleForecaster(forecasters)
-    forecaster.fit(y)
-    fh = np.arange(1, 11)
-    actual = forecaster.predict(fh=fh)
+    forecaster.fit(y, fh=fh)
+    actual = forecaster.predict()
     assert actual.shape == (len(fh),)

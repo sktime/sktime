@@ -30,7 +30,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)), columns=list('AB'))
+    >>> y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)))
     >>> forecasters = [("trend", PolynomialTrendForecaster(), 0),\
                         ("ses", ExponentialSmoothing(trend='add'), 1)]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters])
@@ -77,7 +77,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._is_fitted = False
 
         self._set_fh(fh)
-        y = check_series(y, enforce_multivariate=True)
+        y = check_series(y)
+
+        if not isinstance(y, pd.DataFrame):
+            y = pd.DataFrame(data=y)
 
         if X is not None:
             X = check_X(X)
@@ -131,6 +134,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        self._check_aggfunc()
 
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
@@ -140,26 +144,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return _aggregate(y=y_pred, aggfunc=self.aggfunc)
 
     def get_params(self, deep=True):
-        """Get parameters for this estimator.
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-        Valid parameter keys can be listed with ``get_params()``.
-        Returns
-        -------
-        self
-        """
         self._set_params("forecasters", **kwargs)
         return self
 
@@ -174,7 +161,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 " of (string, estimator, int) tuples."
             )
         names, forecasters, indices = zip(*self.forecasters)
-        # OBS defined by MetaEstimatorMixin
+        # defined by MetaEstimatorMixin
         self._check_names(names)
 
         has_estimator = any(est not in (None, "drop") for est in forecasters)
@@ -194,6 +181,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
         return names, forecasters, indices
 
+    def _check_aggfunc(self):
+        valid_aggfuncs = {"mean": np.mean, "median": np.median}
+        if self.aggfunc not in valid_aggfuncs.keys():
+            raise ValueError("Aggregation function %s not recognized." % self.aggfunc)
+
 
 def _aggregate(y, aggfunc, X=None):
     """Apply aggregation function by row.
@@ -202,6 +194,8 @@ def _aggregate(y, aggfunc, X=None):
     ----------
     y : pd.DataFrame
         Multivariate series to transform.
+    aggfunc : str
+        Aggregation function used for transformation.
     X : pd.DataFrame, optional (default=None)
         Exogenous data used in transformation.
 
@@ -210,11 +204,6 @@ def _aggregate(y, aggfunc, X=None):
     column_ensemble: pd.Series
         Transformed univariate series.
     """
-
-    valid_aggfuncs = {"mean": np.mean, "median": np.median}
-    if aggfunc not in valid_aggfuncs.keys():
-        raise ValueError("Aggregation function %s not recognized." % aggfunc)
-
-    column_ensemble = y.apply(func=valid_aggfuncs[aggfunc], axis=1)
+    column_ensemble = y.apply(func=aggfunc, axis=1)
 
     return pd.Series(column_ensemble, index=y.index)
