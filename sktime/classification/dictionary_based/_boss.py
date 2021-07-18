@@ -77,7 +77,18 @@ class BOSSEnsemble(BaseClassifier):
 
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
-    classifiers/dictionary_based/BOSS.java
+    classifiers/dictionary_based/BOSS.javaz
+
+    Example
+    -------
+    >>> from sktime.classification.dictionary_based import BOSSEnsemble
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = BOSSEnsemble()
+    >>> clf.fit(X_train, y_train)
+    BOSSEnsemble(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags
