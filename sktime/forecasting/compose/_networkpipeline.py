@@ -23,7 +23,6 @@ class NetworkPipelineForecaster(BaseForecaster):
 
     Parameters
     ----------
-
     steps : array of lists
         list comprised of three elements:
             1. name of step (string),
@@ -33,7 +32,6 @@ class NetworkPipelineForecaster(BaseForecaster):
 
     Examples
     --------
-
     `original_X` and `original_y` are key words referring to the
     X and y arguments of NetworkPipelineForecaster.fit
     and NetworkPipelineForecaster.predict
@@ -77,11 +75,10 @@ class NetworkPipelineForecaster(BaseForecaster):
 
     def _iter(self, method, reverse=False):
         """
-        Iterates through steps of the pipeline
+        Iterate through steps of the pipeline.
 
         Parameters
         ----------
-
         method: str
             method that called `_iter`.
             Currently supported `fit`, `update` and `predict`
@@ -125,7 +122,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
 
     def _process_arguments(self, arguments):
         """
-        Checks arguments for consistency.
+        Check arguments for consistency.
 
         Replace key word 'original' with X
 
@@ -136,7 +133,6 @@ Iterator can be called by "fit", "predict" and "update" only.'
         arguments : dictionary
             key-value for fit() method of estimator
         """
-
         returned_arguments_kwarg = arguments.copy()
         if arguments is None:
             return arguments
@@ -305,7 +301,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
         return pred
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -362,4 +358,5 @@ Iterator can be called by "fit", "predict" and "update" only.'
         return self
 
     def get_fitted_params(self):
+        """Will be implemented."""
         raise NotImplementedError()

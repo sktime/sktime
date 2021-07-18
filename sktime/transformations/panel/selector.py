@@ -23,7 +23,7 @@ class Selector(_PanelToPanelTransformer):
         self.return_dataframe = return_dataframe
         super(Selector, self).__init__()
 
-    def fit_transform(self, X, y=None):
+    def transform(self, X, y=None):
         """
         Parameters
         ----------
@@ -38,11 +38,3 @@ class Selector(_PanelToPanelTransformer):
                 return X.iloc[:, self.columns]
         if type(X) == np.ndarray:
             return X[:, self.columns]
-
-    def transform(self, X, y=None):
-        return self.fit_transform(X=X, y=y)
-
-    def fit(self, X, y=None):
-        """Dummy fit"""
-        self._is_fitted = True
-        return self

@@ -8,15 +8,19 @@ __all__ = ["Concatenator"]
 
 
 class Concatenator(_PanelToTabularTransformer):
-    """
-    Concatenates
-    """
+    """Concatenate pandas series or numpy arrays."""
+
+    _tags = {
+        "fit-in-transform": True,
+    }
 
     def __init__(self):
         super(Concatenator, self).__init__()
 
-    def fit_transform(self, X, y=None):
+    def transform(self, X, y=None):
         """
+        Fit and transform.
+
         Parameters
         ----------
         X : list of pandas dataframes
@@ -30,16 +34,3 @@ class Concatenator(_PanelToTabularTransformer):
             return pd.concat(X, axis=1)
         if type(X) == np.ndarray:
             return np.concatenate(tuple(X), axis=1)
-
-    def transform(self, X, y=None):
-        """
-        Parameters
-        ----------
-        X : list of pandas dataframes
-        """
-        return self.fit_transform(X=X, y=y)
-
-    def fit(self, X, y=None):
-        """Dummy fit"""
-        self._is_fitted = True
-        return self
