@@ -22,7 +22,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class BOSSEnsemble(BaseClassifier):
-    """Bag of SFA Symbols (BOSS).
+    """Ensemble of bag of Symbolic Fourier Approximation Symbols (BOSS).
 
     Implementation of BOSS Ensemble from Schäfer (2015). [1]_
 
@@ -41,9 +41,9 @@ class BOSSEnsemble(BaseClassifier):
     to form a word length "l". A histogram of words for each
     series is formed and stored.
 
-    Fit involves finding n histograms.
+    Fit involves finding "n" histograms.
 
-    Predict uses 1 nearest neighbor with a bespoke distance function.
+    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ class BOSSEnsemble(BaseClassifier):
     max_ensemble_size : int or None, default=500
         Maximum number of classifiers to retain. Will limit number of retained
         classifiers even if more than `max_ensemble_size` are within threshold.
-    max_win_len_prop : int, default=1
+    max_win_len_prop : int or float, default=1
         Maximum window length as a proportion of the series length.
     min_window : int, default=10
         Minimum window size.
@@ -90,11 +90,11 @@ class BOSSEnsemble(BaseClassifier):
        https://link.springer.com/article/10.1007/s10618-014-0377-7
 
     Examples
-    -----------
+    --------
     >>> from sktime.classification import BOSSEnsemble
     >>> from sktime.datasets import toy_classification_problem
     >>> X_train, y_train, X_test, y_test = toy_classification_problem()
-    >>> clf = BOSSEnsembler()
+    >>> clf = BOSSEnsemble()
     >>> clf.fit(X_train, y_train)
     >>> y_pred = clf.predict(X_test)
     """
@@ -254,11 +254,12 @@ class BOSSEnsemble(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : pd.DataFrame of shape (n_instances, 1)
 
         Returns
         -------
-        array of shape [n, 1]
+        preds : np.ndarray of shape (n, 1)
+            Predicted class.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -273,11 +274,12 @@ class BOSSEnsemble(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : pd.DataFrame of shape (n_instances, 1)
 
         Returns
         -------
-        array of shape [n, self.n_classes]
+        predicted_probs : array of shape (n_instances, n_classes)
+            Predicted probability of each class.
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
@@ -365,10 +367,71 @@ class BOSSEnsemble(BaseClassifier):
 
 
 class IndividualBOSS(BaseClassifier):
-    """Single Bag of SFA Symbols (BOSS) classifier.
+    """Single bag of Symbolic Fourier Approximation Symbols (BOSS).
 
     Bag of SFA Symbols Ensemble: implementation of a single BOSS Schaffer, the base
     classifier for the boss ensemble.
+
+    Implementation of single BOSS model from Schäfer (2015). [1]_
+
+    This is the underlying classifier for each classifier in the BOSS ensemble.
+
+    NEED DESCRIPTION HERE.
+
+    Fit involves finding "n" histograms.
+
+    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
+
+    Parameters
+    ----------
+    window_size : int
+        Size of the window to use in BOSS algorithm.
+    word_length : int
+        Length of word to use to use in BOSS algorithm.
+    norm : bool, default = False
+        NEED DESCRIPTION HERE.
+    alphabet_size : default = 4
+        NEED DESCRIPTION HERE.
+    save_words : bool, default = True
+        NEED DESCRIPTION HERE.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random, integer.
+
+    Attributes
+    ----------
+    n_classes : int
+        Number of classes. Extracted from the data.
+    n_instances : int
+        Number of instances. Extracted from the data.
+    n_estimators : int
+        The final number of classifiers used. Will be <= `max_ensemble_size` if
+        `max_ensemble_size` has been specified.
+    series_length : int
+        Length of all series (assumed equal).
+
+    See Also
+    --------
+    For the Java version, see
+    `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
+    main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
+
+    References
+    ----------
+    .. [1] Patrick Schäfer, "The BOSS is concerned with time series classification
+       in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+       https://link.springer.com/article/10.1007/s10618-014-0377-7
+
+    Examples
+    --------
+    >>> from sktime.classification import IndividualBOSS
+    >>> from sktime.datasets import toy_classification_problem
+    >>> X_train, y_train, X_test, y_test = toy_classification_problem()
+    >>> clf = IndividualBOSS()
+    >>> clf.fit(X_train, y_train)
+    >>> y_pred = clf.predict(X_test)
     """
 
     def __init__(
