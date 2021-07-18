@@ -73,10 +73,12 @@ def test_oh_setting(Forecaster):
 # check setting/getting API for forecasting horizon
 
 # divide Forecasters into groups based on when fh is required
-FORECASTERS_REQUIRED = [f for f in FORECASTERS if f._all_tags()["requires-fh-in-fit"]]
+FORECASTERS_REQUIRED = [
+    f for f in FORECASTERS if f.get_class_tag("requires-fh-in-fit", True)
+]
 
 FORECASTERS_OPTIONAL = [
-    f for f in FORECASTERS if not f._all_tags()["requires-fh-in-fit"]
+    f for f in FORECASTERS if not f.get_class_tag("requires-fh-in-fit", True)
 ]
 
 
