@@ -77,7 +77,7 @@ class BOSSEnsemble(BaseClassifier):
 
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
-    classifiers/dictionary_based/BOSS.javaz
+    classifiers/dictionary_based/BOSS.java
 
     Example
     -------
