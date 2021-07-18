@@ -31,8 +31,8 @@ from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
+from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.classification.interval_based import DrCIF
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.kernel_based import ROCKETClassifier
@@ -91,6 +91,8 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+from sktime.dists_kernels.scipy_dist import ScipyDist
 
 from sktime.transformations.panel.selector import Selector
 from sktime.forecasting.compose import NetworkPipelineForecaster
@@ -105,10 +107,26 @@ EXCLUDE_ESTIMATORS = [
     "ProximityTree",
 ]
 
+
+# This is temporary until BaseObject is implemented
+DIST_KERNELS_IGNORE_TESTS = [
+    "check_fit_updates_state",
+    "_make_fit_args",
+    "check_fit_returns_self",
+    "check_raises_not_fitted_error",
+    "check_fit_idempotent",
+    "check_fit_does_not_overwrite_hyper_params",
+    "check_methods_do_not_change_state",
+    "check_persistence_via_pickle",
+]
+
+
 EXCLUDED_TESTS = {
     "ShapeletTransformClassifier": ["check_fit_idempotent"],
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
+    "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
+    "AggrDist": DIST_KERNELS_IGNORE_TESTS,
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -241,12 +259,12 @@ ESTIMATOR_TEST_PARAMS = {
         "window_name": "global",
     },
     ROCKETClassifier: {"num_kernels": 100},
-    Arsenal: {"num_kernels": 100},
+    Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
-        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.025},
+        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.02},
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
-        "cboss_params": {"n_parameter_samples": 6, "max_ensemble_size": 2},
+        "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
@@ -257,11 +275,11 @@ ESTIMATOR_TEST_PARAMS = {
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     SFA: {"return_pandas_data_series": True},
-    ContractableBOSS: {"n_parameter_samples": 25, "max_ensemble_size": 5},
+    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 5},
     TemporalDictionaryEnsemble: {
-        "n_parameter_samples": 25,
+        "n_parameter_samples": 10,
         "max_ensemble_size": 5,
-        "randomly_selected_params": 20,
+        "randomly_selected_params": 5,
     },
     TSFC: {"n_estimators": 3},
     ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
@@ -318,6 +336,7 @@ ESTIMATOR_TEST_PARAMS = {
         ]
     },
     Selector: {"columns": 0},
+    AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
 }
 # We use estimator tags in addition to class hierarchies to further distinguish

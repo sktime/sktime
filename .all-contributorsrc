@@ -28,6 +28,7 @@
         "question",
         "review",
         "talk",
+        "test",
         "tutorial"
       ]
     },
@@ -1041,6 +1042,17 @@
       "profile": "https://github.com/SveaMeyer13",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "flix6x",
+      "name": "Felix Claessen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30658763?v=4",
+      "profile": "https://github.com/flix6x",
+      "contributions": [
+        "code",
+        "bug",
+        "test",
       ]
     },
     {
