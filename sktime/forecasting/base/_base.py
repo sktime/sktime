@@ -133,13 +133,14 @@ class BaseForecaster(BaseEstimator):
             "enforce_univariate": enforce_univariate,
             "enforce_multivariate": enforce_multivariate,
             "enforce_index_type": enforce_index_type,
+            "allow_None": False,
         }
 
-        y = check_series(y, **check_y_args)
+        y = check_series(y, **check_y_args, var_name="y")
         # end checking y
 
         # checking X
-        X = check_series(X, enforce_index_type=enforce_index_type)
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
         if self.get_tag("X-y-must-have-same-index"):
             check_equal_time_index(X, y)
         # end checking X
@@ -209,7 +210,7 @@ class BaseForecaster(BaseEstimator):
 
         # input check for X
         enforce_index_type = self.get_tag("enforce_index_type")
-        X = check_series(X, enforce_index_type=enforce_index_type)
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
 
         # convert X if needed
         X_inner_mtype = self.get_tag("X_inner_mtype")
@@ -381,11 +382,11 @@ class BaseForecaster(BaseEstimator):
         }
 
         # update only for non-empty data
-        y = check_series(y, allow_empty=True, **check_y_args)
+        y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
         # end checking y
 
         # checking X
-        X = check_series(X, enforce_index_type=enforce_index_type)
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
         if self.get_tag("X-y-must-have-same-index"):
             check_equal_time_index(X, y)
         # end checking X
