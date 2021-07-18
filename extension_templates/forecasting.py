@@ -71,7 +71,7 @@ class MyForecaster(BaseForecaster):
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "univariate-only": True,  # does estimator use the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
-        "y_inner_type": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
