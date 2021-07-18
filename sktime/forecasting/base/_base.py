@@ -208,11 +208,18 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._set_fh(fh)
 
+        # input check for X
         enforce_index_type = self.get_tag("enforce_index_type")
+        X = check_series(X, enforce_index_type=enforce_index_type)
 
-        # todo: check_X should let a None argument pass here, but it doesn't
-        if X is not None:
-            X = check_X(X, enforce_index_type=enforce_index_type)
+        # convert X if needed
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=None,
+        )
 
         # this should be here, but it breaks the ARIMA forecasters
         #  that is because check_alpha converts to list, but ARIMA forecaster
@@ -220,7 +227,12 @@ class BaseForecaster(BaseEstimator):
         # todo: needs fixing in ARIMA and AutoARIMA
         # alpha = check_alpha(alpha)
 
-        y_pred = self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        y_pred = self._predict(
+            self.fh,
+            X=X_inner,
+            return_pred_int=return_pred_int,
+            alpha=alpha,
+        )
 
         # todo: clean this up, predictive intervals should be returned by other method
         if return_pred_int:

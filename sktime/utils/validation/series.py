@@ -51,7 +51,7 @@ def check_series(
 
     Parameters
     ----------
-    Z : pd.Series, pd.DataFrame, np.ndarray
+    Z : pd.Series, pd.DataFrame, np.ndarray, or None
         Univariate or multivariate time series. NumPy ndarray only allowed
         if `allow_numpy` = True.
     enforce_univariate : bool, default = False
@@ -73,6 +73,9 @@ def check_series(
     ValueError, TypeError
         If Z is an invalid input
     """
+    if Z is None:
+        return Z
+
     # Check if pandas series or numpy array
     if not allow_numpy:
         valid_data_types = tuple(
