@@ -21,9 +21,11 @@ class Concatenator(_PanelToTabularTransformer):
         ----------
         X : list of pandas dataframes
         """
+        self.check_is_fitted()
         if type(X) != list:
             # Only for passing the sktime checks. `X` must be a list.
-            X = [X]
+            return X
+
         if type(X) == pd.core.frame.DataFrame:
             return pd.concat(X, axis=1)
         if type(X) == np.ndarray:
@@ -36,3 +38,8 @@ class Concatenator(_PanelToTabularTransformer):
         X : list of pandas dataframes
         """
         return self.fit_transform(X=X, y=y)
+
+    def fit(self, X, y=None):
+        """Dummy fit"""
+        self._is_fitted = True
+        return self

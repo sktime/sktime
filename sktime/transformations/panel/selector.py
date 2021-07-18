@@ -30,6 +30,7 @@ class Selector(_PanelToPanelTransformer):
 
         X : pd DataFrame or np.array
         """
+        self.check_is_fitted()
         if type(X) == pd.core.frame.DataFrame:
             if self.return_dataframe:
                 return X.iloc[:, self.columns].to_frame()
@@ -40,3 +41,8 @@ class Selector(_PanelToPanelTransformer):
 
     def transform(self, X, y=None):
         return self.fit_transform(X=X, y=y)
+
+    def fit(self, X, y=None):
+        """Dummy fit"""
+        self._is_fitted = True
+        return self
