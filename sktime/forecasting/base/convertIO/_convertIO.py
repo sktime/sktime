@@ -106,7 +106,7 @@ def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(what, pd.Series):
         raise TypeError("input must be a pd.Series")
 
-    if isinstance(store, dict) and "cols" in store.keys and len(store["cols"]) == 1:
+    if isinstance(store, dict) and "cols" in store.keys() and len(store["cols"]) == 1:
         res = pd.DataFrame(what, columns=store["cols"])
     else:
         res = pd.DataFrame(what)
@@ -166,7 +166,7 @@ def convert_np_to_MvS_as_Series(what: np.array, store=None) -> pd.DataFrame:
 
     if (
         isinstance(store, dict)
-        and "cols" in store.keys
+        and "cols" in store.keys()
         and len(store["cols"]) == what.shape[1]
     ):
         res = pd.DataFrame(what, columns=store["cols"])
