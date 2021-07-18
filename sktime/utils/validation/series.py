@@ -128,8 +128,8 @@ def check_series(
 
 
 def check_time_index(
-        index, allow_empty=False, enforce_index_type=None, var_name="input"
-        ):
+    index, allow_empty=False, enforce_index_type=None, var_name="input"
+):
     """Check time index.
 
     Parameters
