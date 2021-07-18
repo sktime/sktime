@@ -16,8 +16,9 @@ class Selector(_PanelToPanelTransformer):
 
     _tags = {"fit-in-transform": True}
 
-    def __init__(self, columns):
+    def __init__(self, columns, return_dataframe=True):
         self.columns = columns
+        self.return_dataframe = return_dataframe
         super(Selector, self).__init__()
 
     def fit_transform(self, X, y=None):
@@ -27,8 +28,10 @@ class Selector(_PanelToPanelTransformer):
 
         X : pd DataFrame
         """
-
-        return X.iloc[:, self.columns].to_frame()
+        if self.return_dataframe:
+            return X.iloc[:, self.columns].to_frame()
+        else:
+            return X.iloc[:, self.columns]
 
     def transform(self, X, y=None):
         return self.fit_transform(X=X, y=y)
