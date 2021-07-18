@@ -79,6 +79,8 @@ class BOSSEnsemble(BaseClassifier):
 
     See Also
     --------
+    IndividualBOSS
+    ContractableBOSS
     For the Java version, see
     `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
@@ -91,7 +93,7 @@ class BOSSEnsemble(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification import BOSSEnsemble
+    >>> from sktime.classification.dictionary_based import BOSSEnsemble
     >>> from sktime.datasets import toy_classification_problem
     >>> X_train, y_train, X_test, y_test = toy_classification_problem()
     >>> clf = BOSSEnsemble()
@@ -414,6 +416,8 @@ class IndividualBOSS(BaseClassifier):
 
     See Also
     --------
+    BOSSEnsemble
+    ContractableBOSS
     For the Java version, see
     `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
@@ -426,7 +430,7 @@ class IndividualBOSS(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification import IndividualBOSS
+    >>> from sktime.classification.dictionary_based import IndividualBOSS
     >>> from sktime.datasets import toy_classification_problem
     >>> X_train, y_train, X_test, y_test = toy_classification_problem()
     >>> clf = IndividualBOSS()
