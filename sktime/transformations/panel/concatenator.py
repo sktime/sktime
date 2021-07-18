@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from sktime.transformations.base import _PanelToTabularTransformer
 import pandas as pd
-
+import numpy as np
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Concatenator"]
@@ -24,7 +24,10 @@ class Concatenator(_PanelToTabularTransformer):
         if type(X) != list:
             # Only for passing the sktime checks. `X` must be a list.
             X = [X]
-        return pd.concat(X, axis=1)
+        if type(X) == pd.core.frame.DataFrame:
+            return pd.concat(X, axis=1)
+        if type(X) == np.ndarray:
+            return np.concatenate(tuple(X), axis=1)
 
     def transform(self, X, y=None):
         """
