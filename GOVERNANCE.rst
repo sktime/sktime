@@ -350,15 +350,17 @@ core developers.
    two conditions must be satisfied:
     - approval by one core developer and no rejection by a core developer (veto right).
       The approval required for this condition must be by a core developer different from a proposer.
+      If the proposed change is a pull request (PR), then the approval must be in the form of a GitHub PR approval.
     - the proposer is a core developer, and no rejection by other core developers was expressed
       by the earliest time point at which reasonable time has passed for consideration.
 -  Formal statements on proposed changes must be located with the proposal,
    usually in the same pull request that contains the proposal, or the related issue.
    Formal statements in this sense are approvals/rejections, and statements
    about whether the proposal should be considered a "major change", as below.
--  Approvals and rejections should be expressed as +1 and -1 comments,
+-  Approvals and rejections can be expressed as +1 and -1 comments,
    respectively, or any written comments
    containing "I formally approve/reject" in reference to the proposal.
+   If the proposed change has the form of a PR, a GitHub PR approval also counts as approval.
 -  Major changes to the project require a more
    detailed analysis and a consensus that is both explicit and informed.
    A major change always require a worked out :ref:`steps`.
