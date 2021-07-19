@@ -94,10 +94,12 @@ class BOSSEnsemble(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.dictionary_based import BOSSEnsemble
-    >>> from sktime.datasets import toy_classification_problem
-    >>> X_train, y_train, X_test, y_test = toy_classification_problem()
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     >>> clf = BOSSEnsemble()
     >>> clf.fit(X_train, y_train)
+    BOSSEnsemble(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -369,7 +371,7 @@ class BOSSEnsemble(BaseClassifier):
 
 
 class IndividualBOSS(BaseClassifier):
-    """Single bag of Symbolic Fourier Approximation Symbols (BOSS).
+    """Single bag of Symbolic Fourier Approximation Symbols (IndividualBOSS).
 
     Bag of SFA Symbols Ensemble: implementation of a single BOSS Schaffer, the base
     classifier for the boss ensemble.
@@ -378,7 +380,9 @@ class IndividualBOSS(BaseClassifier):
 
     This is the underlying classifier for each classifier in the BOSS ensemble.
 
-    NEED DESCRIPTION HERE.
+    Overview: input "n" series of length "m" and IndividualBoss performs a SFA
+    transform to form a sparse dictionary of discretised words. The resulting
+    dictionary is used with the BOSS distance function in a 1-nearest neighbor.
 
     Fit involves finding "n" histograms.
 
@@ -391,11 +395,14 @@ class IndividualBOSS(BaseClassifier):
     word_length : int
         Length of word to use to use in BOSS algorithm.
     norm : bool, default = False
-        NEED DESCRIPTION HERE.
+        Whether to normalize words by dropping the first Fourier coefficient.
     alphabet_size : default = 4
-        NEED DESCRIPTION HERE.
+        Number of possible letters (values) for each word.
     save_words : bool, default = True
-        NEED DESCRIPTION HERE.
+        Whether to keep NumPy array of words in SFA transformation even after
+        the dictionary of words is returned. If True, the array is saved, which
+        can shorten the time to calculate dictionaries using a shorter
+        `word_length` (since the last "n" letters can be removed).
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -431,10 +438,12 @@ class IndividualBOSS(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.dictionary_based import IndividualBOSS
-    >>> from sktime.datasets import toy_classification_problem
-    >>> X_train, y_train, X_test, y_test = toy_classification_problem()
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     >>> clf = IndividualBOSS()
     >>> clf.fit(X_train, y_train)
+    IndividualBOSS(...)
     >>> y_pred = clf.predict(X_test)
     """
 
