@@ -85,7 +85,6 @@ class NetworkPipelineForecaster(BaseForecaster):
 
         Returns
         -------
-
             iterator with steps
         """
         if method not in ["fit", "predict", "update"]:

@@ -8,7 +8,7 @@ __all__ = ["Selector"]
 
 
 class Selector(_PanelToPanelTransformer):
-    """Selects columns from Pandas Dataframe
+    """Select columns from Pandas Dataframe.
 
     Parameters
     ----------
@@ -25,9 +25,10 @@ class Selector(_PanelToPanelTransformer):
 
     def transform(self, X, y=None):
         """
+        Public transform method.
+
         Parameters
         ----------
-
         X : pd DataFrame or np.array
         """
         self.check_is_fitted()
