@@ -157,9 +157,9 @@ class ForecastingHorizon:
         )
         if is_relative is None:
             if type(values) in RELATIVE_TYPES:
-                is_relative = False
-            elif type(values) in ABSOLUTE_TYPES:
                 is_relative = True
+            elif type(values) in ABSOLUTE_TYPES:
+                is_relative = False
             else:
                 raise TypeError(type(values) + "is not a supported fh index type")
         if is_relative:
