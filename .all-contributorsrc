@@ -1091,6 +1091,15 @@
         "code"
       ]
     }
+    {
+      "login": "ltoniazzi",
+      "name": "Lorenzo Toniazzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61414566",
+      "profile": "https://github.com/ltoniazzi",
+      "contributions": [
+        "code"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

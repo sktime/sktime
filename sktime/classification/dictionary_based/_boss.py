@@ -82,7 +82,7 @@ class BOSSEnsemble(BaseClassifier):
     IndividualBOSS
     ContractableBOSS
     For the Java version, see
-    `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
 
     References
@@ -91,13 +91,15 @@ class BOSSEnsemble(BaseClassifier):
        in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
        https://link.springer.com/article/10.1007/s10618-014-0377-7
 
-    Examples
-    --------
+    Example
+    -------
     >>> from sktime.classification.dictionary_based import BOSSEnsemble
-    >>> from sktime.datasets import toy_classification_problem
-    >>> X_train, y_train, X_test, y_test = toy_classification_problem()
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     >>> clf = BOSSEnsemble()
     >>> clf.fit(X_train, y_train)
+    BOSSEnsemble(...)
     >>> y_pred = clf.predict(X_test)
     """
 

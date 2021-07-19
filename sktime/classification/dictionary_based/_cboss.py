@@ -85,7 +85,7 @@ class ContractableBOSS(BaseClassifier):
     --------
     BOSSEnsemble
     For the Java version, see
-    `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/cBOSS.java>`_.
 
     References
@@ -100,13 +100,15 @@ class ContractableBOSS(BaseClassifier):
        and Automated Learning,LNCS, volume 11871
        https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
 
-    Examples
-    --------
-    >>> from sktime.classification import BOSSEnsemble
-    >>> from sktime.datasets import toy_classification_problem
-    >>> X_train, y_train, X_test, y_test = toy_classification_problem()
+    Example
+    -------
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     >>> clf = ContractableBOSS()
     >>> clf.fit(X_train, y_train)
+    ContractableBOSS(...)
     >>> y_pred = clf.predict(X_test)
     """
 
