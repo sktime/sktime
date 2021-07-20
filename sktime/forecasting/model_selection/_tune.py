@@ -57,11 +57,11 @@ class BaseGridSearch(BaseForecaster):
     def _update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
-        self.best_forecaster_.update(y, X, update_params=update_params)
+        self.best_forecaster_._update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict(
+    def _update_predict(
         self,
         y,
         cv=None,
@@ -75,7 +75,7 @@ class BaseGridSearch(BaseForecaster):
         """
         self.check_is_fitted("update_predict")
 
-        return self.best_forecaster_.update_predict(
+        return self.best_forecaster_._update_predict(
             y,
             cv=cv,
             X=X,
@@ -162,6 +162,8 @@ class BaseGridSearch(BaseForecaster):
             Target time series to which to compare the forecasts.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
+        fh : ForecastingHorizon, int, np.ndarray, pd.Index, optional (default=None)
+            Forecasting horizon
 
         Returns
         -------
@@ -223,7 +225,6 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         cv = check_cv(self.cv)
 
         scoring = check_scoring(self.scoring)
