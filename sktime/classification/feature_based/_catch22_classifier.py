@@ -5,18 +5,19 @@ A forest classifier based on catch22 features
 """
 
 __author__ = ["Matthew Middlehurst"]
-__all__ = ["Catch22ForestClassifier"]
+__all__ = ["Catch22Classifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.multiclass import class_distribution
 
+from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
-from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y, check_X
 
 
-class Catch22ForestClassifier(BaseClassifier):
+class Catch22Classifier(BaseClassifier):
     """Canonical Time-series Characteristics (catch22).
 
     Overview: Input n series length m. Transforms series into the 22 catch22
@@ -66,21 +67,27 @@ class Catch22ForestClassifier(BaseClassifier):
 
     def __init__(
         self,
-        n_estimators=200,
         outlier_norm=False,
+        estimator=None,
         n_jobs=1,
         random_state=None,
     ):
-        self.n_estimators = n_estimators
         self.outlier_norm = outlier_norm
+
+        self.estimator = (
+            RandomForestClassifier(n_estimators=200, n_jobs=n_jobs)
+            if estimator is None
+            else estimator
+        )
+
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.classifier = None
-        self.n_timestep_ = 0
-        self.n_dims_ = 0
+        self.transformer_ = None
+        self.estimator_ = None
         self.classes_ = []
-        super(Catch22ForestClassifier, self).__init__()
+        self.n_classes = 0
+        super(Catch22Classifier, self).__init__()
 
     def fit(self, X, y):
         """Fit a random catch22 feature forest classifier.
@@ -95,20 +102,16 @@ class Catch22ForestClassifier(BaseClassifier):
         -------
         self : object
         """
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X, y = check_X_y(X, y)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        self.n_classes = np.unique(y).shape[0]
 
-        c22 = Catch22(outlier_norm=self.outlier_norm)
-        c22_list = c22.fit_transform(X)
+        self.transformer_ = Catch22(outlier_norm=self.outlier_norm)
 
-        self.classifier = RandomForestClassifier(
-            n_jobs=self.n_jobs,
-            n_estimators=self.n_estimators,
-            random_state=self.random_state,
-        )
-
-        X_c22 = np.nan_to_num(np.array(c22_list, dtype=np.float32), False, 0, 0, 0)
-        self.classifier.fit(X_c22, y)
+        self.estimator_ = _clone_estimator(self.estimator, self.random_state)
+        X_t = self.transformer_.fit_transform(X, y)
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+        self.estimator_.fit(X_t, y)
 
         self._is_fitted = True
         return self
@@ -125,13 +128,11 @@ class Catch22ForestClassifier(BaseClassifier):
         output : numpy array of shape = [n_instances]
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X = check_X(X)
 
-        c22 = Catch22(outlier_norm=self.outlier_norm)
-        c22_list = c22.fit_transform(X)
-
-        X_c22 = np.nan_to_num(np.array(c22_list, dtype=np.float32), False, 0, 0, 0)
-        return self.classifier.predict(X_c22)
+        X_t = self.transformer_.transform(X)
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+        return self.estimator_.predict(X_t)
 
     def predict_proba(self, X):
         """Make class probability estimates on each case in X.
@@ -146,10 +147,17 @@ class Catch22ForestClassifier(BaseClassifier):
                 [n_instances, num_classes] of probabilities
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X = check_X(X)
 
-        c22 = Catch22(outlier_norm=self.outlier_norm)
-        c22_list = c22.fit_transform(X)
+        X_t = self.transformer_.transform(X)
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
 
-        X_c22 = np.nan_to_num(np.array(c22_list, dtype=np.float32), False, 0, 0, 0)
-        return self.classifier.predict_proba(X_c22)
+        m = getattr(self.estimator_, "predict_proba", None)
+        if callable(m):
+            return self.estimator_.predict_proba(X_t)
+        else:
+            dists = np.zeros((X.shape[0], self.n_classes))
+            preds = self.estimator_.predict(X_t)
+            for i in range(0, X.shape[0]):
+                dists[i, np.where(self.classes_ == preds[i])] = 1
+            return dists
