@@ -240,7 +240,7 @@ def check_fh(fh, enforce_relative=False):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=True)
+        fh = ForecastingHorizon(fh, is_relative=None)
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
