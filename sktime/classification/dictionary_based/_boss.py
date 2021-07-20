@@ -21,67 +21,86 @@ from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
-# from numba import njit
-# from numba.typed import Dict
-
-
 class BOSSEnsemble(BaseClassifier):
-    """Bag of SFA Symbols (BOSS).
+    """Ensemble of bag of Symbolic Fourier Approximation Symbols (BOSS).
 
-    Bag of SFA Symbols Ensemble: implementation of BOSS from [1]
+    Implementation of BOSS Ensemble from Schäfer (2015). [1]_
 
-    Overview: Input n series length m
-    BOSS performs a gird search over a set of parameter values, evaluating
-    each with a LOOCV. It then retains
-    all ensemble members within 92% of the best. There are three primary
-    parameters:
-            alpha: alphabet size
-            w: window length
-            l: word length.
-    for any combination, a single BOSS slides a window length w along the
-    series. The w length window is shortened to
-    an l length word through taking a Fourier transform and keeping the
-    first l/2 complex coefficients. These l
-    coefficients are then discretised into alpha possible values, to form a
-    word length l. A histogram of words for each
-    series is formed and stored. fit involves finding n histograms.
+    Overview: Input "n" series of length "m" and BOSS performs a grid search over
+    a set of parameter values, evaluating each with a LOOCV. It then retains
+    all ensemble members within 92% of the best by default for use in the ensmeble.
+    There are three primary parameters:
+        - alpha: alphabet size
+        - w: window length
+        - l: word length.
 
-    predict uses 1 nearest neighbour with a bespoke distance function.
+    For any combination, a single BOSS slides a window length "w" along the
+    series. The w length window is shortened to an "l" length word through
+    taking a Fourier transform and keeping the first l/2 complex coefficients.
+    These "l" coefficients are then discretized into alpha possible values,
+    to form a word length "l". A histogram of words for each
+    series is formed and stored.
 
+    Fit involves finding "n" histograms.
+
+    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
 
     Parameters
     ----------
-    threshold               : double [0,1]. retain all classifiers within
-    threshold% of the best one, optional (default = 0.92)
-    max_ensemble_size       : int or None, retain a maximum number of
-    classifiers, even if within threshold, optional (default = 500)
-    max_win_len_prop        : maximum window length as a proportion of
-    series length (default = 1)
-    min_window              : minimum window size, (default = 10)
-    n_jobs                  : int, optional (default=1)
-    The number of jobs to run in parallel for both `fit` and `predict`.
-    ``-1`` means using all processors.
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
+    threshold : float, default=0.92
+        Threshold used to determine which classifiers to retain. All classifiers
+        within percentage `threshold` of the best one are retained.
+    max_ensemble_size : int or None, default=500
+        Maximum number of classifiers to retain. Will limit number of retained
+        classifiers even if more than `max_ensemble_size` are within threshold.
+    max_win_len_prop : int or float, default=1
+        Maximum window length as a proportion of the series length.
+    min_window : int, default=10
+        Minimum window size.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random, integer.
 
     Attributes
     ----------
-    n_classes               : extracted from the data
-    n_instances             : extracted from the data
-    n_estimators            : The final number of classifiers used (
-    <= max_ensemble_size)
-    series_length           : length of all series (assumed equal)
-    classifiers             : array of DecisionTree classifiers
+    n_classes : int
+        Number of classes. Extracted from the data.
+    n_instances : int
+        Number of instances. Extracted from the data.
+    n_estimators : int
+        The final number of classifiers used. Will be <= `max_ensemble_size` if
+        `max_ensemble_size` has been specified.
+    series_length : int
+        Length of all series (assumed equal).
+    classifiers : list
+       List of DecisionTree classifiers.
 
-    Notes
-    -----
-    ..[1] Patrick Schäfer, "The BOSS is concerned with time series classification
-            in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
-            https://link.springer.com/article/10.1007/s10618-014-0377-7
-
+    See Also
+    --------
+    IndividualBOSS
+    ContractableBOSS
     For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
-    classifiers/dictionary_based/BOSS.java
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/
+    main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
+
+    References
+    ----------
+    .. [1] Patrick Schäfer, "The BOSS is concerned with time series classification
+       in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+       https://link.springer.com/article/10.1007/s10618-014-0377-7
+
+    Example
+    -------
+    >>> from sktime.classification.dictionary_based import BOSSEnsemble
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = BOSSEnsemble()
+    >>> clf.fit(X_train, y_train)
+    BOSSEnsemble(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags
@@ -210,7 +229,6 @@ class BOSSEnsemble(BaseClassifier):
                     best_classifier_for_win_size._set_word_len(best_word_len)
                     self.classifiers.append(best_classifier_for_win_size)
 
-                    # print("appending", best_acc_for_win_size, win_size)
                     if best_acc_for_win_size > max_acc:
                         max_acc = best_acc_for_win_size
                         self.classifiers = list(
@@ -240,11 +258,12 @@ class BOSSEnsemble(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : pd.DataFrame of shape (n_instances, 1)
 
         Returns
         -------
-        array of shape [n, 1]
+        preds : np.ndarray of shape (n, 1)
+            Predicted class.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -259,11 +278,12 @@ class BOSSEnsemble(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : pd.DataFrame of shape (n_instances, 1)
 
         Returns
         -------
-        array of shape [n, self.n_classes]
+        predicted_probs : array of shape (n_instances, n_classes)
+            Predicted probability of each class.
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
@@ -351,10 +371,80 @@ class BOSSEnsemble(BaseClassifier):
 
 
 class IndividualBOSS(BaseClassifier):
-    """Single Bag of SFA Symbols (BOSS) classifier.
+    """Single bag of Symbolic Fourier Approximation Symbols (IndividualBOSS).
 
     Bag of SFA Symbols Ensemble: implementation of a single BOSS Schaffer, the base
     classifier for the boss ensemble.
+
+    Implementation of single BOSS model from Schäfer (2015). [1]_
+
+    This is the underlying classifier for each classifier in the BOSS ensemble.
+
+    Overview: input "n" series of length "m" and IndividualBoss performs a SFA
+    transform to form a sparse dictionary of discretised words. The resulting
+    dictionary is used with the BOSS distance function in a 1-nearest neighbor.
+
+    Fit involves finding "n" histograms.
+
+    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
+
+    Parameters
+    ----------
+    window_size : int
+        Size of the window to use in BOSS algorithm.
+    word_length : int
+        Length of word to use to use in BOSS algorithm.
+    norm : bool, default = False
+        Whether to normalize words by dropping the first Fourier coefficient.
+    alphabet_size : default = 4
+        Number of possible letters (values) for each word.
+    save_words : bool, default = True
+        Whether to keep NumPy array of words in SFA transformation even after
+        the dictionary of words is returned. If True, the array is saved, which
+        can shorten the time to calculate dictionaries using a shorter
+        `word_length` (since the last "n" letters can be removed).
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random, integer.
+
+    Attributes
+    ----------
+    n_classes : int
+        Number of classes. Extracted from the data.
+    n_instances : int
+        Number of instances. Extracted from the data.
+    n_estimators : int
+        The final number of classifiers used. Will be <= `max_ensemble_size` if
+        `max_ensemble_size` has been specified.
+    series_length : int
+        Length of all series (assumed equal).
+
+    See Also
+    --------
+    BOSSEnsemble
+    ContractableBOSS
+    For the Java version, see
+    `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
+    main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
+
+    References
+    ----------
+    .. [1] Patrick Schäfer, "The BOSS is concerned with time series classification
+       in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+       https://link.springer.com/article/10.1007/s10618-014-0377-7
+
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import IndividualBOSS
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = IndividualBOSS()
+    >>> clf.fit(X_train, y_train)
+    IndividualBOSS(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     def __init__(
@@ -546,6 +636,21 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
     dictionary or an arrray. It only measures the distance between counts present in
     the first dictionary and the second. Hence dist(a,b) does not necessarily equal
     dist(b,a).
+
+    Parameters
+    ----------
+    first : dict
+        Base dictionary used in distance measurement.
+    second : dict
+        Second dictionary that will be used to measure distance from `first`.
+    best_dist : int, float or sys.float_info.max
+        Largest distance value. Values above this will be replaced by
+        sys.float_info.max.
+
+    Returns
+    -------
+    dist : float
+        The boss distance between the first and second dictionaries.
     """
     dist = 0
 
