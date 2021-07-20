@@ -224,6 +224,7 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
+
 def _clone_estimator(base_estimator, random_state=None):
     estimator = clone(base_estimator)
 
