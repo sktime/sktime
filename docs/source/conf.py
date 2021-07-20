@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+
+"""Configuration file for the Sphinx documentation builder."""
 
 import os
 import sys
@@ -100,6 +96,18 @@ autodoc_default_flags = ["members", "inherited-members"]
 
 
 def linkcode_resolve(domain, info):
+    """Return URL to source code correponding.
+
+    Parameters
+    ----------
+    domain : str
+    info : dict
+
+    Returns
+    -------
+    url : str
+    """
+
     def find_source():
         # try to find the file and line number, based on code from numpy:
         # https://github.com/numpy/numpy/blob/main/doc/source/conf.py#L286
@@ -213,7 +221,8 @@ texinfo_documents = [
 ]
 
 
-def make_estimator_overview(app):
+def _make_estimator_overview(app):
+    """Make estimator overview table."""
     import pandas as pd
     from sktime.utils import all_estimators
 
@@ -284,19 +293,25 @@ def make_estimator_overview(app):
             pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
             ignore_index=True,
         )
-    # creates a table in html format
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 
 
 def setup(app):
+    """Set up sphinx builder.
+
+    Parameters
+    ----------
+    app : Sphinx application object
+    """
+
     def adds(pth):
         print("Adding stylesheet: %s" % pth)  # noqa: T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.
 
-    app.connect("builder-inited", make_estimator_overview)
+    app.connect("builder-inited", _make_estimator_overview)
 
 
 # -- Extension configuration -------------------------------------------------
