@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
@@ -46,9 +46,12 @@ DELEGATED_METHODS = (
 
 
 def _delegator(method):
-    """Helper function to automatically decorate ForecastingHorizon class with
+    """Decorate ForecastingHorizon with pandas.index methods.
+
+    Helper function to automatically decorate ForecastingHorizon class with
     methods from pandas.Index and delegate method calls to wrapped pandas.Index
-    object."""
+    object.
+    """
 
     def delegated(obj, *args, **kwargs):
         return getattr(obj.to_pandas(), method)(*args, **kwargs)
@@ -57,8 +60,7 @@ def _delegator(method):
 
 
 def _check_values(values):
-    """Validate forecasting horizon values and converts them to supported
-    pandas.Index types if possible.
+    """Validate forecasting horizon values and coerce to pandas.Index type.
 
     Parameters
     ----------
@@ -115,18 +117,24 @@ def _check_values(values):
 
 
 class ForecastingHorizon:
-    """Forecasting horizon
+    """Forecasting horizon.
 
     Parameters
     ----------
     values : pd.Index, np.array, list or int
         Values of forecasting horizon
-    is_relative : bool, optional (default=True)
-        - If True, values are relative to end of training series.
-        - If False, values are absolute.
+    is_relative : bool, optional (default=None)
+        - If True, a relative ForecastingHorizon is created:
+                values are relative to end of training series.
+        - If False, an absolute ForecastingHorizon is created:
+                values are absolute.
+        - if None, the flag is determined automatically:
+            relative, if values are of supported relative index type
+            absolute, if not relative and values of supported absolute index type
     """
 
-    def __new__(cls, values=None, is_relative=True):
+    def __new__(cls, values=None, is_relative=None):
+        """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
         # pandas index, but since subclassing pandas indices is not
         # straightforward, we wrap the index object instead. In order to
@@ -138,8 +146,8 @@ class ForecastingHorizon:
         return object.__new__(cls)
 
     def __init__(self, values=None, is_relative=True):
-        if not isinstance(is_relative, bool):
-            raise TypeError("`is_relative` must be a boolean")
+        if is_relative is not None and not isinstance(is_relative, bool):
+            raise TypeError("`is_relative` must be a boolean or None")
         values = _check_values(values)
 
         # check types, note that isinstance() does not work here because index
@@ -147,6 +155,13 @@ class ForecastingHorizon:
         error_msg = (
             f"`values` type is not compatible with `is_relative=" f"{is_relative}`."
         )
+        if is_relative is None:
+            if type(values) in RELATIVE_TYPES:
+                is_relative = True
+            elif type(values) in ABSOLUTE_TYPES:
+                is_relative = False
+            else:
+                raise TypeError(type(values) + "is not a supported fh index type")
         if is_relative:
             if not type(values) in RELATIVE_TYPES:
                 raise TypeError(error_msg)
@@ -158,13 +173,14 @@ class ForecastingHorizon:
         self._is_relative = is_relative
 
     def _new(self, values=None, is_relative=None):
-        """Construct new ForecastingHorizon based on current object
+        """Construct new ForecastingHorizon based on current object.
 
         Parameters
         ----------
         values : pd.Index, np.array, list or int
             Values of forecasting horizon
-        is_relative : bool, optional (default=True)
+        is_relative : bool, optional (default=same as self.is_relative)
+        - If None, determined automatically: same as self.is_relative
         - If True, values are relative to end of training series.
         - If False, values are absolute.
 
@@ -181,8 +197,7 @@ class ForecastingHorizon:
 
     @property
     def is_relative(self):
-        """Whether forecasting horizon is relative to the end of the
-        training series.
+        """Whether forecasting horizon is relative.
 
         Returns
         -------
@@ -191,7 +206,7 @@ class ForecastingHorizon:
         return self._is_relative
 
     def to_pandas(self):
-        """Returns underlying values as pd.Index
+        """Return underlying values as pd.Index.
 
         Returns
         -------
@@ -200,7 +215,7 @@ class ForecastingHorizon:
         return self._values
 
     def to_numpy(self, **kwargs):
-        """Returns underlying values as np.array
+        """Return underlying values as np.array.
 
         Parameters
         ----------
@@ -218,7 +233,8 @@ class ForecastingHorizon:
     # calling different methods.
     @lru_cache(typed=True)
     def to_relative(self, cutoff=None):
-        """Return relative values
+        """Return relative values.
+
         Parameters
         ----------
         cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
@@ -259,7 +275,8 @@ class ForecastingHorizon:
 
     @lru_cache(typed=True)
     def to_absolute(self, cutoff):
-        """Return absolute values
+        """Convert ForecastingHorizon to absolute and return.
+
         Parameters
         ----------
         cutoff : pd.Period, pd.Timestamp, int
@@ -303,6 +320,7 @@ class ForecastingHorizon:
         cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one and vice versa.
+
         Returns
         -------
         fh : ForecastingHorizon
@@ -326,7 +344,7 @@ class ForecastingHorizon:
         return self._new(integers, is_relative=False)
 
     def to_in_sample(self, cutoff=None):
-        """Return in-sample values
+        """Return in-sample index values of fh.
 
         Parameters
         ----------
@@ -344,7 +362,8 @@ class ForecastingHorizon:
         return self._new(in_sample)
 
     def to_out_of_sample(self, cutoff=None):
-        """Return out-of-sample values
+        """Return out-of-sample values of fh.
+
         Parameters
         ----------
         cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
@@ -361,12 +380,11 @@ class ForecastingHorizon:
         return self._new(out_of_sample)
 
     def _is_in_sample(self, cutoff=None):
-        """Get index location of in-sample values"""
+        """Get index location of in-sample values."""
         return self.to_relative(cutoff).to_pandas() <= 0
 
     def is_all_in_sample(self, cutoff=None):
-        """Whether or not the forecasting horizon is purely in-sample for given
-        cutoff.
+        """Whether or not the fh is purely in-sample given cutoff, yes/no.
 
         Parameters
         ----------
@@ -382,13 +400,12 @@ class ForecastingHorizon:
         return sum(self._is_in_sample(cutoff)) == len(self)
 
     def _is_out_of_sample(self, cutoff=None):
-        """Get index location of out-of-sample values"""
+        """Get index location of out-of-sample values."""
         # return ~self._in_sample_idx(cutoff)
         return self.to_relative(cutoff).to_pandas() > 0
 
     def is_all_out_of_sample(self, cutoff=None):
-        """Whether or not the forecasting horizon is purely out-of-sample for
-        given cutoff.
+        """Whether or not the fh is purely out-of-sample given cutoff, yes/no.
 
         Parameters
         ----------
@@ -429,15 +446,18 @@ class ForecastingHorizon:
             return relative - relative.to_pandas()[0]
 
     def __repr__(self):
-        # generate repr based on wrapped index repr
+        """Generate repr based on wrapped index repr."""
         class_name = self.__class__.__name__
         pandas_repr = repr(self.to_pandas()).split("(")[-1].strip(")")
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
 
 
 def _check_cutoff(cutoff, index):
-    """Helper function to check if the cutoff contains all necessary information and is
-    compatible with the time index of the forecasting horizon"""
+    """Check whether cutoff is compatible with fh index type.
+
+    Helper function to check if the cutoff contains all necessary information and is
+    compatible with the time index of the forecasting horizon
+    """
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
 
@@ -471,8 +491,11 @@ def _check_start(start, index):
 
 
 def _coerce_to_period(x, freq=None):
-    """Helper function to coerce pd.Timestamp to pd.Period or pd.DatetimeIndex to
-    pd.PeriodIndex for more reliable arithmetic operations with time indices"""
+    """Coerce compatible index type to pd.PeriodIndex.
+
+    Helper function to coerce pd.Timestamp to pd.Period or pd.DatetimeIndex to
+    pd.PeriodIndex for more reliable arithmetic operations with time indices
+    """
     if freq is None:
         freq = _get_freq(x)
     try:
