@@ -159,7 +159,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 | :woman_mechanic:  **[Developer Guides]**      | How to further develop sktime's code base.                             |
 | :construction: **[Enhancement Proposals]** | Design a new feature for sktime. |
 | :medal_sports: **[Contributors]** | A list of all contributors. |
-| :money_with_wings: **[Donate]** | Make a donation to the sktime project. |
+| :money_with_wings: **[Donate]** | Fund sktime maintenance and development. |
 | :classical_building: **[Governance]** | How and by whom decisions are made in sktime's community.   |
 
 [contribute]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.md
