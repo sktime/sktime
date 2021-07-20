@@ -154,7 +154,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 
 | Documentation              |                                                                |
 | -------------------------- | --------------------------------------------------------------        |
-| :gift_heart: **[Contribute]**        | How to contribute to sktime's project.          |
+| :gift_heart: **[Contribute]**        | How to contribute to sktime.          |
 | :school_satchel:  **[Mentoring]** | New to open source? Apply to our mentoring program! |
 | :date: **[Meetings]** | Join our discussions, tutorials, workshops and sprints! |
 | :woman_mechanic:  **[Developer Guides]**      | How to further develop sktime's code base.                             |
