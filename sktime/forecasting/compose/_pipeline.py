@@ -11,7 +11,6 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils import _has_tag
 from sktime.utils.validation.series import check_series
 
 
@@ -354,7 +353,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         for _, _, transformer in self._iter_transformers(reverse=True):
             # skip sktime transformers where inverse transform
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
-            skip_trafo = transformer._all_tags().get("skip-inverse-transform", False)
+            skip_trafo = transformer.get_tag("skip-inverse-transform", False)
             if not skip_trafo:
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
@@ -394,6 +393,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers(reverse=True):
-            if not _has_tag(transformer, "skip-inverse-transform"):
+            if not transformer.get_tag("skip-inverse-transform", False):
                 zt = transformer.inverse_transform(zt, X)
         return zt
