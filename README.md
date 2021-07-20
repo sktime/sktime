@@ -60,6 +60,8 @@ Our aim is to make the time series analysis ecosystem more interoperable and usa
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet], among others.
 
+For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
+
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
@@ -73,7 +75,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 | **[Transformations]** | maturing | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) |
 | **[Time Series Clustering]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py) |
 | **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
-| **[Annotation]** | experimental | |
+| **[Annotation]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/annotation.py) |
 
 [forecasting]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/forecasting
 [time series classification]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/classification
@@ -83,7 +85,6 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [time series distances/kernels]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/dists_kernels
 [transformations]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/transformations
 
-For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
 ## :hourglass_flowing_sand: Install sktime
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.org/en/latest/installation.html).
