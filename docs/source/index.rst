@@ -3,8 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. include:: ../../README.rst
+Welcome to sktime
+=================
 
+  A unified framework for machine learning with time series
+
+sktime provides time series algorithms and scikit-learn compatible tools to build, tune and validate time series models. sktime provides a unified interface for multiple time series learning tasks, including time series classification, regression, clustering, annotation and forecasting.
 
 Navigation
 ----------
@@ -21,6 +25,8 @@ From here, you can navigate to:
    estimator_overview
    api_reference
    changelog
+   roadmap
+   related_software
 
 .. toctree::
    :caption: Developers
@@ -28,7 +34,6 @@ From here, you can navigate to:
 
    contributing
    developer_guide
-   roadmap
    mentoring
    code_of_conduct
    governance
@@ -39,4 +44,3 @@ From here, you can navigate to:
 
    about
    contributors
-   related_software

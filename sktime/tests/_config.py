@@ -31,8 +31,8 @@ from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
+from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.classification.interval_based import DrCIF
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.kernel_based import ROCKETClassifier
@@ -256,12 +256,12 @@ ESTIMATOR_TEST_PARAMS = {
         "window_name": "global",
     },
     ROCKETClassifier: {"num_kernels": 100},
-    Arsenal: {"num_kernels": 100},
+    Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
-        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.025},
+        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.02},
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
-        "cboss_params": {"n_parameter_samples": 6, "max_ensemble_size": 2},
+        "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
@@ -272,11 +272,11 @@ ESTIMATOR_TEST_PARAMS = {
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     SFA: {"return_pandas_data_series": True},
-    ContractableBOSS: {"n_parameter_samples": 25, "max_ensemble_size": 5},
+    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 5},
     TemporalDictionaryEnsemble: {
-        "n_parameter_samples": 25,
+        "n_parameter_samples": 10,
         "max_ensemble_size": 5,
-        "randomly_selected_params": 20,
+        "randomly_selected_params": 5,
     },
     TSFC: {"n_estimators": 3},
     ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
