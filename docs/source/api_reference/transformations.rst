@@ -153,6 +153,17 @@ Shapelet
     ShapeletTransform
     ContractedShapeletTransform
 
+Signature
+~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.signature_based
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    SignatureTransformer
+
 Series transformers
 -------------------
 
@@ -215,6 +226,18 @@ Cosine
 
     CosineTransformer
 
+Exponent
+~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.exponent
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ExponentTransformer
+    SqrtTransformer
+
 Matrix Profile
 ~~~~~~~~~~~~~~
 
@@ -258,3 +281,14 @@ Composition
     :template: class.rst
 
     OptionalPassthrough
+
+Theta
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer

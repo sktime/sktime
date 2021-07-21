@@ -11,16 +11,17 @@ from sktime.base import BaseEstimator
 
 
 class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for estimtators composed of named
-    estimators.
+    """Handles parameter management for estimtators composed of named estimators.
 
-    from sklearn utils.metaestimator.py
+    From sklearn utils.metaestimator.py
     """
 
     def get_params(self, deep=True):
+        """Return estimator parameters."""
         raise NotImplementedError("abstract method")
 
     def set_params(self, **params):
+        """Set estimator parameters."""
         raise NotImplementedError("abstract method")
 
     def _get_params(self, attr, deep=True):

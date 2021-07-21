@@ -28,6 +28,7 @@
         "question",
         "review",
         "talk",
+        "test",
         "tutorial"
       ]
     },
@@ -1044,12 +1045,32 @@
       ]
     },
     {
+      "login": "flix6x",
+      "name": "Felix Claessen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30658763?v=4",
+      "profile": "https://github.com/flix6x",
+      "contributions": [
+        "code",
+        "bug",
+        "test",
+      ]
+    },
+    {
       "login": "thayeylolu",
       "name": "Taiwo Owoseni",
       "avatar_url": "https://avatars.githubusercontent.com/u/13348874?v=4",
       "profile": "https://thayeylolu.github.io/portfolio/",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "jambo6",
+      "name": "James Morrill",
+      "avatar_url": "https://https://avatars.githubusercontent.com/jambo6",
+      "profile": "https://github.com/jambo6",
+      "contributions": [
+        "code",
       ]
     },
     {
@@ -1066,6 +1087,15 @@
       "name": "Antoni Baum",
       "avatar_url": "https://avatars.githubusercontent.com/u/10364161?v=4",
       "profile": "https://www.linkedin.com/in/yard1/",
+      "contributions": [
+        "code"
+      ]
+    }
+    {
+      "login": "ltoniazzi",
+      "name": "Lorenzo Toniazzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61414566",
+      "profile": "https://github.com/ltoniazzi",
       "contributions": [
         "code"
       ]

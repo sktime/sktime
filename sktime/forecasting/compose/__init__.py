@@ -1,6 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Exports for forecasting composition module.
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
 
 __author__ = ["Markus Löning"]
 
@@ -8,6 +10,7 @@ __all__ = [
     "EnsembleForecaster",
     "TransformedTargetForecaster",
     "STLForecaster",
+    "ForecastingPipeline",
     "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
@@ -25,6 +28,7 @@ __all__ = [
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.compose._loess import STLForecaster
+from sktime.forecasting.compose._pipeline import ForecastingPipeline
 from sktime.forecasting.compose._reduce import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose._reduce import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._reduce import DirectTabularRegressionForecaster
