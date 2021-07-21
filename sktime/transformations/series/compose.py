@@ -156,7 +156,6 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         Returns
         -------
         self : an instance of self
-
         """
         z = check_series(Z, allow_numpy=False)
         self._is_fitted = False
