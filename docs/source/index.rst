@@ -22,6 +22,7 @@ From here, you can navigate to:
    installation
    tutorials
    user_guide
+   estimator_overview
    api_reference
    changelog
    roadmap
