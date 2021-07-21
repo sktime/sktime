@@ -111,7 +111,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     columns : list of str
             Names of columns that are supposed to be transformed
 
-     Attributes
+    Attributes
     ----------
     transformers_ : dict of {str : transformer}
         Maps columns to transformers
