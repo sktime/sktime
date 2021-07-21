@@ -118,7 +118,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.datasets import base
+    >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.transformations.series.compose import ColumnwiseTransformer
 
