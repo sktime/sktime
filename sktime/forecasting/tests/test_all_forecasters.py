@@ -1,8 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for BaseForecaster API points.
 
-# test API provided through BaseForecaster
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
 
 __author__ = ["mloning"]
 __all__ = [
@@ -59,6 +59,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_get_fitted_params(Forecaster):
+    """Test get_fitted_params."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=FH0)
     try:
@@ -71,6 +72,7 @@ def test_get_fitted_params(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_raises_not_fitted_error(Forecaster):
+    """Test that calling post-fit methods before fit raises error."""
     # We here check extra method of the forecaster API: update and update_predict.
     f = _construct_instance(Forecaster)
 
@@ -91,16 +93,26 @@ def test_raises_not_fitted_error(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_y_multivariate_raises_error(Forecaster):
-    # Check that multivariate y raises an appropriate error message.
-    y = _make_series(n_columns=2)
+    """Test that multivariate y raises error if forecaster univariate."""
     f = _construct_instance(Forecaster)
-    with pytest.raises(ValueError, match=r"univariate"):
-        f.fit(y, fh=FH0)
+
+    if f.get_tag("scitype:y") == "univariate":
+
+        y = _make_series(n_columns=2)
+        with pytest.raises(ValueError, match=r"univariate"):
+            f.fit(y, fh=FH0)
+
+    elif f.get_tag("scitype:y") == "multivariate":
+
+        y = _make_series(n_columns=1)
+        with pytest.raises(ValueError, match=r"multivariate"):
+            f.fit(y, fh=FH0)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("y", INVALID_y_INPUT_TYPES)
 def test_y_invalid_type_raises_error(Forecaster, y):
+    """Test that invalid y input types raise error."""
     f = _construct_instance(Forecaster)
     with pytest.raises(TypeError, match=r"type"):
         f.fit(y, fh=FH0)
@@ -109,6 +121,7 @@ def test_y_invalid_type_raises_error(Forecaster, y):
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("X", INVALID_X_INPUT_TYPES)
 def test_X_invalid_type_raises_error(Forecaster, X):
+    """Test that invalid X input types raise error."""
     f = _construct_instance(Forecaster)
     try:
         with pytest.raises(TypeError, match=r"type"):
@@ -124,7 +137,7 @@ def test_X_invalid_type_raises_error(Forecaster, X):
 )
 @pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
 def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps):
-    # Check that predicted time index matches forecasting horizon.
+    """Check that predicted time index matches forecasting horizon."""
     y_train = make_forecasting_problem(index_type=index_type)
     cutoff = y_train.index[-1]
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
@@ -146,7 +159,7 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 )
 @pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
 def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative, steps):
-    # Check that predicted time index matches forecasting horizon.
+    """Check that predicted time index matches forecasting horizon."""
     y, X = make_forecasting_problem(index_type=index_type, make_X=True)
     cutoff = y.index[len(y) // 2]
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
@@ -171,8 +184,7 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
 def test_predict_time_index_in_sample_full(
     Forecaster, index_type, fh_type, is_relative
 ):
-    # Check that predicted time index matched forecasting horizon for full in-sample
-    # predictions.
+    """Check that predicted time index equals fh for full in-sample predictions."""
     y_train = make_forecasting_problem(index_type=index_type)
     cutoff = y_train.index[-1]
     steps = -np.arange(len(y_train))  # full in-sample fh
@@ -216,7 +228,7 @@ def _check_pred_ints(pred_ints: list, y_train: pd.Series, y_pred: pd.Series, fh)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
 def test_predict_pred_interval(Forecaster, fh, alpha):
-    # Check prediction intervals.
+    """Check prediction intervals returned by predict."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     try:
@@ -230,7 +242,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_score(Forecaster, fh):
-    # Check score method
+    """Check score method."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     y_pred = f.predict()
@@ -251,7 +263,7 @@ def test_score(Forecaster, fh):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("update_params", [True, False])
 def test_update_predict_single(Forecaster, fh, update_params):
-    # Check correct time index of update-predict
+    """Check correct time index of update-predict."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     y_pred = f.update_predict_single(y_test, update_params=update_params)
@@ -289,6 +301,7 @@ def _check_update_predict_predicted_index(
 def test_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
 ):
+    """Check predicted index in update_predict with update_params=False."""
     _check_update_predict_predicted_index(
         Forecaster, fh, window_length, step_length, update_params
     )
@@ -303,6 +316,7 @@ def test_update_predict_predicted_index(
 def test_update_predict_predicted_index_update_params(
     Forecaster, fh, window_length, step_length, update_params
 ):
+    """Check predicted index in update_predict with update_params=True."""
     _check_update_predict_predicted_index(
         Forecaster, fh, window_length, step_length, update_params
     )
