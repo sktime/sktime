@@ -61,6 +61,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous data
+
         Returns
         -------
         self : an instance of self.
@@ -108,6 +109,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
+
         Returns
         -------
         self : returns an instance of self.
@@ -144,9 +146,30 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return _aggregate(y=y_pred, aggfunc=self.aggfunc)
 
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self._set_params("forecasters", **kwargs)
         return self
 

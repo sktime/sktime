@@ -57,10 +57,10 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel"""
+        """Fit all forecasters in parallel."""
 
         def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster"""
+            """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
@@ -88,6 +88,7 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
+
         Returns
         -------
         params : mapping of string to any

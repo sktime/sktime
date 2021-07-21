@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
 __author__ = ["Guzal Bulatova"]
 
@@ -28,6 +28,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
     "fh", [(np.arange(1, 11)), (np.arange(1, 33)), (np.arange(1, 3))]
 )
 def test_column_ensemble_shape(forecasters, fh):
+    """Check the shape of the returned prediction."""
     y = pd.DataFrame(np.random.randint(0, 100, size=(100, 3)), columns=list("ABC"))
     forecaster = ColumnEnsembleForecaster(forecasters)
     forecaster.fit(y, fh=fh)
