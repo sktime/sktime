@@ -40,8 +40,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecasters = [("trend", PolynomialTrendForecaster()),\
                         ("naive", NaiveForecaster())]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, n_jobs=2)
-    >>> forecaster._fit_forecasters(forecasters=forecasters, y=y, X=None, fh=[1,2,3])
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    EnsembleForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _required_parameters = ["forecasters"]
