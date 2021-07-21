@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""TSFreshClassifier test code."""
 import numpy as np
 import pytest
 from numpy import testing
@@ -9,6 +10,7 @@ from sktime.datasets import load_gunpoint, load_basic_motions, load_italy_power_
 
 
 def test_tsfresh_classifier_on_gunpoint():
+    """Test of TSFreshClassifier on gun point."""
     # load gunpoint data
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
@@ -28,6 +30,7 @@ def test_tsfresh_classifier_on_gunpoint():
 
 @pytest.mark.parametrize("relevant_feature_extractor", [True, False])
 def test_tsfresh_classifier_on_power_demand(relevant_feature_extractor):
+    """Test of TSFreshClassifier on italy power demand."""
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
@@ -47,6 +50,7 @@ def test_tsfresh_classifier_on_power_demand(relevant_feature_extractor):
 
 
 def test_tsfresh_classifier_on_basic_motions():
+    """Test of TSFreshClassifier on basic motions."""
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)

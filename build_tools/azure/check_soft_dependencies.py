@@ -18,11 +18,10 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["fbprophet"],
-    "sktime.classification.all": ["tsfresh"],
-    "sktime.regression.all": ["tsfresh"],
+    "sktime.classification.feature_based._tsfresh_classifier": ["tsfresh"],
+    "sktime.classification.feature_based._signature_classifier": ["esig"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
-    "sktime.classification.signature_based": ["esig"],
     "sktime.transformations.panel.signature_based": ["esig"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }
