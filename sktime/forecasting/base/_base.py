@@ -52,9 +52,6 @@ from sktime.forecasting.base.convertIO import convert_to, mtype
 
 DEFAULT_ALPHA = 0.05
 
-# turns off output conversions, can remove if we need them again
-OUTPUT_CONVERSIONS = "off"
-
 
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
@@ -89,7 +86,6 @@ class BaseForecaster(BaseEstimator):
         self._cutoff = None  # reference point for relative fh
 
         self.converter_store_y = dict()  # storage dictionary for in/output conversion
-        self.converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseForecaster, self).__init__()
 
@@ -153,8 +149,6 @@ class BaseForecaster(BaseEstimator):
         # convert y to supported inner type, if necessary
         ##################################################
 
-        self.y_in_mtype = mtype(y, "Series")
-
         # retrieve supported mtypes for _fit
         y_inner_mtype = self.get_tag("y_inner_mtype")
         X_inner_mtype = self.get_tag("X_inner_mtype")
@@ -172,7 +166,6 @@ class BaseForecaster(BaseEstimator):
             X,
             to_type=X_inner_mtype,
             as_scitype="Series",  # we are dealing with series
-            store=self.converter_store_X,
         )
 
         # checks and conversions complete, pass to inner fit
@@ -239,26 +232,19 @@ class BaseForecaster(BaseEstimator):
             pred_int = y_pred[1]
             y_pred = y_pred[0]
 
-        if not OUTPUT_CONVERSIONS == "off":
-            y_out = convert_to(
-                y_pred,
-                self.y_in_mtype,
-                as_scitype="Series",
-                store=self.converter_store_y,
-            )
-        else:
-            scitype_y = self.get_tag("scitype:y")
-            to_dict = {
-                "univariate": "pd.Series",
-                "multivariate": "pd.DataFrame",
-                "both": "pd.DataFrame",
-            }
-            y_out = convert_to(
-                y_pred,
-                to_dict[scitype_y],
-                as_scitype="Series",
-                store=self.converter_store_y,
-            )
+        # convert to default output type, dependent on scitype
+        scitype_y = self.get_tag("scitype:y")
+        to_dict = {
+            "univariate": "pd.Series",
+            "multivariate": "pd.DataFrame",
+            "both": "pd.DataFrame",
+        }
+        y_out = convert_to(
+            y_pred,
+            to_dict[scitype_y],
+            as_scitype="Series",
+            store=self.converter_store_y,
+        )
 
         if return_pred_int:
             return (y_out, pred_int)
@@ -396,8 +382,6 @@ class BaseForecaster(BaseEstimator):
         # convert y to supported inner type, if necessary
         ##################################################
 
-        self.y_in_mtype = mtype(y, "Series")
-
         # retrieve supported mtypes for _fit
         y_inner_mtype = self.get_tag("y_inner_mtype")
         X_inner_mtype = self.get_tag("X_inner_mtype")
@@ -415,7 +399,6 @@ class BaseForecaster(BaseEstimator):
             X,
             to_type=X_inner_mtype,
             as_scitype="Series",  # we are dealing with series
-            store=self.converter_store_X,
         )
 
         # checks and conversions complete, pass to inner fit
