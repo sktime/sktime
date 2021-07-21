@@ -112,6 +112,12 @@ def check_series(
             f"{var_name} must be a one of {valid_data_types}, but found type: {type(Z)}"
         )
 
+    if enforce_univariate and enforce_multivariate:
+        raise ValueError(
+            "`enforce_univariate` and `enforce_multivariate` cannot both be set to "
+            "True."
+        )
+
     if enforce_univariate:
         _check_is_univariate(Z, var_name=var_name)
 
