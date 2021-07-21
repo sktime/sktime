@@ -94,7 +94,7 @@ from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
 
-from sktime.transformations.panel.selector import Selector
+from sktime.transformations.panel.dataset_manipulation import Selector
 from sktime.forecasting.compose import NetworkPipelineForecaster
 
 # The following estimators currently do not pass all unit tests
