@@ -21,9 +21,10 @@ VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIn
 def _check_is_univariate(y, var_name="input"):
     """Check if series is univariate."""
     if isinstance(y, pd.DataFrame):
-        if y.shape[1] > 1:
+        nvars = y.shape[1]
+        if nvars > 1:
             raise ValueError(
-                f"{var_name} must be univariate, but found more than one variable."
+                f"{var_name} must be univariate, but found {nvars} variables."
             )
     if isinstance(y, np.ndarray) and y.ndim > 1 and y.shape[1] > 1:
         raise ValueError(
@@ -37,8 +38,11 @@ def _check_is_multivariate(Z, var_name="input"):
     if isinstance(Z, pd.Series):
         raise ValueError(f"{var_name} must have 2 or more variables, but found 1.")
     if isinstance(Z, pd.DataFrame):
-        if Z.shape[1] < 2:
-            raise ValueError(f"{var_name} must have 2 or more variables, but found 1.")
+        nvars = Z.shape[1]
+        if nvars < 2:
+            raise ValueError(
+                f"{var_name} must have 2 or more variables, but found {nvars}."
+            )
     if isinstance(Z, np.ndarray):
         if Z.ndim == 1 or (Z.ndim == 2 and Z.shape[1] == 1):
             raise ValueError(
