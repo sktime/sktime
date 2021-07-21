@@ -136,14 +136,14 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        self._check_aggfunc()
+        aggfunc = self._check_aggfunc()
 
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
             y_pred[:, index] = forecaster.predict(fh)
 
         y_pred = pd.DataFrame(data=y_pred)
-        return _aggregate(y=y_pred, aggfunc=self.aggfunc)
+        return _aggregate(y=y_pred, aggfunc=aggfunc)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -205,9 +205,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return names, forecasters, indices
 
     def _check_aggfunc(self):
-        valid_aggfuncs = {"mean": np.mean, "median": np.median}
+        valid_aggfuncs = {"mean": np.mean, "median": np.median, "average": np.average}
         if self.aggfunc not in valid_aggfuncs.keys():
             raise ValueError("Aggregation function %s not recognized." % self.aggfunc)
+        return valid_aggfuncs[self.aggfunc]
 
 
 def _aggregate(y, aggfunc, X=None):
