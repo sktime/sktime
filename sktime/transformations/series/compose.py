@@ -122,7 +122,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.transformations.series.compose import ColumnwiseTransformer
 
-    >>> y, X = base.load_longley()
+    >>> y, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
     >>> yt = transformer.fit_transform(X)
     """
