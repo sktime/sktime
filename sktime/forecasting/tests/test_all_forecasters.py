@@ -93,7 +93,7 @@ def test_raises_not_fitted_error(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_y_multivariate_raises_error(Forecaster):
-    """Test that multivariate y raises error if forecaster univariate."""
+    """Test that wrong y scitype raises error (uni/multivariate if not supported)."""
     f = _construct_instance(Forecaster)
 
     if f.get_tag("scitype:y") == "univariate":
