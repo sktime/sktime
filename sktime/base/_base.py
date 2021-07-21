@@ -190,7 +190,7 @@ class BaseObject(_BaseEstimator):
 
         update_dict = {key: tags_est[key] for key in tag_names}
 
-        self.set_tags(update_dict)
+        self.set_tags(**update_dict)
 
         return self
 
