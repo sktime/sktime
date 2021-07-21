@@ -22,23 +22,27 @@ def _check_is_univariate(y, var_name="input"):
     """Check if series is univariate."""
     if isinstance(y, pd.DataFrame):
         if y.shape[1] > 1:
-            raise ValueError("Data must be univariate, but found a pd.DataFrame")
+            raise ValueError(
+                f"{var_name} must be univariate, but found more than one variable."
+            )
     if isinstance(y, np.ndarray) and y.ndim > 1 and y.shape[1] > 1:
         raise ValueError(
             f"{var_name} must be univariate, but found np.ndarray with more than "
-            "one dimension"
+            "one column"
         )
 
 
 def _check_is_multivariate(Z, var_name="input"):
     """Check if series is multivariate."""
     if isinstance(Z, pd.Series):
-        raise ValueError(f"{var_name} must be multivariate, but found a pd.Series")
+        raise ValueError(f"{var_name} must have 2 or more variables, but found 1.")
+    if isinstance(Z, pd.DataFrame):
+        if Z.shape[1] < 2:
+            raise ValueError(f"{var_name} must have 2 or more variables, but found 1.")
     if isinstance(Z, np.ndarray):
         if Z.ndim == 1 or (Z.ndim == 2 and Z.shape[1] == 1):
             raise ValueError(
-                "Data must be multivariate, but found np.array with a single dimension "
-                "one dimension"
+                f"{var_name} must have 2 or more variables, but found 1."
             )
 
 
