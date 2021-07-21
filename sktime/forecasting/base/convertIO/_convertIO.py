@@ -106,8 +106,12 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
-    if isinstance(store, dict) and "cols" in store.keys() and len(store["cols"]) == 1:
-        res = pd.DataFrame(obj, columns=store["cols"])
+    if (
+        isinstance(store, dict)
+        and "columns" in store.keys()
+        and len(store["columns"]) == 1
+    ):
+        res = pd.DataFrame(obj, columns=store["columns"])
     else:
         res = pd.DataFrame(obj)
 
@@ -126,7 +130,7 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
         raise ValueError("pd.DataFrame must be pd.DataFrame with one column")
 
     if isinstance(store, dict):
-        store["cols"] = obj.columns[[0]]
+        store["columns"] = obj.columns[[0]]
 
     return obj[obj.columns[0]]
 
@@ -140,7 +144,7 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.array:
         raise TypeError("input must be a pd.DataFrame")
 
     if isinstance(store, dict):
-        store["cols"] = obj.columns
+        store["columns"] = obj.columns
 
     return obj.to_numpy()
 
@@ -166,10 +170,10 @@ def convert_np_to_MvS_as_Series(obj: np.array, store=None) -> pd.DataFrame:
 
     if (
         isinstance(store, dict)
-        and "cols" in store.keys()
-        and len(store["cols"]) == obj.shape[1]
+        and "columns" in store.keys()
+        and len(store["columns"]) == obj.shape[1]
     ):
-        res = pd.DataFrame(obj, columns=store["cols"])
+        res = pd.DataFrame(obj, columns=store["columns"])
     else:
         res = pd.DataFrame(obj)
 
