@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""STSF test code."""
 import numpy as np
 from numpy import testing
 
@@ -7,6 +8,7 @@ from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
 def test_stsf_on_gunpoint():
+    """Test of STSF on gun point."""
     # load gunpoint data
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
@@ -21,6 +23,7 @@ def test_stsf_on_gunpoint():
 
 
 def test_stsf_on_power_demand():
+    """Test of STSF on italy power demand."""
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
