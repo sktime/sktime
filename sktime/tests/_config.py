@@ -13,7 +13,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
-from sktime.classification.signature_based import SignatureClassifier
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.base import BaseEstimator
@@ -25,6 +24,7 @@ from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,
     TSFreshClassifier,
+    SignatureClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import CanonicalIntervalForest
