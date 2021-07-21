@@ -3,29 +3,29 @@
 
 Exports
 -------
-convert_to(what, to_type: str, as_scitype: str, store=None)
-    converts object "what" to type "to_type", considerd as "as_scitype"
+convert_to(obj, to_type: str, as_scitype: str, store=None)
+    converts object "obj" to type "to_type", considerd as "as_scitype"
 
-convert(what, from_type: str, to_type: str, as_scitype: str, store=None)
+convert(obj, from_type: str, to_type: str, as_scitype: str, store=None)
     same as convert_to, without automatic identification of "from_type"
 
-mtype(what, as_scitype: str)
-    returns "from_type" of what, considered as "as_scitype"
+mtype(obj, as_scitype: str)
+    returns "from_type" of obj, considered as "as_scitype"
 ---
 
 Function signature of convert
 
 Parameters
 ----------
-what : object to convert - any type, should comply with mtype spec for as_scitype
-from_type : str - the type to convert "what" to, a valid mtype string
-to_type : str - the type to convert "what" to, a valid mtype string
-as_scitype : str - name of scitype the object "what" is considered as
+obj : object to convert - any type, should comply with mtype spec for as_scitype
+from_type : str - the type to convert "obj" to, a valid mtype string
+to_type : str - the type to convert "obj" to, a valid mtype string
+as_scitype : str - name of scitype the object "obj" is considered as
 store : reference of storage for lossy conversions, default=None (no store)
 
 Returns
 -------
-converted_what : to_type - object what converted to to_type
+converted_obj : to_type - object obj converted to to_type
 
 ---
 
@@ -33,14 +33,14 @@ Function signature of convert_to
 
 Parameters
 ----------
-what : object to convert - any type, should comply with mtype spec for as_scitype
-to_type : str - the type to convert "what" to, a valid mtype string
-as_scitype : str - name of scitype the object "what" is considered as
+obj : object to convert - any type, should comply with mtype spec for as_scitype
+to_type : str - the type to convert "obj" to, a valid mtype string
+as_scitype : str - name of scitype the object "obj" is considered as
 store : reference of storage for lossy conversions, default=None (no store)
 
 Returns
 -------
-converted_what : to_type - object what converted to to_type
+converted_obj : to_type - object obj converted to to_type
 
 """
 
@@ -75,12 +75,12 @@ convert_dict[(from_type, to_type, as_scitype)]
 
 Parameters
 ----------
-what : from_type - object to convert
+obj : from_type - object to convert
 store : dictionary - reference of storage for lossy conversions, default=None (no store)
 
 Returns
 -------
-converted_what : to_type - object what converted to to_type
+converted_obj : to_type - object obj converted to to_type
 
 Raises
 ------
@@ -91,9 +91,9 @@ ValueError and TypeError, if requested conversion is not possible
 convert_dict = dict()
 
 
-def convert_identity(what, store=None):
+def convert_identity(obj, store=None):
 
-    return what
+    return obj
 
 
 # assign identity function to type conversion to self
@@ -101,15 +101,15 @@ for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
-def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
+def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
 
-    if not isinstance(what, pd.Series):
+    if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
     if isinstance(store, dict) and "cols" in store.keys() and len(store["cols"]) == 1:
-        res = pd.DataFrame(what, columns=store["cols"])
+        res = pd.DataFrame(obj, columns=store["cols"])
     else:
-        res = pd.DataFrame(what)
+        res = pd.DataFrame(obj)
 
     return res
 
@@ -117,61 +117,61 @@ def convert_UvS_to_MvS_as_Series(what: pd.Series, store=None) -> pd.DataFrame:
 convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Series
 
 
-def convert_MvS_to_UvS_as_Series(what: pd.DataFrame, store=None) -> pd.Series:
+def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
 
-    if not isinstance(what, pd.DataFrame):
+    if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
 
-    if len(what.columns) != 1:
+    if len(obj.columns) != 1:
         raise ValueError("pd.DataFrame must be pd.DataFrame with one column")
 
     if isinstance(store, dict):
-        store["cols"] = what.columns[[0]]
+        store["cols"] = obj.columns[[0]]
 
-    return what[what.columns[0]]
+    return obj[obj.columns[0]]
 
 
 convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_MvS_to_UvS_as_Series
 
 
-def convert_MvS_to_np_as_Series(what: pd.DataFrame, store=None) -> np.array:
+def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.array:
 
-    if not isinstance(what, pd.DataFrame):
+    if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
 
     if isinstance(store, dict):
-        store["cols"] = what.columns
+        store["cols"] = obj.columns
 
-    return what.to_numpy()
+    return obj.to_numpy()
 
 
 convert_dict[("pd.DataFrame", "np.array", "Series")] = convert_MvS_to_np_as_Series
 
 
-def convert_UvS_to_np_as_Series(what: pd.Series, store=None) -> np.array:
+def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.array:
 
-    if not isinstance(what, pd.Series):
+    if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
-    return pd.DataFrame(what).to_numpy()
+    return pd.DataFrame(obj).to_numpy()
 
 
 convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
 
 
-def convert_np_to_MvS_as_Series(what: np.array, store=None) -> pd.DataFrame:
+def convert_np_to_MvS_as_Series(obj: np.array, store=None) -> pd.DataFrame:
 
-    if not isinstance(what, np.array) and len(what.shape) != 2:
+    if not isinstance(obj, np.array) and len(obj.shape) != 2:
         raise TypeError("input must be a np.array of dim 2")
 
     if (
         isinstance(store, dict)
         and "cols" in store.keys()
-        and len(store["cols"]) == what.shape[1]
+        and len(store["cols"]) == obj.shape[1]
     ):
-        res = pd.DataFrame(what, columns=store["cols"])
+        res = pd.DataFrame(obj, columns=store["cols"])
     else:
-        res = pd.DataFrame(what)
+        res = pd.DataFrame(obj)
 
     return res
 
@@ -179,12 +179,12 @@ def convert_np_to_MvS_as_Series(what: np.array, store=None) -> pd.DataFrame:
 convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
 
 
-def convert_np_to_UvS_as_Series(what: np.array, store=None) -> pd.Series:
+def convert_np_to_UvS_as_Series(obj: np.array, store=None) -> pd.Series:
 
-    if not isinstance(what, np.array) and len(what.shape) < 3:
+    if not isinstance(obj, np.array) and len(obj.shape) < 3:
         raise TypeError("input must be a np.array of dim 1 or 2")
 
-    return pd.Series(what)
+    return pd.Series(obj)
 
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
@@ -197,9 +197,9 @@ convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Serie
 infer_mtype_dict = dict()
 
 
-def infer_mtype_Series(what):
+def infer_mtype_Series(obj):
 
-    what_type = type(what)
+    obj_type = type(obj)
 
     infer_dict = {
         pd.Series: "pd.Series",
@@ -207,10 +207,10 @@ def infer_mtype_Series(what):
         np.ndarray: "np.ndarray",
     }
 
-    if what_type not in infer_dict.keys():
+    if obj_type not in infer_dict.keys():
         raise TypeError("scitype cannot be inferred")
 
-    return infer_dict[what_type]
+    return infer_dict[obj_type]
 
 
 infer_mtype_dict["Series"] = infer_mtype_Series
@@ -221,24 +221,24 @@ infer_mtype_dict["Series"] = infer_mtype_Series
 ##################################################
 
 
-def mtype(what, as_scitype: str):
+def mtype(obj, as_scitype: str):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
     ----------
-    what : object to convert - any type, should comply with mtype spec for as_scitype
-    as_scitype : str - name of scitype the object "what" is considered as
+    obj : object to convert - any type, should comply with mtype spec for as_scitype
+    as_scitype : str - name of scitype the object "obj" is considered as
 
     Returns
     -------
-    str - the type to convert "what" to, a valid mtype string
-        or None, if what is None
+    str - the type to convert "obj" to, a valid mtype string
+        or None, if obj is None
 
     Raises
     ------
     TypeError if no type can be identified
     """
-    if what is None:
+    if obj is None:
         return None
 
     valid_as_scitypes = infer_mtype_dict.keys()
@@ -246,30 +246,30 @@ def mtype(what, as_scitype: str):
     if as_scitype not in valid_as_scitypes:
         raise TypeError(as_scitype + " is not a valid scitype")
 
-    return infer_mtype_dict[as_scitype](what=what)
+    return infer_mtype_dict[as_scitype](obj=obj)
 
 
-def convert(what, from_type: str, to_type: str, as_scitype: str, store=None):
+def convert(obj, from_type: str, to_type: str, as_scitype: str, store=None):
     """Convert objects between different machine representations, subject to scitype.
 
     Parameters
     ----------
-    what : object to convert - any type, should comply with mtype spec for as_scitype
-    from_type : str - the type to convert "what" to, a valid mtype string
-    to_type : str - the type to convert "what" to, a valid mtype string
-    as_scitype : str - name of scitype the object "what" is considered as
+    obj : object to convert - any type, should comply with mtype spec for as_scitype
+    from_type : str - the type to convert "obj" to, a valid mtype string
+    to_type : str - the type to convert "obj" to, a valid mtype string
+    as_scitype : str - name of scitype the object "obj" is considered as
     store : reference of storage for lossy conversions, default=None (no store)
 
     Returns
     -------
-    converted_what : to_type - object what converted to to_type
-                    if what was None, returns None
+    converted_obj : to_type - object obj converted to to_type
+                    if obj was None, returns None
 
     Raises
     ------
     KeyError if conversion is not implemented
     """
-    if what is None:
+    if obj is None:
         return None
 
     key = (from_type, to_type, as_scitype)
@@ -279,39 +279,39 @@ def convert(what, from_type: str, to_type: str, as_scitype: str, store=None):
             "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )
 
-    converted_what = convert_dict[key](what, store=store)
+    converted_obj = convert_dict[key](obj, store=store)
 
-    return converted_what
+    return converted_obj
 
 
 # conversion based on queriable type to specified target
-def convert_to(what, to_type: str, as_scitype: str, store=None):
+def convert_to(obj, to_type: str, as_scitype: str, store=None):
     """Convert object to a different machine representation, subject to scitype.
 
     Parameters
     ----------
-    what : object to convert - any type, should comply with mtype spec for as_scitype
-    to_type : str - the type to convert "what" to, a valid mtype string
+    obj : object to convert - any type, should comply with mtype spec for as_scitype
+    to_type : str - the type to convert "obj" to, a valid mtype string
               or list - admissible types for conversion to
-    as_scitype : str - name of scitype the object "what" is considered as
+    as_scitype : str - name of scitype the object "obj" is considered as
     store : reference of storage for lossy conversions, default=None (no store)
 
     Returns
     -------
-    converted_what : to_type - object what converted to to_type, if to_type is str
+    converted_obj : to_type - object obj converted to to_type, if to_type is str
                      if to_type is list, converted to to_type[0],
-                        unless from_type in to_type, in this case converted_what=what
-                    if what was None, returns None
+                        unless from_type in to_type, in this case converted_obj=obj
+                    if obj was None, returns None
 
     Raises
     ------
-    TypeError if machine type of input "what" is not recognized
+    TypeError if machine type of input "obj" is not recognized
     KeyError if conversion is not implemented
     """
-    if what is None:
+    if obj is None:
         return None
 
-    from_type = mtype(what=what, as_scitype=as_scitype)
+    from_type = mtype(obj=obj, as_scitype=as_scitype)
 
     # if to_type is a list:
     if isinstance(to_type, list):
@@ -322,12 +322,12 @@ def convert_to(what, to_type: str, as_scitype: str, store=None):
         else:
             to_type = to_type[0]
 
-    converted_what = convert(
-        what=what,
+    converted_obj = convert(
+        obj=obj,
         from_type=from_type,
         to_type=to_type,
         as_scitype=as_scitype,
         store=store,
     )
 
-    return converted_what
+    return converted_obj
