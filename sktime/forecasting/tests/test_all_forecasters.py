@@ -105,7 +105,7 @@ def test_y_multivariate_raises_error(Forecaster):
     elif f.get_tag("scitype:y") == "multivariate":
 
         y = _make_series(n_columns=1)
-        with pytest.raises(ValueError, match=r"multivariate"):
+        with pytest.raises(ValueError, match=r"2 or more variables"):
             f.fit(y, fh=FH0)
 
 
