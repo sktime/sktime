@@ -33,9 +33,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)))
     >>> forecasters = [("trend", PolynomialTrendForecaster(), 0),\
                         ("ses", ExponentialSmoothing(trend='add'), 1)]
-    >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters])
-    >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict()
     """
 
     _required_parameters = ["forecasters"]
@@ -51,7 +51,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
 
     def fit(self, y, X=None, fh=None):
-        """Overrides BaseForecaster's `fit`.
+        """Override BaseForecaster's `fit`.
 
         Parameters
         ----------
