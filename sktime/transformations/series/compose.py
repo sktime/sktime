@@ -253,7 +253,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         is_series = False
         if isinstance(z, pd.Series):
             is_series = True
-            self.name_of_z = z.name
+            name_of_z = z.name
             z = z.to_frame()
 
         # make copy of z
@@ -266,7 +266,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
         # make z a series again in univariate case
         if is_series:
-            z = self._revert_to_series(z)
+            z = self._revert_to_series(name_of_z, z)
         return z
 
     @if_delegate_has_method(delegate="transformer")
@@ -293,7 +293,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         # make z a pd.Dataframe in univariate case
         is_series = False
         if isinstance(z, pd.Series):
-            self.name_of_z = z.name
+            name_of_z = z.name
             z = z.to_frame()
             is_series = True
 
@@ -309,7 +309,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
         # make z a series again in univariate case
         if is_series:
-            z = self._revert_to_series(z)
+            z = self._revert_to_series(name_of_z, z)
         return z
 
     @if_delegate_has_method(delegate="transformer")
@@ -351,11 +351,11 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         if len(difference) != 0:
             raise ValueError("Missing columns" + str(difference) + "in Z.")
 
-    def _revert_to_series(self, z):
+    def _revert_to_series(self, name_of_z, z):
         # create series from one dimensional pd.DataFrame
         # make sure not to loose column name
-        if self.name_of_z is not None:
-            z = z[self.name_of_z]
+        if name_of_z is not None:
+            z = z[name_of_z]
         else:
             z = z[0]
             z.name = None
