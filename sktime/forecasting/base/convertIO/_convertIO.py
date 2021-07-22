@@ -135,7 +135,7 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     return obj[obj.columns[0]]
 
 
-convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_MvS_to_UvS_as_Series
+convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
 
 
 def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.array:
