@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
+"""TSFresh Classifier.
+
+Pipeline classifier using the TSFresh transformer and an estimator.
 """
 
 __author__ = ["Matthew Middlehurst"]
@@ -19,7 +21,55 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TSFreshClassifier(BaseClassifier):
-    """"""
+    """Canonical Time-series Characteristics (catch22) classifier.
+
+    This classifier simply transforms the input data using the Catch22 [1]
+    transformer and builds a provided estimator using the transformed data.
+
+
+    Parameters
+    ----------
+    outlier_norm : bool, default=False
+        Normalise each series during the two outlier catch22 features, which can take a
+        while to process for large values
+    estimator : sklearn classifier, default=RandomForestClassifier
+        An sklearn estimator to be built using the transformed data. Defaults to a
+        Random Forest with 200 trees.
+    n_jobs= : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random, integer.
+
+    Attributes
+    ----------
+    n_classes : int
+        Number of classes. Extracted from the data.
+    classes_ : ndarray of shape (n_classes)
+        Holds the label for each class.
+
+    See Also
+    --------
+    :py:class:`TSFreshFeatureExtractor`
+
+    References
+    ----------
+    .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
+        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        (2018): 72-77.
+        https://www.sciencedirect.com/science/article/pii/S0925231218304843
+
+    Example
+    -------
+    >>> from sktime.classification.feature_based import TSFreshClassifier
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = TSFreshClassifier()
+    >>> clf.fit(X_train, y_train)
+    TSFreshClassifier(...)
+    >>> y_pred = clf.predict(X_test)
+    """
 
     # Capability tags
     capabilities = {

@@ -114,7 +114,7 @@ class MatrixProfileClassifier(BaseClassifier):
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
 
-        self._transformer_ = MatrixProfile(m=self.subsequence_length)
+        self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(self.estimator, self.random_state)
 
         m = getattr(self._estimator, "n_jobs", None)
