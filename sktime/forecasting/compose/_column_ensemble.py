@@ -35,6 +35,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                         ("ses", ExponentialSmoothing(trend='add'), 1)]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])
+    ColumnEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
 
