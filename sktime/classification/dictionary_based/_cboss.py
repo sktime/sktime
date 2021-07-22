@@ -83,8 +83,8 @@ class ContractableBOSS(BaseClassifier):
 
     See Also
     --------
-    BOSSEnsemble
-    IndividualBOSS
+    :py:class:`BOSSEnsemble`, :py:class:`IndividualBOSS`
+
     For the Java version, see
     `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/cBOSS.java>`_.
