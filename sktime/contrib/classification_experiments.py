@@ -166,6 +166,12 @@ def set_classifier(cls, resampleId=None):
         return TSFreshClassifier(
             random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
         )
+    elif name == "tsfresh-r":
+        return TSFreshClassifier(
+            random_state=resampleId,
+            estimator=RandomForestClassifier(n_estimators=500),
+            relevant_feature_extractor=True,
+        )
     # Hybrid
     elif name == "hivecotev1":
         return HIVECOTEV1(random_state=resampleId)
@@ -735,26 +741,18 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
-        dataset = "ArrowHead"
-        trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-        testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "1NN-MSM"
+        data_dir = "../datasets/data/"
+        results_dir = ""
+        classifier = "CIF"
+        dataset = "UnitTest"
         resample = 0
-        #         for i in range(0, len(univariate_datasets)):
-        #             dataset = univariate_datasets[i]
-        # #            print(i)
-        # #            print(" problem = "+dataset)
         tf = False
-        for i in range(0, len(benchmark_datasets)):
-            dataset = benchmark_datasets[i]
-            run_experiment(
-                overwrite=True,
-                problem_path=data_dir,
-                results_path=results_dir,
-                cls_name=classifier,
-                dataset=dataset,
-                resampleID=resample,
-                train_file=tf,
-            )
+        run_experiment(
+            overwrite=True,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name=classifier,
+            dataset=dataset,
+            resampleID=resample,
+            train_file=tf,
+        )
