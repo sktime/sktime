@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+"""Series-to-Series Transformers: OptionalPassthrough and Columnwisetransformer."""
+
 __author__ = ["Martin Walter", "Svea Meyer"]
 __all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
 
@@ -14,7 +16,10 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 
 class OptionalPassthrough(_SeriesToSeriesTransformer):
-    """A transformer to tune the implicit hyperparameter whether or not to use a
+    """
+    Tune implicit hyperparameter.
+
+    A transformer to tune the implicit hyperparameter whether or not to use a
     particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
     or not. This is achived by having the additional hyperparameter
     "passthrough" which can be added to a grid then (see example).
@@ -28,7 +33,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         passthrough the data (identity transformation)
 
     Example
-    ----------
+    -------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.compose import OptionalPassthrough
@@ -77,6 +82,19 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         super(OptionalPassthrough, self).__init__()
 
     def fit(self, Z, X=None):
+        """Fit data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+             Series to fit.
+        X : pd.DataFrame, optional (default=None)
+             Exogenous data used in transformation.
+
+        Returns
+        -------
+        self
+        """
         if not self.passthrough:
             self.transformer_ = clone(self.transformer)
             self.transformer_.fit(Z, X)
@@ -84,6 +102,20 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        z : pd.Series
+            Transformed series.
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
@@ -92,6 +124,20 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
+        """Inverse transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        z : pd.Series
+            Inverse transformed data.
+        """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
@@ -101,20 +147,23 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
 class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     """
-    Applies a transformer for univariate series
-    columnwise to multivariate series.
+    Apply a transformer columnwise to multivariate series.
 
     Parameters
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series
-    columns : list of str
-            Names of columns that are supposed to be transformed
+    columns : list of str or None
+            Names of columns that are supposed to be transformed.
+            If it is None all columne are transformed.
 
     Attributes
     ----------
     transformers_ : dict of {str : transformer}
         Maps columns to transformers
+    columns_ : list of str
+        Names of columns that are supposed to be transformed.
+
 
     Example
     -------
@@ -132,20 +181,12 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
-
-        # check that columns are None or list of strings
-        if columns is not None:
-            if not isinstance(columns, list) and all(
-                isinstance(s, str) for s in columns
-            ):
-                raise ValueError("Columns need to be a list of strings or None.")
-
-        self.columns_ = columns
-        self.transformers_ = None
         super(ColumnwiseTransformer, self).__init__()
 
     def fit(self, Z, X=None):
         """
+        Fit data.
+
         Iterates over columns (series) and applies
         the fit function of the transformer.
 
@@ -157,19 +198,31 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-        z = check_series(Z, allow_numpy=False)
         self._is_fitted = False
 
-        # univariate case
+        z = check_series(Z, allow_numpy=False)
+
+        # cast to pd.DataFrame in univariate case
         if isinstance(z, pd.Series):
             z = z.to_frame()
 
+        # check that columns are None or list of strings
+        if self.columns is not None:
+            if not isinstance(self.columns, list) and all(
+                isinstance(s, str) for s in self.columns
+            ):
+                raise ValueError("Columns need to be a list of strings or None.")
+
+        # set self.columns_ to columns that are going to be transformed
+        # (all if self.columns is None)
+        self.columns_ = self.columns
         if self.columns_ is None:
             self.columns_ = z.columns
 
         # make sure z contains all columns that the user wants to transform
         self._check_columns(z)
 
+        # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
             transformer = clone(self.transformer)
@@ -180,6 +233,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of Z by iterating over specified
         columns and applying the univariate series transformer to them.
 
@@ -194,12 +248,12 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         z = check_series(Z)
-        is_series = False
 
-        # univariate case
+        # transform to pd.Dataframe in univariate case
+        is_series = False
         if isinstance(z, pd.Series):
             is_series = True
-            name_of_z = z.name
+            self.name_of_z = z.name
             z = z.to_frame()
 
         # make copy of z
@@ -208,12 +262,11 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         # make sure z contains all columns that the user wants to transform
         self._check_columns(z)
         for colname in self.columns_:
-            # self.columns_ : columns that are supposed to be transformed
             z[colname] = self.transformers_[colname].transform(z[colname], X)
 
         # make z a series again in univariate case
         if is_series:
-            z = self._revert_to_series(name_of_z, z)
+            z = self._revert_to_series(z)
         return z
 
     @if_delegate_has_method(delegate="transformer")
@@ -237,10 +290,10 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z)
 
+        # make z a pd.Dataframe in univariate case
         is_series = False
-        # univariate case
         if isinstance(z, pd.Series):
-            name_of_z = z.name
+            self.name_of_z = z.name
             z = z.to_frame()
             is_series = True
 
@@ -250,17 +303,20 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         # make sure z contains all columns that the user wants to transform
         self._check_columns(z)
 
+        # iterate over columns that are supposed to be inverse_transformed
         for colname in self.columns_:
-            # self.columns_ : columns that are supposed to be transformed
             z[colname] = self.transformers_[colname].inverse_transform(z[colname], X)
+
         # make z a series again in univariate case
         if is_series:
-            z = self._revert_to_series(name_of_z, z)
+            z = self._revert_to_series(z)
         return z
 
     @if_delegate_has_method(delegate="transformer")
     def update(self, Z, X=None, update_params=True):
         """
+        Update Parameters.
+
         Update the parameters of the estimator with new data
         by iterating over specified columns.
         Only works if self.transformer has an update method.
@@ -277,14 +333,13 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         """
         z = check_series(Z)
 
-        # univariate case
+        # make z a pd.DataFrame in univariate case
         if isinstance(z, pd.Series):
             z = z.to_frame()
 
         # make sure z contains all columns that the user wants to transform
         self._check_columns(z)
         for colname in self.columns_:
-            # self.columns_ : columns that are supposed to be transformed
             self.transformers_[colname].update(z[colname], X)
         return self
 
@@ -296,9 +351,11 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         if len(difference) != 0:
             raise ValueError("Missing columns" + str(difference) + "in Z.")
 
-    def _revert_to_series(self, name_of_z, z):
-        if name_of_z is not None:
-            z = z[name_of_z]
+    def _revert_to_series(self, z):
+        # create series from one dimensional pd.DataFrame
+        # make sure not to loose column name
+        if self.name_of_z is not None:
+            z = z[self.name_of_z]
         else:
             z = z[0]
             z.name = None
