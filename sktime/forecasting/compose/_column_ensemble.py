@@ -14,9 +14,6 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
-from sktime.utils.validation.forecasting import check_X
-from sktime.utils.validation.series import check_series
-
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series and aggregate them into one.
@@ -41,7 +38,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
+        "scitype:y": "both",
         "univariate-only": False,
+        "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -50,54 +49,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.forecasters = forecasters
         self.aggfunc = aggfunc
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
-
-    def fit(self, y, X=None, fh=None):
-        """Override BaseForecaster's `fit`.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data
-
-        Returns
-        -------
-        self : an instance of self.
-
-        State change
-        ------------
-        stores data in self._X and self._y
-        stores fh, if passed
-        updates self.cutoff to most recent time in y
-        creates fitted model (attributes ending in "_")
-        sets is_fitted flag to true
-        """
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
-
-        self._set_fh(fh)
-        y = check_series(y)
-
-        if not isinstance(y, pd.DataFrame):
-            y = pd.DataFrame(data=y)
-
-        if X is not None:
-            X = check_X(X)
-
-        self._X = X
-        self._y = y
-
-        self._set_cutoff(y.index[-1])
-
-        self._fit(y=y, X=X, fh=fh)
-
-        # this should happen last
-        self._is_fitted = True
-
-        return self
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -137,14 +88,13 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        aggfunc = self._check_aggfunc()
 
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
             y_pred[:, index] = forecaster.predict(fh)
 
         y_pred = pd.DataFrame(data=y_pred)
-        return _aggregate(y=y_pred, aggfunc=aggfunc)
+        return y_pred
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -204,31 +154,3 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     f"Forecaster."
                 )
         return names, forecasters, indices
-
-    def _check_aggfunc(self):
-        valid_aggfuncs = {"mean": np.mean, "median": np.median, "average": np.average}
-        if self.aggfunc not in valid_aggfuncs.keys():
-            raise ValueError("Aggregation function %s not recognized." % self.aggfunc)
-        return valid_aggfuncs[self.aggfunc]
-
-
-def _aggregate(y, aggfunc, X=None):
-    """Apply aggregation function by row.
-
-    Parameters
-    ----------
-    y : pd.DataFrame
-        Multivariate series to transform.
-    aggfunc : str
-        Aggregation function used for transformation.
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data used in transformation.
-
-    Returns
-    -------
-    column_ensemble: pd.Series
-        Transformed univariate series.
-    """
-    column_ensemble = y.apply(func=aggfunc, axis=1)
-
-    return pd.Series(column_ensemble, index=y.index)
