@@ -77,7 +77,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
     def __init__(
         self,
-        n_estimators=500,
+        n_estimators=200,
         n_jobs=1,
         random_state=None,
     ):
@@ -94,6 +94,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         # The following set in method fit
         self.n_classes = 0
+        self.n_instances = 0
         self.estimators_ = []
         self.intervals_ = []
         self.classes_ = []
@@ -127,7 +128,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
             coerce_to_numpy=True,
         )
         X = X.squeeze(1)
-        n_instances, _ = X.shape
+        self.n_instances, _ = X.shape
 
         rng = check_random_state(self.random_state)
 
@@ -141,7 +142,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         X_d = np.diff(X, 1)
 
         balance_cases = np.zeros(0, dtype=np.int32)
-        average = math.floor(n_instances / self.n_classes)
+        average = math.floor(self.n_instances / self.n_classes)
         for i, c in enumerate(cls):
             if class_counts[i] < average:
                 cls_idx = np.where(y == c)[0]
@@ -155,9 +156,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
                 X_p,
                 X_d,
                 y,
-                np.concatenate(
-                    (rng.choice(n_instances, size=n_instances), balance_cases)
-                ),
+                balance_cases,
                 i,
             )
             for i in range(self.n_estimators)
@@ -183,8 +182,13 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         -------
         output : array of shape = [n_test_instances]
         """
-        proba = self.predict_proba(X)
-        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
+        rng = check_random_state(self.random_state)
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in self.predict_proba(X)
+            ]
+        )
 
     def predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
@@ -338,20 +342,26 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
                 end,
             )
 
-    def _fit_estimator(self, X, X_p, X_d, y, bag, idx):
+    def _fit_estimator(self, X, X_p, X_d, y, balance_cases, idx):
         """Fit an estimator - a clone of base_estimator - on input data (X, y).
 
         Transformed using the supervised intervals for each feature and representation.
         """
-        n_instances = bag.shape[0]
-        bag = bag.astype(int)
-
         estimator = clone(self.base_estimator)
         rs = 5465 if self.random_state == 0 else self.random_state
         rs = None if self.random_state is None else rs * 37 * (idx + 1)
         estimator.set_params(random_state=rs)
-
         rng = check_random_state(rs)
+
+        class_counts = np.zeros(0)
+        while class_counts.shape[0] != self.n_classes:
+            bag = np.concatenate(
+                (rng.choice(self.n_instances, size=self.n_instances), balance_cases)
+            )
+            _, class_counts = np.unique(y[bag], return_counts=True)
+        n_instances = bag.shape[0]
+        bag = bag.astype(int)
+
         transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
         intervals = self._get_intervals(X[bag], y[bag], rng)
