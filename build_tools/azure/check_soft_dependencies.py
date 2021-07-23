@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-# sktime supports a number of soft dependencies which are necessary for using
-# a certain module but otherwise not necessary. Here we check if soft
-# dependencies have been properly isolated and are not required to run other
-# modules.
+"""
+sktime supports a number of soft dependencies which are necessary for using
+a certain module but otherwise not necessary. Here we check if soft
+dependencies have been properly isolated and are not required to run other
+modules.
+"""
+
 import pkgutil
 import re
 from importlib import import_module

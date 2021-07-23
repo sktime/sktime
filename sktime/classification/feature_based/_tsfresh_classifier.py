@@ -22,7 +22,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 class TSFreshClassifier(BaseClassifier):
     """Time Series Feature Extraction based on Scalable Hypothesis Tests (TSFresh)
-    classifier.
+        classifier.
 
     This classifier simply transforms the input data using the TSFresh [1]
     transformer and builds a provided estimator using the transformed data.

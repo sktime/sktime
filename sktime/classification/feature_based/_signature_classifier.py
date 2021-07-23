@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of a SignatureClassifier
+"""Implementation of a SignatureClassifier.
 
 Utilises the signature method of feature extraction.
 This method was built according to the best practices
@@ -145,7 +145,7 @@ class SignatureClassifier(BaseClassifier):
         self.classes_ = []
 
     def _setup_classification_pipeline(self):
-        """Setup the full signature method pipeline."""
+        """Sets up the full signature method pipeline."""
         # Use rf if no classifier is set
         if self.classifier is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
@@ -160,6 +160,18 @@ class SignatureClassifier(BaseClassifier):
     # Handle the sktime fit checks and convert to a tensor
     @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
+        """Fit an estimator using transformed data from the SignatureTransformer.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_instances, n_dims]
+            Nested dataframe with univariate time-series in cells.
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+        """
         self.classes_ = np.unique(labels)
         # Join the classifier onto the signature method pipeline
         self._setup_classification_pipeline()
@@ -172,9 +184,31 @@ class SignatureClassifier(BaseClassifier):
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict(self, data):
+        """Predict class values of n_instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape (n_instances, n_dims)
+
+        Returns
+        -------
+        preds : np.ndarray of shape (n, 1)
+            Predicted class.
+        """
         return self.pipeline.predict(data)
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict_proba(self, data):
+        """Predict class probabilities for n_instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape (n_instances, n_dims)
+
+        Returns
+        -------
+        predicted_probs : array of shape (n_instances, n_classes)
+            Predicted probability of each class.
+        """
         return self.pipeline.predict_proba(data)
