@@ -3,6 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 """
+sktime checks for soft dependencies.
+
 sktime supports a number of soft dependencies which are necessary for using
 a certain module but otherwise not necessary. Here we check if soft
 dependencies have been properly isolated and are not required to run other

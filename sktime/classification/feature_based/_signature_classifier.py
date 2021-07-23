@@ -145,7 +145,7 @@ class SignatureClassifier(BaseClassifier):
         self.classes_ = []
 
     def _setup_classification_pipeline(self):
-        """Sets up the full signature method pipeline."""
+        """Set up the full signature method pipeline."""
         # Use rf if no classifier is set
         if self.classifier is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
