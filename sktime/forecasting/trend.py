@@ -15,6 +15,9 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.datetime import _get_duration
 
+class TrendForcaster(BaseForecaster):
+    pass
+
 
 class PolynomialTrendForecaster(BaseForecaster):
     """
