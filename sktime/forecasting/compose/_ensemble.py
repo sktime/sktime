@@ -5,6 +5,7 @@
 __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -89,20 +90,43 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
+        aggfunc = self._check_aggfunc()
         if return_pred_int:
             raise NotImplementedError()
 
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
+        return _aggregate(y=y_pred, aggfunc=aggfunc)
 
-        valid_aggfuncs = ("median", "mean", "min", "max")
-        if self.aggfunc not in valid_aggfuncs:
-            raise ValueError(f"Invalid `aggfunc`. Please use one of {valid_aggfuncs}")
+    def _check_aggfunc(self):
+        valid_aggfuncs = {
+            "mean": np.mean,
+            "median": np.median,
+            "average": np.average,
+            "min": np.min,
+            "max": np.max,
+        }
+        if self.aggfunc not in valid_aggfuncs.keys():
+            raise ValueError("Aggregation function %s not recognized." % self.aggfunc)
+        return valid_aggfuncs[self.aggfunc]
 
-        if self.aggfunc == "median":
-            return y_pred.median(axis=1)
-        elif self.aggfunc == "min":
-            return y_pred.min(axis=1)
-        elif self.aggfunc == "max":
-            return y_pred.max(axis=1)
-        else:
-            return y_pred.mean(axis=1)
+
+def _aggregate(y, aggfunc, X=None):
+    """Apply aggregation function by row.
+
+    Parameters
+    ----------
+    y : pd.DataFrame
+        Multivariate series to transform.
+    aggfunc : str
+        Aggregation function used for transformation.
+    X : pd.DataFrame, optional (default=None)
+        Exogenous data used in transformation.
+
+    Returns
+    -------
+    column_ensemble: pd.Series
+        Transformed univariate series.
+    """
+    column_ensemble = y.apply(func=aggfunc, axis=1)
+
+    return pd.Series(column_ensemble, index=y.index)
