@@ -179,7 +179,7 @@ Model Selection
     temporal_train_test_split
 
 Model Evaluation (Backtesting)
-----------------
+------------------------------
 
 .. currentmodule:: sktime.forecasting.model_evaluation
 

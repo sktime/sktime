@@ -1,7 +1,7 @@
 .. _transformations_ref:
 
 sktime.transformations: Time series transformers
-=============================================
+================================================
 
 The :mod:`sktime.transformations` module contains classes for data
 transformations.
@@ -250,7 +250,7 @@ Matrix Profile
     MatrixProfileTransformer
 
 Missing value imputation
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~s
 
 .. currentmodule:: sktime.transformations.series.impute
 
@@ -261,7 +261,7 @@ Missing value imputation
     Imputer
 
 Outlier detection
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.outlier_detection
 
@@ -272,7 +272,7 @@ Outlier detection
     HampelFilter
 
 Composition
-~~~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.compose
 
