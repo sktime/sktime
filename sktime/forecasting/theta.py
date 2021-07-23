@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Theta forecaster from statsmodels."""
 __all__ = ["ThetaForecaster"]
-__author__ = ["@big-o", "Markus Löning"]
+__author__ = ["big-o", "mloning"]
 
 from warnings import warn
 
@@ -16,8 +17,7 @@ from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
-    """
-    Theta method of forecasting.
+    """Theta method for forecasting.
 
     The theta method as defined in [1]_ is equivalent to simple exponential
     smoothing
@@ -40,15 +40,12 @@ class ThetaForecaster(ExponentialSmoothing):
 
     Parameters
     ----------
-
     initial_level : float, optional
         The alpha value of the simple exponential smoothing, if the value is
         set then
         this will be used, otherwise it will be estimated from the data.
-
     deseasonalize : bool, optional (default=True)
         If True, data is seasonally adjusted.
-
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
         multiplicative deseasonaliser, which is used if seasonality is
@@ -59,20 +56,16 @@ class ThetaForecaster(ExponentialSmoothing):
 
     Attributes
     ----------
-
     initial_level_ : float
         The estimated alpha value of the SES fit.
-
     drift_ : float
         The estimated drift of the fitted model.
-
     se_ : float
         The standard error of the predictions. Used to calculate prediction
         intervals.
 
     References
     ----------
-
     .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
     decomposition
            approach to forecasting. International Journal of Forecasting 16,
@@ -131,7 +124,6 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
-
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
             warn("`sp` is ignored when `deseasonalise`=False")
@@ -151,12 +143,10 @@ class ThetaForecaster(ExponentialSmoothing):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """
-        Make forecasts.
+        """Make forecasts.
 
         Parameters
         ----------
-
         fh : array-like
             The forecasters horizon with the steps ahead to to predict.
             Default is
@@ -164,7 +154,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         Returns
         -------
-
         y_pred : pandas.Series
             Returns series of predicted values.
         """
@@ -207,9 +196,7 @@ class ThetaForecaster(ExponentialSmoothing):
         return drift
 
     def _compute_pred_err(self, alphas):
-        """
-        Get the prediction errors for the forecast.
-        """
+        """Get the prediction errors for the forecast."""
         self.check_is_fitted()
 
         n_timepoints = len(self._y)
@@ -245,16 +232,13 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
 
     Parameters
     ----------
-
     level : float
         A confidence level, in the open interval (0, 1).
-
     two_tailed : bool (default=True)
         If True, return the two-tailed z score.
 
     Returns
     -------
-
     z : float
         The z score.
     """
