@@ -96,6 +96,15 @@ class SignatureClassifier(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
+    # Capability tags
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
+    }
+
     def __init__(
         self,
         classifier=None,
@@ -133,6 +142,7 @@ class SignatureClassifier(BaseClassifier):
             depth,
         ).signature_method
         self.pipeline = None
+        self.classes_ = []
 
     def _setup_classification_pipeline(self):
         """Setup the full signature method pipeline."""
@@ -150,6 +160,7 @@ class SignatureClassifier(BaseClassifier):
     # Handle the sktime fit checks and convert to a tensor
     @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
+        self.classes_ = np.unique(labels)
         # Join the classifier onto the signature method pipeline
         self._setup_classification_pipeline()
 

@@ -21,23 +21,30 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TSFreshClassifier(BaseClassifier):
-    """Canonical Time-series Characteristics (catch22) classifier.
+    """Time Series Feature Extraction based on Scalable Hypothesis Tests (TSFresh)
+    classifier.
 
-    This classifier simply transforms the input data using the Catch22 [1]
+    This classifier simply transforms the input data using the TSFresh [1]
     transformer and builds a provided estimator using the transformed data.
-
 
     Parameters
     ----------
-    outlier_norm : bool, default=False
-        Normalise each series during the two outlier catch22 features, which can take a
-        while to process for large values
+    default_fc_parameters : str, default="efficient"
+        Set of TSFresh features to be extracted, options are "minimal", "efficient" or
+        "comprehensive".
+    relevant_feature_extractor : bool, default=False
+        Remove irrelevant features using the FRESH algorithm.
     estimator : sklearn classifier, default=RandomForestClassifier
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
-    n_jobs= : int, default=1
+    verbose : int, default=0
+        level of output printed to the console (for information only)
+    n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    chunksize : int or None, default=None
+        Number of series processed in each parallel TSFresh job, should be optimised
+        for efficient parallelisation.
     random_state : int or None, default=None
         Seed for random, integer.
 
@@ -50,7 +57,7 @@ class TSFreshClassifier(BaseClassifier):
 
     See Also
     --------
-    :py:class:`TSFreshFeatureExtractor`
+    :py:class:`TSFreshFeatureExtractor`, :py:class:`TSFreshRelevantFeatureExtractor`
 
     References
     ----------
@@ -104,18 +111,19 @@ class TSFreshClassifier(BaseClassifier):
         self.chunksize = chunksize
         self.random_state = random_state
 
-        self.transformer_ = None
-        self.estimator_ = None
-        self.classes_ = []
+        self._transformer = None
+        self._estimator = None
         self.n_classes = 0
+        self.classes_ = []
+
         super(TSFreshClassifier, self).__init__()
 
     def fit(self, X, y):
-        """Fit a random catch22 feature forest classifier.
+        """Fit an estimator using transformed data from the Catch22 transformer.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
+        X : nested pandas DataFrame of shape [n_instances, n_dims]
             Nested dataframe with univariate time-series in cells.
         y : array-like, shape = [n_instances] The class labels.
 
@@ -127,7 +135,7 @@ class TSFreshClassifier(BaseClassifier):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.n_classes = np.unique(y).shape[0]
 
-        self.transformer_ = (
+        self._transformer = (
             TSFreshRelevantFeatureExtractor(
                 default_fc_parameters=self.default_fc_parameters,
                 n_jobs=self.n_jobs,
@@ -142,54 +150,55 @@ class TSFreshClassifier(BaseClassifier):
         )
 
         if self.verbose < 2:
-            self.transformer_.show_warnings = False
+            self._transformer.show_warnings = False
             if self.verbose < 1:
-                self.transformer_.disable_progressbar = True
+                self._transformer.disable_progressbar = True
 
-        self.estimator_ = _clone_estimator(self.estimator, self.random_state)
-        X_t = self.transformer_.fit_transform(X, y)
-        self.estimator_.fit(X_t, y)
+        self._estimator = _clone_estimator(self.estimator, self.random_state)
+        X_t = self._transformer.fit_transform(X, y)
+        self._estimator.fit(X_t, y)
 
         self._is_fitted = True
         return self
 
     def predict(self, X):
-        """Make predictions for all cases in X.
+        """Predict class values of n_instances in X.
 
         Parameters
         ----------
-        X : The testing input samples of shape [n_instances,1].
+        X : pd.DataFrame of shape (n_instances, n_dims)
 
         Returns
         -------
-        output : numpy array of shape = [n_instances]
+        preds : np.ndarray of shape (n, 1)
+            Predicted class.
         """
         self.check_is_fitted()
         X = check_X(X)
 
-        return self.estimator_.predict(self.transformer_.transform(X))
+        return self._estimator.predict(self._transformer.transform(X))
 
     def predict_proba(self, X):
-        """Make class probability estimates on each case in X.
+        """Predict class probabilities for n_instances in X.
 
         Parameters
         ----------
-        X - pandas dataframe of testing data of shape [n_instances,1].
+        X : pd.DataFrame of shape (n_instances, n_dims)
 
         Returns
         -------
-        output : numpy array of shape =
-                [n_instances, num_classes] of probabilities
+        predicted_probs : array of shape (n_instances, n_classes)
+            Predicted probability of each class.
         """
         self.check_is_fitted()
         X = check_X(X)
 
-        m = getattr(self.estimator_, "predict_proba", None)
+        m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self.estimator_.predict_proba(self.transformer_.transform(X))
+            return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self.estimator_.predict(self.transformer_.transform(X))
+            preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists

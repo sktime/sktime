@@ -23,7 +23,6 @@ class Catch22Classifier(BaseClassifier):
     This classifier simply transforms the input data using the Catch22 [1]
     transformer and builds a provided estimator using the transformed data.
 
-
     Parameters
     ----------
     outlier_norm : bool, default=False
@@ -32,7 +31,7 @@ class Catch22Classifier(BaseClassifier):
     estimator : sklearn classifier, default=RandomForestClassifier
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
-    n_jobs= : int, default=1
+    n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
     random_state : int or None, default=None

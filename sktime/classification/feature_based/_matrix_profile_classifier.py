@@ -29,7 +29,7 @@ class MatrixProfileClassifier(BaseClassifier):
     estimator : sklearn classifier, default=RandomForestClassifier
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
-    n_jobs= : int, default=1
+    n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
     random_state : int or None, default=None
@@ -110,7 +110,7 @@ class MatrixProfileClassifier(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, enforce_univariate=True)
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
 
@@ -140,7 +140,7 @@ class MatrixProfileClassifier(BaseClassifier):
             Predicted class.
         """
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, enforce_univariate=True)
 
         return self._estimator.predict(self._transformer.transform(X))
 
@@ -157,7 +157,7 @@ class MatrixProfileClassifier(BaseClassifier):
             Predicted probability of each class.
         """
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, enforce_univariate=True)
 
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
