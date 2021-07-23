@@ -206,7 +206,7 @@ class BaseForecaster(BaseEstimator):
         if return_pred_int and not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
                 "estimator cannot handle pred. intervals, set return_pred_int=False"
-                )
+            )
 
         # input check for X
         enforce_index_type = self.get_tag("enforce_index_type")
