@@ -415,6 +415,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
+        self.clone_tags(forecaster, "capability:pred_int")
+
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         _check_param_grid(self.param_grid)
@@ -510,6 +512,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
+
+        self.clone_tags(forecaster, "capability:pred_int")
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
