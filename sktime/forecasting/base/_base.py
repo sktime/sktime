@@ -203,7 +203,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._set_fh(fh)
 
-        if not self.get_tag("capability:pred_int"):
+        if return_pred_int and not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
                 "estimator cannot handle pred. intervals, set return_pred_int=False"
                 )
