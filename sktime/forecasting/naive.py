@@ -16,7 +16,8 @@ from sktime.utils.validation import check_window_length
 
 
 class NaiveForecaster(_BaseWindowForecaster):
-    """
+    """Forecast based on naive assumptions about past trends continuing.
+
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
 
@@ -47,8 +48,8 @@ class NaiveForecaster(_BaseWindowForecaster):
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()

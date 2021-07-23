@@ -12,7 +12,7 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
-    """Ensemble of forecasters
+    """Ensemble of forecasters.
 
     Parameters
     ----------
@@ -57,7 +57,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -75,7 +75,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """return the predicted reduction
+        """Return the predicted reduction.
 
         Parameters
         ----------

@@ -10,8 +10,7 @@ import numpy as np
 
 
 class AutoETS(_StatsModelsAdapter):
-    """
-    ETS models with both manual and automatic fitting capabilities.
+    """ETS models with both manual and automatic fitting capabilities.
 
     Manual fitting is adapted from statsmodels' version,
     while automatic fitting is adapted from R version of ets.
@@ -146,12 +145,12 @@ class AutoETS(_StatsModelsAdapter):
 
     References
     ----------
-    [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
-        principles and practice*, 3rd edition, OTexts: Melbourne,
-        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
+       principles and practice*, 3rd edition, OTexts: Melbourne,
+       Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.ets import AutoETS
     >>> y = load_airline()

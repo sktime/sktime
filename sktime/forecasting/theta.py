@@ -16,8 +16,7 @@ from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
-    """
-    Theta method of forecasting.
+    """Thea method of forecasting.
 
     The theta method as defined in [1]_ is equivalent to simple exponential
     smoothing
@@ -86,8 +85,8 @@ class ThetaForecaster(ExponentialSmoothing):
            <https://www.sciencedirect.com/science/article/pii
            /S0169207001001431>`_
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> y = load_airline()
@@ -126,6 +125,7 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -150,12 +150,10 @@ class ThetaForecaster(ExponentialSmoothing):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """
-        Make forecasts.
+        """Make forecasts.
 
         Parameters
         ----------
-
         fh : array-like
             The forecasters horizon with the steps ahead to to predict.
             Default is
@@ -163,7 +161,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         Returns
         -------
-
         y_pred : pandas.Series
             Returns series of predicted values.
         """
@@ -239,12 +236,10 @@ class ThetaForecaster(ExponentialSmoothing):
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
-    """
-    Calculate a z-score from a confidence level.
+    """Calculate a z-score from a confidence level.
 
     Parameters
     ----------
-
     level : float
         A confidence level, in the open interval (0, 1).
 
@@ -253,7 +248,6 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
 
     Returns
     -------
-
     z : float
         The z score.
     """

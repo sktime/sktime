@@ -10,7 +10,7 @@ from sktime.utils.validation.forecasting import check_y
 
 
 class OnlineEnsembleForecaster(EnsembleForecaster):
-    """Online Updating Ensemble of forecasters
+    """Online Updating Ensemble of forecasters.
 
     Parameters
     ----------
@@ -47,6 +47,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.

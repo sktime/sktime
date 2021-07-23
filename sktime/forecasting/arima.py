@@ -211,8 +211,8 @@ class AutoARIMA(_PmdArimaAdapter):
     ----------
     https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()
@@ -386,7 +386,8 @@ class ARIMA(_PmdArimaAdapter):
     When two out of the three terms are zeros, the model may be referred to
     based on the non-zero parameter, dropping "AR", "I" or "MA" from the
     acronym describing the model. For example, ``ARIMA(1,0,0)`` is ``AR(1)``,
-    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]
+    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]_
+
     See notes for more practical information on the ``ARIMA`` class.
 
     Parameters
@@ -509,11 +510,12 @@ class ARIMA(_PmdArimaAdapter):
 
     References
     ----------
-    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
-    https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
+    ..[1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
+    ..[2] https://www.statsmodels.org/stable/generated/
+      statsmodels.tsa.statespace.sarimax.SARIMAX.html
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()

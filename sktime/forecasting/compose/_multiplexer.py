@@ -11,7 +11,8 @@ __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(_HeterogenousEnsembleForecaster):
-    """
+    """Select among multiple models.
+
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
     It should be used in conjunction with ForecastingGridSearchCV
@@ -50,8 +51,8 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         forecaster that MultiplexForecaster will currently
         forecast with.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.forecasting.all import (
     ...     MultiplexForecaster,
     ...     AutoETS,

@@ -27,7 +27,7 @@ def _check_index(index):
 
 
 def _adapt_y_X(y, X):
-    """Adapt fit data to HCB compliant format
+    """Adapt fit data to HCB compliant format.
 
     Parameters
     ----------
@@ -54,7 +54,7 @@ def _adapt_y_X(y, X):
 
 
 def _get_X_pred(X_pred, index):
-    """Translate forecast horizon interface to HCB native dataframe
+    """Translate forecast horizon interface to HCB native dataframe.
 
     Parameters
     ----------

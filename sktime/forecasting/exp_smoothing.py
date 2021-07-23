@@ -8,10 +8,10 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):
-    """
-    Holt-Winters exponential smoothing forecaster. Default settings use
-    simple exponential smoothing
-    without trend and seasonality components.
+    """Holt-Winters exponential smoothing forecaster.
+
+    Default settings use simple exponential smoothing without trend and
+    seasonality components.
 
     Parameters
     ----------
@@ -43,8 +43,8 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
         and practice. OTexts, 2014.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = load_airline()

@@ -85,8 +85,8 @@ class Prophet(_ProphetAdapter):
     https://facebook.github.io/prophet
     https://github.com/facebook/prophet
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex

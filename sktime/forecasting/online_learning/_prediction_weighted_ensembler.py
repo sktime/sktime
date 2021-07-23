@@ -5,9 +5,10 @@ from scipy.optimize import nnls
 
 
 class _PredictionWeightedEnsembler:
-    """Wrapper class to handle ensemble algorithms that use multiple forecasters
-    for prediction. We implement default methods for setting uniform weights,
-    updating and prediction.
+    """Wrapper class to handle ensemble algorithms that use multiple forecasters.
+
+    This implements default methods for setting uniform weights, updating
+    and prediction.
 
     Parameters
     ----------
@@ -30,8 +31,7 @@ class _PredictionWeightedEnsembler:
         super(_PredictionWeightedEnsembler, self).__init__()
 
     def _predict(self, y_pred):
-        """Performs prediction by taking a weighted average of the estimator
-            predictions w.r.t the weights vector
+        """Performs prediction by taking weighted average of forecaster predictions.
 
         Parameters
         ----------
@@ -48,8 +48,7 @@ class _PredictionWeightedEnsembler:
         return prediction
 
     def _modify_weights(self, new_array):
-        """Performs a pointwise multiplication of the current
-        weights with a new array of weights.
+        """Multiply pointwise the current weights with a new array of weights.
 
         Parameters
         ----------
@@ -85,8 +84,10 @@ class _PredictionWeightedEnsembler:
 
 
 class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
-    """Wrapper class to set parameters for hedge-style ensemble algorithms with
-    a forecasting horizon and normalizing constant.
+    """Use hedge-style ensemble algorithms.
+
+    Wrapper for hedge-style ensemble algorithms with a forecasting horizon and
+    normalizing constant.
 
     Parameters
     ----------
@@ -115,7 +116,9 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
 
 
 class NormalHedgeEnsemble(HedgeExpertEnsemble):
-    """Implementation of A Parameter-free Hedging Algorithm,
+    """Parameter free hedging algorithm.
+
+    Implementation of A Parameter-free Hedging Algorithm,
     Kamalika Chaudhuri, Yoav Freund, Daniel Hsu (2009) as a hedge-style
     algorithm.
 
@@ -142,8 +145,10 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         self.R = np.zeros(n_estimators)
 
     def update(self, y_pred, y_true, low_c=0.01):
-        """Resets the weights over the estimators by passing previous observations
-            and updating based on Normal Hedge.
+        """Update forecaster weights.
+
+        The weights are updated over the estimators by passing previous
+        observations and updating based on Normal Hedge.
 
         Parameters
         ----------
@@ -170,7 +175,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             self._update_weights(low_c=low_c)
 
     def _update_weights(self, low_c=0.01):
-        """Updates the weights on each of the estimators by performing a potential
+        """Update forecaster weights.
+
+        Update the weights on each of the estimators by performing a potential
         function update with a root-finding search. low_c represents the lower
         bound on the window that the root finding is occuring over.
 
@@ -227,7 +234,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
 
 
 class NNLSEnsemble(_PredictionWeightedEnsembler):
-    """Ensemble class that performs a non-negative least squares to fit to the
+    """Ensemble forecasts with Non-negative least squares based weighting.
+
+    Ensemble class that performs a non-negative least squares to fit to the
     estimators. Keeps track of all observations seen so far and fits to it.
 
     Parameters

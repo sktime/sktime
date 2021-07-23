@@ -68,9 +68,7 @@ class BaseGridSearch(BaseForecaster):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Call update_predict on the forecaster with the best found
-        parameters.
-        """
+        """Call update_predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update_predict")
 
         return self.best_forecaster_._update_predict(
@@ -125,7 +123,7 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -137,8 +135,10 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def inverse_transform(self, y, X=None):
         """Call inverse_transform on the forecaster with the best found params.
+
         Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
+
         Parameters
         ----------
         y : indexable, length n_samples
@@ -149,8 +149,8 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
-        """Returns the score on the given data, if the forecaster has been
-        refit.
+        """Returns the score on the given data, if the forecaster has been refit.
+
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
 
@@ -219,6 +219,7 @@ class BaseGridSearch(BaseForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -310,8 +311,8 @@ class BaseGridSearch(BaseForecaster):
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
-    """
-    Performs grid-search cross-validation to find optimal model parameters.
+    """Performs grid-search cross-validation to find optimal model parameters.
+
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
 
@@ -364,8 +365,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     scorer_ : function
         Function used to score model
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
@@ -422,8 +423,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
-    """
-    Performs randomized-search cross-validation to find optimal model parameters.
+    """Performs randomized-search cross-validation to find optimal model parameters.
+
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
 

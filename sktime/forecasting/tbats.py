@@ -53,8 +53,8 @@ class TBATS(_TbatsAdapter):
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.tbats import TBATS
     >>> y = load_airline()

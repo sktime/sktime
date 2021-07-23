@@ -53,8 +53,8 @@ class BATS(_TbatsAdapter):
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.bats import BATS
     >>> y = load_airline()
