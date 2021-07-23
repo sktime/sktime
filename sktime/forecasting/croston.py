@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Croston's Forecasting Method."""
+
 import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
@@ -11,7 +13,7 @@ class Croston(BaseForecaster):
     This was designed for forecasting intermittent demand.
 
     Parameters
-    -----------
+    ----------
     smoothing : float, default = 0.1
         Smoothing parameter
 
@@ -113,7 +115,7 @@ class Croston(BaseForecaster):
         forecast : pd.series
                    predicted forecasts
         """
-        if return_pred_int or X is not None:
+        if return_pred_int:
             raise NotImplementedError()
 
         len_fh = len(self.fh)

@@ -124,6 +124,12 @@ ESTIMATOR_TAG_REGISTER = [
         ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
+    (
+        "capability:pred_int",
+        "forecaster",
+        "bool",
+        "is the forecaster capable of returning prediction intervals in predict?",
+    ),
     # (
     #     "handles-panel",
     #     "annotator",
