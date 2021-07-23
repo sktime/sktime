@@ -30,14 +30,14 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 __author__ = ["Markus Löning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
+from sktime.base import BaseEstimator
+
 from contextlib import contextmanager
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 
-from sktime.base import BaseEstimator
-from sktime.forecasting.base.convertIO import convert_to, mtype
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
@@ -46,6 +46,9 @@ from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.series import check_series, check_equal_time_index
+
+from sktime.forecasting.base.convertIO import convert_to, mtype
+
 
 DEFAULT_ALPHA = 0.05
 
