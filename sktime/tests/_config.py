@@ -262,6 +262,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     MatrixProfileClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
+        "subsequence_length": 4,
     },
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
