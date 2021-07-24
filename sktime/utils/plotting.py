@@ -31,6 +31,7 @@ from sktime.utils.validation.series import check_consistent_index_type
 
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
+from sktime.forecasting.base.convertIO import convert_to
 
 def plot_series(
     *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
@@ -208,6 +209,7 @@ def plot_correlations(
     import matplotlib.pyplot as plt
 
     series = check_y(series)
+    series = convert_to(series, "pd.Series", "Series")
 
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))

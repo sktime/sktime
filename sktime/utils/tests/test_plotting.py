@@ -15,7 +15,11 @@ y_airline = load_airline()
 y_airline_true = y_airline.iloc[y_airline.index < "1960-01"]
 y_airline_test = y_airline.iloc[y_airline.index >= "1960-01"]
 series_to_test = [y_airline, (y_airline_true, y_airline_test)]
-invalid_input_types = [y_airline.values, pd.DataFrame(y_airline), "this_is_a_string"]
+invalid_input_types = [
+    y_airline.values,
+    pd.DataFrame({'a': y_airline, 'b': y_airline}),
+    "this_is_a_string",
+    ]
 
 
 # Need to use _plot_series to make it easy for test cases to pass either a
