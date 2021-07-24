@@ -50,7 +50,7 @@ example_dict_lossy[("np.ndarray", "Series", 0)] = True
 example_dict[("pd.Series", "Series", 1)] = None
 example_dict_lossy[("pd.Series", "Series", 1)] = None
 
-df = pd.DataFrame({"a": [1, 4, 0.5, -3]}, {"b": [3, 7, 2, -3 / 7]})
+df = pd.DataFrame({"a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]})
 
 example_dict[("pd.DataFrame", "Series", 0)] = df
 example_dict_lossy[("pd.DataFrame", "Series", 0)] = False
