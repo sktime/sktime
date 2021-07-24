@@ -42,12 +42,12 @@ VALID_ESTIMATOR_TYPES = (
 
 
 def all_estimators(
-        estimator_types=None,
-        filter_tags=None,
-        exclude_estimators=None,
-        return_names=True,
-        as_dataframe=False,
-        ):
+    estimator_types=None,
+    filter_tags=None,
+    exclude_estimators=None,
+    return_names=True,
+    as_dataframe=False,
+):
     """Get a list of all estimators from sktime.
 
     This function crawls the module and gets all classes that inherit
@@ -191,7 +191,7 @@ def all_estimators(
     if filter_tags is not None:
         all_estimators = [
             (n, est) for (n, est) in all_estimators if _check_tag_cond(est, filter_tags)
-            ]
+        ]
 
     # remove names if return_names=False
     if not return_names:
@@ -238,9 +238,9 @@ def _check_tag_cond(estimator, filter_tags=None, as_dataframe=True):
 
 
 def all_tags(
-        estimator_types=None,
-        as_dataframe=False,
-        ):
+    estimator_types=None,
+    as_dataframe=False,
+):
     """Get a list of all tags from sktime.
 
     Retrieves tags directly from `_tags`, offers filtering functionality.
@@ -277,9 +277,7 @@ def all_tags(
 
     if estimator_types is not None:
         estimator_types = _check_estimator_types(estimator_types)
-        all_tags = [
-            tag for tag in all_tags if tag[1] in estimator_types
-            ]
+        all_tags = [tag for tag in all_tags if tag[1] in estimator_types]
 
     all_tags = sorted(all_tags, key=itemgetter(0))
 
