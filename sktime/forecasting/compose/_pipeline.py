@@ -268,8 +268,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     steps : list
         List of tuples like ("name", forecaster/transformer)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
