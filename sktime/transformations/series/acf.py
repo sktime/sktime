@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-"""
-Auto-correlation transformations.
+"""Auto-correlation transformations.
 
 Module :mod:`sktime.transformations.series` implements auto-correlation
 transformers.
@@ -20,11 +19,10 @@ from sktime.utils.validation.series import check_series
 
 
 class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
-    """
-    Auto-correlation transformer.
+    """Auto-correlation transformer.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.datasets import load_airline
@@ -83,8 +81,7 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
 
 
 class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
-    """
-    Partial auto-correlation transformer.
+    """Partial auto-correlation transformer.
 
     Parameters
     ----------
@@ -99,8 +96,8 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
         - ld or ldunbiased : Levinson-Durbin recursion with bias correction
         - ldb or ldbiased : Levinson-Durbin recursion without bias correction
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.datasets import load_airline
