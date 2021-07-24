@@ -310,7 +310,9 @@ class BaseGridSearch(BaseForecaster):
             self.best_forecaster_.fit(y, X, fh)
 
         # Sort values according to rank
-        results = results.sort_values(by=f"rank_{scoring_name}", ascending=not scoring.greater_is_better)
+        results = results.sort_values(
+            by=f"rank_{scoring_name}", ascending=not scoring.greater_is_better
+        )
         # Select n best forecaster
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
@@ -394,7 +396,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         score of forecasters
 
     Example
-    ----------
+    -------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
