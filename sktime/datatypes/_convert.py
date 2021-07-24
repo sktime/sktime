@@ -135,7 +135,7 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str, store=None):
     key = (from_type, to_type, as_scitype)
 
     if key not in convert_dict.keys():
-        raise TypeError(
+        raise NotImplementedError(
             "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )
 
