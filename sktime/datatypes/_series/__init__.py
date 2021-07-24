@@ -6,7 +6,7 @@ from sktime.datatypes._series._mtypes import infer_mtype_dict as infer_mtype_dic
 
 from sktime.datatypes._series._examples import example_dict as example_dict_Series
 from sktime.datatypes._series._examples import (
-    example_dict_lossy as example_dict_lossy_Series
+    example_dict_lossy as example_dict_lossy_Series,
 )
 
 from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
