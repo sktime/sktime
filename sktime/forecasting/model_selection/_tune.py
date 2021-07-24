@@ -294,7 +294,7 @@ class BaseGridSearch(BaseForecaster):
 
         # Rank results, according to whether greater is better for the given scoring.
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=~scoring.greater_is_better
+            ascending=not scoring.greater_is_better
         )
 
         self.cv_results_ = results
@@ -310,9 +310,10 @@ class BaseGridSearch(BaseForecaster):
             self.best_forecaster_.fit(y, X, fh)
 
         # Sort values according to rank
-        results = results.sort_values(by=f"rank_{scoring_name}", ascending=True)
+        results = results.sort_values(by=f"rank_{scoring_name}", ascending=not scoring.greater_is_better)
         # Select n best forecaster
         self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
         for i in range(self.return_n_best_forecasters):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
@@ -322,6 +323,9 @@ class BaseGridSearch(BaseForecaster):
             if self.refit:
                 forecaster.fit(y, X, fh)
             self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
 
         return self
 
@@ -385,6 +389,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Function used to score model
     n_best_forecasters_: list of tuples ("rank", <forecaster>)
         The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
 
     Example
     ----------
@@ -509,6 +516,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Results from grid search cross validation
     n_best_forecasters_: list of tuples ("rank", <forecaster>)
         The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
     """
 
     _required_parameters = ["forecaster", "cv", "param_distributions"]

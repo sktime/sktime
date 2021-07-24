@@ -124,3 +124,17 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         ParameterSampler(param_grid, n_iter, random_state=random_state)
     )
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+
+def test_n_best_forecasters():
+    y = load_airline()
+    forecaster = NaiveForecaster()
+    cv = SlidingWindowSplitter(
+        start_with_window=True,
+        step_length=24)
+    gscv = ForecastingGridSearchCV(
+        cv=cv,
+        param_grid={"strategy": ["mean", "last", "drift"]},
+        forecaster=forecaster,
+        return_n_best_forecasters=3)
+    gscv.fit(y)
+    
