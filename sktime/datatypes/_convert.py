@@ -42,6 +42,19 @@ Returns
 -------
 converted_obj : to_type - object obj converted to to_type
 
+---
+
+Function signature of mtype
+
+Parameters
+----------
+obj : object to convert - any type, should comply with mtype spec for as_scitype
+as_scitype : str - name of scitype the object "obj" is considered as
+
+Returns
+-------
+str - the type to convert "obj" to, a valid mtype string
+    or None, if obj is None
 """
 
 
@@ -54,175 +67,18 @@ __all__ = [
 ]
 
 
-import numpy as np
-import pandas as pd
+from sktime.datatypes._series import convert_dict_Series
+from sktime.datatypes._series import infer_mtype_dict_Series
 
+from sktime.datatypes._panel import convert_dict_Panel
 
-##############################################################
-# methods to convert one machine type to another machine type
-##############################################################
-
-""" key objects in this section:
-
-convert_dict: dict indexed by triples of str
-  1st element = convert from - str
-  2nd element = convert to - str
-  3rd element = considered as this scitype - str
-elements are conversion functions of machine type (1st) -> 2nd
-
-Function signature of all elements
-convert_dict[(from_type, to_type, as_scitype)]
-
-Parameters
-----------
-obj : from_type - object to convert
-store : dictionary - reference of storage for lossy conversions, default=None (no store)
-
-Returns
--------
-converted_obj : to_type - object obj converted to to_type
-
-Raises
-------
-ValueError and TypeError, if requested conversion is not possible
-                            (depending on conversion logic)
-"""
-
+# pool convert_dict-s and infer_mtype_dict-s
 convert_dict = dict()
-
-
-def convert_identity(obj, store=None):
-
-    return obj
-
-
-# assign identity function to type conversion to self
-for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
-    convert_dict[(tp, tp, "Series")] = convert_identity
-
-
-def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
-
-    if not isinstance(obj, pd.Series):
-        raise TypeError("input must be a pd.Series")
-
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == 1
-    ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
-
-    return res
-
-
-convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Series
-
-
-def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
-
-    if not isinstance(obj, pd.DataFrame):
-        raise TypeError("input is not a pd.DataFrame")
-
-    if len(obj.columns) != 1:
-        raise ValueError("pd.DataFrame must be pd.DataFrame with one column")
-
-    if isinstance(store, dict):
-        store["columns"] = obj.columns[[0]]
-
-    return obj[obj.columns[0]]
-
-
-convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
-
-
-def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
-
-    if not isinstance(obj, pd.DataFrame):
-        raise TypeError("input must be a pd.DataFrame")
-
-    if isinstance(store, dict):
-        store["columns"] = obj.columns
-
-    return obj.to_numpy()
-
-
-convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
-
-
-def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
-
-    if not isinstance(obj, pd.Series):
-        raise TypeError("input must be a pd.Series")
-
-    return pd.DataFrame(obj).to_numpy()
-
-
-convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
-
-
-def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
-
-    if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
-        raise TypeError("input must be a np.ndarray of dim 2")
-
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == obj.shape[1]
-    ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
-
-    return res
-
-
-convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
-
-
-def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
-
-    if not isinstance(obj, np.ndarray) and len(obj.shape) < 3:
-        raise TypeError("input must be a np.ndarray of dim 1 or 2")
-
-    return pd.Series(obj)
-
-
-convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
-
-
-#########################################################
-# methods to infer the machine type subject to a scitype
-#########################################################
+convert_dict.update(convert_dict_Series)
+convert_dict.update(convert_dict_Panel)
 
 infer_mtype_dict = dict()
-
-
-def infer_mtype_Series(obj):
-
-    obj_type = type(obj)
-
-    infer_dict = {
-        pd.Series: "pd.Series",
-        pd.DataFrame: "pd.DataFrame",
-        np.ndarray: "np.ndarray",
-    }
-
-    if obj_type not in infer_dict.keys():
-        raise TypeError("scitype cannot be inferred")
-
-    return infer_dict[obj_type]
-
-
-infer_mtype_dict["Series"] = infer_mtype_Series
-
-
-##################################################
-# public functions - mtype inspection, conversion
-##################################################
+infer_mtype_dict.update(infer_mtype_dict_Series)
 
 
 def mtype(obj, as_scitype: str):
