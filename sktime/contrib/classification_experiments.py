@@ -18,14 +18,6 @@ from sktime.classification.dictionary_based import (
     WEASEL,
     MUSE,
 )
-from sktime.classification.distance_based import (
-    ElasticEnsemble,
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
-    ShapeDTW,
-)
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.hybrid._catch22_forest_classifier import (
     Catch22ForestClassifier,
@@ -110,25 +102,9 @@ def set_classifier(cls, resampleId=None):
     A classifier.
     """
     name = cls.lower()
-    # Distance based
-    if name == "pf" or name == "proximityforest":
-        return ProximityForest(random_state=resampleId)
-    elif name == "pt" or name == "proximitytree":
-        return ProximityTree(random_state=resampleId)
-    elif name == "ps" or name == "proximityStump":
-        return ProximityStump(random_state=resampleId)
-    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
-    elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(distance="dtw")
-    elif name == "msm" or name == "1nn-msm":
-        return KNeighborsTimeSeriesClassifier(distance="msm")
-    elif name == "ee" or name == "elasticensemble":
-        return ElasticEnsemble()
-    elif name == "shapedtw":
-        return ShapeDTW()
+
     # Dictionary based
-    elif name == "boss" or name == "bossensemble":
+    if name == "boss" or name == "bossensemble":
         return BOSSEnsemble(random_state=resampleId)
     elif name == "cboss" or name == "contractableboss":
         return ContractableBOSS(random_state=resampleId)
@@ -708,26 +684,24 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
-        dataset = "ArrowHead"
+        data_dir = "../datasets/data/"
+        results_dir = ""
+        dataset = "UnitTest"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "1NN-MSM"
+        classifier = "CIF"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
         # #            print(i)
         # #            print(" problem = "+dataset)
         tf = False
-        for i in range(0, len(benchmark_datasets)):
-            dataset = benchmark_datasets[i]
-            run_experiment(
-                overwrite=True,
-                problem_path=data_dir,
-                results_path=results_dir,
-                cls_name=classifier,
-                dataset=dataset,
-                resampleID=resample,
-                train_file=tf,
-            )
+        run_experiment(
+            overwrite=True,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name=classifier,
+            dataset=dataset,
+            resampleID=resample,
+            train_file=tf,
+        )
