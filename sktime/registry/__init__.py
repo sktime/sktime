@@ -13,11 +13,12 @@ from sktime.registry._base_classes import (
     TRANSFORMER_MIXIN_SCITYPE_LIST,
 )
 
-from sktime.registry._lookup import all_estimators
+from sktime.registry._lookup import all_estimators, all_tags
 
 
 __all__ = [
     "all_estimators",
+    "all_tags",
     "ESTIMATOR_TAG_LIST",
     "ESTIMATOR_TAG_REGISTER",
     "BASE_CLASS_REGISTER",
