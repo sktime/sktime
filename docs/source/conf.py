@@ -46,6 +46,7 @@ if ON_READTHEDOCS:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.todo",
@@ -53,7 +54,6 @@ extensions = [
     # 'sphinx.ext.viewcode',  # link to auto-generated source code files (rst)
     "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
-    "sphinx.ext.napoleon",
     "nbsphinx",  # integrates example notebooks
     "m2r2",  # markdown rendering
 ]
@@ -88,11 +88,15 @@ pygments_style = "sphinx"
 
 # see http://stackoverflow.com/q/12206334/562769
 numpydoc_show_class_members = True
+# this is needed for some reason...
+# see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
 # generate autosummary even if no references
 autosummary_generate = True
-autodoc_default_flags = ["members", "inherited-members"]
+autodoc_default_options = {"members": True, "inherited-members": True}
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = False
 
 
 def linkcode_resolve(domain, info):
@@ -139,7 +143,7 @@ def linkcode_resolve(domain, info):
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 # html_theme = 'bootstrap'
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -147,10 +151,23 @@ html_theme = "sphinx_rtd_theme"
 # documentation.
 
 html_theme_options = {
-    "prev_next_buttons_location": None,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/alan-turing-institute/sktime",
+            "icon": "fab fa-github-square",
+        }
+    ],
+    "favicons": [
+        {
+            "rel": "icon",
+            "sizes": "16x16",
+            "href": "images/sktime-favicon.ico",
+        }
+    ],
+    "show_prev_next": False,
 }
-
-html_favicon = "images/sktime-favicon.ico"
+# html_favicon = "images/sktime-favicon.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
