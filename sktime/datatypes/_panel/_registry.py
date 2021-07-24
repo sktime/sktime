@@ -12,24 +12,24 @@ MTYPE_REGISTER_PANEL = [
     (
         "nested_univ",
         "Panel",
-        "pd.DataFrame with one column per variable, pd.Series in cells"
+        "pd.DataFrame with one column per variable, pd.Series in cells",
     ),
     (
         "numpy3D",
         "Panel",
-        "3D np.array of format (n_instances, n_columns, n_timepoints)"
+        "3D np.array of format (n_instances, n_columns, n_timepoints)",
     ),
     (
         "numpyflat",
         "Panel",
-        "2D np.array of format (n_instances, n_columns*n_timepoints)"
+        "2D np.array of format (n_instances, n_columns*n_timepoints)",
     ),
     ("pd-multiindex", "Panel", "pd.DataFrame with multi-index (instance, time point)"),
     ("pd-wide", "Panel", "pd.DataFrame in wide format, cols = (instance*time point)"),
     (
         "pd-long",
         "Panel",
-        "pd.DataFrame in long format, cols = (index, time_index, column)"
+        "pd.DataFrame in long format, cols = (index, time_index, column)",
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
 ]

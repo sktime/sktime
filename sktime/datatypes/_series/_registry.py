@@ -13,12 +13,12 @@ MTYPE_REGISTER_SERIES = [
     (
         "pd.DataFrame",
         "Series",
-        "pd.DataFrame representation of a uni- or multivariate series"
+        "pd.DataFrame representation of a uni- or multivariate series",
     ),
     (
         "np.npdarray",
         "Series",
-        "2D numpy.ndarray with rows=samples, cols=variables, index=integers"
+        "2D numpy.ndarray with rows=samples, cols=variables, index=integers",
     ),
 ]
 

@@ -8,7 +8,7 @@ from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_P
 
 __all__ = [
     "convert_dict_Panel",
-    "infer_mtype_dict_Panel"
+    "infer_mtype_dict_Panel",
     "MTYPE_LIST_PANEL",
     "MTYPE_REGISTER_PANEL",
 ]
