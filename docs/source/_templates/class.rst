@@ -5,7 +5,7 @@
 
 .. autoclass:: {{ objname }}
 
-.. include:: {{module}}.{{objname}}.examples
+   .. autosummary::
 
 .. raw:: html
 
