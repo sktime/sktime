@@ -5,8 +5,6 @@
 
 .. autoclass:: {{ objname }}
 
-   .. autosummary::
-
 .. raw:: html
 
     <div class="clearer"></div>
