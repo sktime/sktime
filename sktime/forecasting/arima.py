@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements autoregressive integrated moving average (ARIMA) models."""
 
 __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["AutoARIMA", "ARIMA"]
@@ -517,7 +518,7 @@ class ARIMA(_PmdArimaAdapter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.arima import ARIMA
     >>> y = load_airline()
     >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),

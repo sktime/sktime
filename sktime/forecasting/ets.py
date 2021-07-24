@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements automatic and manually exponential time series smoothing models."""
+
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
@@ -359,9 +363,9 @@ class AutoETS(_StatsModelsAdapter):
             )
 
     def summary(self):
-        """
-        Get a summary of the fitted forecaster,
-        same as the implementation in statsmodels:
+        """Get a summary of the fitted forecaster.
+
+        This is the same as the implementation in statsmodels:
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()

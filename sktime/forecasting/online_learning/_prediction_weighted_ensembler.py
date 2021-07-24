@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements online algorithms for prediction weighted ensembles."""
+
 import numpy as np
 from scipy.optimize import bisect
 from scipy.optimize import nnls
@@ -31,7 +35,7 @@ class _PredictionWeightedEnsembler:
         super(_PredictionWeightedEnsembler, self).__init__()
 
     def _predict(self, y_pred):
-        """Performs prediction by taking weighted average of forecaster predictions.
+        """Make predictions by taking weighted average of forecaster predictions.
 
         Parameters
         ----------
@@ -59,8 +63,10 @@ class _PredictionWeightedEnsembler:
         self.weights /= np.sum(self.weights)
 
     def _update(self, y_pred, y_true):
-        """Resets the weights over the estimators by passing previous observations
-            to the weighting algorithm
+        """Update fitted paramters and performs a new ensemble fit.
+
+        Resets the weights over the estimators by passing previous
+        observations to the weighting algorithm.
 
         Parameters
         ----------
@@ -72,7 +78,7 @@ class _PredictionWeightedEnsembler:
         raise NotImplementedError()
 
     def _uniform_weights(self, n_estimators):
-        """Resets weights for n estimator to uniform weights
+        """Reset weights for n estimator to uniform weights.
 
         Parameters
         ----------
@@ -186,7 +192,6 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         low_c : float
             lowest value that c can take
         """
-
         # Calculating Normalizing Constant
         R_plus = np.array(list(map(lambda x: 0 if 0 > x else x, self.R)))
         normalizing_R = np.max(R_plus)
@@ -197,7 +202,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         high_c = (max(R_plus) ** 2) / 2
 
         def _pot(c):
-            """Internal Potential Function
+            """Calculate algorithm's potential Function.
 
             Parameters
             ----------
@@ -213,7 +218,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         c_t = bisect(_pot, low_c, high_c)
 
         def _prob(r, c_t):
-            """Internal Probability Function
+            """Calculate algorithm's probability Function.
 
             Parameters
             ----------
@@ -259,6 +264,15 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
         self.total_y_true = np.empty(0)
 
     def update(self, y_pred, y_true):
+        """Update the online ensemble with new data.
+
+        Parameters
+        ----------
+        y_pred : np.array(), shape=(time_axis,estimator_axis)
+            array with predictions from the estimators
+        y_true : np.array(), shape=(time_axis)
+            array with actual values for predicted quantity
+        """
         self.total_y_pred = np.concatenate((self.total_y_pred, y_pred), axis=1)
         self.total_y_true = np.concatenate((self.total_y_true, y_true))
         weights, loss = nnls(self.total_y_pred.T, self.total_y_true)

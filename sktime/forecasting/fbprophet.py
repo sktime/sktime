@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
-"""Prophet forecaster by wrapping fbprophet."""
+"""Implements Prophet forecaster by wrapping fbprophet."""
 
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]

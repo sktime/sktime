@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements trend based forecaster."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["PolynomialTrendForecaster"]
@@ -74,7 +75,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
         if self.regressor is None:

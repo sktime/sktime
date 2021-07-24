@@ -1,6 +1,12 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements TBATS algorithm.
+
+TBATS refers to Exponential smoothing state space model with Box-Cox
+transformation, ARMA errors, Trigonometric Trend and Seasonal components as
+described in De LIvera, Hyndman and Snyder (2011).
+"""
 
 __author__ = ["Martin Walter"]
 __all__ = ["TBATS"]

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements wrapper for using HCrystalBall forecastsers in sktime."""
+
 import pandas as pd
 from sklearn.base import clone
 
@@ -77,9 +81,9 @@ def _get_X_pred(X_pred, index):
 
 
 def _adapt_y_pred(y_pred):
-    """Translate wrapper prediction to sktime format
+    """Translate wrapper prediction to sktime format.
 
-    From Dataframe to series
+    From Dataframe to series.
 
     Parameters
     ----------
@@ -94,6 +98,13 @@ def _adapt_y_pred(y_pred):
 
 
 class HCrystalBallForecaster(BaseForecaster):
+    """Implement wrapper to allow use of HCrystalBall forecasters in sktime.
+
+    Parameters
+    ----------
+    model :
+        The HCrystalBall forecasting model to use.
+    """
 
     _tags = {
         "univariate-only": True,
@@ -121,7 +132,6 @@ class HCrystalBallForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         y, X = _adapt_y_X(y, X)
         self.model_ = clone(self.model)
         self.model_.fit(X, y)
@@ -129,7 +139,7 @@ class HCrystalBallForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Make forecasts for the given forecast horizon
+        """Make forecasts for the given forecast horizon.
 
         Parameters
         ----------
@@ -156,6 +166,7 @@ class HCrystalBallForecaster(BaseForecaster):
         return _adapt_y_pred(y_pred)
 
     def get_fitted_params(self):
+        """Get fitted parameters."""
         raise NotImplementedError()
 
     def _compute_pred_err(self, alphas):

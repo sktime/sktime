@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster"]
 __author__ = ["Markus Löning", "Piyush Gade"]
@@ -156,7 +157,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Internal predict"""
+        """Calculate predictions for use in predict."""
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
 
