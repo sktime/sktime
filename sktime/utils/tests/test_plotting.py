@@ -1,5 +1,5 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tests for series plotting functions."""
 
 import numpy as np
 import pandas as pd
@@ -33,6 +33,7 @@ def _plot_series(series, ax=None, **kwargs):
 
 @pytest.fixture
 def valid_data_types():
+    """Return valid data types."""
     valid_data_types = tuple(
         filter(
             lambda x: x is not np.ndarray and x is not pd.DataFrame, VALID_DATA_TYPES
@@ -43,6 +44,7 @@ def valid_data_types():
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_runs_without_error(series_to_plot):
+    """Test whether plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -52,6 +54,7 @@ def test_plot_series_runs_without_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
 def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
+    """Tests whether plot_series raises error for invalid input types."""
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
@@ -65,6 +68,7 @@ def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
+    """Tests whether plot_series raises error for series with unequal index."""
     match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
@@ -72,6 +76,7 @@ def test_plot_series_with_unequal_index_type_raises_error(
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
+    """Tests whether plot_series raises error for inconsistent series/markers."""
     match = """There must be one marker for each time series,
                 but found inconsistent numbers of series and
                 markers."""
@@ -88,6 +93,7 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
+    """Tests whether plot_series raises error for inconsistent series/labels."""
     match = """There must be one label for each time series,
                 but found inconsistent numbers of series and
                 labels."""
@@ -104,6 +110,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
+    """Tests whether plot_series returns plt.fig and plt.ax."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -136,6 +143,7 @@ def test_plot_series_output_type(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 def test_plot_correlations_runs_without_error(series_to_plot):
+    """Tests whether plot_correlations runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -147,6 +155,7 @@ def test_plot_correlations_runs_without_error(series_to_plot):
 def test_plot_correlations_invalid_input_type_raises_error(
     series_to_plot, valid_data_types
 ):
+    """Tests whether plot_correlations raises error for invalid input types."""
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
@@ -156,6 +165,7 @@ def test_plot_correlations_invalid_input_type_raises_error(
 
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 def test_plot_correlations_output_type(series_to_plot):
+    """Tests whether plot_correlations returns plt.fig and plt.ax."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -174,8 +184,7 @@ def test_plot_correlations_output_type(series_to_plot):
 
 
 def test_plot_series_uniform_treatment_of_int64_range_index_types():
-    # We test that int64 and range indices are treated uniformly and do not raise an
-    # error of inconsistent index types
+    """Test that int64 and range indices are treated the same without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
