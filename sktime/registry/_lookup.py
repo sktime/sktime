@@ -196,10 +196,13 @@ def all_estimators(
     # remove names if return_names=False
     if not return_names:
         all_estimators = [estimator for (name, estimator) in all_estimators]
+        columns = ["estimator"]
+    else:
+        columns = ["name", "estimator"]
 
     # convert to pd.DataFrame if as_dataframe=True
     if as_dataframe:
-        all_estimators = pd.DataFrame(all_estimators)
+        all_estimators = pd.DataFrame(all_estimators, columns=columns)
 
     return all_estimators
 
@@ -283,7 +286,8 @@ def all_tags(
 
     # convert to pd.DataFrame if as_dataframe=True
     if as_dataframe:
-        all_tags = pd.DataFrame(all_tags)
+        columns = ["name", "scitype", "type", "description"]
+        all_tags = pd.DataFrame(all_tags, columns=columns)
 
     return all_tags
 
