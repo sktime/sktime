@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Sktime registry module exports."""
 
 from sktime.registry._tags import ESTIMATOR_TAG_REGISTER, ESTIMATOR_TAG_LIST
 from sktime.registry._base_classes import (
@@ -12,7 +13,11 @@ from sktime.registry._base_classes import (
     TRANSFORMER_MIXIN_SCITYPE_LIST,
 )
 
+from sktime.registry._lookup import all_estimators
+
+
 __all__ = [
+    "all_estimators",
     "ESTIMATOR_TAG_LIST",
     "ESTIMATOR_TAG_REGISTER",
     "BASE_CLASS_REGISTER",
