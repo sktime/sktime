@@ -138,7 +138,7 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
 convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
 
 
-def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.array:
+def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
 
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
@@ -149,10 +149,10 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.array:
     return obj.to_numpy()
 
 
-convert_dict[("pd.DataFrame", "np.array", "Series")] = convert_MvS_to_np_as_Series
+convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
 
 
-def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.array:
+def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
 
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
@@ -163,10 +163,10 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.array:
 convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
 
 
-def convert_np_to_MvS_as_Series(obj: np.array, store=None) -> pd.DataFrame:
+def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
 
-    if not isinstance(obj, np.array) and len(obj.shape) != 2:
-        raise TypeError("input must be a np.array of dim 2")
+    if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
+        raise TypeError("input must be a np.ndarray of dim 2")
 
     if (
         isinstance(store, dict)
@@ -183,10 +183,10 @@ def convert_np_to_MvS_as_Series(obj: np.array, store=None) -> pd.DataFrame:
 convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
 
 
-def convert_np_to_UvS_as_Series(obj: np.array, store=None) -> pd.Series:
+def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
 
-    if not isinstance(obj, np.array) and len(obj.shape) < 3:
-        raise TypeError("input must be a np.array of dim 1 or 2")
+    if not isinstance(obj, np.ndarray) and len(obj.shape) < 3:
+        raise TypeError("input must be a np.ndarray of dim 1 or 2")
 
     return pd.Series(obj)
 
