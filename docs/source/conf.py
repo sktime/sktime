@@ -55,7 +55,8 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
     "nbsphinx",  # integrates example notebooks
-    "m2r2",  # markdown rendering
+    # "m2r2",  # markdown rendering
+    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
