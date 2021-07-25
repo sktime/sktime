@@ -74,9 +74,7 @@ def _make_estimator(base_estimator, random_state=None):
 
 
 def _select_interval(min_interval, max_interval, series_length, rng, method=3):
-    """
-    private function used to select an interval for a single tree
-    """
+    """private function used to select an interval for a single tree."""
     interval = np.empty(2, dtype=int)
     if method == 0:
         interval[0] = rng.randint(series_length - min_interval)
@@ -102,9 +100,7 @@ def _select_interval(min_interval, max_interval, series_length, rng, method=3):
 def _produce_intervals(
     n_estimators, min_interval, max_interval, series_length, rng, method=3
 ):
-    """
-    private function used to produce intervals for all trees
-    """
+    """Private function used to produce intervals for all trees."""
     intervals = np.empty((n_estimators, 2), dtype=int)
     if method == 0:
         # just keep it as a backup, untested
@@ -339,8 +335,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             single column (i.e., univariate classification). RISE has no
             bespoke method for multivariate classification as yet.
 
-        Local variables
-        ---------------
+        Attributes
+        ----------
         n_instances : int
             Number of cases to classify.
         n_columns : int
@@ -396,8 +392,8 @@ def acf(x, max_lag):
     max_lag: int
         The number of ACF terms to find.
 
-    Return
-    ----------
+    Returns
+    -------
     y : array-like shape = [max_lag]
     """
     y = np.empty(max_lag)
@@ -499,8 +495,8 @@ def matrix_acf(x, num_cases, max_lag):
     max_lag: int
         The number of ACF terms to find.
 
-    Return
-    ----------
+    Returns
+    -------
     y : array-like shape = [num_cases,max_lag]
 
     """
@@ -557,8 +553,8 @@ def ps(x, sign=1, n=None, pad="mean"):
         see numpy.pad for more details
         https://numpy.org/doc/stable/reference/generated/numpy.pad.html
 
-    Return
-    ----------
+    Returns
+    -------
     y : array-like shape = [len(x)/2]
     """
     x_len = x.shape[-1]

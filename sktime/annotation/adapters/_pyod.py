@@ -47,9 +47,9 @@ class PyODAnnotator(BaseSeriesAnnotator):
         -------
         self : returns a reference to self
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Create fitted model that sets attributes ending in "_".
         """
 
         X_np = X.to_numpy()

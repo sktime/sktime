@@ -2,7 +2,7 @@
 .. _performance_metric_ref:
 
 sktime.performance_metrics: Measuring time series model performance
-=======================================================
+===================================================================
 
 The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 
@@ -15,7 +15,8 @@ Forecasting
 .. currentmodule:: sktime.performance_metrics.forecasting
 
 Tunable Classes
-***************
+~~~~~~~~~~~~~~~
+
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class_with_call.rst
@@ -40,7 +41,8 @@ Tunable Classes
     RelativeLoss
 
 Functions
-*********
+~~~~~~~~~
+
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: function.rst

@@ -1,7 +1,7 @@
 .. _about:
 
-About us
-========
+About
+=====
 
 Mission statement
 -----------------
@@ -11,6 +11,11 @@ series. It provides `scikit-learn <https://scikit-learn.org/stable/>`_
 compatible algorithms and model composition tools, supported by a clear
 taxonomy of learning tasks, with instructive documentation and a friendly community.
 
+Contributors
+------------
+
+.. mdinclude:: ../../CONTRIBUTORS.md
+
 
 History
 -------
@@ -19,13 +24,6 @@ sktime was started in April 2019 as a collaborative project between
 Franz Király, Markus Löning, Tony Bagnall and Jason
 Lines. In the first year, it grew into a community-driven project with
 contributions from researchers and practitioners from around the globe.
-
-
-Authors
--------
-
-For an overview of current and past contributors, please see our
-:ref:`contributors page <contributors>`.
 
 
 Citing sktime
@@ -53,6 +51,9 @@ sktime is a community-driven project, however institutional and private
 grants help to assure its sustainability.
 
 We would like to thank the following funders.
+
+Research grants
+~~~~~~~~~~~~~~~
 
 ...................................
 
@@ -115,8 +116,8 @@ Scheme at the `The Alan Turing Institute <https://turing.ac.uk>`_.
    </div>
 
 
-Sprints
--------
+Institutional sponsorship
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `2019 joint sktime MLJ development sprint <https://github.com/sktime/sktime-workshops/tree/master/previous_workshops/2019_sktime_MLJ_joint_dev_sprint>`_ was kindly hosted by `UCL
 <https://www.ucl.ac.uk>`_ and `The Alan Turing Institute <https://turing.ac
@@ -125,6 +126,6 @@ initial funding of the `The Alan Turing Institute <https://turing.ac.uk>`_.
 
 
 Infrastructure support
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-gb/services/devops/>`_, `GitHub Actions <https://docs.github.com/en/free-pro-team@latest/actions>`_, and `AppVeyor <https://www.appveyor.com>`_, `ReadtheDocs <https://readthedocs.org>`_ for the free computing time on their Continuous Integration servers.

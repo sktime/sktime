@@ -4,13 +4,7 @@
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
-
-   {% block methods %}
-   .. automethod:: __init__
-   .. automethod:: __call__
-   {% endblock %}
-
-.. include:: {{module}}.{{objname}}.examples
+   :special-members: __call__
 
 .. raw:: html
 

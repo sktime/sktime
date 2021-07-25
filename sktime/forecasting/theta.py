@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements Theta forecasting model."""
+
 __all__ = ["ThetaForecaster"]
 __author__ = ["@big-o", "Markus Löning"]
 
@@ -16,31 +20,24 @@ from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
-    """
-    Theta method of forecasting.
+    """Theta method of forecasting.
 
     The theta method as defined in [1]_ is equivalent to simple exponential
-    smoothing
-    (SES) with drift. This is demonstrated in [2]_.
+    smoothing (SES) with drift (as demonstrated in [2]_).
 
     The series is tested for seasonality using the test outlined in A&N. If
-    deemed
-    seasonal, the series is seasonally adjusted using a classical
-    multiplicative
-    decomposition before applying the theta method. The resulting forecasts
-    are then
-    reseasonalised.
+    deemed seasonal, the series is seasonally adjusted using a classical
+    multiplicative decomposition before applying the theta method. The
+    resulting forecasts are then reseasonalised.
 
     In cases where SES results in a constant forecast, the theta forecaster
-    will revert
-    to predicting the SES constant plus a linear trend derived from the
-    training data.
+    will revert to predicting the SES constant plus a linear trend derived
+    from the training data.
 
     Prediction intervals are computed using the underlying state space model.
 
     Parameters
     ----------
-
     initial_level : float, optional
         The alpha value of the simple exponential smoothing, if the value is
         set then
@@ -59,7 +56,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
     Attributes
     ----------
-
     initial_level_ : float
         The estimated alpha value of the SES fit.
 
@@ -72,22 +68,17 @@ class ThetaForecaster(ExponentialSmoothing):
 
     References
     ----------
-
-    .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
-    decomposition
-           approach to forecasting. International Journal of Forecasting 16,
-           521-530,
-           2000.
-           <https://www.sciencedirect.com/science/article/pii
-           /S0169207000000662>`_
+    .. [1] Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
+       decomposition approach to forecasting. International Journal of
+       Forecasting 16, 521-530, 2000.
+       https://www.sciencedirect.com/science/article/pii/S0169207000000662
 
     .. [2] `Hyndman, Rob J., and Billah, Baki. Unmasking the Theta method.
-           International J. Forecasting, 19, 287-290, 2003.
-           <https://www.sciencedirect.com/science/article/pii
-           /S0169207001001431>`_
+       International J. Forecasting, 19, 287-290, 2003.
+       https://www.sciencedirect.com/science/article/pii/S0169207001001431
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> y = load_airline()
@@ -126,11 +117,11 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
         """
-
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
             warn("`sp` is ignored when `deseasonalise`=False")
@@ -150,12 +141,10 @@ class ThetaForecaster(ExponentialSmoothing):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """
-        Make forecasts.
+        """Make forecasts.
 
         Parameters
         ----------
-
         fh : array-like
             The forecasters horizon with the steps ahead to to predict.
             Default is
@@ -163,7 +152,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         Returns
         -------
-
         y_pred : pandas.Series
             Returns series of predicted values.
         """
@@ -206,9 +194,7 @@ class ThetaForecaster(ExponentialSmoothing):
         return drift
 
     def _compute_pred_err(self, alphas):
-        """
-        Get the prediction errors for the forecast.
-        """
+        """Get the prediction errors for the forecast."""
         self.check_is_fitted()
 
         n_timepoints = len(self._y)
@@ -239,12 +225,10 @@ class ThetaForecaster(ExponentialSmoothing):
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
-    """
-    Calculate a z-score from a confidence level.
+    """Calculate a z-score from a confidence level.
 
     Parameters
     ----------
-
     level : float
         A confidence level, in the open interval (0, 1).
 
@@ -253,7 +237,6 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
 
     Returns
     -------
-
     z : float
         The z score.
     """

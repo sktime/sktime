@@ -34,7 +34,7 @@ DEFAULT_FH = 1
 
 
 def _repr(self):
-    """Helper function to build repr for splitters similar to estimator objects"""
+    """Helper function to build repr for splitters similar to estimator objects."""
     # This is copied from scikit-learn's BaseEstimator get_params method
     cls = self.__class__
     init = getattr(cls.__init__, "deprecated_original", cls.__init__)
@@ -96,20 +96,19 @@ def _repr(self):
 
 
 def _check_y(y):
-    """Check input to `split` function"""
+    """Check input to `split` function."""
     if isinstance(y, pd.Series):
         y = y.index
     return check_time_index(y)
 
 
 def _check_fh(fh):
-    """Check and convert fh to format expected by CV splitters"""
+    """Check and convert fh to format expected by CV splitters."""
     return check_fh(fh, enforce_relative=True)
 
 
 def _get_end(y, fh):
-    """Compute the end of the last training window for a given and forecasting
-    horizon."""
+    """Compute the end of the last training window for a forecasting horizon."""
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
     n_timepoints = y.shape[0]
@@ -216,7 +215,7 @@ class BaseSplitter:
         raise NotImplementedError("abstract method")
 
     def get_fh(self):
-        """Return the forecasting horizon
+        """Return the forecasting horizon.
 
         Returns
         -------
@@ -275,7 +274,7 @@ class CutoffSplitter(BaseSplitter):
 
 
 class BaseWindowSplitter(BaseSplitter):
-    """Base class for sliding and expanding window splitter"""
+    """Base class for sliding and expanding window splitter."""
 
     def __init__(
         self,
@@ -333,8 +332,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     @staticmethod
     def _split_windows(start, end, step_length, window_length, fh):
-        """Abstract method implemented by concrete classes for sliding and expanding
-        windows"""
+        """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
 
     def _get_start(self, fh):
@@ -369,7 +367,7 @@ class BaseWindowSplitter(BaseSplitter):
         return start
 
     def get_n_splits(self, y=None):
-        """Return number of splits
+        """Return number of splits.
 
         Parameters
         ----------
@@ -594,7 +592,8 @@ class SingleWindowSplitter(BaseSplitter):
 
 
 def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=None):
-    """Split arrays or matrices into sequential train and test subsets
+    """Split arrays or matrices into sequential train and test subsets.
+
     Creates train/test splits over endogenous arrays an optional exogenous
     arrays.
 
@@ -648,8 +647,10 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
 
 
 def _split_by_fh(y, fh, X=None):
-    """Helper function to split time series with forecasting horizon handling both
-    relative and absolute horizons"""
+    """Split time series with forecasting horizon.
+
+    Handles both relative and absolute horizons.
+    """
     if X is not None:
         check_equal_time_index(y, X)
     fh = check_fh(fh)

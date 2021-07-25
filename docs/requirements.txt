@@ -1,7 +1,7 @@
 jupyter
-m2r2
+m2r2>=0.3.1
 nbsphinx
 numpydoc
-sphinx==3.2.*
-sphinx_rtd_theme
+pydata-sphinx-theme
+sphinx==4.0.2
 tabulate

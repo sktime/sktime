@@ -6,9 +6,6 @@ API Reference
 
 This is the class and function reference for ``sktime``.
 
-.. autosummary::
-    :toctree: modules/auto_generated/
-
 .. include:: includes/api_css.rst
 
 .. include:: api_reference/classification.rst

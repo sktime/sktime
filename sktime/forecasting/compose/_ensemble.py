@@ -30,8 +30,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import EnsembleForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster

@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements trend based forecaster."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["PolynomialTrendForecaster"]
@@ -17,8 +18,8 @@ from sktime.utils.datetime import _get_duration
 
 
 class PolynomialTrendForecaster(BaseForecaster):
-    """
-    Forecast time series data with a polynomial trend.
+    """Forecast time series data with a polynomial trend.
+
     Default settings train a linear regression model with a 1st degree
     polynomial transformation of the feature.
 
@@ -34,8 +35,8 @@ class PolynomialTrendForecaster(BaseForecaster):
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> y = load_airline()
@@ -74,7 +75,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
         if self.regressor is None:
@@ -97,7 +97,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Make forecasts for the given forecast horizon
+        """Make forecasts for the given forecast horizon.
 
         Parameters
         ----------

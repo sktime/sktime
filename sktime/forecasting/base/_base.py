@@ -102,10 +102,13 @@ class BaseForecaster(BaseEstimator):
             Exogeneous data
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         stores data in self._X and self._y
         stores fh, if passed
         updates self.cutoff to most recent time in y
@@ -345,11 +348,11 @@ class BaseForecaster(BaseEstimator):
         -------
         self : reference to self
 
-        State change
-        ------------
-        updates self._X and self._y with new data
-        updates self.cutoff to most recent time in y
-        if update_params=True, updates model (attributes ending in "_")
+        Notes
+        -----
+        Update self._y and self._X with `y` and `X`, respectively.
+        Updates  self._cutoff to last index seen in `y`. If update_params=True,
+        updates fitted model that updates attributes ending in "_".
         """
         self.check_is_fitted()
 
@@ -652,9 +655,9 @@ class BaseForecaster(BaseEstimator):
         ----------
         cutoff: pandas compatible index element
 
-        State change
-        ------------
-        self._cutoff is set to cutoff
+        Notes
+        -----
+        Set self._cutoff is to `cutoff`.
         """
         self._cutoff = cutoff
 
@@ -666,9 +669,9 @@ class BaseForecaster(BaseEstimator):
         y: pd.Series, pd.DataFrame, or np.array
             Target time series to which to fit the forecaster.
 
-        State change
-        ------------
-        self._cutoff is set to last index seen in y
+        Notes
+        -----
+        Set self._cutoff to last index seen in `y`.
         """
         if mtype(y, as_scitype="Series") in ["pd.Series", "pd.DataFrame"]:
             self._cutoff = y.index[-1]
@@ -845,11 +848,11 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
 
-        State change
-        ------------
-        updates self._X and self._y with new data
-        updates self.cutoff to most recent time in y
-        if update_params=True, updates model (attributes ending in "_")
+        Notes
+        -----
+        Update self._y and self._X with `y` and `X`, respectively.
+        Updates  self._cutoff to last index seen in `y`. If update_params=True,
+        updates fitted model that updates attributes ending in "_".
         """
         if update_params:
             # default to re-fitting if update is not implemented
