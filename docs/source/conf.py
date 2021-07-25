@@ -175,8 +175,18 @@ html_theme_options = {
         }
     ],
     "show_prev_next": False,
+    "use_edit_page_button": True,
 }
-# html_favicon = "images/sktime-favicon.ico"
+html_context = {
+    "github_user": "alan-turing-institute",
+    "github_repo": "sktime",
+    "github_version": "main",
+    "doc_path": "docs/source/",
+}
+
+html_sidebars = {
+    "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
