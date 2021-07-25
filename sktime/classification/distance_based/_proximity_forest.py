@@ -853,8 +853,8 @@ class ProximityStump(BaseClassifier):
         ----------
         X: the dataset containing a list of instances
 
-        Return
-        ------
+        Returns
+        -------
         2d numpy array of distances from each instance to each
         exemplar (instance by exemplar)
         """
@@ -918,8 +918,8 @@ class ProximityStump(BaseClassifier):
         ----------
         X: the dataframe containing instances
 
-        Return
-        ------
+        Returns
+        -------
         1d numpy array of indices, one for each instance,
         reflecting the index of the closest exemplar
         """
