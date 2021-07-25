@@ -176,14 +176,17 @@ html_theme_options = {
     ],
     "show_prev_next": False,
     "use_edit_page_button": True,
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
 }
+html_logo = "images/sktime-logo-no-text.jpg"
 html_context = {
     "github_user": "alan-turing-institute",
     "github_repo": "sktime",
     "github_version": "main",
     "doc_path": "docs/source/",
 }
-
 html_sidebars = {
     "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
 }
