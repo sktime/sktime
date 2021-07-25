@@ -3,5 +3,5 @@ myst-parser
 nbsphinx
 numpydoc
 pydata-sphinx-theme
-sphinx==4.0.2
+sphinx==4.1.1
 tabulate

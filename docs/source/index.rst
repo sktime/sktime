@@ -12,6 +12,7 @@ From here, you can navigate to:
 .. toctree::
    :maxdepth: 1
 
+   getting_started
    users
    developers
    about
