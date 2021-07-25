@@ -1,5 +1,5 @@
 jupyter
-m2r2
+m2r2>=0.3.1
 nbsphinx
 numpydoc
 pydata-sphinx-theme
