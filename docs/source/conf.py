@@ -25,7 +25,7 @@ if not ON_READTHEDOCS:
 
 # -- Project information -----------------------------------------------------
 project = "sktime"
-copyright = "2019 - 2020 (BSD-3-Clause License)"
+copyright = "2019 - 2021 (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -144,7 +144,6 @@ def linkcode_resolve(domain, info):
 # a list of builtin themes.
 
 html_theme = "pydata_sphinx_theme"
-# html_theme = 'bootstrap'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -155,8 +154,18 @@ html_theme_options = {
         {
             "name": "GitHub",
             "url": "https://github.com/alan-turing-institute/sktime",
-            "icon": "fab fa-github-square",
-        }
+            "icon": "fab fa-github",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/sktime_toolbox",
+            "icon": "fab fa-twitter",
+        },
+        {
+            "name": "Discord",
+            "url": "https://discord.com/invite/gqSab2K",
+            "icon": "fab fa-discord",
+        },
     ],
     "favicons": [
         {
@@ -166,8 +175,18 @@ html_theme_options = {
         }
     ],
     "show_prev_next": False,
+    "use_edit_page_button": True,
 }
-# html_favicon = "images/sktime-favicon.ico"
+html_context = {
+    "github_user": "alan-turing-institute",
+    "github_repo": "sktime",
+    "github_version": "main",
+    "doc_path": "docs/source/",
+}
+
+html_sidebars = {
+    "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
