@@ -755,8 +755,7 @@ def load_uschange(y_name="Consumption"):
 
 
 def load_PBS_dataset():
-    """
-    Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
+    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
 
     Returns
     -------
@@ -784,7 +783,6 @@ def load_PBS_dataset():
     ----------
     ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
     """
-
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
