@@ -220,7 +220,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
             self.columns_ = z.columns
 
         # make sure z contains all columns that the user wants to transform
-        self._check_columns(z)
+        _check_columns(z, selected_columns=self.columns_)
 
         # fit by iterating over columns
         self.transformers_ = {}
@@ -249,24 +249,20 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z)
 
-        # transform to pd.Dataframe in univariate case
-        is_series = False
-        if isinstance(z, pd.Series):
-            is_series = True
-            name_of_z = z.name
-            z = z.to_frame()
+        # handle univariate case
+        z, is_series = _check_is_pdseries(z)
 
         # make copy of z
         z = z.copy()
 
         # make sure z contains all columns that the user wants to transform
-        self._check_columns(z)
+        _check_columns(z, selected_columns=self.columns_)
         for colname in self.columns_:
             z[colname] = self.transformers_[colname].transform(z[colname], X)
 
         # make z a series again in univariate case
         if is_series:
-            z = self._revert_to_series(name_of_z, z)
+            z = z.squeeze("columns")
         return z
 
     @if_delegate_has_method(delegate="transformer")
@@ -290,18 +286,14 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z)
 
-        # make z a pd.Dataframe in univariate case
-        is_series = False
-        if isinstance(z, pd.Series):
-            name_of_z = z.name
-            z = z.to_frame()
-            is_series = True
+        # handle univariate case
+        z, is_series = _check_is_pdseries(z)
 
         # make copy of z
         z = z.copy()
 
         # make sure z contains all columns that the user wants to transform
-        self._check_columns(z)
+        _check_columns(z, selected_columns=self.columns_)
 
         # iterate over columns that are supposed to be inverse_transformed
         for colname in self.columns_:
@@ -309,7 +301,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
         # make z a series again in univariate case
         if is_series:
-            z = self._revert_to_series(name_of_z, z)
+            z = z.squeeze("columns")
         return z
 
     @if_delegate_has_method(delegate="transformer")
@@ -338,25 +330,25 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
             z = z.to_frame()
 
         # make sure z contains all columns that the user wants to transform
-        self._check_columns(z)
+        _check_columns(z, selected_columns=self.columns_)
         for colname in self.columns_:
             self.transformers_[colname].update(z[colname], X)
         return self
 
-    def _check_columns(self, z):
-        # make sure z contains all columns that the user wants to transform
-        z_wanted_keys = set(self.columns_)
-        z_new_keys = set(z.columns)
-        difference = z_wanted_keys.difference(z_new_keys)
-        if len(difference) != 0:
-            raise ValueError("Missing columns" + str(difference) + "in Z.")
 
-    def _revert_to_series(self, name_of_z, z):
-        # create series from one dimensional pd.DataFrame
-        # make sure not to loose column name
-        if name_of_z is not None:
-            z = z[name_of_z]
-        else:
-            z = z[0]
-            z.name = None
-        return z
+def _check_columns(z, selected_columns):
+    # make sure z contains all columns that the user wants to transform
+    z_wanted_keys = set(selected_columns)
+    z_new_keys = set(z.columns)
+    difference = z_wanted_keys.difference(z_new_keys)
+    if len(difference) != 0:
+        raise ValueError("Missing columns" + str(difference) + "in Z.")
+
+
+def _check_is_pdseries(z):
+    # make z a pd.Dataframe in univariate case
+    is_series = False
+    if isinstance(z, pd.Series):
+        z = z.to_frame()
+        is_series = True
+    return z, is_series
