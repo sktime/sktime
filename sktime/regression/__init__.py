@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""test"""
+"""Implements estimators for time series regression."""
