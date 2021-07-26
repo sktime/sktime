@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Implements functionality to import time series datasets."""
+
+"""Datasets included in sktime."""
 
 __all__ = [
     "load_airline",
