@@ -8,7 +8,7 @@ __author__ = ["Matthew Middlehurst"]
 __all__ = ["MatrixProfileClassifier"]
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
@@ -26,9 +26,9 @@ class MatrixProfileClassifier(BaseClassifier):
     ----------
     subsequence_length : int, default=10
         The subsequence length for the MatrixProfile transformer.
-    estimator : sklearn classifier, default=RandomForestClassifier
+    estimator : sklearn classifier, default=KNeighborsClassifier(n_neighbors=1)
         An sklearn estimator to be built using the transformed data. Defaults to a
-        Random Forest with 200 trees.
+        1-nearest neighbour classifier.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -84,7 +84,7 @@ class MatrixProfileClassifier(BaseClassifier):
         self.subsequence_length = subsequence_length
 
         self.estimator = (
-            RandomForestClassifier(n_estimators=200) if estimator is None else estimator
+            KNeighborsClassifier(n_neighbors=1) if estimator is None else estimator
         )
 
         self.n_jobs = n_jobs
