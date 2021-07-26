@@ -1,6 +1,8 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Base class template for annotator base type for time series stream
+Base class template for annotator base type for time series stream.
 
     class name: BaseSeriesAnnotator
 
@@ -77,6 +79,7 @@ class BaseSeriesAnnotator(BaseEstimator):
             Training data to fit model to (time series).
         Y : pd.Series, optional
             Ground truth annotations for training if annotator is supervised.
+
         Returns
         -------
         self :
@@ -119,7 +122,6 @@ class BaseSeriesAnnotator(BaseEstimator):
         Y : pd.Series
             Annotations for sequence X exact format depends on annotation type.
         """
-
         self.check_is_fitted()
 
         X = check_series(X)
@@ -131,7 +133,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         return Y
 
     def update(self, X, Y=None):
-        """update model with new data and optional ground truth annotations
+        """Update model with new data and optional ground truth annotations.
 
         Parameters
         ----------
@@ -149,7 +151,6 @@ class BaseSeriesAnnotator(BaseEstimator):
         -----
         Updates fitted model that updates attributes ending in "_".
         """
-
         self.check_is_fitted()
 
         X = check_series(X)
@@ -183,7 +184,6 @@ class BaseSeriesAnnotator(BaseEstimator):
         -----
         Updates fitted model that updates attributes ending in "_".
         """
-
         X = check_series(X)
 
         self.update(X=X)
@@ -252,7 +252,6 @@ class BaseSeriesAnnotator(BaseEstimator):
         -----
         Updates fitted model that updates attributes ending in "_".
         """
-
         # default/fallback: re-fit to all data
         self._fit(self._X, self._Y)
 
