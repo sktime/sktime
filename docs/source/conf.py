@@ -97,7 +97,17 @@ numpydoc_validation_checks = {"all"}
 
 # generate autosummary even if no references
 autosummary_generate = True
-autodoc_default_options = {"members": True, "inherited-members": True}
+
+# members and inherited-members default to showing methods/attributes, etc
+# from a class that are created in the class or inherited
+# member-order says to order the documentation in the order the members
+# were defined in the source code
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "member-order": "bysource",
+}
+
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
