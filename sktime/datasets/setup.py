@@ -2,14 +2,18 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = "Markus Löning"
+"""
+Configuration file for datasets in sktime.
 
+The file is adapted from:
+https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/datasets/setup.py
+"""
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
-# /sklearn/datasets/setup.py
+___author__ = ["mloning"]
 
 
 def configuration(parent_package="", top_path=None):
+    """Configure setup."""
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration("datasets", parent_package, top_path)
