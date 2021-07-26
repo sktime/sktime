@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements functionality for specifying forecast horizons in sktime."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
@@ -61,7 +63,7 @@ def _delegator(method):
 def _check_values(values):
     """Validate forecasting horizon values.
 
-    Validation checks validaty and also converts forecasting horizon values
+    Validation checks validity and also converts forecasting horizon values
     to supported pandas.Index types if possible.
 
     Parameters
@@ -126,12 +128,18 @@ class ForecastingHorizon:
     ----------
     values : pd.Index, np.array, list or int
         Values of forecasting horizon
-    is_relative : bool, optional (default=True)
-        - If True, values are relative to end of training series.
-        - If False, values are absolute.
+    is_relative : bool, optional (default=None)
+        - If True, a relative ForecastingHorizon is created:
+                values are relative to end of training series.
+        - If False, an absolute ForecastingHorizon is created:
+                values are absolute.
+        - if None, the flag is determined automatically:
+            relative, if values are of supported relative index type
+            absolute, if not relative and values of supported absolute index type
     """
 
-    def __new__(cls, values=None, is_relative=True):
+    def __new__(cls, values=None, is_relative=None):
+        """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
         # pandas index, but since subclassing pandas indices is not
         # straightforward, we wrap the index object instead. In order to
@@ -143,8 +151,8 @@ class ForecastingHorizon:
         return object.__new__(cls)
 
     def __init__(self, values=None, is_relative=True):
-        if not isinstance(is_relative, bool):
-            raise TypeError("`is_relative` must be a boolean")
+        if is_relative is not None and not isinstance(is_relative, bool):
+            raise TypeError("`is_relative` must be a boolean or None")
         values = _check_values(values)
 
         # check types, note that isinstance() does not work here because index
@@ -152,6 +160,13 @@ class ForecastingHorizon:
         error_msg = (
             f"`values` type is not compatible with `is_relative=" f"{is_relative}`."
         )
+        if is_relative is None:
+            if type(values) in RELATIVE_TYPES:
+                is_relative = True
+            elif type(values) in ABSOLUTE_TYPES:
+                is_relative = False
+            else:
+                raise TypeError(type(values) + "is not a supported fh index type")
         if is_relative:
             if not type(values) in RELATIVE_TYPES:
                 raise TypeError(error_msg)
@@ -169,7 +184,8 @@ class ForecastingHorizon:
         ----------
         values : pd.Index, np.array, list or int
             Values of forecasting horizon.
-        is_relative : bool, optional (default=True)
+        is_relative : bool, default=same as self.is_relative
+        - If None, determined automatically: same as self.is_relative
         - If True, values are relative to end of training series.
         - If False, values are absolute.
 
@@ -335,7 +351,7 @@ class ForecastingHorizon:
         return self._new(integers, is_relative=False)
 
     def to_in_sample(self, cutoff=None):
-        """Return in-sample values.
+        """Return in-sample index values of fh.
 
         Parameters
         ----------
@@ -353,7 +369,7 @@ class ForecastingHorizon:
         return self._new(in_sample)
 
     def to_out_of_sample(self, cutoff=None):
-        """Return out-of-sample values.
+        """Return out-of-sample values of fh.
 
         Parameters
         ----------
@@ -436,7 +452,7 @@ class ForecastingHorizon:
             return relative - relative.to_pandas()[0]
 
     def __repr__(self):
-        # generate repr based on wrapped index repr
+        """Generate repr based on wrapped index repr."""
         class_name = self.__class__.__name__
         pandas_repr = repr(self.to_pandas()).split("(")[-1].strip(")")
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"

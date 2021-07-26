@@ -88,7 +88,7 @@ Shapelet-based
     MrSEQLClassifier
 
 Kernel-based
---------------
+------------
 
 .. currentmodule:: sktime.classification.kernel_based
 

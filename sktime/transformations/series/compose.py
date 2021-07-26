@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Meta-transformers for building composite transformers."""
 
 __author__ = ["Martin Walter"]
 __all__ = ["OptionalPassthrough"]
@@ -13,7 +14,9 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 
 class OptionalPassthrough(_SeriesToSeriesTransformer):
-    """A transformer to tune the implicit hyperparameter whether or not to use a
+    """Wrap an existing transformer to tune whether to include it in a pipeline.
+
+    Allows tuning the implicit hyperparameter whether or not to use a
     particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
     or not. This is achived by having the additional hyperparameter
     "passthrough" which can be added to a grid then (see example).
@@ -26,8 +29,8 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         This arg decides whether to apply the given transformer or to just
         passthrough the data (identity transformation)
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.compose import OptionalPassthrough
@@ -76,6 +79,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         super(OptionalPassthrough, self).__init__()
 
     def fit(self, Z, X=None):
+        """Fit the model."""
         if not self.passthrough:
             self.transformer_ = clone(self.transformer)
             self.transformer_.fit(Z, X)
@@ -83,6 +87,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
+        """Apply transformation."""
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
@@ -91,6 +96,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
+        """Reverse the transformation."""
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:

@@ -106,20 +106,19 @@ class _Pipeline(
 
 
 class ForecastingPipeline(_Pipeline):
-    """
-    Pipeline for forecasting with exogenous data to apply transformers
-    to the exogenous serieses. The forecaster can also be a
-    TransformedTargetForecaster containing transformers to
-    transform y. ForecastingPipeline is only applying the given transformers
-    to X.
+    """Pipeline for forecasting with exogenous data.
+
+    ForecastingPipeline is only applying the given transformers
+    to X. The forecaster can also be a TransformedTargetForecaster containing
+    transformers to transform y.
 
     Parameters
     ----------
     steps : list
         List of tuples like ("name", forecaster/transformer)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
@@ -163,6 +162,7 @@ class ForecastingPipeline(_Pipeline):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, required
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -216,7 +216,7 @@ class ForecastingPipeline(_Pipeline):
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -259,8 +259,8 @@ class ForecastingPipeline(_Pipeline):
 
 
 class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
-    """
-    Meta-estimator for forecasting transformed time series.
+    """Meta-estimator for forecasting transformed time series.
+
     Pipeline functionality to apply transformers to the target series.
 
     Parameters
@@ -268,8 +268,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     steps : list
         List of tuples like ("name", forecaster/transformer)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -308,6 +308,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -359,7 +360,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------

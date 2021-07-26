@@ -78,6 +78,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         """Perform a shapelet transform then builds a random forest.
 
         Contract default for ST is 5 hours
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
         series_length] or shape = [n_instances,n_columns]

@@ -5,6 +5,9 @@ sktime.utils: Utility function
 
 The :mod:`sktime.utils` module contains utility functions.
 
+.. automodule:: sktime.utils
+    :no-members:
+
 Plotting
 --------
 
