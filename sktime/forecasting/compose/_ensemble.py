@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements forecaster for creating forecasts from ensembles of other forecasters."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
