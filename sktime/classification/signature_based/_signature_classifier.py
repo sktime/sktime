@@ -24,6 +24,9 @@ from sktime.utils._maint import deprecated
 class SignatureClassifier(BaseClassifier):
     """Classification module using signature-based features.
 
+    DEPRECATED. Please use `SignatureClassifier` from
+    `sktime.classification.feature_based` instead.
+
     This simply initialises the SignatureTransformer class which builds
     the feature extraction pipeline, then creates a new pipeline by
     appending a classifier after the feature extraction step.

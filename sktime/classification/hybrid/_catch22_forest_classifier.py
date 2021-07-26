@@ -20,6 +20,9 @@ from sktime.utils.validation.panel import check_X
 class Catch22ForestClassifier(BaseClassifier):
     """Canonical Time-series Characteristics (catch22).
 
+    DEPRECATED. Please use `Catch22Classifier` from
+    `sktime.classification.feature_based` instead.
+
     Overview: Input n series length m. Transforms series into the 22 catch22
     features [1] extracted from the hctsa toolbox[2] and builds a random forest
     classifier on them.
