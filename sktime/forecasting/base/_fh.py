@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements functionality for specifying forecast horizons in sktime."""
 
 __author__ = ["mloning", "fkiraly"]
 __all__ = ["ForecastingHorizon"]
