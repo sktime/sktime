@@ -1,3 +1,2 @@
-.. _contributing:
-
-.. mdinclude:: ../../CONTRIBUTING.md
+```{include} ./../CONTRIBUTING.md
+```
