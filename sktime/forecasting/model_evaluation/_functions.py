@@ -1,4 +1,7 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements functions to be used in evaluating forecasting models."""
 
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = ["evaluate"]
