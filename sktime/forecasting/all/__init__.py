@@ -1,5 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Import all time series forecasting functionality available in sktime."""
+
 __author__ = ["Markus Löning"]
 __all__ = [
     "ForecastingHorizon",

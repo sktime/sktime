@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements grid search functionality to tune forecasters."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
@@ -149,7 +150,7 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
-        """Returns the score on the given data, if the forecaster has been refit.
+        """Return the score on the given data, if the forecaster has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
@@ -180,7 +181,7 @@ class BaseGridSearch(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def check_is_fitted(self, method_name=None):
-        """Has `fit` been called?
+        """Whether `fit` has been called.
 
         Parameters
         ----------
@@ -417,7 +418,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         self.param_grid = param_grid
 
     def _run_search(self, evaluate_candidates):
-        """Search all candidates in param_grid"""
+        """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
@@ -513,7 +514,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.random_state = random_state
 
     def _run_search(self, evaluate_candidates):
-        """Search n_iter candidates from param_distributions"""
+        """Search n_iter candidates from param_distributions."""
         return evaluate_candidates(
             ParameterSampler(
                 self.param_distributions, self.n_iter, random_state=self.random_state

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Lists of datasets available from the archive on timeseriesclassification.com
+"""Lists of datasets available from the archive on timeseriesclassification.com.
 
 There are four main distinctions: univariate/multivariate equal/unequal length.
 Array univariate lists the 128 UCR problems, as described in [1].
