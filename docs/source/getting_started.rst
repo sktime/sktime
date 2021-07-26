@@ -52,7 +52,7 @@ For more information on the terminology used by ``sktime`` see INSERT LINK TO OU
 
 Quickstart
 ----------
-The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the `tutorials`_, `user_guide`_ and `api_reference`_ in ``sktime's`` `user_documentation`_.
+The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`user_guide` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
 
 Forecasting
 ~~~~~~~~~~~
@@ -78,6 +78,7 @@ Time Series Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
+
     from sktime.classification.interval_based import TimeSeriesForestClassifier
     from sktime.datasets import load_arrow_head
     from sklearn.model_selection import train_test_split
