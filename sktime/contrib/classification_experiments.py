@@ -155,9 +155,7 @@ def set_classifier(cls, resampleId=None):
             random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
         )
     elif name == "matrixprofile":
-        return MatrixProfileClassifier(
-            random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
-        )
+        return MatrixProfileClassifier(random_state=resampleId)
     elif name == "signature":
         return SignatureClassifier(
             random_state=resampleId, classifier=RandomForestClassifier(n_estimators=500)

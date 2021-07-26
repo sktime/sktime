@@ -2,7 +2,6 @@
 """MatrixProfileClassifier test code."""
 import numpy as np
 from numpy import testing
-from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.feature_based import MatrixProfileClassifier
 from sktime.datasets import load_gunpoint, load_italy_power_demand
@@ -16,8 +15,7 @@ def test_matrix_profile_classifier_on_gunpoint():
     indices = np.random.RandomState(0).permutation(10)
 
     # train matrix profile classifier
-    rf = RandomForestClassifier(n_estimators=20)
-    mpc = MatrixProfileClassifier(random_state=0, estimator=rf)
+    mpc = MatrixProfileClassifier(random_state=0)
     mpc.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -33,8 +31,7 @@ def test_matrix_profile_classifier_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train TSFresh classifier
-    rf = RandomForestClassifier(n_estimators=20)
-    mpc = MatrixProfileClassifier(random_state=0, estimator=rf)
+    mpc = MatrixProfileClassifier(random_state=0)
     mpc.fit(X_train, y_train)
 
     score = mpc.score(X_test.iloc[indices], y_test[indices])
@@ -44,66 +41,66 @@ def test_matrix_profile_classifier_on_power_demand():
 matrix_profile_classifier_gunpoint_probas = np.array(
     [
         [
-            0.35,
-            0.65,
+            0.0,
+            1.0,
         ],
         [
-            0.45,
-            0.55,
+            0.0,
+            1.0,
         ],
         [
-            0.8,
-            0.2,
+            1.0,
+            0.0,
         ],
         [
-            0.4,
-            0.6,
+            0.0,
+            1.0,
         ],
         [
-            0.35,
-            0.65,
+            1.0,
+            0.0,
         ],
         [
-            0.55,
-            0.45,
+            1.0,
+            0.0,
         ],
         [
-            0.25,
-            0.75,
+            0.0,
+            1.0,
         ],
         [
-            0.5,
-            0.5,
+            1.0,
+            0.0,
         ],
         [
-            0.6,
-            0.4,
+            1.0,
+            0.0,
         ],
         [
-            0.6,
-            0.4,
+            1.0,
+            0.0,
         ],
     ]
 )
 
 
 # def print_array(array):
-#     print('[')
+#     print("[")
 #     for sub_array in array:
-#         print('[')
+#         print("[")
 #         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
+#             print(value.astype(str), end="")
+#             print(", ")
+#         print("],")
+#     print("]")
+#
 #
 # if __name__ == "__main__":
 #     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
 #     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
-#     rf = RandomForestClassifier(n_estimators=20)
-#     mpc = MatrixProfileClassifier(random_state=0, estimator=rf)
+#     mpc = MatrixProfileClassifier(random_state=0)
 #
 #     mpc.fit(X_train.iloc[indices], y_train[indices])
 #     probas = mpc.predict_proba(X_test.iloc[indices])
