@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["PolynomialTrendForecaster"]
+__all__ = ["TrendForecaster", "PolynomialTrendForecaster"]
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,100 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.datetime import _get_duration
 
-class TrendForcaster(BaseForecaster):
-    pass
+
+class TrendForecaster(BaseForecaster):
+    """
+    Forecast time series data.
+    Default settings train a linear regression model.
+
+    Parameters
+    ----------
+    regressor : estimator object, optional (default = None)
+        Define the regression model type. If not set, will default to
+         sklearn.linear_model.LinearRegression
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> y = load_airline()
+    >>> forecaster = TrendForecaster()
+    >>> forecaster.fit(y)
+    TrendForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
+
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
+    def __init__(self, regressor=None):
+        self.regressor = regressor
+        self.regressor_ = None
+        super(TrendForecaster, self).__init__()
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series with which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecast horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+
+        # for default regressor, set fit_intercept=False
+        regressor = self.regressor or LinearRegression(fit_intercept=False)
+
+        # make pipeline with regressor
+        self.regressor_ = make_pipeline(regressor)
+
+        # transform data
+        n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
+        X = np.arange(n_timepoints).reshape(-1, 1)
+
+        # fit regressor
+        self.regressor_.fit(X, y)
+        return self
+
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make forecasts for the given forecast horizon
+
+        Parameters
+        ----------
+        fh : int, list or np.array
+            The forecast horizon with the steps ahead to predict
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+        return_pred_int : bool, optional (default=False)
+            Return the prediction intervals for the forecast.
+        alpha : float or list, optional (default=0.95)
+            If alpha is iterable, multiple intervals will be calculated.
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions for the forecast
+        y_pred_int : pd.DataFrame
+            Prediction intervals for the forecast
+        """
+        if return_pred_int or X is not None:
+            raise NotImplementedError()
+
+        # use relative fh as time index to predict
+        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
+        X_pred = fh.to_numpy().reshape(-1, 1)
+        y_pred = self.regressor_.predict(X_pred)
+        return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
 
 class PolynomialTrendForecaster(BaseForecaster):
