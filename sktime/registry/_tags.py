@@ -27,7 +27,7 @@ each tuple corresponds to a tag, elements as follows:
 
 ---
 
-ESTIMATOR_TABLE - pd.DataFrame
+ESTIMATOR_TAG_TABLE - pd.DataFrame
     ESTIMATOR_TAG_REGISTER in table form, as pd.DataFrame
         rows of ESTIMATOR_TABLE correspond to elements in ESTIMATOR_TAG_REGISTER
 
@@ -144,9 +144,9 @@ ESTIMATOR_TAG_REGISTER = [
     # ),
 ]
 
-ESTIMATOR_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
+ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
 
-ESTIMATOR_TAG_LIST = ESTIMATOR_TABLE[0].tolist()
+ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
 
 
 def check_tag_is_valid(tag_name, tag_value):
@@ -165,7 +165,7 @@ def check_tag_is_valid(tag_name, tag_value):
     if tag_name not in ESTIMATOR_TAG_LIST:
         raise KeyError(tag_name + " is not a valid tag")
 
-    tag_type = ESTIMATOR_TABLE[2][ESTIMATOR_TABLE[0] == "tag_name"]
+    tag_type = ESTIMATOR_TAG_TABLE[2][ESTIMATOR_TAG_TABLE[0] == "tag_name"]
 
     if tag_type == "bool" and not isinstance(tag_value, bool):
         raise ValueError(tag_name + " must be True/False, found " + tag_value)
