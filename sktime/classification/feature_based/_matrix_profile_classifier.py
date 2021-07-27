@@ -26,7 +26,7 @@ class MatrixProfileClassifier(BaseClassifier):
     ----------
     subsequence_length : int, default=10
         The subsequence length for the MatrixProfile transformer.
-    estimator : sklearn classifier, default=KNeighborsClassifier(n_neighbors=1)
+    estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         1-nearest neighbour classifier.
     n_jobs : int, default=1
@@ -82,10 +82,7 @@ class MatrixProfileClassifier(BaseClassifier):
         random_state=None,
     ):
         self.subsequence_length = subsequence_length
-
-        self.estimator = (
-            KNeighborsClassifier(n_neighbors=1) if estimator is None else estimator
-        )
+        self.estimator = estimator
 
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -115,7 +112,12 @@ class MatrixProfileClassifier(BaseClassifier):
         self.n_classes = self.classes_.shape[0]
 
         self._transformer = MatrixProfile(m=self.subsequence_length)
-        self._estimator = _clone_estimator(self.estimator, self.random_state)
+        self._estimator = _clone_estimator(
+            KNeighborsClassifier(n_neighbors=1)
+            if self.estimator is None
+            else self.estimator,
+            self.random_state,
+        )
 
         m = getattr(self._estimator, "n_jobs", None)
         if callable(m):

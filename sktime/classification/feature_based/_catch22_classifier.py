@@ -28,7 +28,7 @@ class Catch22Classifier(BaseClassifier):
     outlier_norm : bool, default=False
         Normalise each series during the two outlier catch22 features, which can take a
         while to process for large values
-    estimator : sklearn classifier, default=RandomForestClassifier
+    estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
     n_jobs : int, default=1
@@ -88,10 +88,7 @@ class Catch22Classifier(BaseClassifier):
         random_state=None,
     ):
         self.outlier_norm = outlier_norm
-
-        self.estimator = (
-            RandomForestClassifier(n_estimators=200) if estimator is None else estimator
-        )
+        self.estimator = estimator
 
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -120,7 +117,12 @@ class Catch22Classifier(BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
 
         self._transformer = Catch22(outlier_norm=self.outlier_norm)
-        self._estimator = _clone_estimator(self.estimator, self.random_state)
+        self._estimator = _clone_estimator(
+            RandomForestClassifier(n_estimators=200)
+            if self.estimator is None
+            else self.estimator,
+            self.random_state,
+        )
 
         m = getattr(self._estimator, "n_jobs", None)
         if callable(m):

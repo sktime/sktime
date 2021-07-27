@@ -33,7 +33,7 @@ class TSFreshClassifier(BaseClassifier):
         "comprehensive".
     relevant_feature_extractor : bool, default=False
         Remove irrelevant features using the FRESH algorithm.
-    estimator : sklearn classifier, default=RandomForestClassifier
+    estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
     verbose : int, default=0
@@ -98,12 +98,7 @@ class TSFreshClassifier(BaseClassifier):
     ):
         self.default_fc_parameters = default_fc_parameters
         self.relevant_feature_extractor = relevant_feature_extractor
-
-        self.estimator = (
-            RandomForestClassifier(n_estimators=200, n_jobs=n_jobs)
-            if estimator is None
-            else estimator
-        )
+        self.estimator = estimator
 
         self.verbose = verbose
         self.n_jobs = n_jobs
@@ -147,13 +142,22 @@ class TSFreshClassifier(BaseClassifier):
                 chunksize=self.chunksize,
             )
         )
+        self._estimator = _clone_estimator(
+            RandomForestClassifier(n_estimators=200)
+            if self.estimator is None
+            else self.estimator,
+            self.random_state,
+        )
 
         if self.verbose < 2:
             self._transformer.show_warnings = False
             if self.verbose < 1:
                 self._transformer.disable_progressbar = True
 
-        self._estimator = _clone_estimator(self.estimator, self.random_state)
+        m = getattr(self._estimator, "n_jobs", None)
+        if callable(m):
+            self._estimator.n_jobs = self.n_jobs
+
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
 
