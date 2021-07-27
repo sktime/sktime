@@ -18,10 +18,14 @@ from sktime.transformations.panel.signature_based._checks import (
 from sktime.transformations.panel.signature_based._signature_method import (
     SignatureTransformer,
 )
+from sktime.utils._maint import deprecated
 
 
 class SignatureClassifier(BaseClassifier):
     """Classification module using signature-based features.
+
+    DEPRECATED. Please use `SignatureClassifier` from
+    `sktime.classification.feature_based` instead.
 
     This simply initialises the SignatureTransformer class which builds
     the feature extraction pipeline, then creates a new pipeline by
@@ -68,6 +72,9 @@ class SignatureClassifier(BaseClassifier):
         `signature_method` pipeline to make a classification pipeline.
     """
 
+    @deprecated(
+        "Please use `SignatureClassifier` from `sktime.classification.feature_based` instead."  # noqa: E501
+    )
     def __init__(
         self,
         classifier=None,
