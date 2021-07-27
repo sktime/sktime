@@ -232,7 +232,7 @@ def run_experiment(
     if clusterer is None:
         clusterer = set_clusterer(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
-    #Build the clusterer on train
+    # Build the clusterer on train
     start = int(round(time.time() * 1000))
     clusterer.fit(trainX)
     build_time = int(round(time.time() * 1000)) - start
@@ -257,7 +257,7 @@ def run_experiment(
     second.replace("\n", " ")
     second.replace("\r", " ")
     #TODO: refactor clusterers to return an array
-    pr=np.array(preds)
+    pr = np.array(preds)
     third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
     write_results_to_uea_format(
         second_line=second,
@@ -272,7 +272,7 @@ def run_experiment(
     )
     if train_file:
         start = int(round(time.time() * 1000))
-        train_preds  = clusterer.predict(trainX)
+        train_preds = clusterer.predict(trainX)
         train_time = int(round(time.time() * 1000)) - start
         if "Composite" in cls_name:
             second = "Para info too long!"
@@ -280,9 +280,7 @@ def run_experiment(
             second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
-        third = (
-            "TO SORT OUT"
-        )
+        third = "FORMAT NOT FINALISED"
         write_results_to_uea_format(
             second_line=second,
             third_line=third,

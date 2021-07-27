@@ -1091,7 +1091,7 @@ def write_results_to_uea_format(
     # it should be the output
     # of the estimator on the test data (likely trained on the training data
     # for a-priori parameter optimisation)
-    file.write(str(third_line)+"\n")
+    file.write(str(third_line) +  "\n")
 
     # from line 4 onwards each line should include the actual and predicted
     # class labels (comma-separated). If
