@@ -346,47 +346,53 @@ sktime uses a “consensus seeking” process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
--  For a proposed changes to be accepted via lazy consensus, one of the following
+-  For a proposed changes to be approved via lazy consensus, one of the following
    two conditions must be satisfied:
-    - approval by one core developer and no rejection by a core developer (veto right).
+    - approval by at least one core developer and no rejection by a core developer (veto right).
       The approval required for this condition must be by a core developer different from a proposer.
-      If the proposed change is a pull request (PR), then the approval must be in the form of a GitHub PR approval.
-    - the proposer is a core developer, and no rejection by other core developers was expressed
-      by the earliest time point at which reasonable time has passed for consideration.
--  Formal statements on proposed changes must be located with the proposal,
+    - approval in the regular core developer meeting as part of the agenda.
+      This can happen only if no approvals or rejections are expresesd on a PR, see below.
+-  For a proposed change to be rejected via lazy consensus, one of the following two conditions
+   must be satisfied:
+    - rejection by at least one core developer, and no acceptance by a core developer.
+    - rejection in the regular core developer meeting as part of the agenda.
+      This can happen only if no approvals or rejections are expresesd on a PR, see below.
+-  Formal statements on proposed changes must be located with the proposal on GitHub,
    usually in the same pull request that contains the proposal, or the related issue.
    Formal statements in this sense are approvals/rejections, and statements
    about whether the proposal should be considered a "major change", as below.
 -  Approvals and rejections can be expressed as +1 and -1 comments,
    respectively, or any written comments
    containing "I formally approve/reject" in reference to the proposal.
-   If the proposed change has the form of a PR, a GitHub PR approval also counts as approval.
+   If the proposed change has the form of a PR, approval must be in the form of a GitHub PR approval.
 -  Major changes to the project require a more
    detailed analysis and a consensus that is both explicit and informed.
    A major change always require a worked out :ref:`steps`.
-   Major changes require twelve working days excluding week-ends
-   as reasonable time for consideration.
    A change is major in the above sense
    if at least three core developers explicitly state that the proposal is a major change
-   and requires especial consideration, in the location
--  Core developers are expected to give reasonable time for consideration, that is,
-   time and opportunity to other core developers to
+   and requires especial consideration, in the location.
+-  Proposers are expected to give reasonable time for consideration, that is,
+   time and opportunity for core developers to review and
    give their opinion on the contribution.
-   Three working days excluding week-ends constitute "reasonable time" in the above sense
-   if the proposal is not considered a major change. For major changes, fifteen working
-   days excluding week-ends are required.
-   For pull requests, the period starts at the latest checks-passing change to the PR
-   made by the proposer.
+   Ten working days excluding week-ends constitute "reasonable time" in the above sense.
+   For pull requests, the period resets at every new change made to the PR.
+   It starts only when all GitHub checks pass.
+-  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
+   the PR is scheduled for decision, at the top of the next regular core developer meeting's agenda
+   in which less than seven PR are already on the agenda. If no regular core developer meeting
+   is scheduled within the two calendar weeks after the period elapses,
+   the core developers must schedule one within those two weeks.
+-  Decision, in the core developer meeting, is by 2/3 majority of core developers in the meeting,
+   possibly including the proposer.
+   Decision is between approval or rejection. Approval can be subjected to minor corrections, which
+   requires an additional, simple majority consensus decision of core developers in the meeting.
 
-If lazy consensus is found, the proposer can ask for their contribution to be accepted.
-In the case of pull requests, the proposer is then entitled to their pull request
-(at the latest checks-passing state) to be merged by a core developer,
-within three working days excluding week-ends, without further discussion.
+Approval or rejection as above count as "consensus".
+Lack of such consensus can arise under two conditions:
+- at least one approval and at least one rejection on GitHub
+- no 2/3 majority for either approval or rejection in the core developer meeting
 
-When no lazy consensus can be found, the decision is escaled to :ref:`stage-2`.
-The one condition on which this may happen is at least one core developer
-making use of their veto rights, rejecting the proposed change
-within the time frame given for consideration.
+When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 
 .. _stage-2:
 
