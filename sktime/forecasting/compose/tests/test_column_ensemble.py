@@ -33,42 +33,7 @@ def test_column_ensemble_shape(forecasters, fh):
     forecaster = ColumnEnsembleForecaster(forecasters)
     forecaster.fit(y, fh=fh)
     actual = forecaster.predict()
-    assert actual.shape == (len(fh),)
-
-
-@pytest.mark.parametrize(
-    "forecasters",
-    [
-        [("trend", PolynomialTrendForecaster(), 0), ("naive", NaiveForecaster(), 1)],
-        [("trend", PolynomialTrendForecaster(), 0), ("ses", ExponentialSmoothing(), 1)],
-    ],
-)
-def test_avg_mean(forecasters):
-    """Assert `mean` aggfunc return the same values as `avg` with no weights."""
-    y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)), columns=list("AB"))
-    forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-    forecaster.fit(y, fh=[1, 2, 3])
-    mean_pred = forecaster.predict()
-
-    forecaster_1 = ColumnEnsembleForecaster(forecasters=forecasters, aggfunc="average")
-    forecaster_1.fit(y, fh=[1, 2, 3])
-    avg_pred = forecaster_1.predict()
-
-    pd.testing.assert_series_equal(mean_pred, avg_pred)
-
-
-@pytest.mark.parametrize("aggfunc", ["min", "max", ""])
-@pytest.mark.parametrize(
-    "forecasters",
-    [[("trend", PolynomialTrendForecaster(), 0), ("naive", NaiveForecaster(), 1)]],
-)
-def test_invalid_aggfuncs(forecasters, aggfunc):
-    """Check if invalid aggregation functions return Error."""
-    y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)), columns=list("AB"))
-    forecaster = ColumnEnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
-    forecaster.fit(y, fh=[1, 2])
-    with pytest.raises(ValueError, match=r"not recognized"):
-        forecaster.predict()
+    assert actual.shape == (len(fh), y.shape[1])
 
 
 @pytest.mark.parametrize(

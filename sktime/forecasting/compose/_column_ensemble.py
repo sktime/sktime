@@ -16,7 +16,7 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
-    """Forecast each series and aggregate them into one.
+    """Forecast each series with separate forecaster.
 
     Parameters
     ----------
@@ -94,6 +94,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             y_pred[:, index] = forecaster.predict(fh)
 
         y_pred = pd.DataFrame(data=y_pred)
+        y_pred.index = self.fh.to_absolute(self.cutoff)
         return y_pred
 
     def get_params(self, deep=True):
