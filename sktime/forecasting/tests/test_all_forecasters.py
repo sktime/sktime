@@ -61,7 +61,13 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 def test_get_fitted_params(Forecaster):
     """Test get_fitted_params."""
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=FH0)
+    if f.get_tag("scitype:y") == "univariate":
+        y = _make_series(n_columns=1)
+        f.fit(y, fh=FH0)
+
+    elif f.get_tag("scitype:y") == "multivariate":
+        y = _make_series(n_columns=2)
+        f.fit(y, fh=FH0)
     try:
         params = f.get_fitted_params()
         assert isinstance(params, dict)
