@@ -8,7 +8,6 @@ import pandas as pd
 from sklearn.metrics import accuracy_score as acc
 from sktime.utils.data_processing import _make_column_names, from_long_to_nested
 
-
 class TsFileParseException(Exception):
     """
     Should be raised when parsing a .ts file and the format is incorrect.
@@ -1006,27 +1005,44 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
 
 
 def write_results_to_uea_format(
-    path,
-    strategy_name,
+    output_path,
+    estimator_name,
     dataset_name,
     y_true,
     y_pred,
     split="TEST",
     resample_seed=0,
-    y_proba=None,
-    second_line="N/A",
+    predicted_probs=None,
+    second_line="No Parameter Info",
+    third_line="N/A",
 ):
+    """Writes the predictions for an experiment in the standard format used by sktime
+     and tsml
+    Parameters
+    ----------
+    output_path:            string, root path where to put results.
+    estimator_name :        string, name of the class that made the predictions
+    dataset_name:           string, name of the problem the classifier was built on
+    y_true:                 array, actual labels
+    y_pred:                 array, predicted class labels
+    split:                  string, wither TRAIN or TEST, depending on the results.
+    resample_seed:          int, makes resampling deterministic
+    predicted_probs:          number of cases x number of classes 2d array
+    second_line:            unstructured, classifier parameters
+    third_line:             summary performance information (see comment below)
+    """
+
     if len(y_true) != len(y_pred):
         raise IndexError(
-            "The number of predicted class values is not the same as the "
+            "The number of predicted values is not the same as the "
             "number of actual class values"
         )
 
     try:
         os.makedirs(
-            str(path)
+            str(output_path)
             + "/"
-            + str(strategy_name)
+            + str(estimator_name)
             + "/Predictions/"
             + str(dataset_name)
             + "/"
@@ -1042,9 +1058,9 @@ def write_results_to_uea_format(
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
     file = open(
-        str(path)
+        str(output_path)
         + "/"
-        + str(strategy_name)
+        + str(estimator_name)
         + "/Predictions/"
         + str(dataset_name)
         + "/"
@@ -1055,12 +1071,10 @@ def write_results_to_uea_format(
         "w",
     )
 
-    correct = acc(y_true, y_pred)
-
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
     file.write(
-        str(strategy_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
+        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
     )
 
     # the second line of the output is free form and classifier-specific;
@@ -1077,8 +1091,7 @@ def write_results_to_uea_format(
     # it should be the output
     # of the estimator on the test data (likely trained on the training data
     # for a-priori parameter optimisation)
-
-    file.write(str(correct) + "\n")
+    file.write(str(third_line)+"\n")
 
     # from line 4 onwards each line should include the actual and predicted
     # class labels (comma-separated). If
@@ -1095,13 +1108,11 @@ def write_results_to_uea_format(
     #   actual_class_val[i], predicted_class_val[i]
     for i in range(0, len(y_pred)):
         file.write(str(y_true[i]) + "," + str(y_pred[i]))
-        if y_proba is not None:
+        if predicted_probs is not None:
             file.write(",")
-            for j in y_proba[i]:
+            for j in predicted_probs[i]:
                 file.write("," + str(j))
-            file.write("\n")  # TODO BUG new line is written only if the
-            # probas are provided!!!!
-
+        file.write("\n")
     file.close()
 
 

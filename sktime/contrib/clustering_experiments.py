@@ -15,7 +15,7 @@ from sktime.clustering import (
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
 )
-
+from sktime.utils.data_io import write_results_to_uea_format
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -156,7 +156,7 @@ def run_experiment(
     format=".ts",
     train_file=False,
 ):
-    """Run a classification experiment.
+    """Run a clustering experiment.
 
     Method to run a basic experiment and write the results to files called
     testFold<resampleID>.csv and, if required, trainFold<resampleID>.csv.
@@ -181,7 +181,6 @@ def run_experiment(
     train_file: whether to generate train files or not. If true, it performs a
                 10xCV on the train and saves
     """
-    build_test = True
     if not overwrite:
         full_path = (
             str(results_path)
@@ -219,22 +218,13 @@ def run_experiment(
         if train_file == False and build_test == False:
             return
 
-    # TO DO: Automatically differentiate between problem types,
     # currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN" + format)
     testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
     if resampleID != 0:
-        # allLabels = np.concatenate((trainY, testY), axis = None)
-        # allData = pd.concat([trainX, testX])
-        # train_size = len(trainY) / (len(trainY) + len(testY))
-        # trainX, testX, trainY, testY = train_test_split(allData, allLabels,
-        # train_size=train_size,
-        # random_state=resampleID, shuffle=True,
-        # stratify=allLabels)
         trainX, trainY, testX, testY = stratified_resample(
             trainX, trainY, testX, testY, resampleID
         )
-
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
     trainY = le.transform(trainY)
@@ -242,220 +232,71 @@ def run_experiment(
     if clusterer is None:
         clusterer = set_clusterer(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
-    if build_test:
-        # TO DO : use sklearn CV
-        start = int(round(time.time() * 1000))
-        clusterer.fit(trainX)
-        build_time = int(round(time.time() * 1000)) - start
-        start = int(round(time.time() * 1000))
-        clusters = clusterer.predict(testX)
-        preds = form_cluster_list(clusters, len(testY))
-        test_time = int(round(time.time() * 1000)) - start
-        print(
-            cls_name
-            + " on "
-            + dataset
-            + " resample number "
-            + str(resampleID)
-            + " time: "
-            + str(test_time)
-        )
-        #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
-        if "Composite" in cls_name:
-            second = "Para info too long!"
-        else:
-            second = str(clusterer.get_params())
-        second.replace("\n", " ")
-        second.replace("\r", " ")
-
-        print(second)
-        temp = np.array_repr(clusterer.classes_).replace("\n", "")
-
-        third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
-        write_results_to_uea_format(
-            second_line=second,
-            third_line=third,
-            output_path=results_path,
-            classifier_name=cls_name,
-            resample_seed=resampleID,
-            predicted_class_vals=preds,
-            dataset_name=dataset,
-            actual_class_vals=testY,
-            split="TEST",
-        )
+    #Build the clusterer on train
+    start = int(round(time.time() * 1000))
+    clusterer.fit(trainX)
+    build_time = int(round(time.time() * 1000)) - start
+    start = int(round(time.time() * 1000))
+    preds = clusterer.predict(testX)
+    #        preds = form_cluster_list(clusters, len(testY))
+    test_time = int(round(time.time() * 1000)) - start
+    print(
+        cls_name
+        + " on "
+        + dataset
+        + " resample number "
+        + str(resampleID)
+        + " time: "
+        + str(test_time)
+    )
+    #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
+    if "Composite" in cls_name:
+        second = "Para info too long!"
+    else:
+        second = str(clusterer.get_params())
+    second.replace("\n", " ")
+    second.replace("\r", " ")
+    #TODO: refactor clusterers to return an array
+    pr=np.array(preds)
+    third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
+    write_results_to_uea_format(
+        second_line=second,
+        third_line=third,
+        output_path=results_path,
+        estimator_name=cls_name,
+        resample_seed=resampleID,
+        y_pred=preds,
+        dataset_name=dataset,
+        y_true=testY,
+        split="TEST",
+    )
     if train_file:
         start = int(round(time.time() * 1000))
-        if build_test and hasattr(
-            clusterer, "_get_train_probs"
-        ):  # Normally Can only do this if test has been built
-            train_probs = clusterer._get_train_probs(trainX)
-        else:
-            train_probs = cross_val_predict(
-                clusterer, X=trainX, y=trainY, cv=10, method="predict_proba"
-            )
+        train_preds  = clusterer.predict(trainX)
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = clusterer.classes_[np.argmax(train_probs, axis=1)]
-        train_acc = accuracy_score(trainY, train_preds)
-        print(
-            cls_name
-            + " on "
-            + dataset
-            + " resample number "
-            + str(resampleID)
-            + " train acc: "
-            + str(train_acc)
-            + " time: "
-            + str(train_time)
-        )
         if "Composite" in cls_name:
             second = "Para info too long!"
         else:
             second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
-        temp = np.array_repr(clusterer.classes_).replace("\n", "")
         third = (
-            str(train_acc)
-            + ","
-            + str(train_time)
-            + ",-1,-1,-1,"
-            + str(len(clusterer.classes_))
+            "TO SORT OUT"
         )
         write_results_to_uea_format(
             second_line=second,
             third_line=third,
             output_path=results_path,
-            classifier_name=cls_name,
+            estimator_name=cls_name,
             resample_seed=resampleID,
-            predicted_class_vals=train_preds,
-            actual_probas=train_probs,
+            y_pred=train_preds,
             dataset_name=dataset,
-            actual_class_vals=trainY,
+            y_true=trainY,
             split="TRAIN",
         )
 
 
-def write_results_to_uea_format(
-    output_path,
-    classifier_name,
-    dataset_name,
-    actual_class_vals,
-    predicted_class_vals,
-    split="TEST",
-    resample_seed=0,
-    actual_probas=None,
-    second_line="No Parameter Info",
-    third_line="N/A",
-    class_labels=None,
-):
-    """Write results to file.
-
-    Outputs the classifier results, mirrors that produced by tsml Java package.
-    Directories of the form
-    <output_path>/<classifier_name>/Predictions/<dataset_name>
-    Will automatically be created and results written.
-
-    Parameters
-    ----------
-    output_path:            string, root path where to put results.
-    classifier_name:        string, name of the classifier that made the predictions
-    dataset_name:           string, name of the problem the classifier was built on
-    actual_class_vals:      array, actual class labels
-    predicted_class_vals:   array, predicted class labels
-    split:                  string, wither TRAIN or TEST, depending on the results.
-    resample_seed:          int, makes resampling deterministic
-    actual_probas:          number of cases x number of classes 2d array
-    second_line:            unstructured, classifier parameters
-    third_line:             summary performance information (see comment below)
-    class_labels:           needed to equate to tsml output
-
-    """
-    if len(actual_class_vals) != len(predicted_class_vals):
-        raise IndexError(
-            "The number of predicted class values is not the same as the "
-            + "number of actual class values"
-        )
-
-    try:
-        os.makedirs(
-            str(output_path)
-            + "/"
-            + str(classifier_name)
-            + "/Predictions/"
-            + str(dataset_name)
-            + "/"
-        )
-    except os.error:
-        pass  # raises os.error if path already exists
-
-    if split == "TRAIN" or split == "train":
-        train_or_test = "train"
-    elif split == "TEST" or split == "test":
-        train_or_test = "test"
-    else:
-        raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
-
-    file = open(
-        str(output_path)
-        + "/"
-        + str(classifier_name)
-        + "/Predictions/"
-        + str(dataset_name)
-        + "/"
-        + str(train_or_test)
-        + "Fold"
-        + str(resample_seed)
-        + ".csv",
-        "w",
-    )
-
-    # <classifierName>,<datasetName>,<train/test>,<Class Labels>
-    file.write(
-        str(dataset_name)
-        + ","
-        + str(classifier_name)
-        + ","
-        + str(train_or_test)
-        + ","
-        + str(resample_seed)
-        + ",MILLISECONDS,PREDICTIONS, Generated by classification_experiments.py"
-    )
-    file.write("\n")
-
-    # the second line of the output is free form and classifier-specific;
-    # usually this will record info
-    # such as parameter options used, any constituent model names for ensembles, etc.
-    file.write(str(second_line) + "\n")
-
-    # the third line of the file is the accuracy (should be between 0 and 1 inclusive).
-    # If this is a train output file then it will be a training estimate of the
-    # classifier on the training data only (e.g. #10-fold cv, leave-one-out cv, etc.).
-    # If this is a test output file, it should be the output of the estimator on the
-    # test data (likely trained on the training data for a-priori para optimisation)
-    file.write(str(third_line))
-    file.write("\n")
-
-    # from line 4 onwards each line should include the actual and predicted class labels
-    # (comma-separated). If present, for each case, the probabilities of predicting
-    # every class value for this case should also be appended to the line (a space is
-    # also included between the predicted value and the predict_proba). E.g.:
-    # if predict_proba data IS provided for case i:
-    #   actual_class_val[i], predicted_class_val[i],,
-    #
-    # if predict_proba data IS NOT provided for case i:
-    #   actual_class_val[i], predicted_class_val[i]
-    for i in range(0, len(predicted_class_vals)):
-        file.write(str(actual_class_vals[i]) + "," + str(predicted_class_vals[i]))
-        if actual_probas is not None:
-            file.write(",")
-            for j in actual_probas[i]:
-                file.write("," + str(j))
-            file.write("\n")
-
-    file.close()
-
-
-def test_loading():
+def demo_loading():
     """Test function to check dataset loading of univariate and multivaria problems."""
     for i in range(0, len(dataset_lists.univariate)):
         data_dir = "E:/tsc_ts/"
@@ -488,106 +329,6 @@ def test_loading():
         print(testY.shape)
 
 
-benchmark_datasets = [
-    "ACSF1",
-    "Adiac",
-    "ArrowHead",
-    "Beef",
-    "BeetleFly",
-    "BirdChicken",
-    "BME",
-    "Car",
-    "CBF",
-    "ChlorineConcentration",
-    "CinCECGTorso",
-    "Coffee",
-    "Computers",
-    "CricketX",
-    "CricketY",
-    "CricketZ",
-    "DiatomSizeReduction",
-    "DistalPhalanxOutlineCorrect",
-    "DistalPhalanxOutlineAgeGroup",
-    "DistalPhalanxTW",
-    "Earthquakes",
-    "ECG200",
-    "ECG5000",
-    "ECGFiveDays",
-    "EOGHorizontalSignal",
-    "EOGVerticalSignal",
-    "EthanolLevel",
-    "FaceAll",
-    "FaceFour",
-    "FacesUCR",
-    "FiftyWords",
-    "Fish",
-    "FreezerRegularTrain",
-    "FreezerSmallTrain",
-    "Ham",
-    "Haptics",
-    "Herring",
-    "InlineSkate",
-    "InsectEPGRegularTrain",
-    "InsectEPGSmallTrain",
-    "InsectWingbeatSound",
-    "ItalyPowerDemand",
-    "LargeKitchenAppliances",
-    "Lightning2",
-    "Lightning7",
-    "Mallat",
-    "Meat",
-    "MedicalImages",
-    "MiddlePhalanxOutlineCorrect",
-    "MiddlePhalanxOutlineAgeGroup",
-    "MiddlePhalanxTW",
-    "MixedShapesRegularTrain",
-    "MixedShapesSmallTrain",
-    "MoteStrain",
-    "OliveOil",
-    "OSULeaf",
-    "PhalangesOutlinesCorrect",
-    "Phoneme",
-    "PigAirwayPressure",
-    "PigArtPressure",
-    "PigCVP",
-    "Plane",
-    "PowerCons",
-    "ProximalPhalanxOutlineCorrect",
-    "ProximalPhalanxOutlineAgeGroup",
-    "ProximalPhalanxTW",
-    "RefrigerationDevices",
-    "Rock",
-    "ScreenType",
-    "SemgHandGenderCh2",
-    "SemgHandMovementCh2",
-    "SemgHandSubjectCh2",
-    "ShapeletSim",
-    "SmallKitchenAppliances",
-    "SmoothSubspace",
-    "SonyAIBORobotSurface1",
-    "SonyAIBORobotSurface2",
-    "Strawberry",
-    "SwedishLeaf",
-    "Symbols",
-    "SyntheticControl",
-    "ToeSegmentation1",
-    "ToeSegmentation2",
-    "Trace",
-    "TwoLeadECG",
-    "TwoPatterns",
-    "UMD",
-    "UWaveGestureLibraryX",
-    "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",
-    "Wafer",
-    "Wine",
-    "WordSynonyms",
-    "Worms",
-    "WormsTwoClass",
-    "Yoga",
-]
-
-
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
@@ -610,26 +351,20 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "Z:/Results Working Area/DistanceBased/sktime/"
-        dataset = "ArrowHead"
+        data_dir = "../datasets/data/"
+        results_dir = "C:/Temp/Clusterers/"
+        dataset = "UnitTest"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "1NN-MSM"
+        classifier = "kmeans"
         resample = 0
-        #         for i in range(0, len(univariate_datasets)):
-        #             dataset = univariate_datasets[i]
-        # #            print(i)
-        # #            print(" problem = "+dataset)
-        tf = False
-        for i in range(0, len(benchmark_datasets)):
-            dataset = benchmark_datasets[i]
-            run_experiment(
-                overwrite=True,
-                problem_path=data_dir,
-                results_path=results_dir,
-                cls_name=classifier,
-                dataset=dataset,
-                resampleID=resample,
-                train_file=tf,
-            )
+        tf = True
+        run_experiment(
+            overwrite=True,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name=classifier,
+            dataset=dataset,
+            resampleID=resample,
+            train_file=tf,
+        )
