@@ -1005,31 +1005,48 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
 
 
 def write_results_to_uea_format(
-    output_path,
     estimator_name,
     dataset_name,
-    y_true,
     y_pred,
+    output_path,
+    full_path = True,
+    y_true = None,
+    predicted_probs=None,
     split="TEST",
     resample_seed=0,
-    predicted_probs=None,
     second_line="No Parameter Info",
     third_line="N/A",
 ):
     """Writes the predictions for an experiment in the standard format used by sktime
      and tsml
+
     Parameters
     ----------
-    output_path:            string, root path where to put results.
-    estimator_name :        string, name of the class that made the predictions
-    dataset_name:           string, name of the problem the classifier was built on
-    y_true:                 array, actual labels
-    y_pred:                 array, predicted class labels
-    split:                  string, wither TRAIN or TEST, depending on the results.
-    resample_seed:          int, makes resampling deterministic
-    predicted_probs:          number of cases x number of classes 2d array
-    second_line:            unstructured, classifier parameters
-    third_line:             summary performance information (see comment below)
+    estimator_name : str,
+        Name of the object that made the predictions, written to file and can
+        deterimine file structure of output_root is True
+    dataset_name : str
+        name of the problem the classifier was built on
+    y_pred : np.array
+        predicted values
+    output_path : str
+        Path where to put results. Either a root path, or a full path
+    full_path : boolean, default = True
+        If False, then the standard file structure is created. If false, results are
+        written directly to the directory passed in output_path
+    y_true : np.array, default = None
+        Actual values, written to file with the predicted values if present
+    predicted_probs :  np.ndarray, default = None
+        Estimated class probabilities. If passed, these are written after the
+        predicted values. Regressors should not pass anything
+    split : str, default = "TEST"
+        Either TRAIN or TEST, depending on the results, influences file name.
+    resample_seed : int, default = 0
+        Indicates what data
+    second_line : str
+        unstructured, used for predictor parameters
+    third_line : str
+        summary performance information (see comment below)
     """
 
     if len(y_true) != len(y_pred):
@@ -1077,42 +1094,48 @@ def write_results_to_uea_format(
         str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
     )
 
-    # the second line of the output is free form and classifier-specific;
-    # usually this will record info
-    # such as build time, paramater options used, any constituent model
+    # the second line of the output is free form and estimator-specific; usually this
+    # will record info such as build time, paramater options used, any constituent model
     # names for ensembles, etc.
     file.write(str(second_line) + "\n")
 
     # the third line of the file is the accuracy (should be between 0 and 1
-    # inclusive). If this is a train
-    # output file then it will be a training estimate of the classifier on
-    # the training data only (e.g.
-    # 10-fold cv, leave-one-out cv, etc.). If this is a test output file,
-    # it should be the output
-    # of the estimator on the test data (likely trained on the training data
-    # for a-priori parameter optimisation)
+    # inclusive). If this is a train output file then it will be a training estimate
+    # of the classifier on the training data only (e.g. 10-fold cv, leave-one-out cv,
+    # etc.). If this is a test output file, it should be the output of the estimator
+    # on the test data (likely trained on the training data for a-priori parameter
+    # optimisation)
     file.write(str(third_line) + "\n")
 
-    # from line 4 onwards each line should include the actual and predicted
-    # class labels (comma-separated). If
-    # present, for each case, the probabilities of predicting every class
-    # value for this case should also be
-    # appended to the line (a space is also included between the predicted
-    # value and the predict_proba). E.g.:
+    # from line 4 onwards each line should include the actual and predicted class
+    # labels (comma-separated). If present, for each case, the probabilities of
+    # predicting every class value for this case should also be appended to the line (
+    # a space is also included between the predicted value and the predict_proba). E.g.:
     #
     # if predict_proba data IS provided for case i:
-    #   actual_class_val[i], predicted_class_val[i],,prob_class_0[i],
+    #   y_true[i], y_pred[i],,prob_class_0[i],
     #   prob_class_1[i],...,prob_class_c[i]
     #
     # if predict_proba data IS NOT provided for case i:
-    #   actual_class_val[i], predicted_class_val[i]
-    for i in range(0, len(y_pred)):
-        file.write(str(y_true[i]) + "," + str(y_pred[i]))
-        if predicted_probs is not None:
-            file.write(",")
-            for j in predicted_probs[i]:
-                file.write("," + str(j))
-        file.write("\n")
+    #   y_true[i], y_pred[i]
+    # If y_true is None (if clustering), y_true[i] is replaced with ? to indicate
+    # missing
+    if y_true == None:
+        for i in range(0, len(y_pred)):
+            file.write("?," + str(y_pred[i]))
+            if predicted_probs is not None:
+                file.write(",")
+                for j in predicted_probs[i]:
+                    file.write("," + str(j))
+            file.write("\n")
+    else:
+        for i in range(0, len(y_pred)):
+            file.write(str(y_true[i]) + "," + str(y_pred[i]))
+            if predicted_probs is not None:
+                file.write(",")
+                for j in predicted_probs[i]:
+                    file.write("," + str(j))
+            file.write("\n")
     file.close()
 
 
