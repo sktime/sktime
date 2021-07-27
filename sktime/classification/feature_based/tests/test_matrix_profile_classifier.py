@@ -35,7 +35,7 @@ def test_matrix_profile_classifier_on_power_demand():
     mpc.fit(X_train, y_train)
 
     score = mpc.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.9
+    assert score >= 0.88
 
 
 matrix_profile_classifier_gunpoint_probas = np.array(
