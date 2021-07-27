@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of a SignatureClassifier
+"""Implementation of a SignatureClassifier.
 
 Utilises the signature method of feature extraction.
 This method was built according to the best practices
@@ -18,22 +18,17 @@ from sktime.transformations.panel.signature_based._checks import (
 from sktime.transformations.panel.signature_based._signature_method import (
     SignatureTransformer,
 )
-from sktime.utils._maint import deprecated
 
 
 class SignatureClassifier(BaseClassifier):
     """Classification module using signature-based features.
-
-    DEPRECATED. Please use `SignatureClassifier` from
-    `sktime.classification.feature_based` instead.
 
     This simply initialises the SignatureTransformer class which builds
     the feature extraction pipeline, then creates a new pipeline by
     appending a classifier after the feature extraction step.
 
     The default parameters are set to best practice parameters found in
-        "A Generalised Signature Method for Multivariate TimeSeries"
-        [https://arxiv.org/pdf/2006.00873.pdf]
+        "A Generalised Signature Method for Multivariate TimeSeries" [1]
 
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
@@ -47,34 +42,69 @@ class SignatureClassifier(BaseClassifier):
 
     Parameters
     ----------
-    classifier: sklearn estimator, This should be any sklearn-type
-        estimator. Defaults to RandomForestClassifier.
-    augmentation_list: list of tuple of strings, List of augmentations to be
-        applied before the signature transform is applied.
-    window_name: str, The name of the window transform to apply.
-    window_depth: int, The depth of the dyadic window. (Active only if
-        `window_name == 'dyadic']`.
-    window_length: int, The length of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding'].
-    window_step: int, The step of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding'].
-    rescaling: str, The method of signature rescaling.
-    sig_tfm: str, String to specify the type of signature transform. One of:
+    classifier : sklearn estimator, default=RandomForestClassifier
+        This should be any sklearn-type estimator. Defaults to RandomForestClassifier.
+    augmentation_list: list of tuple of strings, default=("basepoint", "addtime")
+        List of augmentations to be applied before the signature transform is applied.
+    window_name: str, default="dyadic"
+        The name of the window transform to apply.
+    window_depth: int, default=3
+        The depth of the dyadic window. (Active only if `window_name == 'dyadic']`.
+    window_length: int, default=None
+        The length of the sliding/expanding window. (Active only if `window_name in
+        ['sliding, 'expanding'].
+    window_step: int, default=None
+        The step of the sliding/expanding window. (Active only if `window_name in
+        ['sliding, 'expanding'].
+    rescaling: str, default=None
+        The method of signature rescaling.
+    sig_tfm: str, default="signature"
+        String to specify the type of signature transform. One of:
         ['signature', 'logsignature']).
-    depth: int, Signature truncation depth.
-    random_state: int, Random state initialisation.
+    depth: int, default=4
+        Signature truncation depth.
+    random_state: int, default=None
+        Random state initialisation.
 
     Attributes
-    ----------------
-    signature_method: sklearn.Pipeline, An sklearn pipeline that performs the
-        signature feature extraction step.
-    pipeline: sklearn.Pipeline, The classifier appended to the
-        `signature_method` pipeline to make a classification pipeline.
+    ----------
+    signature_method: sklearn.Pipeline
+        An sklearn pipeline that performs the signature feature extraction step.
+    pipeline: sklearn.Pipeline
+        The classifier appended to the `signature_method` pipeline to make a
+        classification pipeline.
+
+    References
+    ----------
+    .. [1] Morrill, James, et al. "A generalised signature method for multivariate time
+        series feature extraction." arXiv preprint arXiv:2006.00873 (2020).
+        https://arxiv.org/pdf/2006.00873.pdf
+
+    See Also
+    --------
+    :py:class:`SignatureTransformer`
+
+    Example
+    -------
+    >>> from sktime.classification.feature_based import SignatureClassifier
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = SignatureClassifier()
+    >>> clf.fit(X_train, y_train)
+    SignatureClassifier(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
-    @deprecated(
-        "Please use `SignatureClassifier` from `sktime.classification.feature_based` instead."  # noqa: E501
-    )
+    # Capability tags
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
+    }
+
     def __init__(
         self,
         classifier=None,
@@ -111,9 +141,11 @@ class SignatureClassifier(BaseClassifier):
             sig_tfm,
             depth,
         ).signature_method
+        self.pipeline = None
+        self.classes_ = []
 
     def _setup_classification_pipeline(self):
-        """Setup the full signature method pipeline."""
+        """Set up the full signature method pipeline."""
         # Use rf if no classifier is set
         if self.classifier is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
@@ -128,6 +160,19 @@ class SignatureClassifier(BaseClassifier):
     # Handle the sktime fit checks and convert to a tensor
     @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
+        """Fit an estimator using transformed data from the SignatureTransformer.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_instances, n_dims]
+            Nested dataframe with univariate time-series in cells.
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+        """
+        self.classes_ = np.unique(labels)
         # Join the classifier onto the signature method pipeline
         self._setup_classification_pipeline()
 
@@ -139,9 +184,31 @@ class SignatureClassifier(BaseClassifier):
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict(self, data):
+        """Predict class values of n_instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape (n_instances, n_dims)
+
+        Returns
+        -------
+        preds : np.ndarray of shape (n, 1)
+            Predicted class.
+        """
         return self.pipeline.predict(data)
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict_proba(self, data):
+        """Predict class probabilities for n_instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape (n_instances, n_dims)
+
+        Returns
+        -------
+        predicted_probs : array of shape (n_instances, n_classes)
+            Predicted probability of each class.
+        """
         return self.pipeline.predict_proba(data)
