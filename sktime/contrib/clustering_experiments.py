@@ -256,7 +256,7 @@ def run_experiment(
         second = str(clusterer.get_params())
     second.replace("\n", " ")
     second.replace("\r", " ")
-    #TODO: refactor clusterers to return an array
+    # TODO: refactor clusterers to return an array
     pr = np.array(preds)
     third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
     write_results_to_uea_format(
