@@ -39,6 +39,7 @@ EXTRAS_REQUIRE = {
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
+        "pyod>=0.8.0",
     ],
 }
 
@@ -64,7 +65,7 @@ def find_version(*file_paths):
 WEBSITE = "https://www.sktime.org"
 DISTNAME = "sktime"
 DESCRIPTION = "A unified Python toolbox for machine learning with time series"
-with codecs.open("README.rst", encoding="utf-8-sig") as f:
+with codecs.open("README.md", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "F. Király"
 MAINTAINER_EMAIL = "f.kiraly@ucl.ac.uk"

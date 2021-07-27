@@ -5,7 +5,7 @@
 
 set -e
 
-# Version to test, passed as inpurt argument to script
+# Version to test, passed as input argument to script
 VERSION=$1
 
 # Make temporary directory
@@ -14,7 +14,7 @@ mkdir "$HOME"/testdir
 cd "$HOME"/testdir
 
 # Create test environment
-echo "Creating test environemnt ..."
+echo "Creating test environment ..."
 source $(conda info --base)/etc/profile.d/conda.sh  # set up conda
 conda create -n sktime_testenv python=3.7
 conda activate sktime_testenv
