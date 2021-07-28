@@ -80,6 +80,23 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             for forecaster in self.forecasters_
         ]
 
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional, default=True
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        for forecaster in self.forecasters_:
+            forecaster.update(y, X, update_params=update_params)
+        return self
+
     def get_params(self, deep=True):
         return self._get_params("forecasters", deep=deep)
 

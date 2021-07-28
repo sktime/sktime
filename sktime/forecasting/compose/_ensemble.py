@@ -32,7 +32,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     regressor : sklearn-like regressor, optional, default=None
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
-        a GradientBoostingRegressor() is used. The regressor can also be a
+        a GradientBoostingRegressor(max_depth=5) is used. The regressor can also be a
         sklearn.Pipeline() object.
     test_size : int or float, tional, default=None
         Used to do an internal temporal_train_test_split. The test_size data
@@ -155,23 +155,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         return y_pred
-
-    def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional, default=True
-
-        Returns
-        -------
-        self : an instance of self.
-        """
-        for forecaster in self.forecasters_:
-            forecaster.update(y, X, update_params=update_params)
-        return self
 
 
 def _get_weights(regressor):
