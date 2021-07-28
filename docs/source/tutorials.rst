@@ -30,7 +30,6 @@ The notebook files can be found `here <https://github.com/alan-turing-institute/
     examples/minirocket
     examples/plateau_finder
     examples/loading_data
-    examples/forecasting_with_hcrystalball
     examples/dictionary_based_classification
     examples/interpolation
-    examples/window_splitter
+    examples/window_splitters
