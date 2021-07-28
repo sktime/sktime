@@ -1,6 +1,6 @@
 jupyter
 myst-parser
-nbsphinx
+nbsphinx>=0.8.6
 numpydoc
 pydata-sphinx-theme
 sphinx==4.1.1
