@@ -55,10 +55,12 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 [gitter]: https://gitter.im/sktime/community
 [discord]: https://discord.com/invite/gqSab2K
 
-## :stars: Features
+## :dizzy: Features
 Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features __dedicated time series algorithms__ and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet], among others.
+
+For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
@@ -73,7 +75,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 | **[Transformations]** | maturing | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) |
 | **[Time Series Clustering]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py) |
 | **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
-| **[Annotation]** | experimental | |
+| **[Annotation]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/annotation.py) |
 
 [forecasting]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/forecasting
 [time series classification]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/classification
@@ -83,7 +85,6 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [time series distances/kernels]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/dists_kernels
 [transformations]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/transformations
 
-For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
 ## :hourglass_flowing_sand: Install sktime
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.org/en/latest/installation.html).
@@ -153,15 +154,17 @@ There are many ways to join the sktime community. We follow the [all-contributor
 
 | Documentation              |                                                                |
 | -------------------------- | --------------------------------------------------------------        |
-| :gift_heart: **[Contribute]**        | How to contribute to the sktime's project.          |
+| :gift_heart: **[Contribute]**        | How to contribute to sktime.          |
 | :school_satchel:  **[Mentoring]** | New to open source? Apply to our mentoring program! |
 | :date: **[Meetings]** | Join our discussions, tutorials, workshops and sprints! |
 | :woman_mechanic:  **[Developer Guides]**      | How to further develop sktime's code base.                             |
 | :construction: **[Enhancement Proposals]** | Design a new feature for sktime. |
 | :medal_sports: **[Contributors]** | A list of all contributors. |
+| :money_with_wings: **[Donate]** | Fund sktime maintenance and development. |
 | :classical_building: **[Governance]** | How and by whom decisions are made in sktime's community.   |
 
 [contribute]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.md
+[donate]: https://opencollective.com/sktime
 [extension templates]: https://github.com/alan-turing-institute/sktime/tree/main/extension_templates
 [developer guides]: https://www.sktime.org/en/latest/developer_guide.html
 [contributors]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md

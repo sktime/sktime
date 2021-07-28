@@ -85,13 +85,25 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     Parameters
     ----------
     n_neighbors     : int, set k for knn (default =1)
-    weights         : mechanism for weighting a vote: 'uniform', 'distance'
-    or a callable function: default ==' uniform'
+    weights         : string or callable function, optional, default ==' uniform'
+                      mechanism for weighting a vote, one of: 'uniform', 'distance'
+                      or a callable function
     algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
     ‘kd_tree’, ‘brute’}: default = 'brute'
     distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(return_X_y=True, split="train")
+    >>> X_test, y_test = load_basic_motions(return_X_y=True, split="test")
+    >>> classifier = KNeighborsTimeSeriesClassifier()
+    >>> classifier.fit(X_train, y_train)
+    KNeighborsTimeSeriesClassifier(...)
+    >>> y_pred = classifier.predict(X_test)
     """
 
     # Capability tags

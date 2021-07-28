@@ -22,74 +22,97 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
-    """Contractable Bag of SFA Symbols (cBOSS).
+    """Contractable Bag of Symbolic Fourier Approximation Symbols (cBOSS).
 
-    implementation of BOSS from [1] with refinements described in [2].
+    Implementation of BOSS Ensemble from Schäfer (2015) with refinements
+    described in Middlehurst, Vickers and Bagnall (2019). [1, 2]_
 
-    Overview: Input n series length m
-    cBOSS randomly samples n_parameter_samples parameter sets, evaluating
-    each with a LOOCV. It then retains max_ensemble_size classifiers with the
-    highest accuracy.
+    Overview: Input "n" series of length "m" and cBOSS randomly samples
+    `n_parameter_samples` parameter sets, evaluting each with LOOCV. It then
+    retains `max_ensemble_size` classifiers with the highest accuracy
     There are three primary parameters:
-            alpha: alphabet size
-            w: window length
-            l: word length.
-    for any combination, a single BOSS slides a window length w along the
-    series. The w length window is shortened to
-    an l length word through taking a Fourier transform and keeping the
-    first l/2 complex coefficients. These l
-    coefficients are then discretised into alpha possible values, to form a
-    word length l. A histogram of words for each
-    series is formed and stored. fit involves finding n histograms.
+        - alpha: alphabet size
+        - w: window length
+        - l: word length.
 
-    predict uses 1 nearest neighbour with a bespoke distance function.
+    For any combination, a single BOSS slides a window length "w" along the
+    series. The "w" length window is shortened to an "l" length word by
+    taking a Fourier transform and keeping the first l/2 complex coefficients.
+    These "l" coefficients are then discretised into "alpha" possible values,
+    to form a word length "l". A histogram of words for each
+    series is formed and stored.
+
+    Fit involves finding "n" histograms.
+
+    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
 
     Parameters
     ----------
-    n_parameter_samples     : int, if search is randomised, number of
-    parameter combos to try (default = 250)
-    max_ensemble_size       : int or None, retain a maximum number of
-    classifiers, even if within threshold, optional (default = 50)
-    max_win_len_prop        : maximum window length as a proportion of
-    series length (default = 1)
-    time_limit_in_minutes   : time contract to limit build time in minutes
-    (default = 0, no limit)
-    min_window              : minimum window size, (default = 10)
-    n_jobs                  : int, optional (default=1)
+    n_parameter_samples : int, default = 250
+        If search is randomised, number of parameter combos to try.
+    max_ensemble_size : int or None, default = 50
+        Maximum number of classifiers to retain. Will limit number of retained
+        classifiers even if more than `max_ensemble_size` are within threshold.
+    max_win_len_prop : int or float, default = 1
+        Maximum window length as a proportion of the series length.
+    time_limit_in_minutes : int, default = 0
+        Time contract to limit build time in minutes. Default of 0 means no limit.
+    min_window : int, default = 10
+        Minimum window size.
+    n_jobs : int, default = 1
     The number of jobs to run in parallel for both `fit` and `predict`.
     ``-1`` means using all processors.
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
+    random_state : int or None, default=None
+        Seed for random integer.
 
     Attributes
     ----------
-    n_classes               : extracted from the data
-    n_instances             : extracted from the data
-    n_estimators            : The final number of classifiers used (
-    <= max_ensemble_size)
-    series_length           : length of all series (assumed equal)
-    classifiers             : array of DecisionTree classifiers
-    weights                 : weight of each classifier in the ensemble
+    n_classes : int
+        Number of classes. Extracted from the data.
+    n_instances : int
+        Number of instances. Extracted from the data.
+    n_estimators : int
+        The final number of classifiers used. Will be <= `max_ensemble_size` if
+        `max_ensemble_size` has been specified.
+    series_length : int
+        Length of all series (assumed equal).
+    classifiers : list
+       List of DecisionTree classifiers.
+    weights :
+        Weight of each classifier in the ensemble.
 
     See Also
     --------
-    BOSSEnsemble
+    BOSSEnsemble, IndividualBOSS
 
     Notes
     -----
-    ..[1] Patrick Schäfer, "The BOSS is concerned with time series
-    classification in the presence of noise",
-    Data Mining and Knowledge Discovery, 29(6): 2015
-            https://link.springer.com/article/10.1007/s10618-014-0377-7
-    ..[2] Matthew Middlehurst, William Vickers and Anthony Bagnall
-    "Scalable Dictionary Classifiers for Time Series Classification",
-    in proc 20th International Conference on Intelligent Data Engineering
-    and Automated Learning,LNCS, volume 11871
-            https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
-
     For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/
-    main/java/tsml/classifiers/dictionary_based/cBOSS.java
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/dictionary_based/cBOSS.java>`_.
+
+    References
+    ----------
+    .. [1] Patrick Schäfer, "The BOSS is concerned with time series classification
+       in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+       https://link.springer.com/article/10.1007/s10618-014-0377-7
+
+    .. [2] Matthew Middlehurst, William Vickers and Anthony Bagnall
+       "Scalable Dictionary Classifiers for Time Series Classification",
+       in proc 20th International Conference on Intelligent Data Engineering
+       and Automated Learning,LNCS, volume 11871
+       https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
+
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = ContractableBOSS()
+    >>> clf.fit(X_train, y_train)
+    ContractableBOSS(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags
@@ -144,9 +167,10 @@ class ContractableBOSS(BaseClassifier):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
+        X : nested pandas DataFrame of shape (n_instances, 1)
             Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
+        y : array-like of shape (n_instances,)
+            The class labels.
 
         Returns
         -------
@@ -250,11 +274,13 @@ class ContractableBOSS(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : nested pandas DataFrame of shape (n_instances, 1)
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------
-        array of shape [n, 1]
+        preds : array of shape (n_instances, 1)
+            Predicted class.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -269,11 +295,12 @@ class ContractableBOSS(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : pd.DataFrame of shape (n_instances, 1)
 
         Returns
         -------
-        array of shape [n, self.n_classes]
+        predicted_probs : array of shape (n_instances, n_classes)
+            Predicted probability of each class.
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)

@@ -5,6 +5,9 @@ sktime.utils: Utility function
 
 The :mod:`sktime.utils` module contains utility functions.
 
+.. automodule:: sktime.utils
+    :no-members:
+
 Plotting
 --------
 
@@ -20,7 +23,7 @@ Plotting
 Data Processing
 ---------------
 
-.. currentmodule:: sktime.utils.data_processing
+.. currentmodule:: sktime.datatypes._panel._convert
 
 .. autosummary::
     :toctree: modules/auto_generated/

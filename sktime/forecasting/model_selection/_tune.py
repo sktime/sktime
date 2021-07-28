@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements grid search functionality to tune forecasters."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
@@ -68,9 +69,7 @@ class BaseGridSearch(BaseForecaster):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Call update_predict on the forecaster with the best found
-        parameters.
-        """
+        """Call update_predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update_predict")
 
         return self.best_forecaster_._update_predict(
@@ -125,7 +124,7 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -137,8 +136,10 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def inverse_transform(self, y, X=None):
         """Call inverse_transform on the forecaster with the best found params.
+
         Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
+
         Parameters
         ----------
         y : indexable, length n_samples
@@ -149,8 +150,8 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
-        """Returns the score on the given data, if the forecaster has been
-        refit.
+        """Return the score on the given data, if the forecaster has been refit.
+
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
 
@@ -180,7 +181,7 @@ class BaseGridSearch(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def check_is_fitted(self, method_name=None):
-        """Has `fit` been called?
+        """Whether `fit` has been called.
 
         Parameters
         ----------
@@ -219,6 +220,7 @@ class BaseGridSearch(BaseForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -310,8 +312,8 @@ class BaseGridSearch(BaseForecaster):
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
-    """
-    Performs grid-search cross-validation to find optimal model parameters.
+    """Performs grid-search cross-validation to find optimal model parameters.
+
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
 
@@ -364,8 +366,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     scorer_ : function
         Function used to score model
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
@@ -416,14 +418,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         self.param_grid = param_grid
 
     def _run_search(self, evaluate_candidates):
-        """Search all candidates in param_grid"""
+        """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
-    """
-    Performs randomized-search cross-validation to find optimal model parameters.
+    """Performs randomized-search cross-validation to find optimal model parameters.
+
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
 
@@ -512,7 +514,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.random_state = random_state
 
     def _run_search(self, evaluate_candidates):
-        """Search n_iter candidates from param_distributions"""
+        """Search n_iter candidates from param_distributions."""
         return evaluate_candidates(
             ParameterSampler(
                 self.param_distributions, self.n_iter, random_state=self.random_state

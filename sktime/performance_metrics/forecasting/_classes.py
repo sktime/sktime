@@ -1,4 +1,13 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Metrics classes to assess performance on forecasting task.
+
+Classes named as ``*Score`` return a value to maximize: the higher the better.
+Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
+the lower the better.
+"""
+
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
     relative_loss,

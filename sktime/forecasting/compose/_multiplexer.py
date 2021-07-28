@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements forecaster for selecting among different model classes."""
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -11,7 +12,8 @@ __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(_HeterogenousEnsembleForecaster):
-    """
+    """Select among multiple models.
+
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
     It should be used in conjunction with ForecastingGridSearchCV
@@ -50,8 +52,8 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         forecaster that MultiplexForecaster will currently
         forecast with.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.forecasting.all import (
     ...     MultiplexForecaster,
     ...     AutoETS,
@@ -145,11 +147,11 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             of forecaster names and fit params to be
             used for each forecaster.
             Example: {"ARIMA": ..., "ETS": ...}
+
         Returns
         -------
         self : returns an instance of self.
         """
-
         self._check_forecasters()
         self._set_forecaster()
         forecaster_fit_params = self._check_fit_params(fit_params=fit_params)

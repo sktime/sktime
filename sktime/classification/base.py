@@ -1,4 +1,30 @@
 # -*- coding: utf-8 -*-
+"""
+Base class template for time series classifier scitype.
+
+    class name: BaseClassifier
+
+Scitype defining methods:
+    fitting         - fit(self, X, y)
+    predicting      - predict(self, X)
+
+State:
+    fitted model/strategy   - by convention, any attributes ending in "_"
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
+
+Inspection methods:
+    hyper-parameter inspection  - get_params()
+    fitted parameter inspection - get_fitted_params()
+
+State:
+    fitted model/strategy   - by convention, any attributes ending in "_"
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+
 __all__ = [
     "BaseClassifier",
     "classifier_list",
@@ -69,15 +95,15 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
-        sets is_fitted flag to true
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         """
-
-        coerce_to_numpy = self._all_tags()["coerce-X-to-numpy"]
+        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
 
         X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
 
@@ -89,7 +115,7 @@ class BaseClassifier(BaseEstimator):
         return self
 
     def predict(self, X):
-        """predicts labels for sequences in X
+        """Predicts labels for sequences in X.
 
         Parameters
         ----------
@@ -102,8 +128,7 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-
-        coerce_to_numpy = self._all_tags()["coerce-X-to-numpy"]
+        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
 
         X = check_X(X, coerce_to_numpy=coerce_to_numpy)
         self.check_is_fitted()
@@ -113,9 +138,36 @@ class BaseClassifier(BaseEstimator):
         return y
 
     def predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or single-column pd.DataFrame with pd.Series entries
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances, n_classes] - predictive pmf
+        """
         raise NotImplementedError("abstract method")
 
     def score(self, X, y):
+        """Scores predicted labels against ground truth labels on X.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or single-column pd.DataFrame with pd.Series entries
+        y : array-like, shape =  [n_instances] - predicted class labels
+
+        Returns
+        -------
+        float, accuracy score of predict(X) vs y
+        """
         from sklearn.metrics import accuracy_score
 
         return accuracy_score(y, self.predict(X), normalize=True)
@@ -135,16 +187,18 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         """
         raise NotImplementedError("abstract method")
 
     def _predict(self, X):
-        """predicts labels for sequences in X
+        """Predicts labels for sequences in X.
 
         core logic
 
@@ -159,7 +213,6 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-
         distributions = self.predict_proba(X)
         predictions = []
         for instance_index in range(0, X.shape[0]):

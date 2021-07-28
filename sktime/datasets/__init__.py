@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+"""Datasets included in sktime."""
+
 __all__ = [
     "load_airline",
     "load_arrow_head",

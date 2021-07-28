@@ -74,6 +74,8 @@ Interval-based
     TimeSeriesForestClassifier
     RandomIntervalSpectralForest
     SupervisedTimeSeriesForest
+    CanonicalIntervalForest
+    DrCIF
 
 Shapelet-based
 --------------
@@ -88,7 +90,7 @@ Shapelet-based
     MrSEQLClassifier
 
 Kernel-based
---------------
+------------
 
 .. currentmodule:: sktime.classification.kernel_based
 
@@ -99,13 +101,16 @@ Kernel-based
     ROCKETClassifier
     Arsenal
 
-Signature-based
+Feature-based
 ---------------
 
-.. currentmodule:: sktime.classification.signature_based
+.. currentmodule:: sktime.classification.feature_based
 
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class.rst
 
+    Catch22Classifier
+    MatrixProfileClassifier
+    TSFreshClassifier
     SignatureClassifier

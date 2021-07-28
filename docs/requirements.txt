@@ -1,12 +1,8 @@
-esig==0.9.7
 jupyter
-m2r2
-matplotlib
+myst-parser
 nbsphinx
 numpydoc
-# include pygments due to dependency compatibility issue https://github.com/jupyterlab/jupyterlab_pygments/issues/5
-pygments>=2.4.1
-seaborn
-sphinx==3.2.*
+pydata-sphinx-theme
+sphinx==4.1.1
 sphinx-gallery>=0.6
-sphinx_rtd_theme
+tabulate

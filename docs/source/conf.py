@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+
+"""Configuration file for the Sphinx documentation builder."""
 
 import os
 import sys
+from importlib import import_module
 
 import sktime
 
@@ -28,7 +25,7 @@ if not ON_READTHEDOCS:
 
 # -- Project information -----------------------------------------------------
 project = "sktime"
-copyright = "2019 - 2020 (BSD-3-Clause License)"
+copyright = "2019 - 2021 (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -49,6 +46,7 @@ if ON_READTHEDOCS:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.todo",
@@ -56,10 +54,9 @@ extensions = [
     # 'sphinx.ext.viewcode',  # link to auto-generated source code files (rst)
     "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
-    "sphinx.ext.napoleon",
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
-    "m2r2",  # markdown rendering
+    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -92,14 +89,42 @@ pygments_style = "sphinx"
 
 # see http://stackoverflow.com/q/12206334/562769
 numpydoc_show_class_members = True
+# this is needed for some reason...
+# see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
+
+numpydoc_validation_checks = {"all"}
 
 # generate autosummary even if no references
 autosummary_generate = True
-autodoc_default_flags = ["members", "inherited-members"]
+
+# members and inherited-members default to showing methods/attributes, etc
+# from a class that are created in the class or inherited
+# member-order says to order the documentation in the order the members
+# were defined in the source code
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "member-order": "bysource",
+}
+
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = False
 
 
 def linkcode_resolve(domain, info):
+    """Return URL to source code correponding.
+
+    Parameters
+    ----------
+    domain : str
+    info : dict
+
+    Returns
+    -------
+    url : str
+    """
+
     def find_source():
         # try to find the file and line number, based on code from numpy:
         # https://github.com/numpy/numpy/blob/main/doc/source/conf.py#L286
@@ -131,23 +156,61 @@ def linkcode_resolve(domain, info):
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-html_theme = "sphinx_rtd_theme"
-# html_theme = 'bootstrap'
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 
 html_theme_options = {
-    "prev_next_buttons_location": None,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/alan-turing-institute/sktime",
+            "icon": "fab fa-github",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/sktime_toolbox",
+            "icon": "fab fa-twitter",
+        },
+        {
+            "name": "Discord",
+            "url": "https://discord.com/invite/gqSab2K",
+            "icon": "fab fa-discord",
+        },
+    ],
+    "favicons": [
+        {
+            "rel": "icon",
+            "sizes": "16x16",
+            "href": "images/sktime-favicon.ico",
+        }
+    ],
+    "show_prev_next": False,
+    "use_edit_page_button": True,
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
 }
-
-html_favicon = "images/sktime-favicon.ico"
+html_logo = "images/sktime-logo-no-text.jpg"
+html_context = {
+    "github_user": "alan-turing-institute",
+    "github_repo": "sktime",
+    "github_version": "main",
+    "doc_path": "docs/source/",
+}
+html_sidebars = {
+    "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_js_files = [
+    "js/dynamic_table.js",
+]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -210,12 +273,97 @@ texinfo_documents = [
 ]
 
 
+def _make_estimator_overview(app):
+    """Make estimator overview table."""
+    import pandas as pd
+    from sktime.registry import all_estimators
+
+    def _process_author_info(author_info):
+        """
+        Process author information from source code files.
+
+        Parameters
+        ----------
+        author_info : str
+            Author information string from source code files.
+
+        Returns
+        -------
+        author_info : str
+            Preprocessed author information.
+
+        Notes
+        -----
+        A list of author names is turned into a string.
+        Multiple author names will be separated by a comma,
+        with the final name always preceded by "&".
+        """
+        if isinstance(author_info, list):
+            if len(author_info) > 1:
+                return ", ".join(author_info[:-1]) + " & " + author_info[-1]
+            else:
+                return author_info[0]
+        else:
+            return author_info
+
+    def _does_not_start_with_underscore(input_string):
+        return not input_string.startswith("_")
+
+    # creates dataframe as df
+    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
+
+    df = pd.DataFrame([], columns=COLNAMES)
+
+    for modname, modclass in all_estimators():
+        algorithm_type = "::".join(str(modclass).split(".")[1:-2])
+        try:
+            author_info = _process_author_info(modclass.__author__)
+        except AttributeError:
+            try:
+                author_info = _process_author_info(
+                    import_module(modclass.__module__).__author__
+                )
+            except AttributeError:
+                author_info = "no author info"
+
+        # includes part of class string
+        modpath = str(modclass)[8:-2]
+        path_parts = modpath.split(".")
+        # joins strings excluding starting with '_'
+        clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
+        # adds html link reference
+        modname = str(
+            '<a href="https://www.sktime.org/en/latest/api_reference/modules'
+            + "/auto_generated/"
+            + clean_path
+            + '.html">'
+            + modname
+            + "</a>"
+        )
+
+        df = df.append(
+            pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
+            ignore_index=True,
+        )
+    with open("estimator_overview_table.md", "w") as file:
+        df.to_markdown(file, index=False)
+
+
 def setup(app):
+    """Set up sphinx builder.
+
+    Parameters
+    ----------
+    app : Sphinx application object
+    """
+
     def adds(pth):
         print("Adding stylesheet: %s" % pth)  # noqa: T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.
+
+    app.connect("builder-inited", _make_estimator_overview)
 
 
 # -- Extension configuration -------------------------------------------------
@@ -225,27 +373,6 @@ nbsphinx_execute = "never"  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 
-# since we don't execute the notebooks, we need to manually set the thumbnails here
-nbsphinx_thumbnails = {
-    "examples/01_forecasting": "",
-    "examples/01a_forecasting_sklearn": "",
-    "examples/02_classification_univariate": "",
-    "examples/03_classification_multivariate": "",
-    "examples/04_benchmarking": "",
-    "examples/feature_extraction_with_tsfresh": "",
-    "examples/shapelet_transform": "",
-    "examples/interval_based_classification": "",
-    "examples/catch22": "",
-    "examples/mrseql": "",
-    "examples/rocket": "",
-    "examples/minirocket": "",
-    "examples/plateau_finder": "",
-    "examples/loading_data": "",
-    "examples/forecasting_with_hcrystalball": "",
-    "examples/dictionary_based_classification": "",
-    "examples/interpolation": "",
-    "examples/window_splitter": "",
-}
 # add Binder launch buttom at the top
 CURRENT_FILE = "{{ env.doc2path( env.docname, base=None) }}"
 

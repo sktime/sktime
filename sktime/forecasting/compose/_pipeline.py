@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements pipelines for forecasting."""
 
 __author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
@@ -11,7 +12,6 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils import _has_tag
 from sktime.utils.validation.series import check_series
 
 
@@ -20,7 +20,7 @@ class _Pipeline(
     _HeterogenousMetaEstimator,
 ):
     def _check_steps(self):
-        """Check Steps
+        """Check Steps.
 
         Parameters
         ----------
@@ -71,23 +71,23 @@ class _Pipeline(
             yield idx, name, transformer
 
     def __len__(self):
-        """
-        Returns the length of the Pipeline
-        """
+        """Return the length of the Pipeline."""
         return len(self.steps)
 
     @property
     def named_steps(self):
-        """Map the steps to a dictionary"""
+        """Map the steps to a dictionary."""
         return dict(self.steps)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
+
         Parameters
         ----------
         deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
         Returns
         -------
         params : mapping of string to any
@@ -97,7 +97,9 @@ class _Pipeline(
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
+
         Valid parameter keys can be listed with ``get_params()``.
+
         Returns
         -------
         self
@@ -107,20 +109,19 @@ class _Pipeline(
 
 
 class ForecastingPipeline(_Pipeline):
-    """
-    Pipeline for forecasting with exogenous data to apply transformers
-    to the exogenous serieses. The forecaster can also be a
-    TransformedTargetForecaster containing transformers to
-    transform y. ForecastingPipeline is only applying the given transformers
-    to X.
+    """Pipeline for forecasting with exogenous data.
+
+    ForecastingPipeline is only applying the given transformers
+    to X. The forecaster can also be a TransformedTargetForecaster containing
+    transformers to transform y.
 
     Parameters
     ----------
     steps : list
         List of tuples like ("name", forecaster/transformer)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
@@ -164,6 +165,7 @@ class ForecastingPipeline(_Pipeline):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, required
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -217,7 +219,7 @@ class ForecastingPipeline(_Pipeline):
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -260,8 +262,8 @@ class ForecastingPipeline(_Pipeline):
 
 
 class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
-    """
-    Meta-estimator for forecasting transformed time series.
+    """Meta-estimator for forecasting transformed time series.
+
     Pipeline functionality to apply transformers to the target series.
 
     Parameters
@@ -269,8 +271,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     steps : list
         List of tuples like ("name", forecaster/transformer)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -309,6 +311,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -354,13 +357,13 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         for _, _, transformer in self._iter_transformers(reverse=True):
             # skip sktime transformers where inverse transform
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
-            skip_trafo = transformer._all_tags().get("skip-inverse-transform", False)
+            skip_trafo = transformer.get_tag("skip-inverse-transform", False)
             if not skip_trafo:
                 y_pred = transformer.inverse_transform(y_pred)
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -372,7 +375,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
                 transformer.update(y, X, update_params=update_params)
@@ -384,6 +386,20 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
+        """Return transformed version of input series `Z`.
+
+        Parameters
+        ----------
+        Z : pd.Series or pd.DataFrame
+            A time series to apply the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series or pd.DataFrame
+            Transformed version of input series `Z`.
+        """
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers():
@@ -391,9 +407,23 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         return zt
 
     def inverse_transform(self, Z, X=None):
+        """Reverse transformation on input series `Z`.
+
+        Parameters
+        ----------
+        Z : pd.Series or pd.DataFrame
+            A time series to reverse the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        zt : pd.Series or pd.DataFrame
+            The reconstructed timeseries after the transformation has been reversed.
+        """
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers(reverse=True):
-            if not _has_tag(transformer, "skip-inverse-transform"):
+            if not transformer.get_tag("skip-inverse-transform", False):
                 zt = transformer.inverse_transform(zt, X)
         return zt
