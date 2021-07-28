@@ -122,6 +122,7 @@ def run_clustering_experiment(
             full_path=False,
         )
 
+
 def load_and_run_clustering_experiment(
     problem_path,
     results_path,
@@ -327,6 +328,3 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     assert list(counts_train_new) == list(counts_train)
     assert list(counts_test_new) == list(counts_test)
     return X_train, y_train, X_test, y_test
-
-
-
