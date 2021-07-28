@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
-__all__ = ["EnsembleForecaster"]
+__author__ = ["Markus Löning", "Martin Walter"]
+__all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import pandas as pd
 import numpy as np
@@ -22,7 +22,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     The AutoEnsembleForecaster uses a meta-model (regressor) to calculate the optimal
     weights for ensemble aggregation with mean. The regressor has to be sklearn-like
-    and needs to have either a param "feature_importances_" or "coef_".
+    and needs to have either an attribute "feature_importances_" or "coef_", as this
+    is used as weights. Regressor can also be a sklearn.Pipeline.
 
     Parameters
     ----------
@@ -53,6 +54,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         The weights based on either regressor.feature_importances_ or
         regressor.coef_ values.
     """
+
+    _required_parameters = ["forecasters"]
+    _tags = {
+        "univariate-only": False,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(
         self,
@@ -143,9 +151,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if return_pred_int:
             raise NotImplementedError()
 
-        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
+        y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
-        y_pred = y_pred.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
+        y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
