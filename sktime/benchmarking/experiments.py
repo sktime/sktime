@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn import preprocessing
+import sklearn.utils
 
 from sktime.clustering import (
     TimeSeriesKMeans,
@@ -70,7 +71,7 @@ def run_clustering_experiment(
     build_time = int(round(time.time() * 1000)) - start
     start = int(round(time.time() * 1000))
     train_preds = clusterer.predict(trainX)
-    predict_train_time = int(round(time.time() * 1000)) - start
+    # predict_train_time = int(round(time.time() * 1000)) - start
 
     # Form predictions on trainY
     start = int(round(time.time() * 1000))
@@ -88,7 +89,7 @@ def run_clustering_experiment(
         output_path=results_path,
         estimator_name=cls_name,
         resample_seed=resampleID,
-        y_pred=preds,
+        y_pred=pr,
         dataset_name=dataset_name,
         y_true=testY,
         split="TEST",
@@ -96,8 +97,6 @@ def run_clustering_experiment(
     )
 
     #        preds = form_cluster_list(clusters, len(testY))
-    test_time = int(round(time.time() * 1000)) - start
-    #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
     if "Composite" in cls_name:
         second = "Para info too long!"
     else:
@@ -196,7 +195,7 @@ def load_and_run_clustering_experiment(
                     + " Already exists and overwrite set to false, not building Train"
                 )
                 train_file = False
-        if train_file == False and build_test == False:
+        if train_file is False and build_test is False:
             return
 
     # currently only works with .ts
@@ -206,7 +205,7 @@ def load_and_run_clustering_experiment(
     test_X, test_Y = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
     if resampleID != 0:
         trainX, trainY, testX, testY = stratified_resample(
-            trainX, trainY, testX, testY, resampleID
+            train_X, train_Y, test_X, test_Y, resampleID
         )
     le = preprocessing.LabelEncoder()
     le.fit(train_Y)
@@ -216,11 +215,11 @@ def load_and_run_clustering_experiment(
         clusterer = set_clusterer(cls_name, resampleID)
 
     run_clustering_experiment(
-        train_X,
+        trainX,
         clusterer,
-        trainY=train_Y,
-        testX=test_X,
-        testY=test_Y,
+        trainY=trainY,
+        testX=testX,
+        testY=testY,
         cls_name=cls_name,
         dataset_name=dataset,
         results_path=results_path,
