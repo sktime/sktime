@@ -198,8 +198,8 @@ def load_and_run_clustering_experiment(
             return
 
     # currently only works with .ts
-    train_X, train_Y = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN" +
-                              format)
+    train_X, train_Y = load_ts(
+        problem_path + dataset + "/" + dataset + "_TRAIN" + format)
     test_X, test_Y = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
     if resampleID != 0:
         trainX, trainY, testX, testY = stratified_resample(
@@ -222,6 +222,7 @@ def load_and_run_clustering_experiment(
         dataset_name=dataset,
         results_path=results_path,
     )
+
 
 def set_clusterer(cls, resampleId=None):
     """Construct a clusterer.
