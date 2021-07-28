@@ -6,7 +6,7 @@ import textwrap
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score as acc
-from sktime.utils.data_processing import _make_column_names, from_long_to_nested
+from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 
 
 class TsFileParseException(Exception):
