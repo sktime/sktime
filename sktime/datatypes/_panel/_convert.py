@@ -1007,6 +1007,40 @@ def from_multiindex_to_dflist(obj, store=None):
 convert_dict[("df-list", "pd-multiindex", "Panel")] = from_multiindex_to_dflist
 
 
+def from_dflist_to_numpy3D(obj, store=None):
+
+    if not isinstance(obj, "list"):
+        raise TypeError("obj must be a list of pd.DataFrame")
+
+    n = len(obj[0])
+    cols = set(obj[0].columns)
+
+    for i in len(obj):
+        if not n == len(obj[i]) or not set(obj[i].cols) == cols:
+            raise ValueError("elements of obj must have same length and columns")
+
+    nparr = np.array([X.to_numpy().transpose() for X in obj])
+
+    return nparr
+
+
+convert_dict[("numpy3D", "df-list", "Panel")] = from_dflist_to_numpy3D
+
+
+def from_numpy3D_to_dflist(obj, store=None):
+
+    if not isinstance(obj, "np.ndarray") or len(obj.shape) != 3:
+        raise TypeError("obj must be a 3D numpy.ndarray")
+
+    cols = _make_column_names(obj.shape[1])
+    Xlist = [pd.DataFrame(obj[i].T, colulmns=cols) for i in len(obj)]
+
+    return Xlist
+
+
+convert_dict[("df-list", "numpy3D", "Panel")] = from_numpy3D_to_dflist
+
+
 def is_nested_dataframe(X):
     """Check whether the input is a nested DataFrame.
 
