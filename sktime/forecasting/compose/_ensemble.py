@@ -30,6 +30,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -1 means using all processors.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
+    weights : list of floats
+        Weights to apply in aggregation.
 
     Example
     -------
@@ -48,14 +50,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "univariate-only": True,
+        "univariate-only": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
+    def __init__(self, forecasters, n_jobs=None, aggfunc="average", weights=None):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
+        self.weights = weights
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -75,23 +78,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y, X, fh)
-        return self
-
-    def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional, default=True
-
-        Returns
-        -------
-        self : an instance of self.
-        """
-        for forecaster in self.forecasters_:
-            forecaster.update(y, X, update_params=update_params)
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -115,10 +101,10 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
         y_pred.index = self.fh.to_absolute(self.cutoff)
-        return _aggregate(y=y_pred, aggfunc=aggfunc)
+        return _aggregate(y=y_pred, aggfunc=aggfunc, weights=self.weights)
 
 
-def _aggregate(y, aggfunc):
+def _aggregate(y, aggfunc, weights):
     """Apply aggregation function by row.
 
     Parameters
@@ -133,7 +119,7 @@ def _aggregate(y, aggfunc):
     column_ensemble: pd.Series
         Transformed univariate series.
     """
-    y_agg = aggfunc(y, axis=1)
+    y_agg = aggfunc(y, axis=1, weights=weights)
 
     return pd.Series(y_agg)
 
