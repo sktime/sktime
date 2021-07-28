@@ -13,7 +13,8 @@ from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.base import ForecastingHorizon
 
 
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -32,32 +33,41 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         feature importance scores (decision tree-based models). If None, then
         a GradientBoostingRegressor() is used. The regressor can also be a
         sklearn.Pipeline() object.
-    cv : Splitter (e.g. ExpandingWindowSplitter), optional, default=None
-        Splitter is used for cross-validation of the weights. For each split,
-        there is a training of the regressor on the test data and the weights
-        are in the end averaged over all fitted regressors. Default is a
-        SingleWindowSplitter()
+    test_size : int or float, tional, default=None
+        Used to do an internal temporal_train_test_split. The test_size data
+        will be the endog data of the regressor and it is the most recent data.
+        The exog data of the regressor are the predictions from the temporarily
+        trained ensemble models. If None, it will be set to 0.25.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+    random_state : int or float
+        Only needed if regressor=None to set random_state of the deafult regressor.
 
     Attributes
     ----------
+    regressor_ : sklearn-like regressor
+        Fitted regressor.
     weights_ : np.array
         The weights based on either regressor.feature_importances_ or
         regressor.coef_ values.
-    cv_ : Splitter (e.g. ExpandingWindowSplitter)
-        This is exposed here in case cv=None was given, then cv_ is assigned
-        by default to cv_=SingleWindowSplitter().
     """
 
-    def __init__(self, forecasters, regressor=None, cv=None, n_jobs=None):
+    def __init__(
+        self,
+        forecasters,
+        regressor=None,
+        test_size=None,
+        n_jobs=None,
+        random_state=None,
+    ):
         super(AutoEnsembleForecaster, self).__init__(
             forecasters=forecasters, n_jobs=n_jobs
         )
         self.regressor = regressor
-        self.cv = cv
+        self.test_size = test_size
+        self.random_state = random_state
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -75,56 +85,40 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        # use GradientBoostingRegressor() as default regressor
-        self._regressor = (
-            self.regressor
-            if self.regressor is not None
-            else GradientBoostingRegressor()
-        )
-        # use SingleWindowSplitter() as default cv
-        self.cv_ = (
-            self.cv
-            if self.cv is not None
-            else SingleWindowSplitter(fh.to_relative(cutoff=y.index[-1]))
-        )
+        if self.regressor is not None:
+            self.regressor_ = self.regressor
+        else:
+            self.regressor_ = GradientBoostingRegressor(
+                max_depth=5, random_state=self.random_state
+            )
         self.weights_ = None
 
         names, forecasters = self._check_forecasters()
 
-        # # get training data for meta-model
-        # if X is not None:
-        #     y_train, y_test, X_train, X_test = temporal_train_test_split(
-        # y, X, test_size=self.test_size)
-        # else:
-        #     y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
-        #     X_train, X_test = None, None
+        # get training data for meta-model
+        if X is not None:
+            y_train, y_test, X_train, X_test = temporal_train_test_split(
+                y, X, test_size=self.test_size
+            )
+        else:
+            y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
+            X_train, X_test = None, None
 
-        weight_list = []
-        for idx_train, idx_test in self.cv_.split(y):
-            # fit ensemble models
-            if X is not None:
-                self._fit_forecasters(
-                    forecasters, y.iloc[idx_train], X.iloc[idx_train], fh
-                )
-                y_pred = pd.concat(
-                    self._predict_forecasters(fh, X.iloc[idx_test]), axis=1
-                )
-            else:
-                self._fit_forecasters(forecasters, y.iloc[idx_train], None, fh)
-                y_pred = pd.concat(self._predict_forecasters(fh), axis=1)
-            # fit meta-model (regressor) on predictions of ensemble models with
-            # y_test as target
-            self._regressor.fit(X=y_pred, y=y.iloc[idx_test])
-            # check if regressor is a sklearn.Pipeline
-            if isinstance(self._regressor, Pipeline):
-                # extract regressor from pipeline to access its attributes
-                weights = _get_weights(self._regressor.steps[-1][1])
-            else:
-                weights = _get_weights(self._regressor)
-            weight_list.append(weights)
+        # fit ensemble models
+        fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
+        self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
+        y_pred = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
 
-        # use average weights from each cv split
-        self.weights_ = np.mean(weight_list, axis=0)
+        # fit meta-model (regressor) on predictions of ensemble models
+        # with y_test as endog/target
+        self.regressor_.fit(X=y_pred, y=y_test)
+
+        # check if regressor is a sklearn.Pipeline
+        if isinstance(self.regressor_, Pipeline):
+            # extract regressor from pipeline to access its attributes
+            self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+        else:
+            self.weights_ = _get_weights(self.regressor_)
 
         # fit forecasters with all data
         self._fit_forecasters(forecasters, y, X, fh)
