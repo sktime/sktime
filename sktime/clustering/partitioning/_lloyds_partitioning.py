@@ -166,9 +166,10 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         ----------
         cluster_values: Numpy_Array
             Values to derive a center from (values in a cluster)
+
         Returns
         -------
-        Numpy_Array
+        np.ndarray
             Single value that is determined to be the center of
             the series
         """
@@ -180,7 +181,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
         Parameters
         ----------
-        X: Numpy_Array
+        X: np.ndarray
             Dataset to be validate parameters against
         """
         if isinstance(self.init_algorithm, str):
