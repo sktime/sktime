@@ -13,23 +13,23 @@ Installation
 * environments with python version 3.6, 3.7, or 3.8.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
-We appreciate community contributions towards compatibility with python 3.9, or other operating systems.
 
+``sktime`` releases are available via ``PyPI`` and ``conda`` .
 
-``sktime`` releases are available via PyPI and you can install ``sktime`` with its core dependencies via ``pip`` using:
+To install ``sktime`` with its core dependencies via ``pip`` use:
 
 .. code-block:: bash
 
     pip install sktime
 
-To install ``sktime`` with maximum dependencies, including soft dependencies, install with the ``all_extras`` modifier:
+To install ``sktime`` via ``pip`` with maximum dependencies, including soft dependencies, install using the ``all_extras`` modifier:
 
 .. code-block:: bash
 
     pip install sktime[all_extras]
 
 
-``sktime`` releases are also available via ``conda`` from ``conda-forge`` and can be installed using:
+To install ``sktime`` via ``conda`` from ``conda-forge`` use:
 
 .. code-block:: bash
 
@@ -37,7 +37,7 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
 This will install ``sktime`` with core dependencies, excluding soft dependencies.
 
-Currently, there is no easy route to install ``sktime`` with maximum dependencies via ``conda``. Community contributions towards this, e.g., via conda metapackages, would be appreciated.
+There is not currently a easy route to install ``sktime`` with maximum dependencies via ``conda``. Community contributions towards this, e.g., via conda metapackages, would be appreciated.
 
 For more detailed installation instructions see our more detailed `installation`_ instructions.
 
@@ -52,45 +52,45 @@ For more information on the terminology used by ``sktime`` see INSERT LINK TO OU
 
 Quickstart
 ----------
-The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the `tutorials`_, `user_guide`_ and `api_reference`_ in ``sktime's`` `user_documentation`_.
+The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`user_guide` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
 
 Forecasting
 ~~~~~~~~~~~
 
-```python
-from sktime.datasets import load_airline
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.theta import ThetaForecaster
-from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+.. code-block:: python
 
-y = load_airline()
-y_train, y_test = temporal_train_test_split(y)
-fh = ForecastingHorizon(y_test.index, is_relative=False)
-forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
-forecaster.fit(y_train)
-y_pred = forecaster.predict(fh)
-mean_absolute_percentage_error(y_test, y_pred)
->>> 0.08661467738190656
-```
+    from sktime.datasets import load_airline
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
+    forecaster.fit(y_train)
+    y_pred = forecaster.predict(fh)
+    mean_absolute_percentage_error(y_test, y_pred)
+    >>> 0.08661467738190656
 
 Time Series Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-```python
-from sktime.classification.interval_based import TimeSeriesForestClassifier
-from sktime.datasets import load_arrow_head
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+.. code-block:: python
 
-X, y = load_arrow_head(return_X_y=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y)
-classifier = TimeSeriesForestClassifier()
-classifier.fit(X_train, y_train)
-y_pred = classifier.predict(X_test)
-accuracy_score(y_test, y_pred)
->>> 0.8679245283018868
-```
+    from sktime.classification.interval_based import TimeSeriesForestClassifier
+    from sktime.datasets import load_arrow_head
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import accuracy_score
+
+    X, y = load_arrow_head(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    classifier = TimeSeriesForestClassifier()
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    accuracy_score(y_test, y_pred)
+    >>> 0.8679245283018868
 
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~

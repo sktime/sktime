@@ -74,7 +74,7 @@ def _make_estimator(base_estimator, random_state=None):
 
 
 def _select_interval(min_interval, max_interval, series_length, rng, method=3):
-    """private function used to select an interval for a single tree."""
+    """Private function used to select an interval for a single tree."""
     interval = np.empty(2, dtype=int)
     if method == 0:
         interval[0] = rng.randint(series_length - min_interval)
@@ -308,7 +308,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         return self
 
     def predict(self, X):
-        """Find predictions for all cases in X. Built on top of `predict_proba.
+        """Find predictions for all cases in X.
+
+        Built on top of `predict_proba`.
 
         Parameters
         ----------
@@ -538,7 +540,8 @@ def matrix_acf(x, num_cases, max_lag):
 
 
 def ps(x, sign=1, n=None, pad="mean"):
-    """
+    """Power spectrum transformer.
+
     Power spectrum transform, currently calculated using np function.
     It would be worth looking at ff implementation, see difference in speed
     to java.

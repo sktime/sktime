@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implement dataset splitting for model evaluation and seleciton."""
 
 __all__ = [
     "ExpandingWindowSplitter",
@@ -34,7 +35,7 @@ DEFAULT_FH = 1
 
 
 def _repr(self):
-    """Helper function to build repr for splitters similar to estimator objects."""
+    """Build repr for splitters similar to estimator objects."""
     # This is copied from scikit-learn's BaseEstimator get_params method
     cls = self.__class__
     init = getattr(cls.__init__, "deprecated_original", cls.__init__)
@@ -181,7 +182,7 @@ class BaseSplitter:
             yield train[train >= 0], test[test >= 0]
 
     def _split(self, y):
-        """Internal split method implemented by concrete classes"""
+        """Split method containing internal logic implemented by concrete classes."""
         raise NotImplementedError("abstract method")
 
     def get_n_splits(self, y=None):
@@ -265,11 +266,11 @@ class CutoffSplitter(BaseSplitter):
             yield training_window, test_window
 
     def get_n_splits(self, y=None):
-        """Return the number of splits"""
+        """Return the number of splits."""
         return len(self.cutoffs)
 
     def get_cutoffs(self, y=None):
-        """Return the cutoff points"""
+        """Return the cutoff points."""
         return check_cutoffs(self.cutoffs)
 
 
@@ -336,7 +337,7 @@ class BaseWindowSplitter(BaseSplitter):
         raise NotImplementedError("abstract method")
 
     def _get_start(self, fh):
-        """Get the first split point"""
+        """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
         # the data.
@@ -465,7 +466,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
     @staticmethod
     def _split_windows(start, end, step_length, window_length, fh):
-        """Sliding windows"""
+        """Generate sliding windows."""
         for split_point in range(start, end, step_length):
             train = np.arange(split_point - window_length, split_point)
             test = split_point + fh - 1
@@ -524,7 +525,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     @staticmethod
     def _split_windows(start, end, step_length, window_length, fh):
-        """Expanding windows"""
+        """Generate expanding windows."""
         for split_point in range(start, end, step_length):
             train = np.arange(start - window_length, split_point)
             test = split_point + fh - 1

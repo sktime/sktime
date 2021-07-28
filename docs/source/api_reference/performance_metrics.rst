@@ -14,8 +14,8 @@ Forecasting
 
 .. currentmodule:: sktime.performance_metrics.forecasting
 
-Tunable Classes
-~~~~~~~~~~~~~~~
+Classes
+~~~~~~~
 
 .. autosummary::
     :toctree: modules/auto_generated/

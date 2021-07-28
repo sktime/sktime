@@ -755,8 +755,7 @@ def load_uschange(y_name="Consumption"):
 
 
 def load_PBS_dataset():
-    """
-    Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
+    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
 
     Returns
     -------

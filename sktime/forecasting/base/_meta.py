@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements meta forecaster for forecasters composed of other estimators."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
@@ -15,7 +16,7 @@ from sktime.forecasting.base._base import BaseForecaster
 
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Base class for heterogenous ensemble forecasters"""
+    """Base class for heterogenous ensemble forecasters."""
 
     _required_parameters = ["forecasters"]
 
@@ -57,10 +58,10 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel"""
+        """Fit all forecasters in parallel."""
 
         def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster"""
+            """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
@@ -81,8 +82,10 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         ]
 
     def get_params(self, deep=True):
+        """Get parameters from ensemble forecastors."""
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **params):
+        """Set parameters of ensemble forecasters."""
         self._set_params("forecasters", **params)
         return self

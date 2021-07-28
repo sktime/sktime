@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Implements base class for time series forests."""
 
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
@@ -47,8 +46,7 @@ def _parallel_build_trees(
     class_weight=None,
     n_samples_bootstrap=None,
 ):
-    """
-    Private function used to fit a single tree in parallel."""
+    """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))  # noqa: T001
 
@@ -116,6 +114,7 @@ class BaseTimeSeriesForest(BaseForest):
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `estimator_` attribute.
+
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
@@ -274,9 +273,14 @@ class BaseTimeSeriesForest(BaseForest):
         return self
 
     def apply(self, X):
+        """Abstract method that is implemented by concrete estimators."""
         raise NotImplementedError()
 
     def decision_path(self, X):
+        """Decision path of decision tree.
+
+        Abstract method that is implemented by concrete estimators.
+        """
         raise NotImplementedError()
 
     def _validate_X_predict(self, X):

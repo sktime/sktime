@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements pipelines for forecasting."""
 
 __author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
@@ -19,7 +20,7 @@ class _Pipeline(
     _HeterogenousMetaEstimator,
 ):
     def _check_steps(self):
-        """Check Steps
+        """Check Steps.
 
         Parameters
         ----------
@@ -70,23 +71,23 @@ class _Pipeline(
             yield idx, name, transformer
 
     def __len__(self):
-        """
-        Returns the length of the Pipeline
-        """
+        """Return the length of the Pipeline."""
         return len(self.steps)
 
     @property
     def named_steps(self):
-        """Map the steps to a dictionary"""
+        """Map the steps to a dictionary."""
         return dict(self.steps)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
+
         Parameters
         ----------
         deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
         Returns
         -------
         params : mapping of string to any
@@ -96,7 +97,9 @@ class _Pipeline(
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
+
         Valid parameter keys can be listed with ``get_params()``.
+
         Returns
         -------
         self
@@ -372,7 +375,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
                 transformer.update(y, X, update_params=update_params)
@@ -384,6 +386,20 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
+        """Return transformed version of input series `Z`.
+
+        Parameters
+        ----------
+        Z : pd.Series or pd.DataFrame
+            A time series to apply the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series or pd.DataFrame
+            Transformed version of input series `Z`.
+        """
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers():
@@ -391,6 +407,20 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         return zt
 
     def inverse_transform(self, Z, X=None):
+        """Reverse transformation on input series `Z`.
+
+        Parameters
+        ----------
+        Z : pd.Series or pd.DataFrame
+            A time series to reverse the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        zt : pd.Series or pd.DataFrame
+            The reconstructed timeseries after the transformation has been reversed.
+        """
         self.check_is_fitted()
         zt = check_series(Z, enforce_univariate=True)
         for _, _, transformer in self._iter_transformers(reverse=True):
