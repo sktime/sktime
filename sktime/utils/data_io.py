@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Functions for the input and output of data and results
-"""
+"""Functions for the input and output of data and results."""
 import itertools
 import os
 import textwrap
@@ -17,8 +16,7 @@ class TsFileParseException(Exception):
 
 
 class LongFormatDataParseException(Exception):
-    """Should be raised when parsing a .csv file with long-formatted date and the
-    format is incorrect."""
+    """Should be raised when parsing a .csv file with long-formatted data."""
 
     pass
 
@@ -53,9 +51,7 @@ def load_from_tsfile_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
-
     # Initialize flags and variables used when parsing the file
-
     metadata_started = False
     data_started = False
 
@@ -907,7 +903,6 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     DataFrame
         A dataframe with sktime-formatted data
     """
-
     data = pd.read_csv(full_file_path_and_name, sep=separator, header=0)
     # ensure there are 4 columns in the long_format table
     if len(data.columns) != 4:
@@ -1011,8 +1006,7 @@ def write_results_to_uea_format(
     second_line="No Parameter Info",
     third_line="N/A",
 ):
-    """Write the predictions for an experiment in the standard format used by sktime
-     and tsml.
+    """Write the predictions for an experiment in the standard format used by sktime.
 
     Parameters
     ----------
@@ -1145,13 +1139,13 @@ def write_dataframe_to_tsfile(
 ):
     """
     Output a dataset in dataframe format to .ts file.
-    
+
     Parameters
     ----------
     data: pandas dataframe
         the dataset in a dataframe to be written as a ts file
         which must be of the structure specified in the documentation
-        https://github.com/whackteachers/sktime/blob/master/examples/loading_data.ipynb
+        examples/loading_data.ipynb
         index |   dim_0   |   dim_1   |    ...    |  dim_c-1
            0  | pd.Series | pd.Series | pd.Series | pd.Series
            1  | pd.Series | pd.Series | pd.Series | pd.Series

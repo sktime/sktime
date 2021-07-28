@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Functions to perform classification and clustering experiments, with results
-saved a standardised format.
+Functions to perform classification and clustering experiments.
+
+Results are saved a standardised format used by both tsml and sktime.
 """
 __author__ = ["Tony Bagnall"]
 

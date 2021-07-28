@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-
-""" Cluster Experiments
+"""Cluster Experiments.
 code to run experiments for clustering, saving results in a standard format.
 
 The main method is run_clustering_experiment. However, this file is also configured for

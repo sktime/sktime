@@ -42,7 +42,8 @@ from sktime.distances.elastic import euclidean_distance
 
 
 class TimeSeriesLloydsPartitioning(BaseClusterer):
-    """Time Series Lloyds partitioning algorithm
+    """Time Series Lloyds partitioning algorithm.
+
     Parameters
     ----------
     n_clusters: int, default = 8
@@ -108,8 +109,8 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
     def _fit(self, X: NumpyArray, y: NumpyArray = None) -> BaseClusterer:
         """
-        Method that contains the core logic to fit a cluster
-        to training data
+        Fit a clusterer to training data.
+
         Parameters
         ----------
         X: Numpy array
@@ -133,13 +134,13 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
     def _predict(self, X: NumpyArray) -> NumpyArray:
         """
-        Method used to perform a prediction from the trained
-        model
+        Make a prediction from the trained model.
+
         Parameters
         ----------
         X: Numpy_Array
-            Numpy_Array containing the time series to
-            predict clusters for
+            Numpy_Array containing the time series to predict clusters for
+
         Returns
         -------
         Numpy_Array
@@ -160,8 +161,8 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
         """
-        Method to be implemented by parent defining how centers
-        are calculated based on each iteration of k_partition
+        Calculate centres based on each iteration of k_partition.
+
         Parameters
         ----------
         cluster_values: Numpy_Array
@@ -176,7 +177,8 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
     def _check_params(self, X: NumpyArray):
         """
-        Method used to check the parameters passed
+        Check parameters.
+
         Parameters
         ----------
         X: Numpy_Array
