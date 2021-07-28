@@ -15,7 +15,7 @@ from sktime.transformations.panel.compose import (
 from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.panel import _make_nested_from_array
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():

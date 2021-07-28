@@ -276,7 +276,7 @@ texinfo_documents = [
 def _make_estimator_overview(app):
     """Make estimator overview table."""
     import pandas as pd
-    from sktime.utils import all_estimators
+    from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
         """

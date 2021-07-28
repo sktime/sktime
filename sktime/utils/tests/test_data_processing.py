@@ -7,7 +7,7 @@ from sktime.series_as_features.tests._config import N_INSTANCES
 from sktime.series_as_features.tests._config import N_TIMEPOINTS
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.data_io import make_multi_index_dataframe, generate_example_long_table
-from sktime.utils.data_processing import (
+from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_2d_array,
     from_3d_numpy_to_nested,
     from_nested_to_2d_array,

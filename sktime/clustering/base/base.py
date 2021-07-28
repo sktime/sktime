@@ -16,7 +16,7 @@ __all__ = [
 import pandas as pd
 import numpy as np
 from sktime.base import BaseEstimator
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from typing import Union, Callable
 
 DataFrame = pd.DataFrame
