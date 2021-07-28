@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster"]
@@ -17,8 +17,8 @@ from sktime.utils.datetime import _get_duration
 
 
 class TrendForecaster(BaseForecaster):
-    """
-    Forecast time series data.
+    """Forecast time series data.
+
     Default settings train a linear regression model.
 
     Parameters
@@ -65,7 +65,6 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         # for default regressor, set fit_intercept=False
         regressor = self.regressor or LinearRegression(fit_intercept=False)
 
@@ -81,7 +80,7 @@ class TrendForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Make forecasts for the given forecast horizon
+        """Make forecasts for the given forecast horizon.
 
         Parameters
         ----------
@@ -112,8 +111,8 @@ class TrendForecaster(BaseForecaster):
 
 
 class PolynomialTrendForecaster(BaseForecaster):
-    """
-    Forecast time series data with a polynomial trend.
+    """Forecast time series data with a polynomial trend.
+
     Default settings train a linear regression model with a 1st degree
     polynomial transformation of the feature.
 
@@ -169,7 +168,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
         if self.regressor is None:
@@ -192,7 +190,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Make forecasts for the given forecast horizon
+        """Make forecasts for the given forecast horizon.
 
         Parameters
         ----------
