@@ -41,8 +41,20 @@ Xlist = [
   pd.DataFrame([[1, 4], [2, 5], [3, 6]], columns=cols),
   pd.DataFrame([[1, 4], [2, 55], [3, 6]], columns=cols),
   pd.DataFrame([[1, 42], [2, 5], [3, 6]], columns=cols),
-  ]
+]
 
 example_dict[("df-list", "Panel", 0)] = Xlist
 example_dict_lossy[("df-list", "Panel",  0)] = False
 
+cols = ["instances", "timepoints"] + [f"var_{i}" for i in range(2)]
+
+Xlist = [
+  pd.DataFrame([[0, 0, 1, 4], [0, 1, 2, 5], [0, 2, 3, 6]], columns=cols),
+  pd.DataFrame([[1, 0, 1, 4], [1, 1, 2, 55], [1, 2, 3, 6]], columns=cols),
+  pd.DataFrame([[2, 0, 1, 42], [2, 1, 2, 5], [2, 2, 3, 6]], columns=cols),
+]
+X = pd.concat(Xlist)
+X = X.set_index(["instances", "timepoints"])
+
+example_dict[("pd-multiindex", "Panel", 0)] = X
+example_dict_lossy[("pd-multiindex", "Panel",  0)] = False
