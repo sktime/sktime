@@ -175,7 +175,7 @@ def _get_weights(regressor):
         weights = regressor.coef_
     else:
         raise NotImplementedError("The given regressor is not supported.")
-    return weights
+    return list(weights)
 
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
