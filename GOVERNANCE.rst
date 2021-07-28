@@ -431,7 +431,7 @@ If the proposed change cannot gather a 2/3 majority of the votes cast,
 the CC tries to resolve the deadlock.
 
 -  The CC will use consensus seeking.
--  If no consensus can be found within twenty working days excluding week-ends
+-  If no consensus can be found within twenty working days excluding weekends
    since the beginning of the stage-1 "reasonable time for consideration" period,
    the decision is made through a simple majority vote (with tie breaking) among the CC
    members.
