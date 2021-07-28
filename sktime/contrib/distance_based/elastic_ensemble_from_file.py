@@ -5,7 +5,7 @@ __author__ = "Jason Lines"
 import numpy as np
 import os
 from sklearn.metrics import accuracy_score
-from sktime.contrib.classification_experiments import write_results_to_uea_format
+from sktime.utils.data_io import write_results_to_uea_format
 
 
 class ElasticEnsemblePostProcess:
