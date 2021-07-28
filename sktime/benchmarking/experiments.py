@@ -25,7 +25,7 @@ def run_clustering_experiment(
     testY=None,
     cls_name=None,
     dataset_name=None,
-    resampleID=0
+    resampleID=0,
 ):
     """
     Run a clustering experiment and save the results to file.
@@ -118,7 +118,7 @@ def run_clustering_experiment(
             dataset_name=dataset_name,
             y_true=trainY,
             split="TRAIN",
-            full_path=False
+            full_path=False,
         )
 
 def load_and_run_clustering_experiment(
@@ -159,7 +159,7 @@ def load_and_run_clustering_experiment(
     train_file: whether to generate train files or not. If true, it performs a
                 10xCV on the train and saves
     """
-    #Set up the file path in standard format
+    # Set up the file path in standard format
     if not overwrite:
         full_path = (
             str(results_path)
@@ -212,9 +212,16 @@ def load_and_run_clustering_experiment(
     if clusterer is None:
         clusterer = set_clusterer(cls_name, resampleID)
 
-    run_clustering_experiment(train_X,clusterer,trainY=train_Y,testX=test_X,
-                              testY=test_Y,cls_name=cls_name,dataset_name=dataset,
-                              results_path=results_path)
+    run_clustering_experiment(
+        train_X,
+        clusterer,
+        trainY=train_Y,
+        testX=test_X,
+        testY=test_Y,
+        cls_name=cls_name,
+        dataset_name=dataset,
+        results_path=results_path,
+    )
 
 def set_clusterer(cls, resampleId=None):
     """Construct a clusterer.

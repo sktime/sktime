@@ -1055,10 +1055,15 @@ def write_results_to_uea_format(
             "The number of predicted values is not the same as the "
             "number of actual class values"
         )
-    #If the full directory path is not passed, make the standard structure
+    # If the full directory path is not passed, make the standard structure
     if not full_path:
-            output_path = str(output_path) + "/" + str(estimator_name)+ \
-                          "/Predictions/"+ str(dataset_name)+ "/"
+            output_path = (
+                str(output_path)
+                + "/"
+                + str(estimator_name)
+                + "/Predictions/"
+                + str(dataset_name)+ "/"
+            )
     try:
         os.makedirs(output_path)
     except os.error:

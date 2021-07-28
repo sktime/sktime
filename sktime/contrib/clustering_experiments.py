@@ -4,13 +4,13 @@
 """ Cluster Experiments
 code to run experiments for clustering, saving results in a standard format.
 
-The main method is run_clustering_experiment. However, this file is also configured for 
-runs of the main method with command line arguments, or for single debugging runs. 
+The main method is run_clustering_experiment. However, this file is also configured for
+runs of the main method with command line arguments, or for single debugging runs.
 """
 
 from sktime.benchmarking.experiments import (
     run_clustering_experiment,
-    load_and_run_clustering_experiment
+    load_and_run_clustering_experiment,
 )
 
 import os
@@ -98,28 +98,29 @@ if __name__ == "__main__":
         data_dir = "../datasets/data/"
         results_dir = "C:/Temp/Clusterers/"
         dataset = "UnitTest"
-        classifier = "kmeans"
+        clusterer = "kmeans"
         resample = 0
         tf = True
+        clst = TimeSeriesKMeans(n_clusters=2)
         load_and_run_clustering_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
-            cls_name=classifier,
+            cls_name=clusterer,
             dataset=dataset,
             resampleID=resample,
             train_file=tf,
+            clusterer=clst,
         )
-        clst= TimeSeriesKMeans(n_clusters=2)
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         run_clustering_experiment(
             train_X,
             clst,
-            results_path=results_dir+"Temp/",
+            results_path=results_dir + "Temp/",
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
-            cls_name=dataset
+            cls_name=clusterer,
         )
 
