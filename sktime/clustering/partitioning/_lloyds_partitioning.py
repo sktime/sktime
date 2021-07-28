@@ -192,7 +192,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
         super(TimeSeriesLloydsPartitioning, self)._check_params(X)
 
-    def _cluster_data(self, X: NumpyArray) -> List[List[int]]:
+    def _cluster_data(self, X: NumpyArray) -> List[int]:
         cluster_indexes = []
 
         for i in range(len(X)):

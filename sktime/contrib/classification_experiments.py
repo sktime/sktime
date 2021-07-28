@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Experiments: code to run experiments as an alternative to orchestration.
+"""Classifier Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
 single debugging runs. Results are written in a standard format
-todo: Tidy up this file!
+
+TODO:
+1. Remove problem list
+Add Example
+
+
 """
 
 import os
