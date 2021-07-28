@@ -57,7 +57,6 @@ str - the type to convert "obj" to, a valid mtype string
     or None, if obj is None
 """
 
-
 __author__ = ["fkiraly"]
 
 __all__ = [
@@ -66,6 +65,8 @@ __all__ = [
     "mtype",
 ]
 
+import numpy as np
+import pandas as pd
 
 from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes._series import infer_mtype_dict_Series
@@ -191,3 +192,33 @@ def convert_to(obj, to_type: str, as_scitype: str, store=None):
     )
 
     return converted_obj
+
+
+def _conversions_defined(scitype: str):
+    """Return an indicator matrix which conversions are defined for scitype.
+
+    Parameters
+    ----------
+    scitype: str - name of scitype for which conversions are queried
+
+    Returns
+    -------
+    conv_df: pd.DataFrame, columns and index is list of mtypes for scitype
+            entry of row i, col j is 1 if conversion from i to j is defined,
+                                     0 if conversion from i to j is not defined
+    """
+    pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
+    cols0 = set([x[0] for x in list(convert_dict.keys()) if x[2] == scitype])
+    cols1 = set([x[1] for x in list(convert_dict.keys()) if x[2] == scitype])
+    cols = sorted(list(cols0.union(cols1)))
+
+    mat = np.zeros((len(cols), len(cols)), dtype=int)
+    nkeys = len(cols)
+    for i in range(nkeys):
+        for j in range(nkeys):
+            if (cols[i], cols[j]) in pairs:
+                mat[i, j] = 1
+
+    conv_df = pd.DataFrame(mat, index=cols, columns=cols)
+
+    return conv_df
