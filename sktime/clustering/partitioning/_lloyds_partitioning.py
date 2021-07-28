@@ -14,7 +14,6 @@ from sklearn.utils import check_random_state
 from sktime.clustering.base._typing import (
     MetricParameter,
     MetricFunctionDict,
-    NumpyArray,
     InitAlgo,
     InitAlgoDict,
     NumpyRandomState,
@@ -102,12 +101,12 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         self.init_algorithm = init_algorithm
         self.random_state = random_state
 
-        self._centers: NumpyArray = None
+        self._centers: np.ndarray = None
         self._init_algorithm = None
         self._metric = None
         self._random_state = None
 
-    def _fit(self, X: NumpyArray, y: NumpyArray = None) -> BaseClusterer:
+    def _fit(self, X: np.ndarray, y: np.ndarray = None) -> BaseClusterer:
         """
         Fit a clusterer to training data.
 
@@ -132,7 +131,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         for _ in range(self.max_iter):
             self._update_centers(X)
 
-    def _predict(self, X: NumpyArray) -> NumpyArray:
+    def _predict(self, X: np.ndarray) -> np.ndarray:
         """
         Make a prediction from the trained model.
 
@@ -148,10 +147,10 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         """
         return self._cluster_data(X)
 
-    def get_centers(self) -> NumpyArray:
+    def get_centers(self) -> np.ndarray:
         """
-        Method used to get the centers of the clustering
-        algorithm
+        Get the centres of the clustering algorithm.
+
         Returns
         -------
         Numpy_Array
@@ -159,7 +158,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         """
         return self._centers
 
-    def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
+    def calculate_new_centers(self, cluster_values: np.ndarray) -> np.ndarray:
         """
         Calculate centres based on each iteration of k_partition.
 
@@ -175,7 +174,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         """
         raise NotImplementedError("abstract method")
 
-    def _check_params(self, X: NumpyArray):
+    def _check_params(self, X: np.ndarray):
         """
         Check parameters.
 
@@ -194,7 +193,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
         super(TimeSeriesLloydsPartitioning, self)._check_params(X)
 
-    def _cluster_data(self, X: NumpyArray) -> List[int]:
+    def _cluster_data(self, X: np.ndarray) -> List[int]:
         cluster_indexes = []
 
         for i in range(len(X)):
@@ -209,7 +208,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
         return cluster_indexes
 
-    def _update_centers(self, data: NumpyArray):
+    def _update_centers(self, data: np.ndarray):
         cluster_indexes = self._cluster_data(data)
 
         cluster_values = TimeSeriesLloydsPartitioning.get_cluster_values(
@@ -224,7 +223,8 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         self._centers = np.array(new_centers)
 
     @staticmethod
-    def get_cluster_values(cluster_indexes: NumpyArray, data: NumpyArray, k: int):
+    def get_cluster_values(cluster_indexes: np.ndarray, data: np.ndarray, k: int):
+        """Get the values associated with a cluster."""
         cluster_values = [[] for _ in range(k)]
 
         for i in range(len(cluster_indexes)):

@@ -3,12 +3,6 @@
 
 This file is configured for runs of the main method with command line arguments, or for
 single debugging runs. Results are written in a standard format
-
-TODO:
-1. Remove problem list
-Add Example
-
-
 """
 
 import os
