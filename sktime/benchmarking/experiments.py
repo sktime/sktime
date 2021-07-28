@@ -146,23 +146,28 @@ def load_and_run_clustering_experiment(
 
     Parameters
     ----------
-    problem_path: Location of problem files, full path.
-    results_path: Location of where to write results. Any required directories
-        will be created
-    cls_name: determines which clusterer to use, as defined in set_classifier.
-        This assumes predict_proba is
-    implemented, to avoid predicting twice. May break some classifiers though
-    dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
-                "_TRAIN"+format, same for "_TEST"
-    resampleID: Seed for resampling. If set to 0, the default train/test split
-                from file is used. Also used in output file name.
-    overwrite: if set to False, this will only build results if there is not a
-                result file already present. If
-    True, it will overwrite anything already there
-    format: Valid formats are ".ts", ".arff" and ".long".
-    For more info on format, see   examples/Loading%20Data%20Examples.ipynb
-    train_file: whether to generate train files or not. If true, it performs a
-                10xCV on the train and saves
+    problem_path : str
+        Location of problem files, full path.
+    results_path : str
+        Location of where to write results. Any required directories will be created
+    cls_name : str
+        determines which clusterer to use if clusterer is None. In this
+        case, set_clusterer is called with this cls_name
+    dataset : str
+        Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
+        "_TRAIN"+format, same for "_TEST"
+    resampleID : int, default = 0
+        Seed for resampling. If set to 0, the default train/test split from file is
+        used. Also used in output file name.
+    overwrite : boolean, default = False
+        if False, this will only build results if there is not a result file already
+        present. If True, it will overwrite anything already there.
+    format: string, default = ".ts"
+        Valid formats are ".ts", ".arff", ".tsv" and ".long". For more info on
+        format, see   examples/loading_data.ipynb
+    train_file: boolean, default = False
+        whether to generate train files or not. If true, it performs a 10xCV on the
+        train and saves
     """
     # Set up the file path in standard format
     if not overwrite:
@@ -233,8 +238,10 @@ def set_clusterer(cls, resampleId=None):
 
     Parameters
     ----------
-    cls: String indicating which clusterer you want
-    resampleId: classifier random seed
+    cls : str
+        indicating which clusterer you want
+    resampleId : int or None, default = None
+        clusterer random seed
 
     Return
     ------
