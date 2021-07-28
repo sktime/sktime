@@ -47,7 +47,7 @@ from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.series import check_series, check_equal_time_index
 
-from sktime.forecasting.base.convertIO import convert_to, mtype
+from sktime.datatypes import convert_to, mtype
 
 
 DEFAULT_ALPHA = 0.05

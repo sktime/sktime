@@ -49,7 +49,7 @@ from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils._testing.panel import make_clustering_problem
-from sktime.utils.data_processing import is_nested_dataframe
+from sktime.datatypes._panel._convert import is_nested_dataframe
 from sktime.clustering.base.base import BaseClusterer
 
 from sktime.annotation.base import BaseSeriesAnnotator
