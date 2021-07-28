@@ -109,27 +109,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        aggfunc = self._check_aggfunc()
+        aggfunc = _check_aggfunc(self.aggfunc)
         if return_pred_int:
             raise NotImplementedError()
 
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
+        y_pred.index = self.fh.to_absolute(self.cutoff)
         return _aggregate(y=y_pred, aggfunc=aggfunc)
 
-    def _check_aggfunc(self):
-        valid_aggfuncs = {
-            "mean": np.mean,
-            "median": np.median,
-            "average": np.average,
-            "min": np.min,
-            "max": np.max,
-        }
-        if self.aggfunc not in valid_aggfuncs.keys():
-            raise ValueError("Aggregation function %s not recognized." % self.aggfunc)
-        return valid_aggfuncs[self.aggfunc]
 
-
-def _aggregate(y, aggfunc, X=None):
+def _aggregate(y, aggfunc):
     """Apply aggregation function by row.
 
     Parameters
@@ -138,14 +127,25 @@ def _aggregate(y, aggfunc, X=None):
         Multivariate series to transform.
     aggfunc : str
         Aggregation function used for transformation.
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data used in transformation.
 
     Returns
     -------
     column_ensemble: pd.Series
         Transformed univariate series.
     """
-    column_ensemble = y.apply(func=aggfunc, axis=1)
+    y_agg = aggfunc(y, axis=1)
 
-    return pd.Series(column_ensemble, index=y.index)
+    return pd.Series(y_agg)
+
+
+def _check_aggfunc(aggfunc):
+    valid_aggfuncs = {
+        "mean": np.mean,
+        "median": np.median,
+        "average": np.average,
+        "min": np.min,
+        "max": np.max,
+    }
+    if aggfunc not in valid_aggfuncs.keys():
+        raise ValueError("Aggregation function %s not recognized." % aggfunc)
+    return valid_aggfuncs[aggfunc]
