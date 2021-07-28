@@ -19,9 +19,9 @@ from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 convert_dict = dict()
 
 
-def convert_identity(what, store=None):
+def convert_identity(obj, store=None):
 
-    return what
+    return obj
 
 
 # assign identity function to type conversion to self
@@ -140,9 +140,9 @@ def from_3d_numpy_to_2d_array(X):
     return array_2d
 
 
-def from_3d_numpy_to_2d_array_adp(what, store=None):
+def from_3d_numpy_to_2d_array_adp(obj, store=None):
 
-    return from_3d_numpy_to_2d_array(what)
+    return from_3d_numpy_to_2d_array(obj)
 
 
 convert_dict[("numpy3D", "numpyflat", "Panel")] = from_3d_numpy_to_2d_array_adp
@@ -233,14 +233,14 @@ def from_nested_to_2d_array(X, return_numpy=False):
     return Xt
 
 
-def from_nested_to_pdwide(what, store=None):
+def from_nested_to_pdwide(obj, store=None):
 
-    return from_nested_to_2d_array(X=what, return_numpy=False)
+    return from_nested_to_2d_array(X=obj, return_numpy=False)
 
 
-def from_nested_to_2d_np_array(what, store=None):
+def from_nested_to_2d_np_array(obj, store=None):
 
-    return from_nested_to_2d_array(X=what, return_numpy=True)
+    return from_nested_to_2d_array(X=obj, return_numpy=True)
 
 
 convert_dict[("nested_univ", "pd-wide", "Panel")] = from_nested_to_pdwide
@@ -303,9 +303,9 @@ def from_2d_array_to_nested(
     return Xt
 
 
-def from_pd_wide_to_nested(what, store=None):
+def from_pd_wide_to_nested(obj, store=None):
 
-    return from_2d_array_to_nested(X=what)
+    return from_2d_array_to_nested(X=obj)
 
 
 convert_dict[("pd-wide", "nested_univ", "Panel")] = from_pd_wide_to_nested
@@ -457,10 +457,10 @@ def from_nested_to_long(
     return long_df
 
 
-def from_nested_to_long_adp(what, store=None):
+def from_nested_to_long_adp(obj, store=None):
 
     return from_nested_to_long(
-        X=what,
+        X=obj,
         instance_column_name="case_id",
         time_column_name="reading_id",
         dimension_column_name="dim_id",
@@ -569,9 +569,9 @@ def from_long_to_nested(
     return X_nested
 
 
-def from_long_to_nested_adp(what, store=None):
+def from_long_to_nested_adp(obj, store=None):
 
-    return from_long_to_nested(X_long=what)
+    return from_long_to_nested(X_long=obj)
 
 
 convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
@@ -626,10 +626,10 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     return X_3d
 
 
-def from_multi_index_to_3d_numpy_adp(what, store=None):
+def from_multi_index_to_3d_numpy_adp(obj, store=None):
 
     return from_multi_index_to_3d_numpy(
-        X=what, instance_index="instances", time_index="timepoints"
+        X=obj, instance_index="instances", time_index="timepoints"
     )
 
 
@@ -699,9 +699,9 @@ def from_3d_numpy_to_multi_index(
     return X_mi
 
 
-def from_3d_numpy_to_multi_index_adp(what, store=None):
+def from_3d_numpy_to_multi_index_adp(obj, store=None):
 
-    return from_3d_numpy_to_multi_index(X=what)
+    return from_3d_numpy_to_multi_index(X=obj)
 
 
 convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_index_adp
@@ -766,9 +766,9 @@ def from_multi_index_to_nested(
     return x_nested
 
 
-def from_multi_index_to_nested_adp(what, store=None):
+def from_multi_index_to_nested_adp(obj, store=None):
 
-    return from_multi_index_to_nested(X=what, instance_index_name="instances")
+    return from_multi_index_to_nested(X=obj, instance_index_name="instances")
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
@@ -856,10 +856,10 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     return X_mi
 
 
-def from_nested_to_multi_index_adp(what, store=None):
+def from_nested_to_multi_index_adp(obj, store=None):
 
     return from_nested_to_multi_index(
-        X=what, instance_index_name="instances", time_index="timepoints"
+        X=obj, instance_index_name="instances", time_index="timepoints"
     )
 
 
@@ -923,9 +923,9 @@ def from_nested_to_3d_numpy(X):
     return X_3d
 
 
-def from_nested_to_3d_numpy_adp(what, store=None):
+def from_nested_to_3d_numpy_adp(obj, store=None):
 
-    return from_nested_to_3d_numpy(X=what)
+    return from_nested_to_3d_numpy(X=obj)
 
 
 convert_dict[("nested_univ", "numpy3D", "Panel")] = from_nested_to_3d_numpy_adp
@@ -978,9 +978,9 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     return df
 
 
-def from_3d_numpy_to_nested_adp(what, store=None):
+def from_3d_numpy_to_nested_adp(obj, store=None):
 
-    return from_3d_numpy_to_nested(X=what)
+    return from_3d_numpy_to_nested(X=obj)
 
 
 convert_dict[("numpy3D", "nested_univ", "Panel")] = from_3d_numpy_to_nested_adp
