@@ -1055,18 +1055,14 @@ def write_results_to_uea_format(
             "The number of predicted values is not the same as the "
             "number of actual class values"
         )
-
+    #If the full directory path is not passed, make the standard structure
+    if not full_path:
+            output_path = str(output_path) + "/" + str(estimator_name)+ \
+                          "/Predictions/"+ str(dataset_name)+ "/"
     try:
-        os.makedirs(
-            str(output_path)
-            + "/"
-            + str(estimator_name)
-            + "/Predictions/"
-            + str(dataset_name)
-            + "/"
-        )
+        os.makedirs(output_path)
     except os.error:
-        pass  # raises os.error if path already exists
+        pass  # raises os.error if path already exists, so just ignore this
 
     if split == "TRAIN" or split == "train":
         train_or_test = "train"
@@ -1078,12 +1074,8 @@ def write_results_to_uea_format(
     file = open(
         str(output_path)
         + "/"
-        + str(estimator_name)
-        + "/Predictions/"
-        + str(dataset_name)
-        + "/"
         + str(train_or_test)
-        + "Fold"
+        + "Resample"
         + str(resample_seed)
         + ".csv",
         "w",
@@ -1121,7 +1113,7 @@ def write_results_to_uea_format(
     #   y_true[i], y_pred[i]
     # If y_true is None (if clustering), y_true[i] is replaced with ? to indicate
     # missing
-    if y_true == None:
+    if y_true is None:
         for i in range(0, len(y_pred)):
             file.write("?," + str(y_pred[i]))
             if predicted_probs is not None:
