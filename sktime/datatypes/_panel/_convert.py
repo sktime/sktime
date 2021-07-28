@@ -724,7 +724,6 @@ def from_multi_index_to_nested(
         If True, then nested cells contain NumPy array
         If False, then nested cells contain pandas Series
 
-
     Returns
     -------
     x_nested : pd.DataFrame
@@ -984,6 +983,28 @@ def from_3d_numpy_to_nested_adp(obj, store=None):
 
 
 convert_dict[("numpy3D", "nested_univ", "Panel")] = from_3d_numpy_to_nested_adp
+
+
+def from_dflist_to_multiindex(obj, store=None):
+
+    n = len(obj)
+
+    mi = pd.concat(obj, axis=0, keys=range(n), names=["instances", "timepoints"])
+
+    return mi
+
+
+convert_dict[("pd-multiindex", "df-list", "Panel")] = from_dflist_to_multiindex
+
+
+def from_multiindex_to_dflist(obj, store=None):
+
+    Xlist = [obj.loc[i].rename_axis(None) for i in len(obj)]
+
+    return Xlist
+
+
+convert_dict[("df-list", "pd-multiindex", "Panel")] = from_multiindex_to_dflist
 
 
 def is_nested_dataframe(X):
