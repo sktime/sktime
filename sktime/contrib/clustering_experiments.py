@@ -14,6 +14,7 @@ from sktime.benchmarking.experiments import (
 )
 
 import os
+
 # We sometimes want to force execution in a single thread. sklearn often threads in ways
 # beyond the users control. This forces single thread execution, which is required,
 # for example, when running on an HPC

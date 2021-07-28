@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 __author__ = ["Tony Bagnall"]
 
@@ -91,7 +92,7 @@ def run_clustering_experiment(
         dataset_name=dataset_name,
         y_true=testY,
         split="TEST",
-        full_path=False
+        full_path=False,
     )
 
     #        preds = form_cluster_list(clusters, len(testY))
@@ -199,7 +200,8 @@ def load_and_run_clustering_experiment(
 
     # currently only works with .ts
     train_X, train_Y = load_ts(
-        problem_path + dataset + "/" + dataset + "_TRAIN" + format)
+        problem_path + dataset + "/" + dataset + "_TRAIN" + format
+    )
     test_X, test_Y = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
     if resampleID != 0:
         trainX, trainY, testX, testY = stratified_resample(

@@ -1062,7 +1062,8 @@ def write_results_to_uea_format(
             + "/"
             + str(estimator_name)
             + "/Predictions/"
-            + str(dataset_name)+ "/"
+            + str(dataset_name)
+            + "/"
         )
     try:
         os.makedirs(output_path)
