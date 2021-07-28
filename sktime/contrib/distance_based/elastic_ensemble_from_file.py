@@ -13,7 +13,6 @@ class ElasticEnsemblePostProcess:
 
     Parameters
     ----------
-
     results_path: str
         path to folder storing the results to be read into the ensemble
     dataset_name: str
@@ -213,7 +212,7 @@ class ElasticEnsemblePostProcess:
         overwrite=False,
     ):
         """
-        Writes the results to file.
+        Write the results to file.
 
         Probably could be replaced with data_io.write_results_UEA
 
