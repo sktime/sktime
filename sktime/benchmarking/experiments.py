@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-
+"""
+Functions to perform classification and clustering experiments, with results
+saved a standardised format.
+"""
 __author__ = ["Tony Bagnall"]
 
 import os
@@ -173,10 +176,6 @@ def load_and_run_clustering_experiment(
             + ".csv"
         )
         if os.path.exists(full_path):
-            print(
-                full_path
-                + " Already exists and overwrite set to false, not building Test"
-            )
             build_test = False
         if train_file:
             full_path = (
@@ -190,10 +189,6 @@ def load_and_run_clustering_experiment(
                 + ".csv"
             )
             if os.path.exists(full_path):
-                print(
-                    full_path
-                    + " Already exists and overwrite set to false, not building Train"
-                )
                 train_file = False
         if train_file is False and build_test is False:
             return
