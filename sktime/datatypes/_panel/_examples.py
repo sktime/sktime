@@ -31,7 +31,10 @@ example_dict_lossy = dict()
 ###
 
 
-X = np.array([[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 55, 6]], [[1, 2, 3], [42, 5, 6]]])
+X = np.array(
+  [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 55, 6]], [[1, 2, 3], [42, 5, 6]]],
+  dtype=np.int64
+)
 
 example_dict[("numpy3D", "Panel", 0)] = X
 example_dict_lossy[("numpy3D", "Panel",  0)] = False

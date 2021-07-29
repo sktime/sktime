@@ -994,17 +994,20 @@ def from_dflist_to_multiindex(obj, store=None):
     return mi
 
 
-convert_dict[("pd-multiindex", "df-list", "Panel")] = from_dflist_to_multiindex
+convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 
 
 def from_multiindex_to_dflist(obj, store=None):
 
-    Xlist = [obj.loc[i].rename_axis(None) for i in len(obj)]
+    instance_index = obj.index.levels[0]
+    n = len(instance_index)
+
+    Xlist = [obj.loc[i].rename_axis(None) for i in range(n)]
 
     return Xlist
 
 
-convert_dict[("df-list", "pd-multiindex", "Panel")] = from_multiindex_to_dflist
+convert_dict[("pd-multiindex", "df-list", "Panel")] = from_multiindex_to_dflist
 
 
 def from_dflist_to_numpy3D(obj, store=None):
@@ -1015,8 +1018,8 @@ def from_dflist_to_numpy3D(obj, store=None):
     n = len(obj[0])
     cols = set(obj[0].columns)
 
-    for i in len(obj):
-        if not n == len(obj[i]) or not set(obj[i].cols) == cols:
+    for i in range(len(obj)):
+        if not n == len(obj[i]) or not set(obj[i].columns) == cols:
             raise ValueError("elements of obj must have same length and columns")
 
     nparr = np.array([X.to_numpy().transpose() for X in obj])
@@ -1033,7 +1036,7 @@ def from_numpy3D_to_dflist(obj, store=None):
         raise TypeError("obj must be a 3D numpy.ndarray")
 
     cols = _make_column_names(obj.shape[1])
-    Xlist = [pd.DataFrame(obj[i].T, colulmns=cols) for i in len(obj)]
+    Xlist = [pd.DataFrame(obj[i].T, columns=cols) for i in range(len(obj))]
 
     return Xlist
 
