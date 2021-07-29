@@ -12,6 +12,7 @@ from sktime.datatypes._panel._registry import (
 
 MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL
 
+
 __all__ = [
     "MTYPE_REGISTER",
     "MTYPE_LIST_PANEL",

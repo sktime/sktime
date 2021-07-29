@@ -11,4 +11,6 @@ __all__ = [
     "infer_mtype_dict_Panel",
     "MTYPE_LIST_PANEL",
     "MTYPE_REGISTER_PANEL",
+    "example_dict_Panel",
+    "example_dict_lossy_Panel",
 ]
