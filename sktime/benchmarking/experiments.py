@@ -5,6 +5,8 @@ Functions to perform classification and clustering experiments.
 Results are saved a standardised format used by both tsml and sktime.
 """
 __author__ = ["Tony Bagnall"]
+__all__ = ["run_clustering_experiment", "load_and_run_clustering_experiment"]
+
 
 import os
 import time
@@ -12,7 +14,6 @@ import numpy as np
 import pandas as pd
 
 from sklearn import preprocessing
-import sklearn.utils
 
 from sktime.clustering import (
     TimeSeriesKMeans,
@@ -20,6 +21,7 @@ from sktime.clustering import (
 )
 from sktime.utils.data_io import write_results_to_uea_format
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+from sktime.utils.sampling import stratified_resample
 
 
 def run_clustering_experiment(
@@ -200,18 +202,18 @@ def load_and_run_clustering_experiment(
             return
 
     # currently only works with .ts
-    train_X, train_Y = load_ts(
+    trainX, trainY = load_ts(
         problem_path + dataset + "/" + dataset + "_TRAIN" + format
     )
-    test_X, test_Y = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
+    testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
     if resampleID != 0:
         trainX, trainY, testX, testY = stratified_resample(
-            train_X, train_Y, test_X, test_Y, resampleID
+            trainX, trainY, testX, testY, resampleID
         )
     le = preprocessing.LabelEncoder()
-    le.fit(train_Y)
-    trainY = le.transform(train_Y)
-    testY = le.transform(test_Y)
+    le.fit(trainY)
+    trainY = le.transform(trainY)
+    testY = le.transform(testY)
     if clusterer is None:
         clusterer = set_clusterer(cls_name, resampleID)
 
@@ -268,65 +270,32 @@ def set_clusterer(cls, resampleId=None):
         raise Exception("UNKNOWN CLUSTERER")
 
 
-def stratified_resample(X_train, y_train, X_test, y_test, random_state):
-    """Resample data using a random state.
-
-    Reproducable resampling. Combines train and test, resamples to get the same class
-    distribution, then returns new trrain and test.
-
-    Parameters
-    ----------
-    X_train: train data attributes in sktime pandas format.
-    y_train: train data class labes as np array.
-    X_test: test data attributes in sktime pandas format.
-    y_test: test data class labes as np array.
-
-    Returns
-    -------
-    new train and test attributes and class labels.
-    """
-    all_labels = np.concatenate((y_train, y_test), axis=None)
-    all_data = pd.concat([X_train, X_test])
-    random_state = sklearn.utils.check_random_state(random_state)
-    # count class occurrences
-    unique_train, counts_train = np.unique(y_train, return_counts=True)
-    unique_test, counts_test = np.unique(y_test, return_counts=True)
-    assert list(unique_train) == list(
-        unique_test
-    )  # haven't built functionality to deal with classes that exist in
-    # test but not in train
-    # prepare outputs
-    X_train = pd.DataFrame()
-    y_train = np.array([])
-    X_test = pd.DataFrame()
-    y_test = np.array([])
-    # for each class
-    for label_index in range(0, len(unique_train)):
-        # derive how many instances of this class from the counts
-        num_instances = counts_train[label_index]
-        # get the indices of all instances with this class label
-        label = unique_train[label_index]
-        indices = np.where(all_labels == label)[0]
-        # shuffle them
-        random_state.shuffle(indices)
-        # take the first lot of instances for train, remainder for test
-        train_indices = indices[0:num_instances]
-        test_indices = indices[num_instances:]
-        del indices  # just to make sure it's not used!
-        # extract data from corresponding indices
-        train_instances = all_data.iloc[train_indices, :]
-        test_instances = all_data.iloc[test_indices, :]
-        train_labels = all_labels[train_indices]
-        test_labels = all_labels[test_indices]
-        # concat onto current data from previous loop iterations
-        X_train = pd.concat([X_train, train_instances])
-        X_test = pd.concat([X_test, test_instances])
-        y_train = np.concatenate([y_train, train_labels], axis=None)
-        y_test = np.concatenate([y_test, test_labels], axis=None)
-    # get the counts of the new train and test resample
-    unique_train_new, counts_train_new = np.unique(y_train, return_counts=True)
-    unique_test_new, counts_test_new = np.unique(y_test, return_counts=True)
-    # make sure they match the original distribution of data
-    assert list(counts_train_new) == list(counts_train)
-    assert list(counts_test_new) == list(counts_test)
-    return X_train, y_train, X_test, y_test
+if __name__ == "__main__":
+    data_dir = "../datasets/data/"
+    results_dir = "../temp/"
+    dataset = "UnitTest"
+    clusterer = "kmeans"
+    resample = 0
+    tf = True
+    clst = TimeSeriesKMeans(n_clusters=2)
+    load_and_run_clustering_experiment(
+        overwrite=True,
+        problem_path=data_dir,
+        results_path=results_dir,
+        cls_name=clusterer,
+        dataset=dataset,
+        resampleID=resample,
+        train_file=tf,
+        clusterer=clst,
+    )
+    train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
+    test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+    run_clustering_experiment(
+        train_X,
+        clst,
+        results_path=results_dir + "Temp/",
+        trainY=train_Y,
+        testX=test_X,
+        testY=test_Y,
+        cls_name=clusterer,
+    )
