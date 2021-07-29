@@ -51,11 +51,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @property
     def _forecasters(self):
-        """
-        Internal list of forecaster only containing the name and
-        forecasters, dropping the columns. This is for the implementation
-        of get_params via _HeterogenousMetaEstimator._get_params which
-        expects lists of tuples of len 2.
+        """Make internal list of forecasters.
+
+        The list only contains the name and forecasters, dropping
+        the columns. This is for the implementation of get_params
+        via _HeterogenousMetaEstimator._get_params which expects
+        lists of tuples of len 2.
         """
         return [(name, forecasters) for name, forecasters, _ in self.forecasters]
 
