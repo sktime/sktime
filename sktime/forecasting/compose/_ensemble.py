@@ -53,6 +53,20 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     weights_ : np.array
         The weights based on either regressor.feature_importances_ or
         regressor.coef_ values.
+
+    Example
+    -------
+    >>> from sktime.forecasting.compose import AutoEnsembleForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecasters = [("trend", PolynomialTrendForecaster()),\
+                        ("naive", NaiveForecaster())]
+    >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters, n_jobs=2)
+    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    EnsembleForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _required_parameters = ["forecasters"]
