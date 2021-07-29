@@ -65,7 +65,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                         ("naive", NaiveForecaster())]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters, n_jobs=2)
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
-    EnsembleForecaster(...)
+    AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
 
