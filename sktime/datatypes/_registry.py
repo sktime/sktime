@@ -17,7 +17,7 @@ __all__ = [
     "MTYPE_REGISTER",
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
-    "SCITYPE_REGISTER"
+    "SCITYPE_REGISTER",
 ]
 
 
