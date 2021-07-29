@@ -108,7 +108,8 @@ def set_classifier(cls, resampleId=None):
 
     Basic way of creating the classifier to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy
-    reproducability. You can set up bespoke classifier in many other ways.
+    reproducability for use with load_and_run_classification_experiment. You can pass a
+    classifier object instead to run_classification_experiment.
 
     Parameters
     ----------
@@ -261,13 +262,13 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     return X_train, y_train, X_test, y_test
 
 
-def run_experiment(
+def load_and_run_classification_experiment(
     problem_path,
     results_path,
     cls_name,
     dataset,
     classifier=None,
-    resampleID=0,
+    resample_id=0,
     overwrite=False,
     format=".ts",
     train_file=False,
@@ -287,7 +288,7 @@ def run_experiment(
     implemented, to avoid predicting twice. May break some classifiers though
     dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
                 "_TRAIN"+format, same for "_TEST"
-    resampleID: Seed for resampling. If set to 0, the default train/test split
+    resample_id: Seed for resampling. If set to 0, the default train/test split
                 from file is used. Also used in output file name.
     overwrite: if set to False, this will only build results if there is not a
                 result file already present. If
@@ -306,7 +307,7 @@ def run_experiment(
             + "/Predictions/"
             + str(dataset)
             + "/testFold"
-            + str(resampleID)
+            + str(resample_id)
             + ".csv"
         )
         if os.path.exists(full_path):
@@ -323,7 +324,7 @@ def run_experiment(
                 + "/Predictions/"
                 + str(dataset)
                 + "/trainFold"
-                + str(resampleID)
+                + str(resample_id)
                 + ".csv"
             )
             if os.path.exists(full_path):
@@ -339,7 +340,7 @@ def run_experiment(
     # currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN" + format)
     testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
-    if resampleID != 0:
+    if resample_id != 0:
         # allLabels = np.concatenate((trainY, testY), axis = None)
         # allData = pd.concat([trainX, testX])
         # train_size = len(trainY) / (len(trainY) + len(testY))
@@ -348,7 +349,7 @@ def run_experiment(
         # random_state=resampleID, shuffle=True,
         # stratify=allLabels)
         trainX, trainY, testX, testY = stratified_resample(
-            trainX, trainY, testX, testY, resampleID
+            trainX, trainY, testX, testY, resample_id
         )
 
     le = preprocessing.LabelEncoder()
@@ -356,8 +357,8 @@ def run_experiment(
     trainY = le.transform(trainY)
     testY = le.transform(testY)
     if classifier is None:
-        classifier = set_classifier(cls_name, resampleID)
-    print(cls_name + " on " + dataset + " resample number " + str(resampleID))
+        classifier = set_classifier(cls_name, resample_id)
+    print(cls_name + " on " + dataset + " resample number " + str(resample_id))
     if build_test:
         start = int(round(time.time() * 1000))
         classifier.fit(trainX, trainY)
@@ -372,7 +373,7 @@ def run_experiment(
             + " on "
             + dataset
             + " resample number "
-            + str(resampleID)
+            + str(resample_id)
             + " test acc: "
             + str(ac)
             + " time: "
@@ -406,7 +407,7 @@ def run_experiment(
             third_line=third,
             output_path=results_path,
             estimator_name=cls_name,
-            resample_seed=resampleID,
+            resample_seed=resample_id,
             y_pred=preds,
             predicted_probs=probs,
             dataset_name=dataset,
@@ -431,7 +432,7 @@ def run_experiment(
             + " on "
             + dataset
             + " resample number "
-            + str(resampleID)
+            + str(resample_id)
             + " train acc: "
             + str(train_acc)
             + " time: "
@@ -456,7 +457,7 @@ def run_experiment(
             third_line=third,
             output_path=results_path,
             estimator_name=cls_name,
-            resample_seed=resampleID,
+            resample_seed=resample_id,
             y_pred=train_preds,
             predicted_probs=train_probs,
             dataset_name=dataset,
@@ -610,12 +611,12 @@ if __name__ == "__main__":
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
         tf = str(sys.argv[6]) == "True"
-        run_experiment(
+        load_and_run_classification_experiment(
             problem_path=data_dir,
             results_path=results_dir,
             cls_name=classifier,
             dataset=dataset,
-            resampleID=resample,
+            resample_id=resample,
             train_file=tf,
         )
     else:  # Local run
@@ -626,12 +627,12 @@ if __name__ == "__main__":
         dataset = "UnitTest"
         resample = 0
         tf = False
-        run_experiment(
+        load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
             cls_name=classifier,
             dataset=dataset,
-            resampleID=resample,
+            resample_id=resample,
             train_file=tf,
         )

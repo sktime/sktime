@@ -148,7 +148,7 @@ def tsf_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         tsf = ib.TimeSeriesForest(n_estimators=100)
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
@@ -190,7 +190,7 @@ def tsf_benchmarking():
         tsf = ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
@@ -206,7 +206,7 @@ def rise_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         rise = fb.RandomIntervalSpectralForest(n_estimators=100)
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
@@ -243,7 +243,7 @@ def rise_benchmarking():
         rise = ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
@@ -261,7 +261,7 @@ def boss_benchmarking():
             str(i) + " problem = " + dataset + " writing to " + results_dir + "/BOSS/"
         )
         boss = db.BOSSEnsemble()
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/BOSS/",
@@ -283,7 +283,7 @@ def elastic_distance_benchmarking():
         dataset = distance_test[i]
         print(str(i) + " problem = " + dataset + " writing to " + results_dir + "/DTW/")
         dtw = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/DTW/",
@@ -293,7 +293,7 @@ def elastic_distance_benchmarking():
             train_file=False,
         )
         twe = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/DTW/",

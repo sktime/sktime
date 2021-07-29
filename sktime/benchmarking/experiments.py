@@ -31,7 +31,7 @@ def run_clustering_experiment(
     testY=None,
     cls_name=None,
     dataset_name=None,
-    resampleID=0,
+    resample_id=0,
 ):
     """
     Run a clustering experiment and save the results to file.
@@ -65,7 +65,7 @@ def run_clustering_experiment(
         Name of the clusterer, written to the results file, ignored if None
     dataset_name : str, default = None
         Name of problem, written to the results file, ignored if null
-    resampleID : int, default = 0
+    resample_id : int, default = 0
         Resample identifier, defaults to 0
     """
     # Build the clusterer on train data, recording how long it takes
@@ -92,7 +92,7 @@ def run_clustering_experiment(
         third_line=third,
         output_path=results_path,
         estimator_name=cls_name,
-        resample_seed=resampleID,
+        resample_seed=resample_id,
         y_pred=pr,
         dataset_name=dataset_name,
         y_true=testY,
@@ -117,7 +117,7 @@ def run_clustering_experiment(
             third_line=third,
             output_path=results_path,
             estimator_name=cls_name,
-            resample_seed=resampleID,
+            resample_seed=resample_id,
             y_pred=train_preds,
             dataset_name=dataset_name,
             y_true=trainY,
