@@ -188,7 +188,7 @@ ESTIMATOR_TEST_PARAMS = {
     TransformedTargetForecaster: {"steps": STEPS_y},
     ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
-    StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
+    StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
     Detrender: {"forecaster": FORECASTER},
     ForecastingGridSearchCV: {

@@ -20,7 +20,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """StackingForecaster.
 
     Stacks two or more Forecasters and uses a meta-model (regressor) to infer
-    the final predictions.
+    the final predictions from the predictions of the given forecasters.
 
     Parameters
     ----------
@@ -39,6 +39,20 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     ----------
     regressor_ : sklearn-like regressor
         Fitted meta-model (regressor)
+
+    Example
+    -------
+    >>> from sktime.forecasting.compose import StackingForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecasters = [("trend", PolynomialTrendForecaster()),\
+                        ("naive", NaiveForecaster())]
+    >>> forecaster = StackingForecaster(forecasters=forecasters, n_jobs=2)
+    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    StackingForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _required_parameters = ["forecasters"]
