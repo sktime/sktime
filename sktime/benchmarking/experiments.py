@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Functions to perform classification and clustering experiments.
+"""Functions to perform classification and clustering experiments.
 
 Results are saved a standardised format used by both tsml and sktime.
 """
@@ -202,9 +201,7 @@ def load_and_run_clustering_experiment(
             return
 
     # currently only works with .ts
-    trainX, trainY = load_ts(
-        problem_path + dataset + "/" + dataset + "_TRAIN" + format
-    )
+    trainX, trainY = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN" + format)
     testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
     if resampleID != 0:
         trainX, trainY, testX, testY = stratified_resample(
