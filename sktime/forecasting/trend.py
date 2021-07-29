@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["Anthony Jancso", "mloning"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster"]
 
 import numpy as np
@@ -11,6 +11,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
+from sklearn.base import clone
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.datetime import _get_duration
@@ -46,7 +47,7 @@ class TrendForecaster(BaseForecaster):
 
     def __init__(self, regressor=None):
         self.regressor = regressor
-        self.regressor_ = None
+        self.regressor_ = clone(self.regressor)
         super(TrendForecaster, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -65,15 +66,11 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        # for default regressor, set fit_intercept=False
-        regressor = self.regressor or LinearRegression(fit_intercept=False)
-
-        # make pipeline with regressor
-        self.regressor_ = make_pipeline(regressor)
+        # for default regressor, set fit_intercept=True
+        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
 
         # transform data
-        n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
-        X = np.arange(n_timepoints).reshape(-1, 1)
+        X = y.index.astype("int").to_numpy().reshape(-1, 1)
 
         # fit regressor
         self.regressor_.fit(X, y)
@@ -149,7 +146,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor = regressor
         self.degree = degree
         self.with_intercept = with_intercept
-        self.regressor_ = None
+        self.regressor_ = clone(self.regressor)
         super(PolynomialTrendForecaster, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
