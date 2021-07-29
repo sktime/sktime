@@ -20,29 +20,39 @@ from warnings import warn
 class StackingForecaster(_HeterogenousEnsembleForecaster):
     """StackingForecaster.
 
-    Stacks two or more Forecasters
+    Stacks two or more Forecasters and uses a meta-model (regressor) to infer
+    the final predictions.
 
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
-    final_regressor: Regressor
+        Estimators to apply to the input series.
+    regressor: sklearn-like regressor
+        The regressor is used as a meta-model and trained with the predictions
+        of the ensemble forecasters as exog data and with y as endog data. The
+        length of the data is dependent to the given fh.
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+
+    Attributes
+    ----------
+    regressor_ : sklearn-like regressor
+        Fitted meta-model (regressor)
     """
 
-    _required_parameters = ["forecasters", "final_regressor"]
+    _required_parameters = ["forecasters", "regressor"]
     _tags = {
         "univariate-only": True,
         "requires-fh-in-fit": True,
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, final_regressor, n_jobs=None):
+    def __init__(self, forecasters, regressor, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
-        self.final_regressor = final_regressor
-        self.final_regressor_ = None
+        self.regressor = regressor
+        self.regressor_ = None
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -63,7 +73,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             raise NotImplementedError()
 
         names, forecasters = self._check_forecasters()
-        self._check_final_regressor()
+        self._check_regressor()
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
@@ -77,8 +87,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         X_meta = np.column_stack(self._predict_forecasters(X))
 
         # fit final regressor on on validation window
-        self.final_regressor_ = clone(self.final_regressor)
-        self.final_regressor_.fit(X_meta, y_meta)
+        self.regressor_ = clone(self.regressor)
+        self.regressor_.fit(X_meta, y_meta)
 
         # refit forecasters on entire training series
         self._fit_forecasters(forecasters, y, fh=self.fh, X=X)
@@ -128,13 +138,12 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         if return_pred_int:
             raise NotImplementedError()
         y_preds = np.column_stack(self._predict_forecasters(X))
-        y_pred = self.final_regressor_.predict(y_preds)
+        y_pred = self.regressor_.predict(y_preds)
         index = self.fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
-    def _check_final_regressor(self):
-        if not is_regressor(self.final_regressor):
+    def _check_regressor(self):
+        if not is_regressor(self.regressor):
             raise ValueError(
-                f"`final_regressor` should be a regressor, "
-                f"but found: {self.final_regressor}"
+                f"`regressor` should be a regressor, " f"but found: {self.regressor}"
             )
