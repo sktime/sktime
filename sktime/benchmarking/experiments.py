@@ -269,7 +269,7 @@ def set_clusterer(cls, resampleId=None):
 
 if __name__ == "__main__":
     data_dir = "../datasets/data/"
-    results_dir = "../temp/"
+    results_dir = "../Temp/"
     dataset = "UnitTest"
     clusterer = "kmeans"
     resample = 0
@@ -290,9 +290,10 @@ if __name__ == "__main__":
     run_clustering_experiment(
         train_X,
         clst,
-        results_path=results_dir + "Temp/",
+        results_path=results_dir,
         trainY=train_Y,
         testX=test_X,
         testY=test_Y,
-        cls_name=clusterer,
+        cls_name="kmeans2",
+        dataset_name=dataset,
     )

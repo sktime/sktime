@@ -2,6 +2,7 @@
 """Some development tests for classifiers.
 
 Called benchmarking to avoid automated tests."""
+
 import os
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
