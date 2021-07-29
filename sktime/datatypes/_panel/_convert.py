@@ -1024,7 +1024,7 @@ def from_dflist_to_numpy3D(obj, store=None):
     return nparr
 
 
-convert_dict[("numpy3D", "df-list", "Panel")] = from_dflist_to_numpy3D
+convert_dict[("df-list", "numpy3D", "Panel")] = from_dflist_to_numpy3D
 
 
 def from_numpy3D_to_dflist(obj, store=None):
@@ -1038,7 +1038,7 @@ def from_numpy3D_to_dflist(obj, store=None):
     return Xlist
 
 
-convert_dict[("df-list", "numpy3D", "Panel")] = from_numpy3D_to_dflist
+convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
 
 
 def is_nested_dataframe(X):
