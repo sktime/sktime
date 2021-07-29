@@ -124,6 +124,8 @@ Composition
     :template: class.rst
 
     EnsembleForecaster
+    AutoEnsembleForecaster
+    StackingForecaster
     TransformedTargetForecaster
     ForecastingPipeline
     DirectTabularRegressionForecaster
@@ -134,7 +136,6 @@ Composition
     RecursiveTimeSeriesRegressionForecaster
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
-    StackingForecaster
     MultiplexForecaster
 
 .. autosummary::

@@ -51,6 +51,7 @@ from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import AutoEnsembleForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
@@ -188,6 +189,7 @@ ESTIMATOR_TEST_PARAMS = {
     ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
+    AutoEnsembleForecaster: {"forecasters": FORECASTERS},
     Detrender: {"forecaster": FORECASTER},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
