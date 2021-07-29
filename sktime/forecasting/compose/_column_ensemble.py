@@ -45,10 +45,26 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, aggfunc="mean"):
+    def __init__(self, forecasters):
         self.forecasters = forecasters
-        self.aggfunc = aggfunc
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
+
+    @property
+    def _forecasters(self):
+        """
+        Internal list of forecaster only containing the name and
+        forecasters, dropping the columns. This is for the implementation
+        of get_params via _HeterogenousMetaEstimator._get_params which
+        expects lists of tuples of len 2.
+        """
+        return [(name, forecasters) for name, forecasters, _ in self.forecasters]
+
+    @_forecasters.setter
+    def _forecasters(self, value):
+        self.forecasters = [
+            (name, forecasters, indices)
+            for ((name, forecasters), (_, _, indices)) in zip(value, self.forecasters)
+        ]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -111,7 +127,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("forecasters", deep=deep)
+        return self._get_params("_forecasters", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -122,7 +138,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        self._set_params("forecasters", **kwargs)
+        self._set_params("_forecasters", **kwargs)
         return self
 
     def _check_forecasters(self):
