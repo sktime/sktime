@@ -33,7 +33,7 @@ example_dict_lossy = dict()
 
 X = np.array(
     [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 55, 6]], [[1, 2, 3], [42, 5, 6]]],
-    dtype=np.int64
+    dtype=np.int64,
 )
 
 example_dict[("numpy3D", "Panel", 0)] = X
@@ -60,4 +60,4 @@ X = pd.concat(Xlist)
 X = X.set_index(["instances", "timepoints"])
 
 example_dict[("pd-multiindex", "Panel", 0)] = X
-example_dict_lossy[("pd-multiindex", "Panel",  0)] = False
+example_dict_lossy[("pd-multiindex", "Panel", 0)] = False
