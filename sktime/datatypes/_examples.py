@@ -48,7 +48,7 @@ def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
 
     Returns
     -------
-    fixtures: list with elements being
+    fixtures: dict with integer keys, elements being
         fixture - example for mtype mtype, scitype as_scitype
         if return_lossy=True, elements are pairs with fixture and
         lossy: bool - whether the example is a lossy representation
@@ -58,11 +58,12 @@ def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
     keys = [k for k in exkeys if k[0] == mtype and k[1] == as_scitype]
 
     # retrieve all fixtures that match the key
-    fixtures = [example_dict[k] for k in keys]
+    fixtures = dict()
 
-    if return_lossy:
-        fixtures = [(example_dict[k], example_dict_lossy[k]) for k in keys]
-    else:
-        fixtures = [example_dict[k] for k in keys]
+    for k in keys:
+        if return_lossy:
+            fixtures[k[2]] = (example_dict[k], example_dict_lossy[k])
+        else:
+            fixtures[k[2]] = example_dict[k]
 
     return fixtures
