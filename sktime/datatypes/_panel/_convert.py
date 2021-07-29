@@ -1009,7 +1009,7 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_multiindex_to_dflist
 
 def from_dflist_to_numpy3D(obj, store=None):
 
-    if not isinstance(obj, "list"):
+    if not isinstance(obj, list):
         raise TypeError("obj must be a list of pd.DataFrame")
 
     n = len(obj[0])
@@ -1029,7 +1029,7 @@ convert_dict[("numpy3D", "df-list", "Panel")] = from_dflist_to_numpy3D
 
 def from_numpy3D_to_dflist(obj, store=None):
 
-    if not isinstance(obj, "np.ndarray") or len(obj.shape) != 3:
+    if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
         raise TypeError("obj must be a 3D numpy.ndarray")
 
     cols = _make_column_names(obj.shape[1])
