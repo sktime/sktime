@@ -180,6 +180,9 @@ def _get_weights(regressor):
         weights = regressor.coef_
     else:
         raise NotImplementedError("The given regressor is not supported.")
+    # avoid ZeroDivisionError if all weights are 0
+    if weights.sum() == 0:
+        weights += 1
     return list(weights)
 
 
