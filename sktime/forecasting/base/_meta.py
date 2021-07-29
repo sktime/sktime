@@ -7,7 +7,10 @@ __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel
 from joblib import delayed
+
 from sklearn.base import clone
+from sklearn.base import is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -24,6 +27,18 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         self.forecasters_ = None
         self.n_jobs = n_jobs
         super(_HeterogenousEnsembleForecaster, self).__init__()
+
+    def _check_regressor(self):
+        if self.regressor is None:
+            self.regressor_ = GradientBoostingRegressor()
+        else:
+            if not is_regressor(self.regressor):
+                raise ValueError(
+                    f"`regressor` should be a regressor, "
+                    f"but found: {self.regressor}"
+                )
+            self.regressor_ = clone(self.regressor)
+        return self
 
     def _check_forecasters(self):
         if (

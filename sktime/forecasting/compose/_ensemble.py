@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -43,8 +42,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
-    random_state : int or float
-        Only needed if regressor=None to set random_state of the deafult regressor.
 
     Attributes
     ----------
@@ -82,14 +79,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         n_jobs=None,
-        random_state=None,
     ):
         super(AutoEnsembleForecaster, self).__init__(
             forecasters=forecasters, n_jobs=n_jobs
         )
         self.regressor = regressor
         self.test_size = test_size
-        self.random_state = random_state
+
+        self.regressor_ = None
+        self.weights_ = None
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -107,15 +105,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        if self.regressor is not None:
-            self.regressor_ = self.regressor
-        else:
-            self.regressor_ = GradientBoostingRegressor(
-                max_depth=5, random_state=self.random_state
-            )
-        self.weights_ = None
-
         names, forecasters = self._check_forecasters()
+        self._check_regressor()
 
         # get training data for meta-model
         if X is not None:
@@ -129,11 +120,11 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # fit ensemble models
         fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
         self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
-        y_pred = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
+        X_meta = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
 
         # fit meta-model (regressor) on predictions of ensemble models
         # with y_test as endog/target
-        self.regressor_.fit(X=y_pred, y=y_test)
+        self.regressor_.fit(X=X_meta, y=y_test)
 
         # check if regressor is a sklearn.Pipeline
         if isinstance(self.regressor_, Pipeline):

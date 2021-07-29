@@ -8,7 +8,6 @@ __all__ = ["StackingForecaster"]
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.base import is_regressor
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -42,14 +41,14 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         Fitted meta-model (regressor)
     """
 
-    _required_parameters = ["forecasters", "regressor"]
+    _required_parameters = ["forecasters"]
     _tags = {
-        "univariate-only": True,
+        "univariate-only": False,
         "requires-fh-in-fit": True,
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, regressor, n_jobs=None):
+    def __init__(self, forecasters, regressor=None, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
         self.regressor_ = None
@@ -65,6 +64,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -141,9 +141,3 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_pred = self.regressor_.predict(y_preds)
         index = self.fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
-
-    def _check_regressor(self):
-        if not is_regressor(self.regressor):
-            raise ValueError(
-                f"`regressor` should be a regressor, " f"but found: {self.regressor}"
-            )
