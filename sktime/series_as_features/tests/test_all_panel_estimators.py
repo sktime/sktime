@@ -18,7 +18,7 @@ from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils import all_estimators
+from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.estimator_checks import _make_args
 
