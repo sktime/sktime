@@ -31,19 +31,21 @@ def test_convert(scitype):
     mtypes = conv_mat.index.values
 
     if len(mtypes) == 0:
-        raise RuntimeError("no mtypes defined for scitype "+scitype)
+        raise RuntimeError("no mtypes defined for scitype " + scitype)
 
     fixtures = dict()
 
     for mtype in mtypes:
+        # if we don't do this we get into a clash between linters
+        mtype_long_variable_name_to_avoid_linter_clash = mtype
         fixtures[mtype] = get_examples(
-            mtype=mtype,
+            mtype=mtype_long_variable_name_to_avoid_linter_clash,
             as_scitype=scitype,
-            return_lossy=True
+            return_lossy=True,
         )
 
     if len(fixtures[mtypes[0]]) == 0:
-        raise RuntimeError("no fixtures defined for scitype "+scitype)
+        raise RuntimeError("no fixtures defined for scitype " + scitype)
 
     n_fixtures = len(fixtures[mtypes[0]])
 
