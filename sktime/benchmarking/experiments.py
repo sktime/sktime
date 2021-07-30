@@ -70,25 +70,6 @@ def run_clustering_experiment(
     resample_id : int, default = 0
         Resample identifier, defaults to 0
 
-    Example
-    -------
-    >>> from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-    >>> from sktime.clustering import TimeSeriesKMeans
-    >>> from sktime.setup import ROOT_DIR
-    >>> train_X, train_Y = load_ts(ROOT_DIR+"/datasets/data/UnitTest/UnitTest_TRAIN.ts")
-    >>> test_X, test_Y = load_ts(ROOT_DIR+"/datasets/data/UnitTest/UnitTest_TEST.ts")
-    >>> clst = TimeSeriesKMeans(n_clusters=2)
-    >>> run_clustering_experiment(
-    >>>     train_X,
-    >>>     clst,
-    >>>     results_path="../Temp/",
-    >>>     trainY=train_Y,
-    >>>     testX=test_X,
-    >>>     testY=test_Y,
-    >>>     cls_name="kmeans",
-    >>>     dataset_name="UnitTest",
-    >>>     resample_id=0,
-    >>> )
     """
     # Build the clusterer on train data, recording how long it takes
 
