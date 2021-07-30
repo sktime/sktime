@@ -5,6 +5,9 @@ Functions to sample sktime datasets.
 Used in experiments to get deterministic resamples.
 """
 
+import numpy as np
+import pandas as pd
+
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     """Stratified resample data without replacement using a random state.
