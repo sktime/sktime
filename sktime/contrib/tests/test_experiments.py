@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-""" test_experiments.py, tests the experiments code works with all current valid
-classifiers.
+""" test_experiments.py.
 
-Loops through all classifiers in the list in experiments, trains,  Builds all
+tests the experiments code works with all current valid classifiers.
+Loops through all classifiers in the list in experiments, trains,  Builds all.
 """
 import os
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
@@ -50,6 +50,7 @@ expected_capabilities = {
 
 # Test that the classifiers listed in classification.base all
 def test_classifiers_on_default_problem():
+    """Tests classifiers on a default problem."""
     path = os.path.join(sktime.MODULE, "datasets/data")
     # train_x, train_y = load_from_tsfile_to_dataframe(
     #    os.path.join(path, "UnitTest/UnitTest_TRAIN.ts")
