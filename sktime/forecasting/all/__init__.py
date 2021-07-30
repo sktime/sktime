@@ -1,5 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Module exports for forecasting module."""
+
 __author__ = ["Markus Löning"]
 __all__ = [
     "ForecastingHorizon",
