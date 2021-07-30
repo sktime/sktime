@@ -28,10 +28,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
-    regressor : sklearn-like regressor, optional, default=None
+    regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
-        a GradientBoostingRegressor(max_depth=5) is used. The regressor can also be a
+        a GradientBoostingRegressor() is used. The regressor can also be a
         sklearn.Pipeline() object.
     test_size : int or float, tional, default=None
         Used to do an internal temporal_train_test_split. The test_size data
@@ -85,9 +85,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         )
         self.regressor = regressor
         self.test_size = test_size
-
-        self.regressor_ = None
-        self.weights_ = None
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.

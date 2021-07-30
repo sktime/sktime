@@ -7,7 +7,6 @@ __all__ = ["StackingForecaster"]
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -26,10 +25,12 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
-    regressor: sklearn-like regressor
+    regressor: sklearn-like regressor, optional, default=None.
         The regressor is used as a meta-model and trained with the predictions
         of the ensemble forecasters as exog data and with y as endog data. The
-        length of the data is dependent to the given fh.
+        length of the data is dependent to the given fh. If None, then
+        a GradientBoostingRegressor() is used. The regressor can also be a
+        sklearn.Pipeline() object.
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -65,7 +66,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     def __init__(self, forecasters, regressor=None, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
-        self.regressor_ = None
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -101,7 +101,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         X_meta = np.column_stack(self._predict_forecasters(X))
 
         # fit final regressor on on validation window
-        self.regressor_ = clone(self.regressor)
         self.regressor_.fit(X_meta, y_meta)
 
         # refit forecasters on entire training series
