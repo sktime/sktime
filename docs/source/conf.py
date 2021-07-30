@@ -49,13 +49,11 @@ extensions = [
     "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosectionlabel",
-    "sphinx.ext.todo",
-    "sphinx.ext.mathjax",
     # 'sphinx.ext.viewcode',  # link to auto-generated source code files (rst)
     "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
     "nbsphinx",  # integrates example notebooks
-    # "m2r2",  # markdown rendering
+    "sphinx_gallery.load_style",
     "myst_parser",
 ]
 
