@@ -4,7 +4,8 @@
 Results are saved a standardised format used by both tsml and sktime.
 """
 __author__ = ["Tony Bagnall"]
-__all__ = ["run_clustering_experiment", "load_and_run_clustering_experiment"]
+__all__ = ["run_clustering_experiment", "load_and_run_clustering_experiment",
+           "set_classifier", "set_clusterer"]
 
 
 import os
