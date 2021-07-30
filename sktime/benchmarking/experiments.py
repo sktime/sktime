@@ -259,8 +259,6 @@ def load_and_run_clustering_experiment(
     )
 
 
-
-
 def set_clusterer(cls, resample_id=None):
     """Construct a clusterer.
 
