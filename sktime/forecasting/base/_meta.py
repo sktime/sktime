@@ -30,7 +30,7 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
 
     def _check_regressor(self):
         if self.regressor is None:
-            self.regressor_ = GradientBoostingRegressor()
+            self.regressor_ = GradientBoostingRegressor(max_depth=5)
         else:
             if not is_regressor(self.regressor):
                 raise ValueError(
