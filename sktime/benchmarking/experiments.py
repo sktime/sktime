@@ -85,7 +85,7 @@ def run_clustering_experiment(
     >>>     testY=test_Y,
     >>>     cls_name="kmeans",
     >>>     dataset_name="UnitTest",
-    >>>     resampleID=0,
+    >>>     resample_id=0,
     >>> )
     """
     # Build the clusterer on train data, recording how long it takes
@@ -197,7 +197,7 @@ def load_and_run_clustering_experiment(
     >>>     results_path="../Temp/",
     >>>     cls_name="kmeans",
     >>>     dataset_name="UnitTest",
-    >>>     resampleID=0,
+    >>>     resample_id=0,
     >>>     train_file=True,
     >>> )
 
@@ -258,7 +258,7 @@ def load_and_run_clustering_experiment(
     )
 
 
-def set_clusterer(cls, resampleId=None):
+def set_clusterer(cls, resample_id=None):
     """Construct a clusterer.
 
     Basic way of creating the clusterer to build using the default settings. This
@@ -271,7 +271,7 @@ def set_clusterer(cls, resampleId=None):
     ----------
     cls : str
         indicating which clusterer you want
-    resampleId : int or None, default = None
+    resample_id : int or None, default = None
         clusterer random seed
 
     Return
@@ -285,16 +285,15 @@ def set_clusterer(cls, resampleId=None):
             n_clusters=5,
             max_iter=50,
             averaging_algorithm="mean",
-            random_state=resampleId,
+            random_state=resample_id,
         )
     if name == "kmedoids" or name == "k-medoids":
         return TimeSeriesKMedoids(
             n_clusters=5,
             max_iter=50,
             averaging_algorithm="mean",
-            random_state=resampleId,
+            random_state=resample_id,
         )
 
     else:
         raise Exception("UNKNOWN CLUSTERER")
-
