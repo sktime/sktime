@@ -10,7 +10,6 @@ __all__ = ["run_clustering_experiment", "load_and_run_clustering_experiment"]
 import os
 import time
 import numpy as np
-import pandas as pd
 
 from sklearn import preprocessing
 

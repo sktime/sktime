@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-Functions to sample sktime datasets.
+"""Functions to sample sktime datasets.
 
 Used in experiments to get deterministic resamples.
 """
 
 import numpy as np
 import pandas as pd
+import sklearn.utils
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
