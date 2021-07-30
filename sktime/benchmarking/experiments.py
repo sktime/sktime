@@ -188,18 +188,6 @@ def load_and_run_clustering_experiment(
     train_file: boolean, default = False
         whether to generate train files or not. If true, it performs a 10xCV on the
         train and saves
-
-    Example
-    _______
-    >>> load_and_run_clustering_experiment(
-    ...     problem_path="../datasets/data/",
-    ...     results_path="../Temp/",
-    ...     cls_name="kmeans",
-    ...     dataset_name="UnitTest",
-    ...     resample_id=0,
-    ...     train_file=True,
-    ... )
-
     """
     # Set up the file path in standard format
     if not overwrite:
