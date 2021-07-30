@@ -89,7 +89,7 @@ if __name__ == "__main__":
             results_path=results_dir,
             cls_name=classifier,
             dataset=dataset,
-            resampleID=resample,
+            resample_id=resample,
             train_file=tf,
         )
     else:  # Local run
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             results_path=results_dir,
             cls_name=clusterer,
             dataset=dataset,
-            resampleID=resample,
+            resample_id=resample,
             train_file=tf,
             clusterer=clst,
         )

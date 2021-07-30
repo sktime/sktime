@@ -152,7 +152,7 @@ def load_and_run_clustering_experiment(
     cls_name,
     dataset,
     clusterer=None,
-    resampleID=0,
+    resample_id=0,
     overwrite=False,
     format=".ts",
     train_file=False,
@@ -176,7 +176,7 @@ def load_and_run_clustering_experiment(
     dataset : str
         Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
         "_TRAIN"+format, same for "_TEST"
-    resampleID : int, default = 0
+    resample_id : int, default = 0
         Seed for resampling. If set to 0, the default train/test split from file is
         used. Also used in output file name.
     overwrite : boolean, default = False
@@ -211,7 +211,7 @@ def load_and_run_clustering_experiment(
             + "/Predictions/"
             + str(dataset)
             + "/testResample"
-            + str(resampleID)
+            + str(resample_id)
             + ".csv"
         )
         if os.path.exists(full_path):
@@ -224,7 +224,7 @@ def load_and_run_clustering_experiment(
                 + "/Predictions/"
                 + str(dataset)
                 + "/trainResample"
-                + str(resampleID)
+                + str(resample_id)
                 + ".csv"
             )
             if os.path.exists(full_path):
@@ -235,16 +235,16 @@ def load_and_run_clustering_experiment(
     # currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN" + format)
     testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST" + format)
-    if resampleID != 0:
+    if resample_id != 0:
         trainX, trainY, testX, testY = stratified_resample(
-            trainX, trainY, testX, testY, resampleID
+            trainX, trainY, testX, testY, resample_id
         )
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
     if clusterer is None:
-        clusterer = set_clusterer(cls_name, resampleID)
+        clusterer = set_clusterer(cls_name, resample_id)
 
     run_clustering_experiment(
         trainX,
