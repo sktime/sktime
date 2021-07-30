@@ -6,6 +6,8 @@ sktime.performance_metrics: Measuring time series model performance
 
 The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 
+.. automodule:: sktime.performance_metrics
+    :no-members:
 
 Forecasting
 -----------

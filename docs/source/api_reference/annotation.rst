@@ -6,6 +6,9 @@ sktime.annotation: Time series annotation
 The :mod:`sktime.annotation` module contains algorithms and composition tools
 for time series annotation (for example, anomaly or outlier detection).
 
+.. automodule:: sktime.annotation
+    :no-members:
+
 Adapters
 --------
 

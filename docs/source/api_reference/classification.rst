@@ -5,8 +5,13 @@ sktime.classification: Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
+.. automodule:: sktime.classification
+    :no-members:
+
 Composition
 -----------
+
+.. currentmodule:: sktime.classification.compose
 
 .. autosummary::
     :toctree: auto_generated/
