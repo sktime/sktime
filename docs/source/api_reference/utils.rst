@@ -5,16 +5,13 @@ sktime.utils: Utility function
 
 The :mod:`sktime.utils` module contains utility functions.
 
-.. automodule:: sktime.utils
-    :no-members:
-
 Plotting
 --------
 
 .. currentmodule:: sktime.utils.plotting
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     plot_series
@@ -26,7 +23,7 @@ Data Processing
 .. currentmodule:: sktime.datatypes._panel._convert
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     are_columns_nested
