@@ -73,8 +73,8 @@ def run_clustering_experiment(
     -------
     >>> from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
     >>> from sktime.clustering import TimeSeriesKMeans
-    >>> train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-    >>> test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+    >>> train_X, train_Y = load_ts("../datasets/data/UnitTest/UnitTest_TRAIN.ts")
+    >>> test_X, test_Y = load_ts("../datasets/data/UnitTest/UnitTest_TEST.ts")
     >>> clst = TimeSeriesKMeans(n_clusters=2)
     >>> run_clustering_experiment(
     >>>     train_X,
@@ -192,14 +192,13 @@ def load_and_run_clustering_experiment(
     Example
     _______
     >>> load_and_run_clustering_experiment(
-    >>>     overwrite=True,
-    >>>     problem_path="../datasets/data/",
-    >>>     results_path="../Temp/",
-    >>>     cls_name="kmeans",
-    >>>     dataset_name="UnitTest",
-    >>>     resample_id=0,
-    >>>     train_file=True,
-    >>> )
+    ...     problem_path="../datasets/data/",
+    ...     results_path="../Temp/",
+    ...     cls_name="kmeans",
+    ...     dataset_name="UnitTest",
+    ...     resample_id=0,
+    ...     train_file=True,
+    ... )
 
     """
     # Set up the file path in standard format
