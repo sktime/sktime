@@ -12,6 +12,7 @@ import os
 from setuptools import find_packages
 from sktime._build_utils import maybe_cythonize_extensions
 
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration

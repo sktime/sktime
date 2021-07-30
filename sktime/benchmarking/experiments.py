@@ -12,6 +12,8 @@ import time
 import numpy as np
 
 from sklearn import preprocessing
+from sktime.setup import ROOT_DIR
+
 
 from sktime.clustering import (
     TimeSeriesKMeans,
@@ -73,8 +75,9 @@ def run_clustering_experiment(
     -------
     >>> from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
     >>> from sktime.clustering import TimeSeriesKMeans
-    >>> train_X, train_Y = load_ts("../datasets/data/UnitTest/UnitTest_TRAIN.ts")
-    >>> test_X, test_Y = load_ts("../datasets/data/UnitTest/UnitTest_TEST.ts")
+    >>> from sktime.setup import ROOT_DIR
+    >>> train_X, train_Y = load_ts(ROOT_DIR+"/datasets/data/UnitTest/UnitTest_TRAIN.ts")
+    >>> test_X, test_Y = load_ts(ROOT_DIR+"/datasets/data/UnitTest/UnitTest_TEST.ts")
     >>> clst = TimeSeriesKMeans(n_clusters=2)
     >>> run_clustering_experiment(
     >>>     train_X,
