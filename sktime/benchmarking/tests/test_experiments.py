@@ -12,8 +12,8 @@ from sktime.clustering import TimeSeriesKMeans
 
 def test_load_and_run_clustering_experiment():
     """Test loading, running and saving.
-    Currently it just checks the files have been created, then deletes them. Later it
-    can be enhanced to check the results can be loaded.
+    Currently it just checks that the files have been created, then deletes them.
+    Later it can be enhanced to check the results can be loaded.
     """
     data_dir = "../datasets/data/"
     results_dir = "../Temp/"
