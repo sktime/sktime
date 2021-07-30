@@ -53,6 +53,7 @@ def run_clustering_experiment(
     clusterer : BaseClusterer
         The clustering object
     results_path : str
+        Where to write the results to
     trainY : np.array, default = None
         Train data tue class labels, only used for file writing, ignored by the
         clusterer
@@ -64,9 +65,28 @@ def run_clustering_experiment(
     cls_name : str, default = None
         Name of the clusterer, written to the results file, ignored if None
     dataset_name : str, default = None
-        Name of problem, written to the results file, ignored if null
+        Name of problem, written to the results file, ignored if None
     resample_id : int, default = 0
         Resample identifier, defaults to 0
+
+    Example
+    -------
+    >>> from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+    >>> from sktime.clustering import TimeSeriesKMeans
+    >>> train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
+    >>> test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+    >>> clst = TimeSeriesKMeans(n_clusters=2)
+    >>> run_clustering_experiment(
+    >>>     train_X,
+    >>>     clst,
+    >>>     results_path="../Temp/",
+    >>>     trainY=train_Y,
+    >>>     testX=test_X,
+    >>>     testY=test_Y,
+    >>>     cls_name="kmeans",
+    >>>     dataset_name="UnitTest",
+    >>>     resampleID=0,
+    >>> )
     """
     # Build the clusterer on train data, recording how long it takes
 
@@ -168,6 +188,19 @@ def load_and_run_clustering_experiment(
     train_file: boolean, default = False
         whether to generate train files or not. If true, it performs a 10xCV on the
         train and saves
+
+    Example
+    _______
+    >>> load_and_run_clustering_experiment(
+    >>>     overwrite=True,
+    >>>     problem_path="../datasets/data/",
+    >>>     results_path="../Temp/",
+    >>>     cls_name="kmeans",
+    >>>     dataset_name="UnitTest",
+    >>>     resampleID=0,
+    >>>     train_file=True,
+    >>> )
+
     """
     # Set up the file path in standard format
     if not overwrite:
@@ -265,34 +298,3 @@ def set_clusterer(cls, resampleId=None):
     else:
         raise Exception("UNKNOWN CLUSTERER")
 
-
-if __name__ == "__main__":
-    data_dir = "../datasets/data/"
-    results_dir = "../Temp/"
-    dataset = "UnitTest"
-    clusterer = "kmeans"
-    resample = 0
-    tf = True
-    clst = TimeSeriesKMeans(n_clusters=2)
-    load_and_run_clustering_experiment(
-        overwrite=True,
-        problem_path=data_dir,
-        results_path=results_dir,
-        cls_name=clusterer,
-        dataset=dataset,
-        resampleID=resample,
-        train_file=tf,
-        clusterer=clst,
-    )
-    train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-    test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-    run_clustering_experiment(
-        train_X,
-        clst,
-        results_path=results_dir,
-        trainY=train_Y,
-        testX=test_X,
-        testY=test_Y,
-        cls_name="kmeans2",
-        dataset_name=dataset,
-    )
