@@ -40,7 +40,7 @@ def test_load_and_run_clustering_experiment():
 
 def test_run_clustering_experiment():
     """Test running and saving results.
-    
+
     Currently it just checks the files have been created, then deletes them.
     """
     data_dir = "../datasets/data/"
