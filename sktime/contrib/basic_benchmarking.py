@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Some development tests for classifiers.
 
-Called benchmarking to avoid automated tests."""
+Called benchmarking to avoid automated tests.
+"""
 
 import os
 
