@@ -300,7 +300,6 @@ def set_clusterer(cls, resample_id=None):
         raise Exception("UNKNOWN CLUSTERER")
 
 
-
 def set_classifier(cls, resampleId=None):
     """Construct a classifier.
 
