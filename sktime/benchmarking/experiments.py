@@ -12,6 +12,7 @@ import time
 import numpy as np
 
 from sklearn import preprocessing
+from sklearn.ensemble import RandomForestClassifier
 
 
 from sktime.utils.data_io import write_results_to_uea_format
