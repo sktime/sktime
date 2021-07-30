@@ -25,6 +25,54 @@ class LongFormatDataParseException(Exception):
 
     pass
 
+def _load_dataset(name, split, return_X_y, extract_path=None):
+    """Load time series classification datasets (helper funciton)."""
+    # Allow user to have non standard extract path
+    if extract_path is not None:
+        local_module = os.path.dirname(extract_path)
+        local_dirname = extract_path
+    else:
+        local_module = MODULE
+        local_dirname = DIRNAME
+
+    if not os.path.exists(os.path.join(local_module, local_dirname)):
+        os.makedirs(os.path.join(local_module, local_dirname))
+    if name not in _list_downloaded_datasets(extract_path):
+        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+        # This also tests the validitiy of the URL, can't rely on the html
+        # status code as it always returns 200
+        try:
+            _download_and_extract(url, extract_path)
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                "Invalid dataset name. Please make sure the dataset is "
+                "available on http://timeseriesclassification.com/."
+            ) from e
+
+    if split in ("train", "test"):
+        fname = name + "_" + split.upper() + ".ts"
+        abspath = os.path.join(local_module, local_dirname, name, fname)
+        X, y = load_from_tsfile_to_dataframe(abspath)
+
+    # if split is None, load both train and test set
+    elif split is None:
+        X = pd.DataFrame(dtype="object")
+        y = pd.Series(dtype="object")
+        for split in ("train", "test"):
+            fname = name + "_" + split.upper() + ".ts"
+            abspath = os.path.join(local_module, local_dirname, name, fname)
+            result = load_from_tsfile_to_dataframe(abspath)
+            X = pd.concat([X, pd.DataFrame(result[0])])
+            y = pd.concat([y, pd.Series(result[1])])
+    else:
+        raise ValueError("Invalid `split` value")
+
+    # Return appropriately
+    if return_X_y:
+        return X, y
+    else:
+        X["class_val"] = pd.Series(y)
+        return X
 
 def load_from_tsfile_to_dataframe(
     full_file_path_and_name,
@@ -896,6 +944,37 @@ def load_from_ucr_tsv_to_dataframe(
     X["class_val"] = y
     return X
 
+def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
+    """
+    Load dataset from UCR UEA time series archive.
+
+    Datasets to be found here: http://www.timeseriesclassification.com/dataset.php
+    Downloads and extracts dataset if not already downloaded.
+
+    Parameters
+    ----------
+    name : str
+        Name of data set.
+        Possible strings can be found at:
+        http://www.timeseriesclassification.com/dataset.php .
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+    extract_path : str, optional (default=None)
+        Default extract path is `sktime/datasets/data/`
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+    """
+    return _load_dataset(name, split, return_X_y, extract_path)
 
 def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     """Loads data from a long format file into a Pandas DataFrame.
