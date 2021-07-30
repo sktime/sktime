@@ -13,6 +13,7 @@ from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 
 def test_load_and_run_clustering_experiment():
     """Test loading, running and saving.
+
     Currently it just checks that the files have been created, then deletes them.
     Later it can be enhanced to check the results can be loaded.
     """
@@ -39,12 +40,12 @@ def test_load_and_run_clustering_experiment():
 
 def test_run_clustering_experiment():
     """Test running and saving results.
+    
     Currently it just checks the files have been created, then deletes them.
     """
     data_dir = "../datasets/data/"
     results_dir = "../Temp/"
     dataset = "UnitTest"
-    clusterer = "kmeans"
     resample = 0
     tf = True
     clst = TimeSeriesKMeans(n_clusters=2)
