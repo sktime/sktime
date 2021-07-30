@@ -19,7 +19,7 @@ def test_load_and_run_clustering_experiment():
     """
     load_and_run_clustering_experiment(
         overwrite=True,
-        problem_path="../../datasets/data/",
+        problem_path="../datasets/data/",
         results_path="../Temp/",
         cls_name="kmeans",
         dataset="UnitTest",

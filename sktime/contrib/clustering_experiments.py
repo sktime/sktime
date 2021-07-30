@@ -6,27 +6,9 @@ The main method is run_clustering_experiment. However, this file is also configu
 runs of the main method with command line arguments, or for single debugging runs.
 """
 
-from sktime.benchmarking.experiments import (
-    run_clustering_experiment,
-    load_and_run_clustering_experiment,
-)
-
 import os
-
-# We sometimes want to force execution in a single thread. sklearn often threads in ways
-# beyond the users control. This forces single thread execution, which is required,
-# for example, when running on an HPC
-# MUST be done before numpy import
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREADS"] = "1"
-
-
 import sys
-import numpy as np
 import pandas as pd
-
-
 from sklearn.model_selection import cross_val_predict
 import sklearn.preprocessing
 import sklearn.utils
@@ -37,6 +19,18 @@ from sktime.clustering import (
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
 )
+from sktime.benchmarking.experiments import (
+    run_clustering_experiment,
+    load_and_run_clustering_experiment,
+)
+# We sometimes want to force execution in a single thread. sklearn often threads in ways
+# beyond the users control. This forces single thread execution, which is required,
+# for example, when running on an HPC
+# MUST be done before numpy import
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+import numpy as np
 
 
 def demo_loading():

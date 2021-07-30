@@ -6,6 +6,9 @@ single debugging runs. Results are written in a standard format
 """
 
 import os
+import sys
+import time
+import pandas as pd
 
 import sklearn.preprocessing
 import sklearn.utils
@@ -38,27 +41,21 @@ from sktime.classification.interval_based import (
     RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
+from sktime.classification.interval_based import CanonicalIntervalForest, DrCIF
 from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-
-os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
-os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
-os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
-
-import sys
-import time
-import numpy as np
-import pandas as pd
-
-
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.tsc_dataset_names as dataset_lists
+import sktime.utils.sampling
+
+os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
+import numpy as np
 
 __author__ = ["Tony Bagnall"]
 
@@ -70,196 +67,6 @@ recommended here, they can be directly and automatically compared to the results
 generated in java
 
 """
-
-classifier_list = [
-    # Dictionary based
-    "BOSS",
-    "ContractableBOSS",
-    "TemporalDictionaryEnsemble",
-    "WEASEL",
-    "MUSE",
-    # Distance based
-    "ProximityForest",
-    "KNeighborsTimeSeriesClassifier",
-    "ElasticEnsemble",
-    "ShapeDTW",
-    # Feature based
-    "Catch22Classifier",
-    "MatrixProfileClassifier",
-    "SignatureClassifier",
-    "TSFreshClassifier",
-    # Hybrid
-    "HIVECOTEV1",
-    # Interval based
-    "RandomIntervalSpectralForest",
-    "TimeSeriesForestClassifier",
-    "CanonicalIntervalForest",
-    # Kernel based
-    "ROCKET",
-    "Arsenal",
-    # Shapelet based
-    "ShapeletTransformClassifier",
-    "MrSEQLClassifier",
-]
-
-
-def set_classifier(cls, resampleId=None):
-    """Construct a classifier.
-
-    Basic way of creating the classifier to build using the default settings. This
-    set up is to help with batch jobs for multiple problems to facilitate easy
-    reproducability for use with load_and_run_classification_experiment. You can pass a
-    classifier object instead to run_classification_experiment.
-
-    Parameters
-    ----------
-    cls: String indicating which classifier you want
-    resampleId: classifier random seed
-
-    Return
-    ------
-    A classifier.
-    """
-    name = cls.lower()
-    # Dictionary based
-    if name == "boss" or name == "bossensemble":
-        return BOSSEnsemble(random_state=resampleId)
-    elif name == "cboss" or name == "contractableboss":
-        return ContractableBOSS(random_state=resampleId)
-    elif name == "tde" or name == "temporaldictionaryensemble":
-        return TemporalDictionaryEnsemble(random_state=resampleId)
-    elif name == "weasel":
-        return WEASEL(random_state=resampleId)
-    elif name == "muse":
-        return MUSE(random_state=resampleId)
-    # Distance based
-    elif name == "pf" or name == "proximityforest":
-        return ProximityForest(random_state=resampleId)
-    elif name == "pt" or name == "proximitytree":
-        return ProximityTree(random_state=resampleId)
-    elif name == "ps" or name == "proximityStump":
-        return ProximityStump(random_state=resampleId)
-    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
-    elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(distance="dtw")
-    elif name == "msm" or name == "1nn-msm":
-        return KNeighborsTimeSeriesClassifier(distance="msm")
-    elif name == "ee" or name == "elasticensemble":
-        return ElasticEnsemble()
-    elif name == "shapedtw":
-        return ShapeDTW()
-    # Feature based
-    elif name == "catch22":
-        return Catch22Classifier(
-            random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
-        )
-    elif name == "matrixprofile":
-        return MatrixProfileClassifier(random_state=resampleId)
-    elif name == "signature":
-        return SignatureClassifier(
-            random_state=resampleId, classifier=RandomForestClassifier(n_estimators=500)
-        )
-    elif name == "tsfresh":
-        return TSFreshClassifier(
-            random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
-        )
-    elif name == "tsfresh-r":
-        return TSFreshClassifier(
-            random_state=resampleId,
-            estimator=RandomForestClassifier(n_estimators=500),
-            relevant_feature_extractor=True,
-        )
-    # Hybrid
-    elif name == "hivecotev1":
-        return HIVECOTEV1(random_state=resampleId)
-    # Interval based
-    elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resampleId, n_estimators=500)
-    elif name == "tsf" or name == "timeseriesforestclassifier":
-        return TimeSeriesForestClassifier(random_state=resampleId, n_estimators=500)
-    elif name == "cif" or name == "canonicalintervalforest":
-        return CanonicalIntervalForest(random_state=resampleId, n_estimators=500)
-    elif name == "stsf":
-        return SupervisedTimeSeriesForest(random_state=resampleId, n_estimators=500)
-    elif name == "drcif":
-        return DrCIF(random_state=resampleId, n_estimators=500)
-    # Kernel based
-    elif name == "rocket":
-        return ROCKETClassifier(random_state=resampleId)
-    elif name == "arsenal":
-        return Arsenal(random_state=resampleId)
-    # Shapelet based
-    elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(random_state=resampleId, n_estimators=500)
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
-    else:
-        raise Exception("UNKNOWN CLASSIFIER")
-
-
-def stratified_resample(X_train, y_train, X_test, y_test, random_state):
-    """Resample data using a random state.
-
-    Reproducable resampling. Combines train and test, resamples to get the same class
-    distribution, then returns new trrain and test.
-
-    Parameters
-    ----------
-    X_train: train data attributes in sktime pandas format.
-    y_train: train data class labes as np array.
-    X_test: test data attributes in sktime pandas format.
-    y_test: test data class labes as np array.
-
-    Returns
-    -------
-    new train and test attributes and class labels.
-    """
-    all_labels = np.concatenate((y_train, y_test), axis=None)
-    all_data = pd.concat([X_train, X_test])
-    random_state = sklearn.utils.check_random_state(random_state)
-    # count class occurrences
-    unique_train, counts_train = np.unique(y_train, return_counts=True)
-    unique_test, counts_test = np.unique(y_test, return_counts=True)
-    assert list(unique_train) == list(
-        unique_test
-    )  # haven't built functionality to deal with classes that exist in
-    # test but not in train
-    # prepare outputs
-    X_train = pd.DataFrame()
-    y_train = np.array([])
-    X_test = pd.DataFrame()
-    y_test = np.array([])
-    # for each class
-    for label_index in range(0, len(unique_train)):
-        # derive how many instances of this class from the counts
-        num_instances = counts_train[label_index]
-        # get the indices of all instances with this class label
-        label = unique_train[label_index]
-        indices = np.where(all_labels == label)[0]
-        # shuffle them
-        random_state.shuffle(indices)
-        # take the first lot of instances for train, remainder for test
-        train_indices = indices[0:num_instances]
-        test_indices = indices[num_instances:]
-        del indices  # just to make sure it's not used!
-        # extract data from corresponding indices
-        train_instances = all_data.iloc[train_indices, :]
-        test_instances = all_data.iloc[test_indices, :]
-        train_labels = all_labels[train_indices]
-        test_labels = all_labels[test_indices]
-        # concat onto current data from previous loop iterations
-        X_train = pd.concat([X_train, train_instances])
-        X_test = pd.concat([X_test, test_instances])
-        y_train = np.concatenate([y_train, train_labels], axis=None)
-        y_test = np.concatenate([y_test, test_labels], axis=None)
-    # get the counts of the new train and test resample
-    unique_train_new, counts_train_new = np.unique(y_train, return_counts=True)
-    unique_test_new, counts_test_new = np.unique(y_test, return_counts=True)
-    # make sure they match the original distribution of data
-    assert list(counts_train_new) == list(counts_train)
-    assert list(counts_test_new) == list(counts_test)
-    return X_train, y_train, X_test, y_test
 
 
 def load_and_run_classification_experiment(
@@ -333,7 +140,7 @@ def load_and_run_classification_experiment(
                     + " Already exists and overwrite set to false, not building Train"
                 )
                 train_file = False
-        if train_file == False and build_test == False:
+        if train_file is False and build_test is False:
             return
 
     # TO DO: Automatically differentiate between problem types,
@@ -497,106 +304,6 @@ def demo_loading():
         print(testX.shape)
         print("Test Y shape :")
         print(testY.shape)
-
-
-benchmark_datasets = [
-    "ACSF1",
-    "Adiac",
-    "ArrowHead",
-    "Beef",
-    "BeetleFly",
-    "BirdChicken",
-    "BME",
-    "Car",
-    "CBF",
-    "ChlorineConcentration",
-    "CinCECGTorso",
-    "Coffee",
-    "Computers",
-    "CricketX",
-    "CricketY",
-    "CricketZ",
-    "DiatomSizeReduction",
-    "DistalPhalanxOutlineCorrect",
-    "DistalPhalanxOutlineAgeGroup",
-    "DistalPhalanxTW",
-    "Earthquakes",
-    "ECG200",
-    "ECG5000",
-    "ECGFiveDays",
-    "EOGHorizontalSignal",
-    "EOGVerticalSignal",
-    "EthanolLevel",
-    "FaceAll",
-    "FaceFour",
-    "FacesUCR",
-    "FiftyWords",
-    "Fish",
-    "FreezerRegularTrain",
-    "FreezerSmallTrain",
-    "Ham",
-    "Haptics",
-    "Herring",
-    "InlineSkate",
-    "InsectEPGRegularTrain",
-    "InsectEPGSmallTrain",
-    "InsectWingbeatSound",
-    "ItalyPowerDemand",
-    "LargeKitchenAppliances",
-    "Lightning2",
-    "Lightning7",
-    "Mallat",
-    "Meat",
-    "MedicalImages",
-    "MiddlePhalanxOutlineCorrect",
-    "MiddlePhalanxOutlineAgeGroup",
-    "MiddlePhalanxTW",
-    "MixedShapesRegularTrain",
-    "MixedShapesSmallTrain",
-    "MoteStrain",
-    "OliveOil",
-    "OSULeaf",
-    "PhalangesOutlinesCorrect",
-    "Phoneme",
-    "PigAirwayPressure",
-    "PigArtPressure",
-    "PigCVP",
-    "Plane",
-    "PowerCons",
-    "ProximalPhalanxOutlineCorrect",
-    "ProximalPhalanxOutlineAgeGroup",
-    "ProximalPhalanxTW",
-    "RefrigerationDevices",
-    "Rock",
-    "ScreenType",
-    "SemgHandGenderCh2",
-    "SemgHandMovementCh2",
-    "SemgHandSubjectCh2",
-    "ShapeletSim",
-    "SmallKitchenAppliances",
-    "SmoothSubspace",
-    "SonyAIBORobotSurface1",
-    "SonyAIBORobotSurface2",
-    "Strawberry",
-    "SwedishLeaf",
-    "Symbols",
-    "SyntheticControl",
-    "ToeSegmentation1",
-    "ToeSegmentation2",
-    "Trace",
-    "TwoLeadECG",
-    "TwoPatterns",
-    "UMD",
-    "UWaveGestureLibraryX",
-    "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",
-    "Wafer",
-    "Wine",
-    "WordSynonyms",
-    "Worms",
-    "WormsTwoClass",
-    "Yoga",
-]
 
 
 if __name__ == "__main__":
