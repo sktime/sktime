@@ -8,6 +8,7 @@ __all__ = ["EnsembleForecaster"]
 import numpy as np
 import pandas as pd
 
+from sklearn.utils.stats import _weighted_percentile
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
@@ -42,7 +43,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = load_airline()
     >>> forecasters = [("trend", PolynomialTrendForecaster()),\
                         ("naive", NaiveForecaster())]
-    >>> forecaster = EnsembleForecaster(forecasters=forecasters, n_jobs=2)
+    >>> forecaster = EnsembleForecaster(forecasters=forecasters, \
+                                        aggfunc="min", weights=[1, 10])
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
@@ -55,7 +57,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="average", weights=None):
+    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
@@ -119,7 +121,13 @@ def _aggregate(y, aggfunc, weights):
     column_ensemble: pd.Series
         Transformed univariate series.
     """
-    y_agg = aggfunc(y, axis=1, weights=weights)
+    if aggfunc == np.average:
+        y_agg = aggfunc(y, axis=1, weights=weights)
+    else:
+        y_agg = []
+        for _, row in y.iterrows():
+            agg = _weighted_percentile(aggfunc(row.to_numpy()), sample_weight=weights)
+            y_agg.append(agg)
 
     return pd.Series(y_agg)
 
