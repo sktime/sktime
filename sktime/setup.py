@@ -14,16 +14,18 @@ from sktime._build_utils import maybe_cythonize_extensions
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
-def configuration(parent_package='', top_path=None):
+
+def configuration(parent_package="", top_path=None):
+    """Configurate"""
     from numpy.distutils.misc_util import Configuration
 
     libraries = []
-    if os.name == 'posix':
-        libraries.append('m')
+    if os.name == "posix":
+        libraries.append("m")
 
-    config = Configuration('sktime', parent_package, top_path)
+    config = Configuration("sktime", parent_package, top_path)
 
-    for package in find_packages('sktime'):
+    for package in find_packages("sktime"):
         config.add_subpackage(package)
 
     maybe_cythonize_extensions(top_path, config)
@@ -31,7 +33,7 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from numpy.distutils.core import setup
 
     setup(**configuration(top_path='').todict())
