@@ -12,7 +12,6 @@ import time
 import numpy as np
 
 from sklearn import preprocessing
-from sktime.setup import ROOT_DIR
 
 
 from sktime.clustering import (
