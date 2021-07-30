@@ -10,7 +10,7 @@ from sktime.clustering.base.base import BaseClusterer
 from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Hybrid time series classifiers."""
 __all__ = [
     "Catch22ForestClassifier",
     "HIVECOTEV1",
