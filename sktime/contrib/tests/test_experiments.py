@@ -15,6 +15,7 @@ import sktime.datasets.base as sktime
 
 class TestStats:
     """Test performance statistics."""
+    
     def __init__(
         self,
         unit_test_acc=0.0,
