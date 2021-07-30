@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-""" test_experiments.py.
+"""Test Experiments.
 
 tests the experiments code works with all current valid classifiers.
 Loops through all classifiers in the list in experiments, trains,  Builds all.
 """
+__author__ = ["Tony Bagnall"]
 import os
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 from sktime.classification.base import classifier_list
@@ -13,6 +14,7 @@ import sktime.datasets.base as sktime
 
 
 class TestStats:
+    """Test performance statistics."""
     def __init__(
         self,
         unit_test_acc=0.0,
