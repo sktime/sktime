@@ -19,7 +19,7 @@ def test_load_and_run_clustering_experiment():
     """
     load_and_run_clustering_experiment(
         overwrite=True,
-        problem_path= "../../datasets/data/",
+        problem_path="../../datasets/data/",
         results_path="../Temp/",
         cls_name="kmeans",
         dataset="UnitTest",
@@ -56,4 +56,3 @@ def test_run_clustering_experiment():
     assert os.path.isfile("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
     os.remove("../Temp/kmeans2/Predictions/UnitTest/testResample0.csv")
     os.remove("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
-
