@@ -8,6 +8,7 @@ from sktime.benchmarking.experiments import (
     run_clustering_experiment,
 )
 from sktime.clustering import TimeSeriesKMeans
+from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 
 
 def test_load_and_run_clustering_experiment():
@@ -27,9 +28,8 @@ def test_load_and_run_clustering_experiment():
         results_path=results_dir,
         cls_name=clusterer,
         dataset=dataset,
-        resampleID=resample,
+        resample_id=resample,
         train_file=tf,
-        clusterer=clst,
     )
     assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
     assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
@@ -39,8 +39,7 @@ def test_load_and_run_clustering_experiment():
 
 def test_run_clustering_experiment():
     """Test running and saving results.
-    Currently it just checks the files have been created, then deletes them. Later it
-    can be enhanced to check the results can be loaded.
+    Currently it just checks the files have been created, then deletes them.
     """
     data_dir = "../datasets/data/"
     results_dir = "../Temp/"
@@ -60,6 +59,8 @@ def test_run_clustering_experiment():
         testY=test_Y,
         cls_name="kmeans2",
         dataset_name=dataset,
+        resample_id=resample,
+        train_file=tf,
     )
     assert os.path.isfile("../Temp/kmeans2/Predictions/UnitTest/testResample0.csv")
     assert os.path.isfile("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
