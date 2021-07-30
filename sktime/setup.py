@@ -16,7 +16,7 @@ ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 def configuration(parent_package="", top_path=None):
-    """Configurate"""
+    """Configure."""
     from numpy.distutils.misc_util import Configuration
 
     libraries = []
