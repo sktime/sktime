@@ -20,7 +20,7 @@ class BaseMetric(BaseObject):
         function's name is used.
     """
 
-    def __init__(self, func, sample_func=None, name=None):
+    def __init__(self, func, name=None):
         self._func = func
         self.name = name if name is not None else func.__name__
 
