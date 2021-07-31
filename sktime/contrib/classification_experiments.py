@@ -108,37 +108,33 @@ def load_and_run_classification_experiment(
     build_test = True
     if not overwrite:
         full_path = (
+            str(results_path)
+            + "/"
+            + str(cls_name)
+            + "/Predictions/"
+            + str(dataset)
+            + "/testFold"
+            + str(resample_id)
+            + ".csv"
+        )
+        if os.path.exists(full_path):
+            print(full_path + " Already exists and overwrite false, not building "
+                              "Test")  # noqua
+            build_test = False
+        if train_file:
+            full_path = (
                 str(results_path)
                 + "/"
                 + str(cls_name)
                 + "/Predictions/"
                 + str(dataset)
-                + "/testFold"
+                + "/trainFold"
                 + str(resample_id)
                 + ".csv"
-        )
-        if os.path.exists(full_path):
-            print(
-                full_path
-                + " Already exists and overwrite set to false, not building Test"
-            )
-            build_test = False
-        if train_file:
-            full_path = (
-                    str(results_path)
-                    + "/"
-                    + str(cls_name)
-                    + "/Predictions/"
-                    + str(dataset)
-                    + "/trainFold"
-                    + str(resample_id)
-                    + ".csv"
             )
             if os.path.exists(full_path):
-                print(
-                    full_path
-                    + " Already exists and overwrite set to false, not building Train"
-                )
+                print(full_path + " Already exists and overwrite set to false, "
+                                  "not building Train")  # noqua
                 train_file = False
         if train_file is False and build_test is False:
             return
@@ -185,7 +181,7 @@ def load_and_run_classification_experiment(
             + str(ac)
             + " time: "
             + str(test_time)
-        )
+        )  # noqua
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         if "Composite" in cls_name:
             second = "Para info too long!"
@@ -194,20 +190,17 @@ def load_and_run_classification_experiment(
         second.replace("\n", " ")
         second.replace("\r", " ")
 
-        print(second)
         temp = np.array_repr(classifier.classes_).replace("\n", "")
 
         third = (
-                str(ac)
-                + ","
-                + str(build_time)
-                + ","
-                + str(test_time)
-                + ",-1,-1,"
-                + str(len(classifier.classes_))
-        )
-        print(preds)
-        print(type(preds))
+            str(ac)
+            + ","
+            + str(build_time)
+            + ","
+            + str(test_time)
+            + ",-1,-1,"
+            + str(len(classifier.classes_))
+        )  # noqua
 
         write_results_to_uea_format(
             second_line=second,
@@ -244,7 +237,7 @@ def load_and_run_classification_experiment(
             + str(train_acc)
             + " time: "
             + str(train_time)
-        )
+        )  # noqua
         if "Composite" in cls_name:
             second = "Para info too long!"
         else:
@@ -253,11 +246,11 @@ def load_and_run_classification_experiment(
         second.replace("\r", " ")
         temp = np.array_repr(classifier.classes_).replace("\n", "")
         third = (
-                str(train_acc)
-                + ","
-                + str(train_time)
-                + ",-1,-1,-1,"
-                + str(len(classifier.classes_))
+            str(train_acc)
+            + ","
+            + str(train_time)
+            + ",-1,-1,-1,"
+            + str(len(classifier.classes_))
         )
         write_results_to_uea_format(
             second_line=second,
