@@ -22,12 +22,13 @@ __all__ = [
 
 import numpy as np
 
+from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
 
 # pool convert_dict-s and infer_mtype_dict-s
 check_dict = dict()
 check_dict.update(check_dict_Series)
-# check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Panel)
 
 
 def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj"):
