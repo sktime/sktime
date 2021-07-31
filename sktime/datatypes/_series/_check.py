@@ -89,7 +89,7 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
     # check whether index is equally spaced
     metadata["is_equally_spaced"] = _index_equally_spaced(index)
 
-    return(True, None, metadata, return_metadata)
+    return ret(True, None, metadata, return_metadata)
 
 
 check_dict[("pd.DataFrame", "Series")] = check_pdDataFrame_Series

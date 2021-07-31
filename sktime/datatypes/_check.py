@@ -120,11 +120,11 @@ def mtype(obj, as_scitype: str):
     if as_scitype not in valid_as_scitypes:
         raise TypeError(as_scitype + " is not a supported scitype")
 
-    mtypes = [x[0] for x in list(check_dict.keys()) if x[1] == as_scitype]
+    mtypes = np.array([x[0] for x in list(check_dict.keys()) if x[1] == as_scitype])
 
     is_mtype = [check_is(obj, mtype=mtype, scitype=as_scitype) for mtype in mtypes]
     is_mtype = np.array(is_mtype)
-    res = mtypes[is_mtype]
+    res = [mtypes[i] for i in range(len(mtypes)) if is_mtype[i]]
 
     if np.sum(is_mtype) > 1:
         raise TypeError(f"Error in check_is, more than one mtype identified: {res}")
