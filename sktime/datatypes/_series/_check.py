@@ -84,7 +84,7 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
     if isinstance(index, pd.DatetimeIndex):
         if index.freq is None:
             msg = f"{var_name} has DatetimeIndex, but no frequ attribute set."
-        return ret(False, msg, None, return_metadata)
+            return ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced
     metadata["is_equally_spaced"] = _index_equally_spaced(index)
