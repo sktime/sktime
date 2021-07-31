@@ -131,7 +131,7 @@ def check_raise(obj, mtype: str, scitype: str, var_name="input"):
         mtype=mtype,
         scitype=scitype,
         return_metadata=True,
-        var_name=var_name.
+        var_name=var_name,
     )
 
     if res[0]:
