@@ -7,7 +7,6 @@ __author__ = ["Tony Bagnall"]
 __all__ = [
     "run_clustering_experiment",
     "load_and_run_clustering_experiment",
-    "set_classifier",
     "set_clusterer",
 ]
 
