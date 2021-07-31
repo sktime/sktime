@@ -30,6 +30,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_univariate": bool, True iff all series in panel have one variable
         "is_equally_spaced": bool, True iff all series indices are equally spaced
         "is_empty": bool, True iff one or more of the series in the panel are empty
+        "is_one_series": bool, True iff there is only one series in the panel
 """
 
 __author__ = ["fkiraly"]
@@ -80,8 +81,39 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
         [res[2]["is_equally_spaced"] for res in check_res]
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    metadata["is_one_series"] = len(obj) == 1
 
     return ret(True, None, metadata, return_metadata)
 
 
 check_dict[("df-list", "Panel")] = check_dflist_Panel
+
+
+def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
+
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        else:
+            return valid
+
+    if not isinstance(obj, np.ndarray):
+        msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
+        return ret(False, msg, None, return_metadata)
+
+    if not len(obj.shape) == 3:
+        msg = f"{var_name} must be a 3D numpy.ndarray, but found {len(obj.shape)}D"
+        return ret(False, msg, None, return_metadata)
+
+    # we now know obj is a 3D np.ndarray
+    metadata = dict()
+    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1 or obj.shape[2] < 1
+    metadata["is_univariate"] = obj.shape[1] < 2
+    # np.arrays are considered equally spaced by assumption
+    metadata["is_equally_spaced"] = True
+    metadata["is_one_series"] = obj.shape[0] == 1
+
+    return ret(True, None, metadata, return_metadata)
+
+
+check_dict[("numpy3D", "Panel")] = check_numpy3D_Panel
