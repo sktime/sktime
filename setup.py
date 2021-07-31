@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Install script for sktime."""
+"""Install script for sktime"""
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master
 # /setup.py
@@ -43,19 +43,17 @@ EXTRAS_REQUIRE = {
     ],
 }
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+
 
 def read(*parts):
-    """Read.
-
-    intentionally *not* adding an encoding option to open, See:
-     https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    # intentionally *not* adding an encoding option to open, See:
+    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
     with codecs.open(os.path.join(HERE, *parts), "r") as fp:
         return fp.read()
-    """
 
 
 def find_version(*file_paths):
-    """Find the version."""
     version_file = read(*file_paths)
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
@@ -138,13 +136,11 @@ else:
     extra_setuptools_args = dict()
 
 
+# Custom clean command to remove build artifacts
 class CleanCommand(Clean):
-    """Custom clean command to remove build artifacts from the source tree."""
-
     description = "Remove build artifacts from the source tree"
 
     def run(self):
-        """Run."""
         Clean.run(self)
 
         # Remove c files if we are not within a sdist package
@@ -181,10 +177,7 @@ try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
     class build_ext_subclass(build_ext):
-        """Build extension subclass."""
-
         def build_extensions(self):
-            """Build extensions."""
             from sktime._build_utils.openmp_helpers import get_openmp_flag
 
             if not os.getenv("SKTIME_NO_OPENMP"):
@@ -205,7 +198,6 @@ except ImportError:
 
 
 def configuration(parent_package="", top_path=None):
-    """Configure."""
     if os.path.exists("MANIFEST"):
         os.remove("MANIFEST")
 
@@ -228,10 +220,9 @@ def configuration(parent_package="", top_path=None):
 
 def check_package_status(package, min_version):
     """
-    Check the status of a package.
-
     Returns a dictionary containing a boolean specifying whether given package
-    is up-to-date, along with the version string (empty string if not installed).
+    is up-to-date, along with the version string (empty string if
+    not installed).
     """
     if package == "scikit-learn":
         package = "sklearn"
@@ -273,7 +264,6 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
-    """Set up thas package."""
     metadata = dict(
         name=DISTNAME,
         maintainer=MAINTAINER,
