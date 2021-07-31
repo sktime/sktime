@@ -49,7 +49,6 @@ check_dict = dict()
 
 
 def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
-
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata
@@ -90,7 +89,6 @@ check_dict[("df-list", "Panel")] = check_dflist_Panel
 
 
 def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
-
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata
