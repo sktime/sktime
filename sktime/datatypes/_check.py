@@ -22,12 +22,13 @@ __all__ = [
 
 import numpy as np
 
+from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
 
 # pool convert_dict-s and infer_mtype_dict-s
 check_dict = dict()
 check_dict.update(check_dict_Series)
-# check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Panel)
 
 
 def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj"):
@@ -60,6 +61,7 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
     TypeError if no checks defined for mtype/scitype combination
     ValueError if mtype input argument is not of expected type
     """
+
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata
@@ -123,12 +125,13 @@ def check_raise(obj, mtype: str, scitype: str, var_name="input"):
     TypeError if no checks defined for mtype/scitype combination
     ValueError if mtype input argument is not of expected type
     """
+    obj_long_name_for_avoiding_linter_clash = obj
     res = check_is(
-        obj=obj,
+        obj=obj_long_name_for_avoiding_linter_clash,
         mtype=mtype,
         scitype=scitype,
         return_metadata=True,
-        var_name=var_name
+        var_name=var_name,
     )
 
     if res[0]:

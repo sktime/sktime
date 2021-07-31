@@ -118,9 +118,9 @@ def test_check_negative(scitype):
 
                 # check fixtures that exist against checks that exist
                 if fixture_wrong_type is not None and check_is_defined:
-                    assert not check_is(fixture_wrong_type, mtype, scitype), (
-                        f"check_is {mtype} returns True on {wrong_mtype} fixture {i}"
-                    )
+                    assert not check_is(
+                        fixture_wrong_type, mtype, scitype
+                    ), f"check_is {mtype} returns True on {wrong_mtype} fixture {i}"
 
 
 @pytest.mark.parametrize("scitype", SCITYPES)
@@ -169,6 +169,6 @@ def test_mtype_infer(scitype):
 
             # check fixtures that exist against checks that exist
             if fixture is not None and check_is_defined:
-                assert mtype == infer_mtype(fixture, as_scitype=scitype), (
-                    f"mtype {mtype} not correctly identified for fixture {i}"
-                )
+                assert mtype == infer_mtype(
+                    fixture, as_scitype=scitype
+                ), f"mtype {mtype} not correctly identified for fixture {i}"
