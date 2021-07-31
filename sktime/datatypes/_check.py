@@ -48,7 +48,18 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
         fields:
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
+
+    Raises
+    ------
+    TypeError if no checks defined for mtype/scitype combination
+    ValueError if mtype input argument is not of expected type
     """
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        else:
+            return valid
+
     if isinstance(mtype, str):
         mtype = [mtype]
     elif isinstance(mtype, list):
@@ -64,7 +75,7 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
     for m in mtype:
         key = (m, scitype)
         if (m, scitype) not in valid_keys:
-            raise ValueError(f"no check defined for mtype {m}, scitype {scitype}")
+            raise TypeError("no check defined for mtype {m}, scitype {scitype}")
 
         res = check_dict[key](obj, return_metadata=return_metadata, var_name=var_name)
 
@@ -78,7 +89,10 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
         elif return_metadata:
             msg.append(res[1])
 
-    return False, msg, None
+    if len(msg) == 1:
+        msg = msg[0]
+
+    return ret(False, msg, None, return_metadata)
 
 
 def mtype(obj, as_scitype: str):
