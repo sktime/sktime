@@ -37,7 +37,7 @@ def test_run_clustering_experiment():
 
     Currently it just checks the files have been created, then deletes them.
     """
-    data_dir = "../../datasets/data/"
+    data_dir = "../datasets/data/"
     dataset = "UnitTest"
     train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
     test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
