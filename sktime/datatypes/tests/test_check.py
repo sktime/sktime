@@ -120,7 +120,7 @@ def test_check_negative(scitype):
                 if fixture_wrong_type is not None and check_is_defined:
                     assert not check_is(
                         fixture_wrong_type, mtype, scitype
-                        ), f"check_is {mtype} returns True on {wrong_mtype} fixture {i}"
+                    ), f"check_is {mtype} returns True on {wrong_mtype} fixture {i}"
 
 
 @pytest.mark.parametrize("scitype", SCITYPES)
