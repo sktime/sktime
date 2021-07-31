@@ -56,6 +56,3 @@ def test_run_clustering_experiment():
     assert os.path.isfile("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
     os.remove("../Temp/kmeans2/Predictions/UnitTest/testResample0.csv")
     os.remove("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
-
-
-test_run_clustering_experiment()

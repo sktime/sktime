@@ -70,15 +70,15 @@ generated in java
 
 
 def load_and_run_classification_experiment(
-    problem_path,
-    results_path,
-    cls_name,
-    dataset,
-    classifier=None,
-    resample_id=0,
-    overwrite=False,
-    format=".ts",
-    train_file=False,
+        problem_path,
+        results_path,
+        cls_name,
+        dataset,
+        classifier=None,
+        resample_id=0,
+        overwrite=False,
+        format=".ts",
+        train_file=False,
 ):
     """Run a classification experiment.
 
@@ -108,14 +108,14 @@ def load_and_run_classification_experiment(
     build_test = True
     if not overwrite:
         full_path = (
-            str(results_path)
-            + "/"
-            + str(cls_name)
-            + "/Predictions/"
-            + str(dataset)
-            + "/testFold"
-            + str(resample_id)
-            + ".csv"
+                str(results_path)
+                + "/"
+                + str(cls_name)
+                + "/Predictions/"
+                + str(dataset)
+                + "/testFold"
+                + str(resample_id)
+                + ".csv"
         )
         if os.path.exists(full_path):
             print(
@@ -125,14 +125,14 @@ def load_and_run_classification_experiment(
             build_test = False
         if train_file:
             full_path = (
-                str(results_path)
-                + "/"
-                + str(cls_name)
-                + "/Predictions/"
-                + str(dataset)
-                + "/trainFold"
-                + str(resample_id)
-                + ".csv"
+                    str(results_path)
+                    + "/"
+                    + str(cls_name)
+                    + "/Predictions/"
+                    + str(dataset)
+                    + "/trainFold"
+                    + str(resample_id)
+                    + ".csv"
             )
             if os.path.exists(full_path):
                 print(
@@ -198,13 +198,13 @@ def load_and_run_classification_experiment(
         temp = np.array_repr(classifier.classes_).replace("\n", "")
 
         third = (
-            str(ac)
-            + ","
-            + str(build_time)
-            + ","
-            + str(test_time)
-            + ",-1,-1,"
-            + str(len(classifier.classes_))
+                str(ac)
+                + ","
+                + str(build_time)
+                + ","
+                + str(test_time)
+                + ",-1,-1,"
+                + str(len(classifier.classes_))
         )
         print(preds)
         print(type(preds))
@@ -224,7 +224,7 @@ def load_and_run_classification_experiment(
     if train_file:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
-            classifier, "_get_train_probs"
+                classifier, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
             train_probs = classifier._get_train_probs(trainX)
         else:
@@ -253,11 +253,11 @@ def load_and_run_classification_experiment(
         second.replace("\r", " ")
         temp = np.array_repr(classifier.classes_).replace("\n", "")
         third = (
-            str(train_acc)
-            + ","
-            + str(train_time)
-            + ",-1,-1,-1,"
-            + str(len(classifier.classes_))
+                str(train_acc)
+                + ","
+                + str(train_time)
+                + ",-1,-1,-1,"
+                + str(len(classifier.classes_))
         )
         write_results_to_uea_format(
             second_line=second,
@@ -273,19 +273,18 @@ def load_and_run_classification_experiment(
         )
 
 
-
 def run_classification_experiment(
-        trainX,
-        classifier,
-        results_path,
-        trainY,
-        testX,
-        testY=None,
-        cls_name=None,
-        dataset_name=None,
-        resample_id=0,
-        overwrite=False,
-        train_file=False,
+    trainX,
+    classifier,
+    results_path,
+    trainY,
+    testX,
+    testY=None,
+    cls_name=None,
+    dataset_name=None,
+    resample_id=0,
+    overwrite=False,
+    train_file=False,
 ):
     """Run a classification experiment.
 
@@ -315,27 +314,27 @@ def run_classification_experiment(
     build_test = True
     if not overwrite:
         full_path = (
-            str(results_path)
-            + "/"
-            + str(cls_name)
-            + "/Predictions/"
-            + str(dataset)
-            + "/testFold"
-            + str(resample_id)
-            + ".csv"
-        )
-        if os.path.exists(full_path):
-            build_test = False
-        if train_file:
-            full_path = (
                 str(results_path)
                 + "/"
                 + str(cls_name)
                 + "/Predictions/"
                 + str(dataset)
-                + "/trainFold"
+                + "/testFold"
                 + str(resample_id)
                 + ".csv"
+        )
+        if os.path.exists(full_path):
+            build_test = False
+        if train_file:
+            full_path = (
+                    str(results_path)
+                    + "/"
+                    + str(cls_name)
+                    + "/Predictions/"
+                    + str(dataset)
+                    + "/trainFold"
+                    + str(resample_id)
+                    + ".csv"
             )
             if os.path.exists(full_path):
                 train_file = False
@@ -373,13 +372,13 @@ def run_classification_experiment(
         temp = np.array_repr(classifier.classes_).replace("\n", "")
 
         third = (
-            str(ac)
-            + ","
-            + str(build_time)
-            + ","
-            + str(test_time)
-            + ",-1,-1,"
-            + str(len(classifier.classes_))
+                str(ac)
+                + ","
+                + str(build_time)
+                + ","
+                + str(test_time)
+                + ",-1,-1,"
+                + str(len(classifier.classes_))
         )
         print(preds)
         print(type(preds))
@@ -399,7 +398,7 @@ def run_classification_experiment(
     if train_file:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
-            classifier, "_get_train_probs"
+                classifier, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
             train_probs = classifier._get_train_probs(trainX)
         else:
@@ -417,11 +416,11 @@ def run_classification_experiment(
         second.replace("\r", " ")
         temp = np.array_repr(classifier.classes_).replace("\n", "")
         third = (
-            str(train_acc)
-            + ","
-            + str(train_time)
-            + ",-1,-1,-1,"
-            + str(len(classifier.classes_))
+                str(train_acc)
+                + ","
+                + str(train_time)
+                + ",-1,-1,-1,"
+                + str(len(classifier.classes_))
         )
         write_results_to_uea_format(
             second_line=second,
@@ -507,6 +506,8 @@ if __name__ == "__main__":
             resample_id=resample,
             train_file=tf,
         )
+
+
 def set_classifier(cls, resampleId=None):
     """Construct a classifier.
 
