@@ -58,7 +58,7 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
 
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     # we now know obj is a pd.DataFrame
     index = obj.index
@@ -71,7 +71,7 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."
         )
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
     if not index.is_monotonic:
@@ -79,17 +79,17 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
         )
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     if isinstance(index, pd.DatetimeIndex):
         if index.freq is None:
             msg = f"{var_name} has DatetimeIndex, but no frequ attribute set."
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced
     metadata["is_equally_spaced"] = _index_equally_spaced(index)
 
-    return(True, None, metadata)
+    return ret(True, None, metadata, return_metadata)
 
 
 check_dict[("pd.DataFrame", "Series")] = check_pdDataFrame_Series
@@ -107,7 +107,7 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
 
     if not isinstance(obj, pd.Series):
         msg = f"{var_name} must be a pandas.Series, found {type(obj)}"
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     # we now know obj is a pd.Series
     index = obj.index
@@ -120,7 +120,7 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."
         )
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
     if not index.is_monotonic:
@@ -128,17 +128,17 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
         )
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     if isinstance(index, pd.DatetimeIndex):
         if index.freq is None:
             msg = f"{var_name} has DatetimeIndex, but no frequ attribute set."
-        return ret(False, msg, None)
+        return ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced
     metadata["is_equally_spaced"] = _index_equally_spaced(index)
 
-    return(True, None, metadata)
+    return ret(True, None, metadata, return_metadata)
 
 
 check_dict[("pd.Series", "Series")] = check_pdSeries_Series
@@ -154,9 +154,13 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
         else:
             return valid
 
-    if not isinstance(obj, np.ndarray) and len(obj.shape) == 2:
-        msg = f"{var_name} must be a 2D numpy.ndarray, found {type(obj)}"
-        return ret(False, msg, None)
+    if not isinstance(obj, np.ndarray):
+        msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
+        return ret(False, msg, None, return_metadata)
+
+    if not len(obj.shape) == 2:
+        msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
+        return ret(False, msg, None, return_metadata)
 
     # we now know obj is a 2D np.ndarray
     metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
@@ -164,7 +168,7 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
 
-    return(True, None, metadata)
+    return ret(True, None, metadata, return_metadata)
 
 
 check_dict[("np.ndarray", "Series")] = check_numpy_Series
