@@ -118,8 +118,9 @@ def load_and_run_classification_experiment(
             + ".csv"
         )
         if os.path.exists(full_path):
-            print(full_path + " Already exists and overwrite false, not building "
-                              "Test")  # noqua
+            print(
+                full_path + " Already exists and overwrite false, not building Test."
+            )  # noqua
             build_test = False
         if train_file:
             full_path = (
@@ -133,8 +134,10 @@ def load_and_run_classification_experiment(
                 + ".csv"
             )
             if os.path.exists(full_path):
-                print(full_path + " Already exists and overwrite set to false, "
-                                  "not building Train")  # noqua
+                print(
+                    full_path + " Already exists and overwrite set to false, "
+                    "not building Train"
+                )  # noqua
                 train_file = False
         if train_file is False and build_test is False:
             return
@@ -161,7 +164,7 @@ def load_and_run_classification_experiment(
     testY = le.transform(testY)
     if classifier is None:
         classifier = set_classifier(cls_name, resample_id)
-    print(cls_name + " on " + dataset + " resample number " + str(resample_id))
+    print(cls_name + " on " + dataset + " resample number " + str(resample_id))  # noqua
     if build_test:
         start = int(round(time.time() * 1000))
         classifier.fit(trainX, trainY)
@@ -217,7 +220,7 @@ def load_and_run_classification_experiment(
     if train_file:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
-                classifier, "_get_train_probs"
+            classifier, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
             train_probs = classifier._get_train_probs(trainX)
         else:
@@ -267,17 +270,17 @@ def load_and_run_classification_experiment(
 
 
 def run_classification_experiment(
-        trainX,
-        classifier,
-        results_path,
-        trainY,
-        testX,
-        testY=None,
-        cls_name=None,
-        dataset_name=None,
-        resample_id=0,
-        overwrite=False,
-        train_file=False,
+    trainX,
+    classifier,
+    results_path,
+    trainY,
+    testX,
+    testY=None,
+    cls_name=None,
+    dataset_name=None,
+    resample_id=0,
+    overwrite=False,
+    train_file=False,
 ):
     """Run a classification experiment.
 
@@ -391,7 +394,7 @@ def run_classification_experiment(
     if train_file:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(
-                classifier, "_get_train_probs"
+            classifier, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
             train_probs = classifier._get_train_probs(trainX)
         else:

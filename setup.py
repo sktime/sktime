@@ -45,14 +45,18 @@ EXTRAS_REQUIRE = {
 
 
 def read(*parts):
-    # intentionally *not* adding an encoding option to open, See:
-    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    """Read.
+
+    intentionally *not* adding an encoding option to open, See:
+     https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
     with codecs.open(os.path.join(HERE, *parts), "r") as fp:
         return fp.read()
+    """
 
 
 def find_version(*file_paths):
     """Find the version."""
+
     version_file = read(*file_paths)
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
@@ -136,7 +140,8 @@ else:
 
 
 class CleanCommand(Clean):
-    """Custom clean command to remove build artifacts."""
+    """Custom clean command to remove build artifacts from the source tree."""
+
     description = "Remove build artifacts from the source tree"
 
     def run(self):
@@ -178,6 +183,7 @@ try:
 
     class build_ext_subclass(build_ext):
         """Build extension subclass."""
+
         def build_extensions(self):
             """Build extensions."""
             from sktime._build_utils.openmp_helpers import get_openmp_flag
@@ -200,7 +206,7 @@ except ImportError:
 
 
 def configuration(parent_package="", top_path=None):
-    """Configureation."""
+    """Configure."""
     if os.path.exists("MANIFEST"):
         os.remove("MANIFEST")
 
