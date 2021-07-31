@@ -43,6 +43,7 @@ import pandas as pd
 from sktime.datatypes._series._check import check_pdDataFrame_Series
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
 
 
 check_dict = dict()
@@ -115,3 +116,66 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
 
 
 check_dict[("numpy3D", "Panel")] = check_numpy3D_Panel
+
+
+def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        else:
+            return valid
+
+    if not isinstance(obj, pd.DataFrame):
+        msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
+        return ret(False, msg, None, return_metadata)
+
+    if not isinstance(obj.index, pd.MultiIndex):
+        msg = f"{var_name} have a MultiIndex, found {type(obj.index)}"
+        return ret(False, msg, None, return_metadata)
+
+    nlevels = obj.index.nlevels
+    if not nlevels == 2:
+        msg = f"{var_name} have a MultiIndex with 2 levels, found {nlevels}"
+        return ret(False, msg, None, return_metadata)
+
+    correct_names = ["instances", "timepoints"]
+    objnames = obj.index.names
+    if not objnames == correct_names:
+        msg = (
+            f"{var_name}  must have a MultiIndex with names"
+            f" {correct_names}, found {objnames}"
+        )
+        return ret(False, msg, None, return_metadata)
+
+    # check instance index being integer or range index
+    instind = obj.index.droplevel(1)
+    if not isinstance(instind, VALID_MULTIINDEX_TYPES):
+        msg = f"instance index must be {VALID_MULTIINDEX_TYPES}, found {type(instind)}"
+        return ret(False, msg, None, return_metadata)
+
+    inst_inds = np.unique(obj.index.get_level_values(0))
+
+    check_res = [
+        check_pdDataFrame_Series(obj.loc[i], return_metadata=True) for i in inst_inds
+    ]
+    bad_inds = [i for i in inst_inds if not check_res[i][0]]
+
+    if len(bad_inds) > 0:
+        msg = (
+            f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
+            " not at i={bad_inds}"
+        )
+        return ret(False, msg, None, return_metadata)
+
+    metadata = dict()
+    metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
+    metadata["is_equally_spaced"] = np.all(
+        [res[2]["is_equally_spaced"] for res in check_res]
+    )
+    metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    metadata["is_one_series"] = len(inst_inds) == 1
+
+    return ret(True, None, metadata, return_metadata)
+
+
+check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_Panel
