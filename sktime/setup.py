@@ -14,7 +14,6 @@ from setuptools import find_packages
 from sktime._build_utils import maybe_cythonize_extensions
 
 
-
 def configuration(parent_package="", top_path=None):
     """Configure."""
     from numpy.distutils.misc_util import Configuration
