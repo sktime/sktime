@@ -17,9 +17,6 @@ import time
 import numpy as np
 
 from sklearn import preprocessing
-from sklearn.ensemble import RandomForestClassifier
-
-
 from sktime.utils.data_io import write_results_to_uea_format
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.sampling import stratified_resample
