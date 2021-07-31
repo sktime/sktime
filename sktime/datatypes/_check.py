@@ -5,12 +5,18 @@ Exports
 -------
 check_is(obj, mtype: str, scitype: str)
     checks whether obj is mtype for scitype
+    returns boolean yes/no and metadata
+
+check_raise(obj, mtype:str, scitype:str)
+    checks whether obj is mtype for scitype
+    returns True if passes, otherwise raises error
 """
 
 __author__ = ["fkiraly"]
 
 __all__ = [
     "check_is",
+    "check_raise",
     "mtype",
 ]
 
@@ -25,7 +31,7 @@ check_dict.update(check_dict_Series)
 
 
 def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj"):
-    """Convert objects between different machine representations, subject to scitype.
+    """Check object for compliance with mtype specification, return metadata.
 
     Parameters
     ----------
@@ -93,6 +99,42 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
         msg = msg[0]
 
     return ret(False, msg, None, return_metadata)
+
+
+def check_raise(obj, mtype: str, scitype: str, var_name="input"):
+    """Check object for compliance with mtype specification, raise errors.
+
+    Parameters
+    ----------
+    obj - object to check
+    mtype: str or list of str, mtype to check obj as
+    scitype: str, scitype to check obj as
+    var_name: str, optional, default="input" - name of input in error messages
+
+    Returns
+    -------
+    valid: bool - True if obj complies with the specification
+            same as when return argument of check_is is True
+            otherwise raises an error
+
+    Raises
+    ------
+    TypeError with informative message if obj does not comply
+    TypeError if no checks defined for mtype/scitype combination
+    ValueError if mtype input argument is not of expected type
+    """
+    res = check_is(
+        obj=obj,
+        mtype=mtype,
+        scitype=scitype,
+        return_metadata=True,
+        var_name=var_name
+    )
+
+    if res[0]:
+        return True
+    else:
+        raise TypeError(res[1])
 
 
 def mtype(obj, as_scitype: str):

@@ -3,7 +3,7 @@
 
 __author__ = ["fkiraly"]
 
-from sktime.datatypes._check import check_is
+from sktime.datatypes._check import check_is, check_raise
 from sktime.datatypes._convert import convert, convert_to, mtype
 from sktime.datatypes._registry import (
     MTYPE_REGISTER,
@@ -17,6 +17,7 @@ from sktime.datatypes._examples import get_examples
 
 __all__ = [
     "check_is",
+    "check_raise",
     "convert",
     "convert_to",
     "mtype",
