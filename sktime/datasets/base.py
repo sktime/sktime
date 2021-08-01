@@ -34,6 +34,7 @@ __author__ = [
     "@big-o",
     "Sebastiaan Koel",
     "Emilia Rose",
+    "Tony Bagnall",
 ]
 
 DIRNAME = "data"
@@ -171,13 +172,13 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
                 "Invalid dataset name. Please make sure the dataset is "
                 "available on http://timeseriesclassification.com/."
             ) from e
-    if split is str:
+    if isinstance(split, str):
         split = split.upper()
+
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
-
     # if split is None, load both train and test set
     elif split is None:
         X = pd.DataFrame(dtype="object")
