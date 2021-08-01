@@ -264,6 +264,7 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
+    """Set up package."""
     metadata = dict(
         name=DISTNAME,
         maintainer=MAINTAINER,
