@@ -15,7 +15,7 @@ Adapters
 .. currentmodule:: sktime.annotation.adapters
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     PyODAnnotator

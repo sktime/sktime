@@ -14,7 +14,7 @@ Plotting
 .. currentmodule:: sktime.utils.plotting
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     plot_series
@@ -26,7 +26,7 @@ Data Processing
 .. currentmodule:: sktime.datatypes._panel._convert
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     are_columns_nested

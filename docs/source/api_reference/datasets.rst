@@ -6,7 +6,7 @@ sktime.datasets: Datasets
 .. currentmodule:: sktime.datasets.base
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     load_airline
