@@ -8,31 +8,31 @@ from sktime.clustering import TimeSeriesKMeans
 from sktime.datasets import load_UCR_UEA_dataset
 
 
-def test_run_clustering_experiment():
-    """Test running and saving results.
-
-    Currently it just checks the files have been created, then deletes them.
-    """
-    dataset = "ItalyPowerDemand"
-    train_X, train_Y = load_UCR_UEA_dataset(dataset, "TRAIN", return_X_y=True)
-    test_X, test_Y = load_UCR_UEA_dataset(dataset, "TEST", return_X_y=True)
-    run_clustering_experiment(
-        train_X,
-        TimeSeriesKMeans(n_clusters=2),
-        results_path="../Temp/",
-        trainY=train_Y,
-        testX=test_X,
-        testY=test_Y,
-        cls_name="kmeans",
-        dataset_name=dataset,
-        resample_id=0,
-    )
-    test_path = f"../Temp/kmeans/Predictions/{dataset}/testResample0.csv"
-    train_path = f"../Temp/kmeans/Predictions/{dataset}/trainResample0.csv"
-    assert os.path.isfile(test_path)
-    assert os.path.isfile(train_path)
-    os.remove(test_path)
-    os.remove(train_path)
+# def test_run_clustering_experiment():
+#     """Test running and saving results.
+#
+#     Currently it just checks the files have been created, then deletes them.
+#     """
+#     dataset = "ItalyPowerDemand"
+#     train_X, train_Y = load_UCR_UEA_dataset(dataset, "TRAIN", return_X_y=True)
+#     test_X, test_Y = load_UCR_UEA_dataset(dataset, "TEST", return_X_y=True)
+#     run_clustering_experiment(
+#         train_X,
+#         TimeSeriesKMeans(n_clusters=2),
+#         results_path="../Temp/",
+#         trainY=train_Y,
+#         testX=test_X,
+#         testY=test_Y,
+#         cls_name="kmeans",
+#         dataset_name=dataset,
+#         resample_id=0,
+#     )
+#     test_path = f"../Temp/kmeans/Predictions/{dataset}/testResample0.csv"
+#     train_path = f"../Temp/kmeans/Predictions/{dataset}/trainResample0.csv"
+#     assert os.path.isfile(test_path)
+#     assert os.path.isfile(train_path)
+#     os.remove(test_path)
+#     os.remove(train_path)
 
 
 # def test_load_and_run_clustering_experiment():
