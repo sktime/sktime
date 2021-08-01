@@ -157,6 +157,10 @@ Rights and responsibilities
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be a core developer.
 
 .. _appointment-1:
 
@@ -174,6 +178,11 @@ anonymous.
 While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
+
+End of tenure
+^^^^^^^^^^^^^
+
+Core developers can resign voluntarily at any point in time, by informing the CC in writing.
 
 Core developers that have not contributed to the project (commits or
 GitHub comments) in the past 12 months will automatically become *inactive*
@@ -199,6 +208,11 @@ incidents and enforcing the CoC.
 They are the point of contact for reporting potential CoC incidents.
 
 In addition, they are responsible for maintaining and improving the CoC.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be a CoC committee member.
 
 .. _appointment-2:
 
@@ -251,27 +265,89 @@ Rights and responsibilities
      - Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts)
 
 
+Representation: CC groups
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each individual CC member is considered a member of exactly one of the following three CC groups:
+
+* early career data scientists, including junior professionals such as trainees and junior data scientists, 
+  early career researchers such as PhD students, postdocs, untenured faculty, and 
+  data scientists without a relevant professional role, for instance when transitioning careers 
+* mid- and late career academic data scientists, including tenured university faculty, and senior research staff
+* mid- and late career data scientists in industry or the public sector, such as data science team leads,
+  middle/upper managers, and senior technical roles
+
+Assignment to one of the three categories is automatic,
+based on the primary job role held at the first day of the calendar quarter.
+
+An individual should be considered mid- or late- career if:
+* the individual's primary job role has a tenure of six or more years, and
+* the individual has three or more direct reports in their primary job role, or
+* the individual has technical responsibility or advisory capacity at an org chart level with three or more direct reports
+
+An individual should be considered early career if:
+* the individual's primary job role is untenured in the sense of a tenure of less than six years, or
+* the individual has two or less direct reports in their primary job role, and no comparable technical or advisory capacity
+
+Weight of votes
+^^^^^^^^^^^^^^^
+
+Votes of CC members are weighted in the following way, to avoid imbalance between the CC groups:
+
+* if the fraction of individuals from a given group on the CC is between 1/4 and 5/12,
+  no weighting is applied to votes from individuals in that group.
+* if the fraction of individuals from a given group on the CC is less than 1/4,
+  individual votes are reweighted by a uniform factor such that the total of CC votes
+  from that group is 1/4 of the CC weight total
+* if the fraction of individuals from a given group on the CC is more than 5/12,
+  individual votes are reweighted by a uniform factor such that the total of CC votes
+  from that group is 5/12 of the CC weight total
+
+Eligibility
+^^^^^^^^^^^
+
+Only core developers are eligible for appointment as CC members.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointmnet vote 
+concurrent with the 5 day discussion period (see below).
+
 .. _appointment-3:
 
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
+Appointment to the CC is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which stay open
 for 5 days excluding weekends and then a vote by core developers which will
-stay open for 5 days excluding weekends. CC membership votes are subject to:
+stay open for 5 days excluding weekends. Approval of appointment requires:
 
 * a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CC members.
+* a simple majority approval of all the current CC members
+* a simple majority approval of all current CC members from the same CC group
 
-The vote will take place in private communication channels and will be
-anonymous.
+if there is at least on CC member of the same CC group.
 
-To avoid deadlocks if there is an even number of CC members, one of them
-will have a tie breaking privilege.
+If there are no CC members from the same CC group, the approval condition changes to:
+
+* a 1/2 majority of all cast votes, and
+* a simple majority approval of all core developers who would be in the same CC group
+  if they were on the CC.
+
+The core developer vote takes place in private communication channels, visible only to core developers, and isanonymous.
+The CC vote takes place in private communication channels, visible only to CC members, and is anonymous.
+
+In the rare case of an even vote, the CC member with the longest continuous tenure has a tie breaking privilege.
+
+End of tenure
+^^^^^^^^^^^^^
+
+CC members can resign voluntarily at any point in time, by informing the CC in writing.
 
 CC members who do not actively engage with the CC responsibilities are
-expected to resign.
+expected to resign voluntarily.
+
+Tenure ends automatically when a CC member's tenure as core developer ends,
+e.g., through resignation or inactivity.
 
 Communications
 ^^^^^^^^^^^^^^
@@ -385,8 +461,8 @@ the CC tries to resolve the deadlock.
 
 -  The CC will use consensus seeking.
 -  If no consensus can be found within a month, the decision is made
-   through a simple majority vote (with tie breaking) among the CC
-   members.
+   through a simple weighted majority vote (with tie breaking) among the CC
+   members, according to CC vote weighting.
 -  Any CC decision must be supported by an :ref:`steps`, which has been made public and discussed before the vote.
 
 .. _steps:
