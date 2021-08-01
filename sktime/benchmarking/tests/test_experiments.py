@@ -27,10 +27,10 @@ def test_run_clustering_experiment():
         dataset_name=dataset,
         resample_id=0,
     )
-    assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
-    assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
-    os.remove("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
-    os.remove("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
+    assert os.path.isfile("../Temp/kmeans/Predictions/", dataset, "/testResample0.csv")
+    assert os.path.isfile("../Temp/kmeans/Predictions/", dataset, "/trainResample0.csv")
+    os.remove("../Temp/kmeans/Predictions/", dataset, "/testResample0.csv")
+    os.remove("../Temp/kmeans/Predictions/", dataset, "/trainResample0.csv")
 
 
 # def test_load_and_run_clustering_experiment():
