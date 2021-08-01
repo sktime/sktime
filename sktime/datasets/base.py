@@ -150,7 +150,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None):
-    """Load time series classification datasets (helper funciton)."""
+    """Load time series classification datasets (helper function)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
@@ -163,6 +163,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         os.makedirs(os.path.join(local_module, local_dirname))
     if name not in _list_downloaded_datasets(extract_path):
         raise ValueError(
+            name,
             "NOT A BAKED IN DATASET: LIST IS ",
             _list_downloaded_datasets(extract_path),
             " line 166 in datasets/base.py. ",
