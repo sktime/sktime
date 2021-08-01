@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (ROCKET)."""
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["Matthew Middlehurst", "Viktor Dremov"]
 __all__ = ["ROCKETClassifier"]
 
 import numpy as np
