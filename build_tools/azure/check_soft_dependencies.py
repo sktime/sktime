@@ -2,10 +2,15 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-# sktime supports a number of soft dependencies which are necessary for using
-# a certain module but otherwise not necessary. Here we check if soft
-# dependencies have been properly isolated and are not required to run other
-# modules.
+"""
+sktime checks for soft dependencies.
+
+sktime supports a number of soft dependencies which are necessary for using
+a certain module but otherwise not necessary. Here we check if soft
+dependencies have been properly isolated and are not required to run other
+modules.
+"""
+
 import pkgutil
 import re
 from importlib import import_module
@@ -18,11 +23,10 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["fbprophet"],
-    "sktime.classification.all": ["tsfresh"],
-    "sktime.regression.all": ["tsfresh"],
+    "sktime.classification.feature_based": ["tsfresh", "esig"],
+    "sktime.classification.signature_based": ["esig"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
-    "sktime.classification.signature_based": ["esig"],
     "sktime.transformations.panel.signature_based": ["esig"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }

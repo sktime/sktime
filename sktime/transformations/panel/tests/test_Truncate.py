@@ -4,7 +4,7 @@ from sktime.datasets.base import _load_dataset
 from sktime.transformations.panel.truncation import TruncationTransformer
 
 # from sklearn.ensemble import RandomForestClassifier
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 # import pandas as pd
 
