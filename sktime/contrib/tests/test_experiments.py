@@ -12,7 +12,6 @@ from sktime.classification.base import classifier_list
 from sklearn.metrics import accuracy_score
 import sktime.datasets.base as sktime
 
-
 class TestStats:
     """Test performance statistics."""
 

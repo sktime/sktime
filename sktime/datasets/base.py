@@ -171,9 +171,9 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
                 "Invalid dataset name. Please make sure the dataset is "
                 "available on http://timeseriesclassification.com/."
             ) from e
-
-    if split in ("train", "test"):
-        fname = name + "_" + split.upper() + ".ts"
+    split = split.upper()
+    if split in ("TRAIN", "TEST"):
+        fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
 
@@ -181,14 +181,14 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     elif split is None:
         X = pd.DataFrame(dtype="object")
         y = pd.Series(dtype="object")
-        for split in ("train", "test"):
-            fname = name + "_" + split.upper() + ".ts"
+        for split in ("TRAIN", "TEST"):
+            fname = name + "_" + split + ".ts"
             abspath = os.path.join(local_module, local_dirname, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
     else:
-        raise ValueError("Invalid `split` value")
+        raise ValueError("Invalid `split` value =",split)
 
     # Return appropriately
     if return_X_y:
