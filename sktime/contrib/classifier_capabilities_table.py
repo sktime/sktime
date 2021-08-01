@@ -39,6 +39,6 @@ for classiName, classiClass in all_estimators(estimator_types="classifier"):
             },
             ignore_index=True,
         )
-    except:
+    except AttributeError:
         print(classiName + " - No Capabilites Given")
 df.to_html("Classifier_Capabilities.html", index=False, escape=False)
