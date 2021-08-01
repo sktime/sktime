@@ -89,8 +89,6 @@ class ROCKETClassifier(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
-
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -124,8 +122,6 @@ class ROCKETClassifier(BaseClassifier):
         -------
         output : array of shape = [n_test_instances]
         """
-        self.check_is_fitted()
-        X = check_X(X)
         return self.classifier.predict(X)
 
     def predict_proba(self, X):
