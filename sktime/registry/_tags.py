@@ -130,6 +130,42 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "is the forecaster capable of returning prediction intervals in predict?",
     ),
+    # "capability:multivariate" is the inverse of "univariate-only" tag.
+    # They are kept distinct intentionally for easier TSC refactoring.
+    # Will be merged after refactor completion.
+    (
+        "capability:multivariate",
+        "classifier",
+        "bool",
+        "can classifier use exogeneous data (X)?",
+    ),
+    (
+        "capability:unequal_length",
+        "classifier",
+        "bool",
+        "can classifier handle unequal length data?",
+    ),
+    # "capability:missing_values" is same as "handles-missing-data" tag.
+    # They are kept distinct intentionally for easier TSC refactoring.
+    # Will be merged after refactor completion.
+    (
+        "capability:missing_values",
+        "classifier",
+        "bool",
+        "can the estimator handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "capability:train_estimate",
+        "classifier",
+        "bool",
+        "",  # FIXME: fill in tag meaning in plain English
+    ),
+    (
+        "capability:contractable",
+        "classifier",
+        "bool",
+        "",  # FIXME: fill in tag meaning in plain English
+    ),
     # (
     #     "handles-panel",
     #     "annotator",
