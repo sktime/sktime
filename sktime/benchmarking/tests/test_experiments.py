@@ -33,8 +33,6 @@ def test_run_clustering_experiment():
     os.remove("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
 
 
-test_run_clustering_experiment()
-
 # def test_load_and_run_clustering_experiment():
 #     """Test loading, running and saving.
 #
