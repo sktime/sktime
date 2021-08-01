@@ -13,7 +13,7 @@ def test_run_clustering_experiment():
 
     Currently it just checks the files have been created, then deletes them.
     """
-    dataset = "UnitTest"
+    dataset = "ItalyPowerDemand"
     train_X, train_Y = load_UCR_UEA_dataset(dataset, "TRAIN", return_X_y=True)
     test_X, test_Y = load_UCR_UEA_dataset(dataset, "TEST", return_X_y=True)
     run_clustering_experiment(
