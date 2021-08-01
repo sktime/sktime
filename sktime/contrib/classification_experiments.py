@@ -10,6 +10,7 @@ import os
 
 import sklearn.preprocessing
 import sklearn.utils
+from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.dictionary_based import (
     BOSSEnsemble,
@@ -18,20 +19,31 @@ from sktime.classification.dictionary_based import (
     WEASEL,
     MUSE,
 )
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier,
+from sktime.classification.distance_based import (
+    ElasticEnsemble,
+    ProximityForest,
+    ProximityTree,
+    ProximityStump,
+    KNeighborsTimeSeriesClassifier,
+    ShapeDTW,
 )
+from sktime.classification.feature_based import (
+    Catch22Classifier,
+    MatrixProfileClassifier,
+    SignatureClassifier,
+    TSFreshClassifier,
+)
+from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
+    SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -61,27 +73,34 @@ generated in java
 """
 
 classifier_list = [
-    # Distance based
-    "ProximityForest",
-    "KNeighborsTimeSeriesClassifier",
-    "ElasticEnsemble",
-    "ShapeDTW",
     # Dictionary based
     "BOSS",
     "ContractableBOSS",
     "TemporalDictionaryEnsemble",
     "WEASEL",
     "MUSE",
+    # Distance based
+    "ProximityForest",
+    "KNeighborsTimeSeriesClassifier",
+    "ElasticEnsemble",
+    "ShapeDTW",
+    # Feature based
+    "Catch22Classifier",
+    "MatrixProfileClassifier",
+    "SignatureClassifier",
+    "TSFreshClassifier",
+    # Hybrid
+    "HIVECOTEV1",
     # Interval based
     "RandomIntervalSpectralForest",
     "TimeSeriesForestClassifier",
     "CanonicalIntervalForest",
-    # Shapelet based
-    "ShapeletTransformClassifier",
-    "MrSEQLClassifier",
     # Kernel based
     "ROCKET",
     "Arsenal",
+    # Shapelet based
+    "ShapeletTransformClassifier",
+    "MrSEQLClassifier",
 ]
 
 
@@ -102,7 +121,6 @@ def set_classifier(cls, resampleId=None):
     A classifier.
     """
     name = cls.lower()
-
     # Dictionary based
     if name == "boss" or name == "bossensemble":
         return BOSSEnsemble(random_state=resampleId)
@@ -114,31 +132,68 @@ def set_classifier(cls, resampleId=None):
         return WEASEL(random_state=resampleId)
     elif name == "muse":
         return MUSE(random_state=resampleId)
+    # Distance based
+    elif name == "pf" or name == "proximityforest":
+        return ProximityForest(random_state=resampleId)
+    elif name == "pt" or name == "proximitytree":
+        return ProximityTree(random_state=resampleId)
+    elif name == "ps" or name == "proximityStump":
+        return ProximityStump(random_state=resampleId)
+    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
+        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
+    elif name == "dtw" or name == "1nn-dtw":
+        return KNeighborsTimeSeriesClassifier(distance="dtw")
+    elif name == "msm" or name == "1nn-msm":
+        return KNeighborsTimeSeriesClassifier(distance="msm")
+    elif name == "ee" or name == "elasticensemble":
+        return ElasticEnsemble()
+    elif name == "shapedtw":
+        return ShapeDTW()
+    # Feature based
+    elif name == "catch22":
+        return Catch22Classifier(
+            random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
+        )
+    elif name == "matrixprofile":
+        return MatrixProfileClassifier(random_state=resampleId)
+    elif name == "signature":
+        return SignatureClassifier(
+            random_state=resampleId, classifier=RandomForestClassifier(n_estimators=500)
+        )
+    elif name == "tsfresh":
+        return TSFreshClassifier(
+            random_state=resampleId, estimator=RandomForestClassifier(n_estimators=500)
+        )
+    elif name == "tsfresh-r":
+        return TSFreshClassifier(
+            random_state=resampleId,
+            estimator=RandomForestClassifier(n_estimators=500),
+            relevant_feature_extractor=True,
+        )
+    # Hybrid
+    elif name == "hivecotev1":
+        return HIVECOTEV1(random_state=resampleId)
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resampleId)
+        return RandomIntervalSpectralForest(random_state=resampleId, n_estimators=500)
     elif name == "tsf" or name == "timeseriesforestclassifier":
-        return TimeSeriesForestClassifier(random_state=resampleId)
+        return TimeSeriesForestClassifier(random_state=resampleId, n_estimators=500)
     elif name == "cif" or name == "canonicalintervalforest":
-        return CanonicalIntervalForest(random_state=resampleId)
+        return CanonicalIntervalForest(random_state=resampleId, n_estimators=500)
+    elif name == "stsf":
+        return SupervisedTimeSeriesForest(random_state=resampleId, n_estimators=500)
     elif name == "drcif":
-        return DrCIF(random_state=resampleId)
-    # Shapelet based
-    elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(
-            random_state=resampleId, transform_contract_in_mins=60
-        )
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
+        return DrCIF(random_state=resampleId, n_estimators=500)
+    # Kernel based
     elif name == "rocket":
         return ROCKETClassifier(random_state=resampleId)
     elif name == "arsenal":
         return Arsenal(random_state=resampleId)
-    # Hybrid
-    elif name == "catch22":
-        return Catch22ForestClassifier(random_state=resampleId)
-    elif name == "hivecotev1":
-        return HIVECOTEV1(random_state=resampleId)
+    # Shapelet based
+    elif name == "stc" or name == "shapelettransformclassifier":
+        return ShapeletTransformClassifier(random_state=resampleId, n_estimators=500)
+    elif name == "mrseql" or name == "mrseqlclassifier":
+        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     else:
         raise Exception("UNKNOWN CLASSIFIER")
 
@@ -686,15 +741,9 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "../datasets/data/"
         results_dir = ""
-        dataset = "UnitTest"
-        trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-        testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         classifier = "CIF"
+        dataset = "UnitTest"
         resample = 0
-        #         for i in range(0, len(univariate_datasets)):
-        #             dataset = univariate_datasets[i]
-        # #            print(i)
-        # #            print(" problem = "+dataset)
         tf = False
         run_experiment(
             overwrite=True,
