@@ -188,7 +188,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
     else:
-        raise ValueError("Invalid `split` value =",split)
+        raise ValueError("Invalid `split` value =", split)
 
     # Return appropriately
     if return_X_y:
@@ -790,7 +790,6 @@ def load_PBS_dataset():
     ----------
     ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
     """
-
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
