@@ -1004,7 +1004,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
             raise ValueError("all elements of y_preds must be of the same length")
     if isinstance(y_preds[0], pd.DataFrame):
         for y_pred in y_preds:
-            if not y_pred.columns == ycols:
+            if not y_pred.columns.equals(ycols):
                 raise ValueError("all elements of y_preds must have the same columns")
 
     if len(y_preds[0]) == 1:
