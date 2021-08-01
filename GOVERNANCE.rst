@@ -270,9 +270,9 @@ Representation: CC groups
 
 Each individual CC member is considered a member of exactly one of the following three CC groups:
 
-* early career data scientists, including junior professionals such as trainees and junior data scientists, 
-  early career researchers such as PhD students, postdocs, untenured faculty, and 
-  data scientists without a relevant professional role, for instance when transitioning careers 
+* early career data scientists, including junior professionals such as trainees and junior data scientists,
+  early career researchers such as PhD students, postdocs, untenured faculty, and
+  data scientists without a relevant professional role, for instance when transitioning careers
 * mid- and late career academic data scientists, including tenured university faculty, and senior research staff
 * mid- and late career data scientists in industry or the public sector, such as data science team leads,
   middle/upper managers, and senior technical roles
@@ -308,7 +308,7 @@ Eligibility
 
 Only core developers are eligible for appointment as CC members.
 Non-core-developers can be nominated, but this must be accompanied
-by a nomination for core developer, and a core developer appointmnet vote 
+by a nomination for core developer, and a core developer appointment vote
 concurrent with the 5 day discussion period (see below).
 
 .. _appointment-3:
