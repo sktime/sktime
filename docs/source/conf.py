@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+
+"""Configuration file for the Sphinx documentation builder."""
 
 import os
 import sys
+from importlib import import_module
 
 import sktime
 
@@ -99,6 +96,18 @@ autodoc_default_flags = ["members", "inherited-members"]
 
 
 def linkcode_resolve(domain, info):
+    """Return URL to source code correponding.
+
+    Parameters
+    ----------
+    domain : str
+    info : dict
+
+    Returns
+    -------
+    url : str
+    """
+
     def find_source():
         # try to find the file and line number, based on code from numpy:
         # https://github.com/numpy/numpy/blob/main/doc/source/conf.py#L286
@@ -147,6 +156,9 @@ html_favicon = "images/sktime-favicon.ico"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_js_files = [
+    "js/dynamic_table.js",
+]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -209,12 +221,97 @@ texinfo_documents = [
 ]
 
 
+def _make_estimator_overview(app):
+    """Make estimator overview table."""
+    import pandas as pd
+    from sktime.registry import all_estimators
+
+    def _process_author_info(author_info):
+        """
+        Process author information from source code files.
+
+        Parameters
+        ----------
+        author_info : str
+            Author information string from source code files.
+
+        Returns
+        -------
+        author_info : str
+            Preprocessed author information.
+
+        Notes
+        -----
+        A list of author names is turned into a string.
+        Multiple author names will be separated by a comma,
+        with the final name always preceded by "&".
+        """
+        if isinstance(author_info, list):
+            if len(author_info) > 1:
+                return ", ".join(author_info[:-1]) + " & " + author_info[-1]
+            else:
+                return author_info[0]
+        else:
+            return author_info
+
+    def _does_not_start_with_underscore(input_string):
+        return not input_string.startswith("_")
+
+    # creates dataframe as df
+    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
+
+    df = pd.DataFrame([], columns=COLNAMES)
+
+    for modname, modclass in all_estimators():
+        algorithm_type = "::".join(str(modclass).split(".")[1:-2])
+        try:
+            author_info = _process_author_info(modclass.__author__)
+        except AttributeError:
+            try:
+                author_info = _process_author_info(
+                    import_module(modclass.__module__).__author__
+                )
+            except AttributeError:
+                author_info = "no author info"
+
+        # includes part of class string
+        modpath = str(modclass)[8:-2]
+        path_parts = modpath.split(".")
+        # joins strings excluding starting with '_'
+        clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
+        # adds html link reference
+        modname = str(
+            '<a href="https://www.sktime.org/en/latest/api_reference/modules'
+            + "/auto_generated/"
+            + clean_path
+            + '.html">'
+            + modname
+            + "</a>"
+        )
+
+        df = df.append(
+            pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
+            ignore_index=True,
+        )
+    with open("estimator_overview_table.md", "w") as file:
+        df.to_markdown(file, index=False)
+
+
 def setup(app):
+    """Set up sphinx builder.
+
+    Parameters
+    ----------
+    app : Sphinx application object
+    """
+
     def adds(pth):
         print("Adding stylesheet: %s" % pth)  # noqa: T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.
+
+    app.connect("builder-inited", _make_estimator_overview)
 
 
 # -- Extension configuration -------------------------------------------------

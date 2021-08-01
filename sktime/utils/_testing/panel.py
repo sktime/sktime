@@ -6,13 +6,14 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "make_classification_problem",
     "make_regression_problem",
+    "make_transformer_problem",
 ]
 
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.utils.data_processing import from_3d_numpy_to_nested
+from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.clustering.tests._clustering_tests import generate_univaritate_series
 
 
@@ -117,6 +118,44 @@ def make_clustering_problem(
         return X
     else:
         return pd.Series(X)
+
+
+def make_transformer_problem(
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    return_numpy=True,
+    random_state=None,
+    panel=True,
+):
+    if not panel:
+        X = make_transformer_problem(
+            n_instances=n_instances,
+            n_columns=n_columns,
+            n_timepoints=n_timepoints,
+            return_numpy=True,
+            random_state=random_state,
+            panel=True,
+        )
+        if return_numpy:
+            X = X[0]
+        else:
+            X = pd.DataFrame(X[0])
+    else:
+        X = _make_panel_X(
+            n_instances=n_instances,
+            n_columns=n_columns,
+            n_timepoints=n_timepoints,
+            return_numpy=True,
+            random_state=random_state,
+        )
+        if not return_numpy:
+            arr = []
+            for data in X:
+                arr.append(pd.DataFrame(data))
+            X = arr
+
+    return X
 
 
 def _make_nested_from_array(array, n_instances=20, n_columns=1):
