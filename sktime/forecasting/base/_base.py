@@ -983,7 +983,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
             col-index = (cutoff[i], y_pred.column)
             entry is forecast at horizon given by row, from cutoff/variable at column
         if length of elements in y_preds is 1:
-            row-index = list index
+            row-index = forecasting horizon
             col-index = y_pred.column
     """
     # check that input format is correct
