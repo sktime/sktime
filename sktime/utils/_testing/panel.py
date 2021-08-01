@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.utils.data_processing import from_3d_numpy_to_nested
+from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.clustering.tests._clustering_tests import generate_univaritate_series
 
 
