@@ -30,3 +30,4 @@ meant to provide a technical manual.
    user_guide/regression
    user_guide/forecasting
    user_guide/resources
+   user_guide/glossary

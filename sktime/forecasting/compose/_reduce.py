@@ -814,6 +814,7 @@ def make_reduction(
     scitype : str, optional (default="infer")
         Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
         the scitype cannot be inferred, please specify it explicitly.
+        See :term:`scitype`.
 
     Returns
     -------
