@@ -3,10 +3,7 @@
 
 import os.path
 
-from sktime.benchmarking.experiments import (
-    load_and_run_clustering_experiment,
-    run_clustering_experiment,
-)
+from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering import TimeSeriesKMeans
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.datasets import load_UCR_UEA_dataset
