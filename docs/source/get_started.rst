@@ -1,7 +1,8 @@
 .. _getting_started:
 
-Getting Started
-===============
+===========
+Get Started
+===========
 
 The following information is designed to get users up and running with ``sktime`` quickly. For more detailed information, see the links in each of the subsections.
 
@@ -95,17 +96,7 @@ Time Series Classification
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
 
-OBLIGATORY WARNING ABOUT BEING EXPERIMENTAL HERE.
+.. warning::
 
-INSERT EXAMPLE HERE
-
-Transformations
-~~~~~~~~~~~~~~~
-
-INSERT EXAMPLES (WE SHOULD SHOW AT LEAST ONE COMMON TRANSFORMER OF EACH TRANSFORMER TYPE) HERE
-
-Annotation
-~~~~~~~~~~
-OBLIGATORY WARNING ABOUT BEING EXPERIMENTAL HERE.
-
-INSERT EXAMPLE HERE
+   The time series clustering API is still experimental. Features may change
+   in future releases.

@@ -1,8 +1,8 @@
 
 .. _series_as_features_ref:
 
-sktime.series_as_features: Series-as-features tools
-===================================================
+Series-as-features tools
+========================
 
 The :mod:`sktime.series_as_features` module contains algorithms and composition tools that are shared by the classification and regression modules.
 

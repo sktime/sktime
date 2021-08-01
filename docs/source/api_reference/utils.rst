@@ -1,7 +1,7 @@
 .. _utils_ref:
 
-sktime.utils: Utility function
-==============================
+Utility functions
+=================
 
 The :mod:`sktime.utils` module contains utility functions.
 

@@ -1,8 +1,8 @@
 
 .. _performance_metric_ref:
 
-sktime.performance_metrics: Measuring time series model performance
-===================================================================
+Performance metrics
+===================
 
 The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 

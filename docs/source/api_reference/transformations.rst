@@ -1,7 +1,7 @@
 .. _transformations_ref:
 
-sktime.transformations: Time series transformers
-================================================
+Time series transformations
+===========================
 
 The :mod:`sktime.transformations` module contains classes for data
 transformations.

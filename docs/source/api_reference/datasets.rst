@@ -1,7 +1,7 @@
 .. _datasets_ref:
 
-sktime.datasets: Datasets
-=========================
+Datasets
+========
 
 .. currentmodule:: sktime.datasets.base
 

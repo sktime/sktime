@@ -1,14 +1,10 @@
 .. _get_involved:
 
-Get involved
+Get Involved
 ============
 
 .. toctree::
    :maxdepth: 1
 
    contributing
-   developer_guide
    mentoring
-   roadmap
-   code_of_conduct
-   governance

@@ -1,7 +1,7 @@
-.. _users:
+.. _user_documentation:
 
-Users
-=====
+Documentation
+=============
 
 .. toctree::
    :maxdepth: 1
@@ -10,7 +10,6 @@ Users
    tutorials
    user_guide
    estimator_overview
-   api_reference
+   glossary
    changelog
-   roadmap
    related_software

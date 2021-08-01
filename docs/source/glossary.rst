@@ -1,17 +1,15 @@
 .. _glossary:
 
-Glossary of Common Terms and API Elements
-=========================================
+Glossary of Common Terms
+========================
 
 The glossary below defines common terms and API elements used throughout
 sktime.
 
 .. note::
 
-    The user guide is under development. We have created a basic
-    structure and are looking for contributions to develop the user guide
-    further. For more details, please go to issue `#361 <https://github
-    .com/alan-turing-institute/sktime/issues/361>`_ on GitHub.
+    The glossary is under development. Important terms are still missing.
+    Please create a pull request if you want to add one.
 
 
 .. glossary::

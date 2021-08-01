@@ -1,7 +1,7 @@
 .. _classification_ref:
 
-sktime.classification: Time series classification
-=================================================
+Time series classification
+==========================
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
