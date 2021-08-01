@@ -171,10 +171,14 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         # This also tests the validitiy of the URL, can't rely on the html
         # status code as it always returns 200
         try:
-            _download_and_extract(url, )
+            _download_and_extract(
+                url,
+            )
         except zipfile.BadZipFile as e:
             raise ValueError(
-                "Invalid dataset name. ", extract_path, "Please make sure the dataset "
+                "Invalid dataset name. ",
+                extract_path,
+                "Please make sure the dataset "
                 + "is available on http://timeseriesclassification.com/."
             ) from e
     if isinstance(split, str):
