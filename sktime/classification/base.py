@@ -150,7 +150,11 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances, n_classes] - predictive pmf
         """
-        raise NotImplementedError("abstract method")
+        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
+
+        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        self.check_is_fitted()
+        return self._predict_proba(X)
 
     def score(self, X, y):
         """Scores predicted labels against ground truth labels on X.
@@ -219,3 +223,19 @@ class BaseClassifier(BaseEstimator):
         y = self.label_encoder.inverse_transform(predictions)
 
         return y
+
+    def _predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or single-column pd.DataFrame with pd.Series entries
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances, n_classes] - predictive pmf
+        """
+        raise NotImplementedError("abstract method")

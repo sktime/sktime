@@ -123,7 +123,7 @@ class ROCKETClassifier(BaseClassifier):
         """
         return self.classifier.predict(X)
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -141,9 +141,6 @@ class ROCKETClassifier(BaseClassifier):
         output : array of shape = [n_test_instances, num_classes] of
         probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         dists = np.zeros((X.shape[0], self.n_classes))
         preds = self.classifier.predict(X)
         for i in range(0, X.shape[0]):
