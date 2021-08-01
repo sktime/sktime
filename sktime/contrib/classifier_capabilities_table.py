@@ -40,5 +40,16 @@ for classiName, classiClass in all_estimators(estimator_types="classifier"):
             ignore_index=True,
         )
     except AttributeError:
-        print(classiName + " - No Capabilites Given")
+        df = df.append(
+            {
+                "Classifier Category": category,
+                "Classifier Name": classiName,
+                "multivariate": "N/A",
+                "unequal_length": "N/A",
+                "missing_values": "N/A",
+                "train_estimate": "N/A",
+                "contractable": "N/A",
+            },
+            ignore_index=True,
+        )
 df.to_html("Classifier_Capabilities.html", index=False, escape=False)
