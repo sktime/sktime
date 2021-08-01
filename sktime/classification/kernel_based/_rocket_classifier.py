@@ -76,7 +76,7 @@ class ROCKETClassifier(BaseClassifier):
 
         super(ROCKETClassifier, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a pipeline containing the ROCKET transformer and RidgeClassifierCV.
 
         Parameters
@@ -109,7 +109,7 @@ class ROCKETClassifier(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X.
 
         Parameters
