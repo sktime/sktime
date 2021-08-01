@@ -23,15 +23,17 @@ def test_run_clustering_experiment():
         trainY=train_Y,
         testX=test_X,
         testY=test_Y,
-        cls_name="kmeans2",
+        cls_name="kmeans",
         dataset_name=dataset,
         resample_id=0,
     )
-    assert os.path.isfile("../Temp/kmeans2/Predictions/UnitTest/testResample0.csv")
-    assert os.path.isfile("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
-    os.remove("../Temp/kmeans2/Predictions/UnitTest/testResample0.csv")
-    os.remove("../Temp/kmeans2/Predictions/UnitTest/trainResample0.csv")
+    assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
+    assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
+    os.remove("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
+    os.remove("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
 
+
+test_run_clustering_experiment()
 
 # def test_load_and_run_clustering_experiment():
 #     """Test loading, running and saving.

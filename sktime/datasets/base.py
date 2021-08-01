@@ -162,6 +162,11 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
     if name not in _list_downloaded_datasets(extract_path):
+        raise ValueError(
+            "NOT A BAKED IN DATASET line 166 in datasets/base.py. THIS IS FOR "
+            "DEBUGGING AZURE ONLY: REMOVE"
+        )
+    if name not in _list_downloaded_datasets(extract_path):
         url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
         # This also tests the validitiy of the URL, can't rely on the html
         # status code as it always returns 200
