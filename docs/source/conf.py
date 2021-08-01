@@ -82,6 +82,8 @@ language = None
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", ".ipynb_checkpoints", "Thumbs.db", ".DS_Store"]
 
+add_module_names = False
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
@@ -96,10 +98,10 @@ numpydoc_validation_checks = {"all"}
 # generate autosummary even if no references
 autosummary_generate = True
 
-# members and inherited-members default to showing methods/attributes, etc
-# from a class that are created in the class or inherited
-# member-order says to order the documentation in the order the members
-# were defined in the source code
+# Members and inherited-members default to showing methods and attributes from a
+# class or those inherited.
+# Member-order orders the documentation in the order of how the members are defined in
+# the source code.
 autodoc_default_options = {
     "members": True,
     "inherited-members": True,
@@ -109,9 +111,17 @@ autodoc_default_options = {
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
+# When building HTML using the sphinx.ext.mathjax (enabled by default),
+# Myst-Parser injects the tex2jax_ignore (MathJax v2) and mathjax_ignore (MathJax v3)
+# classes in to the top-level section of each MyST document, and adds some default
+# configuration. This ensures that MathJax processes only math, identified by the
+# dollarmath and amsmath extensions, or specified in math directives. We here silence
+# the corresponding warning that this override happens.
+suppress_warnings = ["myst.mathjax"]
+
 
 def linkcode_resolve(domain, info):
-    """Return URL to source code correponding.
+    """Return URL to source code corresponding.
 
     Parameters
     ----------
@@ -198,6 +208,7 @@ html_context = {
     "github_version": "main",
     "doc_path": "docs/source/",
 }
+html_favicon = "images/sktime-favicon.ico"
 html_sidebars = {
     "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
 }

@@ -18,7 +18,7 @@ Classes
 ~~~~~~~
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class_with_call.rst
 
     MeanAbsoluteScaledError
@@ -44,7 +44,7 @@ Functions
 ~~~~~~~~~
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     make_forecasting_scorer

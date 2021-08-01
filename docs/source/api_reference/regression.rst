@@ -14,7 +14,7 @@ Composition
 .. currentmodule:: sktime.regression.compose
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     ComposableTimeSeriesForestRegressor
@@ -25,7 +25,7 @@ Interval-based
 .. currentmodule:: sktime.regression.interval_based
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     TimeSeriesForestRegressor
