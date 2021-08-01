@@ -205,7 +205,8 @@ class BaseForecaster(BaseEstimator):
 
         if return_pred_int and not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
-                f"Prediction intervals for {self.__class__.__name__} are not yet implemented. Please set return_pred_int=False"
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. Please set return_pred_int=False"
             )
 
         # input check for X
