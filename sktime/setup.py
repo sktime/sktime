@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
+"""Set  up."""
 __author__ = "Markus Löning"
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master

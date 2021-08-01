@@ -143,6 +143,7 @@ else:
 # Custom clean command to remove build artifacts
 class CleanCommand(Clean):
     """Remove build artifacts from the source tree."""
+
     description = "Remove build artifacts from the source tree"
 
     def run(self):
