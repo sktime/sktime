@@ -336,7 +336,8 @@ If there are no CC members from the same CC group, the approval condition change
 The core developer vote takes place in private communication channels, visible only to core developers, and isanonymous.
 The CC vote takes place in private communication channels, visible only to CC members, and is anonymous.
 
-In the rare case of an even vote weight, the tie is broken by the highest average approval among CC groups.
+In the rare case of an even vote weight, the tie is broken by the option which has the highest average of
+approving fractions within CC groups (i.e., compute fraction of approvals in each CC group, then take the arithmetic mean).
 If a tie remains, the CC member with the longest continuous tenure has a tie breaking privilege.
 
 End of tenure
