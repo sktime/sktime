@@ -171,7 +171,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
                 "Invalid dataset name. Please make sure the dataset is "
                 "available on http://timeseriesclassification.com/."
             ) from e
-    split = split.upper()
+    if split is str:
+        split = split.upper()
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
