@@ -179,7 +179,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
                 "Invalid dataset name. ",
                 extract_path,
                 "Please make sure the dataset "
-                + "is available on http://timeseriesclassification.com/."
+                + "is available on http://timeseriesclassification.com/.",
             ) from e
     if isinstance(split, str):
         split = split.upper()
