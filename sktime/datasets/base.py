@@ -165,7 +165,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         raise ValueError(
             "NOT A BAKED IN DATASET: LIST IS ",
             _list_downloaded_datasets(extract_path),
-            " line 166 in datasets/base.py. "
+            " line 166 in datasets/base.py. ",
         )
 
     if name not in _list_downloaded_datasets(extract_path):
