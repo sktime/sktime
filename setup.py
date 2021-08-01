@@ -232,6 +232,7 @@ def configuration(parent_package="", top_path=None):
 def check_package_status(package, min_version):
     """
     Return a dictionary.
+
     Dictionary contains a boolean specifying whether given package
     is up-to-date, along with the version string (empty string if
     not installed).
