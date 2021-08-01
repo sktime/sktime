@@ -283,11 +283,11 @@ based on the primary job role held at the first day of the calendar quarter.
 An individual should be considered mid- or late- career if:
 * the individual's primary job role has a (prospective contractual) tenure of six or more years (including open-ended tenure), and
 * the individual has three or more direct reports in their primary job role, or
-* the individual has technical responsibility or advisory capacity at an org chart level with three or more direct reports
+* the individual has technical responsibility or advisory capacity at an org chart level with three or more reports (incl indirect)
 
 An individual should be considered early career if:
 * the individual's primary job role is untenured in the sense of a tenure of less than six years, or
-* the individual has two or less direct reports in their primary job role, and no comparable technical or advisory capacity
+* the individual has two or less reports in their primary job role, and no comparable technical or advisory capacity
 
 Weight of votes
 ^^^^^^^^^^^^^^^
