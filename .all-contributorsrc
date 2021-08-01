@@ -1143,6 +1143,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "victordremov",
+      "name": "Viktor Dremov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32140716",
+      "profile": "https://github.com/victordremov",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
