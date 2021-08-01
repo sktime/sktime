@@ -201,7 +201,7 @@ html_theme_options = {
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links"],
 }
-html_logo = "images/sktime-logo-no-text.jpg"
+html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
     "github_user": "alan-turing-institute",
     "github_repo": "sktime",
