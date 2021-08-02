@@ -228,15 +228,30 @@ def _check_pred_ints(pred_ints: list, y_train: pd.Series, y_pred: pd.Series, fh)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
 def test_predict_pred_interval(Forecaster, fh, alpha):
-    """Check prediction intervals returned by predict."""
+    """Check prediction intervals returned by predict.
+
+    Arguments
+    ---------
+    Forecaster: BaseEstimator class descendant, forecaster to test
+    fh: ForecastingHorizon, fh at which to test prediction
+    alpha: float, alpha at which to make prediction intervals
+
+    Raises
+    ------
+    AssertionError - if Forecaster test instance has "capability:pred_int"
+            and pred. int are not returned correctly when asking predict for them
+    AssertionError - if Forecaster test instance does not have "capability:pred_int"
+            and no NotImplementedError is raised when asking predict for pred.int
+    """
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
-    try:
+
+    if f.get_tag("capability:pred_int"):
         y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
         _check_pred_ints(pred_ints, y_train, y_pred, fh)
-
-    except NotImplementedError:
-        pass
+    else:
+        with pytest.raises(NotImplementedError, match="prediction intervals"):
+            f.predict(return_pred_int=True, alpha=alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
