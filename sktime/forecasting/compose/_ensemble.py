@@ -44,7 +44,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = load_airline()
     >>> forecasters = [("trend", PolynomialTrendForecaster()),\
                         ("naive", NaiveForecaster())]
-    >>> forecaster = EnsembleForecaster(forecasters=forecasters, \
+    >>> forecaster = EnsembleForecaster(forecasters=forecasters,\
                                         aggfunc="median", weights=[1, 10])
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     EnsembleForecaster(...)
@@ -58,7 +58,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="average", weights=None):
+    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
@@ -125,16 +125,22 @@ def _aggregate(y, aggfunc, weights):
     """
     if aggfunc in (np.min, np.max):
         if weights is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("weights not supported for `min` or max`")
         else:
             y_agg = aggfunc(y, axis=1)
 
     elif aggfunc == np.average:
         y_agg = aggfunc(y, axis=1, weights=weights)
+
     else:
         y_agg = []
         for _, row in y.iterrows():
-            agg = _weighted_percentile(aggfunc(row.to_numpy()), sample_weight=weights)
+            if aggfunc == _weighted_geometric_mean:
+                agg = aggfunc(row.to_numpy(), sample_weight=weights)
+            else:
+                agg = _weighted_percentile(
+                    aggfunc(row.to_numpy()), sample_weight=weights
+                )
             y_agg.append(agg)
 
     return pd.Series(y_agg, index=y.index)
