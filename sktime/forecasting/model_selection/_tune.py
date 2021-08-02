@@ -395,8 +395,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,

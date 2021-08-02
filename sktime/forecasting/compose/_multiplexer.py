@@ -51,8 +51,8 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         forecaster that MultiplexForecaster will currently
         forecast with.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.forecasting.all import (
     ...     MultiplexForecaster,
     ...     AutoETS,
