@@ -250,7 +250,8 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
         _check_pred_ints(pred_ints, y_train, y_pred, fh)
     else:
-        pytest.raises(NotImplementedError, f.predict, return_pred_int=True, alpha=alpha)
+        with pytest.raises(NotImplementedError, match="prediction intervals"):
+            f.predict(return_pred_int=True, alpha=alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
