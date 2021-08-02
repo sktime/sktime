@@ -3,9 +3,9 @@
 
 import os.path
 
-from sktime.benchmarking.experiments import run_clustering_experiment
-from sktime.clustering import TimeSeriesKMeans
-from sktime.datasets import load_UCR_UEA_dataset
+# from sktime.benchmarking.experiments import run_clustering_experiment
+# from sktime.clustering import TimeSeriesKMeans
+# from sktime.datasets import load_UCR_UEA_dataset
 
 
 # def test_run_clustering_experiment():
