@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.utils.stats import _weighted_percentile
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.performance_metrics.forecasting._functions import _weighted_geometric_mean
+from scipy.stats import gmean
 
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -45,7 +45,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecasters = [("trend", PolynomialTrendForecaster()),\
                         ("naive", NaiveForecaster())]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters,\
-                                        aggfunc="median", weights=[1, 10])
+                                        aggfunc="mean", weights=[1, 10])
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
@@ -98,12 +98,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        aggfunc = _check_aggfunc(self.aggfunc)
+        # aggfunc = _check_aggfunc(self.aggfunc)
         if return_pred_int:
             raise NotImplementedError()
 
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        y_pred = _aggregate(y=y_pred, aggfunc=aggfunc, weights=self.weights)
+        y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
         return y_pred
 
@@ -123,38 +123,44 @@ def _aggregate(y, aggfunc, weights):
     y_agg: pd.Series
         Transformed univariate series.
     """
-    if aggfunc in (np.min, np.max):
-        if weights is not None:
-            raise NotImplementedError("weights not supported for `min` or max`")
-        else:
-            y_agg = aggfunc(y, axis=1)
-
-    elif aggfunc == np.average:
-        y_agg = aggfunc(y, axis=1, weights=weights)
-
+    if weights is None:
+        aggfunc = _check_aggfunc(aggfunc, weighted=False)
+        y_agg = aggfunc(y, axis=1)
     else:
-        y_agg = []
-        for _, row in y.iterrows():
-            if aggfunc == _weighted_geometric_mean:
-                agg = aggfunc(row.to_numpy(), sample_weight=weights)
-            else:
-                agg = _weighted_percentile(
-                    aggfunc(row.to_numpy()), sample_weight=weights
-                )
-            y_agg.append(agg)
+        aggfunc = _check_aggfunc(aggfunc, weighted=True)
+        y_agg = aggfunc(y, axis=1, weights=weights)
 
     return pd.Series(y_agg, index=y.index)
 
 
-def _check_aggfunc(aggfunc):
+def _check_aggfunc(aggfunc, weighted=False):
+    _weighted = "weighted" if weighted else "unweighted"
     valid_aggfuncs = {
-        "mean": np.mean,
-        "median": np.median,
-        "average": np.average,
-        "min": np.min,
-        "max": np.max,
-        "weighted_geometric_mean": _weighted_geometric_mean,
+        "mean": {"unweighted": np.mean, "weighted": np.average},
+        "median": {"unweighted": np.median, "weighted": _weighted_median},
+        "min": {"unweighted": np.min, "weighted": _weighted_min},
+        "max": {"unweighted": np.max, "weighted": _weighted_max},
+        "geometric_mean": {"unweighted": gmean, "weighted": gmean},
     }
     if aggfunc not in valid_aggfuncs.keys():
         raise ValueError("Aggregation function %s not recognized." % aggfunc)
-    return valid_aggfuncs[aggfunc]
+    return valid_aggfuncs[aggfunc][_weighted]
+
+
+def _weighted_median(y, weights):
+    w_median = _weighted_percentile(
+        np.median(y, axis=1), sample_weight=weights, percentile=50
+    )
+    return w_median
+
+
+def _weighted_min(y, weights):
+    w_min = _weighted_percentile(np.min(y, axis=1), sample_weight=weights, percentile=0)
+    return w_min
+
+
+def _weighted_max(y, weights):
+    w_max = _weighted_percentile(
+        np.median(y, axis=1), sample_weight=weights, percentile=100
+    )
+    return w_max
