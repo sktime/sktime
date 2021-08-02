@@ -1052,7 +1052,7 @@
       "contributions": [
         "code",
         "bug",
-        "test",
+        "test"
       ]
     },
     {
@@ -1070,7 +1070,7 @@
       "avatar_url": "https://https://avatars.githubusercontent.com/jambo6",
       "profile": "https://github.com/jambo6",
       "contributions": [
-        "code",
+        "code"
       ]
     },
     {
@@ -1098,6 +1098,17 @@
       "profile": "https://github.com/ltoniazzi",
       "contributions": [
         "code"
+      ]
+    }
+    {
+      "login": "BINAYKUMAR943"
+      "name":"Binay Kumar"
+      "avatar_url":"https://avatars.githubusercontent.com/u/38756834?v=4
+      "profile":"https://github.com/BINAYKUMAR943"
+      "contributions":[
+        "code",
+        "doc",
+        "test"
       ]
     }
   ],
