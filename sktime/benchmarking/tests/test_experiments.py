@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Functions to test the functions in experiments.py."""
 
-import os.path
+# import os.path
 
 # from sktime.benchmarking.experiments import run_clustering_experiment
 # from sktime.clustering import TimeSeriesKMeans
