@@ -28,6 +28,7 @@ def configuration(parent_package="", top_path=None):
         "ShampooSales",
         "Airline",
         "ACSF1",
+        "UnitTest",
         "Uschange",
         "PBS_dataset",
     )
