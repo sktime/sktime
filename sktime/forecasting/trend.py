@@ -40,24 +40,23 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "univariate-only": True,
+        "univariate-only": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
 
     def __init__(self, regressor=None):
-        self.regressor = regressor
+        # for default regressor, set fit_intercept=True
+        self.regressor = regressor or LinearRegression(fit_intercept=True)
         super(TrendForecaster, self).__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None):
         """Fit to training data.
 
         Parameters
         ----------
         y : pd.Series
             Target time series with which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecast horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -65,8 +64,8 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        # for default regressor, set fit_intercept=True
-        self.regressor_ = clone(self.regressor) or LinearRegression(fit_intercept=True)
+        # create a clone of self.regressor
+        self.regressor_ = clone(self.regressor)
 
         # transform data
         X = y.index.astype("int").to_numpy().reshape(-1, 1)
@@ -148,15 +147,13 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor
         super(PolynomialTrendForecaster, self).__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None):
         """Fit to training data.
 
         Parameters
         ----------
         y : pd.Series
             Target time series with which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecast horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
