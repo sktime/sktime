@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Load data functions."""
+
 __all__ = [
     "load_airline",
     "load_arrow_head",

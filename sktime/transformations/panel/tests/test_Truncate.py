@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # from sklearn.pipeline import Pipeline
+"""Test Truncator transformer."""
+
 from sktime.datasets import load_japanese_vowels
 from sktime.transformations.panel.truncation import TruncationTransformer
 
@@ -10,6 +12,7 @@ from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 
 def test_truncation_transformer():
+    """Test truncation to the shortest series length."""
     # load data
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
@@ -26,6 +29,7 @@ def test_truncation_transformer():
 
 
 def test_truncation_paramterised_transformer():
+    """Test truncation to the a user defined length."""
     # load data
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)

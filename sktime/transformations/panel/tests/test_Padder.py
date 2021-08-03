@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# from sklearn.pipeline import Pipeline
+"""Test the Padder transformer."""
+
 from sktime.datasets import load_japanese_vowels
 from sktime.transformations.panel.padder import PaddingTransformer
 
@@ -10,11 +11,10 @@ from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 
 def test_padding_transformer():
+    """Test the dimensions after padding."""
     # load data
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
-
-    # print(X_train)
 
     padding_transformer = PaddingTransformer()
     Xt = padding_transformer.fit_transform(X_train)
@@ -25,10 +25,11 @@ def test_padding_transformer():
     assert len(data.columns) == 29 * 12
 
 
-def test_padding_paramterised_transformer():
+def test_padding_parameterised_transformer():
+    """Test padding to user determined length."""
     # load data
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
-    X_test, y_test = load_japanese_vowels( split="test", return_X_y=True)
+    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
 
     # print(X_train)
 
