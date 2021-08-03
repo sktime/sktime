@@ -20,7 +20,7 @@ Plotting
 Data Processing
 ---------------
 
-.. currentmodule:: sktime.utils.data_processing
+.. currentmodule:: sktime.datatypes._panel._convert
 
 .. autosummary::
     :toctree: modules/auto_generated/
