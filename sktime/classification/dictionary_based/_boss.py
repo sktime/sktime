@@ -5,7 +5,7 @@ dictionary based BOSS classifiers based on SFA transform. Contains a single
 BOSS and a BOSS ensemble.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["Matthew Middlehurst", "Ahmed Bilal"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "boss_distance"]
 
 import sys
@@ -18,7 +18,6 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -79,14 +78,13 @@ class BOSSEnsemble(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/dictionary_based/BOSS.java
     """
-
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": True,
-        "contractable": False,
+    
+    _tags = {
+    "capability:multivariate": False,
+    "capability:unequal_length": False,
+    "capability:missing_values": False,
+    "capability:train_estimate": True,
+    "capability:contractable": False,
     }
 
     def __init__(
@@ -119,7 +117,7 @@ class BOSSEnsemble(BaseClassifier):
         self.alphabet_size = 4
         super(BOSSEnsemble, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit a boss ensemble on cases (X,y), where y is the target variable.
 
         Build an ensemble of BOSS classifiers from the training set (X,
@@ -136,7 +134,6 @@ class BOSSEnsemble(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
@@ -230,7 +227,7 @@ class BOSSEnsemble(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n instances in X.
 
         Parameters
@@ -249,7 +246,7 @@ class BOSSEnsemble(BaseClassifier):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -260,8 +257,6 @@ class BOSSEnsemble(BaseClassifier):
         -------
         array of shape [n, self.n_classes]
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 

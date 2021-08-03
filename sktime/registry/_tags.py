@@ -21,7 +21,7 @@ ESTIMATOR_TAG_LIST - list of string
 
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "Ahmed Bilal"]
 
 import pandas as pd
 
@@ -32,6 +32,36 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "does forecaster use exogeneous data (X)?",
+    ),
+    (
+        "capability:multivariate",
+        "classifier",
+        "bool",
+        "does classifier support multivariate data (X)?",
+    ),
+    (
+        "capability:unequal_length",
+        "classifier",
+        "bool",
+        "does classifier support unequal_length data (X)?",
+    ),
+    (
+        "capability:missing_values",
+        "classifier",
+        "bool",
+        "does classifier support missing_values data (X)?",
+    ),
+    (
+        "capability:train_estimate",
+        "classifier",
+        "bool",
+        "does classifier support train_estimate?",
+    ),
+    (
+        "capability:contractable",
+        "classifier",
+        "bool",
+        "does classifier contractable?",
     ),
     (
         "fit-in-transform",
