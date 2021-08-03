@@ -20,10 +20,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     Parameters
     ----------
-    forecasters : list of (str, estimator, index) tuples
+    forecasters : list of tuples (str, estimator, int)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -113,34 +113,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred = pd.DataFrame(data=y_pred)
         y_pred.index = self.fh.to_absolute(self.cutoff)
         return y_pred
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_forecasters", **kwargs)
-        return self
 
     def _check_forecasters(self):
         if (
