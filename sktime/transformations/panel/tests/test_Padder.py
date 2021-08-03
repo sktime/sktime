@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # from sklearn.pipeline import Pipeline
-from sktime.datasets.base import _load_dataset
+from sktime.datasets import load_japanese_vowels
 from sktime.transformations.panel.padder import PaddingTransformer
 
 # from sklearn.ensemble import RandomForestClassifier
@@ -11,9 +11,8 @@ from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 def test_padding_transformer():
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
 
     # print(X_train)
 
@@ -28,9 +27,8 @@ def test_padding_transformer():
 
 def test_padding_paramterised_transformer():
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+    X_test, y_test = load_japanese_vowels( split="test", return_X_y=True)
 
     # print(X_train)
 
@@ -45,9 +43,8 @@ def test_padding_paramterised_transformer():
 
 def test_padding_fill_value_transformer():
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
 
     # print(X_train)
 

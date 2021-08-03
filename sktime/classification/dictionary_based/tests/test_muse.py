@@ -4,7 +4,7 @@ import numpy as np
 # from numpy import testing
 
 from sktime.classification.dictionary_based import MUSE
-from sktime.datasets.base import load_japanese_vowels
+from sktime.datasets import load_japanese_vowels
 
 
 def test_muse_on_japanese_vowels():
