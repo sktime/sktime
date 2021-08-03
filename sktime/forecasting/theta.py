@@ -21,76 +21,66 @@ from sktime.utils.validation.forecasting import check_sp
 class ThetaForecaster(ExponentialSmoothing):
     """Theta method for forecasting.
 
-        The theta method as defined in [1]_ is equivalent to simple exponential
-        smoothing (SES) with drift (as demonstrated in [2]_).
+    The theta method as defined in [1]_ is equivalent to simple exponential
+    smoothing (SES) with drift (as demonstrated in [2]_).
 
-        The series is tested for seasonality using the test outlined in A&N. If
-        deemed seasonal, the series is seasonally adjusted using a classical
-        multiplicative decomposition before applying the theta method. The
-        resulting forecasts are then reseasonalised.
+    The series is tested for seasonality using the test outlined in A&N. If
+    deemed seasonal, the series is seasonally adjusted using a classical
+    multiplicative decomposition before applying the theta method. The
+    resulting forecasts are then reseasonalised.
 
-        In cases where SES results in a constant forecast, the theta forecaster
-        will revert to predicting the SES constant plus a linear trend derived
-        from the training data.
+    In cases where SES results in a constant forecast, the theta forecaster
+    will revert to predicting the SES constant plus a linear trend derived
+    from the training data.
 
-        Prediction intervals are computed using the underlying state space model.
+    Prediction intervals are computed using the underlying state space model.
 
-        Parameters
-        ----------
-        initial_level : float, optional
-            The alpha value of the simple exponential smoothing, if the value is
-            set then
-            this will be used, otherwise it will be estimated from the data.
-        deseasonalize : bool, optional (default=True)
-            If True, data is seasonally adjusted.
-        sp : int, optional (default=1)
-            The number of observations that constitute a seasonal period for a
-            multiplicative deseasonaliser, which is used if seasonality is
-            detected in the
-            training data. Ignored if a deseasonaliser transformer is provided.
-            Default is
-            1 (no seasonality).
+    Parameters
+    ----------
+    initial_level : float, optional
+        The alpha value of the simple exponential smoothing, if the value is
+        set then
+        this will be used, otherwise it will be estimated from the data.
+    deseasonalize : bool, optional (default=True)
+        If True, data is seasonally adjusted.
+    sp : int, optional (default=1)
+        The number of observations that constitute a seasonal period for a
+        multiplicative deseasonaliser, which is used if seasonality is
+        detected in the
+        training data. Ignored if a deseasonaliser transformer is provided.
+        Default is
+        1 (no seasonality).
 
-        Attributes
-        ----------
-        initial_level_ : float
-            The estimated alpha value of the SES fit.
-        drift_ : float
-            The estimated drift of the fitted model.
-        se_ : float
-            The standard error of the predictions. Used to calculate prediction
-            intervals.
+    Attributes
+    ----------
+    initial_level_ : float
+        The estimated alpha value of the SES fit.
+    drift_ : float
+        The estimated drift of the fitted model.
+    se_ : float
+        The standard error of the predictions. Used to calculate prediction
+        intervals.
 
-        References
-        ----------
-    <<<<<<< HEAD
-        .. [1] Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
-           decomposition approach to forecasting. International Journal of
-           Forecasting 16, 521-530, 2000.
-           https://www.sciencedirect.com/science/article/pii/S0169207000000662
-    =======
-        .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
-        decomposition
-               approach to forecasting. International Journal of Forecasting 16,
-               521-530,
-               2000.
-               <https://www.sciencedirect.com/science/article/pii
-               /S0169207000000662>`_
-    >>>>>>> main
+    References
+    ----------
+    .. [1] Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
+       decomposition approach to forecasting. International Journal of
+       Forecasting 16, 521-530, 2000.
+       https://www.sciencedirect.com/science/article/pii/S0169207000000662
 
-        .. [2] `Hyndman, Rob J., and Billah, Baki. Unmasking the Theta method.
-           International J. Forecasting, 19, 287-290, 2003.
-           https://www.sciencedirect.com/science/article/pii/S0169207001001431
+    .. [2] `Hyndman, Rob J., and Billah, Baki. Unmasking the Theta method.
+       International J. Forecasting, 19, 287-290, 2003.
+       https://www.sciencedirect.com/science/article/pii/S0169207001001431
 
-        Examples
-        --------
-        >>> from sktime.datasets import load_airline
-        >>> from sktime.forecasting.theta import ThetaForecaster
-        >>> y = load_airline()
-        >>> forecaster = ThetaForecaster(sp=12)
-        >>> forecaster.fit(y)
-        ThetaForecaster(...)
-        >>> y_pred = forecaster.predict(fh=[1,2,3])
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> y = load_airline()
+    >>> forecaster = ThetaForecaster(sp=12)
+    >>> forecaster.fit(y)
+    ThetaForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
