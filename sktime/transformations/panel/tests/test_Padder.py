@@ -43,6 +43,7 @@ def test_padding_parameterised_transformer():
 
 
 def test_padding_fill_value_transformer():
+    """Test full fill padding."""
     # load data
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)

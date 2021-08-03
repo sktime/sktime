@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 """Test the MUSE multivariate classifier."""
 
+import numpy as np
 from sktime.classification.dictionary_based import MUSE
 from sktime.datasets import load_japanese_vowels
 
