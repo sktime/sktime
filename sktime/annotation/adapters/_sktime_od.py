@@ -1,0 +1,110 @@
+# -*- coding: utf-8 -*-
+from sktime.annotation.base._base import BaseSeriesAnnotator
+import pandas as pd
+import numpy as np
+from sklearn import clone
+from sktime.forecasting.base import ForecastingHorizon
+
+__author__ = ["satya-pattnaik", "mloning"]
+
+
+class SktimeODAnnotator(BaseSeriesAnnotator):
+    """An Outlier Detector which detects those time points as outliers for which the values
+    fall outside of the Uncertainty Intervals of forecasts generated from
+    a Sktime Forecaster.
+    The Sktime Forecaster is passed as an argument.
+
+    This method is inspired from :
+    https://docs.seldon.io/projects/alibi-detect/en/latest/methods/prophet.html
+    Parameters
+    ----------
+    estimator : a Sktime Forecaster object
+    fmt : str {"dense", "sparse"}, optional (default="dense")
+        Annotation output format:
+        * If "sparse", a sub-series of labels for only the outliers in X is returned,
+        * If "dense", a series of labels for all values in X is returned.
+    labels : str {"indicator", "score"}, optional (default="indicator")
+        Annotation output labels:
+        * If "indicator", returned values are boolean, indicating whether a value is an
+        outlier,
+        * If "score", returned values are floats, giving the outlier score.
+    alpha : float, Significance level of the Uncertainty Interval to be used,
+            for detecting the Outliers,(default=0.05)
+    """
+
+    def __init__(self, estimator, fmt="dense", labels="indicator", alpha=0.05):
+        self.estimator = estimator  # Sktime forecaster
+        self.alpha = alpha
+        super(SktimeODAnnotator, self).__init__(fmt=fmt, labels=labels)
+
+    def _fit(self, X, Y=None):
+        """Fit to training data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            training data to fit model to, time series
+        Y : pd.Series, optional
+            ground truth annotations for training if annotator is supervised
+        Returns
+        -------
+        self : returns a reference to self
+
+        State change
+        ------------
+        creates fitted model (attributes ending in "_")
+        """
+        X_t = X.copy()
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X_t)
+
+        return self
+
+    def _predict(self, X):
+        """Create annotations on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame - data to annotate, time series
+
+        Returns
+        -------
+        Y : pd.Series - annotations for sequence X
+            exact format depends on annotation type
+        """
+        X_t = X.copy()
+        fmt = self.fmt
+        labels = self.labels
+
+        fh = ForecastingHorizon(X_t.index, is_relative=False)
+        forecasts, uncertainty_intervals = self.estimator_.predict(
+            fh, return_pred_int=True, alpha=self.alpha
+        )
+
+        uncertainty_intervals["forecast"] = forecasts
+        uncertainty_intervals["original"] = X_t.to_numpy()
+
+        uncertainty_intervals["score"] = (
+            uncertainty_intervals["original"] - uncertainty_intervals["upper"]
+        ) * (uncertainty_intervals["original"] >= uncertainty_intervals["forecast"]) + (
+            uncertainty_intervals["lower"] - uncertainty_intervals["original"]
+        ) * (
+            uncertainty_intervals["original"] < uncertainty_intervals["forecast"]
+        )
+        uncertainty_intervals["is_outlier"] = (
+            uncertainty_intervals["score"] > 0.0
+        ).astype(int)
+        if labels == "score":
+            Y_val_np = uncertainty_intervals["score"]
+        elif labels == "indicator":
+            Y_val_np = uncertainty_intervals["is_outlier"]
+
+        if fmt == "dense":
+            Y = pd.Series(Y_val_np, index=X.index)
+        elif fmt == "sparse":
+            Y_loc = np.where(Y_val_np)
+            Y = pd.Series(Y_val_np.iloc[Y_loc], index=X.index[Y_loc])
+
+        return Y
