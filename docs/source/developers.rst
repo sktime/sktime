@@ -12,6 +12,7 @@ Development
    :maxdepth: 1
 
    developer_guide
+   reviewer_guide
    enhancement_proposals
    roadmap
    code_of_conduct
