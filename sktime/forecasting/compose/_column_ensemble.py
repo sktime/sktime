@@ -20,14 +20,18 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     Parameters
     ----------
-    forecasters : list of tuples (str, estimator, int)
+    forecasters : list of tuples (str, estimator, int or str)
+        With name as str, estimator as sktime-like estimator,
+        index as str or int
 
     Examples
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)))
+    >>> from sktime.datasets import load_longley
+    >>> _, y = load_longley()
+    >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
     >>> forecasters = [("trend", PolynomialTrendForecaster(), 0),\
                         ("ses", ExponentialSmoothing(trend='add'), 1)]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
@@ -63,8 +67,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     @_forecasters.setter
     def _forecasters(self, value):
         self.forecasters = [
-            (name, forecasters, indices)
-            for ((name, forecasters), (_, _, indices)) in zip(value, self.forecasters)
+            (name, forecasters, columns)
+            for ((name, forecasters), (_, _, columns)) in zip(value, self.forecasters)
         ]
 
     def _fit(self, y, X=None, fh=None):
@@ -93,7 +97,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             raise ValueError(
                 "One estimator per column required. Found %s" % len(indices)
             )
-
         self.forecasters_ = []
 
         for (name, forecaster, index) in self.forecasters:
