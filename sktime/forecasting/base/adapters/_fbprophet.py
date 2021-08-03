@@ -20,6 +20,7 @@ class _ProphetAdapter(BaseForecaster):
 
     _tags = {
         "univariate-only": False,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -70,7 +71,7 @@ class _ProphetAdapter(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Predict.
+        """Forecast time series at future horizon.
 
         Parameters
         ----------
@@ -198,13 +199,15 @@ def _merge_X(df, X):
 
 
 class _suppress_stdout_stderr(object):
-    """A context manager for doing a "deep suppression" of stdout and stderr.
+    """Context manager for doing  a "deep suppression" of stdout and stderr.
 
-    This will suppress all print, even if the print originates in a
-    compiled C/Fortran sub-function. This will not suppress raised exceptions,
-    since exceptions are printed to stderr just before a script exits,
-    and after the context manager has exited
-    (at least, I think that is why it lets exceptions through).
+    A context manager for doing a "deep suppression" of stdout and stderr in
+    Python, i.e. will suppress all print, even if the print originates in a
+    compiled C/Fortran sub-function.
+       This will not suppress raised exceptions, since exceptions are printed
+    to stderr just before a script exits, and after the context manager has
+    exited (at least, I think that is why it lets exceptions through).
+
 
     References
     ----------

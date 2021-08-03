@@ -20,6 +20,7 @@ class _TbatsAdapter(BaseForecaster):
 
     _tags = {
         "univariate-only": True,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

@@ -67,6 +67,7 @@ class BaseForecaster(BaseEstimator):
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "univariate-only": True,  # does estimator use the exogeneous X?
+        "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -201,8 +202,17 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
+        # handle inputs
         self.check_is_fitted()
         self._set_fh(fh)
+
+        if return_pred_int and not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. Please set return_pred_int=False. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
 
         # input check for X
         enforce_index_type = self.get_tag("enforce_index_type")
