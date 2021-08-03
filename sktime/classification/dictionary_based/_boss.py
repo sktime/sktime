@@ -79,8 +79,8 @@ class BOSSEnsemble(BaseClassifier):
 
     See Also
     --------
-    IndividualBOSS
-    ContractableBOSS
+    :py:class:`IndividualBOSS`, :py:class:`ContractableBOSS`
+
     For the Java version, see
     `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
@@ -423,10 +423,10 @@ class IndividualBOSS(BaseClassifier):
 
     See Also
     --------
-    BOSSEnsemble
-    ContractableBOSS
+    :py:class:`BOSSEnsemble`, :py:class:`ContractableBOSS`
+
     For the Java version, see
-    `this link <https://github.com/uea-machine-learning/tsml/blob/master/src/
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/
     main/java/tsml/classifiers/dictionary_based/BOSS.java>`_.
 
     References
