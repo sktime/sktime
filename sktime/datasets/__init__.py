@@ -12,8 +12,9 @@ __all__ = [
     "load_longley",
     "load_lynx",
     "load_shampoo_sales",
-    "load_uschange",
     "load_UCR_UEA_dataset",
+    "load_unit_test",
+    "load_uschange",
     "load_PBS_dataset",
 ]
 
@@ -27,6 +28,7 @@ from sktime.datasets.data_io import load_japanese_vowels
 from sktime.datasets.data_io import load_longley
 from sktime.datasets.data_io import load_lynx
 from sktime.datasets.data_io import load_shampoo_sales
-from sktime.datasets.data_io import load_uschange
 from sktime.datasets.data_io import load_UCR_UEA_dataset
+from sktime.datasets.data_io import load_unit_test
+from sktime.datasets.data_io import load_uschange
 from sktime.datasets.data_io import load_PBS_dataset
