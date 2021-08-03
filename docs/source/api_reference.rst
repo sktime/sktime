@@ -10,6 +10,5 @@ This is the class and function reference for ``sktime``.
 
 .. toctree::
     :glob:
-    :hidden:
 
     api_reference/*

@@ -196,7 +196,7 @@ html_theme_options = {
         }
     ],
     "show_prev_next": False,
-    "use_edit_page_button": True,
+    "use_edit_page_button": False,
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links"],

@@ -15,21 +15,6 @@ The notebook files can be found `here <https://github.com/alan-turing-institute/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
 
 .. nbgallery::
+    :glob:
 
-    examples/01_forecasting
-    examples/01a_forecasting_sklearn
-    examples/02_classification_univariate
-    examples/03_classification_multivariate
-    examples/04_benchmarking
-    examples/feature_extraction_with_tsfresh
-    examples/shapelet_transform
-    examples/interval_based_classification
-    examples/catch22
-    examples/mrseql
-    examples/rocket
-    examples/minirocket
-    examples/plateau_finder
-    examples/loading_data
-    examples/dictionary_based_classification
-    examples/interpolation
-    examples/window_splitters
+    examples/*
