@@ -156,7 +156,7 @@ class ContractableBOSS(BaseClassifier):
         self.alphabet_size = 4
         super(ContractableBOSS, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit a c-boss ensemble on cases (X,y), where y is the target variable.
 
         Build an ensemble of BOSS classifiers from the training set (X,
@@ -267,7 +267,7 @@ class ContractableBOSS(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n instances in X.
 
         Parameters
@@ -288,7 +288,7 @@ class ContractableBOSS(BaseClassifier):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
 
         Parameters
