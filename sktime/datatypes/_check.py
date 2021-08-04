@@ -84,7 +84,7 @@ def check_is(
     else:
         raise ValueError("mtype must be a string or list of strings")
 
-    valid_keys = [x for x in list(check_dict.keys()) if x[1] == scitype]
+    valid_keys = check_dict.keys()
 
     msg = []
 
