@@ -48,13 +48,12 @@ extensions = [
     "sphinx.ext.autosummary",
     "numpydoc",
     "sphinx.ext.intersphinx",
-    # 'sphinx.ext.viewcode',  # link to auto-generated source code files (rst)
-    "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
     "sphinx_panels",
+    "sphinx_issues",
 ]
 
 # Use bootstrap CSS from theme.

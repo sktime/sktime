@@ -5,6 +5,7 @@ API Reference
 =============
 
 Welcome to the API reference for ``sktime``.
+
 The API reference provides a technical manual.
 It describes the classes and functions included in sktime.
 For a scientific manual, see the :ref:`user_guide`.
@@ -12,7 +13,7 @@ For a scientific manual, see the :ref:`user_guide`.
 .. include:: includes/api_css.rst
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     api_reference/base
     api_reference/forecasting
@@ -25,11 +26,3 @@ For a scientific manual, see the :ref:`user_guide`.
     api_reference/datasets
     api_reference/utils
     api_reference/exceptions
-
-.. toctree::
-    :hidden:
-
-    api_reference/sktime
-
-
-.. include:: api_reference/sktime
