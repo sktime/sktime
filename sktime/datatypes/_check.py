@@ -182,6 +182,6 @@ def mtype(obj, as_scitype: str = None):
         raise TypeError(f"Error in check_is, more than one mtype identified: {res}")
 
     if np.sum(is_mtype) < 1:
-        raise TypeError("")
+        raise TypeError("No valid mtype could be identified")
 
     return res[0]
