@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Test for elastic distance NN classifiers."""
+__author__ = ["Tony Bagnall"]
 
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
