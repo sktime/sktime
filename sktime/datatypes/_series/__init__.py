@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Module exports: Series type converters and mtype inference."""
+"""Module exports: Series type checkers, converters and mtype inference."""
 
 from sktime.datatypes._series._check import check_dict as check_dict_Series
 from sktime.datatypes._series._convert import convert_dict as convert_dict_Series
