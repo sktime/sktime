@@ -93,7 +93,7 @@ def check_is(
             scitype = mtype_to_scitype(m)
         key = (m, scitype)
         if (m, scitype) not in valid_keys:
-            raise TypeError("no check defined for mtype {m}, scitype {scitype}")
+            raise TypeError(f"no check defined for mtype {m}, scitype {scitype}")
 
         res = check_dict[key](obj, return_metadata=return_metadata, var_name=var_name)
 
