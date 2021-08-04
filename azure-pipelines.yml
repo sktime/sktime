@@ -77,38 +77,38 @@ stages:
               PYTHON_ARCHITECTURE: x86
 
 
-  - stage: 'deploy'
-    dependsOn: 'build'
-    condition: and(succeeded('build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-    jobs:
-      - job: 'upload_to_pypi'
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Collect wheels'
-            inputs:
-              source: 'current'
-              tags: '^v[0-9]+\.[0-9]+\.[0-9]+'
-              patterns: 'wheels_*/*manylinux*.whl'
-              path: 'download/'
-          - script: |
-              mkdir dist
-              cp download/wheels_*/*manylinux*.whl dist/
-              ls -lh dist/
-            displayName: 'Select and list wheels'
-          - task: UsePythonVersion@0
-            displayName: 'Use Python version'
-            inputs:
-              versionSpec: 3.x
-          - script: |
-              pip install --upgrade twine
-            displayName: 'Install twine'
-          - task: TwineAuthenticate@1
-            displayName: 'Twine Authenticate'
-            inputs:
-              # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
-              pythonUploadServiceConnection: PyPI
-          - script: |
-              python -m twine upload -r pypi --config-file $(PYPIRC_PATH) --non-interactive --skip-existing --verbose dist/*.whl
-            displayName: 'Upload wheels to PyPI'
+#  - stage: 'deploy'
+#    dependsOn: 'build'
+#    condition: and(succeeded('build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+#    jobs:
+#      - job: 'upload_to_pypi'
+#        pool:
+#          vmImage: 'ubuntu-latest'
+#        steps:
+#          - task: DownloadPipelineArtifact@2
+#            displayName: 'Collect wheels'
+#            inputs:
+#              source: 'current'
+#              tags: '^v[0-9]+\.[0-9]+\.[0-9]+'
+#              patterns: 'wheels_*/*manylinux*.whl'
+#              path: 'download/'
+#          - script: |
+#              mkdir dist
+#              cp download/wheels_*/*manylinux*.whl dist/
+#              ls -lh dist/
+#            displayName: 'Select and list wheels'
+#          - task: UsePythonVersion@0
+#            displayName: 'Use Python version'
+#            inputs:
+#              versionSpec: 3.x
+#          - script: |
+#              pip install --upgrade twine
+#            displayName: 'Install twine'
+#          - task: TwineAuthenticate@1
+#            displayName: 'Twine Authenticate'
+#            inputs:
+#              # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
+#              pythonUploadServiceConnection: PyPI
+#          - script: |
+#              python -m twine upload -r pypi --config-file $(PYPIRC_PATH) --non-interactive --skip-existing --verbose dist/*.whl
+#            displayName: 'Upload wheels to PyPI'
