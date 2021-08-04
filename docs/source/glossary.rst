@@ -39,8 +39,8 @@ sktime.
         A learning task ...
 
     Panel data
-        Multiple time series, may be :term:`univariate` or
-        :term:`multivariate`.
+        Multiple time series, may consist of :term:`univariate time series` or
+        :term:`multivariate time series`.
 
     Univariate time series
         A single time series

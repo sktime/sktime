@@ -6,7 +6,7 @@ Development
 .. note::
 
    If you are new to sktime, it may be helpful to take a look at the
-   :ref:`_get_involved` page first.
+   :ref:`get_involved` page first.
 
 .. toctree::
    :maxdepth: 1
