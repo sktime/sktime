@@ -46,10 +46,10 @@ def mtype_to_scitype(mtype: str):
     """
     scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
 
-    if len(scitype > 1):
+    if len(scitype) > 1:
         raise ValueError("multiple scitypes match the mtype, specify scitype")
 
-    if len(scitype < 1):
+    if len(scitype) < 1:
         raise ValueError(f"{mtype} is not a supported mtype")
 
     return scitype[0]
