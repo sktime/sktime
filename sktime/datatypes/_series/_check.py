@@ -42,6 +42,9 @@ import pandas as pd
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
+# whether the checks insist on freq attribute is set
+FREQ_SET_CHECK = False
+
 
 check_dict = dict()
 
@@ -81,9 +84,9 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
         )
         return ret(False, msg, None, return_metadata)
 
-    if isinstance(index, pd.DatetimeIndex):
+    if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
         if index.freq is None:
-            msg = f"{var_name} has DatetimeIndex, but no frequ attribute set."
+            msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced
@@ -130,9 +133,9 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
         )
         return ret(False, msg, None, return_metadata)
 
-    if isinstance(index, pd.DatetimeIndex):
+    if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
         if index.freq is None:
-            msg = f"{var_name} has DatetimeIndex, but no frequ attribute set."
+            msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced
