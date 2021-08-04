@@ -117,6 +117,34 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred.index = self.fh.to_absolute(self.cutoff)
         return y_pred
 
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `_forecasters`.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("_forecasters", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `_forecasters`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params("_forecasters", **kwargs)
+        return self
+
     def _check_forecasters(self):
         if (
             self.forecasters is None
