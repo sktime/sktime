@@ -33,11 +33,7 @@ check_dict.update(check_dict_Panel)
 
 
 def check_is(
-    obj,
-    mtype: str,
-    scitype: str = None,
-    return_metadata=False,
-    var_name="obj"
+    obj, mtype: str, scitype: str = None, return_metadata=False, var_name="obj"
 ):
     """Check object for compliance with mtype specification, return metadata.
 
