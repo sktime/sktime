@@ -24,6 +24,7 @@ import numpy as np
 
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
+from sktime.datatypes._registry import mtype_to_scitype
 
 # pool convert_dict-s and infer_mtype_dict-s
 check_dict = dict()
@@ -31,14 +32,21 @@ check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
 
 
-def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj"):
+def check_is(
+    obj,
+    mtype: str,
+    scitype: str = None,
+    return_metadata=False,
+    var_name="obj"
+):
     """Check object for compliance with mtype specification, return metadata.
 
     Parameters
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
-    scitype: str, scitype to check obj as
+    scitype: str, optional, scitype to check obj as; default = inferred from mtype
+        if inferred from mtype, list elements of mtype need not have same scitype
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
@@ -74,13 +82,15 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
         if not np.all([isinstance(x, str) for x in mtype]):
             raise ValueError("list must be a string or list of strings")
     else:
-        raise ValueError("list must be a string or list of strings")
+        raise ValueError("mtype must be a string or list of strings")
 
     valid_keys = [x for x in list(check_dict.keys()) if x[1] == scitype]
 
     msg = []
 
     for m in mtype:
+        if scitype is None:
+            scitype = mtype_to_scitype(m)
         key = (m, scitype)
         if (m, scitype) not in valid_keys:
             raise TypeError("no check defined for mtype {m}, scitype {scitype}")
@@ -103,14 +113,15 @@ def check_is(obj, mtype: str, scitype: str, return_metadata=False, var_name="obj
     return ret(False, msg, None, return_metadata)
 
 
-def check_raise(obj, mtype: str, scitype: str, var_name="input"):
+def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     """Check object for compliance with mtype specification, raise errors.
 
     Parameters
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
-    scitype: str, scitype to check obj as
+    scitype: str, optional, scitype to check obj as; default = inferred from mtype
+        if inferred from mtype, list elements of mtype need not have same scitype
     var_name: str, optional, default="input" - name of input in error messages
 
     Returns
@@ -140,7 +151,7 @@ def check_raise(obj, mtype: str, scitype: str, var_name="input"):
         raise TypeError(res[1])
 
 
-def mtype(obj, as_scitype: str):
+def mtype(obj, as_scitype: str = None):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
