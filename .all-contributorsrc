@@ -1099,7 +1099,16 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "freddyaboulton",
+      "name": "Freddy A Boulton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41651716?v=4",
+      "profile": "https://github.com/freddyaboulton",
+      "contributions": [
+        "test"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
