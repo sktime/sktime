@@ -74,6 +74,7 @@ from sktime.datatypes._series import infer_mtype_dict_Series
 from sktime.datatypes._panel import convert_dict_Panel
 
 from sktime.datatypes._check import mtype as infer_mtype
+from sktime.datatypes._registry import mtype_to_scitype
 
 # pool convert_dict-s and infer_mtype_dict-s
 convert_dict = dict()
@@ -112,7 +113,7 @@ def mtype(obj, as_scitype: str):
     return infer_mtype_dict[as_scitype](obj=obj)
 
 
-def convert(obj, from_type: str, to_type: str, as_scitype: str, store=None):
+def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=None):
     """Convert objects between different machine representations, subject to scitype.
 
     Parameters
@@ -120,7 +121,8 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str, store=None):
     obj : object to convert - any type, should comply with mtype spec for as_scitype
     from_type : str - the type to convert "obj" to, a valid mtype string
     to_type : str - the type to convert "obj" to, a valid mtype string
-    as_scitype : str - name of scitype the object "obj" is considered as
+    as_scitype : str, optional - name of scitype the object "obj" is considered as
+        default = inferred from from_type
     store : reference of storage for lossy conversions, default=None (no store)
 
     Returns
@@ -135,6 +137,9 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str, store=None):
     if obj is None:
         return None
 
+    if as_scitype is None:
+        as_scitype = mtype_to_scitype(from_type)
+
     key = (from_type, to_type, as_scitype)
 
     if key not in convert_dict.keys():
@@ -148,7 +153,7 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str, store=None):
 
 
 # conversion based on queriable type to specified target
-def convert_to(obj, to_type: str, as_scitype: str, store=None):
+def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     """Convert object to a different machine representation, subject to scitype.
 
     Parameters
@@ -156,7 +161,8 @@ def convert_to(obj, to_type: str, as_scitype: str, store=None):
     obj : object to convert - any type, should comply with mtype spec for as_scitype
     to_type : str - the type to convert "obj" to, a valid mtype string
               or list - admissible types for conversion to
-    as_scitype : str - name of scitype the object "obj" is considered as
+    as_scitype : str, optional - name of scitype the object "obj" is considered as
+        default = inferred from mtype of obj, which is in turn inferred internally
     store : reference of storage for lossy conversions, default=None (no store)
 
     Returns
@@ -175,6 +181,9 @@ def convert_to(obj, to_type: str, as_scitype: str, store=None):
         return None
 
     from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
+
+    if as_scitype is None:
+        as_scitype = mtype_to_scitype(from_type)
 
     # if to_type is a list:
     if isinstance(to_type, list):
