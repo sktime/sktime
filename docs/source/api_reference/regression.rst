@@ -7,6 +7,7 @@ The :mod:`sktime.regression` module contains algorithms and composition tools fo
 
 .. automodule:: sktime.regression
     :no-members:
+    :no-inherited-members:
 
 Composition
 -----------

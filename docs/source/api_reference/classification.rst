@@ -7,6 +7,8 @@ The :mod:`sktime.classification` module contains algorithms and composition tool
 
 .. automodule:: sktime.classification
     :no-members:
+    :no-inherited-members:
+
 
 Composition
 -----------

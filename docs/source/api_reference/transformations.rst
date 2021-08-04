@@ -7,8 +7,8 @@ The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
 .. automodule:: sktime.transformations
-   :members:
-   :inherited-members:
+   :no-members:
+   :no-inherited-members:
 
 Panel transformers
 ------------------

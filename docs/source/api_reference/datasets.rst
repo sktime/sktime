@@ -3,7 +3,11 @@
 Datasets
 ========
 
-.. currentmodule:: sktime.datasets.base
+.. automodule:: sktime.datasets
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.datasets
 
 .. autosummary::
     :toctree: auto_generated/

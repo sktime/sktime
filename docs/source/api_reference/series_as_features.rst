@@ -8,6 +8,7 @@ The :mod:`sktime.series_as_features` module contains algorithms and composition 
 
 .. automodule:: sktime.series_as_features
     :no-members:
+    :no-inherited-members:
 
 Composition
 -----------

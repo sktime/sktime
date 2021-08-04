@@ -7,7 +7,7 @@ The :mod:`sktime.base` module contains abstract base classes.
 
 .. automodule:: sktime.base
     :no-members:
-
+    :no-inherited-members:
 
 Base classes
 ------------

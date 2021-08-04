@@ -8,6 +8,8 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
 
 .. automodule:: sktime.forecasting
     :no-members:
+    :no-inherited-members:
+
 
 Base
 ----

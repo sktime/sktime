@@ -7,6 +7,7 @@ The :mod:`sktime.utils` module contains utility functions.
 
 .. automodule:: sktime.utils
     :no-members:
+    :no-inherited-members:
 
 Plotting
 --------
