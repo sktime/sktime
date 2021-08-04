@@ -73,6 +73,8 @@ from sktime.datatypes._series import infer_mtype_dict_Series
 
 from sktime.datatypes._panel import convert_dict_Panel
 
+from sktime.datatypes._check import mtype as infer_mtype
+
 # pool convert_dict-s and infer_mtype_dict-s
 convert_dict = dict()
 convert_dict.update(convert_dict_Series)
@@ -172,7 +174,7 @@ def convert_to(obj, to_type: str, as_scitype: str, store=None):
     if obj is None:
         return None
 
-    from_type = mtype(obj=obj, as_scitype=as_scitype)
+    from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
 
     # if to_type is a list:
     if isinstance(to_type, list):
