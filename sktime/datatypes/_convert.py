@@ -73,8 +73,7 @@ from sktime.datatypes._series import infer_mtype_dict_Series
 
 from sktime.datatypes._panel import convert_dict_Panel
 
-from sktime.datatypes import mtype as infer_mtype
-# from sktime.datatypes._check import mtype as infer_mtype
+from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._registry import mtype_to_scitype
 
 # pool convert_dict-s and infer_mtype_dict-s
