@@ -25,8 +25,7 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
-    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = AutoCorrelationTransformer(n_lags=12)
@@ -101,11 +100,10 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
-    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = AutoCorrelationTransformer(n_lags=12)
+    >>> transformer = PartialAutoCorrelationTransformer(n_lags=12)
     >>> y_hat = transformer.fit_transform(y)
     """
 
