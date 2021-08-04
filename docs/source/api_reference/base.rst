@@ -6,6 +6,8 @@ Base
 The :mod:`sktime.base` module contains abstract base classes.
 
 .. automodule:: sktime.base
+    :no-members:
+
 
 Base classes
 ------------
