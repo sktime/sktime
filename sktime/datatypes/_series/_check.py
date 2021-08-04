@@ -89,8 +89,9 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced
-    metadata["is_equally_spaced"] = _index_equally_spaced(index)
+    # check whether index is equally spaced, compute only if needed
+    if return_metadata:
+        metadata["is_equally_spaced"] = _index_equally_spaced(index)
 
     return ret(True, None, metadata, return_metadata)
 
@@ -138,8 +139,9 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced
-    metadata["is_equally_spaced"] = _index_equally_spaced(index)
+    # check whether index is equally spaced, compute only if needed
+    if return_metadata:
+        metadata["is_equally_spaced"] = _index_equally_spaced(index)
 
     return ret(True, None, metadata, return_metadata)
 
