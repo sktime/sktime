@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Some development tests for classifiers."""
+
 import os
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -130,25 +132,25 @@ data_dir = "Z:/ArchiveData/Univariate_ts/"
 results_dir = "Z:/Benchmarking/"
 
 
-def acf_coefs(x, maxlag=100):
+def _acf_coefs(x, maxlag=100):
     x = np.asarray(x).ravel()
     nlags = np.minimum(len(x) - 1, maxlag)
     return acf(x, nlags=nlags).ravel()
 
 
-def powerspectrum(x, **kwargs):
+def _powerspectrum(x, **kwargs):
     x = np.asarray(x).ravel()
     fft = np.fft.fft(x)
     ps = fft.real * fft.real + fft.imag * fft.imag
     return ps[: ps.shape[0] // 2].ravel()
 
 
-def tsf_benchmarking():
+def _tsf_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         tsf = ib.TimeSeriesForest(n_estimators=100)
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
@@ -190,7 +192,7 @@ def tsf_benchmarking():
         tsf = ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
@@ -201,12 +203,12 @@ def tsf_benchmarking():
         )
 
 
-def rise_benchmarking():
+def _rise_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         rise = fb.RandomIntervalSpectralForest(n_estimators=100)
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
@@ -224,13 +226,13 @@ def rise_benchmarking():
                         (
                             "acf",
                             make_row_transformer(
-                                FunctionTransformer(func=acf_coefs, validate=False)
+                                FunctionTransformer(func=_acf_coefs, validate=False)
                             ),
                         ),
                         (
                             "ps",
                             make_row_transformer(
-                                FunctionTransformer(func=powerspectrum, validate=False)
+                                FunctionTransformer(func=_powerspectrum, validate=False)
                             ),
                         ),
                     ]
@@ -243,7 +245,7 @@ def rise_benchmarking():
         rise = ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
@@ -254,14 +256,14 @@ def rise_benchmarking():
         )
 
 
-def boss_benchmarking():
+def _boss_benchmarking():
     for i in range(0, int(len(benchmark_datasets))):
         dataset = benchmark_datasets[i]
         print(
             str(i) + " problem = " + dataset + " writing to " + results_dir + "/BOSS/"
         )
         boss = db.BOSSEnsemble()
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/BOSS/",
@@ -278,12 +280,12 @@ distance_test = [
 ]
 
 
-def elastic_distance_benchmarking():
+def _elastic_distance_benchmarking():
     for i in range(0, int(len(distance_test))):
         dataset = distance_test[i]
         print(str(i) + " problem = " + dataset + " writing to " + results_dir + "/DTW/")
         dtw = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/DTW/",
@@ -293,7 +295,7 @@ def elastic_distance_benchmarking():
             train_file=False,
         )
         twe = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
-        exp.run_experiment(
+        exp.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/DTW/",
@@ -305,7 +307,7 @@ def elastic_distance_benchmarking():
 
 
 if __name__ == "__main__":
-    #    tsf_benchmarking()
-    #    rise_benchmarking()
-    #    boss_benchmarking()
-    elastic_distance_benchmarking()
+    #    _tsf_benchmarking()
+    #    _rise_benchmarking()
+    #    _boss_benchmarking()
+    _elastic_distance_benchmarking()
