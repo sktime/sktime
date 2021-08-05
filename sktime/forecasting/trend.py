@@ -47,7 +47,7 @@ class TrendForecaster(BaseForecaster):
 
     def __init__(self, regressor=None):
         # for default regressor, set fit_intercept=True
-        self.regressor = regressor or LinearRegression(fit_intercept=True)
+        self.regressor = regressor
         super(TrendForecaster, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -66,8 +66,11 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+
+        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
+
         # create a clone of self.regressor
-        self.regressor_ = clone(self.regressor)
+        self.regressor_ = clone(self.regressor_)
 
         # transform data
         X = y.index.astype("int").to_numpy().reshape(-1, 1)
