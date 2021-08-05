@@ -6,11 +6,6 @@ Loops through all classifiers in the list in experiments, trains,  Builds all.
 """
 
 __author__ = ["Tony Bagnall"]
-import os
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
-from sktime.classification.base import classifier_list
-from sklearn.metrics import accuracy_score
-import sktime.datasets.base as sktime
 
 
 class TestStats:
