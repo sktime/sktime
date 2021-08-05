@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Auto-generate a classifier capabilites summary."""
 import pandas as pd
-from sktime.utils import all_estimators
+from sktime.registry import all_estimators
 
 # List of columns in the table
 df_columns = [
