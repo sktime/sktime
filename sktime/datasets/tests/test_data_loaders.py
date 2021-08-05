@@ -7,7 +7,6 @@ __all__ = []
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_UCR_UEA_dataset
 from sktime.datasets import load_uschange
 
 _CHECKS = {
@@ -30,7 +29,7 @@ _CHECKS = {
 @pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
 def test_data_loaders(dataset):
     """
-    assert if datasets are loaded correctly.
+    Assert if datasets are loaded correctly.
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
