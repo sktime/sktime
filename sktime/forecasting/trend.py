@@ -50,7 +50,7 @@ class TrendForecaster(BaseForecaster):
         self.regressor = regressor or LinearRegression(fit_intercept=True)
         super(TrendForecaster, self).__init__()
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -59,6 +59,8 @@ class TrendForecaster(BaseForecaster):
             Target time series with which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
 
         Returns
         -------
@@ -147,7 +149,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor
         super(PolynomialTrendForecaster, self).__init__()
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -156,6 +158,8 @@ class PolynomialTrendForecaster(BaseForecaster):
             Target time series with which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
 
         Returns
         -------
