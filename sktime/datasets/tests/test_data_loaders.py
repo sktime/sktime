@@ -1,20 +1,14 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Test functions for data input and output."""
 
 __author__ = ["Sebastiaan Koel", "Emilia Rose"]
 __all__ = []
 
-import os
-
-import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.datasets import load_UCR_UEA_dataset
-from sktime.datasets import load_arrow_head
 from sktime.datasets import load_uschange
-from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 _CHECKS = {
     "uschange": {
@@ -36,8 +30,8 @@ _CHECKS = {
 @pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
 def test_data_loaders(dataset):
     """
-    asserts if datasets are loaded correctly
-    ----------
+    assert if datasets are loaded correctly.
+
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
         'len_y'   : lenght of the y series (int),
@@ -68,8 +62,3 @@ def test_data_loaders(dataset):
             assert X[col].dtype == dt
 
         assert len(X) == checks["len_X"]
-
-
-def test_load_UCR_UEA_dataset_invalid_dataset():
-    with pytest.raises(ValueError, match=r"Invalid dataset name"):
-        load_UCR_UEA_dataset("invalid-name")
