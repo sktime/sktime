@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
+"""Test the MUSE multivariate classifier."""
+
 import numpy as np
-
-# from numpy import testing
-
 from sktime.classification.dictionary_based import MUSE
-from sktime.datasets.base import load_japanese_vowels
+from sktime.datasets import load_japanese_vowels
 
 
 def test_muse_on_japanese_vowels():
-    # load japanese vowels data
+    """Test MUSE based on accuracy on JapaneseVowels."""
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(50)
