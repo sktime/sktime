@@ -26,7 +26,7 @@ environment:
       MINICONDA_VERSION: C:\Miniconda36-x64
     - PYTHON_VERSION: "3.7"
       MINICONDA_VERSION: C:\Miniconda37-x64
-    - PYTHON_VERSION: "3.8"
+    - PYTHON_VERSION: "3.8.10"
       MINICONDA_VERSION: C:\Miniconda38-x64
       # For Python 3.8, we need a different image, check out available pre-installed Python
       # and Visual Studio versions: https://www.appveyor.com/docs/linux-images-software/
