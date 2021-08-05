@@ -327,17 +327,50 @@ def load_italy_power_demand(split=None, return_X_y=False):
     Test cases:         1029
     Number of classes:  2
 
-    The data was derived from twelve monthly electrical power demand time
-    series from Italy and
-    first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
-    Mining and
-    Visualization into GUI Operating Systems". The classification task is to
-    distinguish days
-    from Oct to March (inclusive) from April to September.
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=ItalyPowerDemand
+    The data was derived from twelve monthly electrical power demand time series from
+    Italy and first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
+    Mining and Visualization into GUI Operating Systems". The classification task is to
+    distinguish days from Oct to March (inclusive) from April to September.
+    Dataset details:
+    http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_unit_test(split=None, return_X_y=False):
+    """
+    Load UnitTest time series classification problem.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    This is the Chinatown problem with a smaller test set, useful for rapid tests. See
+    http://timeseriesclassification.com/description.php?Dataset=Chinatown
+    for the full dataset
+    Dimensionality:     univariate
+    Series length:      24
+    Train cases:        20
+    Test cases:         22 (full dataset has 345)
+    Number of classes:  2
+    """
+    name = "UnitTest"
     return _load_dataset(name, split, return_X_y)
 
 
