@@ -73,36 +73,3 @@ def test_data_loaders(dataset):
 def test_load_UCR_UEA_dataset_invalid_dataset():
     with pytest.raises(ValueError, match=r"Invalid dataset name"):
         load_UCR_UEA_dataset("invalid-name")
-
-
-def test_load_UCR_UEA_dataset_download(tmpdir):
-    # tmpdir is a pytest fixture
-    extract_path = tmpdir.mkdtemp()
-    name = "ArrowHead"
-    actual_X, actual_y = load_UCR_UEA_dataset(
-        name, return_X_y=True, extract_path=extract_path
-    )
-    data_path = os.path.join(extract_path, name)
-    assert os.path.exists(data_path)
-
-    # check files
-    files = [
-        f"{name}.txt",
-        f"{name}_TEST.arff",
-        f"{name}_TEST.ts",
-        f"{name}_TEST.txt",
-        f"{name}_TRAIN.arff",
-        f"{name}_TRAIN.ts",
-        f"{name}_TRAIN.txt",
-        # "README.md",
-    ]
-
-    for file in os.listdir(data_path):
-        assert file in files
-        files.remove(file)
-    assert len(files) == 0
-
-    # check data
-    expected_X, expected_y = load_arrow_head(return_X_y=True)
-    _assert_array_almost_equal(actual_X, expected_X, decimal=4)
-    np.testing.assert_array_equal(expected_y, actual_y)
