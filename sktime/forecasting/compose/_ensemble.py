@@ -147,20 +147,22 @@ def _check_aggfunc(aggfunc, weighted=False):
     return valid_aggfuncs[aggfunc][_weighted]
 
 
-def _weighted_median(y, weights):
+def _weighted_median(y, axis=1, weights=None):
     w_median = _weighted_percentile(
-        np.median(y, axis=1), sample_weight=weights, percentile=50
+        np.median(y, axis=axis), sample_weight=weights, percentile=50
     )
     return w_median
 
 
-def _weighted_min(y, weights):
-    w_min = _weighted_percentile(np.min(y, axis=1), sample_weight=weights, percentile=0)
+def _weighted_min(y, axis=1, weights=None):
+    w_min = _weighted_percentile(
+        np.min(y, axis=axis), sample_weight=weights, percentile=0
+    )
     return w_min
 
 
-def _weighted_max(y, weights):
+def _weighted_max(y, axis=1, weights=None):
     w_max = _weighted_percentile(
-        np.median(y, axis=1), sample_weight=weights, percentile=100
+        np.median(y, axis=axis), sample_weight=weights, percentile=100
     )
     return w_max
