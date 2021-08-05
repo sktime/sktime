@@ -103,11 +103,23 @@ Using pip, sktime releases are available as source packages and binary wheels. Y
 pip install sktime
 ```
 
+or, with maximum dependencies,
+
+```bash
+pip install sktime[all_extras]
+```
+
 ### conda
 You can also install sktime from `conda` via the `conda-forge` channel. For the feedstock including the build recipe and configuration, check out [this repository](https://github.com/conda-forge/sktime-feedstock).
 
 ```bash
 conda install -c conda-forge sktime
+```
+
+or, with maximum dependencies,
+
+```bash
+conda install -c conda-forge sktime-all-extras
 ```
 
 ## :zap: Quickstart
