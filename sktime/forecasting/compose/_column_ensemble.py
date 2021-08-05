@@ -93,11 +93,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "One estimator per column required. Found %s unique"
                 " estimators" % len(set(indices))
             )
-        elif len(set(indices)) != len(y.columns):
+        elif not np.array_equal(np.sort(indices), np.arange(len(y.columns))):
             raise ValueError(
                 "One estimator per column required. Found %s" % len(indices)
             )
         self.forecasters_ = []
+        self.y_columns = list(y.columns)
 
         for (name, forecaster, index) in self.forecasters:
             forecaster_ = clone(forecaster)
@@ -113,7 +114,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         for (_, forecaster, index) in self.forecasters_:
             y_pred[:, index] = forecaster.predict(fh)
 
-        y_pred = pd.DataFrame(data=y_pred)
+        y_pred = pd.DataFrame(data=y_pred, columns=self.y_columns)
         y_pred.index = self.fh.to_absolute(self.cutoff)
         return y_pred
 
@@ -152,24 +153,15 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             or not isinstance(self.forecasters, list)
         ):
             raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                "Invalid 'forecasters' attribute, 'forecasters' should be a list"
                 " of (string, estimator, int) tuples."
             )
         names, forecasters, indices = zip(*self.forecasters)
         # defined by MetaEstimatorMixin
         self._check_names(names)
 
-        has_estimator = any(est not in (None, "drop") for est in forecasters)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
-
         for forecaster in forecasters:
-            if forecaster not in (None, "drop") and not isinstance(
-                forecaster, BaseForecaster
-            ):
+            if not isinstance(forecaster, BaseForecaster):
                 raise ValueError(
                     f"The estimator {forecaster.__class__.__name__} should be a "
                     f"Forecaster."
