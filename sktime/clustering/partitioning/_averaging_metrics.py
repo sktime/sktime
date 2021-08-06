@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Cluster averaging metrics"""
+"""Cluster averaging metrics."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["MeanAveraging", "BarycenterAveraging"]
@@ -12,7 +12,7 @@ from sktime.clustering.base.typing import NumpyArray
 
 
 class MeanAveraging(BaseClusterAverage):
-    """Mean Averaging algorithm to average a time series
+    """Mean Averaging algorithm to average a time series.
 
     Parameters
     ----------
@@ -40,8 +40,7 @@ class MeanAveraging(BaseClusterAverage):
 
 
 class BarycenterAveraging(BaseClusterAverage):
-    """DTW Barycenter averaging algorithm to average a time series
-    taking adavtange of dtw allignment
+    """DTW Barycenter averaging algorithm.
 
     Parameters
     ----------
@@ -80,7 +79,7 @@ class BarycenterAveraging(BaseClusterAverage):
 
     def average(self):
         """
-        Method used to get the barycenter average
+        Get the barycenter average.
 
         Returns
         -------

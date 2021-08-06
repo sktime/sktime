@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Base types for clustering"""
+"""Base types for clustering."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = [

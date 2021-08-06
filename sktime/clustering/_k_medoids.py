@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Time series K-medoids clusterer"""
+"""Time series K-medoids clusterer."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMedoids"]
@@ -19,7 +19,7 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
-    """Time Series K-Medoids Clusterer
+    """Time Series K-Medoids Clusterer.
 
     Parameters
     ----------
@@ -68,8 +68,7 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
 
     def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseClusterer:
         """
-        Method that is used to fit the clustering algorithm
-        on the dataset X
+        Fit the clustering algorithm on the dataset X.
 
         Parameters
         ----------
@@ -90,8 +89,7 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
-        Method used to perform a prediction from the already
-        trained clustering algorithm
+        Make a prediction from the trained clustering algorithm.
 
         Parameters
         ----------
@@ -109,7 +107,7 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
         """
-        Method used to define how the centers are calculated
+        Define how the centers are calculated.
 
         Parameters
         ----------

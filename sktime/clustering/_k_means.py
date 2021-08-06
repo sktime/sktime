@@ -22,7 +22,7 @@ from sktime.clustering.partitioning import (
 
 
 class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
-    """Time Series K-Means Clusterer
+    """Time Series K-Means Clusterer.
 
     Parameters
     ----------
@@ -89,9 +89,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         self._averaging_algorithm = None
 
     def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseClusterer:
-        """
-        Method that is used to fit the clustering algorithm
-        on the dataset X
+        """Fit the clustering algorithm on the dataset X.
 
         Parameters
         ----------
@@ -111,8 +109,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
         """
-        Method used to perform a prediction from the already
-        trained clustering algorithm
+        Predict from the trained clusterer.
 
         Parameters
         ----------
@@ -129,7 +126,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
         """
-        Method used to define how the centers are calculated
+        Define how the centers are calculated.
 
         Parameters
         ----------
@@ -152,7 +149,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
 
     def _check_params(self, X: NumpyArray):
         """
-        Method used to check the parameters passed
+        Check the parameters passed.
 
         Parameters
         ----------

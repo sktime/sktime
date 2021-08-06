@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Cluster plotting tools"""
+"""Cluster plotting tools."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
@@ -23,7 +23,7 @@ def _plot(cluster_values, center, axes):
 
 def plot_cluster_algorithm(model: BaseClusterer, predict_series: NumpyOrDF, k: int):
     """
-    Method that is used to plot a clustering algorithms output
+    Plot a clustering algorithms output.
 
     Parameters
     ----------

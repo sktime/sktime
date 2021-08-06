@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Utils for time series clusterer"""
+"""Utils for time series clusterer."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["compute_pairwise_distances"]
@@ -18,8 +18,7 @@ def compute_pairwise_distances(
     pairwise_func: Callable = pairwise_distances,
 ):
     """
-    Method used to compute a pairwise distance matrix
-    for a series
+    Compute a pairwise distance matrix for a series.
 
     Parameters
     ----------

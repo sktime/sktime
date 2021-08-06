@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Cluster center initializers"""
+"""Cluster center initializers."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
@@ -16,8 +16,8 @@ from sktime.clustering.base.typing import (
 
 
 class ForgyCenterInitializer(BaseClusterCenterInitializer):
-    """Forgy Center Initializer used to create n centers
-    from a set of series using Forgys technique
+    """Forgy Center Initializer used to create n centers using Forgys technique.
+
     Parameters
     ----------
     data_set: Numpy_Array
@@ -41,13 +41,13 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
             data_set, n_centers, center_calculator_func, random_state
         )
 
-    def initialize_centers(self) -> NumpyArray:
+    def initialize_centers(self) -> np.ndarray:
         """
-        Method called to initialize centers using Forgys
-        technique
+        Initialise centers using Forgys technique.
+
         Returns
         -------
-        Numpy_Array
+        np.ndarray
             numpy array containing the centers
         """
         random_state = check_random_state(self.random_state)
@@ -58,13 +58,14 @@ class ForgyCenterInitializer(BaseClusterCenterInitializer):
 
 
 class RandomCenterInitializer(BaseClusterCenterInitializer):
-    """Random Center Initializer used to create n centers
-    from randomly assigning each time series in the dataset
-    to a random cluster and then taking the approximation
-    value
+    """Random Center Initializer used to create n centers.
+
+    from randomly assigning each time series in the dataset to a random cluster and
+    then taking the approximation value.
+
     Parameters
     ----------
-    data_set: Numpy_Array
+    data_set: np.ndarray
         Numpy_Array that is the dataset to calculate the centers from
     n_centers: int
         Number of centers to be created
@@ -87,12 +88,11 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
 
     def initialize_centers(self) -> NumpyArray:
         """
-        Method called to initialize centers using Forgys
-        technique
+        Initialize centers using Forgys technique.
+
         Returns
         -------
-        Numpy_Array
-            numpy array containing the centers
+        np.ndarray : numpy array containing the centers
         """
         if self.center_calculator_func is None:
             raise ValueError(
@@ -110,16 +110,17 @@ class RandomCenterInitializer(BaseClusterCenterInitializer):
 
 
 class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
-    """K-means++ center initializer algorithm
+    """K-means++ center initializer algorithm.
+
     Parameters
     ----------
-    data_set: Numpy_Array
+    data_set : np.ndarray
         Numpy_Array that is the dataset to calculate the centers from
-    n_centers: int
+    n_centers : int
         Number of centers to be created
-    center_calculator_func: CenterCalculatorFunc, default = None
+    center_calculator_func : CenterCalculatorFunc, default = None
         Function that is used to calculate new centers
-    random_state: NumpyRandomState, default = None
+    random_state : NumpyRandomState, default = None
         Generator used to initialise the centers.
     """
 
@@ -135,12 +136,10 @@ class KMeansPlusPlusCenterInitializer(BaseClusterCenterInitializer):
         )
 
     def initialize_centers(self) -> NumpyArray:
-        """
-        Method called to initialize centers using Forgys
-        technique
+        """Initialise centres using Forgys technique.
+
         Returns
         -------
-        Numpy_Array
-            numpy array containing the centers
+        np.ndarray : numpy array containing the centers
         """
         return
