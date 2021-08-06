@@ -27,7 +27,7 @@ class Medoids(BaseApproximate):
 
     def approximate(self) -> int:
         """
-        Get the approximation
+        Get the approximation.
 
         Returns
         -------
