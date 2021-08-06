@@ -38,7 +38,7 @@ def test_run_clustering_experiment():
 
 
 def test_run_classification_experiment():
-    """Test running and saving results.
+    """Test running and saving results for classifiers.
 
     Currently it just checks the files have been created, then deletes them.
     """
