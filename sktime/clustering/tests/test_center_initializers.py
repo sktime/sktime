@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Test centre initialisers."""
 import numpy as np
 
 from sktime.clustering.tests._clustering_tests import generate_univaritate_series
