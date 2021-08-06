@@ -3,6 +3,8 @@
 
 import os
 
+import benchmarking.experiments
+
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -150,14 +152,14 @@ def _tsf_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         tsf = ib.TimeSeriesForest(n_estimators=100)
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
             cls_name="PythonTSF",
             classifier=tsf,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
         steps = [
             ("segment", RandomIntervalSegmenter(n_intervals="sqrt")),
@@ -192,14 +194,14 @@ def _tsf_benchmarking():
         tsf = ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
             cls_name="PythonTSFComposite",
             classifier=tsf,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
 
 
@@ -208,14 +210,14 @@ def _rise_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         rise = fb.RandomIntervalSpectralForest(n_estimators=100)
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
             cls_name="PythonRISE",
             classifier=rise,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
         steps = [
             ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
@@ -245,14 +247,14 @@ def _rise_benchmarking():
         rise = ComposableTimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
             cls_name="PythonRISEComposite",
             classifier=rise,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
 
 
@@ -263,14 +265,14 @@ def _boss_benchmarking():
             str(i) + " problem = " + dataset + " writing to " + results_dir + "/BOSS/"
         )
         boss = db.BOSSEnsemble()
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/BOSS/",
             cls_name="PythonBOSS",
             classifier=boss,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
 
 
@@ -285,24 +287,24 @@ def _elastic_distance_benchmarking():
         dataset = distance_test[i]
         print(str(i) + " problem = " + dataset + " writing to " + results_dir + "/DTW/")
         dtw = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/DTW/",
             cls_name="PythonDTW",
             classifier=dtw,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
         twe = dist.KNeighborsTimeSeriesClassifier(distance="dtw")
-        exp.load_and_run_classification_experiment(
+        benchmarking.experiments.load_and_run_classification_experiment(
             overwrite=False,
             problem_path=data_dir,
             results_path=results_dir + "/DTW/",
             cls_name="PythonTWE",
             classifier=twe,
             dataset=dataset,
-            train_file=False,
+            build_train=False,
         )
 
 

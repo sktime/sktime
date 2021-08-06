@@ -1,0 +1,25 @@
+kmeans,UnitTest,test
+{'averaging_algorithm': 'mean', 'averaging_algorithm_iterations': 10, 'init_algorithm': 'forgy', 'max_iter': 300, 'metric': 'dtw', 'n_clusters': 2, 'random_state': None, 'verbose': False}
+,1234,15,-1,-1,
+1,1
+1,1
+1,0
+1,0
+1,1
+1,0
+1,0
+1,0
+1,0
+1,0
+1,1
+1,0
+2,1
+2,1
+2,0
+2,1
+2,1
+2,0
+2,1
+2,1
+2,1
+2,1
