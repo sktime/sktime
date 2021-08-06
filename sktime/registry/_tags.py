@@ -143,7 +143,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:unequal_length",
         "classifier",
         "bool",
-        "can classifier handle unequal length data?",
+        "can classifier handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
