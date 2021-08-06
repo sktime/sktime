@@ -349,7 +349,7 @@ def run_classification_experiment(
         second = str(classifier.get_params())
     second.replace("\n", " ")
     second.replace("\r", " ")
-    temp = np.array_repr(classifier.classes_).replace("\n", "")
+    # temp = np.array_repr(classifier.classes_).replace("\n", "")
     third = (
         str(ac)
         + ","
