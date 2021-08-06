@@ -324,7 +324,6 @@ def run_classification_experiment(
     train_file: whether to generate train files or not. If true, it performs a
                 10xCV on the train and saves
     """
-
     start = int(round(time.time() * 1000))
     classifier.fit(trainX, trainY)
     build_time = int(round(time.time() * 1000)) - start
@@ -341,13 +340,13 @@ def run_classification_experiment(
     second.replace("\r", " ")
     temp = np.array_repr(classifier.classes_).replace("\n", "")
     third = (
-            str(ac)
-            + ","
-            + str(build_time)
-            + ","
-            + str(test_time)
-            + ",-1,-1,"
-            + str(len(classifier.classes_))
+        str(ac)
+        + ","
+        + str(build_time)
+        + ","
+        + str(test_time)
+        + ",-1,-1,"
+        + str(len(classifier.classes_))
     )
     write_results_to_uea_format(
         second_line=second,
@@ -491,7 +490,7 @@ def load_and_run_classification_experiment(
         dataset_name=dataset,
         overwrite=overwrite,
         test_file=build_test,
-        train_file=build_train
+        train_file=build_train,
     )
 
 
