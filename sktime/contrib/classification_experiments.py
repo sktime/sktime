@@ -5,6 +5,8 @@ This file is configured for runs of the main method with command line arguments,
 single debugging runs. Results are written in a standard format
 """
 
+__author__ = ["Tony Bagnall"]
+
 import os
 import sys
 
@@ -14,8 +16,6 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
-
-__author__ = ["Tony Bagnall"]
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
