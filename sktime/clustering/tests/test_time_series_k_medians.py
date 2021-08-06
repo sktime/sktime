@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Test K-Medoids."""
+
 import numpy as np
 
 from sktime.clustering._k_medoids import TimeSeriesKMedoids
@@ -9,6 +11,7 @@ from sktime.clustering.tests._clustering_tests import (
 
 
 def test_k_medoids():
+    """Test K-Medoids."""
     rng = np.random.RandomState(1)
     X_train = generate_univaritate_series(n=100, size=5, rng=rng, dtype=np.double)
     X_test = generate_univaritate_series(

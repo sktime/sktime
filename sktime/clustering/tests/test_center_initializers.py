@@ -10,6 +10,7 @@ from sktime.clustering import TimeSeriesKMedoids, TimeSeriesKMeans
 
 
 def test_forgy_cluster_center_initializer():
+    """Test Forgy initialiser."""
     rng = np.random.RandomState(0)
     X = generate_univaritate_series(n=20, size=1, rng=rng, dtype=np.float32)
     forgy_centers = ForgyCenterInitializer(X, 5, random_state=rng)
@@ -24,6 +25,7 @@ def test_forgy_cluster_center_initializer():
 
 
 def test_random_cluster_center_initializer():
+    """Test random cluster initialiser."""
     n_clusters = 3
     k_medians = TimeSeriesKMedoids(n_clusters=n_clusters)
     rng = np.random.RandomState(0)

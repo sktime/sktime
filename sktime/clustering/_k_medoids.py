@@ -84,7 +84,6 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
         self
             Fitted estimator
         """
-
         return super(TimeSeriesKMedoids, self).fit(X)
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
@@ -102,7 +101,6 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
         Numpy_Array: np.array
             Index of the cluster each sample belongs to
         """
-
         return super(TimeSeriesKMedoids, self).predict(X)
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:

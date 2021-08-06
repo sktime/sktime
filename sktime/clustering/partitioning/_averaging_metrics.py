@@ -29,11 +29,11 @@ class MeanAveraging(BaseClusterAverage):
 
     def average(self):
         """
-        Method used to get the mean average
+        Get the mean average.
 
         Returns
         -------
-        Numpy_Array:
+        np.ndarray:
             Array containing the estimated average
         """
         return self.series.mean(axis=0)
@@ -44,7 +44,7 @@ class BarycenterAveraging(BaseClusterAverage):
 
     Parameters
     ----------
-    series: Numpy_Array
+    series: np.ndarray
         The series to find the DBA average of
 
     n_iterations: int
