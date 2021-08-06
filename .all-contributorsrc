@@ -28,6 +28,7 @@
         "question",
         "review",
         "talk",
+        "test",
         "tutorial"
       ]
     },
@@ -1051,7 +1052,7 @@
       "contributions": [
         "code",
         "bug",
-        "test",
+        "test"
       ]
     },
     {
@@ -1069,7 +1070,7 @@
       "avatar_url": "https://https://avatars.githubusercontent.com/jambo6",
       "profile": "https://github.com/jambo6",
       "contributions": [
-        "code",
+        "code"
       ]
     },
     {
@@ -1088,6 +1089,59 @@
       "profile": "https://www.linkedin.com/in/yard1/",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "ltoniazzi",
+      "name": "Lorenzo Toniazzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61414566",
+      "profile": "https://github.com/ltoniazzi",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Riyabelle25",
+      "name": "Riya Elizabeth John",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55790848?v=4",
+      "profile": "https://github.com/Riyabelle25",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
+      "login": "chrisholder",
+      "name": "chrisholder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4674372?v=4",
+      "profile": "https://github.com/chrisholder",
+      "contributions": [
+        "code",
+        "test",
+        "doc",
+        "design",
+        "example"
+      ]
+    },
+    {
+      "login": "moradabaz",
+      "name": "Morad :)",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29915156?v=4",
+      "profile": "https://moradisten.github.io/",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
+      "login": "bilal-196",
+      "name": "Ahmed Bilal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74570044?v=4",
+      "profile": "https://github.com/bilal-196",
+      "contributions": [
+        "doc"
       ]
     }
   ],

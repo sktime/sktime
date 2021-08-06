@@ -6,13 +6,16 @@
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/tests/ @patrickzib @MatthewMiddlehurst
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/feature_based/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/feature_based/tests/ @MatthewMiddlehurst
+sktime/classification/feature_based/_signature_classifier.py @jambo6
 sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/hybrid/tests/ @MatthewMiddlehurst
 sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/tests/ @MatthewMiddlehurst
 sktime/classification/kernel_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/tests/ @MatthewMiddlehurst
 sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
-sktime/classification/signature_based/ @jambo6
 
 sktime/transformations/panel/dictionary_based/ @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
@@ -24,6 +27,7 @@ sktime/transformations/series/compose.py @aiwalter
 sktime/transformations/panel/signature_based/ @jambo6
 sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/difference.py @rnkuhns
+sktime/transformations/series/exponent.py @rnkuhns
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/ets.py @HYang1996
