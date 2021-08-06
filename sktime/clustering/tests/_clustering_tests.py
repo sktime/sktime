@@ -4,7 +4,7 @@ __all__ = ["generate_univaritate_series", "run_clustering_experiment"]
 
 import numpy as np
 from sktime.clustering.base.base import BaseClusterer
-from sktime.clustering.base._typing import NumpyRandomState, NumpyArray
+from sktime.clustering.base.typing import NumpyRandomState, NumpyArray
 from sklearn.utils import check_random_state
 
 

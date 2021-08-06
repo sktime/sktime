@@ -7,7 +7,7 @@ __all__ = ["compute_pairwise_distances"]
 from typing import Callable
 import numpy as np
 
-from sktime.clustering.base._typing import NumpyArray, MetricFunction
+from sktime.clustering.base.typing import NumpyArray, MetricFunction
 from sklearn.metrics.pairwise import pairwise_distances
 
 

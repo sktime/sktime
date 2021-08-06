@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances_argmin_min,
 )
 from sklearn.utils import check_random_state
-from sktime.clustering.base._typing import (
+from sktime.clustering.base.typing import (
     MetricParameter,
     MetricFunctionDict,
     InitAlgo,

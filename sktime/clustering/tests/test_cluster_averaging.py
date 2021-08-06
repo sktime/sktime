@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from sktime.clustering.partitioning._averaging_metrics import (
+from sktime.clustering.partitioning import (
     BarycenterAveraging,
     MeanAveraging,
 )

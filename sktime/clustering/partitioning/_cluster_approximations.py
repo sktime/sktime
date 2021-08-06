@@ -7,7 +7,7 @@ __all__ = ["Medoids"]
 
 import numpy as np
 
-from sktime.clustering.base._typing import NumpyArray, MetricFunction
+from sktime.clustering.base.typing import NumpyArray, MetricFunction
 from sktime.clustering.base import BaseApproximate
 from sktime.clustering.base.clustering_utils import compute_pairwise_distances
 

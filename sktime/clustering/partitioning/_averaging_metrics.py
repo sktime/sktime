@@ -8,7 +8,7 @@ import numpy as np
 
 from functools import reduce
 from sktime.clustering.base import BaseClusterAverage
-from sktime.clustering.base._typing import NumpyArray
+from sktime.clustering.base.typing import NumpyArray
 
 
 class MeanAveraging(BaseClusterAverage):

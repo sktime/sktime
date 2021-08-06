@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from sktime.clustering.base import BaseClusterCenterInitializer
-from sktime.clustering.base._typing import (
+from sktime.clustering.base.typing import (
     NumpyArray,
     NumpyRandomState,
     CenterCalculatorFunc,

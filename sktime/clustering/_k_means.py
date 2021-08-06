@@ -4,7 +4,7 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMeans"]
 
-from sktime.clustering.base._typing import (
+from sktime.clustering.base.typing import (
     InitAlgo,
     AveragingAlgo,
     AveragingAlgoDict,
@@ -14,11 +14,9 @@ from sktime.clustering.base._typing import (
     NumpyRandomState,
 )
 from sktime.clustering.base import BaseClusterer
-from sktime.clustering.partitioning._averaging_metrics import (
+from sktime.clustering.partitioning import (
     BarycenterAveraging,
     MeanAveraging,
-)
-from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
 

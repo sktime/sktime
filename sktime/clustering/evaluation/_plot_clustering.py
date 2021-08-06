@@ -5,7 +5,7 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import pandas as pd
-from sktime.clustering.base._typing import NumpyOrDF
+from sktime.clustering.base.typing import NumpyOrDF
 from sktime.clustering.base.base import BaseClusterer
 from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,

@@ -2,12 +2,11 @@
 import numpy as np
 
 from sktime.clustering.tests._clustering_tests import generate_univaritate_series
-from sktime.clustering.partitioning._center_initializers import (
+from sktime.clustering.partitioning import (
     ForgyCenterInitializer,
     RandomCenterInitializer,
 )
-from sktime.clustering._k_medoids import TimeSeriesKMedoids
-from sktime.clustering._k_means import TimeSeriesKMeans
+from sktime.clustering import TimeSeriesKMedoids, TimeSeriesKMeans
 
 
 def test_forgy_cluster_center_initializer():
