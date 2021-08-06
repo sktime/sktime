@@ -24,7 +24,10 @@ sktime.
         or "classifier".
 
     Forecasting
-        A learning task. For more details, see the :ref:`user_guide`.
+        A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_forecasting`.
+
+    Time series
+        ...
 
     Time series classification
         A learning task ...
@@ -39,8 +42,8 @@ sktime.
         A learning task ...
 
     Panel data
-        Multiple time series, may consist of :term:`univariate time series` or
-        :term:`multivariate time series`.
+        A form of time series data where the same time series are observed observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
+        :term:`multivariate time series`. Accordingly, the data varies across time, observational unit and series (i.e. variables).
 
     Univariate time series
         A single time series
@@ -52,4 +55,7 @@ sktime.
         ...
 
     Exogenous
+        ...
+
+    Reduction
         ...

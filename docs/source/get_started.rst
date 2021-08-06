@@ -1,4 +1,4 @@
-.. _getting_started:
+.. _get_started:
 
 ===========
 Get Started
@@ -23,33 +23,59 @@ To install ``sktime`` with its core dependencies via ``pip`` use:
 
     pip install sktime
 
-To install ``sktime`` via ``pip`` with maximum dependencies, including soft dependencies, install using the ``all_extras`` modifier:
+To install ``sktime`` via ``pip`` with maximum dependencies, including soft dependencies, install using the `all_extras` modifier:
 
 .. code-block:: bash
 
     pip install sktime[all_extras]
 
 
-To install ``sktime`` via ``conda`` from ``conda-forge`` use:
+To install ``sktime`` with its core dependencies via ``conda`` from ``conda-forge`` use:
 
 .. code-block:: bash
 
     conda install -c conda-forge sktime
 
-This will install ``sktime`` with core dependencies, excluding soft dependencies.
+To install ``sktime`` via ``conda`` with maximum dependencies, including soft dependencies, install using the `all-extras` conda recipe:
 
-There is not currently a easy route to install ``sktime`` with maximum dependencies via ``conda``. Community contributions towards this, e.g., via conda metapackages, would be appreciated.
+.. code-block:: bash
 
-For more detailed installation instructions see our more detailed `installation`_ instructions.
+    conda install -c conda-forge sktime-all-extras
 
-Key Terminology
----------------
+Key Concepts
+------------
 
-``sktime`` seeks to provide a unified framework for multiple time series machine learning tasks. While this (hopefully) makes ``sktime's`` functionality more intuitive for users and lets developers extend the framework more easily, having a key set of common terminology is also important.
+``sktime`` seeks to provide a unified framework for multiple time series machine learning tasks. This (hopefully) makes ``sktime's`` functionality intuitive for users
+and lets developers extend the framework more easily. But time series data and the related scientific use cases each can take multiple forms.
+Therefore, a key set of common terminology is also important.
 
-NEED TERMINOLOGY HERE (e.g. time series, univariate, multivariate, scitype, reduction, and any other jargon we take for granted).
+In ``sktime`` time series data can refer to data that is univariate, multivariate or panel.
 
-For more information on the terminology used by ``sktime`` see INSERT LINK TO OUR NEW GLOSSARY HERE.
+- :term:`Univariate time series` data refers to data where a single variable is tracked over time
+- :term:`Multivariate time series` data refers to data where multiple variables are tracked over time for the same observational unit
+   - e.g. multiple quarterly economic indicators bfor a country, multiple sensors readings from a machine, etc
+- :term:`Panel time series` data refers to data where the same time series (univariate or multivariate) are tracked for multiple observational units
+  - e.g. multiple quarterly economic indicators for several countries, sensor readings from multiple machines, etc
+
+``sktime's`` functionality for each learning tasks is centered around providing a set of code artifacts that match a common interface to a given
+scientific purpose (i.e. :term:`scientific type` or :term:`scitype`). For example, ``sktime`` includes a common interface for "forecaster" classes designed to predict future values
+of a time series.
+
+- Blurb about time series classification (link to user guide and glossary)
+- Blurb about time series regression (link to user guide and glossary)
+- Blurb about time series clustering (link to user guide and glossary)
+- Blurb about time series annotation (link to user guide and glossary)
+- Blurb about time series forecasting (link to user guide and glossary)
+- Measuring model performance (link to user guide and glossary)
+
+While the list above presents each learning task separately, in many cases it is possible to adapt one learning task to help solve another related learning task. For example,
+one approach to forecasting would be to use a regression model that explicitly accounts for the data's time dimension. However, another approach is to reduce the forecasting problem
+to cross-sectional regression, where the input data are tabularized and lags of the data are treated as independent features in `scikit-learn` style
+tabular regression algorithms. Likewise one approach to time series annotation task like anomaly detection is to reduce the problem to using forecaster to predict future values and flag
+observations that are too far from these predictions as anomalies. ``sktime`` typically incorporates these type of :term:`reductions <reduction>` through the use of composable classes that
+let users adapt one learning task to solve another related one.
+
+For more information on the terminology used by ``sktime`` see the :ref:`glossary` and :ref:`user_guide`.
 
 Quickstart
 ----------
@@ -93,6 +119,12 @@ Time Series Classification
     accuracy_score(y_test, y_pred)
     >>> 0.8679245283018868
 
+Time Series Regression
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+    from sktime.regression.compose import ComposableTimeSeriesForestRegressor
+
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -100,3 +132,27 @@ Time Series Clustering
 
    The time series clustering API is still experimental. Features may change
    in future releases.
+
+.. code-block:: python
+    from sklearn.model_selection import train_test_split
+    from sktime.clustering import TimeSeriesKMeans
+    from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
+    from sktime.datasets import load_arrow_head
+
+    X, y = load_arrow_head(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    k_means = TimeSeriesKMeans(n_clusters=5, init_algorithm="forgy", metric="dtw")
+    k_means.fit(X_train)
+    plot_cluster_algorithm(k_means, X_test, k_means.n_clusters)
+
+Time Series Annotation
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+   The time series annotation API is still experimental. Features may change
+   in future releases.
+
+.. code-block:: python
+    from sktime.annotation.adapters import PyODAnnotator
