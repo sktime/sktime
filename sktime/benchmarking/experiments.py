@@ -19,7 +19,6 @@ import time
 import numpy as np
 
 from sklearn import preprocessing
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
@@ -51,8 +50,6 @@ from sktime.utils.data_io import write_results_to_uea_format
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.sampling import stratified_resample
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
-from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-from sktime.datasets import load_unit_test
 
 
 def run_clustering_experiment(
@@ -394,7 +391,7 @@ def run_classification_experiment(
             second = str(classifier.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
-        temp = np.array_repr(classifier.classes_).replace("\n", "")
+        # temp = np.array_repr(classifier.classes_).replace("\n", "")
         third = (
             str(train_acc)
             + ","
@@ -463,7 +460,7 @@ def load_and_run_classification_experiment(
             + "/Predictions/"
             + str(dataset)
             + "/testResample"
-            + str(resampleID)
+            + str(resample_id)
             + ".csv"
         )
         if os.path.exists(full_path):
@@ -476,7 +473,7 @@ def load_and_run_classification_experiment(
                 + "/Predictions/"
                 + str(dataset)
                 + "/trainResample"
-                + str(resampleID)
+                + str(resample_id)
                 + ".csv"
             )
             if os.path.exists(full_path):
@@ -594,10 +591,10 @@ def set_classifier(cls, resampleId=None):
         return ROCKETClassifier(random_state=resampleId)
     elif name == "arsenal":
         return Arsenal(random_state=resampleId)
-    # Shapelet based
-    elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(random_state=resampleId, n_estimators=500)
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
+    # Shapelet based excluded for soft dependency
+    # elif name == "stc" or name == "shapelettransformclassifier":
+    #     return ShapeletTransformClassifier(random_state=resampleId, n_estimators=500)
+    # elif name == "mrseql" or name == "mrseqlclassifier":
+    #     return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     else:
         raise Exception("UNKNOWN CLASSIFIER")
