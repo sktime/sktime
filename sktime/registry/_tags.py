@@ -137,7 +137,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:multivariate",
         "classifier",
         "bool",
-        "can classifier use exogeneous data (X)?",
+        "can classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
