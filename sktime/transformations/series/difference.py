@@ -83,8 +83,8 @@ class Differencer(_SeriesToSeriesTransformer):
         The lags used to difference the data.
         If a single `int` value is
 
-    remove_missing : bool, default = True
-        Whether the differencer should remove the initial observations that
+    drop_na : bool, default = True
+        Whether the differencer should drop the initial observations that
         contain missing values as a result of the differencing operation(s).
 
     Attributes
@@ -92,8 +92,8 @@ class Differencer(_SeriesToSeriesTransformer):
     lags : int or array-like
         Lags used to perform the differencing of the input series.
 
-    remove_missing : bool
-        Stores whether the Differencer removes initial observations that contain
+    drop_na : bool
+        Stores whether the Differencer drops the initial observations that contain
         missing values as a result of the differencing operation(s).
 
     Example
@@ -111,9 +111,9 @@ class Differencer(_SeriesToSeriesTransformer):
         "univariate-only": False,
     }
 
-    def __init__(self, lags=1, remove_missing=True):
+    def __init__(self, lags=1, drop_na=True):
         self.lags = lags
-        self.remove_missing = remove_missing
+        self.drop_na = drop_na
         self._Z = None
         self._lags = None
         self._cumulative_lags = None
@@ -142,7 +142,7 @@ class Differencer(_SeriesToSeriesTransformer):
         elif first_idx > orig_last_idx:
             is_future = True
 
-        pad_z_inv = self.remove_missing or is_future
+        pad_z_inv = self.drop_na or is_future
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
         fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
@@ -196,7 +196,7 @@ class Differencer(_SeriesToSeriesTransformer):
             The transformed timeseries.
         """
         Zt = _diff_transform(Z, self._lags)
-        if self.remove_missing:
+        if self.drop_na:
             Zt = Zt.iloc[self._cumulative_lags[-1] :]
         return Zt
 
