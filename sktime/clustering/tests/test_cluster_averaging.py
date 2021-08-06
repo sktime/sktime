@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+"""Test cluster averaging."""
 
 from sktime.clustering.partitioning import (
     BarycenterAveraging,
