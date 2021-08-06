@@ -1,14 +1,71 @@
 .. _get_involved:
 
-Get involved
+Get Involved
 ============
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    contributing
-   developer_guide
    mentoring
-   roadmap
-   code_of_conduct
-   governance
+
+sktime is a community-driven project and your help is extremely welcome.
+If you get stuck, please don’t hesitate to chat with us or raise an issue.
+
+.. panels::
+    :card: + intro-card text-center
+
+    ---
+
+    Contributing
+    ^^^^^^^^^^^^
+
+    New to sktime? Check out the contributing guide.
+
+    +++
+
+    .. link-button:: contributing
+            :type: ref
+            :text: Contributing guide
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Mentoring
+    ^^^^^^^^^
+
+    New to open source? Apply to our mentoring program!
+
+    +++
+
+    .. link-button:: mentoring
+            :type: ref
+            :text: Mentoring
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Sponsoring
+    ^^^^^^^^^^
+
+    Fund sktime maintenance and development.
+
+    +++
+
+    .. link-button:: https://opencollective.com/sktime
+            :text: Donate
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Meet-ups
+    ^^^^^^^^
+
+    Join our discussions, tutorials, workshops and sprints!
+
+    +++
+
+    .. link-button:: https://github.com/sktime/community-council
+            :text: Participate
+            :classes: btn-block btn-secondary stretched-link

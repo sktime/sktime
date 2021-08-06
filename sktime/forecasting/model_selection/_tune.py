@@ -69,7 +69,7 @@ class BaseGridSearch(BaseForecaster):
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
-        """Call update_predict on the forecaster with the best found parameters."""
+        """Call update_predict on forecaster with the best parameters."""
         self.check_is_fitted("update_predict")
 
         return self.best_forecaster_._update_predict(
@@ -150,7 +150,7 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
-        """Return the score on the given data, if the forecaster has been refit.
+        """Return score on the given data, if forecaster has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
@@ -181,7 +181,7 @@ class BaseGridSearch(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def check_is_fitted(self, method_name=None):
-        """Whether `fit` has been called.
+        """Check whether `fit` has been called.
 
         Parameters
         ----------
@@ -417,6 +417,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
+        self.clone_tags(forecaster, "capability:pred_int")
+
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
@@ -512,6 +514,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
+
+        self.clone_tags(forecaster, "capability:pred_int")
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions."""

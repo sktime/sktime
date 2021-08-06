@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-# !/usr/bin/env python3 -u
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements Theta forecasting model."""
+
+"""Theta forecaster."""
 
 __all__ = ["ThetaForecaster"]
-__author__ = ["@big-o", "Markus Löning"]
+__author__ = ["big-o", "mloning"]
 
 from warnings import warn
 
@@ -20,7 +19,7 @@ from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
-    """Theta method of forecasting.
+    """Theta method for forecasting.
 
     The theta method as defined in [1]_ is equivalent to simple exponential
     smoothing (SES) with drift (as demonstrated in [2]_).
@@ -42,10 +41,8 @@ class ThetaForecaster(ExponentialSmoothing):
         The alpha value of the simple exponential smoothing, if the value is
         set then
         this will be used, otherwise it will be estimated from the data.
-
     deseasonalize : bool, optional (default=True)
         If True, data is seasonally adjusted.
-
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
         multiplicative deseasonaliser, which is used if seasonality is
@@ -58,10 +55,8 @@ class ThetaForecaster(ExponentialSmoothing):
     ----------
     initial_level_ : float
         The estimated alpha value of the SES fit.
-
     drift_ : float
         The estimated drift of the fitted model.
-
     se_ : float
         The standard error of the predictions. Used to calculate prediction
         intervals.
@@ -91,6 +86,7 @@ class ThetaForecaster(ExponentialSmoothing):
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
         "univariate-only": True,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -231,7 +227,6 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     ----------
     level : float
         A confidence level, in the open interval (0, 1).
-
     two_tailed : bool (default=True)
         If True, return the two-tailed z score.
 

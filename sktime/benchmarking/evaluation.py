@@ -526,8 +526,8 @@ class Evaluator:
     def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):
         """Plot critical difference diagrams
 
-        References:
-        -----------
+        References
+        ----------
         original implementation by Aaron Bostrom, modified by Markus Löning
         """
         self._check_is_evaluated()
