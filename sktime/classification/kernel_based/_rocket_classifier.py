@@ -101,7 +101,6 @@ class ROCKETClassifier(BaseClassifier):
         )
         rocket_pipeline.fit(X, y)
 
-        self._is_fitted = True
         return self
 
     def _predict(self, X):
