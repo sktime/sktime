@@ -12,7 +12,7 @@ From here, you can navigate to:
 .. toctree::
    :maxdepth: 1
 
-   getting_started
+   get_started
    user_documentation
    get_involved
    about
