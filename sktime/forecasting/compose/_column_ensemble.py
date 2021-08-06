@@ -87,16 +87,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        names, forecasters, indices = self._check_forecasters()
-        if len(set(indices)) != len(indices):
-            raise ValueError(
-                "One estimator per column required. Found %s unique"
-                " estimators" % len(set(indices))
-            )
-        elif not np.array_equal(np.sort(indices), np.arange(len(y.columns))):
-            raise ValueError(
-                "One estimator per column required. Found %s" % len(indices)
-            )
+        self._check_forecasters(y)
+
         self.forecasters_ = []
         self.y_columns = list(y.columns)
 
@@ -146,7 +138,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._set_params("_forecasters", **kwargs)
         return self
 
-    def _check_forecasters(self):
+    def _check_forecasters(self, y):
         if (
             self.forecasters is None
             or len(self.forecasters) == 0
@@ -166,4 +158,14 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     f"The estimator {forecaster.__class__.__name__} should be a "
                     f"Forecaster."
                 )
+
+        if len(set(indices)) != len(indices):
+            raise ValueError(
+                "One estimator per column required. Found %s unique"
+                " estimators" % len(set(indices))
+            )
+        elif not np.array_equal(np.sort(indices), np.arange(len(y.columns))):
+            raise ValueError(
+                "One estimator per column required. Found %s" % len(indices)
+            )
         return names, forecasters, indices
