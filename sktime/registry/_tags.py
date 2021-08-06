@@ -158,7 +158,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:train_estimate",
         "classifier",
         "bool",
-        "",  # FIXME: fill in tag meaning in plain English
+        "can the classifier produce out-of-bag predictions on the training set?",
     ),
     (
         "capability:contractable",  # TODO rename into "capability:set-max-fit-time"
