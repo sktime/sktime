@@ -21,3 +21,4 @@ Contents
 * Panel forecasting
 * Supervised forecasting
 * Reduction
+* :ref:`user_guide_performance_metrics`
