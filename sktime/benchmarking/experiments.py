@@ -23,16 +23,30 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
-from sktime.classification.dictionary_based import BOSSEnsemble, ContractableBOSS, \
-    TemporalDictionaryEnsemble, WEASEL, MUSE
-from sktime.classification.distance_based import ProximityForest, ProximityTree, \
-    ProximityStump, KNeighborsTimeSeriesClassifier, ElasticEnsemble, ShapeDTW
+from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
+    ContractableBOSS,
+    TemporalDictionaryEnsemble,
+    WEASEL,
+    MUSE,
+)
+from sktime.classification.distance_based import (
+    ProximityForest,
+    ProximityTree,
+    ProximityStump,
+    KNeighborsTimeSeriesClassifier,
+    ElasticEnsemble,
+    ShapeDTW,
+)
 from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.interval_based import RandomIntervalSpectralForest, \
-    TimeSeriesForestClassifier, CanonicalIntervalForest, SupervisedTimeSeriesForest, \
-    DrCIF
+from sktime.classification.interval_based import (
+    RandomIntervalSpectralForest,
+    TimeSeriesForestClassifier,
+    CanonicalIntervalForest,
+    SupervisedTimeSeriesForest,
+    DrCIF,
+)
 from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
-
 from sktime.utils.data_io import write_results_to_uea_format
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.sampling import stratified_resample
