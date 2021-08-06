@@ -161,10 +161,10 @@ ESTIMATOR_TAG_REGISTER = [
         "",  # FIXME: fill in tag meaning in plain English
     ),
     (
-        "capability:contractable",
+        "capability:contractable",  # TODO rename into "capability:set-max-fit-time"
         "classifier",
         "bool",
-        "",  # FIXME: fill in tag meaning in plain English
+        "does the estimator support limiting max fit time?",
     ),
     # (
     #     "handles-panel",
