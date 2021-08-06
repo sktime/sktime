@@ -13,9 +13,7 @@ Installation
 
 * environments with python version 3.6, 3.7, or 3.8.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
-
-
-``sktime`` releases are available via ``PyPI`` and ``conda`` .
+* installation via ``PyPi`` or ``conda``
 
 To install ``sktime`` with its core dependencies via ``pip`` use:
 
