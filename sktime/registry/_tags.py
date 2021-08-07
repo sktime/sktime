@@ -161,10 +161,10 @@ ESTIMATOR_TAG_REGISTER = [
         "can the classifier produce out-of-bag predictions on the training set?",
     ),
     (
-        "capability:contractable",  # TODO rename into "capability:set-max-fit-time"
+        "capability:contractable",
         "classifier",
         "bool",
-        "does the estimator support limiting max fit time?",
+        "contract time setting, i.e. does the estimator support limiting max fit time?",
     ),
     # (
     #     "handles-panel",
