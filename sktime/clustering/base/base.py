@@ -27,7 +27,7 @@ CenterCalculatorFunc = Callable[[NumpyArray], NumpyArray]
 
 
 class BaseClusterer(BaseEstimator):
-    """Base Clusterer"""
+    """Base Clusterer."""
 
     def __init__(self):
         super(BaseClusterer, self).__init__()
@@ -115,7 +115,7 @@ class BaseClusterer(BaseEstimator):
 
     def _check_params(self, X: NumpyArray):
         """
-        Custom input checking, should raise errors.
+        Check input, should raise errors.
 
         Parameters
         ----------
@@ -148,7 +148,7 @@ class BaseClusterer(BaseEstimator):
         Retrieve fitted parameters of cluster model.
 
         Returns
-        ----------
+        -------
         param_dict: dictionary of fitted parameters
         """
         self.check_is_fitted()
@@ -162,7 +162,7 @@ class BaseClusterer(BaseEstimator):
             core logic
 
         Returns
-        ----------
+        -------
         param_dict: dictionary of fitted parameters
         """
         raise NotImplementedError
@@ -200,7 +200,7 @@ class BaseClusterCenterInitializer:
 
     def initialize_centers(self) -> NumpyArray:
         """
-        Method used to initialise centers
+        Initialise centres.
 
         Returns
         -------
@@ -212,7 +212,7 @@ class BaseClusterCenterInitializer:
 
 
 class BaseClusterAverage:
-    """Base Cluster Average
+    """Base Cluster Average.
 
     Parameters
     ----------
@@ -226,7 +226,7 @@ class BaseClusterAverage:
 
     def average(self) -> NumpyArray:
         """
-        Method called to find the average for a distance metric
+        Find the average for a distance metric.
 
         Returns
         -------
