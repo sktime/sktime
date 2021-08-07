@@ -130,9 +130,6 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "is the forecaster capable of returning prediction intervals in predict?",
     ),
-    # "capability:multivariate" is the inverse of "univariate-only" tag.
-    # They are kept distinct intentionally for easier TSC refactoring.
-    # Will be merged after refactor completion.
     (
         "capability:multivariate",
         "classifier",
