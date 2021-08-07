@@ -158,7 +158,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:train_estimate",
         "classifier",
         "bool",
-        "can the classifier produce out-of-bag predictions on the training set?",
+        "can the classifier estimate its performance on the training set?",
     ),
     (
         "capability:contractable",
