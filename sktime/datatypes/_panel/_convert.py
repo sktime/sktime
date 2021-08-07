@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from pandas.core.indexes import multi
 
 __all__ = [
     "convert_dict",
@@ -830,7 +829,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     for instance_idx in instance_idxs:
         iidx = instance_idxs
         instance = [
-            pd.DataFrame(i[1], columns=[i[0]]) for i in X.loc[iidx, :].iteritems()
+            pd.DataFrame(i[1], columns=[i[0]]) for i in X.loc[iidx, :].iteritems()  # noqa
         ]
         # instance = [
         #     _val if isinstance(_val, (pd.Series) else pd.Series(_val, name=_lab)
