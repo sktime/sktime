@@ -192,14 +192,13 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     elif not isinstance(to_type, str):
         raise TypeError("to_type must be a str or list of str")
 
-    if not isinstance(as_scitype, str):
-        raise TypeError("as_scitype must be a str")
-
     if as_scitype is None:
         if isinstance(to_type, str):
             as_scitype = mtype_to_scitype(to_type)
         else:
             as_scitype = mtype_to_scitype(to_type[0])
+    elif not isinstance(as_scitype, str):
+        raise TypeError("as_scitype must be a str or None")
 
     from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
 
