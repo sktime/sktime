@@ -828,10 +828,14 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
     instances = []
     for instance_idx in instance_idxs:
+        iidx = instance_idxs
         instance = [
-            _val if isinstance(_val, pd.Series) else pd.Series(_val, name=_lab)
-            for _lab, _val in X.loc[instance_idx, :].iteritems()  # noqa
+            pd.DataFrame(i[1], columns=[i[0]]) for i in X.loc[iidx, :].iteritems()
         ]
+        # instance = [
+        #     _val if isinstance(_val, (pd.Series) else pd.Series(_val, name=_lab)
+        #     for _lab, _val in X.loc[instance_idx, :].iteritems()  # noqa
+        # ]
         # instance = [
         #     X.loc[instance_idx, _label]
         #     if isinstance(X.loc[instance_idx, _label], pd.Series)
