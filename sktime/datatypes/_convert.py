@@ -180,10 +180,10 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     if obj is None:
         return None
 
-    from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
-
     if as_scitype is None:
-        as_scitype = mtype_to_scitype(from_type)
+        as_scitype = mtype_to_scitype(to_type)
+
+    from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
 
     # if to_type is a list:
     if isinstance(to_type, list):
