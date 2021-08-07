@@ -2,7 +2,11 @@
 """Cluster center initializers."""
 
 __author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["ForgyCenterInitializer", "KMeansPlusPlusCenterInitializer"]
+__all__ = [
+    "ForgyCenterInitializer",
+    "KMeansPlusPlusCenterInitializer",
+    "RandomCenterInitializer",
+]
 
 import numpy as np
 from sklearn.utils import check_random_state
