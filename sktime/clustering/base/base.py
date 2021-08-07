@@ -169,7 +169,7 @@ class BaseClusterer(BaseEstimator):
 
 
 class BaseClusterCenterInitializer:
-    """Base Cluster Center Initializer
+    """Base Cluster Center Initializer.
 
     Parameters
     ----------
