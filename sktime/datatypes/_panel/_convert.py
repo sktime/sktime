@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from pandas.core.indexes import multi
 
 __all__ = [
     "convert_dict",
@@ -9,6 +10,7 @@ __all__ = [
 
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 
+from sktime.datatypes._panel._check import is_nested_dataframe
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -767,7 +769,9 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(obj, store=None):
 
-    return from_multi_index_to_nested(X=obj, instance_index_name="instances")
+    return from_multi_index_to_nested(
+        multi_ind_dataframe=obj, instance_index="instances"
+    )
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
@@ -858,7 +862,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 def from_nested_to_multi_index_adp(obj, store=None):
 
     return from_nested_to_multi_index(
-        X=obj, instance_index_name="instances", time_index="timepoints"
+        X=obj, instance_index="instances", time_index="timepoints"
     )
 
 
@@ -1042,35 +1046,3 @@ def from_numpy3D_to_dflist(obj, store=None):
 
 
 convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
-
-
-def is_nested_dataframe(X):
-    """Check whether the input is a nested DataFrame.
-
-    To allow for a mixture of nested and primitive columns types the
-    the considers whether any column is a nested np.ndarray or pd.Series.
-
-    Column is consider nested if any cells in column have a nested structure.
-
-    Parameters
-    ----------
-    X: Input that is checked to determine if it is a nested DataFrame.
-
-    Returns
-    -------
-    bool: Whether the input is a nested DataFrame
-    """
-    # return isinstance(X, pd.DataFrame) and isinstance(
-    #     X.iloc[0, 0], (np.ndarray, pd.Series)
-    # )
-    is_dataframe = isinstance(X, pd.DataFrame)
-
-    # If not a DataFrame we know is_nested_dataframe is False
-    if not is_dataframe:
-        return is_dataframe
-
-    # Otherwise we'll see if any column has a nested structure in first row
-    else:
-        is_nested = are_columns_nested(X).any()
-
-        return is_dataframe and is_nested

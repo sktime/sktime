@@ -64,11 +64,13 @@ def test_convert(scitype):
                 cond2 = from_fixture is not None and from_fixture[0] is not None
                 # from-fixture is not None and not lossy
                 cond3 = cond2 and from_fixture[1] is not None and not from_fixture[1]
+                # conversion is implemented
+                cond4 = conv_mat[to_type][from_type]
 
                 msg = f"conversion {from_type} to {to_type} failed for fixture {i}"
 
                 # test that converted from-fixture equals to-fixture
-                if cond1 and cond2 and cond3:
+                if cond1 and cond2 and cond3 and cond4:
 
                     converted_fixture_i = convert(
                         obj=from_fixture[0],
