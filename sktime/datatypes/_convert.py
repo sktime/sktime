@@ -137,8 +137,14 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
     if obj is None:
         return None
 
+    if not isinstance(to_type, str):
+        raise TypeError("to_type must be a str or list of str")
+    if not isinstance(from_type, str):
+        raise TypeError("from_type must be a str or list of str")
     if as_scitype is None:
         as_scitype = mtype_to_scitype(from_type)
+    elif not isinstance(as_scitype, str):
+        raise TypeError("as_scitype must be str or None")
 
     key = (from_type, to_type, as_scitype)
 
@@ -180,8 +186,20 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     if obj is None:
         return None
 
+    if isinstance(to_type, list):
+        if not np.all(isinstance(x, str) for x in to_type):
+            raise TypeError("to_type must be a str or list of str")
+    elif not isinstance(to_type, str):
+        raise TypeError("to_type must be a str or list of str")
+
+    if not isinstance(as_scitype, str):
+        raise TypeError("as_scitype must be a str")
+
     if as_scitype is None:
-        as_scitype = mtype_to_scitype(to_type)
+        if isinstance(to_type, str):
+            as_scitype = mtype_to_scitype(to_type)
+        else:
+            as_scitype = mtype_to_scitype(to_type[0])
 
     from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
 
