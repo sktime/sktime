@@ -223,6 +223,7 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     -------
     bool: Whether the input is a nested DataFrame
     """
+
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata

@@ -88,7 +88,6 @@ def _tuple_equals(x, y):
     bool - True if x and y are equal in value
         x and y do not need to be equal in reference
     """
-
     n = len(x)
 
     if n != len(y):
