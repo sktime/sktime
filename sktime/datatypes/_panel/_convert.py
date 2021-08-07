@@ -827,7 +827,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
     instances = []
     for instance_idx in instance_idxs:
-        iidx = instance_idxs
+        iidx = instance_idx
         instance = [
             pd.DataFrame(i[1], columns=[i[0]])
             for i in X.loc[iidx, :].iteritems()  # noqa
