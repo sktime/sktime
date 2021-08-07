@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning"]
+"""Utilities for validating panel data."""
+
+__author__ = ["mloning"]
 __all__ = [
     "check_X",
     "check_y",
@@ -27,6 +29,7 @@ def check_X(
     coerce_to_pandas=False,
 ):
     """Validate input data.
+
     Parameters
     ----------
     X : pd.DataFrame or np.array
@@ -41,10 +44,12 @@ def check_X(
         If True, X will be coerced to a 3-dimensional numpy array.
     coerce_to_pandas : bool, optional (default=False)
         If True, X will be coerced to a nested pandas DataFrame.
+
     Returns
     -------
     X : pd.DataFrame or np.array
         Checked and possibly converted input data
+
     Raises
     ------
     ValueError
@@ -108,6 +113,7 @@ def check_X(
 
 def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     """Validate input data.
+
     Parameters
     ----------
     y : pd.Series or np.array
@@ -149,11 +155,11 @@ def check_X_y(
     coerce_to_pandas=False,
 ):
     """Validate input data.
+
     Parameters
     ----------
     X : pd.DataFrame
     y : pd.Series or np.array
-
     enforce_univariate : bool, optional (default=False)
         Enforce that X is univariate.
     enforce_min_instances : int, optional (default=1)
@@ -164,6 +170,7 @@ def check_X_y(
         If True, X will be coerced to a 3-dimensional numpy array.
     coerce_to_pandas : bool, optional (default=False)
         If True, X will be coerced to a nested pandas DataFrame.
+
     Returns
     -------
     X : pd.DataFrame or np.array

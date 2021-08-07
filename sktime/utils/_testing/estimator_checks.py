@@ -73,7 +73,7 @@ def check_estimator(Estimator, exclude=None):
 
 
 def yield_estimator_checks(exclude=None):
-    """Iterator to yield estimator checks"""
+    """Return iterator to yield estimator checks."""
     checks = [
         check_inheritance,
         check_required_params,
@@ -103,6 +103,7 @@ def yield_estimator_checks(exclude=None):
 
 
 def check_required_params(Estimator):
+    """Check required parameter interface."""
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
         required_params = Estimator._required_parameters
@@ -248,7 +249,7 @@ def check_constructor(Estimator):
     # Ensure that init does nothing but set parameters
     # No logic/interaction with other parameters
     def param_filter(p):
-        """Identify hyper parameters of an estimator"""
+        """Identify hyper parameters of an estimator."""
         return (
             p.name != "self" and p.kind != p.VAR_KEYWORD and p.kind != p.VAR_POSITIONAL
         )
@@ -550,7 +551,7 @@ def _get_err_msg(estimator):
 
 
 def _construct_instance(Estimator):
-    """Construct Estimator instance if possible"""
+    """Construct Estimator instance if possible."""
     # if non-default parameters are required, but none have been found,
     # raise error
     if hasattr(Estimator, "_required_parameters"):
@@ -570,8 +571,7 @@ def _construct_instance(Estimator):
 
 
 def _make_args(estimator, method, **kwargs):
-    """Helper function to generate appropriate arguments for testing different
-    estimator types and their methods"""
+    """Generate testing arguments for estimator methods."""
     if method == "fit":
         return _make_fit_args(estimator, **kwargs)
     if method == "update":
@@ -681,8 +681,7 @@ def _make_inverse_transform_args(estimator, **kwargs):
 
 
 def _make_primitives(n_columns=1, random_state=None):
-    """Generate one or more primitives. Useful for checking inverse-transform
-    of series-to-primitives transformer"""
+    """Generate one or more primitives, for checking inverse-transform."""
     rng = check_random_state(random_state)
     if n_columns == 1:
         return rng.rand()
@@ -690,8 +689,7 @@ def _make_primitives(n_columns=1, random_state=None):
 
 
 def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
-    """Generate tabular X. Useful for checking inverse-transform
-    of panel-to-tabular transformer"""
+    """Generate tabular X, for checking inverse-transform."""
     rng = check_random_state(random_state)
     X = rng.rand(n_instances, n_columns)
     if return_numpy:
@@ -701,7 +699,7 @@ def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state
 
 
 def _compare_nested_frame(func, x, y, **kwargs):
-    """Helper function to compare two nested pd.DataFrames
+    """Comper two nested pd.DataFrames.
 
     Parameters
     ----------
@@ -761,7 +759,7 @@ def _assert_array_equal(x, y, err_msg=""):
 
 
 def _get_args(function, varargs=False):
-    """Helper to get function arguments"""
+    """Get function arguments."""
     try:
         params = signature(function).parameters
     except ValueError:
