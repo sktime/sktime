@@ -240,7 +240,7 @@ class BaseClusterAverage:
 
 
 class BaseApproximate:
-    """Base Approximate
+    """Base Approximate.
 
     Parameters
     ----------
@@ -254,7 +254,7 @@ class BaseApproximate:
 
     def approximate(self) -> int:
         """
-        Method called to get the approximation
+        Get the approximation.
 
         Returns
         -------
