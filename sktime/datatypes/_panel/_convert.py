@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from pandas.core.indexes import multi
 
 __all__ = [
     "convert_dict",
@@ -768,7 +769,9 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(obj, store=None):
 
-    return from_multi_index_to_nested(X=obj, instance_index_name="instances")
+    return from_multi_index_to_nested(
+        multi_ind_dataframe=obj, instance_index_name="instances"
+    )
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
