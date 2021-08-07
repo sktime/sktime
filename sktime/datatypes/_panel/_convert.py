@@ -859,7 +859,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 def from_nested_to_multi_index_adp(obj, store=None):
 
     return from_nested_to_multi_index(
-        X=obj, instance_index_name="instances", time_index="timepoints"
+        X=obj, instance_index="instances", time_index="timepoints"
     )
 
 
