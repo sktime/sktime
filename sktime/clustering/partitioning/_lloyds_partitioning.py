@@ -32,7 +32,7 @@ from sktime.distances.elastic_cython import (
     wdtw_distance,
 )
 from sktime.clustering.base.base import BaseClusterCenterInitializer
-from sktime.clustering.partitioning import (
+from sktime.clustering.partitioning._center_initializers import (
     ForgyCenterInitializer,
     RandomCenterInitializer,
 )

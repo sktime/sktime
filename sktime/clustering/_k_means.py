@@ -26,37 +26,37 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
 
     Parameters
     ----------
-    n_clusters: int, default = 8
+    n_clusters : int, default = 8
         The number of clusters to form as the number of
         centroids to generate.
 
-    init_algorithm: Init_Algo, default = forgy
+    init_algorithm : Init_Algo, default = forgy
         Algorithm that is used to initialise the cluster
         centers. str options are "forgy", "random" or
         "k-means++". If using custom center init algorithm
         then must be of type Init_Algo
 
-    max_iter: int, default = 300
+    max_iter : int, default = 300
         Maximum number of iterations of time series k means
         for a single run.
 
-    verbose: bool, default = False
+    verbose : bool, default = False
         Verbosity mode.
 
-    metric: Metric_Parameter, default = None
+    metric : Metric_Parameter, default = None
         The distance metric that is used to calculate the
         distance between points.
 
-    averaging_algorithm: Averaging_Algo, default = "mean"
+    averaging_algorithm : Averaging_Algo, default = "mean"
         The method used to create the average from a cluster.
         str options are "dba" dtw barycenter averaging and
         "means" for mean average.
 
-    averaging_algorithm_iterations: int, default = 10
+    averaging_algorithm_iterations : int, default = 10
         Where appropriate (i.e. DBA) the average is refined by
         iterations. This is the number of times it is refined
 
-    random_state: NumpyRandomState, default = np.random.RandomState(1)
+    random_state : NumpyRandomState, default = np.random.RandomState(1)
         Generator used to initialise the centers.
     """
 

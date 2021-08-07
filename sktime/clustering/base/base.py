@@ -34,7 +34,7 @@ class BaseClusterer(BaseEstimator):
 
     def fit(self, X: NumpyOrDF, y=None):
         """
-        Fit the clustering algorithm on the dataset X
+        Fit the clustering algorithm on the dataset X.
 
         Parameters
         ----------
@@ -84,9 +84,7 @@ class BaseClusterer(BaseEstimator):
 
     def _fit(self, X: NumpyArray):
         """
-        Fit the clustering algorithm on the dataset X
-
-            core logic
+        Fit the clustering algorithm on the dataset X.
 
         Parameters
         ----------
@@ -103,8 +101,6 @@ class BaseClusterer(BaseEstimator):
         """
         Return cluster center index for data samples.
 
-            core logic
-
         Parameters
         ----------
         X: 2D np.array with shape (n_instances, n_timepoints)
@@ -119,7 +115,7 @@ class BaseClusterer(BaseEstimator):
 
     def _check_params(self, X: NumpyArray):
         """
-        Custom input checking, should raise errors
+        Custom input checking, should raise errors.
 
         Parameters
         ----------
@@ -129,7 +125,7 @@ class BaseClusterer(BaseEstimator):
 
     def fit_predict(self, X: NumpyOrDF, y=None) -> NumpyArray:
         """
-        clusters time series and returns cluster labels
+        Cluster time series and returns cluster labels.
 
         Parameters
         ----------
@@ -149,9 +145,9 @@ class BaseClusterer(BaseEstimator):
 
     def get_fitted_params(self):
         """
-        Retrieves fitted parameters of cluster model
+        Retrieve fitted parameters of cluster model.
 
-        returns
+        Returns
         ----------
         param_dict: dictionary of fitted parameters
         """
@@ -161,11 +157,11 @@ class BaseClusterer(BaseEstimator):
 
     def _get_fitted_params(self):
         """
-        Retrieves fitted parameters of cluster model
+        Retrieve fitted parameters of cluster model.
 
             core logic
 
-        returns
+        Returns
         ----------
         param_dict: dictionary of fitted parameters
         """
