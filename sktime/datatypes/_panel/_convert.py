@@ -9,6 +9,7 @@ __all__ = [
 
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 
+from sktime.datatypes._panel._check import is_nested_dataframe
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -1042,35 +1043,3 @@ def from_numpy3D_to_dflist(obj, store=None):
 
 
 convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
-
-
-def is_nested_dataframe(X):
-    """Check whether the input is a nested DataFrame.
-
-    To allow for a mixture of nested and primitive columns types the
-    the considers whether any column is a nested np.ndarray or pd.Series.
-
-    Column is consider nested if any cells in column have a nested structure.
-
-    Parameters
-    ----------
-    X: Input that is checked to determine if it is a nested DataFrame.
-
-    Returns
-    -------
-    bool: Whether the input is a nested DataFrame
-    """
-    # return isinstance(X, pd.DataFrame) and isinstance(
-    #     X.iloc[0, 0], (np.ndarray, pd.Series)
-    # )
-    is_dataframe = isinstance(X, pd.DataFrame)
-
-    # If not a DataFrame we know is_nested_dataframe is False
-    if not is_dataframe:
-        return is_dataframe
-
-    # Otherwise we'll see if any column has a nested structure in first row
-    else:
-        is_nested = are_columns_nested(X).any()
-
-        return is_dataframe and is_nested

@@ -19,9 +19,8 @@ from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_multi_index,
     from_multi_index_to_nested,
     from_nested_to_multi_index,
-    are_columns_nested,
-    is_nested_dataframe,
 )
+from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)

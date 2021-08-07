@@ -179,3 +179,74 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
 
 
 check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_Panel
+
+
+def _cell_is_series_or_array(cell):
+    return isinstance(cell, (pd.Series, np.ndarray))
+
+
+def _nested_cell_mask(X):
+    return X.applymap(_cell_is_series_or_array)
+
+
+def are_columns_nested(X):
+    """Check whether any cells have nested structure in each DataFrame column.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame to check for nested data structures.
+
+    Returns
+    -------
+    any_nested : bool
+        If True, at least one column is nested.
+        If False, no nested columns.
+    """
+    any_nested = _nested_cell_mask(X).any().values
+    return any_nested
+
+
+def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
+    """Check whether the input is a nested DataFrame.
+
+    To allow for a mixture of nested and primitive columns types the
+    the considers whether any column is a nested np.ndarray or pd.Series.
+
+    Column is consider nested if any cells in column have a nested structure.
+
+    Parameters
+    ----------
+    X: Input that is checked to determine if it is a nested DataFrame.
+
+    Returns
+    -------
+    bool: Whether the input is a nested DataFrame
+    """
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        else:
+            return valid
+
+    # If not a DataFrame we know is_nested_dataframe is False
+    if not isinstance(obj, pd.DataFrame):
+        msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
+        return ret(False, msg, None, return_metadata)
+
+    # Otherwise we'll see if any column has a nested structure in first row
+    else:
+        if not are_columns_nested(obj).any():
+            msg = f"{var_name} entries must be pd.Series"
+            return ret(False, msg, None, return_metadata)
+
+    metadata = dict()
+    metadata["is_univariate"] = True
+    # metadata["is_equally_spaced"] = todo
+    # metadata["is_empty"] = todo
+    metadata["is_one_series"] = len(obj) == 1
+
+    return ret(True, None, metadata, return_metadata)
+
+
+check_dict[("nested_univ", "Panel")] = is_nested_dataframe
