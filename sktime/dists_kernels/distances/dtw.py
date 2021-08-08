@@ -2,12 +2,17 @@
 import math
 from enum import Enum
 import numpy as np
-from typing import Union
+from typing import Union, TypedDict
 from numba import prange, njit
 
 from sktime.dists_kernels.distances.base.base import BaseDistance
 
 np_or_none = Union[np.ndarray, None]
+
+
+class LowerBoundingKwargs(TypedDict, total=False):
+    sakoe_chiba_window_radius: int
+    itakura_max_slope: float
 
 
 class LowerBounding(Enum):
@@ -20,7 +25,7 @@ class LowerBounding(Enum):
         self.string_name: str = string_name
 
     def create_bounding_matrix(
-        self, x: np.ndarray, y: np.ndarray, **kwargs
+        self, x: np.ndarray, y: np.ndarray, **kwargs: LowerBoundingKwargs
     ) -> np.ndarray:
         """
         Method used to create the bounding matrix based on the enum
@@ -33,6 +38,13 @@ class LowerBounding(Enum):
         y: np.ndarray
             numpy array of second time series
 
+        **kwargs: LowerBoundingKwargs
+            sakoe_chiba_window_radius: int, defaults = 2
+                Integer that is the radius of the sakoe chiba window
+
+            itakura_max_slope: float, defaults = 2.
+                Gradient of the slope fo itakura
+
         Returns
         -------
         bounding_matrix: np.ndarray
@@ -40,13 +52,17 @@ class LowerBounding(Enum):
             bound are infinity.
         """
         if self.int_val == 2:
-            bounding_matrix = self.sakoe_chiba(
-                x, y, kwargs.get("sakoe_chiba_window_radius")
-            )
+            if "sakoe_chiba_window_radius" in kwargs.keys():
+                sakoe_chiba_window_radius: int = kwargs.get("sakoe_chiba_window_radius")
+            else:
+                sakoe_chiba_window_radius: int = 2
+            bounding_matrix = self.sakoe_chiba(x, y, sakoe_chiba_window_radius)
         elif self.int_val == 3:
-            bounding_matrix = self.itakura_parallelogram(
-                x, y, kwargs.get("itakura_max_slope")
-            )
+            if "itakura_max_slope" in kwargs.keys():
+                itakura_max_slope: float = kwargs.get("itakura_max_slope")
+            else:
+                itakura_max_slope: float = 2.0
+            bounding_matrix = self.itakura_parallelogram(x, y, itakura_max_slope)
         else:
             bounding_matrix = self.no_bounding(x, y)
 
@@ -280,6 +296,7 @@ class _DtwDistance(BaseDistance):
     @staticmethod
     @njit(nopython=True)
     def _dtw_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        # self._cost_matrix(x, y, )
         return np.sum(np.square(x - y))
 
     @staticmethod

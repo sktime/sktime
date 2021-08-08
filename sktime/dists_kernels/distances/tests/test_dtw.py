@@ -6,6 +6,10 @@ from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.dists_kernels.distances.dtw import LowerBounding
 
 
+def test_dtw_distance():
+    pass
+
+
 def test_lower_bounding():
     dimensions = [8, 50]
     nested, _ = make_classification_problem(
@@ -27,7 +31,7 @@ def test_lower_bounding():
 
     sakoe_chiba = LowerBounding.SAKOE_CHIBA
 
-    sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=4)
+    sakoe_chiba.create_bounding_matrix(x, y)
 
     itakura_parallelogram = LowerBounding.ITAKURA_PARALLELOGRAM
-    itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=1.5)
+    itakura_parallelogram.create_bounding_matrix(x, y)
