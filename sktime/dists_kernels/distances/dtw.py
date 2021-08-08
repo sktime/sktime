@@ -106,13 +106,13 @@ class LowerBounding(Enum):
 
         x_upper_line_values = np.interp(
             list(range(x_size)),
-            [0, x_size],
-            [0 - sakoe_chiba_window_radius, y_size - sakoe_chiba_window_radius],
+            [0, x_size - 1],
+            [0 - sakoe_chiba_window_radius, y_size - sakoe_chiba_window_radius - 1],
         )
         x_lower_line_values = np.interp(
             list(range(x_size)),
-            [0, x_size],
-            [0 + sakoe_chiba_window_radius, y_size + sakoe_chiba_window_radius],
+            [0, x_size - 1],
+            [0 + sakoe_chiba_window_radius, y_size + sakoe_chiba_window_radius - 1],
         )
 
         bounding_matrix = self.create_shape_on_matrix(
@@ -166,13 +166,13 @@ class LowerBounding(Enum):
 
         x_upper_line_values = np.interp(
             list(range(x_size)),
-            [0, middle_x_lower, middle_x_upper, x_size],
-            [0, middle_y_upper, middle_y_upper, y_size],
+            [0, middle_x_lower, middle_x_upper, x_size - 1],
+            [0, middle_y_upper, middle_y_upper, y_size - 1],
         )
         x_lower_line_values = np.interp(
             list(range(x_size)),
-            [0, middle_x_lower, middle_x_upper, x_size],
-            [0, middle_y_lower, middle_y_lower, y_size],
+            [0, middle_x_lower, middle_x_upper, x_size - 1],
+            [0, middle_y_lower, middle_y_lower, y_size - 1],
         )
 
         bounding_matrix = self.create_shape_on_matrix(
@@ -275,7 +275,7 @@ class _DtwDistance(BaseDistance):
         y: np.ndarray
             time series to find distance from
         """
-        return _DtwDistance._dtw_distance(x, y)
+        return self._dtw_distance(x, y)
 
     @staticmethod
     @njit(nopython=True)
@@ -284,7 +284,7 @@ class _DtwDistance(BaseDistance):
 
     @staticmethod
     @njit(nopython=True)
-    def _cost_matrix(x, y, mask):
+    def _cost_matrix(x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray):
         pass
 
 

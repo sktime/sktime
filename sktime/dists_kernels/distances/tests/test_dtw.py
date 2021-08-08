@@ -7,7 +7,7 @@ from sktime.dists_kernels.distances.dtw import LowerBounding
 
 
 def test_lower_bounding():
-    dimensions = [7, 10]
+    dimensions = [8, 50]
     nested, _ = make_classification_problem(
         n_instances=2, n_columns=dimensions[0], n_timepoints=10, n_classes=1
     )
