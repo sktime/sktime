@@ -87,7 +87,7 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
     if not n == len(align.columns):
         raise ValueError(
             f"number of data frames in {df_name} must equal"
-            f" number of index columns in {align}"
+            f" number of index columns in {align_name}"
         )
 
     for i, Xi in enumerate(X):
