@@ -4,24 +4,24 @@
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["DrCIF"]
 
-import numpy as np
 import math
+import time
 
+import numpy as np
 from joblib import Parallel, delayed
-from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-
+from sktime.base._base import _clone_estimator
+from sktime.classification.base import BaseClassifier
 from sktime.contrib._continuous_interval_tree import (
     _drcif_feature,
     ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.classification.base import BaseClassifier
 
 
 class DrCIF(BaseClassifier):
@@ -102,7 +102,9 @@ class DrCIF(BaseClassifier):
         n_intervals=None,
         att_subsample_size=10,
         base_estimator=None,
-        save_transform_for_estimate=False,
+        time_limit_in_minutes=0.0,
+        contract_max_n_estimators=500,
+        save_transformed_data=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -114,7 +116,11 @@ class DrCIF(BaseClassifier):
         self.max_interval = max_interval
         self.att_subsample_size = att_subsample_size
 
-        self.save_transform_for_estimate = save_transform_for_estimate
+        self.time_limit_in_minutes = time_limit_in_minutes
+        self.contract_max_n_estimators = contract_max_n_estimators
+        self.save_transformed_data = save_transformed_data
+        self.transformed_data = []
+
         self.random_state = random_state
         self.n_jobs = n_jobs
 
@@ -128,8 +134,8 @@ class DrCIF(BaseClassifier):
         self.__min_interval = []
         self.total_intervals = 0
         self.classifiers = []
-        self.atts = []
         self.intervals = []
+        self.atts = []
         self.dims = []
         self.classes_ = []
         self.tree = None
@@ -157,6 +163,10 @@ class DrCIF(BaseClassifier):
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+
+        time_limit = self.time_limit_in_minutes * 60
+        start_time = time.time()
+        train_time = 0
 
         if self.base_estimator is None or self.base_estimator == "DTC":
             self.tree = DecisionTreeClassifier(criterion="entropy")
@@ -244,18 +254,64 @@ class DrCIF(BaseClassifier):
 
         self.total_intervals = sum(self.__n_intervals)
 
-        fit = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._fit_estimator)(
-                X,
-                X_p,
-                X_d,
-                y,
-                i,
-            )
-            for i in range(self.n_estimators)
-        )
+        if time_limit > 0:
+            self.n_estimators = 0
+            self.classifiers = []
+            self.intervals = []
+            self.atts = []
+            self.dims = []
+            self.transformed_data = []
 
-        self.classifiers, self.intervals, self.dims, self.atts = zip(*fit)
+            while (
+                train_time < time_limit
+                and self.n_estimators < self.contract_max_n_estimators
+            ):
+                fit = Parallel(n_jobs=self.n_jobs)(
+                    delayed(self._fit_estimator)(
+                        X,
+                        X_p,
+                        X_d,
+                        y,
+                        i,
+                    )
+                    for i in range(self.n_jobs)
+                )
+
+                (
+                    classifiers,
+                    intervals,
+                    dims,
+                    atts,
+                    transformed_data,
+                ) = zip(*fit)
+
+                self.classifiers += classifiers
+                self.intervals += intervals
+                self.atts += atts
+                self.dims += dims
+                self.transformed_data += transformed_data
+
+                self.n_estimators += self.n_jobs
+                train_time = time.time() - start_time
+        else:
+            fit = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._fit_estimator)(
+                    X,
+                    X_p,
+                    X_d,
+                    y,
+                    i,
+                )
+                for i in range(self.n_estimators)
+            )
+
+            (
+                self.classifiers,
+                self.intervals,
+                self.dims,
+                self.atts,
+                self.transformed_data,
+            ) = zip(*fit)
 
         self._is_fitted = True
         return self
@@ -342,6 +398,50 @@ class DrCIF(BaseClassifier):
         )
         return output
 
+    def _get_train_probs(self, X, y):
+        self.check_is_fitted()
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
+
+        n_instances, n_dims, series_length = X.shape
+
+        if (
+            n_instances != self.n_instances
+            or n_dims != self.n_dims
+            or series_length != self.series_length
+        ):
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
+
+        if not self.save_transformed_data:
+            raise ValueError("Currently only works with saved transform data from fit.")
+
+        p = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._train_probas_for_estimator)(
+                y,
+                i,
+            )
+            for i in range(self.n_estimators)
+        )
+        y_probas, oobs = zip(*p)
+
+        results = np.sum(y_probas, axis=0)
+        divisors = np.zeros(n_instances)
+        for oob in oobs:
+            for inst in oob:
+                divisors[inst] += 1
+
+        for i in range(n_instances):
+            results[i] = (
+                np.ones(self.n_classes) * (1 / self.n_classes)
+                if divisors[i] == 0
+                else results[i] / (np.ones(self.n_classes) * divisors[i])
+            )
+
+        return results
+
     def _fit_estimator(self, X, X_p, X_d, y, idx):
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
@@ -401,14 +501,19 @@ class DrCIF(BaseClassifier):
 
                 j += 1
 
-        tree = clone(self.tree)
-        tree.set_params(random_state=rs)
+        tree = _clone_estimator(self.tree, rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
-        return [tree, intervals, dims, atts]
+        return [
+            tree,
+            intervals,
+            dims,
+            atts,
+            transformed_x if self.save_transformed_data else None,
+        ]
 
     def _predict_proba_for_estimator(
         self, X, X_p, X_d, classifier, intervals, dims, atts
@@ -442,3 +547,22 @@ class DrCIF(BaseClassifier):
             np.nan_to_num(transformed_x, False, 0, 0, 0)
 
             return classifier.predict_proba(transformed_x)
+
+    def _train_probas_for_estimator(self, y, idx):
+        rs = 255 if self.random_state == 0 else self.random_state
+        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rng = check_random_state(rs)
+
+        indices = range(self.n_instances)
+        subsample = rng.choice(self.n_instances, size=self.n_instances)
+        oob = [n for n in indices if n not in subsample]
+
+        clf = _clone_estimator(self.tree, rs)
+        clf.fit(self.transformed_data[idx][subsample], y[subsample])
+        probas = clf.predict_proba(self.transformed_data[idx][oob])
+
+        results = np.zeros((self.n_instances, self.n_classes))
+        for n, proba in enumerate(probas):
+            results[oob[n]] += proba
+
+        return [results, oob]

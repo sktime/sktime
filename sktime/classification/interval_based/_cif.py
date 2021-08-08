@@ -4,24 +4,23 @@
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["CanonicalIntervalForest"]
 
-import numpy as np
 import math
 
+import numpy as np
 from joblib import Parallel, delayed
-from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-
+from sktime.base._base import _clone_estimator
+from sktime.classification.base import BaseClassifier
 from sktime.contrib._continuous_interval_tree import (
     _cif_feature,
     ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.classification.base import BaseClassifier
 
 
 class CanonicalIntervalForest(BaseClassifier):
@@ -305,8 +304,7 @@ class CanonicalIntervalForest(BaseClassifier):
                     X, intervals[j], dims[j], atts[a], c22
                 )
 
-        tree = clone(self.tree)
-        tree.set_params(random_state=rs)
+        tree = _clone_estimator(self.tree, rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)

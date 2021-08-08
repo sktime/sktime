@@ -287,7 +287,7 @@ class BaseTimeSeriesForest(BaseForest):
         return X
 
     @property
-    def feature_importances_(self):
+    def feature_importances_(self, normalise_time_points=False):
         """Compute feature importances for time series forest"""
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
@@ -324,6 +324,8 @@ class BaseTimeSeriesForest(BaseForest):
 
         # preallocate array for feature importances
         fis = np.zeros((n_timepoints, n_features))
+        if normalise_time_points:
+            fis_count = np.zeros((n_timepoints, n_features))
 
         for i in range(n_estimators):
             # select tree
@@ -352,10 +354,18 @@ class BaseTimeSeriesForest(BaseForest):
 
                     # add feature importance for all time points of interval
                     fis[interval_time_points, k] += fi[column_index]
+                    if normalise_time_points:
+                        fis_count[interval_time_points, k] += 1
 
         # normalise by number of estimators and number of intervals
         fis = fis / n_estimators / n_intervals
 
         # format output
         fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+
+        if normalise_time_points:
+            fis_count = fis_count / n_estimators / n_intervals
+            fis_count = pd.DataFrame(fis_count, columns=feature_names, index=time_index)
+            fis /= fis_count
+
         return fis

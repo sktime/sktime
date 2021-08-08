@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import pytest
 from numpy import testing
 
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
 
 
@@ -21,14 +22,17 @@ def test_cif_on_gunpoint():
     testing.assert_array_equal(probas, cif_gunpoint_probas)
 
 
-def test_cif_on_power_demand():
+@pytest.mark.parametrize("base_estimator", ["CIT", "DTC"])
+def test_cif_on_power_demand(base_estimator):
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(100)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
+    cif = CanonicalIntervalForest(
+        n_estimators=20, base_estimator=base_estimator, random_state=0
+    )
     cif.fit(X_train, y_train)
 
     score = cif.score(X_test.iloc[indices], y_test[indices])
