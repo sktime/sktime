@@ -2,6 +2,26 @@
 """Abstract base class for unsupervised sequence aligners.
 
 This covers both pairwise and multiple sequence aligners.
+
+    class name: BaseAligner
+
+Scitype defining methods:
+    fitting              - fit(self, X, Z=None)
+    get alignment (iloc) - get_alignment()
+    get alignment (loc)  - get_alignment_loc()
+    get distance (float) - get_distance()
+    get distance matrix  - get_distance_matrix()
+
+Inspection methods:
+    hyper-parameter inspection  - get_params()
+    fitted parameter inspection - get_fitted_params()
+
+State:
+    fitted model/strategy   - by convention, any attributes ending in "_"
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
