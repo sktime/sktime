@@ -180,7 +180,7 @@ class BaseAligner(BaseEstimator):
         """
         raise NotImplementedError
 
-    def get_distances(self):
+    def get_distance_matrix(self):
         """Return distance matrix of alignment.
 
         Behaviour: returns pairwise distance matrix of alignment distances
