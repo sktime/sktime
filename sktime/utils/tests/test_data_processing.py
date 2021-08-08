@@ -21,6 +21,7 @@ from sktime.utils.data_processing import (
     from_nested_to_multi_index,
     are_columns_nested,
     is_nested_dataframe,
+    to_numpy_time_series,
 )
 
 
@@ -224,3 +225,29 @@ def test_from_nested_to_long(n_instances, n_columns, n_timepoints):
     assert isinstance(X_long, pd.DataFrame)
     assert X_long.shape == (n_instances * n_timepoints * n_columns, 4)
     assert (X_long.columns == ["case_id", "reading_id", "dim_id", "value"]).all()
+
+
+@pytest.mark.parametrize("n_instances", N_INSTANCES)
+@pytest.mark.parametrize("n_columns", N_COLUMNS)
+@pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
+def test_from_time_series_to_numpy(n_instances, n_columns, n_timepoints):
+    def test_result(result):
+        assert isinstance(result, np.ndarray)
+        assert result.ndim == 2
+
+    nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
+    # pandas series test
+    pd_series_ts = nested.iloc[0]
+    test_result(to_numpy_time_series(pd_series_ts))
+
+    # numpy test
+    np_series_ts = from_nested_to_3d_numpy(nested)[0]
+    test_result(to_numpy_time_series(np_series_ts))
+
+    # list test
+    list_series_ts = from_nested_to_3d_numpy(nested)[0].tolist()
+    test_result(to_numpy_time_series(list_series_ts))
+
+    # dataframe
+    with pytest.raises(TypeError):
+        to_numpy_time_series(nested)

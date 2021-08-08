@@ -881,17 +881,43 @@ def is_nested_dataframe(X):
     bool :
         Whether the input is a nested DataFrame
     """
-    # return isinstance(X, pd.DataFrame) and isinstance(
-    #     X.iloc[0, 0], (np.ndarray, pd.Series)
-    # )
-    is_dataframe = isinstance(X, pd.DataFrame)
+    return isinstance(X, pd.DataFrame) and are_columns_nested(X).any()
 
-    # If not a DataFrame we know is_nested_dataframe is False
-    if not is_dataframe:
-        return is_dataframe
 
-    # Otherwise we'll see if any column has a nested structure in first row
+def to_numpy_time_series(X) -> np.ndarray:
+    """
+    Method used to take a number of different time series
+    and format them to a numpy time series
+
+    Both univariate and multivariate series are supported
+
+    Nan values are converted to 0
+
+    Parameters
+    ----------
+    X: pd.series, numpy, list
+        Input time series to convert
+
+    Returns
+    -------
+    np.ndarray
+        Numpy version of the input
+    """
+    if isinstance(X, np.ndarray):
+        X_copy = np.array(X, copy=True)
+        if np.isnan(X_copy).any():
+            X_copy = np.nan_to_num(X_copy)
+        if X_copy.ndim <= 1:
+            X_copy = X_copy.reshape((-1, 1))
+        if X_copy.dtype != np.float:
+            X_copy = X_copy.astype(np.float)
+        return X_copy
+    elif isinstance(X, pd.Series):
+        return to_numpy_time_series(from_nested_to_2d_array(X, return_numpy=True))
+    elif isinstance(X, list):
+        return to_numpy_time_series(np.array(X))
     else:
-        is_nested = are_columns_nested(X).any()
-
-        return is_dataframe and is_nested
+        raise TypeError(
+            "The series passed is the incorrect type. It must be"
+            " a pd.Series, np.ndarray or a list"
+        )
