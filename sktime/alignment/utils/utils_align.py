@@ -1,0 +1,100 @@
+"""Utility functions for handling and working with alignments."""
+
+__author__ = ["fkiraly"]
+
+import pandas as pd
+
+# todo: need to wait for datatypes PR to merge
+# from sktime.datatypes import check_is
+
+
+def reindex_iloc(df, inds, copy=True):
+    """Reindex pandas.DataFrame with iloc indices, potentially out of bound.
+
+    Parameters
+    ----------
+    df: a pandas.DataFrame
+    inds: iterable, list or pd.Series - iloc indices to reindex to
+    copy: bool, optional, default=True - whether returned data frame is a new object
+        if not, values are references; passed to copy arg of df.reindex
+
+    Returns
+    -------
+    df_ret : pd.DataFrame - df reindexed to inds
+        identical to df.iloc[inds] if inds contains no out of bound index
+        out of bound incides will result in np.nan values
+    entries are reference (not copy)
+
+    Example
+    -------
+    X = pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14])
+    reindex_iloc(X, [1, 2, 6])
+    """
+    indexname = df.index.name
+
+    if indexname is None:
+        newindexname = "index"
+    else:
+        newindexname = indexname
+
+    df_ret = df.reset_index().reindex(inds, copy=copy).set_index(newindexname)
+
+    df_ret.index.name = indexname
+
+    return df_ret
+
+
+def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
+    """Convert iloc alignment to loc alignment, using reference data frame.
+
+    Parameters
+    ----------
+    align: pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
+        cols contain loc index of X[i] mapped to alignment coordinate for alignment
+    align_name: str, optional - name of "align" to display in error messages
+    df_name: str, optional - name of "X" to display in error messages
+
+    Returns
+    -------
+    pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
+        cols contain loc index of X[i] mapped to alignment coordinate for alignment
+
+    Example
+    -------
+    align_df = pd.DataFrame({'ind0' : [1,2,3], 'ind1' : [0,2,4]})
+    X = [pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14]),
+            pd.DataFrame({'a' : [1,2,3,5,6]}, index=[4,8,12,16,20])
+        ]
+
+    convert_align_to_align_loc(align_df, X)
+    """
+    # todo: need to wait for datatypes PR to merge
+    # from sktime.datatypes import check_is
+    # check_is(align, "align-frame", var_name=df_name)
+
+    align_loc_df = align.copy()
+
+    if not isinstance(X, list):
+        raise ValueError(f"{df_name} must be a list of pandas.DataFrame")
+
+    for Xi in X:
+        if not isinstance(Xi, pd.DataFrame):
+            raise ValueError(f"{df_name} must be a list of pandas.DataFrame")
+
+    n = len(X)
+
+    if not n == len(align.columns):
+        raise ValueError(
+            f"number of data frames in {df_name} must equal"
+            f" number of index columns in {align}"
+        )
+
+    for i, Xi in enumerate(X):
+
+        indi = "ind" + str(i)
+
+        # reindex X to the alignment positions
+        #  this also deels with np.nan indices
+        align_loc_df[indi] = reindex_iloc(Xi, align_loc_df[indi], copy=False).index
+
+    return align_loc_df
