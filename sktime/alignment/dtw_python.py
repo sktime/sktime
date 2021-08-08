@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Interface module to dtw-python package.
 
 Exposes basic interface, excluding multivariate case.
@@ -50,12 +51,16 @@ class AlignerDTW(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
     }
 
-    def __init__(self,
-                 dist_method='euclidean', step_pattern='symmetric2',
-                 window_type='none', open_begin=False, open_end=False,
-                 variable_to_align=None
-                ):
-
+    def __init__(
+        self,
+        dist_method="euclidean",
+        step_pattern="symmetric2",
+        window_type="none",
+        open_begin=False,
+        open_end=False,
+        variable_to_align=None,
+    ):
+        """Construct instance."""
         super(AlignerDTWdist, self).__init__()
 
         self.dist_method = dist_method
@@ -109,13 +114,16 @@ class AlignerDTW(BaseAligner):
         X2vec = X2[var_to_align].values
 
         # pass to the interfaced dtw function and store to self
-        alignment = dtw(X1vec, X2vec,
-                        dist_method=dist_method,
-                        step_pattern=step_pattern,
-                        window_type=window_type,
-                        open_begin=open_begin,
-                        open_end=open_end,
-                        keep_internals=True)
+        alignment = dtw(
+            X1vec,
+            X2vec,
+            dist_method=dist_method,
+            step_pattern=step_pattern,
+            window_type=window_type,
+            open_begin=open_begin,
+            open_end=open_end,
+            keep_internals=True,
+        )
 
         self.alignment = alignment
         self.X = X
@@ -138,9 +146,7 @@ class AlignerDTW(BaseAligner):
         alignment = self.alignment
 
         # convert to required data frame format and return
-        aligndf = pd.DataFrame(
-            {"ind0": alignment.index1, "ind1": alignment.index2}
-            )
+        aligndf = pd.DataFrame({"ind0": alignment.index1, "ind1": alignment.index2})
 
         return aligndf
 
@@ -208,15 +214,19 @@ class AlignerDTWdist(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
     }
 
-    def __init__(self,
-                 dist_trafo=None, step_pattern='symmetric2',
-                 window_type='none', open_begin=False, open_end=False,
-                ):
-
+    def __init__(
+        self,
+        dist_trafo=None,
+        step_pattern="symmetric2",
+        window_type="none",
+        open_begin=False,
+        open_end=False,
+    ):
+        """Construct instance."""
         super(AlignerDTWdist, self).__init__()
 
         if dist_trafo is None:
-            raise ValueError('No component dist_trafo provided')
+            raise ValueError("No component dist_trafo provided")
         else:
             self.dist_trafo = dist_trafo
 
@@ -255,12 +265,14 @@ class AlignerDTWdist(BaseAligner):
         distmat = dist_trafo(X1, X2)
 
         # pass to the interfaced dtw function and store to self
-        alignment = dtw(distmat,
-                        step_pattern=step_pattern,
-                        window_type=window_type,
-                        open_begin=open_begin,
-                        open_end=open_end,
-                        keep_internals=True)
+        alignment = dtw(
+            distmat,
+            step_pattern=step_pattern,
+            window_type=window_type,
+            open_begin=open_begin,
+            open_end=open_end,
+            keep_internals=True,
+        )
 
         self.alignment = alignment
         self.X = X
@@ -282,9 +294,7 @@ class AlignerDTWdist(BaseAligner):
         alignment = self.alignment
 
         # convert to required data frame format and return
-        aligndf = pd.DataFrame(
-            {"ind0": alignment.index1, "ind1": alignment.index2}
-            )
+        aligndf = pd.DataFrame({"ind0": alignment.index1, "ind1": alignment.index2})
 
         return aligndf
 

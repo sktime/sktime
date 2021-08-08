@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Utility functions for handling and working with alignments."""
 
 __author__ = ["fkiraly"]

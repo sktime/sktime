@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Abstract base class for unsupervised sequence aligners.
 
 This covers both pairwise and multiple sequence aligners.
@@ -92,7 +93,8 @@ class BaseAligner(BaseEstimator):
         """
         if not hasattr(self, "X"):
             raise NotImplementedError(
-                "fit needs to store X to self when using default get_aligned")
+                "fit needs to store X to self when using default get_aligned"
+            )
 
         X = self.X
 
@@ -124,8 +126,7 @@ class BaseAligner(BaseEstimator):
 
         for i, Xi_orig in enumerate(X_aligned_list):
 
-            indi = 'ind'+str(i)
-
+            indi = "ind" + str(i)
             X_aligned_list[i] = self._apply_alignment(Xi_orig, align[indi])
 
         return X_aligned_list
