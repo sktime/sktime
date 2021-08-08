@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
 import pandas as pd
 import numpy as np
 
@@ -31,7 +30,7 @@ class Selector(_PanelToPanelTransformer):
 
         Parameters
         ----------
-        X : pd DataFrame or np.array
+        X : pd DataFrame
         """
         self.check_is_fitted()
         if type(X) == pd.core.frame.DataFrame:
@@ -42,8 +41,16 @@ class Selector(_PanelToPanelTransformer):
         if type(X) == np.ndarray:
             return X[:, self.columns]
 
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X, y)
 
-class Concatenator(_PanelToTabularTransformer):
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
+
+
+class Concatenator(_PanelToPanelTransformer):
     """Concatenate pandas series or numpy arrays."""
 
     _tags = {
@@ -65,8 +72,18 @@ class Concatenator(_PanelToTabularTransformer):
         if type(X) != list:
             # Only for passing the sktime checks. `X` must be a list.
             return X
+        else:
+            # further checks need to be run to ensure
+            # all elements of the list are the same
+            if type(X[0]) == pd.core.frame.DataFrame:
+                return pd.concat(X, axis=1)
+            if type(X[0]) == np.ndarray:
+                return np.concatenate(tuple(X), axis=1)
 
-        if type(X) == pd.core.frame.DataFrame:
-            return pd.concat(X, axis=1)
-        if type(X) == np.ndarray:
-            return np.concatenate(tuple(X), axis=1)
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X, y)
+
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
