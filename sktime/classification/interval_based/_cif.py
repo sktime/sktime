@@ -15,7 +15,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib._continuous_interval_tree import (
+from sktime.contrib.classification_intervals._continuous_interval_tree import (
     _cif_feature,
     ContinuousIntervalTree,
 )
@@ -304,7 +304,7 @@ class CanonicalIntervalForest(BaseClassifier):
                     X, intervals[j], dims[j], atts[a], c22
                 )
 
-        tree = _clone_estimator(self.tree, rs)
+        tree = _clone_estimator(self.tree, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -342,6 +342,9 @@ class CanonicalIntervalForest(BaseClassifier):
             )
 
         curves = np.zeros((25, self.n_dims, self.series_length))
+        if normalise_time_points:
+            counts = np.zeros((25, self.n_dims, self.series_length))
+
         for i, tree in enumerate(self.classifiers):
             splits, gains = tree.tree_splits_gain()
 
@@ -355,3 +358,11 @@ class CanonicalIntervalForest(BaseClassifier):
                     self.intervals[i][interval][0], self.intervals[i][interval][1] + 1
                 ):
                     curves[att][dim][j] += gain
+                    if normalise_time_points:
+                        curves[att][dim][j] += 1
+
+        if normalise_time_points:
+            counts = counts / self.n_estimators / self.__n_intervals
+            curves /= counts
+
+        return curves

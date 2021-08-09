@@ -16,7 +16,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib._continuous_interval_tree import (
+from sktime.contrib.classification_intervals._continuous_interval_tree import (
     _drcif_feature,
     ContinuousIntervalTree,
 )
@@ -501,7 +501,7 @@ class DrCIF(BaseClassifier):
 
                 j += 1
 
-        tree = _clone_estimator(self.tree, rs)
+        tree = _clone_estimator(self.tree, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)

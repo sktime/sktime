@@ -1,26 +1,16 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Temporal importance curve diagram generators for interval forests."""
 
-# Temporal importance curve diagram generator for interval forests.
-# Applicable to other interval forests.
-# Inputs: figure save path, also used to load in attribute/timepoint inforamtion gain from text file
-#         seed, used in save path
-#         number of attributes used in the forests
-#         number of top attributes to plot
-#
-# Author: Matthew Middlehurst
+__author__ = ["Matthew Middlehurst"]
 
 import numpy as np
 from matplotlib import pyplot as plt
 
+from sktime.transformations.panel import catch22
 
-# Temporal importance curve diagram generator for interval forests
-def plot_curves(
-    curves,
-    curve_names,
-    top_curves_shown=None,
-    plot_mean=True,
-):
+
+def plot_curves(curves, curve_names, top_curves_shown=None, plot_mean=True):
+    """Temporal importance curve diagram generator for interval forests."""
     # find attributes to display by max information gain for any time point.
     top_curves_shown = top_curves_shown if top_curves_shown is None else len(curves)
     max_ig = [max(i) for i in curves]
@@ -56,3 +46,21 @@ def plot_curves(
     plt.ylabel("Information Gain")
 
     return plt
+
+
+def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=True):
+    """Temporal importance curve diagram generator for the CanonicalIntervalForest."""
+    curves = cif.temporal_importance_curves(normalise_time_points=normalise_time_points)
+    curves.reshape((25 * cif.n_dims, cif.series_length))
+    features = catch22.feature_names + ["Mean", "Standard Deviation", "Slope"]
+    curve_names = []
+    for feature in features:
+        for i in range(cif.n_dims):
+            name = feature if cif.n_dims == 1 else feature + " Dim " + str(i)
+            curve_names.append(name)
+    return plot_curves(
+        curves,
+        curve_names,
+        top_curves_shown=top_curves_shown,
+        plot_mean=plot_mean,
+    )
