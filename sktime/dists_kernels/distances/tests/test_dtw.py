@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from typing import List
 
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.data_processing import from_nested_to_3d_numpy
-from sktime.dists_kernels.distances.dtw import LowerBounding
+from sktime.dists_kernels.distances.dtw import LowerBounding, dtw
 
 
-def test_dtw_distance():
-    pass
-
-
-def test_lower_bounding():
-    dimensions = [8, 50]
+def _create_test_ts(dimensions: List[int]):
     nested, _ = make_classification_problem(
         n_instances=2, n_columns=dimensions[0], n_timepoints=10, n_classes=1
     )
@@ -22,7 +18,17 @@ def test_lower_bounding():
     )
     numpy_ts = from_nested_to_3d_numpy(nested)
     y = numpy_ts[0]
+    return x, y
 
+
+def test_dtw_distance():
+    x, y = _create_test_ts([10, 10])
+
+    dtw(x, y, lower_bounding=LowerBounding.NO_BOUNDING)
+
+
+def test_lower_bounding():
+    x, y = _create_test_ts([10, 10])
     no_constraints = LowerBounding.NO_BOUNDING
 
     assert np.array_equal(
@@ -31,7 +37,7 @@ def test_lower_bounding():
 
     sakoe_chiba = LowerBounding.SAKOE_CHIBA
 
-    sakoe_chiba.create_bounding_matrix(x, y)
+    sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=10)
 
     itakura_parallelogram = LowerBounding.ITAKURA_PARALLELOGRAM
     itakura_parallelogram.create_bounding_matrix(x, y)
