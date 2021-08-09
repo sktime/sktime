@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from scipy.stats import gmean
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
@@ -22,7 +23,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
     ],
 )
 def test_avg_mean(forecasters):
-    """Assert `mean` aggfunc returns the same values as `avg` with equal weights."""
+    """Assert `mean` aggfunc returns the same values as `average` with equal weights."""
     y = pd.DataFrame(np.random.randint(0, 100, size=(100,)))
     forecaster = EnsembleForecaster(forecasters=forecasters)
     forecaster.fit(y, fh=[1, 2, 3])
@@ -37,15 +38,76 @@ def test_avg_mean(forecasters):
     pd.testing.assert_series_equal(mean_pred, avg_pred)
 
 
-# @pytest.mark.parametrize("aggfunc", ["min", "max", ""])
+@pytest.mark.parametrize("aggfunc", ["median", "mean", "min", "max", "gmean"])
+@pytest.mark.parametrize(
+    "forecasters",
+    [
+        [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+    ],
+)
+def test_aggregation_unweighted(forecasters, aggfunc):
+    """Assert aggfunc returns the correct values."""
+    y = pd.DataFrame(np.random.randint(0, 100, size=(100,)))
+    forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
+    forecaster.fit(y, fh=[1, 2, 3])
+    actual_pred = forecaster.predict()
+
+    predictions = []
+    if aggfunc == "gmean":
+        aggfunc = gmean
+    for _, forecaster in forecasters:
+        f = forecaster
+        f.fit(y)
+        f_pred = f.predict(fh=[1, 2, 3])
+        predictions.append(f_pred)
+    predictions = pd.DataFrame(predictions)
+    expected_pred = predictions.apply(func=aggfunc, axis=0)
+
+    pd.testing.assert_series_equal(actual_pred, expected_pred)
+
+
+# @pytest.mark.parametrize("aggfunc", ["median", "gmean"])
+# @pytest.mark.parametrize("weights", [[1.44, 1.2]])
 # @pytest.mark.parametrize(
 #     "forecasters",
-#     [[("trend", PolynomialTrendForecaster(), 0), ("naive", NaiveForecaster(), 1)]],
+#     [
+#         [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+#     ],
 # )
-# def test_invalid_aggfuncs(forecasters, aggfunc):
-#     """Check if invalid aggregation functions return Error."""
+# def test_aggregation_weighted(forecasters, aggfunc, weights):
+#     """Assert aggfunc returns the correct values."""
 #     y = pd.DataFrame(np.random.randint(0, 100, size=(100,)))
-#     forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
-#     forecaster.fit(y, fh=[1, 2])
-#     with pytest.raises(ValueError, match=r"not recognized"):
-#         forecaster.predict()
+#     forecaster = EnsembleForecaster(forecasters=forecasters,\
+#                                       aggfunc=aggfunc, weights=weights)
+#     forecaster.fit(y, fh=[1, 2, 3])
+#     actual_pred = forecaster.predict()
+#
+#     predictions = []
+#     for _, forecaster in forecasters:
+#         f = forecaster
+#         f.fit(y)
+#         f_pred = f.predict(fh=[1, 2, 3])
+#         predictions.append(f_pred)
+#
+#     predictions = pd.DataFrame(predictions)
+#     if aggfunc == "median":
+#         func = np.average
+#     else:
+#         func = gmean
+#     expected_pred = predictions.apply(func=func, axis=0, weights=weights)
+#
+#     pd.testing.assert_series_equal(actual_pred, expected_pred)
+
+
+@pytest.mark.parametrize("aggfunc", ["miin", "maximum", ""])
+@pytest.mark.parametrize(
+    "forecasters",
+    [[("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())]],
+)
+def test_invalid_aggfuncs(forecasters, aggfunc):
+    """Check if invalid aggregation functions return Error."""
+    y = pd.DataFrame(np.random.randint(0, 100, size=(100,)))
+    forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
+    forecaster.fit(y, fh=[1, 2])
+    with pytest.raises(ValueError, match=r"not recognized"):
+        forecaster.predict()

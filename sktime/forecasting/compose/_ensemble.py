@@ -98,7 +98,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        # aggfunc = _check_aggfunc(self.aggfunc)
         if return_pred_int:
             raise NotImplementedError()
 
@@ -140,7 +139,7 @@ def _check_aggfunc(aggfunc, weighted=False):
         "median": {"unweighted": np.median, "weighted": _weighted_median},
         "min": {"unweighted": np.min, "weighted": _weighted_min},
         "max": {"unweighted": np.max, "weighted": _weighted_max},
-        "geometric_mean": {"unweighted": gmean, "weighted": gmean},
+        "gmean": {"unweighted": gmean, "weighted": gmean},
     }
     if aggfunc not in valid_aggfuncs.keys():
         raise ValueError("Aggregation function %s not recognized." % aggfunc)
