@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
@@ -8,10 +8,10 @@ __all__ = ["EnsembleForecaster"]
 import numpy as np
 import pandas as pd
 
+from scipy.stats import gmean
 from sklearn.utils.stats import _weighted_percentile
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from scipy.stats import gmean
 
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -116,6 +116,8 @@ def _aggregate(y, aggfunc, weights):
         Multivariate series to transform.
     aggfunc : str
         Aggregation function used for transformation.
+    weights : list of floats
+        Weights to apply in aggregation.
 
     Returns
     -------
@@ -127,7 +129,7 @@ def _aggregate(y, aggfunc, weights):
         y_agg = aggfunc(y, axis=1)
     else:
         aggfunc = _check_aggfunc(aggfunc, weighted=True)
-        y_agg = aggfunc(y, axis=1, weights=weights)
+        y_agg = aggfunc(y, axis=1, weights=np.array(weights))
 
     return pd.Series(y_agg, index=y.index)
 
@@ -147,21 +149,33 @@ def _check_aggfunc(aggfunc, weighted=False):
 
 
 def _weighted_median(y, axis=1, weights=None):
-    w_median = _weighted_percentile(
-        np.median(y, axis=axis), sample_weight=weights, percentile=50
+    w_median = np.apply_along_axis(
+        func1d=_weighted_percentile,
+        axis=axis,
+        arr=y.values,
+        sample_weight=weights,
+        percentile=50,
     )
     return w_median
 
 
 def _weighted_min(y, axis=1, weights=None):
-    w_min = _weighted_percentile(
-        np.min(y, axis=axis), sample_weight=weights, percentile=0
+    w_min = np.apply_along_axis(
+        func1d=_weighted_percentile,
+        axis=axis,
+        arr=y.values,
+        sample_weight=weights,
+        percentile=0,
     )
     return w_min
 
 
 def _weighted_max(y, axis=1, weights=None):
-    w_max = _weighted_percentile(
-        np.median(y, axis=axis), sample_weight=weights, percentile=100
+    w_max = np.apply_along_axis(
+        func1d=_weighted_percentile,
+        axis=axis,
+        arr=y.values,
+        sample_weight=weights,
+        percentile=100,
     )
     return w_max
