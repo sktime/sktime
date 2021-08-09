@@ -7,7 +7,7 @@ from sktime.datasets import load_japanese_vowels
 
 
 def test_muse_on_japanese_vowels():
-    """Test MUSE based on accuracy on JapaneseVowels."""
+    """Test MUSE classifier based on accuracy on JapaneseVowels."""
     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(50)
