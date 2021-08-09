@@ -47,7 +47,7 @@ from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.series import check_series, check_equal_time_index
 
-from sktime.forecasting.base.convertIO import convert_to, mtype
+from sktime.datatypes import convert_to, mtype
 
 
 DEFAULT_ALPHA = 0.05
@@ -67,6 +67,7 @@ class BaseForecaster(BaseEstimator):
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "univariate-only": True,  # does estimator use the exogeneous X?
+        "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -198,8 +199,17 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
+        # handle inputs
         self.check_is_fitted()
         self._set_fh(fh)
+
+        if return_pred_int and not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. Please set return_pred_int=False. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
 
         # input check for X
         enforce_index_type = self.get_tag("enforce_index_type")
@@ -967,18 +977,50 @@ class BaseForecaster(BaseEstimator):
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
-    """Format moving-cutoff predictions."""
+    """Format moving-cutoff predictions.
+
+    Parameters
+    ----------
+    y_preds: list of pd.Series or pd.DataFrames, of length n
+            must have equal index and equal columns
+    cutoffs: iterable of cutoffs, of length n
+
+    Returns
+    -------
+    y_pred: pd.DataFrame, composed of entries of y_preds
+        if length of elements in y_preds is 2 or larger:
+            row-index = index common to the y_preds elements
+            col-index = (cutoff[i], y_pred.column)
+            entry is forecast at horizon given by row, from cutoff/variable at column
+        if length of elements in y_preds is 1:
+            row-index = forecasting horizon
+            col-index = y_pred.column
+    """
+    # check that input format is correct
     if not isinstance(y_preds, list):
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
+    if len(y_preds) == 0:
+        return pd.DataFrame(columns=cutoffs)
+    if not isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+        raise ValueError("y_preds must be a list of pd.Series or pd.DataFrame")
+    ylen = len(y_preds[0])
+    ytype = type(y_preds[0])
+    if isinstance(y_preds[0], pd.DataFrame):
+        ycols = y_preds[0].columns
+    for y_pred in y_preds:
+        if not isinstance(y_pred, ytype):
+            raise ValueError("all elements of y_preds must be of the same type")
+        if not len(y_pred) == ylen:
+            raise ValueError("all elements of y_preds must be of the same length")
+    if isinstance(y_preds[0], pd.DataFrame):
+        for y_pred in y_preds:
+            if not y_pred.columns.equals(ycols):
+                raise ValueError("all elements of y_preds must have the same columns")
 
     if len(y_preds[0]) == 1:
         # return series for single step ahead predictions
-        return pd.concat(y_preds)
-
+        y_pred = pd.concat(y_preds)
     else:
-        # return data frame when we predict multiple steps ahead
-        y_pred = pd.DataFrame(y_preds).T
-        y_pred.columns = cutoffs
-        if y_pred.shape[1] == 1:
-            return y_pred.iloc[:, 0]
-        return y_pred
+        y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
+
+    return y_pred
