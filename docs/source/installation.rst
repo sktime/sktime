@@ -283,7 +283,7 @@ Then you need to set the following environment variables:
 
 Finally you can build the package using the standard command.
 
-Release versions - troubleshooting on Mac OSX
+Development versions - troubleshooting on Mac OSX
 """""""""""""""""""""""""""""""""""""""""""""
 
 After installing the release version following the installation steps above and running a ``pytest`` command, some contributors received the error message below:
