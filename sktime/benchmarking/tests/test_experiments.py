@@ -3,10 +3,10 @@
 
 import os.path
 
-from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.benchmarking.experiments import run_classification_experiment
-from sktime.clustering import TimeSeriesKMeans
+from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.classification.interval_based import TimeSeriesForestClassifier
+from sktime.clustering import TimeSeriesKMeans
 from sktime.datasets import load_unit_test
 
 
@@ -47,11 +47,11 @@ def test_run_classification_experiment():
     test_X, test_Y = load_unit_test("TEST", return_X_y=True)
     run_classification_experiment(
         train_X,
+        train_Y,
+        test_X,
+        test_Y,
         TimeSeriesForestClassifier(n_estimators=10),
-        results_path="../Temp/",
-        trainY=train_Y,
-        testX=test_X,
-        testY=test_Y,
+        "../Temp/",
         cls_name="TSF",
         dataset="UnitTest",
         resample_id=0,
