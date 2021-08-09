@@ -334,7 +334,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
             return classifier.predict_proba(transformed_x)
 
-    def temporal_importance_curves(self):
+    def temporal_importance_curves(self, normalise_time_points=False):
         if not isinstance(self.tree, ContinuousIntervalTree):
             raise ValueError(
                 "CIF base estimator for temporal importance curves must"

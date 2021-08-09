@@ -10,8 +10,6 @@
 #
 # Author: Matthew Middlehurst
 
-import sys
-
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -20,34 +18,27 @@ from matplotlib import pyplot as plt
 def plot_curves(
     curves,
     curve_names,
-    top_curves_shown=-1,
+    top_curves_shown=None,
     plot_mean=True,
-    normalise_time_points=False,
 ):
-    num_atts = int(sys.argv[3])
-    num_dims = int(sys.argv[4])
-
-    curves = []
-    names = []
-    for i in range(num_atts * num_dims):
-        names.append(f.readline().strip())
-        curves.append(array_string_to_list_float(f.readline()))
-
-    # find attributes to display by max information gain for any time point
-    top_atts = top_curves_shown if True else num_atts
-    max = [max(i) for i in curves]
-    top = sorted(range(len(max)), key=lambda i: max[i], reverse=True)[:top_atts]
+    # find attributes to display by max information gain for any time point.
+    top_curves_shown = top_curves_shown if top_curves_shown is None else len(curves)
+    max_ig = [max(i) for i in curves]
+    top = sorted(range(len(max_ig)), key=lambda i: max_ig[i], reverse=True)[
+        :top_curves_shown
+    ]
 
     top_curves = [curves[i] for i in top]
-    top_names = [names[i] for i in top]
+    top_names = [curve_names[i] for i in top]
 
-    # plot curves with highest max and mean information gain for each time point
-    for i in range(0, top_atts):
+    # plot curves with highest max and the mean information gain for each time point if
+    # enabled.
+    for i in range(0, top_curves_shown):
         plt.plot(
             top_curves[i],
-            label=top_names[i] if num_dims == 1 else top_names[i] + " " + top_dims[i],
+            label=top_names[i],
         )
-    if plot_mean and num_dims == 1:
+    if plot_mean:
         plt.plot(
             list(np.mean(curves, axis=0)),
             "--",
@@ -64,4 +55,4 @@ def plot_curves(
     plt.xlabel("Time Point")
     plt.ylabel("Information Gain")
 
-    plt.savefig(sys.argv[1] + "vis" + sys.argv[2])
+    return plt
