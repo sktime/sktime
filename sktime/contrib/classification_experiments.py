@@ -2,7 +2,7 @@
 """Classifier Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
-single debugging runs. Results are written in a standard format
+single debugging runs. Results are written in a standard format.
 """
 
 __author__ = ["Tony Bagnall"]
@@ -10,20 +10,20 @@ __author__ = ["Tony Bagnall"]
 import os
 import sys
 
-from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-import sktime.datasets.tsc_dataset_names as dataset_lists
-
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
+
+from sktime.benchmarking.experiments import load_and_run_classification_experiment
+from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+import sktime.datasets.tsc_dataset_names as dataset_lists
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method
 recommended here, they can be directly and automatically compared to the results
-generated in java
-
+generated in java.
 """
 
 
@@ -62,7 +62,7 @@ def demo_loading():
 
 if __name__ == "__main__":
     """
-    Example simple usage, with arguments input via script or hard coded for testing
+    Example simple usage, with arguments input via script or hard coded for testing.
     """
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             cls_name=classifier,
             dataset=dataset,
             resample_id=resample,
-            train_file=tf,
+            build_train=tf,
         )
     else:  # Local run
         print(" Local Run")
@@ -95,5 +95,5 @@ if __name__ == "__main__":
             cls_name=classifier,
             dataset=dataset,
             resample_id=resample,
-            train_file=tf,
+            build_train=tf,
         )
