@@ -66,7 +66,6 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
 
         # create a clone of self.regressor
