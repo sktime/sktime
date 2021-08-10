@@ -156,3 +156,10 @@ Time Series Annotation
 
 .. code-block:: python
     from sktime.annotation.adapters import PyODAnnotator
+    from pyod.models.iforest import IForest
+    from sktime.datasets import load_airline
+    y = load_airline()
+    pyod_model = IForest()
+    pyod_sktime_annotator = PyODAnnotator(pyod_model)
+    pyod_sktime_annotator.fit(y)
+    annotated_series = pyod_sktime_annotator.predict(y)
