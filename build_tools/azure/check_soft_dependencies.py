@@ -17,7 +17,6 @@ from importlib import import_module
 
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
-    "sktime.benchmarking.experiments": ["tsfresh", "esig"],
     "sktime.forecasting.all": ["pmdarima", "fbprophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
