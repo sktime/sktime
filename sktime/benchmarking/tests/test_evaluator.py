@@ -187,7 +187,7 @@ def test_plots():
 def test_wilcoxon():
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
     results = evaluator.wilcoxon_test().iloc[:, 2:].values
-    expected = np.array([[0, 0.5], [0, 0.5], [0, 0.5]])
+    expected = np.array([[0.5, 0], [0.5, 0], [0.5, 0]])
     assert np.array_equal(results, expected)
 
 
