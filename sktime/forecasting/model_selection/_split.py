@@ -182,7 +182,7 @@ class BaseSplitter:
             yield train[train >= 0], test[test >= 0]
 
     def _split(self, y):
-        """Internal split method implemented by concrete classes"""
+        """_internal_benchmarks split method implemented by concrete classes"""
         raise NotImplementedError("abstract method")
 
     def get_n_splits(self, y=None):

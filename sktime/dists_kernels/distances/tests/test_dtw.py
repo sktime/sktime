@@ -24,7 +24,7 @@ def _create_test_ts(dimensions: List[int]):
 def test_dtw_distance():
     x, y = _create_test_ts([10, 10])
 
-    dtw(x, y, lower_bounding=LowerBounding.NO_BOUNDING)
+    dtw(x, y, lower_bounding=1)
 
 
 def test_lower_bounding():

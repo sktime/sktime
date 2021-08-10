@@ -49,7 +49,7 @@ class _StatsModelsAdapter(BaseForecaster):
         return self
 
     def _fit_forecaster(self, y_train, X_train=None):
-        """Internal fit"""
+        """_internal_benchmarks fit"""
         raise NotImplementedError("abstract method")
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):

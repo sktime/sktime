@@ -3,21 +3,26 @@ import math
 from enum import Enum
 import numpy as np
 from typing import Union, Any
-from numba import prange
+from numba import prange, njit
 
 from sktime.dists_kernels.distances.base.base import BaseDistance
 
 np_or_none = Union[np.ndarray, None]
 
 
-class LowerBounding(Enum):
-    NO_BOUNDING = (1, "no bounding")
-    SAKOE_CHIBA = (2, "sakoe chiba")
-    ITAKURA_PARALLELOGRAM = (3, "itakura parallelogram")
+# NO_BOUNDING = (1, "no bounding")
+# SAKOE_CHIBA = (2, "sakoe chiba")
+# ITAKURA_PARALLELOGRAM = (3, "itakura parallelogram")
 
-    def __init__(self, int_val, string_name):
+
+class LowerBounding(Enum):
+    NO_BOUNDING = 1
+    SAKOE_CHIBA = 2
+    ITAKURA_PARALLELOGRAM = 3
+
+    def __init__(self, int_val):
         self.int_val: int = int_val
-        self.string_name: str = string_name
+        self.string_name: str = ""
 
     def create_bounding_matrix(
         self, x: np.ndarray, y: np.ndarray, **kwargs: Any
@@ -269,11 +274,17 @@ class LowerBounding(Enum):
             raise ValueError("Both x and y values must be given.")
 
 
+@njit
+def _squared_dist(x, y):
+    distance = 0.0
+    for i in range(x.shape[0]):
+        curr = x[i] - y[i]
+        distance += curr * curr
+    return distance
+
+
 # dtw based distances
 class _DtwDistance(BaseDistance):
-    def __init__(self):
-        pass
-
     def _distance(self, x: np.ndarray, y: np.ndarray, **kwargs: Any) -> np.ndarray:
         """
         Method used to calculate the dtw distance between two time series
@@ -287,13 +298,12 @@ class _DtwDistance(BaseDistance):
             time series to find distance from
 
         **kwargs: Any
-            lower_bounding: LowerBounding or int or str, defaults = NO_BOUNDING
+            lower_bounding: LowerBounding or int, defaults = NO_BOUNDING
                 Lower bounding algorithm to use. The following describes the potential
                 parameters:
-                no bounding if LowerBounding.NO_BOUNDING or 1 or "no bounding"
-                sakoe chiba bounding if LowerBounding.SAKOE_CHIBA or 2 or "sakoe chiba"
-                itakura parallelogram if LowerBounding.ITAKURA_PARALLELOGRAM or 3 or
-                    "itakura parallelogram"
+                no bounding if LowerBounding.NO_BOUNDING or 1
+                sakoe chiba bounding if LowerBounding.SAKOE_CHIBA or 2
+                itakura parallelogram if LowerBounding.ITAKURA_PARALLELOGRAM or 3
 
 
             sakoe_chiba_window_radius: int, defaults = 2
@@ -302,7 +312,6 @@ class _DtwDistance(BaseDistance):
             itakura_max_slope: float, defaults = 2.
                 Gradient of the slope fo itakura
         """
-
         (
             x,
             y,
@@ -315,11 +324,41 @@ class _DtwDistance(BaseDistance):
 
         return self._dtw_distance(x, y, bounding_matrix)
 
-    def _check_params(self, x: np.ndarray, y: np.ndarray, kwargs):
+    @staticmethod
+    def _check_params(x: np.ndarray, y: np.ndarray, kwargs: Any):
+        """
+        Method used to check the incoming parameters and ensure they are the correct
+        format for dtw
+
+        x: np.ndarray
+            first time series
+
+        y: np.ndarray
+            second time series
+
+        kwargs: Any
+            lower_bounding: LowerBounding or int, defaults = NO_BOUNDING
+                Lower bounding algorithm to use. The following describes the potential
+                parameters:
+                no bounding if LowerBounding.NO_BOUNDING or 1
+                sakoe chiba bounding if LowerBounding.SAKOE_CHIBA or 2
+                itakura parallelogram if LowerBounding.ITAKURA_PARALLELOGRAM or 3
+
+
+            sakoe_chiba_window_radius: int, defaults = 2
+                Integer that is the radius of the sakoe chiba window
+
+            itakura_max_slope: float, defaults = 2.
+                Gradient of the slope fo itakura
+
+        Returns
+        -------
+        """
         # TODO: check lengths of time series and intepolate on missing values
 
-        # TODO: resolve lower bounding if string int or enum
         lower_bounding = LowerBounding.NO_BOUNDING
+        if "lower_bounding" in kwargs:
+            lower_bounding = LowerBounding(kwargs.get("lower_bounding"))
 
         sakoe_chiba_window_radius = None
         if "sakoe_chiba_window_radius" in kwargs.keys():
@@ -335,11 +374,43 @@ class _DtwDistance(BaseDistance):
     def _dtw_distance(
         x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray
     ) -> np.ndarray:
+        """
+        Method used to generate the dtw distance measures
+
+        Parameters
+        ----------
+        x: np.ndarray
+            first time series
+
+        y: np.ndarray
+            second time series
+
+        bounding_matrix: np.ndarray
+            matrix with 0s in the cells that are in bound and infinity out of bound
+        """
         cost_matrix = _DtwDistance._cost_matrix(x, y, bounding_matrix)
         return np.sqrt(cost_matrix[-1, -1])
 
+    # '@jit(nopython=True, parallel=True)
+
     @staticmethod
+    @njit
     def _cost_matrix(x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray):
+        """
+        Method used to calculate the cost matrix to derive distance from
+
+        Parameters
+        ----------
+        x: np.ndarray
+            first time series
+
+        y: np.ndarray
+            second time series
+
+        bounding_matrix: np.ndarray
+
+
+        """
         x_size = x.shape[0]
         y_size = y.shape[0]
         cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
@@ -348,7 +419,7 @@ class _DtwDistance(BaseDistance):
         for i in range(x_size):
             for j in range(y_size):
                 if np.isfinite(bounding_matrix[i, j]):
-                    cost_matrix[i + 1, j + 1] = np.linalg.norm(x[i] - y[j]) ** 2
+                    cost_matrix[i + 1, j + 1] = _squared_dist(x[i], y[j])
                     cost_matrix[i + 1, j + 1] += min(
                         cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
                     )

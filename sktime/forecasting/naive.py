@@ -155,7 +155,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Internal predict"""
+        """_internal_benchmarks predict"""
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
 

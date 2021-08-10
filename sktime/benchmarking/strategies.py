@@ -210,7 +210,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
     def _fit(self, data):
         """
-        Internal fit
+        _internal_benchmarks fit
 
         Parameters
         ----------

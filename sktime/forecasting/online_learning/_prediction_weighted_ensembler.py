@@ -190,7 +190,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         high_c = (max(R_plus) ** 2) / 2
 
         def _pot(c):
-            """Internal Potential Function
+            """_internal_benchmarks Potential Function
 
             Parameters
             ----------
@@ -206,7 +206,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         c_t = bisect(_pot, low_c, high_c)
 
         def _prob(r, c_t):
-            """Internal Probability Function
+            """_internal_benchmarks Probability Function
 
             Parameters
             ----------
