@@ -13,6 +13,8 @@ From here, you can navigate to:
    :maxdepth: 1
 
    get_started
-   user_documentation
+   users
+   api_reference
    get_involved
+   developers
    about
