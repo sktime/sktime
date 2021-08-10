@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel
@@ -68,22 +68,22 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             for forecaster in forecasters
         )
 
-    def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional, default=True
-
-        Returns
-        -------
-        self : an instance of self.
-        """
-        for forecaster in self.forecasters_:
-            forecaster.update(y, X, update_params=update_params)
-        return self
+    # def _update(self, y, X=None, update_params=True):
+    #     """Update fitted parameters.
+    #
+    #     Parameters
+    #     ----------
+    #     y : pd.Series
+    #     X : pd.DataFrame
+    #     update_params : bool, optional, default=True
+    #
+    #     Returns
+    #     -------
+    #     self : an instance of self.
+    #     """
+    #     for forecaster in self.forecasters_:
+    #         forecaster.update(y, X, update_params=update_params)
+    #     return self
 
     def _predict_forecasters(
         self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
