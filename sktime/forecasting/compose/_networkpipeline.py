@@ -43,24 +43,26 @@ class NetworkPipelineForecaster(BaseForecaster):
     different arguments depending on whether
     NetworkPipelineForecaster.fit or
     NetworkPipelineForecaster.predict is called.
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> pipe = NetworkPipelineForecaster(steps=[
-    ...        (
-    ...            "imputer",
-    ...            Imputer(method="drift"),
-    ...            {"fit": {"Z": "original_y"}, "predict": None, "update": None},
-    ...        ),
-    ...        (
-    ...            "forecaster",
-    ...            NaiveForecaster(strategy="mean"),
-    ...            {
-    ...                "fit": {"y": "imputer", "X": "original_X", "fh": "original_fh"},
-    ...                "predict": {"fh": "original_fh"},
-    ...                "update": {"y": "imputer"},
-    ...            },
-    ...        ),
-    ...    ])
+    >>> from sktime.transformations.panel.dataset_manipulation import Selector
+    >>> from sktime.transformations.panel.dataset_manipulation import Converter
+    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> pipe = NetworkPipelineForecaster([
+    ... ("feature_X1", Selector(1, return_dataframe=False), { "X": "original_X"}),
+    ... ("feature_X2", Selector(2, return_dataframe=False), { "X": "original_X"}),
+    ... ("ft1", BoxCoxTransformer(), { "Z": "feature_X1"}),
+    ... ("ft1_converted", Converter(), {"obj":"ft1", "to_type": "pd.DataFrame",
+    ...     "as_scitype": "Series"}),
+    ... ("ft2", MinMax(), { "X": "feature_X2"}),
+    ... ("concat", Concatenator(), { "X": ["ft1_converted","ft2"] }),
+    ... ("new_y", TabularToSeriesAdaptor(MinMaxScaler()), {"Z":"original_y"}),
+    ... ("y_out", AutoARIMA(suppress_warnings=True), {
+    ...    "fh":"original_fh", "y": "new_y", "X": "concat"})
+    ... ])
+    >>> pipe.fit(y_train,X_train)
+    >>> pipe.predict(fh=[1,2,3,4], X=X_test)
     """
 
     _required_parameters = ["steps"]
@@ -69,11 +71,14 @@ class NetworkPipelineForecaster(BaseForecaster):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = None
-        self._step_results = {}
+        self._step_results_fit = {}
+        self._step_results_predict = {}
+        self._step_results_update = {}
         self._fitted_estimators = {}
+        self._y_transformers = []
         super().__init__()
 
-    def _iter(self, method, reverse=False):
+    def _iter(self, method):
         """
         Iterate through steps of the pipeline.
 
@@ -93,12 +98,7 @@ class NetworkPipelineForecaster(BaseForecaster):
 Iterator can be called by "fit", "predict" and "update" only.'
             )
 
-        if reverse:
-            steps = reversed(self.steps_)
-        else:
-            steps = self.steps_
-
-        for (name, est, arguments) in steps:
+        for (name, est, arguments) in self.steps_:
             # if arguments were defined using the short form notation
             # without specifying behaviour for fit, predict or update
             # add the fit, predict or update, key in the arguments dictionary
@@ -109,17 +109,39 @@ Iterator can be called by "fit", "predict" and "update" only.'
             else:
                 yield (name, est, arguments)
 
-    def _check_steps_for_values(self, step_name):
-        if step_name in self._step_results:
-            return self._step_results[step_name]
+    def _check_steps_for_values(self, step_name, method):
+        step_results_dict = {
+            "fit": self._step_results_fit,
+            "predict": self._step_results_predict,
+            "update": self._step_results_update,
+        }
+        if step_name in step_results_dict[method]:
+            return step_results_dict[method][step_name]
 
         return None
+
+    def _find_step_by_name(self, step_name):
+        """returns single step by name
+
+        Parameters
+        ----------
+        step_name : string
+            name of step to look up
+
+        Returns
+        -------
+            Step or False (if not found)
+        """
+        for name, est, arguments in self._iter(method="predict"):
+            if name == step_name:
+                return (name, est, arguments)
+        return False
 
     def _check_steps_for_consistency(self):
         # TODO implement checks for consistency
         return self.steps
 
-    def _process_arguments(self, arguments):
+    def _process_arguments(self, step_name, arguments, method):
         """
         Check arguments for consistency.
 
@@ -129,9 +151,20 @@ Iterator can be called by "fit", "predict" and "update" only.'
 
         Parameters
         ----------
+        step_name : string
+            Used only for appending self._y_transformers
+            if a transformer is a transformer of `y`
         arguments : dictionary
             key-value for fit() method of estimator
+        method : string
+            method from which the call was originated.
+            Acceptable values: `fit`, `predict` and `update`
         """
+        acceptable_mathods = ["fit", "predict", "update"]
+
+        if method not in acceptable_mathods:
+            raise ValueError(f"Only {acceptable_mathods} calls are acceptable.")
+        arguments = arguments[method]
         returned_arguments_kwarg = arguments.copy()
         if arguments is None:
             return arguments
@@ -140,22 +173,34 @@ Iterator can be called by "fit", "predict" and "update" only.'
                 returned_arguments_kwarg[argument_name] = self._X
                 continue
             if argument_value == "original_y":
+                if method == "fit":
+                    self._y_transformers.append(step_name)
                 returned_arguments_kwarg[argument_name] = self._y
                 continue
             if argument_value == "original_fh":
                 returned_arguments_kwarg[argument_name] = self._fh
                 continue
 
+            if (argument_value in self._y_transformers) and method == "fit":
+                # used for invese transforming `y` at predict()
+                # if a transformer transforms y
+                # its argument_value can be either `original_y`
+                # or a name of step referring to a transformer of y
+                # the first case was covered above
+                # if self._y_transformers is of length 1
+                # this means that no transformations were applied to `y`
+                # this check is handled in predict
+                self._y_transformers.append(step_name)
             if type(argument_value) == list:
                 out = []
                 for list_val in argument_value:
-                    returned_step_value = self._check_steps_for_values(list_val)
+                    returned_step_value = self._check_steps_for_values(list_val, method)
                     if returned_step_value is not None:
                         out.append(returned_step_value)
                 returned_arguments_kwarg[argument_name] = out
                 continue
             # go through all steps and look for returned values
-            returned_step_value = self._check_steps_for_values(argument_value)
+            returned_step_value = self._check_steps_for_values(argument_value, method)
             if returned_step_value is not None:
                 returned_arguments_kwarg[argument_name] = returned_step_value
 
@@ -171,13 +216,12 @@ Iterator can be called by "fit", "predict" and "update" only.'
             # check and process corresponding values
             processed_arguments = {}
 
-            if "fit" in arguments and arguments["fit"] is None:
+            if arguments["fit"] is None:
                 # this step must be skipped
                 continue
-            elif "fit" in arguments:
-                processed_arguments = self._process_arguments(arguments["fit"])
-            else:
-                processed_arguments = self._process_arguments(arguments)
+            processed_arguments = self._process_arguments(
+                step_name=name, arguments=arguments, method="fit"
+            )
 
             if "X" in processed_arguments and processed_arguments["X"] is not None:
                 if type(processed_arguments["X"]) is list:
@@ -194,7 +238,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
             if hasattr(est, "fit_transform"):
                 t = clone(est)
                 out = t.fit_transform(**processed_arguments)
-                self._step_results[name] = out
+                self._step_results_fit[name] = out
                 self._fitted_estimators[name] = t  # TODO: delete
             processed_arguments["fh"] = self._fh
             # if estimator has `fit()` and `predict()` methods it s a forecaster
@@ -216,23 +260,24 @@ Iterator can be called by "fit", "predict" and "update" only.'
             processed_arguments = {}
             # get fitted estimator
             est = self._fitted_estimators[name]
-            if "predict" in arguments and arguments["predict"] is None:
+            if arguments["predict"] is None:
                 # this step must be skipped
                 continue
-            elif "predict" in arguments:
-                # y is not used when the steps are executed in normal order.
-                if "y" in arguments["predict"]:
-                    arguments["predict"].pop("y", None)
-                processed_arguments = self._process_arguments(arguments["predict"])
-            else:
-                processed_arguments = self._process_arguments(arguments)
+
+            # y is not used when the steps are executed in normal order.
+            if "y" in arguments["predict"]:
+                arguments["predict"].pop("y", None)
+
+            processed_arguments = self._process_arguments(
+                step_name=name, arguments=arguments, method="predict"
+            )
 
             # if estimator has a `transform()` method, it is a transformer
             if hasattr(est, "transform"):
-                if "X" not in arguments["predict"]:
+                if "y" in arguments["predict"]:
                     # process only exogenous variables, skip `y`
-                    continue
-                self._step_results[name] = est.transform(**processed_arguments)
+                    arguments["predict"].pop("y")
+                self._step_results_predict[name] = est.transform(**processed_arguments)
             # if estimator has a `predict()` method, it is a forecaster
 
             if hasattr(est, "predict"):
@@ -242,62 +287,24 @@ Iterator can be called by "fit", "predict" and "update" only.'
                     **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
                 )
                 # pred.index.freq = self._y.index.freq
-                self._step_results[name] = pred
+                self._step_results_predict[name] = pred
 
-        # iterate in reverse order
-        i = 0  # used for skipping the first estimator when iterating in
-        # reverse order, i.e.
-        # the last estimator if iterating in normal order
-        for name, est, arguments in self._iter(method="predict", reverse=True):
-            if i == 0:
-                # skips the first step, i.e. the last step
-                # when iterating in reverse order
-                continue
-            i += 1
-            # Iterates through the steps in the pipeline
-
-            processed_arguments = {}
-            # get fitted estimator
-            # estimator in self.steps_ is not fitted.
-            # use fitted estimator in self._fitted_estimators
-            est = self._fitted_estimators[name]
-            # check arguments of pipeline.
-            # Inspect the `predict` key of the step arguments
-            # check and process corresponding values
-            if "predict" in arguments and arguments["predict"] is None:
-                # this step must be skipped
-                continue
-            if (
-                ("predict" in arguments)
-                and ("X" in arguments["predict"])
-                and (len(arguments["predict"]) == 1)
-            ):
-                # not inverse transform steps that invovle only exogenous variables
-                continue
-            else:
-                # drop X for inverse transform
-                if "X" in arguments["predict"]:
-                    arguments["predict"].pop("X", None)
-                # process arguments of dictionary without `X` argument
-                processed_arguments = self._process_arguments(arguments["predict"])
-
-            # if estimator has a `transform()` method it is a transformer
-            if hasattr(est, "inverse_transform"):
-                if "y" not in processed_arguments["predict"]:
-                    continue
-                self._step_results[name] = est.inverse_transform(**processed_arguments)
-            # if estimator has a `predict()` method it is a forecaster
-
-            if hasattr(est, "predict"):
-
-                fitted_estimator = self._fitted_estimators[name]
-                pred = fitted_estimator.predict(
-                    **processed_arguments, return_pred_int=return_pred_int, alpha=alpha
-                )
-                # pred.index.freq = self._y.index.freq
-                self._step_results[name] = pred
-
-        return pred
+        # iterate in reverse order only transormers of y
+        if len(self._y_transformers) == 1:
+            # no transformations of y were performed
+            return pred
+        else:
+            # ignore the last step.
+            # last step is final estimator
+            last_step_output = pred
+            for y_transformer in reversed(self._y_transformers[0:-1]):
+                trained_estimator = self._fitted_estimators[y_transformer]
+                if hasattr(trained_estimator, "inverse_transform"):
+                    # overwrite step results with inverse transform
+                    last_step_output = trained_estimator.inverse_transform(
+                        last_step_output
+                    )
+            return last_step_output
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -326,16 +333,14 @@ Iterator can be called by "fit", "predict" and "update" only.'
             # use fitted estimator in self._fitted_estimators
             est = self._fitted_estimators[name]
 
-            if "update" in arguments and arguments["update"] is None:
+            if arguments["update"] is None:
                 # this step must be skipped
                 continue
             # assume update takes same arguments as fit
-            elif "update" in arguments:
 
-                processed_arguments = self._process_arguments(arguments["update"])
-
-            else:
-                processed_arguments = self._process_arguments(arguments)
+            processed_arguments = self._process_arguments(
+                step_name=name, arguments=arguments, method="update"
+            )
 
             processed_arguments["update_params"] = update_params
             # Transformers do not have `predict()`
@@ -344,7 +349,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
 
                 out = est.update(**processed_arguments)
                 out._cutoff = self.cutoff
-                self._step_results[name] = out
+                self._step_results_update[name] = out
             else:
                 raise ValueError(f"{name} has no update() method.")
             #     continue

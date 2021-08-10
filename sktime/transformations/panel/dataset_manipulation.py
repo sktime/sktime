@@ -3,6 +3,8 @@ from sktime.transformations.base import _PanelToPanelTransformer
 import pandas as pd
 import numpy as np
 
+from sktime.datatypes._convert import convert_to
+
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Selector", "Concatenator"]
 
@@ -85,5 +87,29 @@ class Concatenator(_PanelToPanelTransformer):
         return self.transform(X, y)
 
     def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
+
+
+class Converter(_PanelToPanelTransformer):
+    """Wraps sktime.datatypes._convert in transformer
+    interface that can be used withing pipelines"""
+
+    _tags = {
+        "fit-in-transform": True,
+    }
+
+    def __init__(self):
+        super(Converter, self).__init__()
+
+    def transform(self, obj, to_type, as_scitype, store=None):
+        self.check_is_fitted()
+        return convert_to(obj, to_type, as_scitype, store)
+
+    def fit_transform(self, obj, to_type, as_scitype, store=None):
+        self.fit(obj, to_type, as_scitype, store)
+        return self.transform(obj, to_type, as_scitype, store)
+
+    def fit(self, obj, to_type, as_scitype, store=None):
         self._is_fitted = True
         return self
