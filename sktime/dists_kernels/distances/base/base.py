@@ -8,7 +8,7 @@ class BaseDistance:
     def __call__(self, x, y, **kwargs):
         return self.distance(x, y, **kwargs)
 
-    def distance(self, x: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+    def distance(self, x: np.ndarray, y: np.ndarray, **kwargs) -> float:
         """
         Method used to get the distance between two time series
 
@@ -18,13 +18,17 @@ class BaseDistance:
             First time series to compare
         y: np.ndarray, pd.Dataframe, list
             Second time series to compare
+
+        Returns
+        -------
+            float that is the distance between the two time series
         """
         x = BaseDistance._check_distance_parameters(x)
         y = BaseDistance._check_distance_parameters(y)
 
         return self._distance(x, y, **kwargs)
 
-    def _distance(self, x: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+    def _distance(self, x: np.ndarray, y: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Implement distance")
 
     @staticmethod

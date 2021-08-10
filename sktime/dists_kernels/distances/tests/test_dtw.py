@@ -4,7 +4,7 @@ from typing import List
 
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.data_processing import from_nested_to_3d_numpy
-from sktime.dists_kernels.distances.dtw import LowerBounding, dtw
+from sktime.dists_kernels.distances.dtw import LowerBounding, dtw, dtw_with_cost_matrix
 
 
 def _create_test_ts(dimensions: List[int]):
@@ -23,8 +23,12 @@ def _create_test_ts(dimensions: List[int]):
 
 def test_dtw_distance():
     x, y = _create_test_ts([10, 10])
-
     dtw(x, y, lower_bounding=1)
+
+
+def test_dtw_with_cost_matrix_distance():
+    x, y = _create_test_ts([10, 10])
+    dtw_with_cost_matrix(x, y, lower_bounding=1)
 
 
 def test_lower_bounding():
