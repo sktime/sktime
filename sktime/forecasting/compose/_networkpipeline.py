@@ -45,24 +45,30 @@ class NetworkPipelineForecaster(BaseForecaster):
     NetworkPipelineForecaster.predict is called.
     >>> from sktime.transformations.panel.dataset_manipulation import Selector
     >>> from sktime.transformations.panel.dataset_manipulation import Converter
+    >>> from sktime.transformations.panel.dataset_manipulation import Concatenator
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=4)
+    >>> X_train, X_test = temporal_train_test_split(X, test_size=4)
     >>> pipe = NetworkPipelineForecaster([
     ... ("feature_X1", Selector(1, return_dataframe=False), { "X": "original_X"}),
     ... ("feature_X2", Selector(2, return_dataframe=False), { "X": "original_X"}),
     ... ("ft1", BoxCoxTransformer(), { "Z": "feature_X1"}),
     ... ("ft1_converted", Converter(), {"obj":"ft1", "to_type": "pd.DataFrame",
     ...     "as_scitype": "Series"}),
-    ... ("ft2", MinMax(), { "X": "feature_X2"}),
+    ... ("ft2", TabularToSeriesAdaptor(MinMaxScaler()), { "Z": "feature_X2"}),
     ... ("concat", Concatenator(), { "X": ["ft1_converted","ft2"] }),
     ... ("new_y", TabularToSeriesAdaptor(MinMaxScaler()), {"Z":"original_y"}),
     ... ("y_out", AutoARIMA(suppress_warnings=True), {
     ...    "fh":"original_fh", "y": "new_y", "X": "concat"})
     ... ])
-    >>> pipe.fit(y_train,X_train)
-    >>> pipe.predict(fh=[1,2,3,4], X=X_test)
+    >>> pipeline = pipe.fit(y_train,X_train)
+    >>> predictions = pipe.predict(fh=[1,2,3,4], X=X_test)
     """
 
     _required_parameters = ["steps"]
