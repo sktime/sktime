@@ -342,7 +342,7 @@ ESTIMATOR_TEST_PARAMS = {
                 {
                     "fit": {"y": "imputer", "fh": "original_fh"},
                     "predict": {"fh": "original_fh"},
-                    "update": {"y": "imputer"},
+                    "update": {"y": "original_y"},
                 },
             ),
         ]
