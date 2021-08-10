@@ -59,12 +59,14 @@ In ``sktime`` time series data can refer to data that is univariate, multivariat
 scientific purpose (i.e. :term:`scientific type` or :term:`scitype`). For example, ``sktime`` includes a common interface for "forecaster" classes designed to predict future values
 of a time series.
 
-- Blurb about time series classification (link to user guide and glossary)
-- Blurb about time series regression (link to user guide and glossary)
-- Blurb about time series clustering (link to user guide and glossary)
-- Blurb about time series annotation (link to user guide and glossary)
-- Blurb about time series forecasting (link to user guide and glossary)
-- Measuring model performance (link to user guide and glossary)
+``sktime's`` interface currently supports:
+
+- :ref:`Time series classification <user_guide_classification>`
+- :ref:`Time series regression <user_guide_regression>`
+- :ref:`Time series clustering <user_guide_clustering>`
+- :ref:`Forecasting <user_guide_forecasting>`
+- :ref:`Time series annotation <user_guide_annotation>`
+- :ref:`Measuring model performance <user_guide_performance_metrics>`
 
 While the list above presents each learning task separately, in many cases it is possible to adapt one learning task to help solve another related learning task. For example,
 one approach to forecasting would be to use a regression model that explicitly accounts for the data's time dimension. However, another approach is to reduce the forecasting problem

@@ -41,15 +41,18 @@ sktime.
     Time series annotation
         A learning task ...
 
-    Panel data
+    Panel time series
         A form of time series data where the same time series are observed observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
         :term:`multivariate time series`. Accordingly, the data varies across time, observational unit and series (i.e. variables).
 
     Univariate time series
-        A single time series
+        A single time series. While univariate analysis often only uses information contained in the series itself,
+        univariate time series regression and forecasting can also include :term:`exogenous` data.
 
     Multivariate time series
-        Multiple time series
+        Multiple time series. Typically observed for the same observational unit. In regresssion and forecasting, multivariate time series
+        is typically used to refer to cases where the series evolve together over time. This is related, but different than the cases where
+        a :term:`Univeriate time series` is dependent on :term:`exogenous` data.
 
     Endogenous
         ...
