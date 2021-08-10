@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
-__author__ = ["Guzal Bulatova", "Markus Löning"]
+__author__ = ["GuzalBulatova", "mloning"]
 __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
@@ -45,7 +45,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
         "univariate-only": False,
         "y_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": False,
+        "requires-fh-in-fit": True,
         "handles-missing-data": False,
     }
 
