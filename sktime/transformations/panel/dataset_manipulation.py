@@ -5,14 +5,13 @@ import numpy as np
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested_adp
 from sktime.datatypes._convert import convert_to
 
-"""
-Provide basic transformers to use together with
-`sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
-
-"""
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Selector", "Concatenator", "Converter"]
+
+"""Provide basic transformers to use together with
+`sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
+"""
 
 
 class Selector(_PanelToPanelTransformer):
