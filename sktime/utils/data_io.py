@@ -7,7 +7,9 @@ import textwrap
 
 import numpy as np
 import pandas as pd
+
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
+from sktime.transformations.base import BaseTransformer
 
 
 class TsFileParseException(Exception):
@@ -1125,6 +1127,107 @@ def write_results_to_uea_format(
     file.close()
 
 
+def write_tabular_transformation_to_arff(
+    data,
+    transformation,
+    path,
+    problem_name="sample_data",
+    class_label=None,
+    class_value_list=None,
+    comment=None,
+    fold="",
+):
+    """
+    Output a dataset in dataframe format to .ts file.
+
+    Parameters
+    ----------
+    data: {pandas dataframe, 3d numpy array}
+        the dataset to build the transformation with which must be of the structure
+        specified in the documentation examples/loading_data.ipynb
+    transformation: BaseTransformer
+        Transformation to save to arff
+    path: str
+        The full path to output the ardd file
+    problem_name: str
+        The problemName to print in the header of the arff file
+        and also the name of the file.
+    class_label: {list, None}, optional
+        Provide class label to show the possible class values
+        for classification problems in the header.
+    class_value_list: {list/ndarray, []}, optional
+        ndarray containing the class values for each case in classification problems
+    comment: {None, str}, optional
+        Comment text to be inserted before the header in a block.
+    fold: str, optional
+        Addon at the end of the filename, i.e. _TRAIN or _TEST.
+
+    Returns
+    -------
+    None
+    """
+    # ensure transformation provided is a transformer
+    if not isinstance(transformation, BaseTransformer):
+        raise ValueError("Transformation must be a BaseTransformer")
+
+    data = transformation.fit_transform(data, class_value_list)
+
+    if isinstance(data, pd.DataFrame):
+        data = data.to_numpy()
+
+    if class_value_list is not None and class_label is None:
+        class_label = np.unique(class_value_list)
+    elif class_value_list is None:
+        class_value_list = []
+
+    # ensure number of cases is same as the class value list
+    if len(data) != len(class_value_list) and len(class_value_list) > 0:
+        raise IndexError(
+            "The number of cases is not the same as the number of given class values"
+        )
+
+    # create path if not exist
+    dirt = f"{str(path)}/{str(problem_name)}/"
+    try:
+        os.makedirs(dirt)
+    except os.error:
+        pass  # raises os.error if path already exists
+
+    # create arff file in the path
+    file = open(f"{dirt}{str(problem_name)}{fold}.arff", "w")
+
+    # write comment if any as a block at start of file
+    if comment is not None:
+        file.write("\n% ".join(textwrap.wrap("% " + comment)))
+        file.write("\n")
+
+    # begin writing header information
+    file.write(f"@Relation {problem_name}\n")
+
+    # write each attribute
+    for i in range(data.shape[1]):
+        file.write(f"@attribute att{str(i)} numeric\n")
+
+    # write class attribute if it exists
+    if class_label is not None:
+        comma_separated_class_label = ",".join(str(label) for label in class_label)
+        file.write(f"@attribute target {{{comma_separated_class_label}}}\n")
+
+    file.write("@data\n")
+
+    for case, value in itertools.zip_longest(data, class_value_list):
+        # turn attributes into comma-separated row
+        atts = ",".join([str(num) if not np.isnan(num) else "?" for num in case])
+        file.write(str(atts))
+        if value is not None:
+            file.write(f",{value}")  # write the case value if any
+        elif class_label is not None:
+            file.write(",?")
+        file.write("\n")  # open a new line
+
+    file.close()
+
+
 def write_dataframe_to_tsfile(
     data,
     path,
@@ -1137,6 +1240,7 @@ def write_dataframe_to_tsfile(
     series_length=-1,
     missing_values="NaN",
     comment=None,
+    fold="",
 ):
     """
     Output a dataset in dataframe format to .ts file.
@@ -1176,6 +1280,8 @@ def write_dataframe_to_tsfile(
         Representation for missing value, default is NaN.
     comment: {None, str}, optional
         Comment text to be inserted before the header in a block.
+    fold: str, optional
+        Addon at the end of the filename, i.e. _TRAIN or _TEST.
 
     Returns
     -------
@@ -1191,15 +1297,19 @@ def write_dataframe_to_tsfile(
     https://stackoverflow.com/questions/37877708/
     how-to-turn-a-pandas-dataframe-row-into-a-comma-separated-string
     """
-    if class_value_list is None:
+    if class_value_list is not None and class_label is None:
+        class_label = np.unique(class_value_list)
+    elif class_value_list is None:
         class_value_list = []
+
     # ensure data provided is a dataframe
     if not isinstance(data, pd.DataFrame):
         raise ValueError("Data provided must be a DataFrame")
+
     # ensure number of cases is same as the class value list
     if len(data.index) != len(class_value_list) and len(class_value_list) > 0:
         raise IndexError(
-            "The number of cases is not the same as the number of given " "class values"
+            "The number of cases is not the same as the number of given class values"
         )
 
     if equal_length and series_length == -1:
@@ -1215,12 +1325,13 @@ def write_dataframe_to_tsfile(
         pass  # raises os.error if path already exists
 
     # create ts file in the path
-    file = open(f"{dirt}{str(problem_name)}_transform.ts", "w")
+    file = open(f"{dirt}{str(problem_name)}{fold}.ts", "w")
 
     # write comment if any as a block at start of file
-    if comment:
+    if comment is not None:
         file.write("\n# ".join(textwrap.wrap("# " + comment)))
         file.write("\n")
+
     # begin writing header information
     file.write(f"@problemName {problem_name}\n")
     file.write(f"@timeStamps {str(timestamp).lower()}\n")
@@ -1233,7 +1344,7 @@ def write_dataframe_to_tsfile(
         file.write(f"@seriesLength {series_length}\n")
 
     # write class label line
-    if class_label:
+    if class_label is not None:
         space_separated_class_label = " ".join(str(label) for label in class_label)
         file.write(f"@classLabel true {space_separated_class_label}\n")
     else:
