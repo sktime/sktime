@@ -85,23 +85,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional, default=True
-
-        Returns
-        -------
-        self : an instance of self.
-        """
-        for forecaster in self.forecasters_:
-            forecaster.update(y, X, update_params=update_params)
-        return self
-
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Return the predicted reduction.
 
