@@ -5,12 +5,14 @@ import numpy as np
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested_adp
 from sktime.datatypes._convert import convert_to
 
-__author__ = ["Viktor Kazakov"]
-__all__ = ["Selector", "Concatenator"]
-
-"""Basic dataset manipulations.
+"""
+Provide basic transformers to use together with
+`sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
 
 """
+
+__author__ = ["Viktor Kazakov"]
+__all__ = ["Selector", "Concatenator", "Converter"]
 
 
 class Selector(_PanelToPanelTransformer):
@@ -46,12 +48,12 @@ class Selector(_PanelToPanelTransformer):
             return X[:, self.columns]
 
     def fit_transform(self, X, y=None):
-        """Used for passing unit tests."""
+        """Use for passing unit tests."""
         self.fit(X, y)
         return self.transform(X, y)
 
     def fit(self, X, y=None):
-        """Used for passing unit tests."""
+        """Use for passing unit tests."""
         self._is_fitted = True
         return self
 
@@ -87,12 +89,12 @@ class Concatenator(_PanelToPanelTransformer):
                 return np.concatenate(tuple(X), axis=1)
 
     def fit_transform(self, X, y=None):
-        """Used for passing unit tests."""
+        """Use for passing unit tests."""
         self.fit(X, y)
         return self.transform(X, y)
 
     def fit(self, X, y=None):
-        """Used for passing unit tests."""
+        """Use for passing unit tests."""
         self._is_fitted = True
         return self
 
@@ -137,11 +139,11 @@ class Converter(_PanelToPanelTransformer):
     def fit_transform(
         self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None
     ):
-        """Used for passing unit tests."""
+        """Use for passing unit tests."""
         self.fit(obj, to_type, as_scitype, store)
         return self.transform(obj, to_type, as_scitype, store)
 
     def fit(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
-        """Used for passing unit tests."""
+        """Use for passing unit tests."""
         self._is_fitted = True
         return self
