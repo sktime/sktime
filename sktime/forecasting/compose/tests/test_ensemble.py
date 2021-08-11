@@ -7,6 +7,7 @@ __author__ = ["GuzalBulatova"]
 import numpy as np
 import pandas as pd
 import pytest
+import sys
 
 from scipy.stats import gmean
 from sktime.forecasting.compose import EnsembleForecaster
@@ -74,6 +75,7 @@ def test_aggregation_unweighted(forecasters, aggfunc):
         [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
     ],
 )
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_aggregation_weighted(forecasters, aggfunc, weights):
     """Assert weighted aggfunc returns the correct values."""
     y = make_forecasting_problem()
