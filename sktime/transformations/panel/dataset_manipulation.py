@@ -8,7 +8,9 @@ from sktime.datatypes._convert import convert_to
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Selector", "Concatenator"]
 
-"""Basic dataset manipulations."""
+"""Basic dataset manipulations.
+
+"""
 
 
 class Selector(_PanelToPanelTransformer):
@@ -44,12 +46,12 @@ class Selector(_PanelToPanelTransformer):
             return X[:, self.columns]
 
     def fit_transform(self, X, y=None):
-        """Placeholder method for passing unit tests."""
+        """Used for passing unit tests."""
         self.fit(X, y)
         return self.transform(X, y)
 
     def fit(self, X, y=None):
-        """Placeholder method for passing unit tests"""
+        """Used for passing unit tests."""
         self._is_fitted = True
         return self
 
@@ -85,19 +87,19 @@ class Concatenator(_PanelToPanelTransformer):
                 return np.concatenate(tuple(X), axis=1)
 
     def fit_transform(self, X, y=None):
-        """Placeholder method for passing unit tests."""
+        """Used for passing unit tests."""
         self.fit(X, y)
         return self.transform(X, y)
 
     def fit(self, X, y=None):
-        """Placeholder method for passing unit tests."""
+        """Used for passing unit tests."""
         self._is_fitted = True
         return self
 
 
 class Converter(_PanelToPanelTransformer):
-    """Wraps sktime.datatypes._convert in transformer
-    interface that can be used withing pipelines
+    """Wraps sktime.datatypes._convert.
+    Transformer interface that can be used within pipelines
     The default values for to_type and as_scitype
     are given for passing the unit tests.
 
@@ -135,9 +137,11 @@ class Converter(_PanelToPanelTransformer):
     def fit_transform(
         self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None
     ):
+        """Used for passing unit tests."""
         self.fit(obj, to_type, as_scitype, store)
         return self.transform(obj, to_type, as_scitype, store)
 
     def fit(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
+        """Used for passing unit tests."""
         self._is_fitted = True
         return self
