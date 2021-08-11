@@ -115,8 +115,7 @@ class Converter(_PanelToPanelTransformer):
         super(Converter, self).__init__()
 
     def transform(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
-        """
-        Public transform method.
+        """Public transform method.
 
         Parameters
         ----------
