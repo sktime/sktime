@@ -127,7 +127,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
         return None
 
     def _find_step_by_name(self, step_name):
-        """returns single step by name
+        """Return single step by name.
 
         Parameters
         ----------
