@@ -93,7 +93,10 @@ class Concatenator(_PanelToPanelTransformer):
 
 class Converter(_PanelToPanelTransformer):
     """Wraps sktime.datatypes._convert in transformer
-    interface that can be used withing pipelines"""
+    interface that can be used withing pipelines
+    The default values for to_type and as_scitype
+    are given for passing the unit tests.
+    """
 
     _tags = {
         "fit-in-transform": True,
@@ -102,14 +105,16 @@ class Converter(_PanelToPanelTransformer):
     def __init__(self):
         super(Converter, self).__init__()
 
-    def transform(self, obj, to_type, as_scitype, store=None):
+    def transform(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
         self.check_is_fitted()
         return convert_to(obj, to_type, as_scitype, store)
 
-    def fit_transform(self, obj, to_type, as_scitype, store=None):
+    def fit_transform(
+        self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None
+    ):
         self.fit(obj, to_type, as_scitype, store)
         return self.transform(obj, to_type, as_scitype, store)
 
-    def fit(self, obj, to_type, as_scitype, store=None):
+    def fit(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
         self._is_fitted = True
         return self
