@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
 
-__author__ = ["Guzal Bulatova"]
+__author__ = ["GuzalBulatova"]
 
 import numpy as np
 import pandas as pd
@@ -10,11 +10,21 @@ import pytest
 
 from scipy.stats import gmean
 from sktime.forecasting.compose import EnsembleForecaster
-from sktime.tests._config import FORECASTERS
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster
+
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
-def test_avg_mean(forecasters=FORECASTERS):
+@pytest.mark.parametrize(
+    "forecasters",
+    [
+        [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+        [("trend", PolynomialTrendForecaster()), ("ses", ExponentialSmoothing())],
+    ],
+)
+def test_avg_mean(forecasters):
     """Assert `mean` aggfunc returns the same values as `average` with equal weights."""
     y = make_forecasting_problem()
     forecaster = EnsembleForecaster(forecasters)
@@ -29,17 +39,23 @@ def test_avg_mean(forecasters=FORECASTERS):
 
 
 @pytest.mark.parametrize("aggfunc", ["median", "mean", "min", "max", "gmean"])
-def test_aggregation_unweighted(aggfunc):
+@pytest.mark.parametrize(
+    "forecasters",
+    [
+        [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+    ],
+)
+def test_aggregation_unweighted(forecasters, aggfunc):
     """Assert aggfunc returns the correct values."""
     y = make_forecasting_problem()
-    forecaster = EnsembleForecaster(forecasters=FORECASTERS, aggfunc=aggfunc)
+    forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
     forecaster.fit(y, fh=[1, 2, 3])
     actual_pred = forecaster.predict()
 
     predictions = []
     if aggfunc == "gmean":
         aggfunc = gmean
-    for _, forecaster in FORECASTERS:
+    for _, forecaster in forecasters:
         f = forecaster
         f.fit(y)
         f_pred = f.predict(fh=[1, 2, 3])
@@ -50,26 +66,32 @@ def test_aggregation_unweighted(aggfunc):
     pd.testing.assert_series_equal(actual_pred, expected_pred)
 
 
-@pytest.mark.parametrize("aggfunc", ["median", "gmean"])
+@pytest.mark.parametrize("aggfunc", ["mean", "gmean"])
 @pytest.mark.parametrize("weights", [[1.44, 1.2]])
-def test_aggregation_weighted(aggfunc, weights):
-    """Assert aggfunc returns the correct values."""
+@pytest.mark.parametrize(
+    "forecasters",
+    [
+        [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+    ],
+)
+def test_aggregation_weighted(forecasters, aggfunc, weights):
+    """Assert weighted aggfunc returns the correct values."""
     y = make_forecasting_problem()
     forecaster = EnsembleForecaster(
-        forecasters=FORECASTERS, aggfunc=aggfunc, weights=weights
+        forecasters=forecasters, aggfunc=aggfunc, weights=weights
     )
     forecaster.fit(y, fh=[1, 2, 3])
     actual_pred = forecaster.predict()
 
     predictions = []
-    for _, forecaster in FORECASTERS:
+    for _, forecaster in forecasters:
         f = forecaster
         f.fit(y)
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
 
     predictions = pd.DataFrame(predictions)
-    if aggfunc == "median":
+    if aggfunc == "mean":
         func = np.average
     else:
         func = gmean
@@ -79,10 +101,14 @@ def test_aggregation_weighted(aggfunc, weights):
 
 
 @pytest.mark.parametrize("aggfunc", ["miin", "maximum", ""])
-def test_invalid_aggfuncs(aggfunc):
+@pytest.mark.parametrize(
+    "forecasters",
+    [[("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())]],
+)
+def test_invalid_aggfuncs(forecasters, aggfunc):
     """Check if invalid aggregation functions return Error."""
     y = make_forecasting_problem()
-    forecaster = EnsembleForecaster(forecasters=FORECASTERS, aggfunc=aggfunc)
+    forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
     forecaster.fit(y, fh=[1, 2])
     with pytest.raises(ValueError, match=r"not recognized"):
         forecaster.predict()
