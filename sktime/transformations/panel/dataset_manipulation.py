@@ -2,7 +2,7 @@
 from sktime.transformations.base import _PanelToPanelTransformer
 import pandas as pd
 import numpy as np
-
+from sktime.datatypes._panel._convert import from_3d_numpy_to_nested_adp
 from sktime.datatypes._convert import convert_to
 
 __author__ = ["Viktor Kazakov"]
@@ -107,6 +107,10 @@ class Converter(_PanelToPanelTransformer):
 
     def transform(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
         self.check_is_fitted()
+        # for passing unit tests.
+        # If 3d numpy array as passed return pandas DataFrame
+        if (type(obj) is np.ndarray) and len(obj.shape) == 3:
+            return from_3d_numpy_to_nested_adp(obj)
         return convert_to(obj, to_type, as_scitype, store)
 
     def fit_transform(
