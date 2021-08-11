@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Diverse Representation Canonical Interval Forest Classifier (DrCIF)."""
+"""DrCIF classifier.
+
+interval based DrCIF classifier extracting catch22 features from random intervals on
+periodogram and differences representations as well as the base series.
+"""
 
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["DrCIF"]
@@ -27,41 +31,55 @@ from sktime.utils.validation.panel import check_X, check_X_y
 class DrCIF(BaseClassifier):
     """Diverse Representation Canonical Interval Forest Classifier (DrCIF).
 
-    Interval based forest making use of the catch22 feature set on randomly
-    selected intervals on the base series, periodogram representation and
-    differences representation.
+    Extension of the CIF algorithm using multple representations. Interval based forest
+    making use of the catch22 feature set on randomly selected intervals on the base
+    series, periodogram representation and differences representation.
 
-    Overview: Input n series length m
-    for each tree
-        sample 4 + (sqrt(m)*sqrt(d)) / 3 intervals per representation
-        subsample att_subsample_size tsf/catch22 attributes randomly
-        randomly select dimension for each interval
-        calculate attributes for each interval, concatenate to form new
-        data set
-        build decision tree on new data set
-    ensemble the trees with averaged probability estimates
-
-    This implementation deviates from the original in minor ways. Predictions
-    are made using summed probabilities instead of majority vote
-    and it does not use the splitting criteria tiny refinement described in
-    deng13forest by default.
+    Overview: Input "n" series with "d" dimensions of length "m".
+    For each tree
+        - Sample n_intervals intervals per representation of random position and length
+        - Subsample att_subsample_size catch22 or summary statistic attributes randomly
+        - Randomly select dimension for each interval
+        - Calculate attributes for each interval from its representation, concatenate
+          to form new data set
+        - Build decision tree on new data set
+    Ensemble the trees with averaged probability estimates
 
     Parameters
     ----------
-    n_estimators       : int, ensemble size, optional (default to 200)
-    n_intervals        : int or size 3 list, number of intervals to extract per
-    representation, optional (default to 4 + (sqrt(representation_length)*sqrt(n_dims))
-    / 3)
-    att_subsample_size : int, number of catch22/tsf attributes to subsample
-    per classifier, optional (default to 10)
+    n_estimators : int, default=200
+        Number of estimators to build for the ensemble.
+    n_intervals : int, length 3 List of ints or None, default=None
+        Number of intervals to extract per representation per tree, if None extracts
+        (4 + (sqrt(representation_length) * sqrt(n_dims)) / 3) intervals. todo
+    att_subsample_size : int, default=10
+        Number of catch22 or summary statistic attributes to subsample per tree. todo
     min_interval       : int or size 3 list, minimum width of an interval
     per representation, optional (default to 4)
-    max_interval       : int or size 3 list, maximum width of an interval
-    per representation, optional (default to representation_length / 2)
-    n_jobs             : int, optional (default=1)
-    The number of jobs to run in parallel for both `fit` and `predict`.
-    ``-1`` means using all processors.
-    random_state       : int, seed for random, optional (default to no seed)
+    min_interval : int, length 3 List of ints or None, default=None
+        Minimum length of an interval per representation, if None set to 4. todo
+    max_interval : int, length 3 List of ints or None, default=None
+        Maximum length of an interval per representation, if None set to
+        (representation_length / 2). todo
+    base_estimator : BaseEstimator or str, default="DTC"
+        Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
+        string for suggested options.
+        "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
+        measure.
+        "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
+        tree used with embedded attribute processing for faster predictions.
+    time_limit_in_minutes : int, default=0
+        Time contract to limit build time in minutes, overriding n_estimators.
+        Default of 0 means n_estimators is used.
+    contract_max_n_estimators : int, default=500
+        Max number of estimators when time_limit_in_minutes is set.
+    save_transformed_data : bool, default=False
+        Save the data transformed in fit for use in _get_train_probs.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
@@ -85,23 +103,22 @@ class DrCIF(BaseClassifier):
 
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
+        "capability:contractable": True,
     }
 
     def __init__(
         self,
-        min_interval=None,
-        max_interval=None,
         n_estimators=200,
         n_intervals=None,
         att_subsample_size=10,
-        base_estimator=None,
+        min_interval=None,
+        max_interval=None,
+        base_estimator="DTC",
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=500,
         save_transformed_data=False,
@@ -129,16 +146,18 @@ class DrCIF(BaseClassifier):
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
-        self.__n_intervals = []
-        self.__max_interval = []
-        self.__min_interval = []
+        self.__n_estimators = n_estimators
+        self.__n_intervals = n_intervals
+        self.__att_subsample_size = att_subsample_size
+        self.__max_interval = max_interval
+        self.__min_interval = min_interval
+        self.__base_estimator = base_estimator
         self.total_intervals = 0
         self.classifiers = []
         self.intervals = []
         self.atts = []
         self.dims = []
         self.classes_ = []
-        self.tree = None
 
         super(DrCIF, self).__init__()
 
@@ -168,12 +187,12 @@ class DrCIF(BaseClassifier):
         start_time = time.time()
         train_time = 0
 
-        if self.base_estimator is None or self.base_estimator == "DTC":
-            self.tree = DecisionTreeClassifier(criterion="entropy")
+        if self.base_estimator == "DTC":
+            self.__base_estimator = DecisionTreeClassifier(criterion="entropy")
         elif self.base_estimator == "CIT":
-            self.tree = ContinuousIntervalTree()
+            self.__base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
-            self.tree = self.base_estimator
+            self.__base_estimator = self.base_estimator
         else:
             raise ValueError("DrCIF invalid base estimator given.")
 
@@ -501,7 +520,7 @@ class DrCIF(BaseClassifier):
 
                 j += 1
 
-        tree = _clone_estimator(self.tree, random_state=rs)
+        tree = _clone_estimator(self.__base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -519,7 +538,7 @@ class DrCIF(BaseClassifier):
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
         c22 = Catch22(outlier_norm=True)
-        if isinstance(self.tree, ContinuousIntervalTree):
+        if isinstance(self.__base_estimator, ContinuousIntervalTree):
             return classifier.predict_proba_drcif(
                 X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts
             )
@@ -557,7 +576,7 @@ class DrCIF(BaseClassifier):
         subsample = rng.choice(self.n_instances, size=self.n_instances)
         oob = [n for n in indices if n not in subsample]
 
-        clf = _clone_estimator(self.tree, rs)
+        clf = _clone_estimator(self.__base_estimator, rs)
         clf.fit(self.transformed_data[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data[idx][oob])
 

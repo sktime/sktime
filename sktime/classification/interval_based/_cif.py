@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Canonical Interval Forest Classifier (CIF)."""
+"""CIF classifier
+
+interval based CIF classifier extracting catch22 features from random intervals.
+"""
 
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["CanonicalIntervalForest"]
@@ -24,41 +27,46 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class CanonicalIntervalForest(BaseClassifier):
-    """Canonical Interval Forest Classifier.
+    """Canonical Interval Forest Classifier (CIF).
 
     Interval based forest making use of the catch22 feature set on randomly
     selected intervals.
 
-    Overview: Input n series length m
-    for each tree
-        sample sqrt(m) intervals
-        subsample att_subsample_size tsf/catch22 attributes randomly
-        randomly select dimension for each interval
-        calculate attributes for each interval, concatenate to form new
-        data set
-        build decision tree on new data set
+    Overview: Input "n" series with "d" dimensions of length "m".
+    For each tree
+        - Sample n_intervals intervals of random position and length
+        - Subsample att_subsample_size catch22 or summary statistic attributes randomly
+        - Randomly select dimension for each interval
+        - Calculate attributes for each interval, concatenate to form new
+          data set
+        - Build decision tree on new data set
     ensemble the trees with averaged probability estimates
-
-    This implementation deviates from the original in minor ways. Predictions
-    are made using summed probabilities instead of majority vote
-    and it does not use the splitting criteria tiny refinement described in
-    deng13forest by default.
 
     Parameters
     ----------
-    n_estimators       : int, ensemble size, optional (default to 200)
-    n_intervals        : int, number of intervals to extract, optional (default to
-    sqrt(series_length)*sqrt(n_dims))
-    att_subsample_size : int, number of catch22/tsf attributes to subsample
-    per classifier, optional (default to 8)
-    min_interval       : int, minimum width of an interval, optional (default
-    to 3)
-    max_interval       : int, maximum width of an interval, optional (default
-    to series_length/2)
-    n_jobs             : int, optional (default=1)
-    The number of jobs to run in parallel for both `fit` and `predict`.
-    ``-1`` means using all processors.
-    random_state       : int, seed for random, optional (default to no seed)
+    n_estimators : int, default=200
+        Number of estimators to build for the ensemble.
+    n_intervals : int or None, default=None
+        Number of intervals to extract per tree, if None extracts
+        (sqrt(series_length) * sqrt(n_dims)) intervals.
+    att_subsample_size : int, default=8
+        Number of catch22 or summary statistic attributes to subsample per tree.
+    min_interval : int, default=3
+        Minimum length of an interval.
+    max_interval : int or None, default=None
+        Maximum length of an interval, if None set to (series_length / 2).
+    base_estimator : BaseEstimator or str, default="DTC"
+        Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
+        string for suggested options.
+        "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
+        measure.
+        "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
+        tree used with embedded attribute processing for faster predictions.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
@@ -86,23 +94,22 @@ class CanonicalIntervalForest(BaseClassifier):
 
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
         self,
-        min_interval=3,
-        max_interval=None,
         n_estimators=200,
         n_intervals=None,
         att_subsample_size=8,
-        base_estimator=None,
+        min_interval=3,
+        max_interval=None,
+        base_estimator="DTC",
         n_jobs=1,
         random_state=None,
     ):
@@ -123,13 +130,15 @@ class CanonicalIntervalForest(BaseClassifier):
         self.n_dims = 0
         self.series_length = 0
         self.__n_intervals = n_intervals
+        self.__att_subsample_size = att_subsample_size
         self.__max_interval = max_interval
+        self.__min_interval = min_interval
+        self.__base_estimator = base_estimator
         self.classifiers = []
         self.atts = []
         self.intervals = []
         self.dims = []
         self.classes_ = []
-        self.tree = None
 
         super(CanonicalIntervalForest, self).__init__()
 
@@ -155,12 +164,12 @@ class CanonicalIntervalForest(BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        if self.base_estimator is None or self.base_estimator == "DTC":
-            self.tree = DecisionTreeClassifier(criterion="entropy")
+        if self.base_estimator == "DTC":
+            self.__base_estimator = DecisionTreeClassifier(criterion="entropy")
         elif self.base_estimator == "CIT":
-            self.tree = ContinuousIntervalTree()
+            self.__base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
-            self.tree = self.base_estimator
+            self.__base_estimator = self.base_estimator
         else:
             raise ValueError("DrCIF invalid base estimator given.")
 
@@ -171,13 +180,20 @@ class CanonicalIntervalForest(BaseClassifier):
         if self.__n_intervals <= 0:
             self.__n_intervals = 1
 
+        if self.att_subsample_size <= 0:
+            self.__att_subsample_size = 1
+        elif self.att_subsample_size > 25:
+            self.__att_subsample_size = 25
+
         if self.series_length < self.min_interval:
-            self.min_interval = self.series_length
+            self.__min_interval = self.series_length
+        elif self.min_interval < 3:
+            self.__min_interval = 3
 
         if self.max_interval is None:
             self.__max_interval = self.series_length / 2
-        if self.__max_interval < self.min_interval:
-            self.__max_interval = self.min_interval
+        if self.__max_interval < self.__min_interval:
+            self.__max_interval = self.__min_interval
 
         fit = Parallel(n_jobs=self.n_jobs)(
             delayed(self._fit_estimator)(
@@ -265,11 +281,11 @@ class CanonicalIntervalForest(BaseClassifier):
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
-            shape=(self.att_subsample_size * self.__n_intervals, self.n_instances),
+            shape=(self.__att_subsample_size * self.__n_intervals, self.n_instances),
             dtype=np.float32,
         )
 
-        atts = rng.choice(25, self.att_subsample_size, replace=False)
+        atts = rng.choice(25, self.__att_subsample_size, replace=False)
         dims = rng.choice(self.n_dims, self.__n_intervals, replace=True)
         intervals = np.zeros((self.__n_intervals, 2), dtype=int)
 
@@ -277,34 +293,38 @@ class CanonicalIntervalForest(BaseClassifier):
         # features
         for j in range(0, self.__n_intervals):
             if rng.random() < 0.5:
-                intervals[j][0] = rng.randint(0, self.series_length - self.min_interval)
+                intervals[j][0] = rng.randint(
+                    0, self.series_length - self.__min_interval
+                )
                 len_range = min(
                     self.series_length - intervals[j][0],
                     self.__max_interval,
                 )
                 length = (
-                    rng.randint(0, len_range - self.min_interval) + self.min_interval
+                    rng.randint(0, len_range - self.__min_interval)
+                    + self.__min_interval
                 )
                 intervals[j][1] = intervals[j][0] + length
             else:
                 intervals[j][1] = (
-                    rng.randint(0, self.series_length - self.min_interval)
-                    + self.min_interval
+                    rng.randint(0, self.series_length - self.__min_interval)
+                    + self.__min_interval
                 )
                 len_range = min(intervals[j][1], self.__max_interval)
                 length = (
-                    rng.randint(0, len_range - self.min_interval) + self.min_interval
-                    if len_range - self.min_interval > 0
-                    else self.min_interval
+                    rng.randint(0, len_range - self.__min_interval)
+                    + self.__min_interval
+                    if len_range - self.__min_interval > 0
+                    else self.__min_interval
                 )
                 intervals[j][0] = intervals[j][1] - length
 
-            for a in range(0, self.att_subsample_size):
-                transformed_x[self.att_subsample_size * j + a] = _cif_feature(
+            for a in range(0, self.__att_subsample_size):
+                transformed_x[self.__att_subsample_size * j + a] = _cif_feature(
                     X, intervals[j], dims[j], atts[a], c22
                 )
 
-        tree = _clone_estimator(self.tree, random_state=rs)
+        tree = _clone_estimator(self.__base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -314,17 +334,17 @@ class CanonicalIntervalForest(BaseClassifier):
 
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
         c22 = Catch22(outlier_norm=True)
-        if isinstance(self.tree, ContinuousIntervalTree):
+        if isinstance(self.__base_estimator, ContinuousIntervalTree):
             return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
         else:
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.__n_intervals, X.shape[0]),
+                shape=(self.__att_subsample_size * self.__n_intervals, X.shape[0]),
                 dtype=np.float32,
             )
 
             for j in range(0, self.__n_intervals):
-                for a in range(0, self.att_subsample_size):
-                    transformed_x[self.att_subsample_size * j + a] = _cif_feature(
+                for a in range(0, self.__att_subsample_size):
+                    transformed_x[self.__att_subsample_size * j + a] = _cif_feature(
                         X, intervals[j], dims[j], atts[a], c22
                     )
 
@@ -335,7 +355,7 @@ class CanonicalIntervalForest(BaseClassifier):
             return classifier.predict_proba(transformed_x)
 
     def temporal_importance_curves(self, normalise_time_points=False):
-        if not isinstance(self.tree, ContinuousIntervalTree):
+        if not isinstance(self.__base_estimator, ContinuousIntervalTree):
             raise ValueError(
                 "CIF base estimator for temporal importance curves must"
                 " be ContinuousIntervalTree."
@@ -350,8 +370,8 @@ class CanonicalIntervalForest(BaseClassifier):
 
             for n, split in enumerate(splits):
                 gain = gains[n]
-                interval = int(split / self.att_subsample_size)
-                att = self.atts[i][int(split % self.att_subsample_size)]
+                interval = int(split / self.__att_subsample_size)
+                att = self.atts[i][int(split % self.__att_subsample_size)]
                 dim = self.dims[i][interval]
 
                 for j in range(
