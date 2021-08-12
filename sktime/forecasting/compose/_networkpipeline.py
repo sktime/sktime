@@ -393,9 +393,9 @@ Iterator can be called by "fit", "predict" and "update" only.'
         else:
             for step in self.steps:
                 if hasattr(step[1], "get_params"):
-                    out[step[0]] = [step[1], step[1].get_params(), step[2]]
+                    out[step[0]] = f"{step[1]}__{step[1].get_params()}"
                 else:
-                    out[step[0]] = [step[1], step[2]]
+                    out[step[0]] = f"{step[1]}"
         out["steps"] = self.steps
         return out
 
