@@ -10,6 +10,7 @@ Development
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    developer_guide
    reviewer_guide

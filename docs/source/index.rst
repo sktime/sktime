@@ -11,6 +11,7 @@ sktime provides time series algorithms and scikit-learn compatible tools to buil
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    get_started
    users

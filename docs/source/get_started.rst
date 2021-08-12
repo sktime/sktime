@@ -56,10 +56,9 @@ an index indicating the position of an observation in the sequence of values.
 In ``sktime`` time series data can refer to data that is univariate, multivariate or panel, with the difference relating to the number and interrelation
 between time series :term:`variables <variable>`, as well as the number of :term:`instances <instance>` for which each variable is observed.
 
-- :term:`Univariate time series` data refers to data where a single variable is tracked over time.
-- :term:`Multivariate time series` data refers to data where multiple variables are tracked over time for the same :term:`instance`. For example, multiple quarterly economic indicators for a country or multiple sensor readings from the same machine.
+- :term:`Univariate time series` data refers to data where a single :term:`variable` is tracked over time.
+- :term:`Multivariate time series` data refers to data where multiple :term:`variables <variable>` are tracked over time for the same :term:`instance`. For example, multiple quarterly economic indicators for a country or multiple sensor readings from the same machine.
 - :term:`Panel time series` data refers to data where the variables (univariate or multivariate) are tracked for multiple :term:`instances <instance>`. For example, multiple quarterly economic indicators for several countries or multiple sensor readings for multiple machines.
-
 
 Learning Tasks
 ~~~~~~~~~~~~~~
