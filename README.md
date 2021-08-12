@@ -22,7 +22,7 @@ sktime is a library for time series analsyis in Python. It provides a unified in
 | Documentation              |                                                                |
 | -------------------------- | -------------------------------------------------------------- |
 | :star: **[Tutorials]**        | New to sktime? Here's everything you need to know!              |
-| :clipboard: **[Binder notebooks]** | Example notebooks to play with in your browser.              |
+| :clipboard: **[Binder Notebooks]** | Example notebooks to play with in your browser.              |
 | :woman_technologist: **[User Guides]**      | How to use sktime and its features.                             |
 | :scissors: **[Extension Templates]** | How to build your own estimator using sktime's API.            |
 | :control_knobs: **[API Reference]**      | The detailed reference for sktime's API.                        |
