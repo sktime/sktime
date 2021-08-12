@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Module exports: series type converters."""
+"""Module exports: data type definitions, checks, validation, fixtures, converters."""
 
 __author__ = ["fkiraly"]
 
