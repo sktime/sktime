@@ -45,15 +45,26 @@ Key Concepts
 
 ``sktime`` seeks to provide a unified framework for multiple time series machine learning tasks. This (hopefully) makes ``sktime's`` functionality intuitive for users
 and lets developers extend the framework more easily. But time series data and the related scientific use cases each can take multiple forms.
-Therefore, a key set of common terminology is also important.
+Therefore, a key set of common concepts and terminology is important.
 
-In ``sktime`` time series data can refer to data that is univariate, multivariate or panel.
+Data Types
+~~~~~~~~~~
 
-- :term:`Univariate time series` data refers to data where a single variable is tracked over time
-- :term:`Multivariate time series` data refers to data where multiple variables are tracked over time for the same observational unit
-   - e.g. multiple quarterly economic indicators bfor a country, multiple sensors readings from a machine, etc
-- :term:`Panel time series` data refers to data where the same time series (univariate or multivariate) are tracked for multiple observational units
-  - e.g. multiple quarterly economic indicators for several countries, sensor readings from multiple machines, etc
+``sktime`` is designed for time series machine learning. Time series data refers to data where the variables are ordered over time or
+an index indicating the position of an observation in the sequence of values.
+
+In ``sktime`` time series data can refer to data that is univariate, multivariate or panel, with the difference relating to the number and interrelation
+between time series :term:`variables <variable>`, as well as the number of :term:`instances <instance>` for which each variable is observed.
+
+- :term:`Univariate time series` data refers to data where a single variable is tracked over time.
+- :term:`Multivariate time series` data refers to data where multiple variables are tracked over time for the same :term:`instance`.
+For example, multiple quarterly economic indicators for a country or multiple sensor readings from the same machine.
+- :term:`Panel time series` data refers to data where the variables (univariate or multivariate) are tracked for multiple :term:`instances <instance>`.
+For example, multiple quarterly economic indicators for several countries or multiple sensor readings for multiple machines.
+
+
+Learning Tasks
+~~~~~~~~~~~~~~
 
 ``sktime's`` functionality for each learning tasks is centered around providing a set of code artifacts that match a common interface to a given
 scientific purpose (i.e. :term:`scientific type` or :term:`scitype`). For example, ``sktime`` includes a common interface for "forecaster" classes designed to predict future values
@@ -61,21 +72,24 @@ of a time series.
 
 ``sktime's`` interface currently supports:
 
-- :ref:`Time series classification <user_guide_classification>`
-- :ref:`Time series regression <user_guide_regression>`
-- :ref:`Time series clustering <user_guide_clustering>`
-- :ref:`Forecasting <user_guide_forecasting>`
-- :ref:`Time series annotation <user_guide_annotation>`
-- :ref:`Measuring model performance <user_guide_performance_metrics>`
+- :ref:`Time series classification <user_guide_classification>` where the time series data for a given instance are used to predict a categorical target class
+- :ref:`Time series regression <user_guide_regression>` where the time series data for a given instance are used to predict a continuous target value
+- :ref:`Time series clustering <user_guide_clustering>` where the goal is to discover groups consisting of instances with similar time series
+- :ref:`Forecasting <user_guide_forecasting>`where the goal is to predict future values of the input series
+- :ref:`Time series annotation <user_guide_annotation>` which is focused on outlier detection, anomaly detection, change point detection and segmentation
+- :ref:`Performance metrics <user_guide_performance_metrics>` to measure the quality of a model's performance
+
+Reduction
+~~~~~~~~~
 
 While the list above presents each learning task separately, in many cases it is possible to adapt one learning task to help solve another related learning task. For example,
 one approach to forecasting would be to use a regression model that explicitly accounts for the data's time dimension. However, another approach is to reduce the forecasting problem
 to cross-sectional regression, where the input data are tabularized and lags of the data are treated as independent features in `scikit-learn` style
-tabular regression algorithms. Likewise one approach to time series annotation task like anomaly detection is to reduce the problem to using forecaster to predict future values and flag
+tabular regression algorithms. Likewise one approach to the time series annotation task like anomaly detection is to reduce the problem to using forecaster to predict future values and flag
 observations that are too far from these predictions as anomalies. ``sktime`` typically incorporates these type of :term:`reductions <reduction>` through the use of composable classes that
 let users adapt one learning task to solve another related one.
 
-For more information on the terminology used by ``sktime`` see the :ref:`glossary`. To learn more about ``sktime's`` functionality see the :ref:`user_guide`.
+For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`user guide <user_guide>`.
 
 Quickstart
 ----------
@@ -122,6 +136,10 @@ Time Series Classification
 Time Series Regression
 ~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+    The time series regression API is stable. But the inclusion of a dataset to illustrate
+    its features is still in progress.
+
 .. code-block:: python
     from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 
@@ -134,6 +152,7 @@ Time Series Clustering
    in future releases.
 
 .. code-block:: python
+
     from sklearn.model_selection import train_test_split
     from sktime.clustering import TimeSeriesKMeans
     from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
@@ -155,6 +174,7 @@ Time Series Annotation
    in future releases.
 
 .. code-block:: python
+
     from sktime.annotation.adapters import PyODAnnotator
     from pyod.models.iforest import IForest
     from sktime.datasets import load_airline

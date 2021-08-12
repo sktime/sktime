@@ -27,19 +27,19 @@ sktime.
         A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_forecasting`.
 
     Time series
-        ...
+         Data where the :term:`variable` measurements are ordered over time or an index indicating the position of an observation in the sequence of values.
 
     Time series classification
-        A learning task ...
+        A learning task focused on using the patterns across instances between the time series and a categorical target variable.
 
     Time series regression
-        A learning task ...
+        A learning task focused on using the patterns across instances between the time series and a continuous target variable.
 
     Time series clustering
-        A learning task ...
+        A learning task focused on discovering groups consisting of instances with similar time series.
 
     Time series annotation
-        A learning task ...
+        A learning task focused on labeling the timepoints of a time series. This includes the related tasks of outlier detection, anomaly detection, change point detection and segmentation.
 
     Panel time series
         A form of time series data where the same time series are observed observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
@@ -50,15 +50,31 @@ sktime.
         univariate time series regression and forecasting can also include :term:`exogenous` data.
 
     Multivariate time series
-        Multiple time series. Typically observed for the same observational unit. In regresssion and forecasting, multivariate time series
+        Multiple time series. Typically observed for the same observational unit. Multivariate time series
         is typically used to refer to cases where the series evolve together over time. This is related, but different than the cases where
-        a :term:`Univeriate time series` is dependent on :term:`exogenous` data.
+        a :term:`univariate time series` is dependent on :term:`exogenous` data.
 
     Endogenous
-        ...
+        Within a learning task endogenous variables are determined by exogenous variables or past timepoints of the variable itself. Also referred to
+        as the dependent variable or target.
 
     Exogenous
-        ...
+        Within a learning task exogenous variables are external factors whose pattern of impact on tasks' endogenous variables must be learned.
+        Also referred to as independent variables or features.
 
     Reduction
-        ...
+        Reduction refers to decomposing a given learning task into simpler tasks that can be composed to create a solution to the original task.
+        In ``sktime`` reduction is used to allow one learning task to be adapted as a solution for an alternative task.
+
+    Variable
+        Refers to some measurement of in terest. Variables may be cross-sectional (e.g. time-invarient measurements like a patient's place of birth) or
+        :term:`time series`.
+
+    Timepoint
+        The point in time that an observation is made. A timee point may represent an exact point in time (a timestamp),
+        a timeperiod (e.g. minutes, hours or days), or simply an index indicating the position of an observation in the sequence of values.
+
+    Instance
+        A member of the set of entities being studied and which an ML practitioner wishes to generalize. For example,
+        patients, chemical process runs, machines, countries, etc. May also be referred to as samples, examples, observations or records
+        depending on the discipline and context.
