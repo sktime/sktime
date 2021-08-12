@@ -37,17 +37,6 @@ def test_column_ensemble_shape(forecasters, fh):
 
 
 @pytest.mark.parametrize(
-    "forecasters", [("trend", PolynomialTrendForecaster(), 0), [], None]
-)
-def test_invalid_tuple_forecasters(forecasters):
-    """Check if invalid forecaster tuples return correct Error."""
-    y = pd.DataFrame(np.random.randint(0, 100, size=(100, 2)), columns=list("AB"))
-    forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-    with pytest.raises(ValueError, match=r"should be a list"):
-        forecaster.fit(y, fh=[1, 2])
-
-
-@pytest.mark.parametrize(
     "forecasters",
     [
         [

@@ -45,13 +45,19 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
         "univariate-only": False,
         "y_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
+        forecaster_requires_fh_in_fit = (
+            forecaster.get_tag("requires-fh-in-fit")
+            for _, forecaster, _ in self.forecasters
+        )
+        at_least_one_requires_fh_in_fit = any(forecaster_requires_fh_in_fit)
+        self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh_in_fit})
 
     @property
     def _forecasters(self):
