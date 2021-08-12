@@ -74,7 +74,7 @@ class NetworkPipelineForecaster(BaseForecaster):
     _required_parameters = ["steps"]
     _tags = {"univariate-only": False, "requires-fh-in-fit": False}
 
-    def __init__(self, steps):
+    def __init__(self, steps, *args):
         self.steps = steps
         self.steps_ = None
         self._step_results_fit = {}
@@ -370,3 +370,53 @@ Iterator can be called by "fit", "predict" and "update" only.'
     def get_fitted_params(self):
         """Will be implemented."""
         raise NotImplementedError()
+
+    def get_params(self, deep=True):
+        """Get parameters of this estimator.
+
+        Parameters
+        ----------
+        deep : bool
+            if True, will return parameters for this estimator and
+            contained subobjects that are estimators
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values
+
+        """
+        out = dict()
+        if (self.steps is None) or (deep is False):
+            out["steps"] = self.steps
+            return out
+        else:
+            for step in self.steps:
+                if hasattr(step[1], "get_params"):
+                    out[step[0]] = [step[1], step[1].get_params(), step[2]]
+                else:
+                    out[step[0]] = [step[1], step[2]]
+        out["steps"] = self.steps
+        return out
+
+    def set_params(self, **params):
+        """Set parameters of this estimator.
+
+        Works on simple and composite estimators.
+
+        Parameters
+        ----------
+        **params : dict
+            Estimator parameters.
+
+        Returns
+        -------
+        self: estimator instance
+            Estimator instance.
+        """
+        if "steps" not in params:
+            raise ValueError("params dictionary must have a `steps` key")
+
+        self.steps_ = params["steps"]
+        self.steps = params["steps"]
+        return self
