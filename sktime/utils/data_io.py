@@ -1137,6 +1137,7 @@ def write_tabular_transformation_to_arff(
     class_value_list=None,
     comment=None,
     fold="",
+    fit_transform=True,
 ):
     """
     Output a dataset in dataframe format to .ts file.
@@ -1162,6 +1163,8 @@ def write_tabular_transformation_to_arff(
         Comment text to be inserted before the header in a block.
     fold: str, optional
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
+    fit_transform: bool, optional
+        Whether to fit the transformer prior to calling transform
 
     Returns
     -------
@@ -1171,7 +1174,10 @@ def write_tabular_transformation_to_arff(
     if not isinstance(transformation, BaseTransformer):
         raise ValueError("Transformation must be a BaseTransformer")
 
-    data = transformation.fit_transform(data, class_value_list)
+    if fit_transform:
+        data = transformation.fit_transform(data, class_value_list)
+    else:
+        data = transformation.transform(data, class_value_list)
 
     if isinstance(data, pd.DataFrame):
         data = data.to_numpy()
