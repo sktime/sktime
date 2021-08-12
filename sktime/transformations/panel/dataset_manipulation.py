@@ -5,7 +5,6 @@ Selection of simple transformers that can be used with
 `sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
 """
 
-# -*- coding: utf-8 -*-
 from sktime.transformations.base import _PanelToPanelTransformer
 import pandas as pd
 import numpy as np
