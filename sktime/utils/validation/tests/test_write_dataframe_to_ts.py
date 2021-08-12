@@ -9,7 +9,6 @@ import pytest
 from pandas._testing import assert_frame_equal
 
 import sktime
-
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 from sktime.utils.data_io import write_dataframe_to_tsfile
 
@@ -26,7 +25,6 @@ def test_write_dataframe_to_ts_success(tmp_path):
         data=test_x,
         path=tmp_path,
         problem_name="ItalyPowerDemand",
-        timestamp=False,
         univariate=True,
         class_label=[1, 2],
         class_value_list=test_y,
@@ -37,6 +35,7 @@ def test_write_dataframe_to_ts_success(tmp_path):
           GUI Operating Systems". The classification task is to distinguish
           days from Oct to March (inclusive) from April to September.
         """,
+        fold="_transform",
     )
     # load data back from the ts file
     result = f"{tmp_path}/ItalyPowerDemand/ItalyPowerDemand_transform.ts"
@@ -51,6 +50,5 @@ def test_write_dataframe_to_ts_fail(tmp_path):
             data=np.random.rand(3, 2),
             path=str(tmp_path),
             problem_name="GunPoint",
-            timestamp=False,
             univariate=True,
         )

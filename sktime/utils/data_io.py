@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TsFileParseException(Exception):
@@ -1232,7 +1233,6 @@ def write_dataframe_to_tsfile(
     data,
     path,
     problem_name="sample_data",
-    timestamp=False,
     univariate=True,
     class_label=None,
     class_value_list=None,
@@ -1261,8 +1261,6 @@ def write_dataframe_to_tsfile(
     problem_name: str
         The problemName to print in the header of the ts file
         and also the name of the file.
-    timestamp: {False, bool}, optional
-        Indicate whether the data contains timestamps in the header.
     univariate: {True, bool}, optional
         Indicate whether the data is univariate or multivariate in the header.
         If univariate, only the first dimension will be written to file
@@ -1290,24 +1288,104 @@ def write_dataframe_to_tsfile(
     Notes
     -----
     This version currently does not support writing timestamp data.
-
-    References
-    ----------
-    The code for writing series data into file is adopted from
-    https://stackoverflow.com/questions/37877708/
-    how-to-turn-a-pandas-dataframe-row-into-a-comma-separated-string
     """
+    # ensure data provided is a dataframe
+    if not isinstance(data, pd.DataFrame):
+        raise ValueError("Data provided must be a DataFrame")
+
+    if class_value_list is not None:
+        data, class_value_list = check_X_y(data, class_value_list, coerce_to_numpy=True)
+    else:
+        data = check_X(data, coerce_to_numpy=True)
+
+    # ensure data provided is a dataframe
+    write_ndarray_to_tsfile(
+        data,
+        path,
+        problem_name=problem_name,
+        univariate=univariate,
+        class_label=class_label,
+        class_value_list=class_value_list,
+        equal_length=equal_length,
+        series_length=series_length,
+        missing_values=missing_values,
+        comment=comment,
+        fold=fold,
+    )
+
+
+def write_ndarray_to_tsfile(
+    data,
+    path,
+    problem_name="sample_data",
+    univariate=True,
+    class_label=None,
+    class_value_list=None,
+    equal_length=False,
+    series_length=-1,
+    missing_values="NaN",
+    comment=None,
+    fold="",
+):
+    """
+    Output a dataset in ndarray format to .ts file.
+
+    Parameters
+    ----------
+    data: pandas dataframe
+        the dataset in a 3d ndarray to be written as a ts file
+        which must be of the structure specified in the documentation
+        examples/loading_data.ipynb
+        (n_instances, n_columns, n_timepoints)
+    path: str
+        The full path to output the ts file
+    problem_name: str
+        The problemName to print in the header of the ts file
+        and also the name of the file.
+    univariate: {True, bool}, optional
+        Indicate whether the data is univariate or multivariate in the header.
+        If univariate, only the first dimension will be written to file
+    class_label: {list, None}, optional
+        Provide class label to show the possible class values
+        for classification problems in the header.
+    class_value_list: {list/ndarray, []}, optional
+        ndarray containing the class values for each case in classification problems
+    equal_length: {False, bool}, optional
+        Indicate whether each series has equal length. It only write to file if true.
+    series_length: {-1, int}, optional
+        Indicate each series length if they are of equal length.
+        It only write to file if true.
+    missing_values: {NaN, str}, optional
+        Representation for missing value, default is NaN.
+    comment: {None, str}, optional
+        Comment text to be inserted before the header in a block.
+    fold: str, optional
+        Addon at the end of the filename, i.e. _TRAIN or _TEST.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This version currently does not support writing timestamp data.
+    """
+    # ensure data provided is a ndarray
+    if not isinstance(data, np.ndarray):
+        raise ValueError("Data provided must be a ndarray")
+
+    if class_value_list is not None:
+        data, class_value_list = check_X_y(data, class_value_list)
+    else:
+        data = check_X(data)
+
     if class_value_list is not None and class_label is None:
         class_label = np.unique(class_value_list)
     elif class_value_list is None:
         class_value_list = []
 
-    # ensure data provided is a dataframe
-    if not isinstance(data, pd.DataFrame):
-        raise ValueError("Data provided must be a DataFrame")
-
     # ensure number of cases is same as the class value list
-    if len(data.index) != len(class_value_list) and len(class_value_list) > 0:
+    if len(data) != len(class_value_list) and len(class_value_list) > 0:
         raise IndexError(
             "The number of cases is not the same as the number of given class values"
         )
@@ -1334,7 +1412,7 @@ def write_dataframe_to_tsfile(
 
     # begin writing header information
     file.write(f"@problemName {problem_name}\n")
-    file.write(f"@timeStamps {str(timestamp).lower()}\n")
+    file.write("@timestamps false\n")
     file.write(f"@univariate {str(univariate).lower()}\n")
 
     # write equal length or series length if provided
@@ -1353,23 +1431,20 @@ def write_dataframe_to_tsfile(
     # begin writing the core data for each case
     # which are the series and the class value list if there is any
     file.write("@data\n")
-    for case, value in itertools.zip_longest(data.iterrows(), class_value_list):
-        for dimension in case[1:]:  # start from the first dimension
-            # split the series observation into separate token
-            # ignoring the header and index
-            series = (
-                dimension[0]
-                .to_string(index=False, header=False, na_rep=missing_values)
-                .split("\n")
-            )
+    for case, value in itertools.zip_longest(data, class_value_list):
+        for dimension in case:
             # turn series into comma-separated row
-            series = ",".join(obsv for obsv in series)
+            series = ",".join(
+                [str(num) if not np.isnan(num) else missing_values for num in dimension]
+            )
             file.write(str(series))
             # continue with another dimension for multivariate case
             if not univariate:
                 file.write(":")
         if value is not None:
             file.write(f":{value}")  # write the case value if any
+        elif class_label is not None:
+            file.write(f":{missing_values}")
         file.write("\n")  # open a new line
 
     file.close()
