@@ -1233,7 +1233,6 @@ def write_dataframe_to_tsfile(
     data,
     path,
     problem_name="sample_data",
-    univariate=True,
     class_label=None,
     class_value_list=None,
     equal_length=False,
@@ -1261,9 +1260,6 @@ def write_dataframe_to_tsfile(
     problem_name: str
         The problemName to print in the header of the ts file
         and also the name of the file.
-    univariate: {True, bool}, optional
-        Indicate whether the data is univariate or multivariate in the header.
-        If univariate, only the first dimension will be written to file
     class_label: {list, None}, optional
         Provide class label to show the possible class values
         for classification problems in the header.
@@ -1303,7 +1299,6 @@ def write_dataframe_to_tsfile(
         data,
         path,
         problem_name=problem_name,
-        univariate=univariate,
         class_label=class_label,
         class_value_list=class_value_list,
         equal_length=equal_length,
@@ -1318,7 +1313,6 @@ def write_ndarray_to_tsfile(
     data,
     path,
     problem_name="sample_data",
-    univariate=True,
     class_label=None,
     class_value_list=None,
     equal_length=False,
@@ -1342,9 +1336,6 @@ def write_ndarray_to_tsfile(
     problem_name: str
         The problemName to print in the header of the ts file
         and also the name of the file.
-    univariate: {True, bool}, optional
-        Indicate whether the data is univariate or multivariate in the header.
-        If univariate, only the first dimension will be written to file
     class_label: {list, None}, optional
         Provide class label to show the possible class values
         for classification problems in the header.
@@ -1378,6 +1369,8 @@ def write_ndarray_to_tsfile(
         data, class_value_list = check_X_y(data, class_value_list)
     else:
         data = check_X(data)
+
+    univariate = data.shape[1] == 1
 
     if class_value_list is not None and class_label is None:
         class_label = np.unique(class_value_list)
@@ -1441,10 +1434,11 @@ def write_ndarray_to_tsfile(
             # continue with another dimension for multivariate case
             if not univariate:
                 file.write(":")
+        a = ":" if univariate else ""
         if value is not None:
-            file.write(f":{value}")  # write the case value if any
+            file.write(f"{a}{value}")  # write the case value if any
         elif class_label is not None:
-            file.write(f":{missing_values}")
+            file.write(f"{a}{missing_values}")
         file.write("\n")  # open a new line
 
     file.close()
