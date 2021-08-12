@@ -1,7 +1,8 @@
-.. _get_involved:
+.. _about:
 
-Get Involved
-============
+=====
+About
+=====
 
 .. toctree::
    :maxdepth: 1
