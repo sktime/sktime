@@ -19,4 +19,7 @@ Welcome to sktime's developer guide!
    :maxdepth: 1
    :glob:
 
-   developer_guide/*
+   developer_guide/introduction
+   developer_guide/add_dataset
+   developer_guide/add_estimators
+   developer_guide/documentation
