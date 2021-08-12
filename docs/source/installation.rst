@@ -288,8 +288,8 @@ Troubleshooting - Mac OSX build requirements
 
 After installing the release version following the installation steps above and running a ``pytest`` command, some contributors received the error message below:
 
-``E   ValueError: numpy.ndarray size changed, may indicate binary incompatibility.``
-``Expected 88 from C header, got 80 from PyObject``
+``E   ValueError: numpy.ndarray size changed, may indicate binary incompatibility.
+Expected 88 from C header, got 80 from PyObject``
 
 A possible solution to the problem is reinstalling your C compiler. If it is gcc, run ``brew reinstall gcc`` and then ``pip install -e .``.
 This should be followed by installing the OpenMP library and setting the environment variables using the same commands again as in the section above.
