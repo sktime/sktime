@@ -71,7 +71,7 @@ class Concatenator(_PanelToPanelTransformer):
 
     def transform(self, X, y=None):
         """
-        Fit and transform.
+        Public transform method.
 
         Parameters
         ----------
@@ -116,8 +116,9 @@ class Converter(_PanelToPanelTransformer):
         super(Converter, self).__init__()
 
     def transform(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
-        """
-        Public transform method.
+        """Public transform method.
+
+        Transformer calls sktime.datatypes._convert.
 
         Parameters
         ----------
