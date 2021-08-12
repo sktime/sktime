@@ -79,7 +79,7 @@ def test_from_3d_numpy_to_nested(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_nested_to_2d_array(n_instances, n_columns, n_timepoints):
-    """Test test_from_nested_to_2d_array for correctness."""
+    """Test from_nested_to_2d_array for correctness."""
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
 
     array = from_nested_to_2d_array(nested)
