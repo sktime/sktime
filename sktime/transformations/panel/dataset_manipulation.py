@@ -9,7 +9,9 @@ from sktime.datatypes._convert import convert_to
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Selector", "Concatenator", "Converter"]
 
-"""Provide basic transformers to use together with
+"""Network Pipeline transformers.
+
+Selection of simple transformers that can be used with
 `sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
 """
 
@@ -114,7 +116,8 @@ class Converter(_PanelToPanelTransformer):
         super(Converter, self).__init__()
 
     def transform(self, obj, to_type="pd.DataFrame", as_scitype="Series", store=None):
-        """Public transform method.
+        """
+        Public transform method.
 
         Parameters
         ----------
