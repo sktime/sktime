@@ -77,6 +77,8 @@ Development
             :text: Get Involved
             :classes: btn-block btn-secondary stretched-link
 
+    ---
+
     Code of Conduct
     ^^^^^^^^^^^^^^^
 
@@ -87,6 +89,8 @@ Development
             :type: ref
             :text: Code of Conduct
             :classes: btn-block btn-secondary stretched-link
+
+    ---
 
     Governance
     ^^^^^^^^^^

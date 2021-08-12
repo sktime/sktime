@@ -80,6 +80,8 @@ From here, you can navigate to:
             :text: Get Involved
             :classes: btn-block btn-secondary stretched-link
 
+    ---
+
     Developers
     ^^^^^^^^^^
 
@@ -91,6 +93,8 @@ From here, you can navigate to:
             :type: ref
             :text: Developers
             :classes: btn-block btn-secondary stretched-link
+
+    ---
 
     About
     ^^^^^

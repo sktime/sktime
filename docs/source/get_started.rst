@@ -57,10 +57,8 @@ In ``sktime`` time series data can refer to data that is univariate, multivariat
 between time series :term:`variables <variable>`, as well as the number of :term:`instances <instance>` for which each variable is observed.
 
 - :term:`Univariate time series` data refers to data where a single variable is tracked over time.
-- :term:`Multivariate time series` data refers to data where multiple variables are tracked over time for the same :term:`instance`.
-For example, multiple quarterly economic indicators for a country or multiple sensor readings from the same machine.
-- :term:`Panel time series` data refers to data where the variables (univariate or multivariate) are tracked for multiple :term:`instances <instance>`.
-For example, multiple quarterly economic indicators for several countries or multiple sensor readings for multiple machines.
+- :term:`Multivariate time series` data refers to data where multiple variables are tracked over time for the same :term:`instance`. For example, multiple quarterly economic indicators for a country or multiple sensor readings from the same machine.
+- :term:`Panel time series` data refers to data where the variables (univariate or multivariate) are tracked for multiple :term:`instances <instance>`. For example, multiple quarterly economic indicators for several countries or multiple sensor readings for multiple machines.
 
 
 Learning Tasks
@@ -72,12 +70,11 @@ of a time series.
 
 ``sktime's`` interface currently supports:
 
-- :ref:`Time series classification <user_guide_classification>` where the time series data for a given instance are used to predict a categorical target class
-- :ref:`Time series regression <user_guide_regression>` where the time series data for a given instance are used to predict a continuous target value
-- :ref:`Time series clustering <user_guide_clustering>` where the goal is to discover groups consisting of instances with similar time series
-- :ref:`Forecasting <user_guide_forecasting>`where the goal is to predict future values of the input series
-- :ref:`Time series annotation <user_guide_annotation>` which is focused on outlier detection, anomaly detection, change point detection and segmentation
-- :ref:`Performance metrics <user_guide_performance_metrics>` to measure the quality of a model's performance
+- :term:`Time series classification` where the time series data for a given instance are used to predict a categorical target class.
+- :term:`Time series regression` where the time series data for a given instance are used to predict a continuous target value.
+- :term:`Time series clustering` where the goal is to discover groups consisting of instances with similar time series.
+- :term:`Forecasting` where the goal is to predict future values of the input series.
+- :term:`Time series annotation` which is focused on outlier detection, anomaly detection, change point detection and segmentation.
 
 Reduction
 ~~~~~~~~~
