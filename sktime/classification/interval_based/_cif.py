@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CIF classifier
+"""CIF classifier.
 
 interval based CIF classifier extracting catch22 features from random intervals.
 """
@@ -369,6 +369,7 @@ class CanonicalIntervalForest(BaseClassifier):
             return classifier.predict_proba(transformed_x)
 
     def temporal_importance_curves(self, normalise_time_points=False):
+        """Returns the CIF temporal importance curves. Requires the CIT classifier."""
         if not isinstance(self._base_estimator, ContinuousIntervalTree):
             raise ValueError(
                 "CIF base estimator for temporal importance curves must"
