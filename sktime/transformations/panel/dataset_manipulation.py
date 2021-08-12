@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Network Pipeline transformers.
+
+Selection of simple transformers that can be used with
+`sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
+"""
+
+# -*- coding: utf-8 -*-
 from sktime.transformations.base import _PanelToPanelTransformer
 import pandas as pd
 import numpy as np
@@ -8,12 +15,6 @@ from sktime.datatypes._convert import convert_to
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Selector", "Concatenator", "Converter"]
-
-"""Network Pipeline transformers.
-
-Selection of simple transformers that can be used with
-`sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
-"""
 
 
 class Selector(_PanelToPanelTransformer):
@@ -130,7 +131,6 @@ class Converter(_PanelToPanelTransformer):
         -------
             resulting type from `sktime.datatypes._convert.convert_to`
         """
-
         self.check_is_fitted()
         # for passing unit tests.
         # If 3d numpy array as passed return pandas DataFrame
