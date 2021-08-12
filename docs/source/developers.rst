@@ -75,7 +75,7 @@ Development
 
     .. link-button:: roadmap
             :type: ref
-            :text: Get Involved
+            :text: Roadmap
             :classes: btn-block btn-secondary stretched-link
 
     ---

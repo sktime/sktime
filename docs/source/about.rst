@@ -67,7 +67,7 @@ Learn more about the sktime project and its community.
     Funding
     ^^^^^^^
 
-    Help support the project.
+    Thank you to sktime's supporters.
 
     +++
 
