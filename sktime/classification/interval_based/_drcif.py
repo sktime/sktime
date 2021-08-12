@@ -25,15 +25,16 @@ from sktime.contrib.classification_intervals._continuous_interval_tree import (
     ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
-from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.utils.validation.panel import check_X_y
 
 
 class DrCIF(BaseClassifier):
     """Diverse Representation Canonical Interval Forest Classifier (DrCIF).
 
-    Extension of the CIF algorithm using multple representations. Interval based forest
-    making use of the catch22 feature set on randomly selected intervals on the base
-    series, periodogram representation and differences representation.
+    Extension of the CIF algorithm using multple representations. Implementation of the
+    interval based forest making use of the catch22 feature set on randomly selected
+    intervals on the base series, periodogram representation and differences
+    representation described in the HIVE-COTE 2.0 paper Middlehurst et al (2021). [1]_
 
     Overview: Input "n" series with "d" dimensions of length "m".
     For each tree
@@ -49,18 +50,19 @@ class DrCIF(BaseClassifier):
     ----------
     n_estimators : int, default=200
         Number of estimators to build for the ensemble.
-    n_intervals : int, length 3 List of ints or None, default=None
-        Number of intervals to extract per representation per tree, if None extracts
-        (4 + (sqrt(representation_length) * sqrt(n_dims)) / 3) intervals. todo
+    n_intervals : int, length 3 list of int or None, default=None
+        Number of intervals to extract per representation per tree as an int for all
+        representations or list for individual settings, if None extracts
+        (4 + (sqrt(representation_length) * sqrt(n_dims)) / 3) intervals.
     att_subsample_size : int, default=10
-        Number of catch22 or summary statistic attributes to subsample per tree. todo
-    min_interval       : int or size 3 list, minimum width of an interval
-    per representation, optional (default to 4)
-    min_interval : int, length 3 List of ints or None, default=None
-        Minimum length of an interval per representation, if None set to 4. todo
-    max_interval : int, length 3 List of ints or None, default=None
-        Maximum length of an interval per representation, if None set to
-        (representation_length / 2). todo
+        Number of catch22 or summary statistic attributes to subsample per tree.
+    min_interval : int or length 3 list of int, default=4
+        Minimum length of an interval per representation as an int for all
+        representations or list for individual settings.
+    max_interval : int, length 3 list of int or None, default=None
+        Maximum length of an interval per representation as an int for all
+        representations or list for individual settings, if None set to
+        (representation_length / 2).
     base_estimator : BaseEstimator or str, default="DTC"
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
         string for suggested options.
@@ -83,17 +85,35 @@ class DrCIF(BaseClassifier):
 
     Attributes
     ----------
-    n_classes      : int, extracted from the data
-    n_instances    : int, extracted from the data
-    n_dims         : int, extracted from the data
-    series_length  : int, extracted from the data
-    classifiers    : array of shape = [n_estimators] of DecisionTree
-    atts           : array of shape = [n_estimators][att_subsample_size]
-    catch22/tsf attribute indexes for all classifiers
-    intervals      : array of shape = [n_estimators][n_intervals][2] stores
-    indexes of all start and end points for all classifiers
-    dims           : array of shape = [n_estimators][n_intervals] stores
-    the dimension to extract from for each interval
+    n_classes      : int
+        The number of classes.
+    n_instances    : int
+        The number of train cases.
+    n_dims         : int
+        The number of dimensions per case.
+    series_length  : int
+        The length of each series.
+    classes_ : list
+        The classes labels.
+    total_intervals : int
+        Total number of intervals per tree from all representations.
+    classifiers : list of shape (n_estimators) of BaseEstimator
+        The collections of estimators trained in fit.
+    intervals : list of shape (n_estimators) of ndarray with shape (total_intervals,2)
+        Stores indexes of each intervals start and end points for all classifiers.
+    atts : list of shape (n_estimators) of array with shape (att_subsample_size)
+        Attribute indexes of the subsampled catch22 or summary statistic for all
+        classifiers.
+    dims : list of shape (n_estimators) of array with shape (total_intervals)
+        The dimension to extract attributes from each interval for all classifiers.
+    transformed_data : list of shape (n_estimators) of ndarray with shape
+    (n_instances,total_intervals * att_subsample_size)
+        The transformed dataset for all classifiers. Only saved when
+        save_transformed_data is true
+
+    See Also
+    --------
+    CanonicalIntervalForest
 
     Notes
     -----
@@ -101,6 +121,22 @@ class DrCIF(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/interval_based/DrCIF.java
 
+    References
+    ----------
+    .. [1] Middlehurst, Matthew, James Large, Michael Flynn, Jason Lines, Aaron Bostrom,
+       and Anthony Bagnall. "HIVE-COTE 2.0: a new meta ensemble for time series
+       classification." arXiv preprint arXiv:2104.07551 (2021).
+
+    Examples
+    --------
+    >>> from sktime.classification.interval_based import DrCIF
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = DrCIF()
+    >>> clf.fit(X_train, y_train)
+    DrCIF(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -125,18 +161,16 @@ class DrCIF(BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-        self.base_estimator = base_estimator
-
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
+        self.att_subsample_size = att_subsample_size
         self.min_interval = min_interval
         self.max_interval = max_interval
-        self.att_subsample_size = att_subsample_size
+        self.base_estimator = base_estimator
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_estimators = contract_max_n_estimators
         self.save_transformed_data = save_transformed_data
-        self.transformed_data = []
 
         self.random_state = random_state
         self.n_jobs = n_jobs
@@ -146,22 +180,24 @@ class DrCIF(BaseClassifier):
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
-        self.__n_estimators = n_estimators
-        self.__n_intervals = n_intervals
-        self.__att_subsample_size = att_subsample_size
-        self.__max_interval = max_interval
-        self.__min_interval = min_interval
-        self.__base_estimator = base_estimator
+        self.classes_ = []
         self.total_intervals = 0
         self.classifiers = []
         self.intervals = []
         self.atts = []
         self.dims = []
-        self.classes_ = []
+        self.transformed_data = []
+
+        self._n_estimators = n_estimators
+        self._n_intervals = n_intervals
+        self._att_subsample_size = att_subsample_size
+        self._max_interval = max_interval
+        self._min_interval = min_interval
+        self._base_estimator = base_estimator
 
         super(DrCIF, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
          Uses random intervals and catch22/basic summary features
@@ -177,8 +213,6 @@ class DrCIF(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
-
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -188,11 +222,11 @@ class DrCIF(BaseClassifier):
         train_time = 0
 
         if self.base_estimator == "DTC":
-            self.__base_estimator = DecisionTreeClassifier(criterion="entropy")
+            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
         elif self.base_estimator == "CIT":
-            self.__base_estimator = ContinuousIntervalTree()
+            self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
-            self.__base_estimator = self.base_estimator
+            self._base_estimator = self.base_estimator
         else:
             raise ValueError("DrCIF invalid base estimator given.")
 
@@ -212,66 +246,69 @@ class DrCIF(BaseClassifier):
         X_d = np.diff(X, 1)
 
         if self.n_intervals is None:
-            self.__n_intervals = [None, None, None]
-            self.__n_intervals[0] = 4 + int(
+            self._n_intervals = [None, None, None]
+            self._n_intervals[0] = 4 + int(
                 (math.sqrt(self.series_length) * math.sqrt(self.n_dims)) / 3
             )
-            self.__n_intervals[1] = 4 + int(
+            self._n_intervals[1] = 4 + int(
                 (math.sqrt(X_p.shape[2]) * math.sqrt(self.n_dims)) / 3
             )
-            self.__n_intervals[2] = 4 + int(
+            self._n_intervals[2] = 4 + int(
                 (math.sqrt(X_d.shape[2]) * math.sqrt(self.n_dims)) / 3
             )
         elif isinstance(self.n_intervals, int):
-            self.__n_intervals = [self.n_intervals, self.n_intervals, self.n_intervals]
+            self._n_intervals = [self.n_intervals, self.n_intervals, self.n_intervals]
         elif isinstance(self.n_intervals, list) and len(self.n_intervals) == 3:
-            self.__n_intervals = self.n_intervals
+            self._n_intervals = self.n_intervals
         else:
             raise ValueError("DrCIF n_intervals must be an int or list of length 3.")
-        for i, n in enumerate(self.__n_intervals):
+        for i, n in enumerate(self._n_intervals):
             if n <= 0:
-                self.__n_intervals[i] = 1
+                self._n_intervals[i] = 1
 
-        if self.min_interval is None:
-            self.__min_interval = [4, 4, 4]
-        elif isinstance(self.min_interval, int):
-            self.__min_interval = [
+        if self.att_subsample_size <= 0:
+            self.__att_subsample_size = 1
+        elif self.att_subsample_size > 25:
+            self.__att_subsample_size = 25
+
+        if isinstance(self.min_interval, int):
+            self._min_interval = [
                 self.min_interval,
                 self.min_interval,
                 self.min_interval,
             ]
         elif isinstance(self.min_interval, list) and len(self.min_interval) == 3:
-            self.__min_interval = self.min_interval
+            self._min_interval = self.min_interval
         else:
             raise ValueError("DrCIF min_interval must be an int or list of length 3.")
-        if self.series_length < self.__min_interval[0]:
-            self.__min_interval[0] = self.series_length
-        if X_p.shape[2] < self.__min_interval[1]:
-            self.__min_interval[1] = X_p.shape[2]
-        if X_d.shape[2] < self.__min_interval[2]:
-            self.__min_interval[2] = X_d.shape[2]
+        if self.series_length < self._min_interval[0]:
+            self._min_interval[0] = self.series_length
+        if X_p.shape[2] < self._min_interval[1]:
+            self._min_interval[1] = X_p.shape[2]
+        if X_d.shape[2] < self._min_interval[2]:
+            self._min_interval[2] = X_d.shape[2]
 
         if self.max_interval is None:
-            self.__max_interval = [
+            self._max_interval = [
                 self.series_length / 2,
                 X_p.shape[2] / 2,
                 X_d.shape[2] / 2,
             ]
         elif isinstance(self.max_interval, int):
-            self.__max_interval = [
+            self._max_interval = [
                 self.max_interval,
                 self.max_interval,
                 self.max_interval,
             ]
         elif isinstance(self.max_interval, list) and len(self.max_interval) == 3:
-            self.__max_interval = self.max_interval
+            self._max_interval = self.max_interval
         else:
             raise ValueError("DrCIF max_interval must be an int or list of length 3.")
-        for i, n in enumerate(self.__max_interval):
-            if n < self.__min_interval[i]:
-                self.__max_interval[i] = self.__min_interval[i]
+        for i, n in enumerate(self._max_interval):
+            if n < self._min_interval[i]:
+                self._max_interval[i] = self._min_interval[i]
 
-        self.total_intervals = sum(self.__n_intervals)
+        self.total_intervals = sum(self._n_intervals)
 
         if time_limit > 0:
             self.n_estimators = 0
@@ -332,10 +369,7 @@ class DrCIF(BaseClassifier):
                 self.transformed_data,
             ) = zip(*fit)
 
-        self._is_fitted = True
-        return self
-
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -355,7 +389,7 @@ class DrCIF(BaseClassifier):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -374,9 +408,6 @@ class DrCIF(BaseClassifier):
         output : array of shape = [n_test_instances, num_classes] of
         probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
-
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length:
             raise TypeError(
@@ -469,11 +500,11 @@ class DrCIF(BaseClassifier):
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
-            shape=(self.att_subsample_size * self.total_intervals, self.n_instances),
+            shape=(self._att_subsample_size * self.total_intervals, self.n_instances),
             dtype=np.float32,
         )
 
-        atts = rng.choice(29, self.att_subsample_size, replace=False)
+        atts = rng.choice(29, self._att_subsample_size, replace=False)
         dims = rng.choice(self.n_dims, self.total_intervals, replace=True)
         intervals = np.zeros((self.total_intervals, 2), dtype=int)
 
@@ -484,35 +515,35 @@ class DrCIF(BaseClassifier):
 
             # Find the random intervals for classifier i, transformation r
             # and concatenate features
-            for _ in range(0, self.__n_intervals[r]):
+            for _ in range(0, self._n_intervals[r]):
                 if rng.random() < 0.5:
                     intervals[j][0] = rng.randint(
-                        0, transform_length - self.__min_interval[r]
+                        0, transform_length - self._min_interval[r]
                     )
                     len_range = min(
                         transform_length - intervals[j][0],
-                        self.__max_interval[r],
+                        self._max_interval[r],
                     )
                     length = (
-                        rng.randint(0, len_range - self.__min_interval[r])
-                        + self.__min_interval[r]
+                        rng.randint(0, len_range - self._min_interval[r])
+                        + self._min_interval[r]
                     )
                     intervals[j][1] = intervals[j][0] + length
                 else:
                     intervals[j][1] = (
-                        rng.randint(0, transform_length - self.__min_interval[r])
-                        + self.__min_interval[r]
+                        rng.randint(0, transform_length - self._min_interval[r])
+                        + self._min_interval[r]
                     )
-                    len_range = min(intervals[j][1], self.__max_interval[r])
+                    len_range = min(intervals[j][1], self._max_interval[r])
                     length = (
-                        rng.randint(0, len_range - self.__min_interval[r])
-                        + self.__min_interval[r]
-                        if len_range - self.__min_interval[r] > 0
-                        else self.__min_interval[r]
+                        rng.randint(0, len_range - self._min_interval[r])
+                        + self._min_interval[r]
+                        if len_range - self._min_interval[r] > 0
+                        else self._min_interval[r]
                     )
                     intervals[j][0] = intervals[j][1] - length
 
-                for a in range(0, self.att_subsample_size):
+                for a in range(0, self._att_subsample_size):
                     transformed_x[p] = _drcif_feature(
                         T[r], intervals[j], dims[j], atts[a], c22
                     )
@@ -520,7 +551,7 @@ class DrCIF(BaseClassifier):
 
                 j += 1
 
-        tree = _clone_estimator(self.__base_estimator, random_state=rs)
+        tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
         transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -538,23 +569,23 @@ class DrCIF(BaseClassifier):
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
         c22 = Catch22(outlier_norm=True)
-        if isinstance(self.__base_estimator, ContinuousIntervalTree):
+        if isinstance(self._base_estimator, ContinuousIntervalTree):
             return classifier.predict_proba_drcif(
-                X, X_p, X_d, c22, self.__n_intervals, intervals, dims, atts
+                X, X_p, X_d, c22, self._n_intervals, intervals, dims, atts
             )
         else:
             T = [X, X_p, X_d]
 
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.total_intervals, X.shape[0]),
+                shape=(self._att_subsample_size * self.total_intervals, X.shape[0]),
                 dtype=np.float32,
             )
 
             p = 0
             j = 0
             for r in range(0, len(T)):
-                for _ in range(0, self.__n_intervals[r]):
-                    for a in range(0, self.att_subsample_size):
+                for _ in range(0, self._n_intervals[r]):
+                    for a in range(0, self._att_subsample_size):
                         transformed_x[p] = _drcif_feature(
                             T[r], intervals[j], dims[j], atts[a], c22
                         )
@@ -576,7 +607,7 @@ class DrCIF(BaseClassifier):
         subsample = rng.choice(self.n_instances, size=self.n_instances)
         oob = [n for n in indices if n not in subsample]
 
-        clf = _clone_estimator(self.__base_estimator, rs)
+        clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data[idx][oob])
 
