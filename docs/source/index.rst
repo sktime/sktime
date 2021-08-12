@@ -58,7 +58,7 @@ From here, you can navigate to:
     API Reference
     ^^^^^^^^^^^^^
 
-    Fund sktime maintenance and development.
+    Understand sktime's API.
 
     +++
 
