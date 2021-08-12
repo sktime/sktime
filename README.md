@@ -22,6 +22,7 @@ sktime is a library for time series analsyis in Python. It provides a unified in
 | Documentation              |                                                                |
 | -------------------------- | -------------------------------------------------------------- |
 | :star: **[Tutorials]**        | New to sktime? Here's everything you need to know!              |
+| :clipboard: **[Binder Notebooks]** | Example notebooks to play with in your browser.              |
 | :woman_technologist: **[User Guides]**      | How to use sktime and its features.                             |
 | :scissors: **[Extension Templates]** | How to build your own estimator using sktime's API.            |
 | :control_knobs: **[API Reference]**      | The detailed reference for sktime's API.                        |
@@ -31,6 +32,7 @@ sktime is a library for time series analsyis in Python. It provides a unified in
 | :pencil: **[Related Software]**          | A list of related software. |
 
 [tutorials]: https://www.sktime.org/en/latest/tutorials.html
+[binder notebooks]: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples
 [user guides]: https://www.sktime.org/en/latest/user_guide.html
 [video tutorial]: https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020
 [api reference]: https://www.sktime.org/en/latest/api_reference.html
@@ -103,11 +105,23 @@ Using pip, sktime releases are available as source packages and binary wheels. Y
 pip install sktime
 ```
 
+or, with maximum dependencies,
+
+```bash
+pip install sktime[all_extras]
+```
+
 ### conda
 You can also install sktime from `conda` via the `conda-forge` channel. For the feedstock including the build recipe and configuration, check out [this repository](https://github.com/conda-forge/sktime-feedstock).
 
 ```bash
 conda install -c conda-forge sktime
+```
+
+or, with maximum dependencies,
+
+```bash
+conda install -c conda-forge sktime-all-extras
 ```
 
 ## :zap: Quickstart
