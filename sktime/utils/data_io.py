@@ -1194,14 +1194,16 @@ def write_tabular_transformation_to_arff(
         )
 
     # create path if not exist
-    dirt = f"{str(path)}/{str(problem_name)}/"
+    dirt = f"{str(path)}/{str(problem_name)}-{type(transformation).__name__}/"
     try:
         os.makedirs(dirt)
     except os.error:
         pass  # raises os.error if path already exists
 
     # create arff file in the path
-    file = open(f"{dirt}{str(problem_name)}{fold}.arff", "w")
+    file = open(
+        f"{dirt}{str(problem_name)}-{type(transformation).__name__}{fold}.arff", "w"
+    )
 
     # write comment if any as a block at start of file
     if comment is not None:
