@@ -150,7 +150,7 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances, n_classes] - predictive pmf
         """
-        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
 
         X = check_X(X, coerce_to_numpy=coerce_to_numpy)
         self.check_is_fitted()
