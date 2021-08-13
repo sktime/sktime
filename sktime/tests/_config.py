@@ -39,6 +39,7 @@ from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
+from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import DirectTabularRegressionForecaster
@@ -156,6 +157,7 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
 FORECASTER = ExponentialSmoothing()
+COLUMN_ENSEMBLE_FORECASTER = [("naive", NaiveForecaster(), 0)]
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
 STEPS_y = [
     ("transformer", Detrender(ThetaForecaster())),
@@ -166,6 +168,7 @@ STEPS_X = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
+    ColumnEnsembleForecaster: {"forecasters": COLUMN_ENSEMBLE_FORECASTER},
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
