@@ -13,7 +13,8 @@ ___author__ = ["mloning"]
 
 
 def configuration(parent_package="", top_path=None):
-    """Configure setup."""
+    """Configure the imports."""
+
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration("datasets", parent_package, top_path)
@@ -32,6 +33,7 @@ def configuration(parent_package="", top_path=None):
         "ShampooSales",
         "Airline",
         "ACSF1",
+        "UnitTest",
         "Uschange",
         "PBS_dataset",
     )

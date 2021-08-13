@@ -3,9 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements composite forecasters."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 __all__ = [
+    "ColumnEnsembleForecaster",
     "EnsembleForecaster",
     "TransformedTargetForecaster",
     "ForecastingPipeline",
@@ -23,6 +24,7 @@ __all__ = [
     "make_reduction",
 ]
 
+from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.compose._pipeline import ForecastingPipeline
