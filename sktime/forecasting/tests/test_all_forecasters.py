@@ -170,11 +170,10 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
-        y = _make_series(n_columns=1)
+        y_train = _make_series(n_columns=1, index_type=index_type)
 
     elif f.get_tag("scitype:y") == "multivariate" or f.get_tag("scitype:y") == "both":
-        y = _make_series(n_columns=2)
-    y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+        y_train = _make_series(n_columns=1, index_type=index_type)
 
     try:
         f.fit(y_train, X_train, fh=fh)
