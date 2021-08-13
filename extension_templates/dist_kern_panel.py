@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Extension template for pairwise distance or kernel on panel data.
+Extension template for pairwise distance or kernel between time series.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -28,7 +28,7 @@ from sktime.dists_kernels import BasePairwiseTransformerPanel
 
 
 class MyTrafoPwPanel(BasePairwiseTransformerPanel):
-    """Custom distance/kernel. todo: write docstring.
+    """Custom time series distance/kernel. todo: write docstring.
 
     todo: describe your custom distance/kernel here
 
@@ -82,7 +82,8 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
     # todo: implement this, mandatory
     def _transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix between time series.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
@@ -90,14 +91,14 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
         Parameters
         ----------
-        X: pd.DataFrame of length n, or 2D np.array with n rows
-        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
+        X: list of pd.DataFrame or 2D np.arrays, of length n
+        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
             default X2 = X
 
         Returns
         -------
         distmat: np.array of shape [n, m]
-            (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
+            (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
         # implement here
         # IMPORTANT: avoid side effects to X, X2

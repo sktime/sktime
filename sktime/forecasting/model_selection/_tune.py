@@ -41,6 +41,7 @@ class BaseGridSearch(BaseForecaster):
         refit=False,
         scoring=None,
         verbose=0,
+        return_n_best_forecasters=1,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -50,6 +51,7 @@ class BaseGridSearch(BaseForecaster):
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
+        self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -150,7 +152,7 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
-        """Return score on the given data, if forecaster has been refit.
+        """Return the score on the given data, if forecaster been refitted.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
@@ -181,7 +183,7 @@ class BaseGridSearch(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def check_is_fitted(self, method_name=None):
-        """Check whether `fit` has been called.
+        """Check if `fit` has been called.
 
         Parameters
         ----------
@@ -294,8 +296,9 @@ class BaseGridSearch(BaseForecaster):
 
         # Rank results, according to whether greater is better for the given scoring.
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=~scoring.greater_is_better
+            ascending=not scoring.greater_is_better
         )
+
         self.cv_results_ = results
 
         # Select best parameters.
@@ -308,87 +311,118 @@ class BaseGridSearch(BaseForecaster):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
 
+        # Sort values according to rank
+        results = results.sort_values(
+            by=f"rank_{scoring_name}", ascending=not scoring.greater_is_better
+        )
+        # Select n best forecaster
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = clone(self.forecaster).set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
+
         return self
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """Performs grid-search cross-validation to find optimal model parameters.
 
-    The forecaster is fit on the initial window and then temporal
-    cross-validation is used to find the optimal parameter
+        The forecaster is fit on the initial window and then temporal
+        cross-validation is used to find the optimal parameter
 
-    Grid-search cross-validation is performed based on a cross-validation
-    iterator encoding the cross-validation scheme, the parameter grid to
-    search over, and (optionally) the evaluation metric for comparing model
-    performance. As in scikit-learn, tuning works through the common
-    hyper-parameter interface which allows to repeatedly fit and evaluate
-    the same forecaster with different hyper-parameters.
+        Grid-search cross-validation is performed based on a cross-validation
+        iterator encoding the cross-validation scheme, the parameter grid to
+        search over, and (optionally) the evaluation metric for comparing model
+        performance. As in scikit-learn, tuning works through the common
+        hyper-parameter interface which allows to repeatedly fit and evaluate
+        the same forecaster with different hyper-parameters.
 
-    Parameters
-    ----------
-    forecaster : estimator object
-        The estimator should implement the sktime or scikit-learn estimator
-        interface. Either the estimator must contain a "score" function,
-        or a scoring function must be passed.
-    cv : cross-validation generator or an iterable
-        e.g. SlidingWindowSplitter()
-    param_grid : dict or list of dictionaries
-        Model tuning parameters of the forecaster to evaluate
-    scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters
-    n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
-    refit: bool, optional (default=True)
-        Refit the forecaster with the best parameters on all the data
-    verbose: int, optional (default=0)
-    pre_dispatch: str, optional (default='2*n_jobs')
-    error_score: numeric value or the str 'raise', optional (default=np.nan)
-        The test score returned when a forecaster fails to be fitted.
-    return_train_score: bool, optional (default=False)
+        Parameters
+        ----------
+        forecaster : estimator object
+            The estimator should implement the sktime or scikit-learn estimator
+            interface. Either the estimator must contain a "score" function,
+            or a scoring function must be passed.
+        cv : cross-validation generator or an iterable
+            e.g. SlidingWindowSplitter()
+        param_grid : dict or list of dictionaries
+            Model tuning parameters of the forecaster to evaluate
+        scoring: function, optional (default=None)
+            Function to score models for evaluation of optimal parameters
+        n_jobs: int, optional (default=None)
+            Number of jobs to run in parallel.
+            None means 1 unless in a joblib.parallel_backend context.
+            -1 means using all processors.
+        refit: bool, optional (default=True)
+            Refit the forecaster with the best parameters on all the data
+        verbose: int, optional (default=0)
+        return_n_best_forecasters: int, default=1
+            In case the n best forecaster should be returned, this value can be set
+            and the n best forecasters will be assigned to n_best_forecasters_
+        pre_dispatch: str, optional (default='2*n_jobs')
+        error_score: numeric value or the str 'raise', optional (default=np.nan)
+            The test score returned when a forecaster fails to be fitted.
+        return_train_score: bool, optional (default=False)
 
-    Attributes
-    ----------
-    best_index_ : int
-    best_score_: float
-        Score of the best model
-    best_params_ : dict
-        Best parameter values across the parameter grid
-    best_forecaster_ : estimator
-        Fitted estimator with the best parameters
-    cv_results_ : dict
-        Results from grid search cross validation
-    n_splits_: int
-        Number of splits in the data for cross validation}
-    refit_time_ : float
-        Time (seconds) to refit the best forecaster
-    scorer_ : function
-        Function used to score model
+        Attributes
+        ----------
+        best_index_ : int
+        best_score_: float
+            Score of the best model
+        best_params_ : dict
+            Best parameter values across the parameter grid
+        best_forecaster_ : estimator
+            Fitted estimator with the best parameters
+        cv_results_ : dict
+            Results from grid search cross validation
+        n_splits_: int
+            Number of splits in the data for cross validation}
+        refit_time_ : float
+            Time (seconds) to refit the best forecaster
+        scorer_ : function
+            Function used to score model
+    <<<<<<< HEAD
+    =======
+        n_best_forecasters_: list of tuples ("rank", <forecaster>)
+            The "rank" is in relation to best_forecaster_
+        n_best_scores_: list of float
+            The scores of n_best_forecasters_ sorted from best to worst
+            score of forecasters
+    >>>>>>> main
 
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter)
-    >>> from sktime.forecasting.naive import NaiveForecaster
+        Examples
+        --------
+        >>> from sktime.datasets import load_airline
+        >>> from sktime.forecasting.model_selection import (
+        ...     ExpandingWindowSplitter,
+        ...     ForecastingGridSearchCV,
+        ...     ExpandingWindowSplitter)
+        >>> from sktime.forecasting.naive import NaiveForecaster
 
-    >>> y = load_airline()
-    >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
-    >>> forecaster = NaiveForecaster()
-    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
-    >>> gscv = ForecastingGridSearchCV(
-    ...     forecaster=forecaster,
-    ...     param_grid=param_grid,
-    ...     cv=cv)
-    >>> gscv.fit(y)
-    ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh)
+        >>> y = load_airline()
+        >>> fh = [1,2,3]
+        >>> cv = ExpandingWindowSplitter(
+        ...     start_with_window=True,
+        ...     fh=fh)
+        >>> forecaster = NaiveForecaster()
+        >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+        >>> gscv = ForecastingGridSearchCV(
+        ...     forecaster=forecaster,
+        ...     param_grid=param_grid,
+        ...     cv=cv)
+        >>> gscv.fit(y)
+        ForecastingGridSearchCV(...)
+        >>> y_pred = gscv.predict(fh)
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
@@ -403,6 +437,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         n_jobs=None,
         refit=True,
         verbose=0,
+        return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
     ):
         super(ForecastingGridSearchCV, self).__init__(
@@ -413,6 +448,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             cv=cv,
             strategy=strategy,
             verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
         )
         self.param_grid = param_grid
@@ -465,6 +501,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     refit: bool, optional (default=True)
         Refit the forecaster with the best parameters on all the data
     verbose: int, optional (default=0)
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch: str, optional (default='2*n_jobs')
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -483,6 +523,11 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Fitted estimator with the best parameters
     cv_results_ : dict
         Results from grid search cross validation
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
     """
 
     _required_parameters = ["forecaster", "cv", "param_distributions"]
@@ -498,6 +543,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         n_jobs=None,
         refit=True,
         verbose=0,
+        return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
     ):
@@ -509,6 +555,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             refit=refit,
             cv=cv,
             verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
         )
         self.param_distributions = param_distributions

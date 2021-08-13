@@ -136,6 +136,7 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
+    ColumnEnsembleForecaster
     EnsembleForecaster
     TransformedTargetForecaster
     ForecastingPipeline
