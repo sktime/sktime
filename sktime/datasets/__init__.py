@@ -16,7 +16,6 @@ __all__ = [
     "load_unit_test",
     "load_uschange",
     "load_PBS_dataset",
-    "load_acsf1",
     "load_japanese_vowels",
 ]
 

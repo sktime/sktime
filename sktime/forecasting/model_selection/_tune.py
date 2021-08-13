@@ -391,14 +391,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
             Time (seconds) to refit the best forecaster
         scorer_ : function
             Function used to score model
-    <<<<<<< HEAD
-    =======
         n_best_forecasters_: list of tuples ("rank", <forecaster>)
             The "rank" is in relation to best_forecaster_
         n_best_scores_: list of float
             The scores of n_best_forecasters_ sorted from best to worst
             score of forecasters
-    >>>>>>> main
 
         Examples
         --------

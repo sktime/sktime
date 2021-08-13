@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements composite forecasters."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 __all__ = [
     "ColumnEnsembleForecaster",
