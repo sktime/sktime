@@ -3,7 +3,6 @@
 
 from sktime.datatypes._series._check import check_dict as check_dict_Series
 from sktime.datatypes._series._convert import convert_dict as convert_dict_Series
-from sktime.datatypes._series._mtypes import infer_mtype_dict as infer_mtype_dict_Series
 
 from sktime.datatypes._series._examples import example_dict as example_dict_Series
 from sktime.datatypes._series._examples import (
@@ -15,7 +14,6 @@ from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER
 __all__ = [
     "check_dict_Series",
     "convert_dict_Series",
-    "infer_mtype_dict_Series",
     "MTYPE_LIST_SERIES",
     "MTYPE_REGISTER_SERIES",
     "example_dict_Series",
