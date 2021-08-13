@@ -395,7 +395,7 @@ Voting takes place:
 
 For all types of changes, except appointments, votes take place on the
 related public issue or pull request. The winning condition is a 2/3
-majority of the votes casts by core developers including CC members for the proposal.
+majority of the votes cast by core developers (including CC members) for the proposal.
 If the proposal cannot gather a 2/3 majority of the votes cast by core
 developers, the decision is escalated to the :ref:`stage-3`.
 
