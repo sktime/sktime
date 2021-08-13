@@ -13,8 +13,8 @@ sktime is a library for time series analsyis in Python. It provides a unified in
 | Overview | |
 |---|---|
 | **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github)](https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test) [![!appveyor](https://img.shields.io/appveyor/ci/mloning/sktime/main?logo=appveyor)](https://ci.appveyor.com/project/mloning/sktime) [![!azure-devops](https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/main?logo=azure-pipelines)](https://dev.azure.com/mloning/sktime/_build) [![!codecov](https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/alan-turing-institute/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) |
-| **Code** |  [![!pypi](https://img.shields.io/pypi/v/sktime?color=orange)](https://pypi.org/project/sktime/) [![!conda](https://img.shields.io/conda/vn/conda-forge/sktime)](https://anaconda.org/conda-forge/sktime) [![!python-versions](https://img.shields.io/pypi/pyversions/sktime)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
-| **Community** | [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!gitter](https://img.shields.io/static/v1?logo=gitter&label=gitter&message=chat&color=lightgreen)](https://gitter.im/sktime/community) [![!twitter](https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social)](https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s) |
+| **Code** |  [![!pypi](https://img.shields.io/pypi/v/sktime?color=orange)](https://pypi.org/project/sktime/) [![!conda](https://img.shields.io/conda/vn/conda-forge/sktime)](https://anaconda.org/conda-forge/sktime) [![!python-versions](https://img.shields.io/pypi/pyversions/sktime)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples) |
+| **Community** | [![!slack](https://img.shields.io/static/v1?logo=slack&label=slack&message=chat&color=lightgreen)](https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!gitter](https://img.shields.io/static/v1?logo=gitter&label=gitter&message=chat&color=lightgreen)](https://gitter.im/sktime/community) [![!twitter](https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social)](https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s) |
 | **Citation** | [![!zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg)](https://doi.org/10.5281/zenodo.3749000) |
 
 ## :books: Documentation
@@ -184,7 +184,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [contributors]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md
 [governance]: https://www.sktime.org/en/latest/governance.html
 [mentoring]: https://github.com/sktime/mentoring
-[meetings]: https://github.com/sktime/community-council
+[meetings]: https://calendar.google.com/calendar/u/0/embed?src=sktime.toolbox@gmail.com&ctz=UTC
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
 
 ## :bulb: Project vision
