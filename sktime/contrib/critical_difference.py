@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Standalone function to plot critical difference diagram."""
+
 __author__ = ["Svea Meyer"]
 
 import numpy as np
@@ -16,7 +18,7 @@ def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
 
     Larger parts of code copied from scipy.
 
-    Arguments:
+    Arguments
     ---------
     n_strategies : int
       number of strategies to evaluate
@@ -25,13 +27,12 @@ def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
     ranked_data : np.array (shape: n_strategies * n_datasets)
       rank of strategy on dataset
 
-    Returns:
+    Returns
     -------
     is_significant : bool
       Indicates whether strategies differ significantly in terms of performance
       (according to Friedman test).
     """
-
     if n_strategies < 3:
         raise ValueError(
             "At least 3 sets of measurements must be given for Friedmann test, got{}.".format(
@@ -110,18 +111,16 @@ def plot_critical_difference(
         reverse : bool
            if set to 'True', the lowest rank is on the right (default: 'True')
     """
-
     # Helper Functions
     def _nth(l, n):
-        """
-        Returns only nth element in a list.
-        """
+        """Return only nth element in a list."""
         n = _lloc(l, n)
         return [a[n] for a in l]
 
     def _lloc(l, n):
         """
         List location in list of list structure.
+
         Enable the use of negative locations:
         -1 is the last element, -2 second last...
         """
@@ -138,9 +137,7 @@ def plot_critical_difference(
         return textspace + scalewidth / (highv - lowv) * a
 
     def _line(l, color="k", **kwargs):
-        """
-        Input is a list of pairs of points.
-        """
+        """Input is a list of pairs of points."""
         ax.plot(_wfl(_nth(l, 0)), _hfl(_nth(l, 1)), color=color, **kwargs)
 
     def _text(x, y, s, *args, **kwargs):
@@ -175,36 +172,186 @@ def plot_critical_difference(
 
     if is_significant:
         if alpha == 0.01:
-            qalpha = [0.000, 2.576, 2.913, 3.113, 3.255, 3.364, 3.452, 3.526,
-                      3.590, 3.646, 3.696, 3.741, 3.781, 3.818,
-                      3.853, 3.884, 3.914, 3.941, 3.967, 3.992, 4.015, 4.037,
-                      4.057, 4.077, 4.096, 4.114, 4.132, 4.148,
-                      4.164, 4.179, 4.194, 4.208, 4.222, 4.236, 4.249, 4.261,
-                      4.273, 4.285, 4.296, 4.307, 4.318, 4.329,
-                      4.339, 4.349, 4.359, 4.368, 4.378, 4.387, 4.395, 4.404,
-                      4.412, 4.420, 4.428, 4.435, 4.442, 4.449,
-                      4.456]
+            qalpha = [
+                0.000,
+                2.576,
+                2.913,
+                3.113,
+                3.255,
+                3.364,
+                3.452,
+                3.526,
+                3.590,
+                3.646,
+                3.696,
+                3.741,
+                3.781,
+                3.818,
+                3.853,
+                3.884,
+                3.914,
+                3.941,
+                3.967,
+                3.992,
+                4.015,
+                4.037,
+                4.057,
+                4.077,
+                4.096,
+                4.114,
+                4.132,
+                4.148,
+                4.164,
+                4.179,
+                4.194,
+                4.208,
+                4.222,
+                4.236,
+                4.249,
+                4.261,
+                4.273,
+                4.285,
+                4.296,
+                4.307,
+                4.318,
+                4.329,
+                4.339,
+                4.349,
+                4.359,
+                4.368,
+                4.378,
+                4.387,
+                4.395,
+                4.404,
+                4.412,
+                4.420,
+                4.428,
+                4.435,
+                4.442,
+                4.449,
+                4.456,
+            ]
 
         elif alpha == 0.05:
-            qalpha = [0.000, 1.960, 2.344, 2.569, 2.728, 2.850, 2.948, 3.031,
-                      3.102, 3.164, 3.219, 3.268, 3.313, 3.354,
-                      3.391, 3.426, 3.458, 3.489, 3.517, 3.544, 3.569, 3.593,
-                      3.616, 3.637, 3.658, 3.678, 3.696, 3.714,
-                      3.732, 3.749, 3.765, 3.780, 3.795, 3.810, 3.824, 3.837,
-                      3.850, 3.863, 3.876, 3.888, 3.899, 3.911,
-                      3.922, 3.933, 3.943, 3.954, 3.964, 3.973, 3.983, 3.992,
-                      4.001, 4.009, 4.017, 4.025, 4.032, 4.040,
-                      4.046]
+            qalpha = [
+                0.000,
+                1.960,
+                2.344,
+                2.569,
+                2.728,
+                2.850,
+                2.948,
+                3.031,
+                3.102,
+                3.164,
+                3.219,
+                3.268,
+                3.313,
+                3.354,
+                3.391,
+                3.426,
+                3.458,
+                3.489,
+                3.517,
+                3.544,
+                3.569,
+                3.593,
+                3.616,
+                3.637,
+                3.658,
+                3.678,
+                3.696,
+                3.714,
+                3.732,
+                3.749,
+                3.765,
+                3.780,
+                3.795,
+                3.810,
+                3.824,
+                3.837,
+                3.850,
+                3.863,
+                3.876,
+                3.888,
+                3.899,
+                3.911,
+                3.922,
+                3.933,
+                3.943,
+                3.954,
+                3.964,
+                3.973,
+                3.983,
+                3.992,
+                4.001,
+                4.009,
+                4.017,
+                4.025,
+                4.032,
+                4.040,
+                4.046,
+            ]
         elif alpha == 0.1:
-            qalpha = [0.000, 1.645, 2.052, 2.291, 2.460, 2.589, 2.693, 2.780,
-                      2.855, 2.920, 2.978, 3.030, 3.077, 3.120,
-                      3.159, 3.196, 3.230, 3.261, 3.291, 3.319, 3.346, 3.371,
-                      3.394, 3.417, 3.439, 3.459, 3.479, 3.498,
-                      3.516, 3.533, 3.550, 3.567, 3.582, 3.597, 3.612, 3.626,
-                      3.640, 3.653, 3.666, 3.679, 3.691, 3.703,
-                      3.714, 3.726, 3.737, 3.747, 3.758, 3.768, 3.778, 3.788,
-                      3.797, 3.806, 3.814, 3.823, 3.831, 3.838,
-                      3.846]
+            qalpha = [
+                0.000,
+                1.645,
+                2.052,
+                2.291,
+                2.460,
+                2.589,
+                2.693,
+                2.780,
+                2.855,
+                2.920,
+                2.978,
+                3.030,
+                3.077,
+                3.120,
+                3.159,
+                3.196,
+                3.230,
+                3.261,
+                3.291,
+                3.319,
+                3.346,
+                3.371,
+                3.394,
+                3.417,
+                3.439,
+                3.459,
+                3.479,
+                3.498,
+                3.516,
+                3.533,
+                3.550,
+                3.567,
+                3.582,
+                3.597,
+                3.612,
+                3.626,
+                3.640,
+                3.653,
+                3.666,
+                3.679,
+                3.691,
+                3.703,
+                3.714,
+                3.726,
+                3.737,
+                3.747,
+                3.758,
+                3.768,
+                3.778,
+                3.788,
+                3.797,
+                3.806,
+                3.814,
+                3.823,
+                3.831,
+                3.838,
+                3.846,
+            ]
             #
         else:
             raise Exception("alpha must be 0.01, 0.05 or 0.1")
@@ -438,16 +585,16 @@ def plot_critical_difference(
     plt.show()
 
 
-#if __name__ == "__main__":
- #   import csv
-  #  scores = np.loadtxt("example_scores/TESTACC_MEANS.csv", delimiter=",")
-  #  with open("example_scores/labels.csv", newline="") as f:
-   #     reader = csv.reader(f)
-    #    data = list(reader)
-    #labels = []
-    #for l in data:
-     #   labels.append(l[0])
-    #cliques = [[0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 1]]
-    #plot_critical_difference(
-     #   scores=scores, labels=labels, cliques=None, alpha=0.05, is_errors=False
-    #)
+# if __name__ == "__main__":
+#   import csv
+#  scores = np.loadtxt("example_scores/TESTACC_MEANS.csv", delimiter=",")
+#  with open("example_scores/labels.csv", newline="") as f:
+#     reader = csv.reader(f)
+#    data = list(reader)
+# labels = []
+# for l in data:
+#   labels.append(l[0])
+# cliques = [[0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 1]]
+# plot_critical_difference(
+#   scores=scores, labels=labels, cliques=None, alpha=0.05, is_errors=False
+# )
