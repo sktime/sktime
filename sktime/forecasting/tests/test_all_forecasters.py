@@ -62,12 +62,12 @@ def test_get_fitted_params(Forecaster):
     """Test get_fitted_params."""
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
-        y = _make_series(n_columns=1)
-        f.fit(y, fh=FH0)
+        y_train = _make_series(n_columns=1)
+        f.fit(y_train, fh=FH0)
 
     elif f.get_tag("scitype:y") == "multivariate" or f.get_tag("scitype:y") == "both":
-        y = _make_series(n_columns=2)
-        f.fit(y, fh=FH0)
+        y_train = _make_series(n_columns=2)
+        f.fit(y_train, fh=FH0)
     try:
         params = f.get_fitted_params()
         assert isinstance(params, dict)
