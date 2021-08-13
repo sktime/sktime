@@ -428,13 +428,12 @@ the CC tries to resolve the deadlock.
 sktime enhancement proposal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-STEPS are required for:
+sktime enhancmenet proposals (STEPs) are required for:
 
 * certain types of proposed changes, by default, see `decision making process <#Decision-making>`__
 * for all stage 3 decisions
 
-For stage 3 decisions, the sktime enhancement proposal (STEP) must have been made
-public at least 5 working days (excluding week-ends) before the vote.
+If a STEP is required by a vote, it must have been made public at least 5 working days (excluding week-ends) before that vote.
 
 A STEP is a consolidated document, with a concise
 problem statement, a clear description of the proposed solution and a
