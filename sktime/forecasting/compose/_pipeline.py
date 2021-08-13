@@ -74,6 +74,28 @@ class _Pipeline(
         """Return the length of the Pipeline."""
         return len(self.steps)
 
+    def _get_inverse_transform(self, y):
+        """Iterate over transformers.
+
+        Inverse transform y (used for y_pred and pred_int)
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        y : pd.Series
+            Inverse transformed y
+        """
+        for _, _, transformer in self._iter_transformers(reverse=True):
+            # skip sktime transformers where inverse transform
+            # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
+            skip_trafo = transformer.get_tag("skip-inverse-transform", False)
+            if not skip_trafo:
+                y = transformer.inverse_transform(y)
+        return y
+
     @property
     def named_steps(self):
         """Map the steps to a dictionary."""
@@ -210,13 +232,14 @@ class ForecastingPipeline(_Pipeline):
             Prediction intervals
         """
         forecaster = self.steps_[-1][1]
+
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
                 X = transformer.transform(X)
-        y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
-        return y_pred
+
+        return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -264,7 +287,9 @@ class ForecastingPipeline(_Pipeline):
 class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     """Meta-estimator for forecasting transformed time series.
 
-    Pipeline functionality to apply transformers to the target series.
+    Pipeline functionality to apply transformers to the target series. The
+    X data is not transformed. If you want to transform X, please use the
+    ForecastingPipeline.
 
     Parameters
     ----------
@@ -321,7 +346,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            y = t.fit_transform(y)
+            y = t.fit_transform(y, X)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
@@ -352,15 +377,23 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             Prediction intervals
         """
         forecaster = self.steps_[-1][1]
-        y_pred = forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
-
-        for _, _, transformer in self._iter_transformers(reverse=True):
-            # skip sktime transformers where inverse transform
-            # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
-            skip_trafo = transformer.get_tag("skip-inverse-transform", False)
-            if not skip_trafo:
-                y_pred = transformer.inverse_transform(y_pred)
-        return y_pred
+        if return_pred_int:
+            y_pred, pred_int = forecaster.predict(
+                fh, X, return_pred_int=return_pred_int, alpha=alpha
+            )
+            # inverse transform pred_int
+            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"])
+            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"])
+        else:
+            y_pred = forecaster.predict(
+                fh, X, return_pred_int=return_pred_int, alpha=alpha
+            )
+        # inverse transform y_pred
+        y_pred = self._get_inverse_transform(y_pred)
+        if return_pred_int:
+            return y_pred, pred_int
+        else:
+            return y_pred
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -418,7 +451,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
         Returns
         -------
-        zt : pd.Series or pd.DataFrame
+        Z_inv : pd.Series or pd.DataFrame
             The reconstructed timeseries after the transformation has been reversed.
         """
         self.check_is_fitted()
