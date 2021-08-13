@@ -56,6 +56,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install wheel
           pip install -r build_tools/requirements.txt
+          pip install -r .binder/prelim_requirements.txt
           pip install -r .binder/requirements.txt
       - name: Build wheel
         run: python setup.py sdist bdist_wheel
