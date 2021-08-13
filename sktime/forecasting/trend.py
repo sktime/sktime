@@ -19,7 +19,7 @@ from sktime.utils.datetime import _get_duration
 
 
 class TrendForecaster(BaseForecaster):
-    """Forecast time series data.
+    """Trend based forecasts of time series data.
 
     Default settings train a linear regression model.
 

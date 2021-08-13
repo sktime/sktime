@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Functions for loading data."""
+"""Functions to load datasets included in sktime."""
 
 __all__ = [
     "load_airline",

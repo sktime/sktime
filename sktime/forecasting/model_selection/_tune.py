@@ -337,89 +337,89 @@ class BaseGridSearch(BaseForecaster):
 class ForecastingGridSearchCV(BaseGridSearch):
     """Performs grid-search cross-validation to find optimal model parameters.
 
-    The forecaster is fit on the initial window and then temporal
-    cross-validation is used to find the optimal parameter
+        The forecaster is fit on the initial window and then temporal
+        cross-validation is used to find the optimal parameter
 
-    Grid-search cross-validation is performed based on a cross-validation
-    iterator encoding the cross-validation scheme, the parameter grid to
-    search over, and (optionally) the evaluation metric for comparing model
-    performance. As in scikit-learn, tuning works through the common
-    hyper-parameter interface which allows to repeatedly fit and evaluate
-    the same forecaster with different hyper-parameters.
+        Grid-search cross-validation is performed based on a cross-validation
+        iterator encoding the cross-validation scheme, the parameter grid to
+        search over, and (optionally) the evaluation metric for comparing model
+        performance. As in scikit-learn, tuning works through the common
+        hyper-parameter interface which allows to repeatedly fit and evaluate
+        the same forecaster with different hyper-parameters.
 
-    Parameters
-    ----------
-    forecaster : estimator object
-        The estimator should implement the sktime or scikit-learn estimator
-        interface. Either the estimator must contain a "score" function,
-        or a scoring function must be passed.
-    cv : cross-validation generator or an iterable
-        e.g. SlidingWindowSplitter()
-    param_grid : dict or list of dictionaries
-        Model tuning parameters of the forecaster to evaluate
-    scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters
-    n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
-    refit: bool, optional (default=True)
-        Refit the forecaster with the best parameters on all the data
-    verbose: int, optional (default=0)
-    return_n_best_forecasters: int, default=1
-        In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs')
-    error_score: numeric value or the str 'raise', optional (default=np.nan)
-        The test score returned when a forecaster fails to be fitted.
-    return_train_score: bool, optional (default=False)
+        Parameters
+        ----------
+        forecaster : estimator object
+            The estimator should implement the sktime or scikit-learn estimator
+            interface. Either the estimator must contain a "score" function,
+            or a scoring function must be passed.
+        cv : cross-validation generator or an iterable
+            e.g. SlidingWindowSplitter()
+        param_grid : dict or list of dictionaries
+            Model tuning parameters of the forecaster to evaluate
+        scoring: function, optional (default=None)
+            Function to score models for evaluation of optimal parameters
+        n_jobs: int, optional (default=None)
+            Number of jobs to run in parallel.
+            None means 1 unless in a joblib.parallel_backend context.
+            -1 means using all processors.
+        refit: bool, optional (default=True)
+            Refit the forecaster with the best parameters on all the data
+        verbose: int, optional (default=0)
+        return_n_best_forecasters: int, default=1
+            In case the n best forecaster should be returned, this value can be set
+            and the n best forecasters will be assigned to n_best_forecasters_
+        pre_dispatch: str, optional (default='2*n_jobs')
+        error_score: numeric value or the str 'raise', optional (default=np.nan)
+            The test score returned when a forecaster fails to be fitted.
+        return_train_score: bool, optional (default=False)
 
-    Attributes
-    ----------
-    best_index_ : int
-    best_score_: float
-        Score of the best model
-    best_params_ : dict
-        Best parameter values across the parameter grid
-    best_forecaster_ : estimator
-        Fitted estimator with the best parameters
-    cv_results_ : dict
-        Results from grid search cross validation
-    n_splits_: int
-        Number of splits in the data for cross validation}
-    refit_time_ : float
-        Time (seconds) to refit the best forecaster
-    scorer_ : function
-        Function used to score model
-    n_best_forecasters_: list of tuples ("rank", <forecaster>)
-        The "rank" is in relation to best_forecaster_
-    n_best_scores_: list of float
-        The scores of n_best_forecasters_ sorted from best to worst
-        score of forecasters
+        Attributes
+        ----------
+        best_index_ : int
+        best_score_: float
+            Score of the best model
+        best_params_ : dict
+            Best parameter values across the parameter grid
+        best_forecaster_ : estimator
+            Fitted estimator with the best parameters
+        cv_results_ : dict
+            Results from grid search cross validation
+        n_splits_: int
+            Number of splits in the data for cross validation}
+        refit_time_ : float
+            Time (seconds) to refit the best forecaster
+        scorer_ : function
+            Function used to score model
+        n_best_forecasters_: list of tuples ("rank", <forecaster>)
+            The "rank" is in relation to best_forecaster_
+        n_best_scores_: list of float
+            The scores of n_best_forecasters_ sorted from best to worst
+            score of forecasters
 
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter)
-    >>> from sktime.forecasting.naive import NaiveForecaster
+        Examples
+        --------
+        >>> from sktime.datasets import load_airline
+        >>> from sktime.forecasting.model_selection import (
+        ...     ExpandingWindowSplitter,
+        ...     ForecastingGridSearchCV,
+        ...     ExpandingWindowSplitter)
+        >>> from sktime.forecasting.naive import NaiveForecaster
 
-    >>> y = load_airline()
-    >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
-    >>> forecaster = NaiveForecaster()
-    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
-    >>> gscv = ForecastingGridSearchCV(
-    ...     forecaster=forecaster,
-    ...     param_grid=param_grid,
-    ...     cv=cv)
-    >>> gscv.fit(y)
-    ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh)
+        >>> y = load_airline()
+        >>> fh = [1,2,3]
+        >>> cv = ExpandingWindowSplitter(
+        ...     start_with_window=True,
+        ...     fh=fh)
+        >>> forecaster = NaiveForecaster()
+        >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+        >>> gscv = ForecastingGridSearchCV(
+        ...     forecaster=forecaster,
+        ...     param_grid=param_grid,
+        ...     cv=cv)
+        >>> gscv.fit(y)
+        ForecastingGridSearchCV(...)
+        >>> y_pred = gscv.predict(fh)
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]

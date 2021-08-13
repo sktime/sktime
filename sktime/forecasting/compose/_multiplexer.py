@@ -12,7 +12,7 @@ __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(_HeterogenousEnsembleForecaster):
-    """MultiplexForecaster for model selection.
+    """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
