@@ -331,11 +331,11 @@ corresponding decision making process is described in more detail below.
    * - Code changes and major documentation changes
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
-     - Lazy consensus based on a :ref:`steps`
+     - Lazy consensus, requires a :ref:`steps`
    * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus based on a :ref:`steps`
+     - Lazy consensus, requires a :ref:`steps`
    * - Appointment
-     - Voting
+     - Directly starts with voting (stage 2)
 
 .. _stage-1:
 
@@ -370,7 +370,7 @@ core developers.
    In that meeting, a core developer is assigned to review, and approve or reject within 
    5 days of the meeting, excluding week-ends.
 
-Lack of a lazy consensus, in the above sense, can arise only under the following condition:
+Failure of lazy consensus, in the above sense, can arise only under the following condition:
 at least one approval and at least one rejection in the PR.
 
 When no consensus can be found, the decision is escaled to :ref:`stage-2`.
@@ -380,21 +380,23 @@ When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 Stage 2: voting
 ~~~~~~~~~~~~~~~
 
-When no consensus can be found, any core developer can call for a vote
-at any point during the discussion.
+Voting takes place:
 
+* when no lazy consensus can be found in stage 1 decision making
+* for appointments
+
+-  The start of a voting period after stage 1 is at the moment the lazy consensus fails.
+-  Start and end time of the vote must in the core developer channel, and on the PR (if on a PR).
 -  The vote will conclude 5 days excluding weekends from the call for the vote.
 -  Votes are voluntary. Abstentions are allowed. Core developers can
    abstain by simply not casting a vote.
--  All votes are a binary vote: for or against accepting the proposed
-   changes.
+-  All votes are a binary vote: for or against accepting the proposal.
 -  Votes are casts as comments: +1 (approval) or -1 (rejection).
--  Votes are cast publicly, in the location of the proposed change.
 
 For all types of changes, except appointments, votes take place on the
 related public issue or pull request. The winning condition is a 2/3
-majority of the votes casts by core developers including CC members. If the
-proposed change cannot gather a 2/3 majority of the votes cast by core
+majority of the votes casts by core developers including CC members for the proposal.
+If the proposal cannot gather a 2/3 majority of the votes cast by core
 developers, the decision is escalated to the :ref:`stage-3`.
 
 For appointments, votes take place in private communication channels
