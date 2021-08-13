@@ -138,9 +138,9 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
         return None
 
     if not isinstance(to_type, str):
-        raise TypeError("to_type must be a str or list of str")
+        raise TypeError("to_type must be a str")
     if not isinstance(from_type, str):
-        raise TypeError("from_type must be a str or list of str")
+        raise TypeError("from_type must be a str")
     if as_scitype is None:
         as_scitype = mtype_to_scitype(from_type)
     elif not isinstance(as_scitype, str):
