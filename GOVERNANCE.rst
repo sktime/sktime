@@ -354,17 +354,12 @@ core developers.
    The approval required for this condition must be by a core developer different from a proposer.
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
    rejection by at least one core developer, and no acceptance by a core developer.
--  Formal statements on proposed changes must be located with the proposal on GitHub,
-   usually in the same pull request that contains the proposal, or the related issue.
-   Formal statements in this sense are approvals/rejections, and statements
-   about whether the proposal should be considered a "major change", as below.
--  Approvals and rejections can be expressed as +1 and -1 comments,
-   respectively, or any written comments
-   containing "I formally approve/reject" in reference to the proposal.
-   If the proposed change has the form of a PR, approval must be in the form of a GitHub PR approval.
+-  Approvals must be in the form of a GitHub PR approval. of the PR in question.
+   Rejections can be expressed as -1 comments, or any written comments
+   containing "I formally reject" in the PR, in reference to it.
 -  Proposers are expected to give reasonable time for consideration, that is,
    time and opportunity for core developers to review and
-   give their opinion on the contribution.
+   give their opinion on the PR.
    Ten working days excluding week-ends constitute "reasonable time" in the above sense.
    The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
