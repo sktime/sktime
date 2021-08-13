@@ -67,6 +67,7 @@ If you get stuck, please don’t hesitate to chat with us or raise an issue.
 
     +++
 
-    .. link-button:: https://github.com/sktime/community-council
+    .. link-button:: meetups
+            :type: ref
             :text: Participate
             :classes: btn-block btn-secondary stretched-link
