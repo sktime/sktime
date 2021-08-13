@@ -1,8 +1,11 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
-"""Implements ensemble forecasters that create univariate (optionally weighted)
-combination of the predictions from underlying forecasts."""
+"""Implements ensemble forecasters.
+
+Creates univariate (optionally weighted)
+combination of the predictions from underlying forecasts.
+"""
 
 __author__ = ["mloning", "GuzalBulatova"]
 __all__ = ["EnsembleForecaster"]
