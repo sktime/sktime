@@ -40,6 +40,17 @@ Trend
     :toctree: modules/auto_generated/
     :template: class.rst
 
+    TrendForecaster
+
+PolynomialTrend
+-----
+
+.. currentmodule:: sktime.forecasting.trend
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
     PolynomialTrendForecaster
 
 Exponential Smoothing
