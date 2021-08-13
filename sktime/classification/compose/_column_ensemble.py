@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-""" ColumnEnsembleClassifier: For Multivariate Time Series Classification.
-Builds classifiers on each dimension (column) independently
+"""ColumnEnsembleClassifier: For Multivariate Time Series Classification.
 
+Builds classifiers on each dimension (column) independently.
 """
 
 __author__ = ["Aaron Bostrom"]
@@ -57,9 +57,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     # this check whether the column input was a slice object or a tuple.
     def _validate_column_callables(self, X):
-        """
-        Converts callable column specifications.
-        """
+        """Convert callable column specifications."""
         columns = []
         for _, _, column in self.estimators:
             if callable(column):
@@ -68,10 +66,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self._columns = columns
 
     def _validate_remainder(self, X):
-        """
-        Validates ``remainder`` and defines ``_remainder`` targeting
-        the remaining columns.
-        """
+        """Validate ``remainder`` and defines ``_remainder``."""
         is_estimator = hasattr(self.remainder, "fit") or hasattr(
             self.remainder, "predict_proba"
         )
@@ -90,15 +85,12 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self._remainder = ("remainder", self.remainder, remaining_idx)
 
     def _iter(self, replace_strings=False):
-        """
-        Generate (name, estimator, column) tuples.
+        """Generate (name, estimator, column) tuples.
 
         If fitted=True, use the fitted transformations, else use the
         user specified transformations updated with converted column names
         and potentially appended with transformer for remainder.
-
         """
-
         if self.is_fitted:
             estimators = self.estimators_
         else:
@@ -124,7 +116,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     def fit(self, X, y):
         # the data passed in could be an array of dataframes?
-        """Fit all estimators, fit the data
+        """Fit all estimators, fit the data.
 
         Parameters
         ----------
@@ -172,7 +164,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         )
 
     def predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting """
+        """Predict class probabilities for X using 'soft' voting."""
         self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
@@ -394,10 +386,9 @@ def _get_column_indices(X, key):
 
 
 def _is_empty_column_selection(column):
-    """
-    Return True if the column selection is empty (empty list or all-False
-    boolean array).
+    """Check if column selection is empty.
 
+    Both an empty list or all-False boolean array are considered empty.
     """
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()

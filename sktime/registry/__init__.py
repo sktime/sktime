@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implements registry for sktime estimators base classes and tags."""
+"""Implements registry for sktime estimator base classes and tags."""
 
 from sktime.registry._tags import (
     ESTIMATOR_TAG_REGISTER,
