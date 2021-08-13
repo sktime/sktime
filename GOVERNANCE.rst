@@ -331,7 +331,7 @@ corresponding decision making process is described in more detail below.
    * - Code changes and major documentation changes
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
-     - Lazy consensus based on an :ref:`steps`
+     - Lazy consensus based on a :ref:`steps`
    * - Changes to sktime's governance (this document and the CoC)
      - Lazy consensus based on a :ref:`steps`
    * - Appointment
