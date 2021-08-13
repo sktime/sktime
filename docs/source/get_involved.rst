@@ -7,8 +7,9 @@ Get Involved
    :maxdepth: 1
    :hidden:
 
-   contributing
-   mentoring
+   get_involved/contributing
+   get_involved/mentoring
+   get_involved/meetups
 
 sktime is a community-driven project and your help is extremely welcome.
 If you get stuck, please don’t hesitate to chat with us or raise an issue.
