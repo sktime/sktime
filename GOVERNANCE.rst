@@ -346,17 +346,11 @@ sktime uses a “consensus seeking” process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
--  For a proposed changes to be approved via lazy consensus, one of the following
-   two conditions must be satisfied:
-    - approval by at least one core developer and no rejection by a core developer (veto right).
-      The approval required for this condition must be by a core developer different from a proposer.
-    - approval in the regular core developer meeting as part of the agenda.
-      This can happen only if no approvals or rejections are expresesd on a PR, see below.
--  For a proposed change to be rejected via lazy consensus, one of the following two conditions
-   must be satisfied:
-    - rejection by at least one core developer, and no acceptance by a core developer.
-    - rejection in the regular core developer meeting as part of the agenda.
-      This can happen only if no approvals or rejections are expresesd on a PR, see below.
+-  For a proposed changes to be approved via lazy consensus, it needs to 
+   approval by at least one core developer and no rejection by a core developer (veto right).
+   The approval required for this condition must be by a core developer different from a proposer.
+-  For a proposed change to be rejected via lazy consensus, it needs to receive a
+   rejection by at least one core developer, and no acceptance by a core developer.
 -  Formal statements on proposed changes must be located with the proposal on GitHub,
    usually in the same pull request that contains the proposal, or the related issue.
    Formal statements in this sense are approvals/rejections, and statements
@@ -378,19 +372,12 @@ core developers.
    For pull requests, the period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
-   the PR is scheduled for decision, at the top of the next regular core developer meeting's agenda
-   in which less than seven PR are already on the agenda. If no regular core developer meeting
-   is scheduled within the two calendar weeks after the period elapses,
-   the core developers must schedule one within those two weeks.
--  Decision, in the core developer meeting, is by 2/3 majority of core developers in the meeting,
-   possibly including the proposer.
-   Decision is between approval or rejection. Approval can be subjected to minor corrections, which
-   requires an additional, simple majority consensus decision of core developers in the meeting.
+   the PR is scheduled at the top of the next regular (bi-monthly) core developer meeting's agenda.
+   In that meeting, a core developer is assigned to review, and approve or reject within 
+   5 days of the meeting, excluding week-ends.
 
-Approval or rejection as above count as "consensus".
-Lack of such consensus can arise under two conditions:
-- at least one approval and at least one rejection on GitHub
-- no 2/3 majority for either approval or rejection in the core developer meeting
+Lack of a lazy consensus, in the above sense, can arise only under the following condition:
+at least one approval and at least one rejection on GitHub.
 
 When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 
