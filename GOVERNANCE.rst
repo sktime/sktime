@@ -386,7 +386,7 @@ Voting takes place:
 * for appointments
 
 -  The start of a voting period after stage 1 is at the moment the lazy consensus fails.
--  Start and end time of the vote must in the core developer channel, and on the PR (if on a PR).
+-  Start and end time of the vote must be announced in the core developer channel, and on the PR (if on a PR).
 -  The vote will conclude 5 days excluding weekends from the call for the vote.
 -  Votes are voluntary. Abstentions are allowed. Core developers can
    abstain by simply not casting a vote.
