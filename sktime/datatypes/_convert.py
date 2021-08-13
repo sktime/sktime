@@ -62,14 +62,12 @@ __author__ = ["fkiraly"]
 __all__ = [
     "convert",
     "convert_to",
-    "mtype",
 ]
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes._series import convert_dict_Series
-from sktime.datatypes._series import infer_mtype_dict_Series
 
 from sktime.datatypes._panel import convert_dict_Panel
 
@@ -80,37 +78,6 @@ from sktime.datatypes._registry import mtype_to_scitype
 convert_dict = dict()
 convert_dict.update(convert_dict_Series)
 convert_dict.update(convert_dict_Panel)
-
-infer_mtype_dict = dict()
-infer_mtype_dict.update(infer_mtype_dict_Series)
-
-
-def mtype(obj, as_scitype: str):
-    """Infer the mtype of an object considered as a specific scitype.
-
-    Parameters
-    ----------
-    obj : object to convert - any type, should comply with mtype spec for as_scitype
-    as_scitype : str - name of scitype the object "obj" is considered as
-
-    Returns
-    -------
-    str - the type to convert "obj" to, a valid mtype string
-        or None, if obj is None
-
-    Raises
-    ------
-    TypeError if no type can be identified
-    """
-    if obj is None:
-        return None
-
-    valid_as_scitypes = infer_mtype_dict.keys()
-
-    if as_scitype not in valid_as_scitypes:
-        raise TypeError(as_scitype + " is not a valid scitype")
-
-    return infer_mtype_dict[as_scitype](obj=obj)
 
 
 def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=None):
