@@ -50,7 +50,9 @@ def plot_curves(curves, curve_names, top_curves_shown=None, plot_mean=True):
 
 def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=True):
     """Temporal importance curve diagram generator for the CanonicalIntervalForest."""
-    curves = cif.temporal_importance_curves(normalise_time_points=normalise_time_points)
+    curves = cif._temporal_importance_curves(
+        normalise_time_points=normalise_time_points
+    )
     curves.reshape((25 * cif.n_dims, cif.series_length))
     features = catch22.feature_names + ["Mean", "Standard Deviation", "Slope"]
     curve_names = []

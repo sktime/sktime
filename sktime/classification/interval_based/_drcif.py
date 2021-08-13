@@ -25,6 +25,7 @@ from sktime.contrib.classification_intervals._continuous_interval_tree import (
     ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -97,7 +98,7 @@ class DrCIF(BaseClassifier):
         The classes labels.
     total_intervals : int
         Total number of intervals per tree from all representations.
-    classifiers : list of shape (n_estimators) of BaseEstimator
+    estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
     intervals : list of shape (n_estimators) of ndarray with shape (total_intervals,2)
         Stores indexes of each intervals start and end points for all classifiers.
@@ -117,9 +118,9 @@ class DrCIF(BaseClassifier):
 
     Notes
     -----
-    For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/interval_based/DrCIF.java
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    /tsml/classifiers/interval_based/DrCIF.java>`_.
 
     References
     ----------
@@ -135,7 +136,7 @@ class DrCIF(BaseClassifier):
     >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     >>> clf = DrCIF()
     >>> clf.fit(X_train, y_train)
-    DrCIF(...)
+    DrCIF()
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -152,7 +153,7 @@ class DrCIF(BaseClassifier):
         n_estimators=200,
         n_intervals=None,
         att_subsample_size=10,
-        min_interval=None,
+        min_interval=4,
         max_interval=None,
         base_estimator="DTC",
         time_limit_in_minutes=0.0,
@@ -182,7 +183,7 @@ class DrCIF(BaseClassifier):
         self.series_length = 0
         self.classes_ = []
         self.total_intervals = 0
-        self.classifiers = []
+        self.estimators_ = []
         self.intervals = []
         self.atts = []
         self.dims = []
@@ -194,25 +195,13 @@ class DrCIF(BaseClassifier):
         self._max_interval = max_interval
         self._min_interval = min_interval
         self._base_estimator = base_estimator
+        self._n_jobs = n_jobs
 
         super(DrCIF, self).__init__()
 
     def _fit(self, X, y):
-        """Build a forest of trees from the training set (X, y).
+        self._n_jobs = check_n_jobs(self.n_jobs)
 
-         Uses random intervals and catch22/basic summary features
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_instances,n_dimensions,
-        series_length] or shape = [n_instances,series_length]
-        The training input samples.
-        y : array-like, shape =  [n_instances]    The class labels.
-
-        Returns
-        -------
-        self : object
-        """
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -266,9 +255,7 @@ class DrCIF(BaseClassifier):
             if n <= 0:
                 self._n_intervals[i] = 1
 
-        if self.att_subsample_size <= 0:
-            self.__att_subsample_size = 1
-        elif self.att_subsample_size > 25:
+        if self.att_subsample_size > 25:
             self.__att_subsample_size = 25
 
         if isinstance(self.min_interval, int):
@@ -312,7 +299,7 @@ class DrCIF(BaseClassifier):
 
         if time_limit > 0:
             self.n_estimators = 0
-            self.classifiers = []
+            self.estimators_ = []
             self.intervals = []
             self.atts = []
             self.dims = []
@@ -322,7 +309,7 @@ class DrCIF(BaseClassifier):
                 train_time < time_limit
                 and self.n_estimators < self.contract_max_n_estimators
             ):
-                fit = Parallel(n_jobs=self.n_jobs)(
+                fit = Parallel(n_jobs=self._n_jobs)(
                     delayed(self._fit_estimator)(
                         X,
                         X_p,
@@ -330,7 +317,7 @@ class DrCIF(BaseClassifier):
                         y,
                         i,
                     )
-                    for i in range(self.n_jobs)
+                    for i in range(self._n_jobs)
                 )
 
                 (
@@ -341,16 +328,16 @@ class DrCIF(BaseClassifier):
                     transformed_data,
                 ) = zip(*fit)
 
-                self.classifiers += classifiers
+                self.estimators_ += classifiers
                 self.intervals += intervals
                 self.atts += atts
                 self.dims += dims
                 self.transformed_data += transformed_data
 
-                self.n_estimators += self.n_jobs
+                self.n_estimators += self._n_jobs
                 train_time = time.time() - start_time
         else:
-            fit = Parallel(n_jobs=self.n_jobs)(
+            fit = Parallel(n_jobs=self._n_jobs)(
                 delayed(self._fit_estimator)(
                     X,
                     X_p,
@@ -362,7 +349,7 @@ class DrCIF(BaseClassifier):
             )
 
             (
-                self.classifiers,
+                self.estimators_,
                 self.intervals,
                 self.dims,
                 self.atts,
@@ -370,17 +357,6 @@ class DrCIF(BaseClassifier):
             ) = zip(*fit)
 
     def _predict(self, X):
-        """Find predictions for all cases in X. Built on top of predict_proba.
-
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_dimensions,series_length]
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances]
-        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -390,24 +366,6 @@ class DrCIF(BaseClassifier):
         )
 
     def _predict_proba(self, X):
-        """Find probability estimates for each class for all cases in X.
-
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_dimensions,series_length]
-
-        Local variables
-        ----------
-        n_test_instances     : int, number of cases to classify
-        series_length    : int, number of attributes in X, must match
-        _num_atts determined in fit
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
-        """
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length:
             raise TypeError(
@@ -430,12 +388,12 @@ class DrCIF(BaseClassifier):
 
         X_d = np.diff(X, 1)
 
-        y_probas = Parallel(n_jobs=self.n_jobs)(
+        y_probas = Parallel(n_jobs=self._n_jobs)(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 X_p,
                 X_d,
-                self.classifiers[i],
+                self.estimators_[i],
                 self.intervals[i],
                 self.dims[i],
                 self.atts[i],
@@ -468,7 +426,7 @@ class DrCIF(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        p = Parallel(n_jobs=self.n_jobs)(
+        p = Parallel(n_jobs=self._n_jobs)(
             delayed(self._train_probas_for_estimator)(
                 y,
                 i,

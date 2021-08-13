@@ -23,6 +23,7 @@ from sktime.contrib.classification_intervals._continuous_interval_tree import (
     ContinuousIntervalTree,
 )
 from sktime.transformations.panel.catch22 import Catch22
+from sktime.utils.validation import check_n_jobs
 
 
 class CanonicalIntervalForest(BaseClassifier):
@@ -79,7 +80,7 @@ class CanonicalIntervalForest(BaseClassifier):
         The length of each series.
     classes_ : list
         The classes labels.
-    classifiers : list of shape (n_estimators) of BaseEstimator
+    estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
     intervals : list of shape (n_estimators) of ndarray with shape (n_intervals,2)
         Stores indexes of each intervals start and end points for all classifiers.
@@ -95,9 +96,9 @@ class CanonicalIntervalForest(BaseClassifier):
 
     Notes
     -----
-    For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/interval_based/CIF.java
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    /tsml/classifiers/interval_based/CIF.java>`_.
 
     References
     ----------
@@ -113,7 +114,7 @@ class CanonicalIntervalForest(BaseClassifier):
     >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     >>> clf = CanonicalIntervalForest()
     >>> clf.fit(X_train, y_train)
-    CanonicalIntervalForest(...)
+    CanonicalIntervalForest()
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -153,7 +154,7 @@ class CanonicalIntervalForest(BaseClassifier):
         self.n_dims = 0
         self.series_length = 0
         self.classes_ = []
-        self.classifiers = []
+        self.estimators_ = []
         self.intervals = []
         self.atts = []
         self.dims = []
@@ -163,25 +164,13 @@ class CanonicalIntervalForest(BaseClassifier):
         self._max_interval = max_interval
         self._min_interval = min_interval
         self._base_estimator = base_estimator
+        self._n_jobs = n_jobs
 
         super(CanonicalIntervalForest, self).__init__()
 
     def _fit(self, X, y):
-        """Build a forest of trees from the training set (X, y).
+        self._n_jobs = check_n_jobs(self.n_jobs)
 
-         Uses random intervals and catch22/tsf summary features.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_instances,n_dimensions,
-        series_length] or shape = [n_instances,series_length]
-        The training input samples.
-        y : array-like, shape =  [n_instances]    The class labels.
-
-        Returns
-        -------
-        self : object
-        """
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -202,9 +191,7 @@ class CanonicalIntervalForest(BaseClassifier):
         if self._n_intervals <= 0:
             self._n_intervals = 1
 
-        if self.att_subsample_size <= 0:
-            self._att_subsample_size = 1
-        elif self.att_subsample_size > 25:
+        if self.att_subsample_size > 25:
             self._att_subsample_size = 25
 
         if self.series_length < self.min_interval:
@@ -217,7 +204,7 @@ class CanonicalIntervalForest(BaseClassifier):
         if self._max_interval < self._min_interval:
             self._max_interval = self._min_interval
 
-        fit = Parallel(n_jobs=self.n_jobs)(
+        fit = Parallel(n_jobs=self._n_jobs)(
             delayed(self._fit_estimator)(
                 X,
                 y,
@@ -226,20 +213,9 @@ class CanonicalIntervalForest(BaseClassifier):
             for i in range(self.n_estimators)
         )
 
-        self.classifiers, self.intervals, self.dims, self.atts = zip(*fit)
+        self.estimators_, self.intervals, self.dims, self.atts = zip(*fit)
 
     def _predict(self, X):
-        """Predict for all cases in X. Built on top of predict_proba.
-
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_dimensions,series_length]
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances]
-        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -249,24 +225,6 @@ class CanonicalIntervalForest(BaseClassifier):
         )
 
     def _predict_proba(self, X):
-        """Probability estimates for each class for all cases in X.
-
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_dimensions,series_length]
-
-        Local variables
-        ----------
-        n_test_instances     : int, number of cases to classify
-        series_length    : int, number of attributes in X, must match
-        series_length determined in fit
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
-        """
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length:
             raise TypeError(
@@ -274,10 +232,10 @@ class CanonicalIntervalForest(BaseClassifier):
                 "that in the test data"
             )
 
-        y_probas = Parallel(n_jobs=self.n_jobs)(
+        y_probas = Parallel(n_jobs=self._n_jobs)(
             delayed(self._predict_proba_for_estimator)(
                 X,
-                self.classifiers[i],
+                self.estimators_[i],
                 self.intervals[i],
                 self.dims[i],
                 self.atts[i],
@@ -368,8 +326,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
             return classifier.predict_proba(transformed_x)
 
-    def temporal_importance_curves(self, normalise_time_points=False):
-        """Returns the CIF temporal importance curves. Requires the CIT classifier."""
+    def _temporal_importance_curves(self, normalise_time_points=False):
         if not isinstance(self._base_estimator, ContinuousIntervalTree):
             raise ValueError(
                 "CIF base estimator for temporal importance curves must"
@@ -380,7 +337,7 @@ class CanonicalIntervalForest(BaseClassifier):
         if normalise_time_points:
             counts = np.zeros((25, self.n_dims, self.series_length))
 
-        for i, tree in enumerate(self.classifiers):
+        for i, tree in enumerate(self.estimators_):
             splits, gains = tree.tree_splits_gain()
 
             for n, split in enumerate(splits):
