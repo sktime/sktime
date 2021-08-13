@@ -13,7 +13,7 @@ def time_function_call(
 
     result = timeit.timeit(timeit_experiments, number=average_amount)
 
-    return result
+    return result / average_amount
 
 
 def profile_a_function(

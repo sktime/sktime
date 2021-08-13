@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sktime.dists_kernels.distances.dtw import dtw
+from sktime.metrics.distances.distances import dtw
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.benchmarking._internal_benchmarks.profiling import time_function_call
@@ -29,16 +29,12 @@ def run_distance_benchmark(
     #     kwargs=kwargs
     # )
 
-    # profile = time_function_call(
-    #     function_to_time=dtw_distance,
-    #     average_amount=50,
-    #     print_result=True,
-    #     kwargs=kwargs
-    # )
-
-    time_function_call(function_to_time=distance_func, average_amount=50, kwargs=kwargs)
-
+    time_taken = time_function_call(
+        function_to_time=distance_func, average_amount=50, kwargs=kwargs
+    )
     # time_function_call(function_to_time=tslearn_dtw, average_amount=50, kwargs=kwargs)
+
+    return time_taken
 
 
 if __name__ == "__main__":

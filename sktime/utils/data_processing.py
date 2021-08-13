@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from typing import Union, List
 
 __all__ = [
     "from_3d_numpy_to_2d_array",
@@ -18,6 +19,8 @@ __all__ = [
     "are_columns_nested",
     "is_nested_dataframe",
     "convert_from_dictionary",
+    "to_numpy_time_series",
+    "to_numpy_time_series_matrix",
 ]
 
 
@@ -884,7 +887,39 @@ def is_nested_dataframe(X):
     return isinstance(X, pd.DataFrame) and are_columns_nested(X).any()
 
 
-def to_numpy_time_series(X) -> np.ndarray:
+def to_numpy_time_series_matrix(x: Union[np.ndarray, pd.DataFrame, List]):
+    """
+    Method that is used to take a matrix of time series and format them into a valid
+    numpy matrix by performing checks and reformatting where appropriate
+
+    Parameters
+    ----------
+    x: np.ndarray or pd.Dataframe or List
+        Input time series matrix to format
+
+    Returns
+    -------
+    np.ndarray
+        Numpy matrix containing valid time series
+    """
+    if isinstance(x, np.ndarray):
+        X_copy = np.array(x, copy=True)
+        valid_x = np.zeros_like(X_copy)
+        for i in range(X_copy.shape[0]):
+            valid_x[i] = to_numpy_time_series(X_copy[i])
+        return valid_x
+    elif isinstance(x, pd.DataFrame):
+        return to_numpy_time_series_matrix(from_nested_to_3d_numpy(x))
+    elif isinstance(x, list):
+        return to_numpy_time_series_matrix(np.array(x))
+    else:
+        raise TypeError(
+            "The matrix passed is not of valid type. It must be one of the following:"
+            "np.ndarray, pd.Dataframe, List[pd.Dataframe], List[np.ndarray], List[List]"
+        )
+
+
+def to_numpy_time_series(x: Union[pd.Series, np.ndarray, List]) -> np.ndarray:
     """
     Method used to take a number of different time series
     and format them to a numpy time series
@@ -895,7 +930,7 @@ def to_numpy_time_series(X) -> np.ndarray:
 
     Parameters
     ----------
-    X: pd.series, numpy, list
+    x: pd.series, numpy, list
         Input time series to convert
 
     Returns
@@ -903,8 +938,8 @@ def to_numpy_time_series(X) -> np.ndarray:
     np.ndarray
         Numpy version of the input
     """
-    if isinstance(X, np.ndarray):
-        X_copy = np.array(X, copy=True)
+    if isinstance(x, np.ndarray):
+        X_copy = np.array(x, copy=True)
         if np.isnan(X_copy).any():
             X_copy = np.nan_to_num(X_copy)
         if X_copy.ndim <= 1:
@@ -912,10 +947,10 @@ def to_numpy_time_series(X) -> np.ndarray:
         if X_copy.dtype != np.float:
             X_copy = X_copy.astype(np.float)
         return X_copy
-    elif isinstance(X, pd.Series):
-        return to_numpy_time_series(from_nested_to_2d_array(X, return_numpy=True))
-    elif isinstance(X, list):
-        return to_numpy_time_series(np.array(X))
+    elif isinstance(x, pd.Series):
+        return to_numpy_time_series(from_nested_to_2d_array(x, return_numpy=True))
+    elif isinstance(x, list):
+        return to_numpy_time_series(np.array(x))
     else:
         raise TypeError(
             "The series passed is the incorrect type. It must be"
