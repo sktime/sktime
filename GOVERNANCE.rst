@@ -333,20 +333,23 @@ corresponding decision making process is described in more detail below.
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus based on an :ref:`steps`
    * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus based on an :ref:`steps`
+     - Lazy consensus based on a :ref:`steps`
    * - Appointment
      - Voting
 
 .. _stage-1:
 
-Stage 1: lazy consensus with veto right
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Stage 1: lazy consensus
+~~~~~~~~~~~~~~~~~~~~~~~
 
 sktime uses a “consensus seeking” process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
--  For a proposed changes to be approved via lazy consensus, it needs to 
+-  Proposed changes should be in the form of GitHub pull requests (PR).
+   Some changes also require a worked out :ref:`steps`, this depends on the type of change, see 
+   `decision making process <#Decision-making>`__ above.
+-  For a proposed change to be approved via lazy consensus, it needs to 
    approval by at least one core developer and no rejection by a core developer (veto right).
    The approval required for this condition must be by a core developer different from a proposer.
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
@@ -359,17 +362,11 @@ core developers.
    respectively, or any written comments
    containing "I formally approve/reject" in reference to the proposal.
    If the proposed change has the form of a PR, approval must be in the form of a GitHub PR approval.
--  Major changes to the project require a more
-   detailed analysis and a consensus that is both explicit and informed.
-   A major change always require a worked out :ref:`steps`.
-   A change is major in the above sense
-   if at least three core developers explicitly state that the proposal is a major change
-   and requires especial consideration, in the location.
 -  Proposers are expected to give reasonable time for consideration, that is,
    time and opportunity for core developers to review and
    give their opinion on the contribution.
    Ten working days excluding week-ends constitute "reasonable time" in the above sense.
-   For pull requests, the period resets at every new change made to the PR.
+   The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of the next regular (bi-monthly) core developer meeting's agenda.
@@ -432,11 +429,15 @@ the CC tries to resolve the deadlock.
 sktime enhancement proposal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For all stage 3 decisions of the CC on major changes,
-an sktime enhancement proposal (STEP) must have been made
-public and discussed before the vote.
+STEPS are required for:
 
-An sktime enhancement proposal is a consolidated document, with a concise
+* certain types of proposed changes, by default, see `decision making process <#Decision-making>`__
+* for all stage 3 decisions
+
+For stage 3 decisions, the sktime enhancement proposal (STEP) must have been made
+public at least 5 working days (excluding week-ends) before the vote.
+
+A STEP is a consolidated document, with a concise
 problem statement, a clear description of the proposed solution and a
 comparison with alternative solutions, as outlined in our
 `template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
@@ -444,8 +445,11 @@ comparison with alternative solutions, as outlined in our
 A complete STEP must always include at least a high-level design for the proposed change,
 not just a wishlist of features.
 
-We collect and discuss proposals in sktime’s `repository for
+Usually, we collect and discuss proposals in sktime’s `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
+
+For smaller changes, such as punctual changes to the API or governance documents,
+the STEP can also be be part of an issue or pull request.
 
 .. _algorithm-inclusion-guidelines:
 
