@@ -138,13 +138,15 @@ def test_X_invalid_type_raises_error(Forecaster, X):
 @pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
 def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
-    y_train = make_forecasting_problem(index_type=index_type)
+    f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1, index_type=index_type)
+
+    elif f.get_tag("scitype:y") == "multivariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=2, index_type=index_type)
     cutoff = y_train.index[-1]
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-    f = _construct_instance(Forecaster)
 
-    # Some estimators may not support all time index types and fh types, hence we
-    # need to catch NotImplementedErrors.
     try:
         f.fit(y_train, fh=fh)
         y_pred = f.predict()
