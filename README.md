@@ -2,7 +2,7 @@
 
 # Welcome to sktime
 
-> A unified interface for machine learning with time series data
+> A unified interface for machine learning with time series
 
 :rocket: **Version 0.7.0 out now!** [Check out the release notes here.](https://github.com/alan-turing-institute/sktime/releases)
 
