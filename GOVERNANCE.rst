@@ -364,7 +364,7 @@ core developers.
    The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
 -  During this period, the PR can be merged if it has an approval and no rejection, but must be
-   reverted if it received a rejection in addition.
+   reverted if it receives a rejection in addition.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of the next regular (bi-monthly) core developer meeting's agenda.
    In that meeting, a core developer is assigned to review, and approve or reject within 
