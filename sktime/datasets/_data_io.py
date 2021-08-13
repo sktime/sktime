@@ -398,7 +398,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     Details
     -------
     Dimensionality:     multivariate, 12
-    Series length:      29
+    Series length:      7-29
     Train cases:        270
     Test cases:         370
     Number of classes:  9
@@ -543,7 +543,7 @@ def load_basic_motions(split=None, return_X_y=False):
 
     Details
     -------
-    Dimensionality:     univariate
+    Dimensionality:     mulyivariate, 6
     Series length:      100
     Train cases:        40
     Test cases:         40

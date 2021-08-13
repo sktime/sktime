@@ -90,9 +90,9 @@ class Arsenal(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.kernel_based import Arsenal
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True)
     >>> clf = Arsenal()
     >>> clf.fit(X_train, y_train)
     Arsenal()
@@ -138,23 +138,11 @@ class Arsenal(BaseClassifier):
 
         self._class_dictionary = {}
         self._weight_sum = 0
-        self._n_jobs = 0
+        self._n_jobs = n_jobs
 
         super(Arsenal, self).__init__()
 
     def _fit(self, X, y):
-        """Build an ensemble ROCKET transformer and RidgeClassifierCV classifier.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_instances, self.n_dims, self.series_length = X.shape
@@ -189,7 +177,7 @@ class Arsenal(BaseClassifier):
                         X,
                         y,
                     )
-                    for i in range(self.n_jobs)
+                    for i in range(self._n_jobs)
                 )
 
                 estimators, transformed_data = zip(*fit)
@@ -197,7 +185,7 @@ class Arsenal(BaseClassifier):
                 self.estimators_ += estimators
                 self.transformed_data += transformed_data
 
-                self.n_estimators += self.n_jobs
+                self.n_estimators += self._n_jobs
                 train_time = time.time() - start_time
         else:
             fit = Parallel(n_jobs=self._n_jobs)(
@@ -224,20 +212,6 @@ class Arsenal(BaseClassifier):
             self._weight_sum += weight
 
     def _predict(self, X):
-        """Find predictions for all cases in X. Built on top of predict_proba.
-
-        Parameters
-        ----------
-        X : The training input samples. array-like or pandas data frame.
-        If a Pandas data frame is passed, a check is performed that it only
-        has one column.
-        If not, an exception is thrown, since this classifier does not yet have
-        multivariate capability.
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances]
-        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -247,23 +221,6 @@ class Arsenal(BaseClassifier):
         )
 
     def _predict_proba(self, X):
-        """Find probability estimates for each class for all cases in X.
-
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances, series_length]
-            If a Pandas data frame is passed (sktime format) a check is
-            performed that it only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
-
-        Returns
-        -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
-        """
         y_probas = Parallel(n_jobs=self._n_jobs)(
             delayed(self._predict_proba_for_estimator)(
                 X,
