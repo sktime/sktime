@@ -1,64 +1,51 @@
 # -*- coding: utf-8 -*-
 """CanonicalIntervalForest test code."""
 import numpy as np
-import pytest
 from numpy import testing
 
 from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
+from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_cif_on_gunpoint():
-    """Test of CanonicalIntervalForest on gun point."""
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
+def test_cif_on_unit_test_data():
+    """Test of CanonicalIntervalForest on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
-    cif.fit(X_train.iloc[indices], y_train[indices])
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
+    cif.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = cif.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, cif_gunpoint_probas)
+    testing.assert_array_equal(probas, cif_unit_test_probas)
 
-
-@pytest.mark.parametrize("base_estimator", ["CIT", "DTC"])
-def test_cif_on_power_demand(base_estimator):
-    """Test of CanonicalIntervalForest on italy power demand."""
-    # load power demand data
-    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(100)
-
-    # train CIF
-    cif = CanonicalIntervalForest(
-        n_estimators=20, base_estimator=base_estimator, random_state=0
-    )
-    cif.fit(X_train, y_train)
-
-    score = cif.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.92
+    score = cif.score(X_test, y_test)
+    assert score >= 0.95
 
 
 def test_cif_on_basic_motions():
-    """Test of CanonicalIntervalForest on basic motions."""
+    """Test of CanonicalIntervalForest on basic motions data."""
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(20)
+    indices = np.random.RandomState(0).permutation(10)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
     cif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
     probas = cif.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, cif_basic_motions_probas)
 
+    score = cif.score(X_test, y_test)
+    assert score >= 0.95
 
-cif_gunpoint_probas = np.array(
+
+cif_unit_test_probas = np.array(
     [
         [
             0.05,
@@ -200,21 +187,21 @@ cif_basic_motions_probas = np.array(
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
-#     cif_u = CanonicalIntervalForest(n_estimators=20, random_state=0)
+#     cif_u = CanonicalIntervalForest(n_estimators=10, random_state=0)
 #
-#     cif_u.fit(X_train.iloc[indices], y_train[indices])
+#     cif_u.fit(X_train, y_train)
 #     probas = cif_u.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(20)
+#     indices = np.random.RandomState(0).permutation(10)
 #
-#     cif_m = CanonicalIntervalForest(n_estimators=20, random_state=0)
+#     cif_m = CanonicalIntervalForest(n_estimators=10, random_state=0)
 #
 #     cif_m.fit(X_train.iloc[indices], y_train[indices])
 #     probas = cif_m.predict_proba(X_test.iloc[indices])
