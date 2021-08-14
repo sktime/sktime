@@ -347,9 +347,9 @@ community tries to find a resolution that has no open objections among
 core developers.
 
 -  Proposed changes should be in the form of GitHub pull requests (PR).
-   Some changes also require a worked out :ref:`steps`, this depends on the type of change, see 
+   Some changes also require a worked out :ref:`steps`, this depends on the type of change, see
    `decision making process <#Decision-making>`__ above.
--  For a proposed change to be approved via lazy consensus, it needs to 
+-  For a proposed change to be approved via lazy consensus, it needs to
    approval by at least one core developer and no rejection by a core developer (veto right).
    The approval required for this condition must be by a core developer different from a proposer.
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
@@ -367,7 +367,7 @@ core developers.
    reverted if it receives a rejection in addition.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of the next regular (bi-monthly) core developer meeting's agenda.
-   In that meeting, a core developer is assigned to review, and approve or reject within 
+   In that meeting, a core developer is assigned to review, and approve or reject within
    5 days of the meeting, excluding week-ends.
 
 Failure of lazy consensus, in the above sense, can arise only under the following condition:
