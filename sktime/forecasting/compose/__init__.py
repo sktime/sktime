@@ -1,10 +1,11 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Import of modules."""
+"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+
 __author__ = ["Markus Löning"]
 
 __all__ = [
+    "ColumnEnsembleForecaster",
     "EnsembleForecaster",
     "TransformedTargetForecaster",
     "ForecastingPipeline",
@@ -23,6 +24,7 @@ __all__ = [
     "NetworkPipelineForecaster",
 ]
 
+from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.compose._pipeline import ForecastingPipeline
