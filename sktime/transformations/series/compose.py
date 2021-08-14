@@ -3,17 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Meta-transformers for building composite transformers."""
 
-"""Series-to-Series Transformers: OptionalPassthrough and Columnwisetransformer."""
-
-__author__ = ["Martin Walter", "Svea Meyer"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
-
 import pandas as pd
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
+
+__author__ = ["Martin Walter", "Svea Meyer"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
 
 
 class OptionalPassthrough(_SeriesToSeriesTransformer):
@@ -31,7 +29,6 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
     passthrough : bool
         This arg decides whether to apply the given transformer or to just
         passthrough the data (identity transformation)
-
 
     Examples
     --------
@@ -83,7 +80,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         super(OptionalPassthrough, self).__init__()
 
     def fit(self, Z, X=None):
-        """Fit the model."""
+        """Fit the model.
 
         Parameters
         ----------
@@ -103,7 +100,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
-        """Apply transformation."""
+        """Apply transformation.
 
         Parameters
         ----------
