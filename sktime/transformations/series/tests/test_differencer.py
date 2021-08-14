@@ -37,7 +37,7 @@ def test_differencer_same_series(y, lags):
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
 def test_differencer_remove_missing_false(y, lags):
-    transformer = Differencer(lags=lags, remove_na=False)
+    transformer = Differencer(lags=lags, drop_na=False)
     y_transform = transformer.fit_transform(y)
     y_reconstructed = transformer.inverse_transform(y_transform)
 
