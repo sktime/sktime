@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Implements metrics for pairwise and aggregate comparison."""
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
@@ -8,12 +9,24 @@ from sktime.benchmarking.base import BaseMetric
 
 
 class PairwiseMetric(BaseMetric):
+    """Compute metric pairwise.
+
+    Parameters
+    ----------
+    func : function
+        Function that computes the pairwise metric.
+
+    name : str
+        Name of the metric
+    """
+
     def __init__(self, func, name=None, **kwargs):
         name = func.__name__ if name is None else name
         self.func = func
         super(PairwiseMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
+        """Compute metric and standard error."""
         # compute mean
         mean = self.func(y_true, y_pred)
 
@@ -30,6 +43,17 @@ class PairwiseMetric(BaseMetric):
 
 
 class AggregateMetric(BaseMetric):
+    """Compute metric pairwise.
+
+    Parameters
+    ----------
+    func : function
+        Function that computes the pairwise metric.
+
+    name : str
+        Name of the metric
+    """
+
     def __init__(self, func, method="jackknife", name=None, **kwargs):
         allowed_methods = ("jackknife",)
         if method not in allowed_methods:
@@ -45,7 +69,7 @@ class AggregateMetric(BaseMetric):
         super(AggregateMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
-        """Compute metric and standard error
+        """Compute metric and standard error.
 
         References
         ----------
@@ -83,7 +107,7 @@ class AggregateMetric(BaseMetric):
 
     @staticmethod
     def _compute_jackknife_stderr(x):
-        """Compute standard error of jacknife samples
+        """Compute standard error of jacknife samples.
 
         References
         ----------
@@ -95,7 +119,7 @@ class AggregateMetric(BaseMetric):
 
     @staticmethod
     def _jackknife_resampling(x):
-        """Performs jackknife resampling on numpy arrays.
+        """Perform jackknife resampling on numpy arrays.
 
         Jackknife resampling is a technique to generate 'n' deterministic
         samples
