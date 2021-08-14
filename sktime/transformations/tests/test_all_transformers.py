@@ -98,7 +98,7 @@ def check_series_to_series_transform_multivariate(Estimator):
             Estimator, n_timepoints=n_timepoints, n_columns=n_columns
         )
         assert isinstance(out, (pd.DataFrame, np.ndarray))
-        if Estimator.get_tag("transform-returns-same-time-index"):
+        if Estimator.get_class_tag("transform-returns-same-time-index"):
             assert out.shape == (n_timepoints, n_columns)
 
 
@@ -145,7 +145,7 @@ def check_panel_to_panel_transform_multivariate(Estimator):
 
 
 def check_transform_returns_same_time_index(Estimator):
-    if Estimator.get_tag("transform-returns-same-time-index"):
+    if Estimator.get_class_tag("transform-returns-same-time-index"):
         assert issubclass(Estimator, _SeriesToSeriesTransformer)
         estimator = _construct_instance(Estimator)
         fit_args = _make_args(estimator, "fit")
@@ -162,7 +162,7 @@ def check_transform_inverse_transform_equivalent(Estimator):
     X = _make_args(estimator, "fit")[0]
     Xt = estimator.fit_transform(X)
     Xit = estimator.inverse_transform(Xt)
-    if Estimator.get_tag("transform-returns-same-time-index"):
+    if Estimator.get_class_tag("transform-returns-same-time-index"):
         _assert_array_almost_equal(X, Xit)
     else:
         _assert_array_almost_equal(X.loc[Xit.index], Xit)
