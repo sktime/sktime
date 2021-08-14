@@ -5,7 +5,8 @@ Dictionary based cBOSS classifier based on SFA transform. Improves the
 ensemble structure of the original BOSS algorithm.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst", "BINAYKUMAR943"]
+
 __all__ = ["ContractableBOSS"]
 
 import math
@@ -17,8 +18,6 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import IndividualBOSS
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
@@ -114,12 +113,12 @@ class ContractableBOSS(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": True,
-        "contractable": True,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
+        "capability:contractable": True,
     }
 
     def __init__(
@@ -174,8 +173,6 @@ class ContractableBOSS(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
-
         time_limit = self.time_limit_in_minutes * 60
         self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
@@ -300,9 +297,6 @@ class ContractableBOSS(BaseClassifier):
         predicted_probs : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-
         sums = np.zeros((X.shape[0], self.n_classes))
 
         for n, clf in enumerate(self.classifiers):

@@ -124,6 +124,36 @@ ESTIMATOR_TAG_REGISTER = [
         ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
+    (
+        "capability:missing_values",
+        "classifier",
+        "bool",
+        "is classifier capable of handling missing values",
+    ),
+    (
+        "capability:multivariate",
+        "classifier",
+        "bool",
+        "is classifier capable of handling multivariate time series data?",
+    ),
+    (
+        "capability:unequal_length",
+        "classifier",
+        "bool",
+        "is classifier capable of handling unequal length time series data?",
+    ),
+    (
+        "capability:train_estimate",
+        "classifier",
+        "bool",
+        "can classifier estimate its performance during the training proces?",
+    ),
+    (
+        "capability:contractable",
+        "classifier",
+        "bool",
+        "Does classifier support limiting of max build time?",
+    )
     # (
     #     "handles-panel",
     #     "annotator",
