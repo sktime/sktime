@@ -139,9 +139,13 @@ def test_X_invalid_type_raises_error(Forecaster, X):
 def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+    if f.get_tag("scitype:y") == "both":
+        if f.get_tag("scitype:y") == "univariate":
+            y_train = _make_series(n_columns=1, index_type=index_type)
+        if f.get_tag("scitype:y") == "multivariate":
+            y_train = _make_series(n_columns=2, index_type=index_type)
+    elif f.get_tag("scitype:y") == "univariate":
         y_train = _make_series(n_columns=1, index_type=index_type)
-
     elif f.get_tag("scitype:y") == "multivariate" or f.get_tag("scitype:y") == "both":
         y_train = _make_series(n_columns=2, index_type=index_type)
     cutoff = y_train.index[-1]
