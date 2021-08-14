@@ -153,9 +153,10 @@ def all_estimators(
                 ]
                 all_estimators.extend(estimators)
             except ModuleNotFoundError as e:
-                # Skip modules with import errors, but notify the user
+                # Skip missing soft dependencies
+                if "soft dependency" not in str(e):
+                    raise e
                 warnings.warn(str(e), ImportWarning)
-                warnings.warn("Error importing {module_name}. Try: pip install sktime[all_extras]", ImportWarning)
 
     # Drop duplicates
     all_estimators = set(all_estimators)
