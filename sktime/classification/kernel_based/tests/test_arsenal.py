@@ -2,6 +2,7 @@
 """Arsenal test code."""
 import numpy as np
 from numpy import testing
+from sklearn.metrics import accuracy_score
 
 from sktime.classification.kernel_based import Arsenal
 from sktime.datasets import load_basic_motions, load_unit_test
@@ -24,14 +25,26 @@ def test_arsenal_on_unit_test_data():
     probas = arsenal.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, arsenal_unit_test_probas)
 
+    # test train estimate
+    train_probas = arsenal._get_train_probs(X_train, y_train)
+    train_preds = arsenal.classes_[np.argmax(train_probas, axis=1)]
+    assert accuracy_score(y_train, train_preds) >= 0.95
+
     score = arsenal.score(X_test, y_test)
     assert score >= 0.95
 
-    # train_probas = arsenal._get_train_probs(X_train, y_train)
-    # test train estimate
 
+def test_contracted_drcif_on_unit_test_data():
+    """Test of contracted Arsenal on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
 
-# test contracting on unittest data
+    # train contracted DrCIF
+    arsenal = Arsenal(time_limit_in_minutes=0.05, random_state=0)
+    arsenal.fit(X_train, y_train)
+
+    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.95
 
 
 def test_arsenal_on_basic_motions():
