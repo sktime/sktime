@@ -34,6 +34,7 @@ __author__ = [
     "@big-o",
     "Sebastiaan Koel",
     "Emilia Rose",
+    "Tony Bagnall",
 ]
 
 DIRNAME = "data"
@@ -149,7 +150,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None):
-    """Load time series classification datasets (helper funciton)."""
+    """Load time series classification datasets (helper function)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
@@ -165,30 +166,35 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         # This also tests the validitiy of the URL, can't rely on the html
         # status code as it always returns 200
         try:
-            _download_and_extract(url, extract_path)
+            _download_and_extract(
+                url,
+            )
         except zipfile.BadZipFile as e:
             raise ValueError(
-                "Invalid dataset name. Please make sure the dataset is "
-                "available on http://timeseriesclassification.com/."
+                "Invalid dataset name. ",
+                extract_path,
+                "Please make sure the dataset "
+                + "is available on http://timeseriesclassification.com/.",
             ) from e
+    if isinstance(split, str):
+        split = split.upper()
 
-    if split in ("train", "test"):
-        fname = name + "_" + split.upper() + ".ts"
+    if split in ("TRAIN", "TEST"):
+        fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
-
     # if split is None, load both train and test set
     elif split is None:
         X = pd.DataFrame(dtype="object")
         y = pd.Series(dtype="object")
-        for split in ("train", "test"):
-            fname = name + "_" + split.upper() + ".ts"
+        for split in ("TRAIN", "TEST"):
+            fname = name + "_" + split + ".ts"
             abspath = os.path.join(local_module, local_dirname, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
     else:
-        raise ValueError("Invalid `split` value")
+        raise ValueError("Invalid `split` value =", split)
 
     # Return appropriately
     if return_X_y:
@@ -321,17 +327,50 @@ def load_italy_power_demand(split=None, return_X_y=False):
     Test cases:         1029
     Number of classes:  2
 
-    The data was derived from twelve monthly electrical power demand time
-    series from Italy and
-    first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
-    Mining and
-    Visualization into GUI Operating Systems". The classification task is to
-    distinguish days
-    from Oct to March (inclusive) from April to September.
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=ItalyPowerDemand
+    The data was derived from twelve monthly electrical power demand time series from
+    Italy and first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
+    Mining and Visualization into GUI Operating Systems". The classification task is to
+    distinguish days from Oct to March (inclusive) from April to September.
+    Dataset details:
+    http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_unit_test(split=None, return_X_y=False):
+    """
+    Load UnitTest time series classification problem.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    This is the Chinatown problem with a smaller test set, useful for rapid tests. See
+    http://timeseriesclassification.com/description.php?Dataset=Chinatown
+    for the full dataset
+    Dimensionality:     univariate
+    Series length:      24
+    Train cases:        20
+    Test cases:         22 (full dataset has 345)
+    Number of classes:  2
+    """
+    name = "UnitTest"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -790,7 +829,6 @@ def load_PBS_dataset():
     ----------
     ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
     """
-
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)

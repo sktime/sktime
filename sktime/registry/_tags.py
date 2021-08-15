@@ -153,6 +153,12 @@ ESTIMATOR_TAG_REGISTER = [
         "classifier",
         "bool",
         "Does classifier support limiting of max build time?",
+    ),
+   (
+        "capability:pred_int",
+        "forecaster",
+        "bool",
+        "is the forecaster capable of returning prediction intervals in predict?",
     )
     # (
     #     "handles-panel",
