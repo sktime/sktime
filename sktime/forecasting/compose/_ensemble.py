@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements forecaster for creating forecasts from ensembles of other forecasters."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
@@ -30,8 +31,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import EnsembleForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
