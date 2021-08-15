@@ -70,13 +70,13 @@ class CanonicalIntervalForest(BaseClassifier):
 
     Attributes
     ----------
-    n_classes      : int
+    n_classes : int
         The number of classes.
-    n_instances    : int
+    n_instances : int
         The number of train cases.
-    n_dims         : int
+    n_dims : int
         The number of dimensions per case.
-    series_length  : int
+    series_length : int
         The length of each series.
     classes_ : list
         The classes labels.
