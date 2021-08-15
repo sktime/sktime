@@ -260,8 +260,6 @@ class ContractableBOSS(BaseClassifier):
 
         self.n_estimators = len(self.classifiers)
         self.weight_sum = np.sum(self.weights)
-
-        self._is_fitted = True
         return self
 
     def _predict(self, X):
