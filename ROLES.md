@@ -10,7 +10,7 @@ Community Council
 | Name | GitHub ID |
 |------|-----------|
 | Bagnall, Anthony | TonyBagnall |
-| Kiraly, Franz | fkiraly | 
+| Kiraly, Franz | fkiraly |
 | Loning, Markus | mloning |
 
 Code of Conduct Committee
@@ -19,7 +19,7 @@ Code of Conduct Committee
 | Name | GitHub ID |
 |------|-----------|
 | Bagnall, Anthony | TonyBagnall |
-| Kiraly, Franz | fkiraly | 
+| Kiraly, Franz | fkiraly |
 | Loning, Markus | mloning |
 | Vilas, Martina | mvilas |
 
@@ -36,7 +36,7 @@ Core Contributors
 | Kuhns, Ryan | rnkuhns |
 | Large, James | james-large |
 | Loning, Markus | mloning |
-| Middlehurst, Matthew | mattewmiddlehurst | 
+| Middlehurst, Matthew | mattewmiddlehurst |
 | Oastler, George | goastler |
 | Seth, Ayushmaan | ayushmaanseth |
 | Vilas, Martina | mvilas |
