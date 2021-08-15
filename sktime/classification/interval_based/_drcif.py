@@ -5,7 +5,7 @@ interval based DrCIF classifier extracting catch22 features from random interval
 periodogram and differences representations as well as the base series.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["DrCIF"]
 
 import math
@@ -131,9 +131,9 @@ class DrCIF(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.interval_based import DrCIF
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = DrCIF()
     >>> clf.fit(X_train, y_train)
     DrCIF()
