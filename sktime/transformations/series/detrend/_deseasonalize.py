@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements transformations to deseasonalize a timeseries."""
 
 __author__ = ["Markus Löning"]
 __all__ = [
@@ -22,8 +23,7 @@ from sktime.utils.validation.series import check_series
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
-    """A transformer that removes seasonal components from time
-    series.
+    """A transformer that removes seasonal components from time series.
 
     Parameters
     ----------
@@ -32,8 +32,8 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     model : str {"additive", "multiplicative"}, optional (default="additive")
         Model to use for estimating seasonal component
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -59,7 +59,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         self._y_index = y.index
 
     def _align_seasonal(self, y):
-        """Align seasonal components with y's time index"""
+        """Align seasonal components with y's time index."""
         shift = (
             -_get_duration(
                 y.index[0],
@@ -115,6 +115,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of y.
 
         Parameters
@@ -134,6 +135,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
+
         Returns a transformed version of y.
 
         Parameters
@@ -152,7 +154,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         return self._inverse_transform(z, seasonal)
 
     def update(self, Z, X=None, update_params=False):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
@@ -171,8 +173,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
-    """A transformer that removes seasonal components from time
-    series, conditional on seasonality test.
+    """Remove seasonal components from time series, conditional on seasonality test.
 
     Parameters
     ----------
@@ -192,8 +193,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         super(ConditionalDeseasonalizer, self).__init__(sp=sp, model=model)
 
     def _check_condition(self, y):
-        """Check if y meets condition"""
-
+        """Check if y meets condition."""
         if not callable(self.seasonality_test_):
             raise ValueError(
                 f"`func` must be a function/callable, but found: "
@@ -219,7 +219,6 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         -------
         self : an instance of self
         """
-
         z = check_series(Z, enforce_univariate=True)
         self._set_y_index(z)
         sp = check_sp(self.sp)

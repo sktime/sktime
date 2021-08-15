@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
 __author__ = ["Markus Löning", "Svea Meyer"]
@@ -15,8 +16,8 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
-    """
-    Remove a trend from a series.
+    """Remove a trend from a series.
+
     This transformer uses any forecaster and returns the in-sample residuals
     of the forecaster's predicted values.
 
@@ -49,8 +50,8 @@ class Detrender(_SeriesToSeriesTransformer):
     forecaster_ : estimator object
         Model that defines the trend in the series
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
@@ -68,8 +69,7 @@ class Detrender(_SeriesToSeriesTransformer):
         super(Detrender, self).__init__()
 
     def fit(self, Z, X=None):
-        """
-        Compute the trend in the series
+        """Compute the trend in the series.
 
         Parameters
         ----------
@@ -101,8 +101,7 @@ class Detrender(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
-        """
-        Remove trend from the data.
+        """Remove trend from the data.
 
         Parameters
         ----------
@@ -142,8 +141,7 @@ class Detrender(_SeriesToSeriesTransformer):
             return z - z_pred
 
     def inverse_transform(self, Z, X=None):
-        """
-        Add trend back to a time series
+        """Add trend back to a time series.
 
         Parameters
         ----------
@@ -183,8 +181,7 @@ class Detrender(_SeriesToSeriesTransformer):
             return z + z_pred
 
     def update(self, Z, X=None, update_params=True):
-        """
-        Update the parameters of the detrending estimator with new data
+        """Update the parameters of the detrending estimator with new data.
 
         Parameters
         ----------

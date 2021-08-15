@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for Facebook prophet to be used in sktime framework."""
 
 __author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["_ProphetAdapter"]
@@ -206,6 +207,7 @@ class _suppress_stdout_stderr(object):
        This will not suppress raised exceptions, since exceptions are printed
     to stderr just before a script exits, and after the context manager has
     exited (at least, I think that is why it lets exceptions through).
+
 
     References
     ----------
