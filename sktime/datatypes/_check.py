@@ -7,9 +7,12 @@ check_is(obj, mtype: str, scitype: str)
     checks whether obj is mtype for scitype
     returns boolean yes/no and metadata
 
-check_raise(obj, mtype:str, scitype:str)
+check_raise(obj, mtype: str, scitype:str)
     checks whether obj is mtype for scitype
     returns True if passes, otherwise raises error
+
+mtype(obj, as_scitype: str = None)
+    infer the mtype of obj, considering it as as_scitype
 """
 
 __author__ = ["fkiraly"]
@@ -152,12 +155,16 @@ def mtype(obj, as_scitype: str = None):
 
     Parameters
     ----------
-    obj : object to convert - any type, should comply with mtype spec for as_scitype
-    as_scitype : str - name of scitype the object "obj" is considered as
+    obj : object to infer type of - any type, should comply with and mtype spec
+        if as_scitype is provided, this needs to be mtype belonging to scitype
+    as_scitype : str, optional, default=None
+        name of scitype the object "obj" is considered as, finds mtype for that
+        if None (default), does not assume a specific as_scitype and tests all mtypes
+            generally, as_scitype should be provided for maximum efficiency
 
     Returns
     -------
-    str - the type to convert "obj" to, a valid mtype string
+    str - the inferred mtype of "obj", a valid mtype string
         or None, if obj is None
 
     Raises
@@ -167,21 +174,22 @@ def mtype(obj, as_scitype: str = None):
     if obj is None:
         return None
 
-    valid_as_scitypes = list(set([x[1] for x in list(check_dict.keys())]))
+    valid_as_scitypes = list(set([x[1] for x in check_dict.keys()]))
 
-    if as_scitype not in valid_as_scitypes:
+    if as_scitype is not None and as_scitype not in valid_as_scitypes:
         raise TypeError(as_scitype + " is not a supported scitype")
 
-    mtypes = np.array([x[0] for x in list(check_dict.keys()) if x[1] == as_scitype])
+    if as_scitype is None:
+        mtypes = np.array([x[0] for x in check_dict.keys()])
+    else:
+        mtypes = np.array([x[0] for x in check_dict.keys() if x[1] == as_scitype])
 
-    is_mtype = [check_is(obj, mtype=mtype, scitype=as_scitype) for mtype in mtypes]
-    is_mtype = np.array(is_mtype)
-    res = [mtypes[i] for i in range(len(mtypes)) if is_mtype[i]]
+    res = [mtype for mtype in mtypes if check_is(obj, mtype=mtype, scitype=as_scitype)]
 
-    if np.sum(is_mtype) > 1:
+    if len(res) > 1:
         raise TypeError(f"Error in check_is, more than one mtype identified: {res}")
 
-    if np.sum(is_mtype) < 1:
+    if len(res) < 1:
         raise TypeError("No valid mtype could be identified")
 
     return res[0]
