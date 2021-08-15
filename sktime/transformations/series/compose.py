@@ -1,11 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
-"""Series-to-Series Transformers: OptionalPassthrough and Columnwisetransformer."""
-
-__author__ = ["Martin Walter", "Svea Meyer"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
+"""Meta-transformers for building composite transformers."""
 
 import pandas as pd
 from sktime.transformations.base import _SeriesToSeriesTransformer
@@ -14,12 +10,14 @@ from sktime.utils.validation.series import check_series
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
+__author__ = ["Martin Walter", "Svea Meyer"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
+
 
 class OptionalPassthrough(_SeriesToSeriesTransformer):
-    """
-    Tune implicit hyperparameter.
+    """Wrap an existing transformer to tune whether to include it in a pipeline.
 
-    A transformer to tune the implicit hyperparameter whether or not to use a
+    Allows tuning the implicit hyperparameter whether or not to use a
     particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
     or not. This is achived by having the additional hyperparameter
     "passthrough" which can be added to a grid then (see example).
@@ -32,8 +30,8 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         This arg decides whether to apply the given transformer or to just
         passthrough the data (identity transformation)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.compose import OptionalPassthrough
@@ -82,7 +80,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         super(OptionalPassthrough, self).__init__()
 
     def fit(self, Z, X=None):
-        """Fit data.
+        """Fit the model.
 
         Parameters
         ----------
@@ -102,7 +100,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         return self
 
     def transform(self, Z, X=None):
-        """Transform data.
+        """Apply transformation.
 
         Parameters
         ----------

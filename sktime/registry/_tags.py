@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Register of estimator and object tags.
+"""Register of estimator and object tags.
 
 Note for extenders: new tags should be entered in ESTIMATOR_TAG_REGISTER.
 No other place is necessary to add new tags.

@@ -95,12 +95,13 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
-        sets is_fitted flag to true
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
 
@@ -190,11 +191,13 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         """
         raise NotImplementedError("abstract method")
 
