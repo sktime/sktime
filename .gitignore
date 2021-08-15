@@ -76,11 +76,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-# automatically generated content
-docs/source/modules/auto_generated/
-docs/source/api_reference/modules/auto_generated/
-
-# automatically sym-linked example notebooks
+docs/source/api_reference/auto_generated/
+docs/estimator_overview_table.md
 docs/source/examples
 
 # PyBuilder
