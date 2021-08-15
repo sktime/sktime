@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements forecaster for selecting among different model classes."""
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -11,7 +12,7 @@ __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(_HeterogenousEnsembleForecaster):
-    """MultiplexForecaster for model selection.
+    """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
