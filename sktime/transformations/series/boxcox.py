@@ -1,9 +1,10 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implmenents Box-Cox and Log Transformations."""
 
 __author__ = ["Markus Löning"]
-__all__ = ["BoxCoxTransformer"]
+__all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
 import pandas as pd
@@ -26,8 +27,8 @@ from sktime.utils.validation.series import check_series
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
     """Box-Cox power transform.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -109,14 +110,53 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
 
 class LogTransformer(_SeriesToSeriesTransformer):
+    """Log transformation.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.boxcox import LogTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = LogTransformer()
+    >>> y_hat = transformer.fit_transform(y)
+    """
+
     _tags = {"transform-returns-same-time-index": True}
 
     def transform(self, Z, X=None):
+        """Transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed series.
+        """
         self.check_is_fitted()
         Z = check_series(Z)
         return np.log(Z)
 
     def inverse_transform(self, Z, X=None):
+        """Inverse transform data.
+
+        Parameters
+        ----------
+        Z : pd.Series
+            Series to transform.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data used in transformation.
+
+        Returns
+        -------
+        Zt : pd.Series
+            Transformed data - the inverse of the Box-Cox transformation.
+        """
         self.check_is_fitted()
         Z = check_series(Z)
         return np.exp(Z)
@@ -181,7 +221,7 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
 
 
 def _guerrero(x, sp, bounds=None):
-    r"""Return lambda estimated by the Guerrero method [Guerrero].
+    """Estimate lambda using the Guerrero method as described in [1]_.
 
     Parameters
     ----------
@@ -201,8 +241,8 @@ def _guerrero(x, sp, bounds=None):
 
     References
     ----------
-    [Guerrero] V.M. Guerrero, "Time-series analysis supported by Power
-    Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
+    .. [1] V.M. Guerrero, "Time-series analysis supported by Power
+       Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
     """
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
