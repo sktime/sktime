@@ -94,8 +94,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(return_X_y=True, split="train")

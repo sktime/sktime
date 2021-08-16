@@ -1,6 +1,12 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements BATS algorithm.
+
+BATS refers to Exponential smoothing state space model with Box-Cox
+transformation, ARMA errors, Trend and Seasonal components as described in
+De LIvera, Hyndman and Snyder (2011).
+"""
 
 __author__ = ["Martin Walter"]
 __all__ = ["BATS"]
@@ -53,8 +59,8 @@ class BATS(_TbatsAdapter):
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.bats import BATS
     >>> y = load_airline()

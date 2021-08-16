@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Utilities to impute series with missing values."""
+
 __author__ = ["Martin Walter"]
 __all__ = ["Imputer"]
 
@@ -44,8 +46,8 @@ class Imputer(_SeriesToSeriesTransformer):
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
