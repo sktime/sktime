@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Import all time series regression functionality available in sktime."""
 
 __author__ = ["Markus Löning"]
 __all__ = [

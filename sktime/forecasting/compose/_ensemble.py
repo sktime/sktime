@@ -40,8 +40,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     weights : list of floats
         Weights to apply in aggregation.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import EnsembleForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
