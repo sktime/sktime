@@ -119,8 +119,8 @@ that describes the algorithm.
 Where applicable this should be done by providing a link between the description where the reference is applicable (say in the extended summary or notes)
 and the references section.
 
-Linked references should follow a very specific format to ensure they render correctly. Note the space between the ".." and opening bracket below,
-as well as the space after the closing bracket. Also note that all lines after the first line should start so they are aligned immediately with the
+The references should follow a very specific format to ensure they render correctly. See the example below. Note the space between the ".."
+and opening bracket, the space after the closing bracket, and how all the lines after the first line are aligned immediately with the
 opening bracket. Additional references should be added in exactly the same way, but the number enclosed in the bracket should be incremented.
 
 .. code-block:: rst
