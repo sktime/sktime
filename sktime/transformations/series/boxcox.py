@@ -27,6 +27,72 @@ from sktime.utils.validation.series import check_series
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
     """Box-Cox power transform.
 
+    Box-Cox transformation is a data transformation that is used to
+    make data more normally distributed and stabilize its variance based
+    on the hyperparameter lambda. [1]_
+
+    The BoxCoxTransformer solves for the lambda parameter used in the Box-Cox
+    transformation given `method`, the optimization approach, and input
+    data provided to `fit`.
+
+    The use of Guerrero's method for solving for lambda requires the seasonal
+    periodicity, `sp` be provided. [2]_
+
+    Parameters
+    ----------
+    bounds : tuple
+        Lower and upper bounds used to restrict the feasible range
+        when solving for the value of lambda.
+    method : {"pearsonr", "mle", "all", "guerrero"}, default="mle"
+        The optimization approach used to determine the lambda value used
+        in the Box-Cox transformation.
+    sp : int
+        Seasonal periodicity of the data in integer form. Only used if
+        method="guerrero" is chosen. Must be an integer >= 2.
+
+    Attributes
+    ----------
+    bounds : tuple
+        Lower and upper bounds used to restrict the feasible range when
+        solving for lambda.
+    method : str
+        Optimization approach used to solve for lambda. One of "personr",
+        "mle", "all", "guerrero".
+    sp : int
+        Seasonal periodicity of the data in integer form.
+    lambda_ : float
+        The Box-Cox lambda paramter that was solved for based on the supplied
+        `method` and data provided in `fit`.
+
+    See Also
+    --------
+    LogTransformer :
+        Transformer input data using natural log. Can help normalize data and
+        compress variance of the series.
+    ExponentTransformer :
+        Transform input data by raising it to an exponent. Can help compress
+        variance of series if a fractional exponent is supplied.
+    SqrtTransformer :
+        Transform input data by taking its square root. Can help compress
+        variance of input series.
+
+    Notes
+    -----
+    The Box-Cox transformation is defined as:
+
+
+
+    Therefore, the input data must be positive. In some implementations, a positive
+    constant is added to the series prior to applying the transformation. But
+    that is not the case here.
+
+    References
+    ----------
+    .. [1] Box, G. E. P. & Cox, D. R. (1964) An analysis of transformations,
+       Journal ofthe Royal Statistical Society, Series B, 26, 211-252.
+    .. [2] V.M. Guerrero, "Time-series analysis supported by Power
+       Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
+
     Examples
     --------
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -111,6 +177,15 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
 class LogTransformer(_SeriesToSeriesTransformer):
     """Log transformation.
+
+    The natural log transformation is can be used to make data more normally
+    distributed and stabilize its variance.
+
+    Notes
+    -----
+    The log transformation is applied as
+
+    .. math:: ln(y)
 
     Examples
     --------
@@ -316,7 +391,9 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
     `x` before calling `boxcox`.
     The confidence limits returned when ``alpha`` is provided give the interval
     where:
+
     .. math::
+
         llf(\hat{\lambda}) - llf(\lambda) < \frac{1}{2}\chi^2(1 - \alpha, 1),
     with ``llf`` the log-likelihood function and :math:`\chi^2` the chi-squared
     function.
