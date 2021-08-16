@@ -13,7 +13,7 @@ def test_arsenal_on_unit_test_data():
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train Arsenal
     arsenal = Arsenal(
@@ -28,10 +28,7 @@ def test_arsenal_on_unit_test_data():
     # test train estimate
     train_probas = arsenal._get_train_probs(X_train, y_train)
     train_preds = arsenal.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.95
-
-    score = arsenal.score(X_test, y_test)
-    assert score >= 0.95
+    assert accuracy_score(y_train, train_preds) >= 0.85
 
 
 def test_contracted_drcif_on_unit_test_data():
@@ -41,10 +38,11 @@ def test_contracted_drcif_on_unit_test_data():
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 
     # train contracted DrCIF
-    arsenal = Arsenal(time_limit_in_minutes=0.05, random_state=0)
+    arsenal = Arsenal(time_limit_in_minutes=0.025, random_state=0)
     arsenal.fit(X_train, y_train)
 
-    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.95
+    assert len(arsenal.estimators_) > 1
+    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.85
 
 
 def test_arsenal_on_basic_motions():
@@ -52,7 +50,7 @@ def test_arsenal_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train Arsenal
     arsenal = Arsenal(num_kernels=500, n_estimators=5, random_state=0)
@@ -62,9 +60,6 @@ def test_arsenal_on_basic_motions():
     probas = arsenal.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, arsenal_basic_motions_probas)
 
-    score = arsenal.score(X_test, y_test)
-    assert score >= 0.95
-
 
 arsenal_unit_test_probas = np.array(
     [
@@ -73,22 +68,6 @@ arsenal_unit_test_probas = np.array(
             1.0,
         ],
         [
-            -0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            -0.0,
-        ],
-        [
-            1.0,
-            -0.0,
-        ],
-        [
-            -0.0,
-            1.0,
-        ],
-        [
             1.0,
             -0.0,
         ],
@@ -105,91 +84,87 @@ arsenal_unit_test_probas = np.array(
             -0.0,
         ],
         [
+            1.0,
+            -0.0,
+        ],
+        [
+            1.0,
+            -0.0,
+        ],
+        [
             -0.0,
             1.0,
+        ],
+        [
+            1.0,
+            -0.0,
+        ],
+        [
+            1.0,
+            -0.0,
         ],
     ]
 )
 arsenal_basic_motions_probas = np.array(
     [
         [
-            1.0,
             -0.0,
-        ],
-        [
             -0.0,
-            1.0,
-        ],
-        [
-            -0.0,
-            1.0,
-        ],
-        [
             -0.0,
             1.0,
         ],
         [
             1.0,
             -0.0,
+            -0.0,
+            -0.0,
         ],
         [
-            1.0,
+            0.19820852,
+            -0.0,
+            0.80179148,
             -0.0,
         ],
         [
             -0.0,
-            1.0,
-        ],
-        [
-            1.0,
+            0.80179148,
+            0.19820852,
             -0.0,
         ],
         [
             -0.0,
-            1.0,
-        ],
-        [
+            -0.0,
             -0.0,
             1.0,
         ],
         [
             -0.0,
-            1.0,
-        ],
-        [
-            1.0,
             -0.0,
-        ],
-        [
-            -0.0,
-            1.0,
-        ],
-        [
             -0.0,
             1.0,
         ],
         [
             1.0,
             -0.0,
+            -0.0,
+            -0.0,
         ],
         [
+            -0.0,
+            -0.0,
             1.0,
             -0.0,
         ],
         [
             -0.0,
             1.0,
+            -0.0,
+            -0.0,
         ],
         [
             -0.0,
             1.0,
-        ],
-        [
-            1.0,
             -0.0,
-        ],
-        [
-            1.0,
             -0.0,
         ],
     ]
@@ -210,7 +185,7 @@ arsenal_basic_motions_probas = np.array(
 # if __name__ == "__main__":
 #     X_train, y_train = load_unit_test(split="train", return_X_y=True)
 #     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
+#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
 #     arsenal_u = Arsenal(num_kernels=500, n_estimators=5, random_state=0)
 #
@@ -220,7 +195,7 @@ arsenal_basic_motions_probas = np.array(
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
+#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
 #     arsenal_m = Arsenal(num_kernels=500, n_estimators=5, random_state=0)
 #

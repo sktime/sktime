@@ -24,12 +24,12 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class Arsenal(BaseClassifier):
-    """Arsenal.
+    """Arsenal ensemble.
 
-    Overview: an ennsemble of ROCKET transformers using RidgeClassifierCV base
+    Overview: an ensemble of ROCKET transformers using RidgeClassifierCV base
     classifier. Weights each classifier using the accuracy from the ridge
-    cross-validation. Allows for generation of probabilities at the expense of
-    scalability.
+    cross-validation. Allows for generation of probability estimates at the
+    expense of scalability compared to ROCKETClassifier.
 
     Parameters
     ----------
@@ -93,9 +93,9 @@ class Arsenal(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test =load_unit_test(split="test", return_X_y=True)
-    >>> clf = Arsenal()
+    >>> clf = Arsenal(num_kernels=500, n_estimators=5)
     >>> clf.fit(X_train, y_train)
-    Arsenal()
+    Arsenal(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -170,7 +170,9 @@ class Arsenal(BaseClassifier):
                     delayed(self._fit_estimator)(
                         _clone_estimator(
                             base_rocket,
-                            (255 if self.random_state == 0 else self.random_state)
+                            None
+                            if self.random_state is None
+                            else (255 if self.random_state == 0 else self.random_state)
                             * 37
                             * (i + 1),
                         ),
@@ -192,7 +194,9 @@ class Arsenal(BaseClassifier):
                 delayed(self._fit_estimator)(
                     _clone_estimator(
                         base_rocket,
-                        (255 if self.random_state == 0 else self.random_state)
+                        None
+                        if self.random_state is None
+                        else (255 if self.random_state == 0 else self.random_state)
                         * 37
                         * (i + 1),
                     ),
