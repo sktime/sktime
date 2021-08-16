@@ -93,7 +93,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     n_estimators            : The final number of classifiers used
     (<=max_ensemble_size)
     series_length           : length of all series (assumed equal)
-    classifiers             : array of IndividualTDE classifiers
+    estimators_             : array of IndividualTDE classifiers
     weights                 : weight of each classifier in the ensemble
     weight_sum              : sum of all weights
     prev_parameters_x       : parameter value of previous classifiers for GP
@@ -115,22 +115,22 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     Example
     -------
     >>> from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> clf = TemporalDictionaryEnsemble()
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = TemporalDictionaryEnsemble(n_parameter_samples=75, max_ensemble_size=25)
     >>> clf.fit(X_train, y_train)
     TemporalDictionaryEnsemble(...)
     >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": True,
-        "contractable": True,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
+        "capability:contractable": True,
     }
 
     def __init__(
@@ -164,7 +164,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.dim_threshold = dim_threshold
         self.max_dims = max_dims
 
-        self.classifiers = []
+        self.estimators_ = []
         self.weights = []
         self._weight_sum = 0
         self.n_classes = 0
@@ -216,7 +216,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
 
-        self.classifiers = []
+        self.estimators_ = []
         self.weights = []
         self._prev_parameters_x = []
         self._prev_parameters_y = []
@@ -313,10 +313,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     lowest_acc = tde._accuracy
                     lowest_acc_idx = num_classifiers
                 self.weights.append(weight)
-                self.classifiers.append(tde)
+                self.estimators_.append(tde)
             elif tde._accuracy > lowest_acc:
                 self.weights[lowest_acc_idx] = weight
-                self.classifiers[lowest_acc_idx] = tde
+                self.estimators_[lowest_acc_idx] = tde
                 lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
 
             self._prev_parameters_x.append(parameters)
@@ -325,7 +325,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             num_classifiers += 1
             train_time = time.time() - start_time
 
-        self.n_estimators = len(self.classifiers)
+        self.n_estimators = len(self.estimators_)
         self._weight_sum = np.sum(self.weights)
 
         self._is_fitted = True
@@ -366,7 +366,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
-        for n, clf in enumerate(self.classifiers):
+        for n, clf in enumerate(self.estimators_):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
@@ -377,7 +377,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         min_acc = 1.0
         min_acc_idx = 0
 
-        for c, classifier in enumerate(self.classifiers):
+        for c, classifier in enumerate(self.estimators_):
             if classifier._accuracy < min_acc:
                 min_acc = classifier._accuracy
                 min_acc_idx = c
@@ -396,7 +396,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X):
+    def _get_train_probs(self, X, y=None):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
         for i in range(num_inst):
@@ -404,13 +404,13 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             sums = np.zeros(self.n_classes)
 
             cls_idx = []
-            for n, clf in enumerate(self.classifiers):
+            for n, clf in enumerate(self.estimators_):
                 idx = np.where(clf.subsample == i)
                 if len(idx[0]) > 0:
                     cls_idx.append([n, idx[0][0]])
 
             preds = Parallel(n_jobs=self.n_jobs)(
-                delayed(self.classifiers[cls[0]]._train_predict)(
+                delayed(self.estimators_[cls[0]]._train_predict)(
                     cls[1],
                 )
                 for cls in cls_idx
