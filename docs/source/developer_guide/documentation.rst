@@ -11,7 +11,7 @@ These include:
 
 * Documenting code using NumPy docstrings and sktime conventions
 * Following ``sktime's`` docstring convention for public code artifacts and modules
-* Adding new public functionality to the :ref:`api_refernce` and :ref:`user guide <user_guide>`
+* Adding new public functionality to the :ref:`api_reference` and :ref:`user guide <user_guide>`
 
 More detailed information on ``sktime's`` documentation format is provided below.
 
@@ -19,7 +19,7 @@ Docstring Conventions
 =====================
 
 sktime uses the numpydoc_ Sphinx extension and follows
-`NumPy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`.
+`NumPy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
 To ensure docstrings meet expectations, sktime uses a combination of validations built into numpydoc_,
 pydocstyle_ (set to the NumPy convention) pre-commit checks and automated testing of docstring examples to ensure
