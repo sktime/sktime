@@ -1041,7 +1041,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/46671894?v=4",
       "profile": "https://github.com/SveaMeyer13",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -1152,7 +1153,16 @@
         "doc"
       ]
     },
-     {
+    {
+      "login": "victordremov",
+      "name": "Viktor Dremov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32140716",
+      "profile": "https://github.com/victordremov",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "corvusrabus",
       "name": "Corvin Paul",
       "avatar_url": "https://lh3.googleusercontent.com/zMvwkuxyIsRN1I0-HLojbcbbHaERXa-b9eztZ23z_C2m7cXdMiU4z36ekS5-cgBmikPhZA=w1280",

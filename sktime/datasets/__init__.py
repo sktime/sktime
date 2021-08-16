@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Load data functions."""
+"""Functions to load datasets included in sktime."""
 
 __all__ = [
     "load_airline",
@@ -16,6 +16,7 @@ __all__ = [
     "load_unit_test",
     "load_uschange",
     "load_PBS_dataset",
+    "load_japanese_vowels",
 ]
 
 from sktime.datasets._data_io import load_airline
