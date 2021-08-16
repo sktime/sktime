@@ -67,7 +67,7 @@ Summary and Extended Summary
 The summary should be a single line, followed by a (properly formatted) extended summary.
 The extended summary should include a user friendly explanation of the code artifacts functionality.
 
-For all sktime estimators and other code artifacts that implement an algorithms (e.g. performance metrics),
+For all sktime estimators and other code artifacts that implement an algorithm (e.g. performance metrics),
 the extended summary should also include a short, user-friendly synopsis of the algorithm being implemented. When the algorithm is implemented
 using multiple sktime estimators, the synopsis should first provide a high-level summary of the estimator components (e.g. transformer1 is applied then a classifier).
 Additional user-friendly details of the algorithm should follow (e.g. describe how the transformation and classifier work).
