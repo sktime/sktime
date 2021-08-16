@@ -65,7 +65,7 @@ Summary and Extended Summary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The summary should be a single line, followed by a (properly formatted) extended summary.
-The extended summary should include a user friendly explanation of the code artificats functionality,
+The extended summary should include a user friendly explanation of the code artifacts functionality.
 
 For all sktime estimators and other code artifacts that implement an algorithms (e.g. performance metrics),
 the extended summary should also include a short, user-friendly synopsis of the algorithm being implemented. When the algorithm is implemented
