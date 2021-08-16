@@ -31,7 +31,7 @@ def test_arsenal_on_unit_test_data():
     assert accuracy_score(y_train, train_preds) >= 0.85
 
 
-def test_contracted_drcif_on_unit_test_data():
+def test_contracted_arsenal_on_unit_test_data():
     """Test of contracted Arsenal on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -42,7 +42,7 @@ def test_contracted_drcif_on_unit_test_data():
     arsenal.fit(X_train, y_train)
 
     assert len(arsenal.estimators_) > 1
-    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.85
+    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.8
 
 
 def test_arsenal_on_basic_motions():
