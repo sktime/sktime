@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Classes to raise timeseries to a user provied exponent."""
+"""Implements transformers raise time series to user provided exponent."""
 
 __author__ = ["Ryan Kuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
@@ -42,8 +42,8 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
     offset : int or float
         User supplied offset value.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -76,7 +76,6 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
         -------
         self
         """
-
         if not isinstance(self.power, (int, float)):
             raise ValueError(
                 f"Expected `power` to be int or float, but found {type(self.power)}."
@@ -216,8 +215,8 @@ class SqrtTransformer(ExponentTransformer):
     offset : int or float
         User supplied offset value.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.exponent import SqrtTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()

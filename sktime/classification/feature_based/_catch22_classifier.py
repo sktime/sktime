@@ -46,9 +46,11 @@ class Catch22Classifier(BaseClassifier):
 
     See Also
     --------
-    :py:class:`Catch22`
+    Catch22
 
-    Authors 'catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
+    Notes
+    -----
+    Authors `catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
 
     For the Java version, see `tsml <https://github.com/uea-machine-learning/tsml/blob
     /master/src/main/java/tsml/classifiers/hybrids/Catch22Classifier.java>`_.
@@ -59,8 +61,8 @@ class Catch22Classifier(BaseClassifier):
         Data Mining and Knowledge Discovery 33.6 (2019): 1821-1852.
         https://link.springer.com/article/10.1007/s10618-019-00647-x
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.feature_based import Catch22Classifier
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
