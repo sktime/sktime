@@ -65,7 +65,7 @@ def test_get_fitted_params(Forecaster):
         y_train = _make_series(n_columns=1)
         f.fit(y_train, fh=FH0)
 
-    elif f.get_tag("scitype:y") == "multivariate" or f.get_tag("scitype:y") == "both":
+    elif f.get_tag("scitype:y") == "multivariate":
         y_train = _make_series(n_columns=2)
         f.fit(y_train, fh=FH0)
     try:
