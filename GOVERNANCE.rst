@@ -347,7 +347,7 @@ community tries to find a resolution that has no open objections among
 core developers.
 
 -  Proposed changes should be in the form of GitHub pull requests (PR).
-   Some changes also require a worked out :ref:`steps`, this depends on the type of change, see
+   Some changes also require a worked out :ref:`steps`. This depends on the type of change, see
    `decision making process <#Decision-making>`__ above.
 -  For a proposed change to be approved via lazy consensus, it needs to
    approval by at least one core developer and no rejection by a core developer (veto right).
