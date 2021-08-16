@@ -19,6 +19,7 @@ __all__ = [
     "NaiveForecaster",
     "ExponentialSmoothing",
     "ThetaForecaster",
+    "ThetaNewForecaster",
     "AutoARIMA",
     "ARIMA",
     "AutoETS",
@@ -86,6 +87,7 @@ from sktime.datasets import load_lynx
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.theta_new import ThetaNewForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.arima import AutoARIMA
