@@ -428,7 +428,7 @@ the CC tries to resolve the deadlock.
 sktime enhancement proposal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sktime enhancmenet proposals (STEPs) are required for:
+sktime enhancement proposals (STEPs) are required for:
 
 * certain types of proposed changes, by default, see `decision making process <#Decision-making>`__
 * for all stage 3 decisions
