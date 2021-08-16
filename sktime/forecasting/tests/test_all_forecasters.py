@@ -244,11 +244,15 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             and no NotImplementedError is raised when asking predict for pred.int
     """
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y_train = _make_series(n_columns=2)
     f.fit(y_train, fh=fh)
-
     if f.get_tag("capability:pred_int"):
         y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
         _check_pred_ints(pred_ints, y_train, y_pred, fh)
+
     else:
         with pytest.raises(NotImplementedError, match="prediction intervals"):
             f.predict(return_pred_int=True, alpha=alpha)
