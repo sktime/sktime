@@ -28,7 +28,7 @@ class BOSSEnsemble(BaseClassifier):
 
     Overview: Input "n" series of length "m" and BOSS performs a grid search over
     a set of parameter values, evaluating each with a LOOCV. It then retains
-    all ensemble members within 92% of the best by default for use in the ensmeble.
+    all ensemble members within 92% of the best by default for use in the ensemble.
     There are three primary parameters:
         - alpha: alphabet size
         - w: window length

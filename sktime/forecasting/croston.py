@@ -32,10 +32,11 @@ class Croston(BaseForecaster):
 
     References
     ----------
-    ..[1] J. D. Croston. Forecasting and stock control for intermittent demands.
-      Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
-    ..[2] Forecasting: Principles and Practice,
-      Otext book by Rob J Hyndman and George Athanasopoulos
+    .. [1] J. D. Croston. Forecasting and stock control for intermittent demands.
+       Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
+    .. [2] Forecasting: Principles and Practice,
+       Otext book by Rob J Hyndman and George Athanasopoulos.
+       https://otexts.com/fpp2/
     """
 
     _tags = {

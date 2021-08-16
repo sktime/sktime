@@ -15,10 +15,12 @@ _check_soft_dependencies("pmdarima")
 class AutoARIMA(_PmdArimaAdapter):
     """Automatically discover the optimal order for an ARIMA model.
 
+    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
+
     The auto-ARIMA process seeks to identify the most optimal parameters
     for an ARIMA model, settling on a single fitted ARIMA model. This
     process is based on the commonly-used R function,
-    forecast::auto.arima [3].
+    forecast::auto.arima.
 
     Auto-ARIMA works by conducting differencing tests (i.e.,
     Kwiatkowski–Phillips–Schmidt–Shin, Augmented Dickey-Fuller or
@@ -215,7 +217,7 @@ class AutoARIMA(_PmdArimaAdapter):
     References
     ----------
     # noqa: E501
-    ..[1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
+    .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
 
     Examples
     --------
@@ -362,6 +364,8 @@ class AutoARIMA(_PmdArimaAdapter):
 
 class ARIMA(_PmdArimaAdapter):
     """An ARIMA estimator.
+
+    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
 
     An ARIMA, or autoregressive integrated moving average, is a
     generalization of an autoregressive moving average (ARMA) and is fitted to
@@ -520,9 +524,9 @@ class ARIMA(_PmdArimaAdapter):
 
     References
     ----------
-    ..[1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
-    ..[2] https://www.statsmodels.org/stable/generated/
-      statsmodels.tsa.statespace.sarimax.SARIMAX.html
+    .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
+    # noqa: E501
+    .. [2] https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
 
     Examples
     --------

@@ -4,8 +4,9 @@
 """Implements BATS algorithm.
 
 BATS refers to Exponential smoothing state space model with Box-Cox
-transformation, ARMA errors, Trend and Seasonal components as described in
-De LIvera, Hyndman and Snyder (2011).
+transformation, ARMA errors, Trend and Seasonal components.
+
+Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
 __author__ = ["Martin Walter"]
@@ -64,10 +65,10 @@ class BATS(_TbatsAdapter):
 
     References
     ----------
-    ..[1] https://github.com/intive-DataScience/tbats
-    ..[2] De Livera, A.M., Hyndman, R.J., & Snyder, R. D. (2011),
-        Forecasting time series with complex seasonal patterns using exponential
-        smoothing, Journal of the American Statistical Association, 106(496), 1513-1527.
+    .. [1] https://github.com/intive-DataScience/tbats
+    .. [2] De Livera, A.M., Hyndman, R.J., & Snyder, R. D. (2011),
+       Forecasting time series with complex seasonal patterns using exponential
+       smoothing, Journal of the American Statistical Association, 106(496), 1513-1527.
 
     Examples
     --------
