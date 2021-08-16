@@ -208,9 +208,14 @@ class AutoARIMA(_PmdArimaAdapter):
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
 
+    See also
+    --------
+    ARIMA
+
     References
     ----------
-    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
+    # noqa: E501
+    ..[1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
 
     Examples
     --------
@@ -508,6 +513,10 @@ class ARIMA(_PmdArimaAdapter):
             term) out of the likelihood. This reduces the number of parameters
             estimated by maximum likelihood by one, but standard errors will
             then not be available for the scale parameter.
+
+    See also
+    --------
+    AutoARIMA
 
     References
     ----------
