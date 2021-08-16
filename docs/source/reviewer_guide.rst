@@ -16,8 +16,8 @@ Triage
 * Assign to relevant project board
 * Title: Is it using the 3-letter codes? Is it understandable?
 * Description: Is it understandable? Any related issues/PRs?
-* CI checks: approval for first-time contributors, any help needed with
-code/doc quality checks?
+* CI checks: approval for first-time contributors, any help needed with 
+  code/doc quality checks?
 * Merge conflicts
 
 Code
@@ -25,8 +25,7 @@ Code
 
 * Unit testing: Are the code changes tested? Are the unit tests understandable?
 * Test code locally: Does everything work as expected?
-* Deprecation warnings: Has the public API changed? Have deprecation
-warnings been added before making the changes?
+* Deprecation warnings: Has the public API changed? Have deprecation warnings been added before making the changes?
 
 .. _reviewer_guide_doc:
 
@@ -35,8 +34,8 @@ Documenation
 
 * Are the docstrings complete and understandable to users?
 * Do they follow the NumPy format and sktime conventions?
-* If the same parameter, attribute, return object or error is included elsewhere in sktime are the docstring descriptions
-as similar as possible
+* If the same parameter, attribute, return object or error is included elsewhere in sktime are the docstring descriptions 
+  as similar as possible
 * Does the online documentation render correctly with the changes?
 * Do the docstrings contain links to the relevant topics in the :ref:`glossary` or
 :ref:`user_guide`?
