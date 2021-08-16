@@ -33,10 +33,8 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
     The BoxCoxTransformer solves for the lambda parameter used in the Box-Cox
     transformation given `method`, the optimization approach, and input
-    data provided to `fit`.
-
-    The use of Guerrero's method for solving for lambda requires the seasonal
-    periodicity, `sp` be provided. [2]_
+    data provided to `fit`. The use of Guerrero's method for solving for lambda
+    requires the seasonal periodicity, `sp` be provided. [2]_
 
     Parameters
     ----------
@@ -69,21 +67,17 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
     LogTransformer :
         Transformer input data using natural log. Can help normalize data and
         compress variance of the series.
-    ExponentTransformer :
+    sktime.transformations.series.exponent.ExponentTransformer :
         Transform input data by raising it to an exponent. Can help compress
         variance of series if a fractional exponent is supplied.
-    SqrtTransformer :
+    sktime.transformations.series.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
 
     Notes
     -----
-    The Box-Cox transformation is defined as
-
-    .. math::
-
-        \\frac{y^{\\lambda}-1}{\\lambda}, \\lambda \\ne 0
-        ln(y), \\lambda = 0
+    The Box-Cox transformation is defined as :math:`\\frac{y^{\\lambda}-1}{\\lambda},
+    \\lambda \\ne 0 \\text{ or } ln(y), \\lambda = 0`.
 
     Therefore, the input data must be positive. In some implementations, a positive
     constant is added to the series prior to applying the transformation. But
@@ -184,11 +178,21 @@ class LogTransformer(_SeriesToSeriesTransformer):
     The natural log transformation is can be used to make data more normally
     distributed and stabilize its variance.
 
+    See Also
+    --------
+    BoxCoxTransformer :
+        Applies Box-Cox power transformation. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.exponent.ExponentTransformer :
+        Transform input data by raising it to an exponent. Can help compress
+        variance of series if a fractional exponent is supplied.
+    sktime.transformations.series.exponent.SqrtTransformer :
+        Transform input data by taking its square root. Can help compress
+        variance of input series.
+
     Notes
     -----
-    The log transformation is applied as
-
-    .. math:: ln(y)
+    The log transformation is applied as :math:`ln(y)`.
 
     Examples
     --------
