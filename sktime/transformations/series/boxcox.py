@@ -78,9 +78,12 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
     Notes
     -----
-    The Box-Cox transformation is defined as:
+    The Box-Cox transformation is defined as
 
+    .. math::
 
+        \\frac{y^{\\lambda}-1}{\\lambda}, \\lambda \\ne 0
+        ln(y), \\lambda = 0
 
     Therefore, the input data must be positive. In some implementations, a positive
     constant is added to the series prior to applying the transformation. But
