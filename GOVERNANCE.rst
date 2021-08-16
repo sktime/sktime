@@ -354,7 +354,7 @@ core developers.
    The approval required for this condition must be by a core developer different from a proposer.
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
    rejection by at least one core developer, and no acceptance by a core developer.
--  Approvals must be in the form of a GitHub PR approval. of the PR in question.
+-  Approvals must be in the form of a GitHub PR approval of the PR in question.
    Rejections can be expressed as -1 comments, or any written comments
    containing "I formally reject" in the PR, in reference to it.
 -  Proposers are expected to give reasonable time for consideration, that is,
