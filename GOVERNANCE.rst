@@ -367,8 +367,7 @@ core developers.
    reverted if it receives a rejection in addition.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of agenda for the next developer meetup.
-   In that meeting, a core developer is assigned to review, and approve or reject within
-   5 days of the meeting, excluding week-ends.
+   In that meeting, a core developer is assigned to review the PR and either approve or reject within five days of the meeting excluding weekends.
 
 Failure of lazy consensus, in the above sense, can arise only under the following condition:
 at least one approval and at least one rejection in the PR.
