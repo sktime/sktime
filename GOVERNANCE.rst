@@ -381,7 +381,7 @@ Stage 2: voting
 
 Voting takes place:
 
-* when no lazy consensus can be found in stage 1 decision making
+* when no lazy consensus can be found in stage 1 above
 * for appointments
 
 -  The start of a voting period after stage 1 is at the moment the lazy consensus fails.
