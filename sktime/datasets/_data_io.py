@@ -141,10 +141,14 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: pandas DataFrame
+        The time series data for the problem with n_cases rows and either
+        n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
+        series associated with each case. If return_X_y is False, column
+        n_dimensions+1 is the target variable.
+    y: optional: numpy array
+        The class labels for each case in X, returned separately if return_X_y is
+        True, or appended to X if False
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
