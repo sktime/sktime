@@ -64,7 +64,7 @@ Accordingly, sktime estimators and most other public code artifcations should ge
 Summary and Extended Summary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As is typicaly the summary should be a single line, followed by a properly somewhat longer (and properly formatted) extended summary.
+The summary should be a single line, followed by a (properly formatted) extended summary.
 The extended summary should include a user friendly explanation of the code artificats functionality,
 
 For all sktime estimators and other code artifacts that implement an algorithms (e.g. performance metrics),
