@@ -119,6 +119,7 @@ def _list_downloaded_datasets(extract_path):
 def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
     """
     Load dataset from UCR UEA time series archive.
+    
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
     in the standard .ts format: each row is a (possibly multivariate) time series.
     Each dimension is separated by a colon, each value in a series is comma
