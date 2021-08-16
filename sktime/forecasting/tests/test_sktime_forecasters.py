@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # test API provided through BaseSktimeForecaster
-
+"""SKtime Forecasters Test."""
 __author__ = ["@mloning"]
 __all__ = [
     "test_different_fh_in_fit_and_predict_req",
@@ -50,6 +50,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 # test _y setting
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_oh_setting(Forecaster):
+    """Check cuttoff and _y."""
     # check _y and cutoff is None after construction
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
@@ -94,6 +95,7 @@ FORECASTERS_OPTIONAL = [
 # testing Forecasters which require fh during fitting
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_no_fh_in_fit_req(Forecaster):
+    """Check if fh is required in fit."""
     f = _construct_instance(Forecaster)
     # fh required in fit, raises error if not passed
     with pytest.raises(ValueError):
@@ -102,6 +104,7 @@ def test_no_fh_in_fit_req(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_fh_in_fit_req(Forecaster):
+    """Checks if fh is requred in fit."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
@@ -111,6 +114,7 @@ def test_fh_in_fit_req(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_same_fh_in_fit_and_predict_req(Forecaster):
+    """Check if fh is the same in fit and predict."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
@@ -120,6 +124,7 @@ def test_same_fh_in_fit_and_predict_req(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_different_fh_in_fit_and_predict_req(Forecaster):
+    """Check if fh is different in fit and predict."""
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
@@ -132,6 +137,7 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
 # testing Forecasters which take fh either during fitting or predicting
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_no_fh_opt(Forecaster):
+    """Check if fh is optional in fit."""
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
         y_train = _make_series(n_columns=1)
@@ -146,6 +152,7 @@ def test_no_fh_opt(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_fit_opt(Forecaster):
+    """Check if fh is optional in fit."""
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
         y_train = _make_series(n_columns=1)
@@ -161,6 +168,7 @@ def test_fh_in_fit_opt(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_predict_opt(Forecaster):
+    """Check if fh is optional in predict."""
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
         y_train = _make_series(n_columns=1)
@@ -175,7 +183,7 @@ def test_fh_in_predict_opt(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_same_fh_in_fit_and_predict_opt(Forecaster):
-
+    """Check if fh is the same in fit and predict."""
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
         y_train = _make_series(n_columns=1)
