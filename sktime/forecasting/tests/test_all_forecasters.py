@@ -123,6 +123,11 @@ def test_y_invalid_type_raises_error(Forecaster, y):
 def test_X_invalid_type_raises_error(Forecaster, X):
     """Test that invalid X input types raise error."""
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1)
+
+    elif f.get_tag("scitype:y") == "multivariate":
+        y_train = _make_series(n_columns=2)
     try:
         with pytest.raises(TypeError, match=r"type"):
             f.fit(y_train, X, fh=FH0)
