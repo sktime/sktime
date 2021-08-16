@@ -31,8 +31,13 @@ warnings been added before making the changes?
 Documenation
 ============
 
-* Are the docstrings complete? Are they understandable?
+* Are the docstrings complete and understandable to users?
 * Do they follow the NumPy format and sktime conventions?
 * Does the online documentation render correctly with the changes?
-* Could we add links to relevant topics in the :ref:`glossary` or
+* Do the docstrings contain links to the relevant topics in the :ref:`glossary` or
 :ref:`user_guide`?
+
+.. warning::
+
+    If a Pull Request does not meet sktime's :ref:`documentation guide <developer_guide_documentation>`
+    a reviewer shoudl require the documentation be updated prior to approving the Pull Request.
