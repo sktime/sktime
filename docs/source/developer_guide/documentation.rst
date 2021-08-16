@@ -35,7 +35,7 @@ sktime Specific Conventions
 
 Beyond basic NumPy docstring formatting conventions, developers should focus on:
 
-- Ensuring all parameters (classes, functions, methods) and attributes (classes) are documented completely and consistantly
+- Ensuring all parameters (classes, functions, methods) and attributes (classes) are documented completely and consistently
 - Including links to the relevant topics in the :ref:`glossary` or :ref:`user_guide` in the extended summary
 - Including an `Examples` section that demonstrates at least basic functionality in all public code artifacts
 - Adding a `See Also` section that references related sktime code artifacts as applicable
