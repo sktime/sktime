@@ -39,7 +39,7 @@ check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for 
 
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "Viktor Dremov"]
 
 import pandas as pd
 
@@ -158,6 +158,39 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "is the forecaster capable of returning prediction intervals in predict?",
+    ),
+    (
+        "capability:multivariate",
+        "classifier",
+        "bool",
+        "can classifier classify time series with 2 or more variables?",
+    ),
+    (
+        "capability:unequal_length",
+        "classifier",
+        "bool",
+        "can classifier handle unequal length time series?",
+    ),
+    # "capability:missing_values" is same as "handles-missing-data" tag.
+    # They are kept distinct intentionally for easier TSC refactoring.
+    # Will be merged after refactor completion.
+    (
+        "capability:missing_values",
+        "classifier",
+        "bool",
+        "can the estimator handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "capability:train_estimate",
+        "classifier",
+        "bool",
+        "can the classifier estimate its performance on the training set?",
+    ),
+    (
+        "capability:contractable",
+        "classifier",
+        "bool",
+        "contract time setting, i.e. does the estimator support limiting max fit time?",
     ),
     # (
     #     "handles-panel",
