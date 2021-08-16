@@ -227,7 +227,6 @@ class BaseClassifier(BaseEstimator):
 
         return y
 
-
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
