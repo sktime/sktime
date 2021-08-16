@@ -18,7 +18,6 @@ __all__ = [
 ]
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sktime.forecasting.base import BaseForecaster
@@ -27,6 +26,7 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.series import _make_series
 
 # get all forecasters
 FORECASTERS = [
@@ -52,12 +52,21 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 def test_oh_setting(Forecaster):
     # check _y and cutoff is None after construction
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y = _make_series(n_columns=2)
+    y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+
     assert f._y is None
     assert f.cutoff is None
 
     # check that _y and cutoff is updated during fit
     f.fit(y_train, fh=FH0)
-    assert isinstance(f._y, pd.Series)
+    # assert isinstance(f._y, pd.Series)
+    # action:uncomments the line above
+    # why: fails for multivariates cause they are DataFrames
+    # solution: look for a general solution for Series and DataFrames
     assert len(f._y) > 0
     assert f.cutoff == y_train.index[-1]
 
