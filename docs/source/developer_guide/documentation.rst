@@ -22,15 +22,20 @@ sktime uses the numpydoc_ Sphinx extension and follows
 `NumPy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`.
 
 To ensure docstrings meet expectations, sktime uses a combination of validations built into numpydoc_,
-pydocstyle_ (set to the NumPy convention) pre-commit checks, automated testing of docstring examples to ensure
-the code runs without error, and :ref:`reviewer <reviewer_guide_doc>` feedback.
+pydocstyle_ (set to the NumPy convention) pre-commit checks and automated testing of docstring examples to ensure
+the code runs without error. However, the automated docstring validation in pydocstyle_ only covers basic formatting.
+Passing these tests is necessary to meet the sktime docstring conventions, but is not sufficient for doing so.
+
+To ensure docstrings meet sktime's conventions, developers are expected to check their docstrings against numpydoc_
+and sktime conventions and :ref:`reviewer's <reviewer_guide_doc>` are expected to also focus feedback on docstring
+quality.
 
 sktime Specific Conventions
 ---------------------------
 
 Beyond basic NumPy docstring formatting conventions, developers should focus on:
 
-- Ensuring all parameters and attributes (classes) are documented completely and consistantly
+- Ensuring all parameters (classes, functions, methods) and attributes (classes) are documented completely and consistantly
 - Including links to the relevant topics in the :ref:`glossary` or :ref:`user_guide` in the extended summary
 - Including an `Examples` section that demonstrates at least basic functionality in all public code artifacts
 - Adding a `See Also` section that references related sktime code artifacts as applicable
@@ -60,11 +65,33 @@ Summary and Extended Summary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As is typicaly the summary should be a single line, followed by a properly somewhat longer (and properly formatted) extended summary.
-The extended summary should include a user friendly explanation of the code artificats functionality
-and links to relevant content in the :ref:`glossary` and :ref:`user guide <user_guide>`.
+The extended summary should include a user friendly explanation of the code artificats functionality,
 
-For all sktime estimators and other code artifacts that implement an algorith,ms (e.g. performance metrics),
-the extended summary should also include a short, user-friendly synopsis of the algorithm being implemented.
+For all sktime estimators and other code artifacts that implement an algorithms (e.g. performance metrics),
+the extended summary should also include a short, user-friendly synopsis of the algorithm being implemented. When the algorithm is implemented
+using multiple sktime estimators, the synopsis should first provide a high-level summary of the estimator components (e.g. transformer1 is applied then a classifier).
+Additional user-friendly details of the algorithm should follow (e.g. describe how the transformation and classifier work).
+
+The extended summary should also include links to relevant content in the :ref:`glossary` and :ref:`user guide <user_guide>`.
+
+If a "term" already exists in the glossary and the developer wants to link it directly they can use:
+
+.. code-block::
+
+    :term:`the glossary term`
+
+In other cases you'll want to use different phrasing but link to an existing glossary term, and the developer can use:
+
+.. code-block::
+
+    :term:`the link text <the glossary term>`
+
+In the event a term is not already in the glossary, developers should add the term to the glossary (sktime/docs/source/glossary.rst) and include a reference (as shown above)
+to the added term.
+
+Likewise, a developer can link to a particular area of the user guide by including an explicit cross-reference and following the steps for referencing in Sphinx
+(see the helpful description on `Sphinx cross-references <https://docs.readthedocs.io/en/stable/guides/cross-referencing-with-sphinx.html>`_ posted by Read the Docs).
+Again developers are encouraged to add important content to the user guide and link to it if it does not already exist.
 
 See Also
 ~~~~~~~~
@@ -79,16 +106,32 @@ Notes
 
 The notes section can include several types of information, including:
 
-- Mathematical details of a code object or other important implementation details
-- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of a sktime
-time series classifier)
+- Mathematical details of a code object or other important implementation details (using ..math or :math:`` functionality)
+- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of a sktime time series classifier)
 - state changing methods (sktime estimator classes)
 
 References
 ~~~~~~~~~~
 
 sktime estimators that implement a concrete algorithm should generally include citations to the original research article, textbook or other resource
-that describes the algorithm. Other code artifcations
+that describes the algorithm.
+
+Where applicable this should be done by providing a link between the description where the reference is applicable (say in the extended summary or notes)
+and the references section.
+
+Linked references should follow a very specific format to ensure they render correctly. Note the space between the ".." and opening bracket below,
+as well as the space after the closing bracket. Also note that all lines after the first line should start so they are aligned immediately with the
+opening bracket. Additional references should be added in exactly the same way, but the number enclosed in the bracket should be incremented.
+
+.. code-block:: rst
+
+    .. [1] Some research article, link or other type of citation.
+       Long references wrap onto multiple lines, but you need to
+       indent them so they start aligned with opening bracket on first line.
+
+Assuming a reference like shown above was added in the references section, the reference labeled as "[1]" above can
+be linked elsewhere in the same docstring using "[1]_". In some cases the rendering may not show correctly if a the "[1]_" link is
+preceded or followed by certain characters. If you run into this issue, try putting  a space before and following the "[1]_" cross-reference.
 
 Examples
 ~~~~~~~~
