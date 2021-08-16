@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 __author__ = ["Christopher Holder"]
 
-from typing import Callable, Set, Type, Optional
+import numpy as np
+from typing import Set, Type, Optional
 from dataclasses import dataclass
 
-from sktime.metrics.distances.base._base import BaseDistance, BasePairwise
+from sktime.metrics.distances.base._base import BaseDistance
 from sktime.metrics.distances._dtw import _DtwDistance, _DtwDistanceCostMatrix
 
 
 def dtw(
-    x, y, lower_bounding=None, sakoe_chiba_window_radius=None, itakura_max_slope=None
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding=None,
+    sakoe_chiba_window_radius=None,
+    itakura_max_slope=None,
 ):
     """
     Method used to check the incoming parameters and ensure they are the correct
@@ -48,7 +53,11 @@ def dtw(
 
 
 def dtw_with_cost_matrix(
-    x, y, lower_bounding=None, sakoe_chiba_window_radius=None, itakura_max_slope=None
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding=None,
+    sakoe_chiba_window_radius=None,
+    itakura_max_slope=None,
 ):
     """
     Method used to calculate the dtw distance between two time series
@@ -90,6 +99,21 @@ def dtw_with_cost_matrix(
     return _DtwDistanceCostMatrix().distance(x, y, **kwargs)
 
 
+def dtw_pairwise(
+    x: np.ndarray,
+    y: np.ndarray = None,
+    lower_bounding=None,
+    sakoe_chiba_window_radius=None,
+    itakura_max_slope=None,
+):
+    kwargs = {
+        "lower_bounding": lower_bounding,
+        "sakoe_chiba_window_radius": sakoe_chiba_window_radius,
+        "itakura_max_slopes": itakura_max_slope,
+    }
+    return _DtwDistance().pairwise(x, y, **kwargs)
+
+
 @dataclass(frozen=True)
 class DistanceInfo:
     """
@@ -103,13 +127,7 @@ class DistanceInfo:
     # All aliases, including canonical_name
     aka: Set[str]
     # Base distance class
-    base_distance_class: Optional[Type[BaseDistance]]
-    # Base pairwise class
-    base_pairwise_class: Optional[Type[BasePairwise]]
-    # Distance function to call
-    dist_func: Callable
-    # Pairwise function to call
-    pairwise_dist_func: Optional[Callable]
+    distance_class: Optional[Type[BaseDistance]]
 
 
 # Registry of implemented metrics:
@@ -117,15 +135,12 @@ DISTANCE_INFO = [
     DistanceInfo(
         canonical_name="dtw",
         aka={"dtw", "dynamic time warping"},
-        base_distance_class=_DtwDistance,
-        dist_func=_DtwDistance().distance,
-        pairwise_dist_func=_DtwDistance().distance,
+        distance_class=_DtwDistance,
     ),
     DistanceInfo(
         canonical_name="dtw cost matrix",
         aka={"dtw cost matrix", "dynamic time warping cost matrix"},
-        base_distance_class=_DtwDistanceCostMatrix,
-        dist_func=_DtwDistanceCostMatrix().distance,
+        distance_class=_DtwDistanceCostMatrix,
     ),
 ]
 
