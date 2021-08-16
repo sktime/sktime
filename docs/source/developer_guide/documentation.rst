@@ -129,9 +129,8 @@ opening bracket. Additional references should be added in exactly the same way, 
        Long references wrap onto multiple lines, but you need to
        indent them so they start aligned with opening bracket on first line.
 
-Assuming a reference like shown above was added in the references section, the reference labeled as "[1]" above can
-be linked elsewhere in the same docstring using "[1]_". In some cases the rendering may not show correctly if a the "[1]_" link is
-preceded or followed by certain characters. If you run into this issue, try putting  a space before and following the "[1]_" cross-reference.
+To link to the reference labeled as "[1]", you use "[1]_". This only works within the same docstring. Sometimes this is not rendered correctly if the "[1]_" link is
+preceded or followed by certain characters. If you run into this issue, try putting a space before and following the "[1]_" link.
 
 Examples
 ~~~~~~~~
