@@ -133,6 +133,11 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_no_fh_opt(Forecaster):
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y_train = _make_series(n_columns=2)
+
     f.fit(y_train)
     # not passing fh to either fit or predict raises error
     with pytest.raises(ValueError):
@@ -141,6 +146,12 @@ def test_no_fh_opt(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_fit_opt(Forecaster):
+    f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y_train = _make_series(n_columns=2)
+
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
@@ -151,6 +162,12 @@ def test_fh_in_fit_opt(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_predict_opt(Forecaster):
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y_train = _make_series(n_columns=2)
+
+    f = _construct_instance(Forecaster)
     f.fit(y_train)
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
@@ -158,7 +175,13 @@ def test_fh_in_predict_opt(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_same_fh_in_fit_and_predict_opt(Forecaster):
+
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y_train = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y_train = _make_series(n_columns=2)
+
     # passing the same fh to both fit and predict works
     f.fit(y_train, fh=FH0)
     f.predict(FH0)
