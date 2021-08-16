@@ -421,7 +421,7 @@ the CC tries to resolve the deadlock.
 -  If this vote is needed, the vote should take place within twenty-five working days after the beginning
    of the stage-1 "reasonable time for consideration" period, during a regular, minuted CC meeting.
 -  Any proposal reaching stage 3 must be supported by an :ref:`steps`,
-   which has been made public at least 5 days, excluding week-ends, before the vote.
+   which has been made public at least 5 days, excluding weekends, before the vote.
 
 .. _steps:
 
