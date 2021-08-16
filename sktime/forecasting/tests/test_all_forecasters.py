@@ -256,20 +256,24 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-def test_score(Forecaster, fh):
+def test_score(Forecaster, fh):  # ERROR
     """Check score method."""
     f = _construct_instance(Forecaster)
+    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+        y = _make_series(n_columns=1)
+    elif f.get_tag("scitype:y") == "multivariate":
+        y = _make_series(n_columns=2)
+    y_train, y_test = temporal_train_test_split(y)
     f.fit(y_train, fh=fh)
     y_pred = f.predict()
 
     fh_idx = check_fh(fh).to_indexer()  # get zero based index
+    actual = f.score(y_test.iloc[fh_idx], fh=fh)
     expected = mean_absolute_percentage_error(
         y_pred, y_test.iloc[fh_idx], symmetric=True
     )
 
-    # compare with actual score
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=fh)
+    # compare expected score with actual score
     actual = f.score(y_test.iloc[fh_idx], fh=fh)
     assert actual == expected
 
