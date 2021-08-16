@@ -396,7 +396,7 @@ class ARIMA(_PmdArimaAdapter):
     When two out of the three terms are zeros, the model may be referred to
     based on the non-zero parameter, dropping "AR", "I" or "MA" from the
     acronym describing the model. For example, ``ARIMA(1,0,0)`` is ``AR(1)``,
-    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]_
+    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``.
 
     See notes for more practical information on the ``ARIMA`` class.
 
@@ -518,7 +518,7 @@ class ARIMA(_PmdArimaAdapter):
             estimated by maximum likelihood by one, but standard errors will
             then not be available for the scale parameter.
 
-    See also
+    See Also
     --------
     AutoARIMA
 
