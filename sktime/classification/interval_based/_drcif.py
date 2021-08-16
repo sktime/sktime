@@ -136,7 +136,7 @@ class DrCIF(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = DrCIF(n_estimators=10)
     >>> clf.fit(X_train, y_train)
-    DrCIF(n_estimators=10)
+    DrCIF(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -192,8 +192,8 @@ class DrCIF(BaseClassifier):
         self._n_estimators = n_estimators
         self._n_intervals = n_intervals
         self._att_subsample_size = att_subsample_size
-        self._max_interval = max_interval
         self._min_interval = min_interval
+        self._max_interval = max_interval
         self._base_estimator = base_estimator
         self._n_jobs = n_jobs
 
@@ -256,7 +256,7 @@ class DrCIF(BaseClassifier):
                 self._n_intervals[i] = 1
 
         if self.att_subsample_size > 25:
-            self.__att_subsample_size = 25
+            self._att_subsample_size = 25
 
         if isinstance(self.min_interval, int):
             self._min_interval = [
@@ -298,7 +298,7 @@ class DrCIF(BaseClassifier):
         self.total_intervals = sum(self._n_intervals)
 
         if time_limit > 0:
-            self.n_estimators = 0
+            self._n_estimators = 0
             self.estimators_ = []
             self.intervals = []
             self.atts = []
@@ -307,7 +307,7 @@ class DrCIF(BaseClassifier):
 
             while (
                 train_time < time_limit
-                and self.n_estimators < self.contract_max_n_estimators
+                and self._n_estimators < self.contract_max_n_estimators
             ):
                 fit = Parallel(n_jobs=self._n_jobs)(
                     delayed(self._fit_estimator)(
@@ -321,20 +321,20 @@ class DrCIF(BaseClassifier):
                 )
 
                 (
-                    classifiers,
+                    estimators,
                     intervals,
                     dims,
                     atts,
                     transformed_data,
                 ) = zip(*fit)
 
-                self.estimators_ += classifiers
+                self.estimators_ += estimators
                 self.intervals += intervals
                 self.atts += atts
                 self.dims += dims
                 self.transformed_data += transformed_data
 
-                self.n_estimators += self._n_jobs
+                self._n_estimators += self._n_jobs
                 train_time = time.time() - start_time
         else:
             fit = Parallel(n_jobs=self._n_jobs)(
@@ -345,7 +345,7 @@ class DrCIF(BaseClassifier):
                     y,
                     i,
                 )
-                for i in range(self.n_estimators)
+                for i in range(self._n_estimators)
             )
 
             (
@@ -398,11 +398,11 @@ class DrCIF(BaseClassifier):
                 self.dims[i],
                 self.atts[i],
             )
-            for i in range(self.n_estimators)
+            for i in range(self._n_estimators)
         )
 
         output = np.sum(y_probas, axis=0) / (
-            np.ones(self.n_classes) * self.n_estimators
+            np.ones(self.n_classes) * self._n_estimators
         )
         return output
 
@@ -431,7 +431,7 @@ class DrCIF(BaseClassifier):
                 y,
                 i,
             )
-            for i in range(self.n_estimators)
+            for i in range(self._n_estimators)
         )
         y_probas, oobs = zip(*p)
 

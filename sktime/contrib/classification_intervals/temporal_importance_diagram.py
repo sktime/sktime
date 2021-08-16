@@ -12,7 +12,7 @@ from sktime.transformations.panel import catch22
 def plot_curves(curves, curve_names, top_curves_shown=None, plot_mean=True):
     """Temporal importance curve diagram generator for interval forests."""
     # find attributes to display by max information gain for any time point.
-    top_curves_shown = top_curves_shown if top_curves_shown is None else len(curves)
+    top_curves_shown = len(curves) if top_curves_shown is None else top_curves_shown
     max_ig = [max(i) for i in curves]
     top = sorted(range(len(max_ig)), key=lambda i: max_ig[i], reverse=True)[
         :top_curves_shown
@@ -53,7 +53,7 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
     curves = cif._temporal_importance_curves(
         normalise_time_points=normalise_time_points
     )
-    curves.reshape((25 * cif.n_dims, cif.series_length))
+    curves = curves.reshape((25 * cif.n_dims, cif.series_length))
     features = catch22.feature_names + ["Mean", "Standard Deviation", "Slope"]
     curve_names = []
     for feature in features:

@@ -114,7 +114,7 @@ class CanonicalIntervalForest(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = CanonicalIntervalForest(n_estimators=10)
     >>> clf.fit(X_train, y_train)
-    CanonicalIntervalForest(n_estimators=10)
+    CanonicalIntervalForest(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -137,13 +137,12 @@ class CanonicalIntervalForest(BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-        self.base_estimator = base_estimator
-
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
         self.min_interval = min_interval
         self.max_interval = max_interval
         self.att_subsample_size = att_subsample_size
+        self.base_estimator = base_estimator
 
         self.random_state = random_state
         self.n_jobs = n_jobs

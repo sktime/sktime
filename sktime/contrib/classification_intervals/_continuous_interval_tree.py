@@ -25,7 +25,7 @@ from sktime.utils.validation.panel import check_X
 
 
 class ContinuousIntervalTree(BaseEstimator):
-    """Continuous Interval Tree (CIT)
+    """Continuous Interval Tree (CIT).
 
     The 'Time Series Tree' described in the Time Series Forest (TSF) paper Deng et al
     (2013). [1]_

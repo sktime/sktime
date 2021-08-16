@@ -39,6 +39,7 @@ def test_contracted_drcif_on_unit_test_data():
     drcif = DrCIF(time_limit_in_minutes=0.025, random_state=0)
     drcif.fit(X_train, y_train)
 
+    assert len(drcif.estimators_) > 1
     assert accuracy_score(y_test, drcif.predict(X_test)) >= 0.8
 
 
