@@ -208,7 +208,7 @@ class AutoARIMA(_PmdArimaAdapter):
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
 
-    See also
+    See Also
     --------
     ARIMA
 

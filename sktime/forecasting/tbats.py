@@ -22,8 +22,6 @@ class TBATS(_TbatsAdapter):
 
     TBATS (Exponential smoothing state space model with Box-Cox
     transformation, ARMA errors, Trigonometric Trend and Seasonal components.)
-    Model has been described in De Livera, Hyndman & Snyder (2011).
-    All of the useful methods have been implemented in parent Estimator class.
 
     Parameters
     ----------
@@ -58,6 +56,18 @@ class TBATS(_TbatsAdapter):
         https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
+
+    See Also
+    --------
+    BATS
+
+    References
+    ----------
+    ..[1] https://github.com/intive-DataScience/tbats
+    ..[2] De Livera, A.M., Hyndman, R.J., & Snyder, R. D. (2011),
+        Forecasting time series with complex seasonal patterns using exponential
+        smoothing, Journal of the American Statistical Association, 106(496), 1513-1527.
+
 
     Examples
     --------
