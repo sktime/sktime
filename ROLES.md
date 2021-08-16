@@ -53,5 +53,3 @@ Former Core Contributors (inactive)
 | N, Omar | big-o |
 | Rockenschaub, Patrick | prockenschaub |
 | Smith, Mathew | matteogales |
-
-
