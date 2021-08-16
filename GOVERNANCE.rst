@@ -350,7 +350,7 @@ core developers.
    Some changes also require a worked out :ref:`steps`. This depends on the type of change, see
    `decision making process <#Decision-making>`__ above.
 -  For a proposed change to be approved via lazy consensus, it needs to
-   approval by at least one core developer and no rejection by a core developer (veto right).
+   approval by at least one core developer (lazy consensus) and no rejection by a core developer (veto right).
    The approval required for this condition must be by a core developer different from a proposer.
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
    rejection by at least one core developer, and no acceptance by a core developer.
