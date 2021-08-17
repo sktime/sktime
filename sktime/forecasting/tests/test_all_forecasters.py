@@ -96,13 +96,13 @@ def test_y_multivariate_raises_error(Forecaster):
     """Test that wrong y scitype raises error (uni/multivariate if not supported)."""
     f = _construct_instance(Forecaster)
 
-    if f.get_tag("scitype:y") == "univariate":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
 
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
-    elif f.get_tag("scitype:y") == "multivariate":
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
 
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
@@ -139,20 +139,29 @@ def test_X_invalid_type_raises_error(Forecaster, X):
 def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") == "univariate":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
         y_train = _make_series(n_columns=1, index_type=index_type)
+        cutoff = y_train.index[-1]
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-    elif f.get_tag("scitype:y") == "multivariate":
+        try:
+            f.fit(y_train, fh=fh)
+            y_pred = f.predict()
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
+
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=2, index_type=index_type)
-    cutoff = y_train.index[-1]
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        cutoff = y_train.index[-1]
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-    try:
-        f.fit(y_train, fh=fh)
-        y_pred = f.predict()
-        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
-    except NotImplementedError:
-        pass
+        try:
+            f.fit(y_train, fh=fh)
+            y_pred = f.predict()
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
