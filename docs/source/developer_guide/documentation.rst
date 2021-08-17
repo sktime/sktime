@@ -114,14 +114,15 @@ References
 ~~~~~~~~~~
 
 sktime estimators that implement a concrete algorithm should generally include citations to the original research article, textbook or other resource
-that describes the algorithm.
+that describes the algorithm. Other code artifacts can include references as warranted (for example, references to relevant papers are included in
+sktime's performance metrics).
 
-```suggestion
-This should be done by adding references into this references section, and then linking to these in other parts of the docstring.
+This should be done by adding references into the references section of the docstring, and then typically linking to these in other parts of the docstring.
 
-The references should follow a very specific format to ensure they render correctly. See the example below. Note the space between the ".."
-and opening bracket, the space after the closing bracket, and how all the lines after the first line are aligned immediately with the
-opening bracket. Additional references should be added in exactly the same way, but the number enclosed in the bracket should be incremented.
+The references you intend to link to within the docstring should follow a very specific format to ensure they render correctly.
+See the example below. Note the space between the ".." and opening bracket, the space after the closing bracket,
+and how all the lines after the first line are aligned immediately with the opening bracket.
+Additional references should be added in exactly the same way, but the number enclosed in the bracket should be incremented.
 
 .. code-block:: rst
 
@@ -131,6 +132,14 @@ opening bracket. Additional references should be added in exactly the same way, 
 
 To link to the reference labeled as "[1]", you use "[1]_". This only works within the same docstring. Sometimes this is not rendered correctly if the "[1]_" link is
 preceded or followed by certain characters. If you run into this issue, try putting a space before and following the "[1]_" link.
+
+To list a reference but not link it elsewhere in the docstring, you can leave out the ".. [1]" directive as shown below.
+
+.. code-block:: rst
+
+    Some research article, link or other type of citation.
+    Long references wrap onto multiple lines. If you are
+    not linking the reference you can leave off the ".. [1]".
 
 Examples
 ~~~~~~~~
@@ -149,6 +158,7 @@ Estimators
 ^^^^^^^^^^
 
 BOSSEnsemble_
+
 ContractableBOSS_
 
 Performance Metrics
