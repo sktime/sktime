@@ -100,8 +100,8 @@ class WEASEL(BaseClassifier):
     }
     https://dl.acm.org/doi/10.1145/3132847.3132980
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.dictionary_based import WEASEL
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)

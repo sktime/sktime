@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements trend based forecaster."""
 
 __author__ = ["Anthony Jancso", "mloning"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster"]
@@ -18,7 +19,7 @@ from sktime.utils.datetime import _get_duration
 
 
 class TrendForecaster(BaseForecaster):
-    """Forecast time series data.
+    """Trend based forecasts of time series data.
 
     Default settings train a linear regression model.
 
@@ -127,8 +128,8 @@ class PolynomialTrendForecaster(BaseForecaster):
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> y = load_airline()
