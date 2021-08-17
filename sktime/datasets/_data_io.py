@@ -91,8 +91,7 @@ def _download_and_extract(url, extract_path=None):
 
 
 def _list_downloaded_datasets(extract_path):
-    """
-    Return a list of all the currently downloaded datasets.
+    """Return a list of all the currently downloaded datasets.
 
     Modified version of
     https://github.com/tslearn-team/tslearn/blob
@@ -117,34 +116,42 @@ def _list_downloaded_datasets(extract_path):
 
 
 def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
-    """
-    Load dataset from UCR UEA time series archive.
+    """Load dataset from UCR UEA time series archive.
 
-    Datasets to be found here: http://www.timeseriesclassification.com/dataset.php
-    Downloads and extracts dataset if not already downloaded.
+    Downloads and extracts dataset if not already downloaded. Data is assumed to be
+    in the standard .ts format: each row is a (possibly multivariate) time series.
+    Each dimension is separated by a colon, each value in a series is comma
+    separated. For examples see sktime.datasets.data.tsc. ArrowHead is an example of
+    a univariate equal length problem, BasicMotions an equal length multivariate
+    problem.
 
     Parameters
     ----------
     name : str
-        Name of data set.
-        Possible strings can be found at:
-        http://www.timeseriesclassification.com/dataset.php .
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        Name of data set. If a dataset that is listed in tsc_dataset_names is given,
+        this function will look in the extract_path first, and if it is not present,
+        attempt to download the data from www.timeseriesclassification.com, saving it to
+        the extract_path.
+    split : None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By default it
+        loads both into a single dataset, otherwise it looks only for files of the
+        format <name>_TRAIN.ts or <name>_TEST.ts.
+    return_X_y : bool, optional (default=False)
+        it returns two objects, if False, it appends the class labels to the dataframe.
     extract_path : str, optional (default=None)
-        Default extract path is `sktime/datasets/data/`
+        the path to look for the data. If no path is provided, the function
+        looks in `sktime/datasets/data/`.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: pandas DataFrame
+        The time series data for the problem with n_cases rows and either
+        n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
+        series associated with each case. If return_X_y is False, column
+        n_dimensions+1 contains the class labels/target variable.
+    y: numpy array, optional
+        The class labels for each case in X, returned separately if return_X_y is
+        True, or appended to X if False
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
