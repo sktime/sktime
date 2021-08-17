@@ -340,21 +340,39 @@ def test_update_predict_single(Forecaster, fh, update_params):
 def _check_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
 ):
-    y = make_forecasting_problem(all_positive=True, index_type="datetime")
-    y_train, y_test = temporal_train_test_split(y)
-    cv = SlidingWindowSplitter(
-        fh,
-        window_length=window_length,
-        step_length=step_length,
-        start_with_window=False,
-    )
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=fh)
-    y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
-    assert isinstance(y_pred, (pd.Series, pd.DataFrame))
-    expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
-    actual = y_pred.index
-    np.testing.assert_array_equal(actual, expected)
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
+        y = _make_series(n_columns=1, all_positive=True, index_type="datetime")
+        y_train, y_test = temporal_train_test_split(y)
+        cv = SlidingWindowSplitter(
+            fh,
+            window_length=window_length,
+            step_length=step_length,
+            start_with_window=False,
+        )
+        f.fit(y_train, fh=fh)
+        y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
+        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+        expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
+        actual = y_pred.index
+        np.testing.assert_array_equal(actual, expected)
+
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
+        y = _make_series(n_columns=2, all_positive=True, index_type="datetime")
+
+        y_train, y_test = temporal_train_test_split(y)
+        cv = SlidingWindowSplitter(
+            fh,
+            window_length=window_length,
+            step_length=step_length,
+            start_with_window=False,
+        )
+        f.fit(y_train, fh=fh)
+        y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
+        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+        expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
+        actual = y_pred.index
+        np.testing.assert_array_equal(actual, expected)
 
 
 # test with update_params=False and different values for steps_length
