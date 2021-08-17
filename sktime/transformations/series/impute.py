@@ -34,8 +34,8 @@ class Imputer(_SeriesToSeriesTransformer):
         * "constant" : same constant value (given in arg value) for all NaN
         * "mean" : pd.Series.mean()
         * "median" : pd.Series.median()
-        * "backfill"/"bfill" : adapted from pd.Series.fillna()
-        * "pad"/"ffill" : adapted from pd.Series.fillna()
+        * "backfill" ot "bfill" : adapted from pd.Series.fillna()
+        * "pad" or "ffill" : adapted from pd.Series.fillna()
         * "random" : random values between pd.Series.min() and .max()
         * "forecaster" : use an sktime Forecaster, given in arg forecaster
 
@@ -47,7 +47,7 @@ class Imputer(_SeriesToSeriesTransformer):
     forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
         Use a given Forecaster to impute by insample predictions when
         method="forecaster". Before fitting, missing data is imputed with
-        method="ffill"/"bfill" as heuristic.
+        method="ffill" or "bfill" as heuristic.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 

@@ -45,11 +45,11 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
         - "none" performs no checks or handling of missing values
         - “raise” raises an exception if NaN values are found.
         - “drop” removes the missing observations and then estimates the
-        autocovariances treating the non-missing as contiguous.
+          autocovariances treating the non-missing as contiguous.
         - “conservative” computes the autocovariance using nan-ops so that nans
-        are removed when computing the mean and cross-products that are used to
-        estimate the autocovariance. "n" in calculation is set to the number of
-        non-missing observations.
+          are removed when computing the mean and cross-products that are used to
+          estimate the autocovariance. "n" in calculation is set to the number of
+          non-missing observations.
 
     See Also
     --------

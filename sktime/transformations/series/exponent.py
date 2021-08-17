@@ -214,8 +214,8 @@ class SqrtTransformer(ExponentTransformer):
 
     Transformation take the square root of the input series. By default,
     when offset="auto", a series with negative values is shifted prior to the
-    exponentiation to avoid potential errors of applying certain fractional
-    exponents to negative values.
+    exponentiation to avoid potential errors of applying square root
+    transformation to negative values.
 
     Parameters
     ----------
