@@ -61,19 +61,24 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 def test_get_fitted_params(Forecaster):
     """Test get_fitted_params."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
         y_train = _make_series(n_columns=1)
         f.fit(y_train, fh=FH0)
+        try:
+            params = f.get_fitted_params()
+            assert isinstance(params, dict)
 
-    elif f.get_tag("scitype:y") == "multivariate":
+        except NotImplementedError:
+            pass
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=2)
         f.fit(y_train, fh=FH0)
-    try:
-        params = f.get_fitted_params()
-        assert isinstance(params, dict)
+        try:
+            params = f.get_fitted_params()
+            assert isinstance(params, dict)
 
-    except NotImplementedError:
-        pass
+        except NotImplementedError:
+            pass
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
