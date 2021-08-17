@@ -33,7 +33,8 @@ def _from_2d_numpy_to_series(x, index=None):
 
 
 class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
-    """Adapt scikit-learn-like tabular transformations to series setting.
+    """Adapt scikit-learn-like :term:`tabular` transformations to
+    :term:`series <Time series>` setting.
 
     This is useful for applying scikit-learn transformations to series,
     but only works with transformations that do not require multiple
