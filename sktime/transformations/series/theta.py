@@ -22,12 +22,9 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and ThetaLinesTransformer modifies the local curvature of the time series
-    using Theta-coefficients passed through the parameter `theta`.
+    using Theta-coefficient values passed through the parameter `theta`.
 
-    The pimary parameter:
-        theta: list of Theta-coefficient values
-
-    Each theta-coefficient is applied directly to the second differences of the input
+    Each Theta-coefficient is applied directly to the second differences of the input
     series. The resulting transformed series (Theta-lines) are returned as a
     pd.DataFrame of shape len(input series) * len(`theta`).
 
@@ -40,9 +37,10 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     -----
     Depending on the value of the Theta-coefficient, Theta-lines either augment the
     long-term trend (0 < Theta < 1) or the the short-term behaviour (Theta > 1).
+
     Special cases:
-        - Theta == 0 : deflates input data to linear trend;
-        - Theta == 1 : returns data unchanged;
+        - Theta == 0 : deflates input data to linear trend
+        - Theta == 1 : returns data unchanged
         - Theta < 0 : transformes time series and mirrors it along the linear trend.
 
     References
