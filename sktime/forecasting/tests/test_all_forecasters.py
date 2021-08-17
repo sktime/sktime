@@ -96,13 +96,13 @@ def test_y_multivariate_raises_error(Forecaster):
     """Test that wrong y scitype raises error (uni/multivariate if not supported)."""
     f = _construct_instance(Forecaster)
 
-    if f.get_tag("scitype:y") == "univariate":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
 
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
-    elif f.get_tag("scitype:y") == "multivariate":
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
 
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
@@ -280,16 +280,20 @@ def test_score(Forecaster, fh):
 def test_update_predict_single(Forecaster, fh, update_params):
     """Check correct time index of update-predict."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
         y = _make_series(n_columns=1)
-    elif f.get_tag("scitype:y") == "multivariate":
+        y_train, y_test = temporal_train_test_split(y)
+        f.fit(y_train, fh=fh)
+        y_pred = f.update_predict_single(y_test, update_params=update_params)
+        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y = _make_series(
             n_columns=2,
         )
-    y_train, y_test = temporal_train_test_split(y)
-    f.fit(y_train, fh=fh)
-    y_pred = f.update_predict_single(y_test, update_params=update_params)
-    _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
+        y_train, y_test = temporal_train_test_split(y)
+        f.fit(y_train, fh=fh)
+        y_pred = f.update_predict_single(y_test, update_params=update_params)
+        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
 
 def _check_update_predict_predicted_index(
