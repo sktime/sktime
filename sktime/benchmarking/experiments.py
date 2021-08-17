@@ -113,17 +113,17 @@ def run_clustering_experiment(
     """
     # Build the clusterer on train data, recording how long it takes
 
-    start = int(time.time())
+    start = int(time.perf_counter())
     clusterer.fit(trainX)
-    build_time = int(time.time()) - start
-    start = int(time.time())
+    build_time = int(time.perf_counter()) - start
+    start = int(time.perf_counter())
     train_preds = clusterer.predict(trainX)
     # predict_train_time = int(round(time.time() * 1000)) - start
 
     # Form predictions on trainY
-    start = int(time.time())
+    start = int(time.perf_counter())
     preds = clusterer.predict(testX)
-    test_time = int(time.time()) - start
+    test_time = int(time.perf_counter()) - start
     second = str(clusterer.get_params())
     second.replace("\n", " ")
     second.replace("\r", " ")
@@ -352,13 +352,13 @@ def run_classification_experiment(
         cross-validation on the train data and saves. If the classifier can produce its
         own estimates, those are used instead.
     """
-    start = int(time.time())
+    start = int(time.perf_counter())
     classifier.fit(trainX, trainY)
-    build_time = int(time.time()) - start
-    start = int(time.time())
+    build_time = int(time.perf_counter()) - start
+    start = int(time.perf_counter())
     probs = classifier.predict_proba(testX)
     preds = classifier.classes_[np.argmax(probs, axis=1)]
-    test_time = int(time.time()) - start
+    test_time = int(time.perf_counter()) - start
     ac = accuracy_score(testY, preds)
     if "Composite" in cls_name:
         second = "Para info too long!"
@@ -389,7 +389,7 @@ def run_classification_experiment(
         full_path=False,
     )
     if train_file:
-        start = int(time.time())
+        start = int(time.perf_counter())
         if hasattr(
             classifier, "_get_train_probs"
         ):  # Normally Can only do this if test has been built
@@ -398,7 +398,7 @@ def run_classification_experiment(
             train_probs = cross_val_predict(
                 classifier, X=trainX, y=trainY, cv=10, method="predict_proba"
             )
-        train_time = int(time.time()) - start
+        train_time = int(time.perf_counter()) - start
         train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
         train_acc = accuracy_score(trainY, train_preds)
         if "Composite" in cls_name:
