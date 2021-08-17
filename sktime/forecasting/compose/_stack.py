@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements forecasters for combining forecasts via stacking."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["StackingForecaster"]
@@ -109,8 +110,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _update(self, y, X=None, update_params=True):
-
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------

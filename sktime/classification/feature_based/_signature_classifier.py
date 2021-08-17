@@ -82,10 +82,10 @@ class SignatureClassifier(BaseClassifier):
 
     See Also
     --------
-    :py:class:`SignatureTransformer`
+    SignatureTransformer
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.feature_based import SignatureClassifier
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
