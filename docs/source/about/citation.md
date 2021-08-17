@@ -1,4 +1,4 @@
-# Citing sktime
+# How to cite sktime
 
 If you use sktime in a scientific publication, we would appreciate
 citations to the following paper:
