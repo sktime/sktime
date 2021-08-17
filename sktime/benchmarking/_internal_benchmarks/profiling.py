@@ -8,8 +8,11 @@ import timeit
 def time_function_call(
     function_to_time: Callable, average_amount: int = 100, kwargs: Any = None
 ):
+    x = kwargs.pop("x")
+    y = kwargs.pop("y")
+
     def timeit_experiments():
-        function_to_time(kwargs.get("x"), kwargs.get("y"))
+        function_to_time(x, y, **kwargs)
 
     result = timeit.timeit(timeit_experiments, number=average_amount)
 
