@@ -67,7 +67,7 @@ sktime.
         In ``sktime`` reduction is used to allow one learning task to be adapted as a solution for an alternative task.
 
     Variable
-        Refers to some measurement of in terest. Variables may be cross-sectional (e.g. time-invariant measurements like a patient's place of birth) or
+        Refers to some measurement of interest. Variables may be cross-sectional (e.g. time-invariant measurements like a patient's place of birth) or
         :term:`time series`.
 
     Timepoint
