@@ -22,7 +22,7 @@ sktime uses the numpydoc_ Sphinx extension and follows
 `NumPy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
 To ensure docstrings meet expectations, sktime uses a combination of validations built into numpydoc_,
-pydocstyle_ (set to the NumPy convention) pre-commit checks and automated testing of docstring examples to ensure
+pydocstyle_ pre-commit checks (set to the NumPy convention) and automated testing of docstring examples to ensure
 the code runs without error. However, the automated docstring validation in pydocstyle_ only covers basic formatting.
 Passing these tests is necessary to meet the sktime docstring conventions, but is not sufficient for doing so.
 
@@ -140,5 +140,24 @@ The examples should use either a built-in sktime dataset or other simple data (e
 (e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 
+Examples of Good sktime Docstrings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here are a few examples of sktime code artifacts with good documentation.
+
+Estimators
+^^^^^^^^^^
+
+BOSSEnsemble_
+ContractableBOSS_
+
+Performance Metrics
+^^^^^^^^^^^^^^^^^^^
+
+MeanAbsoluteScaledError_
+
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
 .. _pydocstyle: http://www.pydocstyle.org/en/stable/
+.. _BOSSEnsemble: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
+.. _ContractableBOSS: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
+.. _MeanAbsoluteScaledError: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
