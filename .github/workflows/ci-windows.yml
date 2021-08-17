@@ -9,106 +9,47 @@ on:
       - main
 
 jobs:
-  code-quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.4
-        with:
-          output: ' '
-      - name: List changed files
-        run: echo '${{ steps.file_changes.outputs.files}}'
-      - uses: pre-commit/action@v2.0.0
-        with:
-          extra_args: --files ${{ steps.file_changes.outputs.files}}
-
-  doc-quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pydocstyle
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.4
-        with:
-          output: ' '
-      - name: List changed files
-        run: echo '${{ steps.file_changes.outputs.files}}'
-      - name: Check doc-quality
-        run: pydocstyle ${{ steps.file_changes.outputs.files}} --config=setup.cfg
-
-  test-examples:
-    needs: code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install wheel
-          pip install -r build_tools/requirements.txt
-          pip install -r .binder/requirements.txt
-      - name: Build wheel
-        run: python setup.py sdist bdist_wheel
-      - name: Install from wheel
-        run: pip install --pre --no-index --no-deps --find-links dist/ sktime
-      - name: Run examples
-        run: build_tools/run_examples.sh
-        shell: bash
-
-  build:
-    needs: code-quality
+ build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest]
         python-version: [3.6, 3.7, 3.8]
     steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniconda-version: "latest"
-          auto-update-conda: true
-          activate-environment: testenv
-          channels: conda-forge,defaults
-          channel-priority: true
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-      - name: Set up conda
-      - run: |
-          conda config --set always_yes true
-      - name: Install dependencies
-        run: |
-          conda install -c conda-forge "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba>=0.50,<0.53" "numpy>=1.19" "pandas>=1.1.0,<1.2" "statsmodels>=0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0"
-          pip install -r build_tools/requirements.txt
-          conda list
-      - name: Build wheel
-        run: |
-          python setup.py build_ext --compiler=msvc
-          python setup.py bdist_wheel bdist_wininst
-          ls dist
-      - name: Install from wheel
-        run: pip install --pre --no-index --no-deps --find-links dist/ sktime
-      - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          cd testdir/
-          pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
-      - name: Display coverage report
-        run: ls -l ./testdir/
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./testdir/coverage.xml
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      name: Set up conda
+      with:
+        miniconda-version: "latest"
+        auto-update-conda: true
+        activate-environment: testenv
+        channels: conda-forge,defaults
+        channel-priority: true
+        python-version: ${{ matrix.python-version }}
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+    - name: Install dependencies
+      run: |
+        conda install -c conda-forge -y "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba>=0.50,<0.53" "numpy>=1.19" "pandas>=1.1.0,<1.2" "statsmodels>=0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0"
+        pip install -r build_tools/requirements.txt
+        conda list
+    - name: Build wheel
+      run: |
+        python setup.py build_ext --compiler=msvc
+        python setup.py bdist_wheel bdist_wininst
+        ls dist
+    - name: Install from wheel
+      run: pip install --pre --no-index --no-deps --find-links dist/ sktime
+    - name: Run tests
+      run: |
+        mkdir -p testdir/
+        cp .coveragerc testdir/
+        cp setup.cfg testdir/
+        cd testdir/
+        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+    - name: Display coverage report
+      run: ls -l ./testdir/
+    - name: Publish code coverage
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./testdir/coverage.xml
