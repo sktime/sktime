@@ -23,7 +23,7 @@ from sktime.forecasting.base import ForecastingHorizon
 
 
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
-    """Automatically find best weights for the ensemble.
+    """Automatically find best weights for the ensembled forecasters.
 
     The AutoEnsembleForecaster uses a meta-model (regressor) to calculate the optimal
     weights for ensemble aggregation with mean. The regressor has to be sklearn-like
@@ -56,6 +56,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     weights_ : np.array
         The weights based on either regressor.feature_importances_ or
         regressor.coef_ values.
+
+    See Also
+    --------
+    EnsembleForecaster
 
     Example
     -------
@@ -200,6 +204,10 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
         Weights to apply in aggregation.
+
+    See Also
+    --------
+    AutoEnsembleForecaster
 
     Examples
     --------
