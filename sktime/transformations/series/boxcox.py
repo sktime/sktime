@@ -25,9 +25,9 @@ from sktime.utils.validation.series import check_series
 
 
 class BoxCoxTransformer(_SeriesToSeriesTransformer):
-    """Box-Cox power transform.
+    r"""Box-Cox power transform.
 
-    Box-Cox transformation is a data transformation that is used to
+    Box-Cox transformation is a power transformation that is used to
     make data more normally distributed and stabilize its variance based
     on the hyperparameter lambda. [1]_
 
@@ -76,8 +76,8 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
     Notes
     -----
-    The Box-Cox transformation is defined as :math:`\\frac{y^{\\lambda}-1}{\\lambda},
-    \\lambda \\ne 0 \\text{ or } ln(y), \\lambda = 0`.
+    The Box-Cox transformation is defined as :math:`\frac{y^{\lambda}-1}{\lambda},
+    \lambda \ne 0 \text{ or } ln(y), \lambda = 0`.
 
     Therefore, the input data must be positive. In some implementations, a positive
     constant is added to the series prior to applying the transformation. But
@@ -173,9 +173,9 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
 
 
 class LogTransformer(_SeriesToSeriesTransformer):
-    """Log transformation.
+    """Natural logarithm transformation.
 
-    The natural log transformation is can be used to make data more normally
+    The natural log transformation can used to make data more normally
     distributed and stabilize its variance.
 
     See Also
