@@ -42,6 +42,23 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
     offset : int or float
         User supplied offset value.
 
+    See Also
+    --------
+    BoxCoxTransformer :
+        Applies Box-Cox power transformation. Can help normalize data and
+        compress variance of the series.
+    LogTransformer :
+        Transformer input data using natural log. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.exponent.SqrtTransformer :
+        Transform input data by taking its square root. Can help compress
+        variance of input series.
+
+    Notes
+    -----
+    For an input series `Z` the exponent transformation is defined as
+    :math:`(Z + offset)^{power}`.
+
     Examples
     --------
     >>> from sktime.transformations.series.exponent import ExponentTransformer
@@ -195,7 +212,7 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
 class SqrtTransformer(ExponentTransformer):
     """Apply square root transformation to a timeseries.
 
-    Transformation raises input series to the `power` provided. By default,
+    Transformation take the square root of the input series. By default,
     when offset="auto", a series with negative values is shifted prior to the
     exponentiation to avoid potential errors of applying certain fractional
     exponents to negative values.
@@ -214,6 +231,23 @@ class SqrtTransformer(ExponentTransformer):
     ----------
     offset : int or float
         User supplied offset value.
+
+    See Also
+    --------
+    BoxCoxTransformer :
+        Applies Box-Cox power transformation. Can help normalize data and
+        compress variance of the series.
+    LogTransformer :
+        Transformer input data using natural log. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.exponent.ExponentTransformer :
+        Transform input data by raising it to an exponent. Can help compress
+        variance of series if a fractional exponent is supplied.
+
+    Notes
+    -----
+    For an input series `Z` the square root transformation is defined as
+    :math:`(Z + offset)^{0.5}`.
 
     Examples
     --------
