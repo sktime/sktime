@@ -321,9 +321,20 @@ def test_score(Forecaster, fh):
 def test_update_predict_single(Forecaster, fh, update_params):
     """Check correct time index of update-predict."""
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=fh)
-    y_pred = f.update_predict_single(y_test, update_params=update_params)
-    _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
+        y = _make_series(n_columns=1)
+        y_train, y_test = temporal_train_test_split(y)
+        f.fit(y_train, fh=fh)
+        y_pred = f.update_predict_single(y_test, update_params=update_params)
+        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
+        y = _make_series(
+            n_columns=2,
+        )
+        y_train, y_test = temporal_train_test_split(y)
+        f.fit(y_train, fh=fh)
+        y_pred = f.update_predict_single(y_test, update_params=update_params)
+        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
 
 def _check_update_predict_predicted_index(
