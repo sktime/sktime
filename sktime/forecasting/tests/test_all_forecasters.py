@@ -169,12 +169,24 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
     f = _construct_instance(Forecaster)
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
-    try:
-        f.fit(y_train, X_train, fh=fh)
-        y_pred = f.predict(X=X_test)
-        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
-    except NotImplementedError:
-        pass
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
+        y_train = _make_series(n_columns=1, index_type=index_type)
+        try:
+            f.fit(y_train, X_train, fh=fh)
+            y_pred = f.predict(X=X_test)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
+
+    elif f.get_tag("scitype:y") in ["multivariate", "both"]:
+        y_train = _make_series(n_columns=1, index_type=index_type)
+
+        try:
+            f.fit(y_train, X_train, fh=fh)
+            y_pred = f.predict(X=X_test)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
