@@ -96,13 +96,13 @@ def test_y_multivariate_raises_error(Forecaster):
     """Test that wrong y scitype raises error (uni/multivariate if not supported)."""
     f = _construct_instance(Forecaster)
 
-    if f.get_tag("scitype:y") == "univariate":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
 
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
-    elif f.get_tag("scitype:y") == "multivariate":
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
 
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
@@ -169,18 +169,24 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
     f = _construct_instance(Forecaster)
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
-    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
+        y_train = _make_series(n_columns=1, index_type=index_type)
+        try:
+            f.fit(y_train, X_train, fh=fh)
+            y_pred = f.predict(X=X_test)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
+
+    elif f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=1, index_type=index_type)
 
-    elif f.get_tag("scitype:y") == "multivariate" or f.get_tag("scitype:y") == "both":
-        y_train = _make_series(n_columns=1, index_type=index_type)
-
-    try:
-        f.fit(y_train, X_train, fh=fh)
-        y_pred = f.predict(X=X_test)
-        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
-    except NotImplementedError:
-        pass
+        try:
+            f.fit(y_train, X_train, fh=fh)
+            y_pred = f.predict(X=X_test)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
