@@ -96,13 +96,13 @@ def test_y_multivariate_raises_error(Forecaster):
     """Test that wrong y scitype raises error (uni/multivariate if not supported)."""
     f = _construct_instance(Forecaster)
 
-    if f.get_tag("scitype:y") == "univariate":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
 
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
-    elif f.get_tag("scitype:y") == "multivariate":
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
 
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
