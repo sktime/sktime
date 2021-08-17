@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster"]
 __author__ = ["Markus Löning", "Piyush Gade"]
@@ -11,13 +12,13 @@ import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation import check_window_length
 
 
-class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
-    """
+class NaiveForecaster(_BaseWindowForecaster):
+    """Forecast based on naive assumptions about past trends continuing.
+
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
 
@@ -47,7 +48,19 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
+
+    _tags = {"requires-fh-in-fit": False}
 
     def __init__(self, strategy="last", window_length=None, sp=1):
         super(NaiveForecaster, self).__init__()
@@ -55,7 +68,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         self.sp = sp
         self.window_length = window_length
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -69,9 +82,10 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
         Returns
         -------
         self : returns an instance of self.
-        """  # X_train is ignored
-        self._set_y_X(y, X)
-        self._set_fh(fh)
+        """
+        # X_train is ignored
+
+        n_timepoints = y.shape[0]
 
         if self.strategy == "last":
             if self.sp == 1:
@@ -99,7 +113,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                         f"{self.window_length} is smaller than "
                         f"`sp`: {self.sp}."
                     )
-            self.window_length_ = check_window_length(self.window_length)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
             self.sp_ = check_sp(self.sp)
 
             #  if not given, set default window length for the mean strategy
@@ -111,7 +125,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                 warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
-            self.window_length_ = check_window_length(self.window_length)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
             if self.window_length is None:
                 self.window_length_ = len(y)
             if self.window_length == 1:
@@ -138,13 +152,12 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                 f"the training series."
             )
 
-        self._is_fitted = True
         return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Internal predict"""
+        """Calculate predictions for use in predict."""
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
 
@@ -181,7 +194,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
                     pad_width = self.sp_ - remainder
                 else:
                     pad_width = 0
-                last_window = np.hstack([last_window, np.full(pad_width, np.nan)])
+                last_window = np.hstack([np.full(pad_width, np.nan), last_window])
 
                 # reshape last window, one column per season
                 last_window = last_window.reshape(

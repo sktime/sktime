@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+"""Implements meta forecaster for forecasters composed of other estimators."""
+
+__author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel
@@ -12,11 +14,10 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._sktime import _SktimeForecaster
 
 
-class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstimator):
-    """Base class for heterogenous ensemble forecasters"""
+class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
+    """Base class for heterogeneous ensemble forecasters."""
 
     _required_parameters = ["forecasters"]
 
@@ -58,16 +59,33 @@ class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstima
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel"""
+        """Fit all forecasters in parallel."""
 
         def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster"""
+            """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_forecaster)(clone(forecaster), y, X, fh)
             for forecaster in forecasters
         )
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional, default=True
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        for forecaster in self.forecasters_:
+            forecaster.update(y, X, update_params=update_params)
+        return self
 
     def _predict_forecasters(
         self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -82,8 +100,29 @@ class _HeterogenousEnsembleForecaster(_SktimeForecaster, _HeterogenousMetaEstima
         ]
 
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **params):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
         self._set_params("forecasters", **params)
         return self

@@ -9,7 +9,7 @@ import pytest
 
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests._config import EXCLUDED_TESTS
-from sktime.utils import all_estimators
+from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import check_estimator
 
 ALL_ESTIMATORS = all_estimators(

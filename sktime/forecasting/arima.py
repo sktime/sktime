@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements autoregressive integrated moving average (ARIMA) models."""
 
 __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["AutoARIMA", "ARIMA"]
@@ -210,6 +211,16 @@ class AutoARIMA(_PmdArimaAdapter):
     References
     ----------
     https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> y = load_airline()
+    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)
+    >>> forecaster.fit(y)
+    AutoARIMA(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(
@@ -376,7 +387,8 @@ class ARIMA(_PmdArimaAdapter):
     When two out of the three terms are zeros, the model may be referred to
     based on the non-zero parameter, dropping "AR", "I" or "MA" from the
     acronym describing the model. For example, ``ARIMA(1,0,0)`` is ``AR(1)``,
-    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]
+    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]_
+
     See notes for more practical information on the ``ARIMA`` class.
 
     Parameters
@@ -439,7 +451,7 @@ class ARIMA(_PmdArimaAdapter):
         metric to use for scoring the out-of-sample data:
 
             * If a string, must be a valid metric name importable from
-              ``sklearn.metrics``.
+                ``sklearn.metrics``.
             * If a callable, must adhere to the function signature::
 
                 def foo_loss(y_true, y_pred)
@@ -461,16 +473,16 @@ class ARIMA(_PmdArimaAdapter):
     **sarimax_kwargs : keyword args, optional
         Optional arguments to pass to the SARIMAX constructor.
         Examples of potentially valuable kwargs:
-          - time_varying_regression : boolean
+            - time_varying_regression : boolean
             Whether or not coefficients on the exogenous regressors are allowed
             to vary over time.
-          - enforce_stationarity : boolean
+            - enforce_stationarity : boolean
             Whether or not to transform the AR parameters to enforce
             stationarity in the auto-regressive component of the model.
-          - enforce_invertibility : boolean
+            - enforce_invertibility : boolean
             Whether or not to transform the MA parameters to enforce
             invertibility in the moving average component of the model.
-          - simple_differencing : boolean
+            - simple_differencing : boolean
             Whether or not to use partially conditional maximum likelihood
             estimation for seasonal ARIMA models. If True, differencing is
             performed prior to estimation, which discards the first
@@ -478,20 +490,20 @@ class ARIMA(_PmdArimaAdapter):
             state-space formulation. If False, the full SARIMAX model is
             put in state-space form so that all datapoints can be used in
             estimation. Default is False.
-          - measurement_error: boolean
+            - measurement_error: boolean
             Whether or not to assume the endogenous observations endog were
             measured with error. Default is False.
-          - mle_regression : boolean
+            - mle_regression : boolean
             Whether or not to use estimate the regression coefficients for the
             exogenous variables as part of maximum likelihood estimation or
             through the Kalman filter (i.e. recursive least squares). If
             time_varying_regression is True, this must be set to False.
             Default is True.
-          - hamilton_representation : boolean
+            - hamilton_representation : boolean
             Whether or not to use the Hamilton representation of an ARMA
             process (if True) or the Harvey representation (if False).
             Default is False.
-          - concentrate_scale : boolean
+            - concentrate_scale : boolean
             Whether or not to concentrate the scale (variance of the error
             term) out of the likelihood. This reduces the number of parameters
             estimated by maximum likelihood by one, but standard errors will
@@ -499,8 +511,22 @@ class ARIMA(_PmdArimaAdapter):
 
     References
     ----------
-    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
-    https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
+    ..[1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
+    ..[2] https://www.statsmodels.org/stable/generated/
+      statsmodels.tsa.statespace.sarimax.SARIMAX.html
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.arima import ARIMA
+    >>> y = load_airline()
+    >>> forecaster = ARIMA(
+    ...     order=(1, 1, 0),
+    ...     seasonal_order=(0, 1, 0, 12),
+    ...     suppress_warnings=True)
+    >>> forecaster.fit(y)
+    ARIMA(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(

@@ -1,4 +1,7 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements matrix profile transformation."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["MatrixProfileTransformer"]
@@ -12,8 +15,28 @@ _check_soft_dependencies("stumpy")
 
 import stumpy  # noqa: E402
 
+# noqa: E501
+
 
 class MatrixProfileTransformer(_SeriesToSeriesTransformer):
+    """Calculate the matrix profile of a time series.
+
+    Takes as input a single time series dataset and returns the matrix profile
+    for that time series dataset.
+
+    Parameters
+    ----------
+    window_length : int
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.matrix_profile import \
+    MatrixProfileTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = MatrixProfileTransformer()
+    >>> y_hat = transformer.fit_transform(y)
+    """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
 
@@ -21,22 +44,20 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
         self.window_length = window_length
         super(MatrixProfileTransformer, self).__init__()
 
-    def transform(self, X, y=None):
-        """
-        Takes as input a single time series dataset and returns the matrix profile
-        for that time series dataset.
+    def transform(self, Z, X=None):
+        """Tranform data.
 
         Parameters
         ----------
-        X: pandas.Series
-           Time series dataset(lets say of length=n)
+        Z: pandas.Series
+            Time series dataset(lets say of length=n)
 
         Returns
         -------
-        Xt: pandas.Series
+        Z: pandas.Series
             Matrix Profile of time series as output with length as (n-window_length+1)
         """
         self.check_is_fitted()
-        X = check_series(X, enforce_univariate=True)
-        Xt = stumpy.stump(X, self.window_length)
-        return pd.Series(Xt[:, 0])
+        Z = check_series(Z, enforce_univariate=True)
+        Z = stumpy.stump(Z, self.window_length)
+        return pd.Series(Z[:, 0])

@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.utils.data_processing import from_2d_array_to_nested
+from sktime.datatypes._panel._convert import from_2d_array_to_nested
 from sktime.utils.validation.panel import check_X
 
 
