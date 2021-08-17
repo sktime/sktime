@@ -1,0 +1,18 @@
+name: "Test"
+description: "Run pytest and upload coverage report"
+runs:
+  using: "composite"
+  steps:
+    - name: Run tests
+      run: |
+        mkdir -p testdir/
+        cp .coveragerc testdir/
+        cp setup.cfg testdir/
+        cd testdir/
+        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+    - name: Display coverage report
+      run: ls -l ./testdir/
+    - name: Publish code coverage
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./testdir/coverage.xml
