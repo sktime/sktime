@@ -211,7 +211,7 @@ def test_fh_in_predict_opt(Forecaster):
         f.predict(FH0)
         np.testing.assert_array_equal(f.fh, FH0)
 
-    elif f.get_tag("scitype:y") in ["multivariate", "both"]:
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=2)
 
         f = _construct_instance(Forecaster)
@@ -232,7 +232,7 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
         f.predict(FH0)
         np.testing.assert_array_equal(f.fh, FH0)
 
-    elif f.get_tag("scitype:y") in ["multivariate", "both"]:
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=2)
 
         # passing the same fh to both fit and predict works
