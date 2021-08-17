@@ -273,7 +273,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
 
-        Returns an inverse transformed version of Z by iterating over specified
+        Returns an inverse-transformed version of Z by iterating over specified
         columns and applying the univariate series transformer to them.
         Only works if `self.transformer` has an `inverse_transform` method.
 
@@ -284,7 +284,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         Returns
         -------
         Z : pd.Series, pd.DataFrame
-            Inverse transformed time series(es).
+            Inverse-transformed time series(es).
         """
         self.check_is_fitted()
         z = check_series(Z)

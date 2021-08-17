@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adaptor for applying Scikit-learn-like transformers to time series."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["TabularToSeriesAdaptor"]
 
 import pandas as pd
@@ -42,7 +42,12 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
     Parameters
     ----------
     transformer : Estimator
-        scikit-learn-like transformer to fit and apply to series
+        scikit-learn-like transformer to fit and apply to series.
+
+    Attributes
+    ----------
+    transformer_ : Estimator
+        Transformer fitted to data.
 
     Examples
     --------
@@ -63,7 +68,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
         super(TabularToSeriesAdaptor, self).__init__()
 
     def fit(self, Z, X=None):
-        """Fit.
+        """Fit data.
 
         Parameters
         ----------
@@ -72,7 +77,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
 
         Returns
         -------
-        self
+        self : an instance of self
         """
         Z = check_series(Z)
         self.transformer_ = clone(self.transformer)
