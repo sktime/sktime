@@ -1,4 +1,8 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements outlier detection from pyOD."""
+
 import numpy as np
 from sktime.annotation.base._base import BaseSeriesAnnotator
 
@@ -10,7 +14,7 @@ from sklearn import clone
 
 
 class PyODAnnotator(BaseSeriesAnnotator):
-    """Transformer that applies outlier detector from pyOD
+    """Transformer that applies outlier detector from pyOD.
 
     Parameters
     ----------
@@ -47,11 +51,10 @@ class PyODAnnotator(BaseSeriesAnnotator):
         -------
         self : returns a reference to self
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Create fitted model that sets attributes ending in "_".
         """
-
         X_np = X.to_numpy()
 
         if len(X_np.shape) == 1:
@@ -74,7 +77,6 @@ class PyODAnnotator(BaseSeriesAnnotator):
         Y : pd.Series - annotations for sequence X
             exact format depends on annotation type
         """
-
         fmt = self.fmt
         labels = self.labels
 

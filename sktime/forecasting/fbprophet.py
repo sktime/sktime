@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
-"""Prophet forecaster by wrapping fbprophet."""
+"""Implements Prophet forecaster by wrapping fbprophet."""
 
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
@@ -85,8 +84,8 @@ class Prophet(_ProphetAdapter):
     https://facebook.github.io/prophet
     https://github.com/facebook/prophet
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
