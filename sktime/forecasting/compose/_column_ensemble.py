@@ -106,6 +106,23 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional, default=True
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        for _, forecaster, index in self.forecasters_:
+            forecaster.update(y.iloc[:, index], X, update_params=update_params)
+        return self
+
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
 
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
