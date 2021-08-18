@@ -1,5 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Test functionality of time series plotting functions."""
 
 import numpy as np
 import pandas as pd
@@ -37,6 +39,7 @@ all_plots = univariate_plots + [_plot_series]
 
 @pytest.fixture
 def valid_data_types():
+    """Filter valid data types for those that work with plotting functions."""
     valid_data_types = tuple(
         filter(
             lambda x: x is not np.ndarray and x is not pd.DataFrame, VALID_DATA_TYPES
@@ -47,6 +50,7 @@ def valid_data_types():
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_runs_without_error(series_to_plot):
+    """Verify plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -57,6 +61,7 @@ def test_plot_series_runs_without_error(series_to_plot):
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
 @pytest.mark.parametrize("plot_func", all_plots)
 def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
+    """Verify all plots raise input errors with invalid input."""
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
@@ -70,6 +75,7 @@ def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
+    """Verify plot_series raises expected error with unequal index types."""
     match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
@@ -77,6 +83,7 @@ def test_plot_series_with_unequal_index_type_raises_error(
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
+    """Verify plot_series raises expected error for inconsistent marker length."""
     match = """There must be one marker for each time series,
                 but found inconsistent numbers of series and
                 markers."""
@@ -93,6 +100,7 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
+    """Verify plot_series raises expected error for inconsistent label length."""
     match = """There must be one label for each time series,
                 but found inconsistent numbers of series and
                 labels."""
@@ -109,6 +117,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
+    """Verify output of plot series is correct."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -142,6 +151,7 @@ def test_plot_series_output_type(series_to_plot):
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 def test_univariate_plots_run_without_error(series_to_plot, plot_func):
+    """Verify plots that accept univariate series run without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -152,6 +162,7 @@ def test_univariate_plots_run_without_error(series_to_plot, plot_func):
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 def test_univariate_plots_output_type(series_to_plot, plot_func):
+    """Verify plots that accept univariate series have the correct output types."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -170,6 +181,7 @@ def test_univariate_plots_output_type(series_to_plot, plot_func):
 
 
 def test_plot_series_uniform_treatment_of_int64_range_index_types():
+    """Verify that plot_series treats Int64 and Range indices equally."""
     # We test that int64 and range indices are treated uniformly and do not raise an
     # error of inconsistent index types
     _check_soft_dependencies("matplotlib")
