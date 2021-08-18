@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # License: copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
-"""Implements Theta-lines transformation for use with automatic Theta forecasting."""
+"""Implements Theta-lines transformation for use with Theta forecasting."""
 
 __author__ = ["GuzalBulatova", "mloning"]
 __all__ = ["ThetaLinesTransformer"]
@@ -26,11 +26,11 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
 
     Each Theta-coefficient is applied directly to the second differences of the input
     series. The resulting transformed series (Theta-lines) are returned as a
-    pd.DataFrame of shape len(input series) * len(`theta`).
+    pd.DataFrame of shape `len(input series) * len(theta)`.
 
     Parameters
     ----------
-    theta : list or tuple of int or float, default=(0,2)
+    theta : sequence of float, default=(0,2)
         Theta-coefficients to use in transformation.
 
     Notes
@@ -41,7 +41,7 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     Special cases:
         - Theta == 0 : deflates input data to linear trend
         - Theta == 1 : returns data unchanged
-        - Theta < 0 : transformes time series and mirrors it along the linear trend.
+        - Theta < 0 : transforms time series and mirrors it along the linear trend.
 
     References
     ----------
