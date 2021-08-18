@@ -90,7 +90,7 @@ class Arsenal(BaseClassifier):
 
         super(Arsenal, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build an ensemble ROCKET transformer and RidgeClassifierCV classifier.
 
         Parameters
@@ -103,7 +103,6 @@ class Arsenal(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
         n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_classes = np.unique(y).shape[0]
@@ -126,7 +125,6 @@ class Arsenal(BaseClassifier):
             self.weights.append(weight)
             self.weight_sum += weight
 
-        self._is_fitted = True
         return self
 
     def predict(self, X):
