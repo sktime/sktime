@@ -1,4 +1,4 @@
-.. _contributing::
+.. _contributing_guide::
 
 =================
 How to contribute

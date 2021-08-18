@@ -26,7 +26,7 @@ If you get stuck, please don’t hesitate to chat with us or raise an issue.
 
     +++
 
-    .. link-button:: contributing
+    .. link-button:: contributing_guide
             :type: ref
             :text: Contributing guide
             :classes: btn-block btn-secondary stretched-link
