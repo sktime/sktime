@@ -1140,31 +1140,32 @@ def write_tabular_transformation_to_arff(
     fit_transform=True,
 ):
     """
-    Output a dataset in dataframe format to .ts file.
+    Transform a dataset using a tabular output transformer and write the result to a
+    .ts file.
 
     Parameters
     ----------
-    data: {pandas dataframe, 3d numpy array}
-        the dataset to build the transformation with which must be of the structure
-        specified in the documentation examples/loading_data.ipynb
+    data: pandas dataframe or 3d numpy array
+        The dataset to build the transformation with which must be of the structure
+        specified in the documentation examples/loading_data.ipynb.
     transformation: BaseTransformer
-        Transformation to save to arff
+        Transformation use and to save to arff.
     path: str
-        The full path to output the ardd file
-    problem_name: str
-        The problemName to print in the header of the arff file
-        and also the name of the file.
-    class_label: {list, None}, optional
-        Provide class label to show the possible class values
-        for classification problems in the header.
-    class_value_list: {list/ndarray, []}, optional
-        ndarray containing the class values for each case in classification problems
-    comment: {None, str}, optional
+        The full path to output the arff file to.
+    problem_name: str, default="sample_data"
+        The problemName to print in the header of the arff file and also the name of
+        the file.
+    class_label: list of str or None, default=None
+        The problems class labels to show the possible class values for in the file
+        header, optional.
+    class_value_list: list, ndarray or None, default=None
+        The class values for each case, optional.
+    comment: str or None, default=None
         Comment text to be inserted before the header in a block.
-    fold: str, optional
+    fold: str or None, default=None
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
-    fit_transform: bool, optional
-        Whether to fit the transformer prior to calling transform
+    fit_transform: bool, default=True
+        Whether to fit the transformer prior to calling transform.
 
     Returns
     -------
@@ -1192,6 +1193,9 @@ def write_tabular_transformation_to_arff(
         raise IndexError(
             "The number of cases is not the same as the number of given class values"
         )
+
+    if fold is None:
+        fold = ""
 
     # create path if not exist
     dirt = f"{str(path)}/{str(problem_name)}-{type(transformation).__name__}/"
@@ -1255,34 +1259,33 @@ def write_dataframe_to_tsfile(
     Parameters
     ----------
     data: pandas dataframe
-        the dataset in a dataframe to be written as a ts file
+        The dataset in a dataframe to be written as a ts file
         which must be of the structure specified in the documentation
-        examples/loading_data.ipynb
+        examples/loading_data.ipynb.
         index |   dim_0   |   dim_1   |    ...    |  dim_c-1
            0  | pd.Series | pd.Series | pd.Series | pd.Series
            1  | pd.Series | pd.Series | pd.Series | pd.Series
           ... |    ...    |    ...    |    ...    |    ...
            n  | pd.Series | pd.Series | pd.Series | pd.Series
     path: str
-        The full path to output the ts file
-    problem_name: str
-        The problemName to print in the header of the ts file
-        and also the name of the file.
-    class_label: {list, None}, optional
-        Provide class label to show the possible class values
-        for classification problems in the header.
-    class_value_list: {list/ndarray, []}, optional
-        ndarray containing the class values for each case in classification problems
-    equal_length: {False, bool}, optional
-        Indicate whether each series has equal length. It only write to file if true.
-    series_length: {-1, int}, optional
-        Indicate each series length if they are of equal length.
-        It only write to file if true.
-    missing_values: {NaN, str}, optional
-        Representation for missing value, default is NaN.
-    comment: {None, str}, optional
+        The full path to output the ts file to.
+    problem_name: str, default="sample_data"
+        The problemName to print in the header of the ts file and also the name of
+        the file.
+    class_label: list of str or None, default=None
+        The problems class labels to show the possible class values for in the file
+        header, optional.
+    class_value_list: list, ndarray or None, default=None
+        The class values for each case, optional.
+    equal_length: bool, default=False
+        Indicates whether each series is of equal length.
+    series_length: int, default=-1
+        Indicates the series length if they are of equal length.
+    missing_values: str, default="NaN"
+        Representation for missing values.
+    comment: str or None, default=None
         Comment text to be inserted before the header in a block.
-    fold: str, optional
+    fold: str or None, default=None
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
 
     Returns
@@ -1335,30 +1338,29 @@ def write_ndarray_to_tsfile(
     Parameters
     ----------
     data: pandas dataframe
-        the dataset in a 3d ndarray to be written as a ts file
+        The dataset in a 3d ndarray to be written as a ts file
         which must be of the structure specified in the documentation
-        examples/loading_data.ipynb
+        examples/loading_data.ipynb.
         (n_instances, n_columns, n_timepoints)
     path: str
-        The full path to output the ts file
-    problem_name: str
-        The problemName to print in the header of the ts file
-        and also the name of the file.
-    class_label: {list, None}, optional
-        Provide class label to show the possible class values
-        for classification problems in the header.
-    class_value_list: {list/ndarray, []}, optional
-        ndarray containing the class values for each case in classification problems
-    equal_length: {False, bool}, optional
-        Indicate whether each series has equal length. It only write to file if true.
-    series_length: {-1, int}, optional
-        Indicate each series length if they are of equal length.
-        It only write to file if true.
-    missing_values: {NaN, str}, optional
-        Representation for missing value, default is NaN.
-    comment: {None, str}, optional
+        The full path to output the ts file to.
+    problem_name: str, default="sample_data"
+        The problemName to print in the header of the ts file and also the name of
+        the file.
+    class_label: list of str or None, default=None
+        The problems class labels to show the possible class values for in the file
+        header.
+    class_value_list: list, ndarray or None, default=None
+        The class values for each case, optional.
+    equal_length: bool, default=False
+        Indicates whether each series is of equal length.
+    series_length: int, default=-1
+        Indicates the series length if they are of equal length.
+    missing_values: str, default="NaN"
+        Representation for missing values.
+    comment: str or None, default=None
         Comment text to be inserted before the header in a block.
-    fold: str, optional
+    fold: str or None, default=None
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
 
     Returns
@@ -1396,6 +1398,9 @@ def write_ndarray_to_tsfile(
             "Please specify the series length for equal length time series data."
         )
 
+    if fold is None:
+        fold = ""
+
     # create path if not exist
     dirt = f"{str(path)}/{str(problem_name)}/"
     try:
@@ -1415,11 +1420,9 @@ def write_ndarray_to_tsfile(
     file.write(f"@problemName {problem_name}\n")
     file.write("@timestamps false\n")
     file.write(f"@univariate {str(univariate).lower()}\n")
+    file.write(f"@equalLength {str(equal_length).lower()}\n")
 
-    # write equal length or series length if provided
-    if equal_length:
-        file.write(f"@equalLength {str(equal_length).lower()}\n")
-    if series_length > 0:
+    if series_length > 0 and equal_length:
         file.write(f"@seriesLength {series_length}\n")
 
     # write class label line
