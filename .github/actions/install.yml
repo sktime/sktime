@@ -1,7 +1,0 @@
-name: "Install"
-description: "Install from pre-built Python wheel"
-runs:
-  using: "composite"
-  steps:
-    - name: Install from wheel
-      run: pip install --pre --no-index --no-deps --find-links dist/ sktime
