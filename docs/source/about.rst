@@ -8,12 +8,12 @@ About
    :maxdepth: 1
    :hidden:
 
-   about/mission.md
-   about/contributors.md
-   about/history.md
-   about/funding.md
-   about/citation.md
-   about/artwork.md
+   about/mission
+   about/contributors
+   about/history
+   about/funding
+   about/citation
+   about/artwork
 
 Learn more about the sktime project and its community.
 
