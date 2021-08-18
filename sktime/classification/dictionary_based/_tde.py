@@ -5,7 +5,7 @@ Dictionary based TDE classifiers based on SFA transform. Contains a single
 IndividualTDE and TDE.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = "MatthewMiddlehurst"
 __all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersection"]
 
 import math
@@ -23,17 +23,20 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
-    """
-    Temporal Dictionary Ensemble (TDE) as described in [1].
+    """Temporal Dictionary Ensemble (TDE).
 
-    Overview: Input n series length m with d dimensions
-    TDE searches k parameter values selected using a Gaussian processes
-    regressor, evaluating each with a LOOCV. It then retains s
+    Implementation of the dictionary based Temporal Dictionary Ensemble as described
+    in [1]_.
+
+    Overview: Input "n" series length "m" with "d" dimensions
+    TDE searches "k" parameter values selected using a Gaussian processes
+    regressor, evaluating each with a LOOCV. It then retains "s"
     ensemble members.
     There are six primary parameters for individual classifiers:
             alpha: alphabet size
@@ -42,7 +45,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             p: normalise/no normalise
             h: levels
             b: MCB/IGB
-    for any combination, an individual TDE classifier slides a window of
+    For any combination, an individual TDE classifier slides a window of
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
     first l/2 complex coefficients. These lcoefficients are then discretised
@@ -54,11 +57,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     fit involves finding n histograms.
     predict uses 1 nearest neighbour with a the histogram intersection
     distance function.
-
-    For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/classifiers/dictionary_based/TDE.java
-
 
     Parameters
     ----------
@@ -99,18 +97,22 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     prev_parameters_x       : parameter value of previous classifiers for GP
     prev_parameters_y       : accuracy of previous classifiers for GP
 
+    See Also
+    --------
+    IndividualTDE,
+
     Notes
     -----
-    ..[1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
-        "The Temporal Dictionary Ensemble (TDE) Classifier for Time Series
-        Classification",
-            in proceedings of the European Conference on Machine Learning and
-            Principles and Practice of Knowledge Discovery in Databases, 2020
-        https://ueaeprints.uea.ac.uk/id/eprint/75490/
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/dictionary_based/TDE.java>`_.
 
-    Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/classifiers/dictionary_based/TDE.java
+    References
+    ----------
+    ..  [1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
+        "The Temporal Dictionary Ensemble (TDE) Classifier for Time Series
+        Classification", in proceedings of the European Conference on Machine Learning
+        and Principles and Practice of Knowledge Discovery in Databases, 2020.
 
     Example
     -------
@@ -124,7 +126,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
     _tags = {
         "capability:multivariate": True,
         "capability:unequal_length": False,
@@ -184,24 +185,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.alphabet_size = 4
         super(TemporalDictionaryEnsemble, self).__init__()
 
-    def fit(self, X, y):
-        """Build an ensemble of individual TDE classifiers.
-
-         Using the training set (X,y), through randomising over the parameter space
-         to a set number of times then selecting new parameters using Gaussian
-        processes.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
+    def _fit(self, X, y):
+        self._n_jobs = check_n_jobs(self.n_jobs)
 
         if self.n_parameter_samples <= self.randomly_selected_params:
             print(  # noqa
@@ -328,42 +313,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.n_estimators = len(self.estimators_)
         self._weight_sum = np.sum(self.weights)
 
-        self._is_fitted = True
-        return self
-
-    def predict(self, X):
-        """Predict class values of n instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape [n, 1]
-
-        Returns
-        -------
-        array of shape [n, 1]
-        """
+    def _predict(self, X):
         rng = check_random_state(self.random_state)
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self.predict_proba(X)
+                for prob in self._predict_proba(X)
             ]
         )
 
-    def predict_proba(self, X):
-        """Predict class probabilities for n instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape [n, 1]
-
-        Returns
-        -------
-        array of shape [n, self.n_classes]
-        """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
-
+    def _predict_proba(self, X):
         sums = np.zeros((X.shape[0], self.n_classes))
 
         for n, clf in enumerate(self.estimators_):
