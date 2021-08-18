@@ -85,7 +85,7 @@ Learn more about the sktime project and its community.
 
     +++
 
-    .. link-button:: citation
+    .. link-button:: citation.md
             :type: ref
             :text: Citation
             :classes: btn-block btn-secondary stretched-link
