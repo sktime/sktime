@@ -22,12 +22,12 @@ class Prophet(_ProphetAdapter):
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
-            name: string name of the seasonality component.
-            period: float number of days in one period.
-            fourier_order: int number of Fourier components to use.
-            prior_scale: optional float prior scale for this component.
-            mode: optional 'additive' or 'multiplicative'
-            condition_name: string name of the seasonality condition.
+            * name: string name of the seasonality component.
+            * period: float number of days in one period.
+            * fourier_order: int number of Fourier components to use.
+            * prior_scale: optional float prior scale for this component.
+            * mode: optional 'additive' or 'multiplicative'
+            * condition_name: string name of the seasonality condition.
     add_country_holidays: dict or None, default=None
         Dict with args for Prophet.add_country_holidays().
         Dict can have the following keys/values:
@@ -95,14 +95,11 @@ class Prophet(_ProphetAdapter):
         str as defined in StanBackendEnum. If None, will try to
         iterate over all available backends and find the working one.
 
-    See Also
-    --------
-    https://facebook.github.io/prophet
-    https://github.com/facebook/prophet
-
     References
     ----------
     .. [1] timeseries-offset-aliases : https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
+    .. [2] https://facebook.github.io/prophet
+    .. [3] https://github.com/facebook/prophet
 
     Examples
     --------
