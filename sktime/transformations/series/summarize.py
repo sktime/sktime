@@ -27,7 +27,7 @@ ALLOWED_SUM_FUNCS = (
 )
 
 
-def _series_summary(series_or_df, summary_function="mean"):
+def _series_summary(series_or_df, summary_function="mean", axis=0):
     """Calculate summary value of a time series.
 
     For multivariate data the summary is applied to each column.
@@ -40,6 +40,8 @@ def _series_summary(series_or_df, summary_function="mean"):
         One of pandas summary functions ("mean", "min", "max", "sum",
         "skew", "kurtosis", "var", "std", "sem", "nunique", "count") that is used
         to summarize each column of the dataset.
+    axis : int, default=0
+        Axis to apply the summary function along. Only used for multivariate data.
 
     Raises
     ------
@@ -63,35 +65,35 @@ def _series_summary(series_or_df, summary_function="mean"):
         raise ValueError("`series_or_df` must be pd.Series or pd>DataFrame.")
 
     if summary_function == "mean":
-        summary_value = series_or_df.mean(axis=0)
+        summary_value = series_or_df.mean(axis=axis)
     elif summary_function == "min":
-        summary_value = series_or_df.min(axis=0)
+        summary_value = series_or_df.min(axis=axis)
     elif summary_function == "max":
-        summary_value = series_or_df.max(axis=0)
+        summary_value = series_or_df.max(axis=axis)
     elif summary_function == "sum":
-        summary_value = series_or_df.sum(axis=0)
+        summary_value = series_or_df.sum(axis=axis)
     elif summary_function == "skew":
-        summary_value = series_or_df.skew(axis=0)
+        summary_value = series_or_df.skew(axis=axis)
     elif summary_function == "kurtosis":
-        summary_value = series_or_df.kurtosis(axis=0)
+        summary_value = series_or_df.kurtosis(axis=axis)
     elif summary_function == "std":
-        summary_value = series_or_df.std(axis=0)
+        summary_value = series_or_df.std(axis=axis)
     elif summary_function == "var":
-        summary_value = series_or_df.var(axis=0)
+        summary_value = series_or_df.var(axis=axis)
     elif summary_function == "mad":
-        summary_value = series_or_df.mad(axis=0)
+        summary_value = series_or_df.mad(axis=axis)
     elif summary_function == "sem":
-        summary_value = series_or_df.sem(axis=0)
+        summary_value = series_or_df.sem(axis=axis)
     elif summary_function == "nunique":
         if is_series:
             summary_value = series_or_df.nunique()
         else:
-            summary_value = series_or_df.nunique(axis=0)
+            summary_value = series_or_df.nunique(axis=axis)
     elif summary_function == "count":
         if is_series:
             summary_value = series_or_df.count()
         else:
-            summary_value = series_or_df.count(axis=0)
+            summary_value = series_or_df.count(axis=axis)
     else:
         raise ValueError(f"`summary_function must be one of {ALLOWED_SUM_FUNCS}.")
 
@@ -105,9 +107,13 @@ def _series_summary(series_or_df, summary_function="mean"):
 class SummaryTransformer(_SeriesToPrimitivesTransformer):
     """Calculate summary value of a time series.
 
+    Calculates scalar value when applied to a :term:`univariate time series`.
+    If input is :term:`multivariate time series` then Scalar values for each
+    column and returned as elements of a pd.Series.
+
     Parameters
     ----------
-    summary_function : str
+    summary_function : str, default="mean"
         One of pandas summary functions ("mean", "min", "max", "sum",
         "skew", "kurtosis", "var", "std", "sem", "nunique", "count") that is used
         to summarize each column of the dataset.
