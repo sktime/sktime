@@ -80,6 +80,6 @@ sktime.
         depending on the discipline and context.
 
     Tabular
-        Is a setting where each :term:`timepoint` of the :term:`univariate time series` being measured for each instance are treated as feature and
-        stored as a primitive data type in the DataFrame’s cells. E.g., there are N instances of time series and each has T timepoints, this would
-        yield a pandas DataFrame with shape (N, T), so N columns, T rows.
+        Is a setting where each :term:`timepoint` of the :term:`univariate time series` being measured for each instance are treated as features and
+        stored as a primitive data type in the DataFrame’s cells. E.g., there are N :term:`instances <instance>` of time series and each has T
+        :term:`timepoints <timepoint>`, this would yield a pandas DataFrame with shape (T, N): T rows, N columns.
