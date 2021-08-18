@@ -250,7 +250,7 @@ Matrix Profile
     MatrixProfileTransformer
 
 Missing value imputation
-~~~~~~~~~~~~~~~~~~~~~~~~s
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
 
