@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.utils.plotting import plot_series, plot_correlations
+from sktime.utils.plotting import plot_series, plot_correlations, plot_lags
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import VALID_DATA_TYPES
 
@@ -15,7 +15,12 @@ y_airline = load_airline()
 y_airline_true = y_airline.iloc[y_airline.index < "1960-01"]
 y_airline_test = y_airline.iloc[y_airline.index >= "1960-01"]
 series_to_test = [y_airline, (y_airline_true, y_airline_test)]
-invalid_input_types = [y_airline.values, pd.DataFrame(y_airline), "this_is_a_string"]
+invalid_input_types = [
+    y_airline.values,
+    pd.DataFrame({"y1": y_airline, "y2": y_airline}),
+    "this_is_a_string",
+]
+univariate_plots = [plot_correlations, plot_lags]
 
 
 # Need to use _plot_series to make it easy for test cases to pass either a
@@ -25,6 +30,9 @@ def _plot_series(series, ax=None, **kwargs):
         return plot_series(*series, ax=ax, **kwargs)
     else:
         return plot_series(series, ax=ax, **kwargs)
+
+
+all_plots = univariate_plots + [_plot_series]
 
 
 @pytest.fixture
@@ -47,12 +55,13 @@ def test_plot_series_runs_without_error(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
-def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
+@pytest.mark.parametrize("plot_func", all_plots)
+def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
     with pytest.raises((TypeError, ValueError)):
-        _plot_series(series_to_plot)
+        plot_func(series_to_plot)
 
 
 @pytest.mark.parametrize(
@@ -131,31 +140,22 @@ def test_plot_series_output_type(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", [y_airline])
-def test_plot_correlations_runs_without_error(series_to_plot):
+@pytest.mark.parametrize("plot_func", univariate_plots)
+def test_univariate_plots_run_without_error(series_to_plot, plot_func):
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
-    plot_correlations(series_to_plot)
+    plot_func(series_to_plot)
     plt.gcf().canvas.draw_idle()
 
 
-@pytest.mark.parametrize("series_to_plot", invalid_input_types)
-def test_plot_correlations_invalid_input_type_raises_error(
-    series_to_plot, valid_data_types
-):
-    # TODO: Is it possible to dynamically create the matching str if it includes
-    #       characters that need to be escaped (like .)
-    # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
-    with pytest.raises((TypeError, ValueError)):
-        plot_correlations(series_to_plot)
-
-
 @pytest.mark.parametrize("series_to_plot", [y_airline])
-def test_plot_correlations_output_type(series_to_plot):
+@pytest.mark.parametrize("plot_func", univariate_plots)
+def test_univariate_plots_output_type(series_to_plot, plot_func):
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
-    fig, ax = plot_correlations(series_to_plot)
+    fig, ax = plot_func(series_to_plot)
 
     is_fig_figure = isinstance(fig, plt.Figure)
     is_ax_array = isinstance(ax, np.ndarray)
@@ -163,7 +163,7 @@ def test_plot_correlations_output_type(series_to_plot):
 
     assert is_fig_figure and is_ax_array and is_ax_array_axis, "".join(
         [
-            "plot_correlations should return plt.Figure and array of plt.Axes,",
+            f"{plot_func.__name__} should return plt.Figure and array of plt.Axes,",
             f"but returned: {type(fig)} and {type(ax)}",
         ]
     )
