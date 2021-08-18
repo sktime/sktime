@@ -9,6 +9,7 @@ __all__ = ["SummaryTransformer", "MeanTransformer"]
 import pandas as pd
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.utils._maint import deprecated
 from sktime.utils.validation.series import check_series
 
 
@@ -208,5 +209,11 @@ class MeanTransformer(SummaryTransformer):
     >>> y_mean = transformer.fit_transform(y)
     """
 
+    @deprecated(
+        """Please use `SummaryTransformer` from
+        `sktime.transformation.series.summarize` instead.
+        Will be removed in release 0.9.
+        """
+    )
     def __init__(self):
         super().__init__(summary_function="mean")
