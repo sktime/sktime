@@ -99,7 +99,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     See Also
     --------
-    IndividualTDE,
+    IndividualTDE
 
     Notes
     -----
