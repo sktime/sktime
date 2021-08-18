@@ -127,7 +127,7 @@ class Arsenal(BaseClassifier):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
