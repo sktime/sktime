@@ -361,7 +361,7 @@ class DrCIF(BaseClassifier):
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self.predict_proba(X)
+                for prob in self._predict_proba(X)
             ]
         )
 
