@@ -1,13 +1,20 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements forecaster for creating forecasts from ensembles of other forecasters."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implements ensemble forecasters.
 
-__author__ = ["Markus Löning"]
+Creates univariate (optionally weighted)
+combination of the predictions from underlying forecasts.
+"""
+
+__author__ = ["mloning", "GuzalBulatova"]
 __all__ = ["EnsembleForecaster"]
 
+import numpy as np
 import pandas as pd
 
+from scipy.stats import gmean
+from sklearn.utils.stats import _weighted_percentile
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
@@ -30,6 +37,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -1 means using all processors.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
+    weights : list of floats
+        Weights to apply in aggregation.
 
     Examples
     --------
@@ -40,7 +49,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = load_airline()
     >>> forecasters = [("trend", PolynomialTrendForecaster()),\
                         ("naive", NaiveForecaster())]
-    >>> forecaster = EnsembleForecaster(forecasters=forecasters, n_jobs=2)
+    >>> forecaster = EnsembleForecaster(forecasters=forecasters,\
+                                        aggfunc="mean", weights=[1, 10])
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
@@ -48,14 +58,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "univariate-only": True,
+        "univariate-only": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="mean"):
+    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
+        self.weights = weights
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -77,23 +88,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional, default=True
-
-        Returns
-        -------
-        self : an instance of self.
-        """
-        for forecaster in self.forecasters_:
-            forecaster.update(y, X, update_params=update_params)
-        return self
-
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Return the predicted reduction.
 
@@ -113,16 +107,80 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             raise NotImplementedError()
 
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
+        y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
-        valid_aggfuncs = ("median", "mean", "min", "max")
-        if self.aggfunc not in valid_aggfuncs:
-            raise ValueError(f"Invalid `aggfunc`. Please use one of {valid_aggfuncs}")
+        return y_pred
 
-        if self.aggfunc == "median":
-            return y_pred.median(axis=1)
-        elif self.aggfunc == "min":
-            return y_pred.min(axis=1)
-        elif self.aggfunc == "max":
-            return y_pred.max(axis=1)
-        else:
-            return y_pred.mean(axis=1)
+
+def _aggregate(y, aggfunc, weights):
+    """Apply aggregation function by row.
+
+    Parameters
+    ----------
+    y : pd.DataFrame
+        Multivariate series to transform.
+    aggfunc : str
+        Aggregation function used for transformation.
+    weights : list of floats
+        Weights to apply in aggregation.
+
+    Returns
+    -------
+    y_agg: pd.Series
+        Transformed univariate series.
+    """
+    if weights is None:
+        aggfunc = _check_aggfunc(aggfunc, weighted=False)
+        y_agg = aggfunc(y, axis=1)
+    else:
+        aggfunc = _check_aggfunc(aggfunc, weighted=True)
+        y_agg = aggfunc(y, axis=1, weights=np.array(weights))
+
+    return pd.Series(y_agg, index=y.index)
+
+
+def _check_aggfunc(aggfunc, weighted=False):
+    _weighted = "weighted" if weighted else "unweighted"
+    valid_aggfuncs = {
+        "mean": {"unweighted": np.mean, "weighted": np.average},
+        "median": {"unweighted": np.median, "weighted": _weighted_median},
+        "min": {"unweighted": np.min, "weighted": _weighted_min},
+        "max": {"unweighted": np.max, "weighted": _weighted_max},
+        "gmean": {"unweighted": gmean, "weighted": gmean},
+    }
+    if aggfunc not in valid_aggfuncs.keys():
+        raise ValueError("Aggregation function %s not recognized." % aggfunc)
+    return valid_aggfuncs[aggfunc][_weighted]
+
+
+def _weighted_median(y, axis=1, weights=None):
+    w_median = np.apply_along_axis(
+        func1d=_weighted_percentile,
+        axis=axis,
+        arr=y.values,
+        sample_weight=weights,
+        percentile=50,
+    )
+    return w_median
+
+
+def _weighted_min(y, axis=1, weights=None):
+    w_min = np.apply_along_axis(
+        func1d=_weighted_percentile,
+        axis=axis,
+        arr=y.values,
+        sample_weight=weights,
+        percentile=0,
+    )
+    return w_min
+
+
+def _weighted_max(y, axis=1, weights=None):
+    w_max = np.apply_along_axis(
+        func1d=_weighted_percentile,
+        axis=axis,
+        arr=y.values,
+        sample_weight=weights,
+        percentile=100,
+    )
+    return w_max
