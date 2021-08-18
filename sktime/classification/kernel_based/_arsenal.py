@@ -16,8 +16,6 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import Rocket
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class Arsenal(BaseClassifier):
