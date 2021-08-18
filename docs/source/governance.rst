@@ -391,22 +391,6 @@ the CC tries to resolve the deadlock.
    members.
 -  Any CC decision must be supported by an :ref:`steps`, which has been made public and discussed before the vote.
 
-.. _steps:
-
-sktime enhancement proposal
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For all decision of the CC, an sktime enhancement proposal (STEP) must have been made
-public and discussed before the vote.
-
-An sktime enhancement proposal is a consolidated document, with a concise
-problem statement, a clear description of the proposed solution and a
-comparison with alternative solutions, as outlined in our
-`template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
-
-We collect and discuss proposals in sktime’s `repository for
-enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
-
 .. _algorithm-inclusion-guidelines:
 
 Algorithm inclusion guidelines
