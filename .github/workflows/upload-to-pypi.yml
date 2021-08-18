@@ -5,7 +5,7 @@ on:
     types: [published]
 
 jobs:
-  deploy:
+  deploy-macos:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -53,3 +53,50 @@ jobs:
           ls -l dist/*
           python -m pip install --upgrade twine
           python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*
+
+  deploy-windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+        python-version: [3.6, 3.7, 3.8.8]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      name: Set up conda
+      with:
+        miniconda-version: "latest"
+        auto-update-conda: true
+        activate-environment: testenv
+        channels: conda-forge,defaults
+        channel-priority: true
+        python-version: ${{ matrix.python-version }}
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+    - name: Install dependencies
+      run: |
+        conda install -c conda-forge -y "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba>=0.50,<0.53" "numpy>=1.19" "pandas>=1.1.0,<1.2" "statsmodels>=0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0"
+        pip install -r build_tools/requirements.txt
+        conda list
+    - name: Build wheel
+      run: |
+        python setup.py build_ext --compiler=msvc
+        python setup.py bdist_wheel bdist_wininst
+        ls dist
+    - name: Install from wheel
+      run: pip install --pre --no-index --no-deps --find-links dist/ sktime
+    - name: Run tests
+      run: |
+        mkdir -p testdir/
+        cp .coveragerc testdir/
+        cp setup.cfg testdir/
+        cd testdir/
+        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+    - name: Upload wheel and source tarball to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        ls -l dist/*
+        python -m pip install --upgrade twine
+        python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*
