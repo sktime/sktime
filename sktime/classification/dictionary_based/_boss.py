@@ -531,7 +531,7 @@ class IndividualBOSS(BaseClassifier):
 
         Returns
         -------
-        np.array(classes): array of shape [n, 1]
+        array of shape [n, 1]
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
