@@ -11,7 +11,6 @@ If you would like to sponsor sktime, please visit our `page <https://opencollect
 
 We would like to thank the following sponsors.
 
-
 Research grants
 ---------------
 
@@ -45,8 +44,8 @@ Institutional sponsorship
 
 The 2019 joint sktime MLJ development sprint was kindly hosted by `UCL <https://www.ucl.ac.uk>`_ and `The Alan Turing Institute <https://turing.ac.uk>`_. Some participants could attend thanks to the initial funding of the `The Alan Turing Institute <https://turing.ac.uk>`_.
 
-Infrastructure support
-----------------------
+Infrastructure
+--------------
 
 We would also like to thank `Microsoft
 Azure <https://azure.microsoft.com/en-gb/services/devops/>`__, `GitHub
