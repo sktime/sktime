@@ -17,6 +17,7 @@ ALLOWED_SUM_FUNCS = (
     "mean",
     "min",
     "max",
+    "median",
     "sum",
     "skew",
     "kurtosis",
@@ -49,7 +50,7 @@ def _series_summary(series_or_df, summary_function="mean", axis=0):
     ValueError :
         `series_or_df` must be pd.Series or pd>DataFrame.
     ValueError :
-        `summary_function must be one of ("mean", "min", "max", "mode", "sum",
+        `summary_function must be one of ("mean", "min", "max", "median", "sum",
         "skew", "kurtosis", "var", "std", "sem", "nunique", "count").
 
     Returns
@@ -71,6 +72,8 @@ def _series_summary(series_or_df, summary_function="mean", axis=0):
         summary_value = series_or_df.min(axis=axis)
     elif summary_function == "max":
         summary_value = series_or_df.max(axis=axis)
+    elif summary_function == "median":
+        summary_value = series_or_df.median(axis=axis)
     elif summary_function == "sum":
         summary_value = series_or_df.sum(axis=axis)
     elif summary_function == "skew":
@@ -115,9 +118,10 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
     Parameters
     ----------
     summary_function : str, default="mean"
-        One of pandas summary functions ("mean", "min", "max", "sum",
-        "skew", "kurtosis", "var", "std", "sem", "nunique", "count") that is used
-        to summarize each column of the dataset.
+        One of pandas Series and DataFrame summary functions
+        ("mean", "min", "max", "median", "sum", "skew", "kurtosis", "var",
+        "std", "sem", "nunique", "count") that is used to summarize each column
+        of the dataset.
 
     See Also
     --------
