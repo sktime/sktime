@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from sklearn.model_selection import train_test_split
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.utils._testing.panel import make_classification_problem
 
 

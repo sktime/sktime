@@ -1,5 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for using tbats forecasters in sktime framework."""
 
 __author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["_TbatsAdapter"]
@@ -14,10 +16,11 @@ from sktime.utils.validation.forecasting import check_sp
 
 
 class _TbatsAdapter(BaseForecaster):
-    """Base class for interfacing tbats forecasting algorithms"""
+    """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
         "univariate-only": True,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -84,14 +87,12 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
 
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
         """Forecast time series at future horizon.
 
         Parameters
@@ -139,7 +140,7 @@ class _TbatsAdapter(BaseForecaster):
             return y_pred
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -153,5 +154,5 @@ class _TbatsAdapter(BaseForecaster):
         return fitted_params
 
     def _get_fitted_param_names(self):
-        """Get names of fitted parameters"""
+        """Get names of fitted parameters."""
         return self._fitted_param_names

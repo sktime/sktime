@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adaptor for applying Scikit-learn-like transformers to time series."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["TabularToSeriesAdaptor"]
@@ -32,8 +33,7 @@ def _from_2d_numpy_to_series(x, index=None):
 
 
 class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
-    """Adaptor for scikit-learn-like tabular transformations to series
-    setting.
+    """Adapt scikit-learn-like tabular transformations to series setting.
 
     This is useful for applying scikit-learn transformations to series,
     but only works with transformations that do not require multiple
@@ -44,8 +44,8 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
     transformer : Estimator
         scikit-learn-like transformer to fit and apply to series
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.datasets import load_airline
@@ -82,6 +82,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of y.
 
         Parameters

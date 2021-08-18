@@ -310,8 +310,7 @@ Changed
 
 Fixed
 ~~~~~
-* Fix links in Readthedocs and Binder launch button (#416)
-@mloning
+* Fix links in Readthedocs and Binder launch button (#416) @mloning
 * Fixed small bug in performance metrics (#422) @krumeto
 * Resolved warnings in notebook examples (#418) @alwinw
 * Resolves #325 ModuleNotFoundError for soft dependencies (#410) @alwinw
