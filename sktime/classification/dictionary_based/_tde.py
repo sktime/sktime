@@ -114,8 +114,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Classification", in proceedings of the European Conference on Machine Learning
         and Principles and Practice of Knowledge Discovery in Databases, 2020.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
