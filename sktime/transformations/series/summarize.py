@@ -138,8 +138,6 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
     """
 
     _tags = {
-        "univariate-only": False,
-        "multivariate-only": False,
         "fit-in-transform": True,
     }
 
