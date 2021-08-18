@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Arsenal, an ensemble of ROCKET classifiers."""
 
-__author__ = ["Matthew Middlehurst", "Oleksii Kachaiev"]
+__author__ = ["MatthewMiddlehurst", "kachayev", "victordremov"]
 __all__ = ["Arsenal"]
 
 import numpy as np
