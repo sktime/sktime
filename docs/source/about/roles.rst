@@ -4,10 +4,8 @@
 Community roles
 ===============
 
-This is a list of contributors with their roles.
-
-A list of all contributors can be found `here <contributors.md>`.
-The roles are described in the :ref:`governance` document.
+The roles are described in sktime's :ref:`governance` document.
+A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
@@ -86,7 +84,7 @@ Former Core Developers (inactive)
      - :user:`hyang1996`
    * - Jason Lines
      - :user:`jasonlines`
-   * -
+   * - -
      - :user:`big-o`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`

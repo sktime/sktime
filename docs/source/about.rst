@@ -11,9 +11,9 @@ About
    about/mission
    about/contributors
    about/roles
-   about/history
    about/funding
    about/citation
+   about/history
    about/artwork
 
 Learn more about the sktime project and its community.
