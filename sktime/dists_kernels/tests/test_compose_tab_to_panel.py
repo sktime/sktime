@@ -3,7 +3,7 @@ import numpy as np
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.utils._testing.panel import make_transformer_problem
-from sktime.utils import all_estimators
+from sktime.registry import all_estimators
 
 PAIRWISE_TRANSFORMERS_TAB = all_estimators(
     estimator_types="transformer-pairwise", return_names=False

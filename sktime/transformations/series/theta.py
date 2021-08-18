@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# License: copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implements Theta-lines transformation for use with automatic theta forecasting."""
 
 __author__ = ["Guzal Bulatova", "Markus Löning"]
 __all__ = ["ThetaLinesTransformer"]
@@ -17,19 +18,23 @@ from sktime.utils.validation.series import check_series
 class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     """Decompose the original data into two or more Theta-lines.
 
-    Example
-    -------
+    Notes
+    -----
+    Implements decomposition as described in [1]_.
+
+    References
+    ----------
+    .. [1] E.Spiliotis et al., "Generalizing the Theta method for
+       automatic forecasting ", European Journal of Operational
+       Research, vol. 284, pp. 550-558, 2020.
+
+    Examples
+    --------
     >>> from sktime.transformations.series.theta import ThetaLinesTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ThetaLinesTransformer([0, 0.25, 0.5, 0.75])
     >>> y_thetas = transformer.fit_transform(y)
-
-    References
-    ----------
-    [1] E.Spiliotis et al., "Generalizing the Theta method for
-    automatic forecasting ", European Journal of Operational
-    Research, vol. 284, pp. 550-558, 2020.
     """
 
     _tags = {

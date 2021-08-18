@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 # from sklearn.pipeline import Pipeline
-from sktime.datasets.base import _load_dataset
+"""Test Truncator transformer."""
+
+from sktime.datasets import load_japanese_vowels
 from sktime.transformations.panel.truncation import TruncationTransformer
 
 # from sklearn.ensemble import RandomForestClassifier
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 # import pandas as pd
 
 
 def test_truncation_transformer():
+    """Test truncation to the shortest series length."""
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
 
     # print(X_train)
 
@@ -27,10 +29,10 @@ def test_truncation_transformer():
 
 
 def test_truncation_paramterised_transformer():
+    """Test truncation to the a user defined length."""
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
 
     # print(X_train)
 
