@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["Markus Löning", "Svea Meyer"]
+__author__ = ["mloning", "sveameyer13"]
 
 from sklearn.base import clone
 import pandas as pd
@@ -39,9 +39,8 @@ class Detrender(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    forecaster : estimator object, optional
-        default=None. If None, PolynomialTrendForecaster(degree=1) is used.
-
+    forecaster : estimator object, default=None
+        If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
         The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster)
 
@@ -49,6 +48,10 @@ class Detrender(_SeriesToSeriesTransformer):
     ----------
     forecaster_ : estimator object
         Model that defines the trend in the series
+
+    See Also
+    --------
+    Deseasonalizer
 
     Examples
     --------
