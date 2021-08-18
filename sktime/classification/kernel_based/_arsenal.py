@@ -146,11 +146,11 @@ class Arsenal(BaseClassifier):
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self.predict_proba(X)
+                for prob in self._predict_proba(X)
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -168,9 +168,6 @@ class Arsenal(BaseClassifier):
         output : array of shape = [n_test_instances, num_classes] of
         probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
-
         sums = np.zeros((X.shape[0], self.n_classes))
 
         for n, clf in enumerate(self.estimators_):
