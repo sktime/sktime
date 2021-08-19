@@ -1171,6 +1171,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "mathco-wf",
+      "name": "TheMathcompay Widget Factory Team",
+      "avatar_url": "https://avatars.githubusercontent.com/mathco-wf",
+      "profile": "https://github.com/mathco-wf",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",
