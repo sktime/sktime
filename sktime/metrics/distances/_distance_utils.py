@@ -40,9 +40,7 @@ def format_distance_series(
     return x, y
 
 
-def format_pairwise_matrix(
-    x: SktimeMatrix, y: Union[SktimeMatrix, None] = None
-) -> Tuple[np.ndarray, np.ndarray, bool]:
+def format_pairwise_matrix(x: SktimeMatrix) -> np.ndarray:
     """
     Method used to check and format the pairwise matrices passed to a pairwise distance
     operation
@@ -50,27 +48,13 @@ def format_pairwise_matrix(
     Parameters
     ----------
     x: np.ndarray or pd.Dataframe or List
-        First matrix
-    y: np.ndarray or pd.Dataframe or List, defaults = None
-        Second matrix if None the set to the value of x (i.e. comparing to self)
+        Matrix of time series
 
     Returns
     -------
     x: np.ndarray
-        First matrix checked and formatted
-    y: np.ndarray
-        Second matrix checked and formatted
-    symmetric: bool
-        Boolean marking if the pairwise matrix will be symmetric (i.e. x = y)
-
+        Matrix of time series checked and formatted
     """
     x = to_numpy_time_series_matrix(x)
 
-    if y is None:
-        y = np.copy(x)
-        symmetric = True
-    else:
-        y = to_numpy_time_series_matrix(y)
-        symmetric = False
-
-    return x, y, symmetric
+    return x

@@ -28,15 +28,6 @@ def test_dtw_distance():
     dtw(x, y, lower_bounding=3)
 
 
-# def test_dtw_pairwise_distance():
-#     nested, _ = make_classification_problem(
-#         n_instances=10, n_columns=10, n_timepoints=10, n_classes=1
-#     )
-#     numpy_ts = from_nested_to_3d_numpy(nested)
-#
-#     dtw_pairwise(numpy_ts)
-
-
 def test_dtw_with_cost_matrix_distance():
     x, y = _create_test_ts([10, 10])
     dtw_and_cost_matrix(x, y, lower_bounding=1)

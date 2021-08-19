@@ -2,7 +2,7 @@
 __all__ = ["dtw", "dtw_and_cost_matrix"]
 
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 from enum import Enum
 import math
 from numba import njit
@@ -55,7 +55,7 @@ class LowerBounding(Enum):
             Integer that is the radius of the sakoe chiba window
 
         itakura_max_slope: float, defaults = 2.
-            Gradient of the slope fo itakura
+            Gradient of the slope of itakura
 
         Returns
         -------
@@ -89,7 +89,6 @@ class LowerBounding(Enum):
         np.ndarray
             bounding matrix with all values set to 0. as there is no bounding.
         """
-        self._check_params(x, y)
         return np.zeros((x.shape[0], y.shape[0]))
 
     def sakoe_chiba(
@@ -115,7 +114,6 @@ class LowerBounding(Enum):
             bounding matrix with the values inside the bound set to 0. and anything
             outside set to infinity
         """
-        self._check_params(x, y)
         if not isinstance(sakoe_chiba_window_radius, int):
             raise ValueError("The sakoe chiba radius must be an integer.")
 
@@ -165,7 +163,6 @@ class LowerBounding(Enum):
             outside set to infinity
 
         """
-        self._check_params(x, y)
         if not isinstance(itakura_max_slope, float):
             raise ValueError("The itakura max slope must be a float")
 
@@ -274,13 +271,49 @@ class LowerBounding(Enum):
         return bounding_matrix
 
     @staticmethod
-    def _check_params(x: np.ndarray, y: np.ndarray):
-        if x is None or y is None:
-            raise ValueError("Both x and y values must be given.")
+    def check_bounding_parameters(
+        sakoe_chiba_window_radius: int = 2, itakura_max_slope: float = 2.0
+    ):
+        """
+
+        Parameters
+        ----------
+        sakoe_chiba_window_radius: int, defaults = 2
+            Integer that is the radius of the sakoe chiba window
+
+        itakura_max_slope: float, defaults = 2.
+            Gradient of the slope of itakura
+        Returns
+        -------
+        sakoe_chiba_window_radius: int
+            Integer that is the radius of the sakoe chiba window
+        itakura_max_slope: float
+            Gradient of the slope of itakura
+        """
+        if not isinstance(sakoe_chiba_window_radius, int):
+            raise ValueError("The sakoe chiba radius must be an int value")
+        if not isinstance(itakura_max_slope, float):
+            raise ValueError("The itakura max slope must be a float value")
+        return sakoe_chiba_window_radius, itakura_max_slope
 
 
 @njit
-def _squared_dist(x, y):
+def _squared_dist(x: np.ndarray, y: np.ndarray) -> float:
+    """
+    Method used to calculate the squared distance between two series
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+
+    Returns
+    -------
+    distance: float
+        squared distance between the two series
+    """
     distance = 0.0
     for i in range(x.shape[0]):
         curr = x[i] - y[i]
@@ -302,6 +335,7 @@ def _cost_matrix(x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray):
         second time series
 
     bounding_matrix: np.ndarray
+        matrix bounding the warping path
     """
     x_size = x.shape[0]
     y_size = y.shape[0]
@@ -323,7 +357,38 @@ def _dtw_check_params(
     x: np.ndarray,
     y: np.ndarray,
     lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-):
+    sakoe_chiba_window_radius: int = 2,
+    itakura_max_slope: float = 2.0,
+) -> Tuple[np.ndarray, np.ndarray, LowerBounding, int, float]:
+    """
+    Method used to check the dtw parameters passed
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Bounding technique to use
+    sakoe_chiba_window_radius: int, defaults = 2
+        Sakoe chiba radius
+    itakura_max_slope: float, defaults = 2.
+        Itakura max slope
+
+    Returns
+    -------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+    lower_bounding: LowerBounding
+        Bounding technique to use
+    sakoe_chiba_window_radius: int
+        Sakoe chiba radius
+    itakura_max_slope: float
+        Itakura max slope
+    """
     x, y = format_distance_series(x, y)
 
     # TODO: check lengths of time series and interpolate on missing values
@@ -331,7 +396,45 @@ def _dtw_check_params(
     if isinstance(lower_bounding, int):
         lower_bounding = LowerBounding(lower_bounding)
 
-    return x, y, lower_bounding
+    (
+        sakoe_chiba_window_radius,
+        itakura_max_slope,
+    ) = LowerBounding.check_bounding_parameters(
+        sakoe_chiba_window_radius, itakura_max_slope
+    )
+
+    return x, y, lower_bounding, sakoe_chiba_window_radius, itakura_max_slope
+
+
+def _dtw(x, y, lower_bounding, sakoe_chiba_window_radius, itakura_max_slope):
+    """
+    Method that performs dtw. No checks are performed when running this so assume
+    the parameters are good.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Bounding technique to use
+    sakoe_chiba_window_radius: int, defaults = 2
+        Sakoe chiba radius
+    itakura_max_slope: float, defaults = 2.
+        Itakura max slope
+
+    Returns
+    -------
+    float
+        dtw distance between two time series
+    """
+
+    bounding_matrix = lower_bounding.create_bounding_matrix(
+        x, y, sakoe_chiba_window_radius, itakura_max_slope
+    )
+    cost_matrix = _cost_matrix(x, y, bounding_matrix)
+    return np.sqrt(cost_matrix[-1, -1])
 
 
 def dtw(
@@ -369,15 +472,53 @@ def dtw(
         float that is the distance between the two time series
     """
 
-    # sakoe_chiba_window_radius and itakura_max_slope are checked when LowerBounding
-    # enum created so dont need to check here
-    x, y, lower_bounding = _dtw_check_params(x, y, lower_bounding)
+    (
+        x,
+        y,
+        lower_bounding,
+        sakoe_chiba_window_radius,
+        itakura_max_slope,
+    ) = _dtw_check_params(
+        x, y, lower_bounding, sakoe_chiba_window_radius, itakura_max_slope
+    )
+    return _dtw(x, y, lower_bounding, sakoe_chiba_window_radius, itakura_max_slope)
 
+
+def _dtw_and_cost_matrix(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    sakoe_chiba_window_radius: int = 2,
+    itakura_max_slope: float = 2.0,
+):
+    """
+    Method that performs dtw and returns cost matrix. No checks are performed when
+    running this so assume the parameters are good.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Bounding technique to use
+    sakoe_chiba_window_radius: int, defaults = 2
+        Sakoe chiba radius
+    itakura_max_slope: float, defaults = 2.
+        Itakura max slope
+
+    Returns
+    -------
+    float
+        dtw distance between two time series
+    """
     bounding_matrix = lower_bounding.create_bounding_matrix(
         x, y, sakoe_chiba_window_radius, itakura_max_slope
     )
+
     cost_matrix = _cost_matrix(x, y, bounding_matrix)
-    return np.sqrt(cost_matrix[-1, -1])
+    return np.sqrt(cost_matrix[-1, -1]), cost_matrix
 
 
 def dtw_and_cost_matrix(
@@ -419,16 +560,18 @@ def dtw_and_cost_matrix(
         cost matrix used to generate the dtw between the two series
     """
 
-    # sakoe_chiba_window_radius and itakura_max_slope are checked when LowerBounding
-    # enum created so dont need to check here
-    x, y, lower_bounding = _dtw_check_params(x, y, lower_bounding)
-
-    bounding_matrix = lower_bounding.create_bounding_matrix(
-        x, y, sakoe_chiba_window_radius, itakura_max_slope
+    (
+        x,
+        y,
+        lower_bounding,
+        sakoe_chiba_window_radius,
+        itakura_max_slope,
+    ) = _dtw_check_params(
+        x, y, lower_bounding, sakoe_chiba_window_radius, itakura_max_slope
     )
-
-    cost_matrix = _cost_matrix(x, y, bounding_matrix)
-    return np.sqrt(cost_matrix[-1, -1]), cost_matrix
+    return _dtw_and_cost_matrix(
+        x, y, lower_bounding, sakoe_chiba_window_radius, itakura_max_slope
+    )
 
 
 # def dtw_pairwise(
