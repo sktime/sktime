@@ -383,6 +383,12 @@ def setup(app):
 
 
 # -- Extension configuration -------------------------------------------------
+extensions = ["sphinx_issues"]
+
+# GitHub repo
+issues_uri = "https://github.com/sloria/marshmallow/issues/{issue}"
+issues_pr_uri = "https://github.com/sloria/marshmallow/pull/{pr}"
+issues_commit_uri = "https://github.com/sloria/marshmallow/commit/{commit}"
 
 # -- Options for nbsphinx extension ---------------------------------------
 nbsphinx_execute = "never"  # always  # whether to run notebooks
