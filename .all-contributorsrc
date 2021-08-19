@@ -1166,12 +1166,12 @@
     {
       "login": "AreloTanoh",
       "name": "Arelo Tanoh",
-      "avatar_url": " ",
+      "avatar_url": "https://avatars.githubusercontent.com/AreloTanoh",
       "profile": "https://github.com/AreloTanoh",
        "contributions": [
-        "doc"
+         "doc"
       ]
-      }, 
+      },
      {
       "login": "pul95",
       "name": "Pulkit Verma",
