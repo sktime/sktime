@@ -358,8 +358,7 @@ We use the `pre-commit <#Code-quality-checks>`_ workflow together with
 consistent formatting and check whether your contribution complies with
 the PEP8 style.
 
-For docstrings, we use the `numpy docstring
-standard <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`__.
+For docstrings, we use the `numpy docstring standard <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_, along with sktime specific conventions described in our :ref:`developer_guide`'s :ref:`documentation section <developer_guide_documentation>`.
 
 In addition, we add the following guidelines:
 
