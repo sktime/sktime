@@ -1168,6 +1168,15 @@
       "name": "Arelo Tanoh",
       "avatar_url": " ",
       "profile": "https://github.com/AreloTanoh",
+       "contributions": [
+        "doc"
+      ]
+      }, 
+     {
+      "login": "pul95",
+      "name": "Pulkit Verma",
+      "avatar_url": "https://avatars.githubusercontent.com/pul95",
+      "profile": "https://github.com/pul95",
       "contributions": [
         "doc"
       ]
