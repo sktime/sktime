@@ -58,7 +58,7 @@ class AutoAR(_StatsModelsAdapter):
 
     def __init__(
         self,
-        maxlag,
+        maxlag=10,
         trend="c",
         seasonal=False,
         hold_back=None,
@@ -102,6 +102,7 @@ class AutoAR(_StatsModelsAdapter):
         self.use_t = use_t
         self.start_params = start_params
         self.method = method
+        self.transparams = transparams
         self.normalized_cov_params = normalized_cov_params
         self.solver = solver
         self.maxiter = maxiter
