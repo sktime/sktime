@@ -1140,8 +1140,7 @@ def write_tabular_transformation_to_arff(
     fit_transform=True,
 ):
     """
-    Transform a dataset using a tabular output transformer and write the result to a
-    .ts file.
+    Transform a dataset using a tabular transformer and write the result to a arff file.
 
     Parameters
     ----------
