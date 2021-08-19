@@ -19,9 +19,8 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
     Parameters
     ----------
-    trend : str or None, default=None
-        Type of trend component.Takes one of 
-        {"add", "mul", "additive", "multiplicative", None}     
+    trend : {"add", "mul", "additive", "multiplicative", None}, default=None
+        Type of trend component.
     damped_trend : bool, default=False
         Should the trend component be damped.
     seasonal : str or None, default=None
