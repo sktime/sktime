@@ -39,12 +39,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     regressor, evaluating each with a LOOCV. It then retains "s"
     ensemble members.
     There are six primary parameters for individual classifiers:
-            alpha: alphabet size
-            w: window length
-            l: word length
-            p: normalise/no normalise
-            h: levels
-            b: MCB/IGB
+            - alpha: alphabet size
+            - w: window length
+            - l: word length
+            - p: normalise/no normalise
+            - h: levels
+            - b: MCB/IGB
     For any combination, an individual TDE classifier slides a window of
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
@@ -60,28 +60,32 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     Parameters
     ----------
-    n_parameter_samples     : int, number of parameter combos to try
-    (default=250)
-    max_ensemble_size       : int, maximum number of classifiers
-    (default=50)
-    time_limit_in_minutes              : int, time contract to limit build time in
-    minutes (default=0, no limit)
-    max_win_len_prop        : float between 0 and 1, maximum window length
-    as a proportion of series length (default=1)
-    min_window              : int, minimum window size (default=10)
-    randomly_selected_params: int, number of parameters randomly selected
-    before GP is used (default=50)
-    bigrams                 : boolean or None, whether to use bigrams
-    (default=None, true for univariate, false for multivariate)
-    dim_threshold           : float between 0 and 1, dimension accuracy
-    threshold for multivariate (default=0.85)
-    max_dims                : int, max number of dimensions for multivariate
-    (default=20)
-    n_jobs                  : int, optional (default=1)
-    The number of jobs to run in parallel for both `fit` and `predict`.
-    ``-1`` means using all processors.
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
+    n_parameter_samples : int, default=250
+        number of parameter combos to try
+    max_ensemble_size : int, default=50
+        maximum number of classifiers
+    max_win_len_prop : float, default=1
+        between 0 and 1, maximum window length as a proportion of series length
+    min_window : int, default=10
+        minimum window size
+    randomly_selected_params: int, default=50
+        number of parameters randomly selected before GP is used
+    bigrams : boolean or None, default=None
+        whether to use bigrams (true for univariate, false for multivariate)
+    dim_threshold : float, default=0.85
+         between 0 and 1, dimension accuracy threshold for multivariate
+    max_dims : int, default=20
+        max number of dimensions for multivariate #todo above
+    time_limit_in_minutes : int, default=0
+        Time contract to limit build time in minutes, overriding n_estimators.
+        Default of 0 means n_estimators is used.
+    save_train_predictions : bool, default=False
+        Save the ensemble member train predictions in fit for use in _get_train_probs.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
@@ -99,7 +103,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     See Also
     --------
-    IndividualTDE
+    IndividualTDE, ContractableBOSS
 
     Notes
     -----
