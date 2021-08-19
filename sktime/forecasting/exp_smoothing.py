@@ -4,7 +4,7 @@
 """Implements Holt-Winters exponential smoothing."""
 
 __all__ = ["ExponentialSmoothing"]
-__author__ = ["Markus Löning", "@big-o"]
+__author__ = ["mloning", "big-o"]
 
 from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
 
@@ -23,9 +23,8 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         Type of trend component.
     damped_trend : bool, default=False
         Should the trend component be damped.
-    seasonal : str or None, default=None
+    seasonal : {"add", "mul", "additive", "multiplicative", None}, default=None
         Type of seasonal component.Takes one of
-        {"add", "mul", "additive", "multiplicative", None}
     sp : int or None, default=None
         The number of seasonal periods to consider.
     initial_level : float or None, default=None
@@ -37,13 +36,11 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     initial_seasonal : float or None, default=None
         The gamma value of the holt winters seasonal method, if the value
         is set then this value will be used as the value.
-    use_boxcox : str or float or bool or None, default=None
+    use_boxcox : {True, False, 'log', float}, default=None
         Should the Box-Cox transform be applied to the data first? 
-        Takes one of {True, False, 'log', float}. If 'log'
-        then apply the log. If float then use lambda equal to float.
-    initialization_method: str or None, default='estimated'
+        If 'log' then apply the log. If float then use lambda equal to float.     
+    initialization_method: {'estimated','heuristic','legacy-heuristic','known',None}, default='estimated'
         Method for initialize the recursions. Takes one of
-        {'estimated','heuristic','legacy-heuristic','known',None}.
         If 'known' initialization is used, then `initial_level` must be
         passed, as well as `initial_trend` and `initial_seasonal` if
         applicable.
