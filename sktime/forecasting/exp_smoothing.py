@@ -19,28 +19,39 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
     Parameters
     ----------
-    trend : str{"add", "mul", "additive", "multiplicative", None}, optional
-    (default=None)
-        Type of trend component.
-    damped_trend : bool, optional (default=None)
+    trend : str or None, default=None
+        Type of trend component.Takes one of 
+        {"add", "mul", "additive", "multiplicative", None}     
+    damped_trend : bool, default=False
         Should the trend component be damped.
-    seasonal : {"add", "mul", "additive", "multiplicative", None}, optional
-    (default=None)
-        Type of seasonal component.
-    sp : int, optional (default=None)
+    seasonal : str or None, default=None
+        Type of seasonal component.Takes one of
+        {"add", "mul", "additive", "multiplicative", None}
+    sp : int or None, default=None
         The number of seasonal periods to consider.
-    initial_level : float, optional
+    initial_level : float or None, default=None
         The alpha value of the simple exponential smoothing, if the value
         is set then this value will be used as the value.
-    initial_trend : float, optional
+    initial_trend : float or None, default=None
         The beta value of the Holt's trend method, if the value is
         set then this value will be used as the value.
-    initial_seasonal : float, optional
+    initial_seasonal : float or None, default=None
         The gamma value of the holt winters seasonal method, if the value
         is set then this value will be used as the value.
-    use_boxcox : {True, False, 'log', float}, optional
-        Should the Box-Cox transform be applied to the data first? If 'log'
+    use_boxcox : str or float or bool or None, default=None
+        Should the Box-Cox transform be applied to the data first? 
+        Takes one of {True, False, 'log', float}. If 'log'
         then apply the log. If float then use lambda equal to float.
+    initialization_method: str or None, default='estimated'
+        Method for initialize the recursions. Takes one of
+        {'estimated','heuristic','legacy-heuristic','known',None}.
+        If 'known' initialization is used, then `initial_level` must be
+        passed, as well as `initial_trend` and `initial_seasonal` if
+        applicable.
+        'heuristic' uses a heuristic based on the data to estimate initial
+        level, trend, and seasonal state. 'estimated' uses the same heuristic
+        as initial guesses, but then estimates the initial states as part of
+        the fitting process.
 
     References
     ----------
