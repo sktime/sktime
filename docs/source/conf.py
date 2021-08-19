@@ -383,10 +383,6 @@ def setup(app):
 
 
 # -- Extension configuration -------------------------------------------------
-# extensions = ["sphinx_issues"]
-
-# GitHub repo
-# issues_github_path = "sloria/marshmallow"
 
 # -- Options for nbsphinx extension ---------------------------------------
 nbsphinx_execute = "never"  # always  # whether to run notebooks
