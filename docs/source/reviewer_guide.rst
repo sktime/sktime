@@ -18,7 +18,7 @@ Triage
 * Description: Is it understandable? Any related issues/PRs?
 * CI checks: approval for first-time contributors, any help needed with
   code/doc quality checks?
-* Merge conflicts
+* Merge conflict
 
 Code
 ====
