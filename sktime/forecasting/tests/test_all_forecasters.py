@@ -134,17 +134,23 @@ def test_y_invalid_type_raises_error(Forecaster, y):
 def test_X_invalid_type_raises_error(Forecaster, X):
     """Test that invalid X input types raise error."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") == "univariate" or f.get_tag("scitype:y") == "both":
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
         y_train = _make_series(n_columns=1)
+        try:
+            with pytest.raises(TypeError, match=r"type"):
+                f.fit(y_train, X, fh=FH0)
+        except NotImplementedError as e:
+            msg = str(e).lower()
+            assert "exogenous" in msg
 
-    elif f.get_tag("scitype:y") == "multivariate":
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=2)
-    try:
-        with pytest.raises(TypeError, match=r"type"):
-            f.fit(y_train, X, fh=FH0)
-    except NotImplementedError as e:
-        msg = str(e).lower()
-        assert "exogenous" in msg
+        try:
+            with pytest.raises(TypeError, match=r"type"):
+                f.fit(y_train, X, fh=FH0)
+        except NotImplementedError as e:
+            msg = str(e).lower()
+            assert "exogenous" in msg
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -205,7 +211,7 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
         except NotImplementedError:
             pass
 
-    elif f.get_tag("scitype:y") in ["multivariate", "both"]:
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
         y_train = _make_series(n_columns=1, index_type=index_type)
 
         try:
@@ -224,19 +230,32 @@ def test_predict_time_index_in_sample_full(
     Forecaster, index_type, fh_type, is_relative
 ):
     """Check that predicted time index equals fh for full in-sample predictions."""
-    y_train = make_forecasting_problem(index_type=index_type)
-    cutoff = y_train.index[-1]
-    steps = -np.arange(len(y_train))  # full in-sample fh
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
     f = _construct_instance(Forecaster)
-    # Some estimators may not support all time index types and fh types, hence we
-    # need to catch NotImplementedErrors.
-    try:
-        f.fit(y_train, fh=fh)
-        y_pred = f.predict()
-        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
-    except NotImplementedError:
-        pass
+    if f.get_tag("scitype:y") in ["univariate", "both"]:
+        y_train = _make_series(n_columns=1, index_type=index_type)
+        cutoff = y_train.index[-1]
+        steps = -np.arange(len(y_train))
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+
+        try:
+            f.fit(y_train, fh=fh)
+            y_pred = f.predict()
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
+
+    if f.get_tag("scitype:y") in ["multivariate", "both"]:
+        y_train = _make_series(n_columns=2, index_type=index_type)
+        cutoff = y_train.index[-1]
+        steps = -np.arange(len(y_train))
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+
+        try:
+            f.fit(y_train, fh=fh)
+            y_pred = f.predict()
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        except NotImplementedError:
+            pass
 
 
 def _check_pred_ints(pred_ints: list, y_train: pd.Series, y_pred: pd.Series, fh):
