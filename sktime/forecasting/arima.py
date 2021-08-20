@@ -216,7 +216,6 @@ class AutoARIMA(_PmdArimaAdapter):
 
     References
     ----------
-    # noqa: E501
     .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
 
     Examples
@@ -228,7 +227,7 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> forecaster.fit(y)
     AutoARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -525,7 +524,7 @@ class ARIMA(_PmdArimaAdapter):
     References
     ----------
     .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
-    # noqa: E501
+
     .. [2] https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
 
     Examples
@@ -540,7 +539,7 @@ class ARIMA(_PmdArimaAdapter):
     >>> forecaster.fit(y)
     ARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
