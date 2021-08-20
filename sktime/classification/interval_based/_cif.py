@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Canonical Interval Forest Classifier (CIF)."""
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["Matthew Middlehurst, kejsitake"]
 __all__ = ["CanonicalIntervalForest"]
 
 import numpy as np
@@ -88,12 +88,12 @@ class CanonicalIntervalForest(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -134,7 +134,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
         super(CanonicalIntervalForest, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
          Uses random intervals and catch22/tsf summary features.
@@ -150,7 +150,6 @@ class CanonicalIntervalForest(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
@@ -191,10 +190,9 @@ class CanonicalIntervalForest(BaseClassifier):
 
         self.classifiers, self.intervals, self.dims, self.atts = zip(*fit)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -214,7 +212,7 @@ class CanonicalIntervalForest(BaseClassifier):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Probability estimates for each class for all cases in X.
 
         Parameters
@@ -233,8 +231,6 @@ class CanonicalIntervalForest(BaseClassifier):
         output : array of shape = [n_test_instances, num_classes] of
         probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
 
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length:
@@ -336,7 +332,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
             return classifier.predict_proba(transformed_x)
 
-    def temporal_importance_curves(self):
+    def _temporal_importance_curves(self):
         if not isinstance(self.tree, ContinuousIntervalTree):
             raise ValueError(
                 "CIF base estimator for temporal importance curves must"
