@@ -112,8 +112,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/TDE.java
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)

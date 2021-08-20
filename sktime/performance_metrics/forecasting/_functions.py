@@ -1,15 +1,13 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""Metrics to assess performance on forecasting task.
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Metrics functions to assess performance on forecasting task.
 
-Functions named as ``*_score`` return a scalar value to maximize: the higher
-the better.
-Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
+Functions named as ``*_score`` return a value to maximize: the higher the better.
+Function named as ``*_error`` or ``*_loss`` return a value to minimize:
 the lower the better.
 """
 
-# !/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 from scipy.stats import gmean
 from sklearn.utils.stats import _weighted_percentile
