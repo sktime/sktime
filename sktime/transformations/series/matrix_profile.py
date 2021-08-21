@@ -1,4 +1,7 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements matrix profile transformation."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["MatrixProfileTransformer"]
@@ -16,7 +19,8 @@ import stumpy  # noqa: E402
 
 
 class MatrixProfileTransformer(_SeriesToSeriesTransformer):
-    """
+    """Calculate the matrix profile of a time series.
+
     Takes as input a single time series dataset and returns the matrix profile
     for that time series dataset.
 
@@ -24,10 +28,10 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
     ----------
     window_length : int
 
-    Example
-    ----------
-    # noqa:
-    >>> from sktime.transformations.series.matrix_profile import MatrixProfileTransformer
+    Examples
+    --------
+    >>> from sktime.transformations.series.matrix_profile import \
+    MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = MatrixProfileTransformer()
@@ -41,14 +45,15 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
         super(MatrixProfileTransformer, self).__init__()
 
     def transform(self, Z, X=None):
-        """
+        """Tranform data.
+
         Parameters
         ----------
         Z: pandas.Series
             Time series dataset(lets say of length=n)
 
         Returns
-        ----------
+        -------
         Z: pandas.Series
             Matrix Profile of time series as output with length as (n-window_length+1)
         """

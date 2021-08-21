@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster"]
 __author__ = ["Markus Löning", "Piyush Gade"]
@@ -16,7 +17,8 @@ from sktime.utils.validation import check_window_length
 
 
 class NaiveForecaster(_BaseWindowForecaster):
-    """
+    """Forecast based on naive assumptions about past trends continuing.
+
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
 
@@ -47,8 +49,8 @@ class NaiveForecaster(_BaseWindowForecaster):
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
@@ -155,7 +157,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Internal predict"""
+        """Calculate predictions for use in predict."""
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
 
