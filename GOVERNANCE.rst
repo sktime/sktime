@@ -417,8 +417,6 @@ the CC tries to resolve the deadlock.
    since the beginning of the stage-1 "reasonable time for consideration" period,
    the decision is made through a simple majority vote (with tie breaking) among the CC
    members.
--  If this vote is needed, the vote should take place within twenty-five working days after the beginning
-   of the stage-1 "reasonable time for consideration" period, during a regular, minuted CC meeting.
 -  Any proposal reaching stage 3 must be supported by an :ref:`steps`,
    which has been made public at least 5 days, excluding weekends, before the vote.
 
