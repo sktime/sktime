@@ -19,16 +19,18 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     Allows tuning the implicit hyperparameter whether or not to use a
     particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
-    or not. This is achived by having the additional hyperparameter
-    "passthrough" which can be added to a grid then (see example).
+    or not. This is achieved by the hyperparameter `passthrough`
+    which can be added to a tuning grid then (see example).
 
     Parameters
     ----------
     transformer : Estimator
-        scikit-learn-like or sktime-like transformer to fit and apply to series
-    passthrough : bool
-        This arg decides whether to apply the given transformer or to just
-        passthrough the data (identity transformation)
+        scikit-learn-like or sktime-like transformer to fit and apply to series.
+    passthrough : bool, default=False
+       Whether to apply the given transformer or to just
+        passthrough the data (identity transformation). If, True the transformer
+        is not applied and the OptionalPassthrough uses the identity
+        transformation.
 
     Examples
     --------
