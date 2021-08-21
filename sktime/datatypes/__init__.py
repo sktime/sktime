@@ -10,6 +10,7 @@ from sktime.datatypes._registry import (
     MTYPE_LIST_PANEL,
     MTYPE_LIST_SERIES,
     SCITYPE_REGISTER,
+    mtype_to_scitype,
 )
 
 from sktime.datatypes._examples import get_examples
@@ -22,6 +23,7 @@ __all__ = [
     "convert_to",
     "mtype",
     "get_examples",
+    "mtype_to_scitype",
     "MTYPE_REGISTER",
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
