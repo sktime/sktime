@@ -13,7 +13,7 @@ from sktime.datatypes._convert import convert_to
 
 
 __author__ = ["Viktor Kazakov"]
-__all__ = ["Selector", "Concatenator", "Converter"]
+__all__ = ["Selector", "SeriesUnion", "Converter"]
 
 
 class Selector(_PanelToPanelTransformer):
@@ -21,14 +21,15 @@ class Selector(_PanelToPanelTransformer):
 
     Parameters
     ----------
-    columns: integer
+    columns : integer
+    convert_to_dataframe : Bool
     """
 
     _tags = {"fit-in-transform": True}
 
-    def __init__(self, columns, return_dataframe=True):
+    def __init__(self, columns, convert_to_dataframe=True):
         self.columns = columns
-        self.return_dataframe = return_dataframe
+        self.convert_to_dataframe = convert_to_dataframe
         super(Selector, self).__init__()
 
     def transform(self, X, y=None):
@@ -41,7 +42,7 @@ class Selector(_PanelToPanelTransformer):
         """
         self.check_is_fitted()
         if type(X) == pd.core.frame.DataFrame:
-            if self.return_dataframe:
+            if self.convert_to_dataframe:
                 return X.iloc[:, self.columns].to_frame()
             else:
                 return X.iloc[:, self.columns]
@@ -59,7 +60,7 @@ class Selector(_PanelToPanelTransformer):
         return self
 
 
-class Concatenator(_PanelToPanelTransformer):
+class SeriesUnion(_PanelToPanelTransformer):
     """Concatenate pandas series or numpy arrays."""
 
     _tags = {
@@ -67,7 +68,7 @@ class Concatenator(_PanelToPanelTransformer):
     }
 
     def __init__(self):
-        super(Concatenator, self).__init__()
+        super(SeriesUnion, self).__init__()
 
     def transform(self, X, y=None):
         """
@@ -75,16 +76,23 @@ class Concatenator(_PanelToPanelTransformer):
 
         Parameters
         ----------
-        X : list of pandas dataframes
+        X : list
+            pandas dataframes or numpy arrays
         """
         self.check_is_fitted()
         if type(X) != list:
             # Only for passing the sktime checks. `X` must be a list.
             return X
         else:
-            # further checks need to be run to ensure
-            # all elements of the list are the same
-            if type(X[0]) == pd.core.frame.DataFrame:
+            for i in range(len(X)):
+                if i == 0:
+                    continue
+                else:
+                    if not isinstance(X[i], type(X[0])):
+                        raise ValueError("All elements of X must be of the same type.")
+            if (type(X[0]) == pd.core.frame.DataFrame) or (
+                type(X[0]) == pd.core.series.Series
+            ):
                 return pd.concat(X, axis=1)
             if type(X[0]) == np.ndarray:
                 return np.concatenate(tuple(X), axis=1)

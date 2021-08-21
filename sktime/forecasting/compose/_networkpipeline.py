@@ -45,7 +45,7 @@ class NetworkPipelineForecaster(BaseForecaster):
     NetworkPipelineForecaster.predict is called.
     >>> from sktime.transformations.panel.dataset_manipulation import Selector
     >>> from sktime.transformations.panel.dataset_manipulation import Converter
-    >>> from sktime.transformations.panel.dataset_manipulation import Concatenator
+    >>> from sktime.transformations.panel.dataset_manipulation import SeriesUnion
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -56,13 +56,11 @@ class NetworkPipelineForecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y, test_size=4)
     >>> X_train, X_test = temporal_train_test_split(X, test_size=4)
     >>> pipe = NetworkPipelineForecaster([
-    ... ("feature_X1", Selector(1, return_dataframe=False), { "X": "original_X"}),
-    ... ("feature_X2", Selector(2, return_dataframe=False), { "X": "original_X"}),
+    ... ("feature_X1", Selector(1, convert_to_dataframe=False), { "X": "original_X"}),
+    ... ("feature_X2", Selector(2, convert_to_dataframe=False), { "X": "original_X"}),
     ... ("ft1", BoxCoxTransformer(), { "Z": "feature_X1"}),
-    ... ("ft1_converted", Converter(), {"obj":"ft1", "to_type": "pd.DataFrame",
-    ...     "as_scitype": "Series"}),
     ... ("ft2", TabularToSeriesAdaptor(MinMaxScaler()), { "Z": "feature_X2"}),
-    ... ("concat", Concatenator(), { "X": ["ft1_converted","ft2"] }),
+    ... ("concat", SeriesUnion(), { "X": ["ft1","ft2"] }),
     ... ("new_y", TabularToSeriesAdaptor(MinMaxScaler()), {"Z":"original_y"}),
     ... ("y_out", AutoARIMA(suppress_warnings=True), {
     ...    "fh":"original_fh", "y": "new_y", "X": "concat"})
@@ -245,7 +243,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
                 t = clone(est)
                 out = t.fit_transform(**processed_arguments)
                 self._step_results_fit[name] = out
-                self._fitted_estimators[name] = t  # TODO: delete
+                self._fitted_estimators[name] = t
             processed_arguments["fh"] = self._fh
             # if estimator has `fit()` and `predict()` methods it s a forecaster
             if hasattr(est, "fit") and hasattr(est, "predict"):
