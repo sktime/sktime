@@ -9,9 +9,8 @@ steps:
         -e NPY_NUM_BUILD_JOBS=4 \
         -e PLATFORM="$(PLATFORM)" \
         -e REQUIREMENTS="$(REQUIREMENTS)" \
-        -e EXCLUDE_PYTHON_VERSIONS="$(EXCLUDE_PYTHON_VERSIONS)" \
+        -e INCLUDED_VERSIONS="$(INCLUDED_VERSIONS)" \
         -v "$PWD":/io \
         "$(IMAGE)" \
         /io/build_tools/azure/build_wheels.sh
     displayName: 'Build and test wheels'
-

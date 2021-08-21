@@ -1,4 +1,8 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements a composite Time series Forest Regressor that accepts a pipeline."""
+
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
@@ -285,14 +289,17 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
     def predict(self, X):
         """Predict regression target for X.
+
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the trees in the forest.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
@@ -314,8 +321,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         return np.sum(y_hat, axis=0) / len(self.estimators_)
 
     def _set_oob_score(self, X, y):
-        """
-        Compute out-of-bag scores."""
+        """Compute out-of-bag scores."""
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         n_samples = y.shape[0]
