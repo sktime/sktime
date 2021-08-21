@@ -28,10 +28,15 @@ def test_tde_on_unit_test_data():
     probas = tde.predict_proba(X_test.iloc[indices]).round(6)
     testing.assert_array_equal(probas, tde_unit_test_probas)
 
-    # test train estimate
+    # test loocv train estimate
     train_probas = tde._get_train_probs(X_train, y_train)
     train_preds = tde.classes_[np.argmax(train_probas, axis=1)]
     assert accuracy_score(y_train, train_preds) >= 0.85
+
+    # test oob estimate
+    train_probas = tde._get_train_probs(X_train, y_train, train_estimate_method="oob")
+    train_preds = tde.classes_[np.argmax(train_probas, axis=1)]
+    assert accuracy_score(y_train, train_preds) >= 0.8
 
 
 def test_contracted_tde_on_unit_test_data():

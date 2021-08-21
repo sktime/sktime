@@ -24,7 +24,6 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -61,26 +60,29 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     Parameters
     ----------
     n_parameter_samples : int, default=250
-        number of parameter combos to try
+        Number of parameter combinations to consider for the final ensemble.
     max_ensemble_size : int, default=50
-        maximum number of classifiers
+        Maximum number of estimators in the ensemble.
     max_win_len_prop : float, default=1
-        between 0 and 1, maximum window length as a proportion of series length
+        Maximum window length as a proportion of series length, must be between 0 and 1.
     min_window : int, default=10
-        minimum window size
+        Minimum window length.
     randomly_selected_params: int, default=50
-        number of parameters randomly selected before GP is used
+        Number of parameters randomly selected before the Gaussian process parameter
+        selection is used.
     bigrams : boolean or None, default=None
-        whether to use bigrams (true for univariate, false for multivariate)
+        Whether to use bigrams, defaults to true for univariate data and false for
+        multivariate data.
     dim_threshold : float, default=0.85
-         between 0 and 1, dimension accuracy threshold for multivariate
+        Dimension accuracy threshold for multivariate data, must be between 0 and 1.
     max_dims : int, default=20
-        max number of dimensions for multivariate #todo above
+        Max number of dimensions per classifier for multivariate data.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
     save_train_predictions : bool, default=False
-        Save the ensemble member train predictions in fit for use in _get_train_probs.
+        Save the ensemble member train predictions in fit for use in _get_train_probs
+        leave-one-out cross-validation.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -89,17 +91,22 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     Attributes
     ----------
-    n_classes               : extracted from the data
-    n_instances             : extracted from the data
-    n_dims                  : extracted from the data
-    n_estimators            : The final number of classifiers used
-    (<=max_ensemble_size)
-    series_length           : length of all series (assumed equal)
-    estimators_             : array of IndividualTDE classifiers
-    weights                 : weight of each classifier in the ensemble
-    weight_sum              : sum of all weights
-    prev_parameters_x       : parameter value of previous classifiers for GP
-    prev_parameters_y       : accuracy of previous classifiers for GP
+    n_classes : int
+        The number of classes.
+    n_instances : int
+        The number of train cases.
+    n_dims : int
+        The number of dimensions per case.
+    series_length : int
+        The length of each series.
+    classes_ : list
+        The classes labels.
+    n_estimators : int
+        The final number of classifiers used (<= max_ensemble_size)
+    estimators_ : list of shape (n_estimators) of IndividualTDE
+        The collections of estimators trained in fit.
+    weights : list of shape (n_estimators) of float
+        Weight of each estimator in the ensemble.
 
     See Also
     --------
@@ -160,33 +167,36 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.randomly_selected_params = randomly_selected_params
         self.bigrams = bigrams
 
-        self.time_limit_in_minutes = time_limit_in_minutes
-        self.save_train_predictions = save_train_predictions
-        self.n_jobs = n_jobs
-        self.random_state = random_state
-
         # multivariate
         self.dim_threshold = dim_threshold
         self.max_dims = max_dims
 
+        self.time_limit_in_minutes = time_limit_in_minutes
+        self.save_train_predictions = save_train_predictions
+
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+        self.n_classes = 0
+        self.n_instances = 0
+        self.n_dims = 0
+        self.series_length = 0
+        self.classes_ = []
+        self.n_estimators = 0
         self.estimators_ = []
         self.weights = []
+
+        self._word_lengths = [16, 14, 12, 10, 8]
+        self._norm_options = [True, False]
+        self._levels = [1, 2, 3]
+        self._igb_options = [True, False]
+        self._alphabet_size = 4
         self._weight_sum = 0
-        self.n_classes = 0
-        self.classes_ = []
-        self.class_dictionary = {}
-        self.n_estimators = 0
-        self.series_length = 0
-        self.n_dims = 0
-        self.n_instances = 0
+        self._class_dictionary = {}
         self._prev_parameters_x = []
         self._prev_parameters_y = []
+        self._n_jobs = n_jobs
 
-        self.word_lengths = [16, 14, 12, 10, 8]
-        self.norm_options = [True, False]
-        self.levels = [1, 2, 3]
-        self.igb_options = [True, False]
-        self.alphabet_size = 4
         super(TemporalDictionaryEnsemble, self).__init__()
 
     def _fit(self, X, y):
@@ -203,7 +213,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
+            self._class_dictionary[classVal] = index
 
         self.estimators_ = []
         self.weights = []
@@ -229,14 +239,17 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
-        start_time = time.time()
-        train_time = 0
         subsample_size = int(self.n_instances * 0.7)
         lowest_acc = 1
         lowest_acc_idx = 0
 
+        time_limit = self.time_limit_in_minutes * 60
+        start_time = time.time()
+        train_time = 0
         if time_limit > 0:
-            self.n_parameter_samples = 0
+            n_parameter_samples = 0
+        else:
+            n_parameter_samples = self.n_parameter_samples
 
         rng = check_random_state(self.random_state)
 
@@ -250,7 +263,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         # use time limit or n_parameter_samples if limit is 0
         while (
-            train_time < time_limit or num_classifiers < self.n_parameter_samples
+            train_time < time_limit or num_classifiers < n_parameter_samples
         ) and len(possible_parameters) > 0:
             if num_classifiers < self.randomly_selected_params:
                 parameters = possible_parameters.pop(
@@ -274,7 +287,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
             tde = IndividualTDE(
                 *parameters,
-                alphabet_size=self.alphabet_size,
+                alphabet_size=self._alphabet_size,
                 bigrams=use_bigrams,
                 dim_threshold=self.dim_threshold,
                 max_dims=self.max_dims,
@@ -284,7 +297,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde.subsample = subsample
 
             if self.save_train_predictions:
-                tde._train_predictions = np.zeros(self.n_instances - subsample_size)
+                tde._train_predictions = np.zeros(subsample_size)
 
             tde._accuracy = self._individual_train_acc(
                 tde,
@@ -327,12 +340,19 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         )
 
     def _predict_proba(self, X):
+        _, _, series_length = X.shape
+        if series_length != self.series_length:
+            raise TypeError(
+                "ERROR number of attributes in the train does not match "
+                "that in the test data"
+            )
+
         sums = np.zeros((X.shape[0], self.n_classes))
 
         for n, clf in enumerate(self.estimators_):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
-                sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
+                sums[i, self._class_dictionary[preds[i]]] += self.weights[n]
 
         return sums / (np.ones(self.n_classes) * self._weight_sum)
 
@@ -350,43 +370,73 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def _unique_parameters(self, max_window, win_inc):
         possible_parameters = [
             [win_size, word_len, normalise, levels, igb]
-            for normalise in self.norm_options
+            for normalise in self._norm_options
             for win_size in range(self.min_window, max_window + 1, win_inc)
-            for word_len in self.word_lengths
-            for levels in self.levels
-            for igb in self.igb_options
+            for word_len in self._word_lengths
+            for levels in self._levels
+            for igb in self._igb_options
         ]
 
         return possible_parameters
 
-    def _get_train_probs(self, X, y=None):
-        num_inst = X.shape[0]
-        results = np.zeros((num_inst, self.n_classes))
-        for i in range(num_inst):
-            divisor = 0
-            sums = np.zeros(self.n_classes)
+    def _get_train_probs(self, X, y, train_estimate_method="loocv"):
+        self.check_is_fitted()
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-            cls_idx = []
-            for n, clf in enumerate(self.estimators_):
-                idx = np.where(clf.subsample == i)
-                if len(idx[0]) > 0:
-                    cls_idx.append([n, idx[0][0]])
+        n_instances, n_dims, series_length = X.shape
 
-            preds = Parallel(n_jobs=self.n_jobs)(
-                delayed(self.estimators_[cls[0]]._train_predict)(
-                    cls[1],
-                )
-                for cls in cls_idx
+        if (
+            n_instances != self.n_instances
+            or n_dims != self.n_dims
+            or series_length != self.series_length
+        ):
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
             )
 
-            for n, pred in enumerate(preds):
-                sums[self.class_dictionary.get(pred, -1)] += self.weights[cls_idx[n][0]]
-                divisor += self.weights[cls_idx[n][0]]
+        results = np.zeros((n_instances, self.n_classes))
+        divisors = np.zeros(n_instances)
 
+        if train_estimate_method.lower() == "loocv":
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf.subsample
+                preds = (
+                    clf._train_predictions
+                    if self.save_train_predictions
+                    else Parallel(n_jobs=self.n_jobs)(
+                        delayed(clf._train_predict)(
+                            i,
+                        )
+                        for i in range(len(subsample))
+                    )
+                )
+
+                for n, pred in enumerate(preds):
+                    results[subsample[n]][
+                        self._class_dictionary.get(pred)
+                    ] += self.weights[i]
+                    divisors[subsample[n]] += self.weights[i]
+        elif train_estimate_method.lower() == "oob":
+            indices = range(n_instances)
+            for i, clf in enumerate(self.estimators_):
+                oob = [n for n in indices if n not in clf.subsample]
+                preds = clf.predict(X[oob])
+
+                for n, pred in enumerate(preds):
+                    results[oob[n]][self._class_dictionary.get(pred)] += self.weights[i]
+                    divisors[oob[n]] += self.weights[i]
+        else:
+            raise ValueError(
+                "Invalid train_estimate_method. Available options: loocv, oob"
+            )
+
+        for i in range(n_instances):
             results[i] = (
                 np.ones(self.n_classes) * (1 / self.n_classes)
-                if divisor == 0
-                else sums / (np.ones(self.n_classes) * divisor)
+                if divisors[i] == 0
+                else results[i] / (np.ones(self.n_classes) * divisors[i])
             )
 
         return results
@@ -429,7 +479,84 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
 
 class IndividualTDE(BaseClassifier):
-    """Single TDE classifier, based off the Bag of SFA Symbols (BOSS) model."""
+    """Single TDE classifier, based off the Bag of SFA Symbols (BOSS) model.
+
+    Bag of SFA Symbols Ensemble: implementation of a single BOSS Schaffer, the base
+    classifier for the boss ensemble.
+
+    Implementation of single BOSS model from Schäfer (2015). [1]_
+
+    This is the underlying classifier for each classifier in the BOSS ensemble.
+
+    Overview: input "n" series of length "m" and IndividualBoss performs a SFA
+    transform to form a sparse dictionary of discretised words. The resulting
+    dictionary is used with the BOSS distance function in a 1-nearest neighbor.
+
+    Fit involves finding "n" histograms.
+
+    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
+
+    Parameters
+    ----------
+    window_size : int
+        Size of the window to use in BOSS algorithm.
+    word_length : int
+        Length of word to use to use in BOSS algorithm.
+    norm : bool, default = False
+        Whether to normalize words by dropping the first Fourier coefficient.
+    alphabet_size : default = 4
+        Number of possible letters (values) for each word.
+    save_words : bool, default = True
+        Whether to keep NumPy array of words in SFA transformation even after
+        the dictionary of words is returned. If True, the array is saved, which
+        can shorten the time to calculate dictionaries using a shorter
+        `word_length` (since the last "n" letters can be removed).
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random, integer.
+
+    Attributes
+    ----------
+    n_classes : int
+        Number of classes. Extracted from the data.
+    n_instances : int
+        Number of instances. Extracted from the data.
+    n_estimators : int
+        The final number of classifiers used. Will be <= `max_ensemble_size` if
+        `max_ensemble_size` has been specified.
+    series_length : int
+        Length of all series (assumed equal). todo above
+
+    See Also
+    --------
+    TemporalDictinaryEnsemble
+
+    Notes
+    -----
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/dictionary_based/IndividualTDE.java>`_.
+
+    References
+    ----------
+    ..  [1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
+        "The Temporal Dictionary Ensemble (TDE) Classifier for Time Series
+        Classification", in proceedings of the European Conference on Machine Learning
+        and Principles and Practice of Knowledge Discovery in Databases, 2020.
+
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import IndividualTDE
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = IndividualTDE()
+    >>> clf.fit(X_train, y_train)
+    IndividualTDE(...)
+    >>> y_pred = clf.predict(X_test)
+    """
 
     def __init__(
         self,
@@ -474,22 +601,12 @@ class IndividualTDE(BaseClassifier):
         self.num_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
+        self._n_jobs = n_jobs
+
         super(IndividualTDE, self).__init__()
 
-    def fit(self, X, y):
-        """Fit a single TD classifier on n_instances cases (X,y).
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
+    def _fit(self, X, y):
+        self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.class_vals = y
@@ -528,28 +645,13 @@ class IndividualTDE(BaseClassifier):
                     lower_bounding=False,
                     save_words=False,
                     use_fallback_dft=True,
-                    n_jobs=self.n_jobs,
+                    n_jobs=self._n_jobs,
                 )
             )
             sfa = self.transformers[0].fit_transform(X, y)
             self.transformed_data = sfa[0]
 
-        self._is_fitted = True
-        return self
-
-    def predict(self, X):
-        """Predict class values of n instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape [n, 1]
-
-        Returns
-        -------
-        array of shape [n, 1]
-        """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
+    def _predict(self, X):
         num_cases = X.shape[0]
 
         if self.n_dims > 1:
@@ -569,7 +671,7 @@ class IndividualTDE(BaseClassifier):
             test_bags = self.transformers[0].transform(X)
             test_bags = test_bags[0]
 
-        classes = Parallel(n_jobs=self.n_jobs)(
+        classes = Parallel(n_jobs=self._n_jobs)(
             delayed(self._test_nn)(
                 test_bag,
             )
@@ -578,18 +680,8 @@ class IndividualTDE(BaseClassifier):
 
         return np.array(classes)
 
-    def predict_proba(self, X):
-        """Predict class probabilities for n instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape [n, 1]
-
-        Returns
-        -------
-        array of shape [n, self.n_classes]
-        """
-        preds = self.predict(X)
+    def _predict_proba(self, X):
+        preds = self._predict(X)
         dists = np.zeros((X.shape[0], self.num_classes))
 
         for i in range(0, X.shape[0]):
@@ -634,7 +726,7 @@ class IndividualTDE(BaseClassifier):
                     save_words=False,
                     keep_binning_dft=True,
                     use_fallback_dft=True,
-                    n_jobs=self.n_jobs,
+                    n_jobs=self._n_jobs,
                 )
             )
 
@@ -697,9 +789,31 @@ class IndividualTDE(BaseClassifier):
 
 
 def histogram_intersection(first, second):
-    """Histogram intersection between two instances.
+    """Find the distance between two histograms.
 
-    Passed either dictionaries or numpy arrays.
+    This returns the distance between first and second dictionaries, using a non
+    symmetric distance measure. It is used to find the distance between historgrams
+    of words.
+
+    This distance function is designed for sparse matrix, represented as either a
+    dictionary or an arrray. It only measures the distance between counts present in
+    the first dictionary and the second. Hence dist(a,b) does not necessarily equal
+    dist(b,a).
+
+    Parameters
+    ----------
+    first : dict
+        Base dictionary used in distance measurement.
+    second : dict
+        Second dictionary that will be used to measure distance from `first`.
+    best_dist : int, float or sys.float_info.max
+        Largest distance value. Values above this will be replaced by
+        sys.float_info.max.
+
+    Returns
+    -------
+    dist : float
+        The boss distance between the first and second dictionaries. todo above
     """
     if isinstance(first, dict):
         sim = 0
