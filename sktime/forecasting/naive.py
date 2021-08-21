@@ -24,7 +24,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
     Parameters
     ----------
-    strategy : str{"last", "mean", "drift"}, optional (default="last")
+    strategy : {"last", "mean", "drift"}, default="last"
         Strategy used to make forecasts:
 
         * "last" : forecast the last value in the
@@ -40,12 +40,12 @@ class NaiveForecaster(_BaseWindowForecaster):
                      forecasted for each season.
         * "drift": forecast by fitting a line between the
                     first and last point of the window and
-                     extrapolating it into the future
+                     extrapolating it into the future.
 
-    sp : int, optional (default=1)
+    sp : int, default=1
         Seasonal periodicity to use in the seasonal forecasting.
 
-    window_length : int or None, optional (default=None)
+    window_length : int or None, default=None
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
 
@@ -75,10 +75,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list or np.array, default=None
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        X : pd.DataFrame, default=None
+            Exogenous variables are ignored.
+
         Returns
         -------
         self : returns an instance of self.
