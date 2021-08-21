@@ -84,8 +84,7 @@ class MyClusterer(BaseClusterer):
 
     # todo: implement this, mandatory
     def _fit(self, X):
-        """
-        Fit the clustering algorithm on the dataset X
+        """Fit the clustering algorithm on the dataset X.
 
             core logic
 
@@ -126,13 +125,12 @@ class MyClusterer(BaseClusterer):
     # this is typically important for clustering
     # at least one of _predict and _get_fitted_params should be implemented
     def _get_fitted_params(self):
-        """
-        Retrieves fitted parameters of cluster model
+        """Retrieve fitted parameters of cluster model.
 
             core logic
 
-        returns
-        ----------
+        Returns
+        -------
         param_dict: dictionary of fitted parameters
         """
         # implement here
