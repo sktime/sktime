@@ -51,6 +51,7 @@ class NetworkPipelineForecaster(BaseForecaster):
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.datasets import load_longley
+    >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=4)
     >>> X_train, X_test = temporal_train_test_split(X, test_size=4)
