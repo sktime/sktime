@@ -48,7 +48,6 @@ class NetworkPipelineForecaster(BaseForecaster):
     >>> from sktime.transformations.panel.dataset_manipulation import SeriesUnion
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-    >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.datasets import load_longley
