@@ -30,6 +30,10 @@ class NetworkPipelineForecaster(BaseForecaster):
             3. arguments (dictionary) key value paris for
             fit_transform or predict method of estimator
 
+    See Also
+    --------
+    ForecastingPipeline, TransformedTargetForecaster
+
     Examples
     --------
     `original_X` and `original_y` are key words referring to the
