@@ -97,6 +97,7 @@ from sktime.transformations.series.compose import ColumnwiseTransformer
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.feature_selection import FeatureSelection
 
 
 # The following estimators currently do not pass all unit tests
@@ -331,6 +332,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    FeatureSelection: {"method": "random", "n_features": 2},
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},

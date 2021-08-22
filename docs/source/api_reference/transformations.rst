@@ -293,3 +293,14 @@ Theta
     :template: class.rst
 
     ThetaLinesTransformer
+
+FeatureSelection
+~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.feauture_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FeatureSelection
