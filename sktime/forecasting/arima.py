@@ -134,21 +134,22 @@ class AutoARIMA(_PmdArimaAdapter):
         with_intercept is False, the trend will be set to a no- intercept
         value.
     method : str, optional (default='lbfgs')
-        The method determines which solver from scipy.optimize is used, and it
-        can be chosen from among the following strings:
+        The ``method`` determines which solver from ``scipy.optimize``
+        is used, and it can be chosen from among the following strings:
 
-        ‘newton’ for Newton-Raphson
-        ‘nm’ for Nelder-Mead
-        ‘bfgs’ for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
-        ‘lbfgs’ for limited-memory BFGS with optional box constraints
-        ‘powell’ for modified Powell’s method
-        ‘cg’ for conjugate gradient
-        ‘ncg’ for Newton-conjugate gradient
-        ‘basinhopping’ for global basin-hopping solver
-        The explicit arguments in fit are passed to the solver, with the
-        exception of the basin-hopping solver. Each solver has several
-        optional arguments that are not the same across solvers. These can be
-        passed as **fit_kwargs
+        - 'newton' for Newton-Raphson
+        - 'nm' for Nelder-Mead
+        - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+        - 'lbfgs' for limited-memory BFGS with optional box constraints
+        - 'powell' for modified Powell's method
+        - 'cg' for conjugate gradient
+        - 'ncg' for Newton-conjugate gradient
+        - 'basinhopping' for global basin-hopping solver
+
+        The explicit arguments in ``fit`` are passed to the solver,
+        with the exception of the basin-hopping solver. Each
+        solver has several optional arguments that are not the same across
+        solvers. These can be passed as **fit_kwargs
     maxiter : int, optional (default=50)
         The maximum number of function evaluations.
     offset_test_args : dict, optional (default=None)
@@ -483,16 +484,17 @@ class ARIMA(_PmdArimaAdapter):
     **sarimax_kwargs : keyword args, optional
         Optional arguments to pass to the SARIMAX constructor.
         Examples of potentially valuable kwargs:
-            - time_varying_regression : boolean
+
+        - time_varying_regression : boolean
             Whether or not coefficients on the exogenous regressors are allowed
             to vary over time.
-            - enforce_stationarity : boolean
+        - enforce_stationarity : boolean
             Whether or not to transform the AR parameters to enforce
             stationarity in the auto-regressive component of the model.
-            - enforce_invertibility : boolean
+         - enforce_invertibility : boolean
             Whether or not to transform the MA parameters to enforce
             invertibility in the moving average component of the model.
-            - simple_differencing : boolean
+        - simple_differencing : boolean
             Whether or not to use partially conditional maximum likelihood
             estimation for seasonal ARIMA models. If True, differencing is
             performed prior to estimation, which discards the first
@@ -500,20 +502,20 @@ class ARIMA(_PmdArimaAdapter):
             state-space formulation. If False, the full SARIMAX model is
             put in state-space form so that all datapoints can be used in
             estimation. Default is False.
-            - measurement_error: boolean
+         - measurement_error: boolean
             Whether or not to assume the endogenous observations endog were
             measured with error. Default is False.
-            - mle_regression : boolean
+        - mle_regression : boolean
             Whether or not to use estimate the regression coefficients for the
             exogenous variables as part of maximum likelihood estimation or
             through the Kalman filter (i.e. recursive least squares). If
             time_varying_regression is True, this must be set to False.
             Default is True.
-            - hamilton_representation : boolean
+        - hamilton_representation : boolean
             Whether or not to use the Hamilton representation of an ARMA
             process (if True) or the Harvey representation (if False).
             Default is False.
-            - concentrate_scale : boolean
+        - concentrate_scale : boolean
             Whether or not to concentrate the scale (variance of the error
             term) out of the likelihood. This reduces the number of parameters
             estimated by maximum likelihood by one, but standard errors will
