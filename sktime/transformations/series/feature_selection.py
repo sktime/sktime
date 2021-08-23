@@ -54,7 +54,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.feature_selection import FeatureSelection
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
-    >>> transformer = FeatureSelection(method="feature-importances", n_feautures=3)
+    >>> transformer = FeatureSelection(method="feature-importances", n_features=3)
     >>> Xt = transformer.fit_transform(X, y)
     """
 
