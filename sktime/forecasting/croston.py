@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Croston's Forecasting Method."""
+
+
 import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
@@ -6,14 +11,14 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class Croston(BaseForecaster):
-    """Croston's Forecasting Method.
+    """Croston's method for forecasting intermittent demand.
 
-    This was designed for forecasting intermittent demand.
+    Implements method proposed by Croston in [1]_ and described in [2]_.
 
     Parameters
-    -----------
+    ----------
     smoothing : float, default = 0.1
-        Smoothing parameter
+        Smoothing parameter.
 
     Examples
     --------
@@ -27,10 +32,10 @@ class Croston(BaseForecaster):
 
     References
     ----------
-    [1]  J. D. Croston. Forecasting and stock control for intermittent demands.
-        Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
-    [2]  Forecasting: Principles and Practice,
-        Otext book by Rob J Hyndman and George Athanasopoulos
+    ..[1] J. D. Croston. Forecasting and stock control for intermittent demands.
+      Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
+    ..[2] Forecasting: Principles and Practice,
+      Otext book by Rob J Hyndman and George Athanasopoulos
     """
 
     _tags = {
@@ -53,16 +58,12 @@ class Croston(BaseForecaster):
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+            Exogenous variables are ignored.
+
         Returns
         -------
         self : returns an instance of self.
         """
-        if X is not None:
-            raise NotImplementedError(
-                "Support for exogenous variables is not yet implemented"
-            )
-
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
 
@@ -107,15 +108,13 @@ class Croston(BaseForecaster):
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+            Exogenous variables are ignored.
+
         Returns
         -------
         forecast : pd.series
-                   predicted forecasts
+            Predicted forecasts.
         """
-        if return_pred_int or X is not None:
-            raise NotImplementedError()
-
         len_fh = len(self.fh)
         f = self._f
 
