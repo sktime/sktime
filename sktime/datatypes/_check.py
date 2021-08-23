@@ -39,7 +39,7 @@ check_dict.update(check_dict_Panel)
 def check_is(
     obj,
     mtype: str,
-    scitype: Union(str, list) = None,
+    scitype: Union[str, list] = None,
     return_metadata=False,
     var_name="obj",
 ):
