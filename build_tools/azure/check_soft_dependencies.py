@@ -2,30 +2,34 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-# sktime supports a number of soft dependencies which are necessary for using
-# a certain module but otherwise not necessary. Here we check if soft
-# dependencies have been properly isolated and are not required to run other
-# modules.
+"""
+sktime checks for soft dependencies.
+
+sktime supports a number of soft dependencies which are necessary for using
+a certain module but otherwise not necessary. Here we check if soft
+dependencies have been properly isolated and are not required to run other
+modules.
+"""
+
 import pkgutil
 import re
 from importlib import import_module
 
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
+    "sktime.benchmarking.experiments": ["tsfresh", "esig"],
     "sktime.forecasting.all": ["pmdarima", "fbprophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["fbprophet"],
-    "sktime.classification.all": ["tsfresh"],
-    "sktime.classification.hybrid._catch22_forest_classifier": ["catch22"],
-    "sktime.classification.interval_based._cif": ["catch22"],
-    "sktime.classification.interval_based._drcif": ["catch22"],
-    "sktime.regression.all": ["tsfresh"],
+    "sktime.classification.feature_based": ["tsfresh", "esig"],
+    "sktime.classification.signature_based": ["esig"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
-    "sktime.transformations.panel.catch22_features": ["catch22"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
+    "sktime.transformations.panel.signature_based": ["esig"],
+    "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 

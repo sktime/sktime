@@ -1,4 +1,4 @@
-.. _learning_tasks:
+.. _user_guide_learning_tasks:
 
 Overview of Learning Tasks
 ==========================
@@ -9,15 +9,3 @@ Overview of Learning Tasks
     structure and are looking for contributions to develop the user guide
     further. For more details, please go to issue `#361 <https://github
     .com/alan-turing-institute/sktime/issues/361>`_ on GitHub.
-
-Contents
---------
-
-* :ref:`classification`
-* :ref:`regression`
-* :ref:`forecasting`
-* Clustering
-* Time series annotation
-* Panel forecasting
-* Supervised forecasting
-* Reduction

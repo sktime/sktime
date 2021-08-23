@@ -3,7 +3,7 @@
 Configurable time series ensembles
 """
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
-__all__ = ["TimeSeriesForestClassifier"]
+__all__ = ["ComposableTimeSeriesForestClassifier"]
 
 from warnings import warn
 import numpy as np
@@ -27,7 +27,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
-class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
+class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     """Time-Series Forest Classifier.
 
     @article{DENG2013142,
@@ -230,7 +230,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         self.max_samples = max_samples
 
         # Pass on params.
-        super(TimeSeriesForestClassifier, self).__init__(
+        super(ComposableTimeSeriesForestClassifier, self).__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,

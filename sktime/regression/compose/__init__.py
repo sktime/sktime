@@ -1,5 +1,6 @@
-__all__ = [
-    "TimeSeriesForestRegressor"
-]
+# -*- coding: utf-8 -*-
+"""Implement composite time series regression estimators."""
 
-from sktime.regression.compose._ensemble import TimeSeriesForestRegressor
+__all__ = ["ComposableTimeSeriesForestRegressor"]
+
+from sktime.regression.compose._ensemble import ComposableTimeSeriesForestRegressor

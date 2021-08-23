@@ -465,7 +465,8 @@ class ShapeletTransform(_PanelToTabularTransformer):
                     time_this_shapelet = time_now - time_last_shapelet
                     if time_this_shapelet > max_time_calc_shapelet:
                         max_time_calc_shapelet = time_this_shapelet
-                        print(max_time_calc_shapelet)  # noqa
+                        if self.verbose > 0:
+                            print(max_time_calc_shapelet)  # noqa
                     time_last_shapelet = time_now
 
                     # add a little 1% leeway to the timing incase one run was

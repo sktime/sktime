@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+"""Validations for use with forecasting module."""
+
 __all__ = [
     "check_y",
     "check_X",
@@ -74,20 +77,21 @@ def check_X(
     ----------
     X : pd.Series, pd.DataFrame, np.ndarray
     allow_empty : bool, optional (default=False)
-        If True, empty `y` raises an error.
+        If False, empty `X` raises an error.
     enforce_index_type : type, optional (default=None)
         type of time index
     enforce_univariate : bool, optional (default=False)
-        If True, multivariate Z will raise an error.
+        If True, multivariate X will raise an error.
+
     Returns
     -------
-    y : pd.Series, pd.DataFrame
+    X : pd.Series, pd.DataFrame
         Validated input data.
 
     Raises
     ------
     ValueError, TypeError
-        If y is an invalid input
+        If X is an invalid input
     UserWarning
         Warning that X is given and model can't use it
     """
@@ -108,7 +112,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     ----------
     y : pd.Series
     allow_empty : bool, optional (default=False)
-        If True, empty `y` raises an error.
+        If False, empty `y` raises an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
     enforce_index_type : type, optional (default=None)
@@ -138,7 +142,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     return y
 
 
-def check_cv(cv):
+def check_cv(cv, enforce_start_with_window=False):
     """
     Check CV generators.
 
@@ -155,22 +159,28 @@ def check_cv(cv):
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
+
+    if enforce_start_with_window:
+        if hasattr(cv, "start_with_window") and not cv.start_with_window:
+            raise ValueError("`start_with_window` must be set to True")
+
     return cv
 
 
 def check_step_length(step_length):
     """Validate window length.
+
     Parameters
     ----------
     step_length : step length for data set.
 
     Returns
-    ----------
+    -------
     step_length : int
         if step_length in not none and is int and greater than or equal to 1.
 
     Raises
-    ----------
+    ------
     ValueError
         if step_length is negative or not an integer or is None.
     """
@@ -230,14 +240,14 @@ def check_fh(fh, enforce_relative=False):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=True)
+        fh = ForecastingHorizon(fh, is_relative=None)
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
     # can be empty in some cases, but users should not create forecasting horizons
     # with no values
     if len(fh) == 0:
-        raise ValueError(f"`fh` must not be empty, but found: {fh}")
+        raise ValueError("`fh` must not be empty")
 
     if enforce_relative and not fh.is_relative:
         raise ValueError("`fh` must be relative, but found absolute `fh`")
@@ -247,10 +257,13 @@ def check_fh(fh, enforce_relative=False):
 
 def check_alpha(alpha):
     """Check that a confidence level alpha (or list of alphas) is valid.
+
     All alpha values must lie in the open interval (0, 1).
+
     Parameters
     ----------
     alpha : float, list of float
+
     Raises
     ------
     ValueError
@@ -277,18 +290,18 @@ def check_alpha(alpha):
 
 
 def check_cutoffs(cutoffs):
-    """Validates the cutoff
+    """Validate the cutoff.
 
     Parameters
     ----------
     cutoffs : np.ndarray or pd.Index
 
     Returns
-    ----------
+    -------
     cutoffs (Sorted array)
 
     Raises
-    ----------
+    ------
     ValueError
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
@@ -306,38 +319,42 @@ def check_cutoffs(cutoffs):
     return np.sort(cutoffs)
 
 
-def check_scoring(scoring):
+def check_scoring(scoring, allow_y_pred_benchmark=False):
     """
-    Validates the performace scoring
+    Validate the performace scoring.
 
     Parameters
     ----------
-    scoring : object of class MetricFunctionWrapper from sktime.permormance_metrics.
+    scoring : object that inherits from BaseMetric from sktime.performance_metrics.
 
     Returns
-    ----------
-    scoring : object of class MetricFunctionWrapper of sktime.permormance_metrics.
-    sMAPE(mean percentage error)
-        if the object is None.
+    -------
+    scoring :
+        MeanAbsolutePercentageError if the object is None.
 
     Raises
-    ----------
+    ------
     TypeError
         if object is not callable from current scope.
-        if object is not an instance of class MetricFunctionWrapper of
-        sktime.permormance_metrics.
+    NotImplementedError
+        if metric requires y_pred_benchmark to be passed
     """
-    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
-    from sktime.performance_metrics.forecasting import sMAPE
+    # Note symmetric=True is default arg for MeanAbsolutePercentageError
+    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
     if scoring is None:
-        return sMAPE()
+        return MeanAbsolutePercentageError()
+
+    scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+
+    if scoring_req_bench and not allow_y_pred_benchmark:
+        msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
+                 fully supported yet. Please use a performance metric that does not
+                 require y_pred_benchmark as a keyword argument in its call signature.
+              """
+        raise NotImplementedError(msg)
 
     if not callable(scoring):
         raise TypeError("`scoring` must be a callable object")
-
-    allowed_base_class = MetricFunctionWrapper
-    if not isinstance(scoring, allowed_base_class):
-        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring

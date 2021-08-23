@@ -232,14 +232,14 @@ class CheckPyPIFiles(Step):
 
 class PushTagToGitHub(Step):
     def action(self, context):
-        self.do_cmd("git push -u --tags origin master")
+        self.do_cmd(f"git push origin v{context['version']}")
 
 
 def main():
     colorama.init()
     steps = [
         # prepare and run final checks
-        ConfirmGitStatus(branch="master"),
+        ConfirmGitStatus(branch="main"),
         MakeClean(),
         UpdateVersion(),
         CheckVersionNumber(),

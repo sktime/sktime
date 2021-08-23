@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_gunpoint
 from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
@@ -33,7 +33,7 @@ std_transformer = SeriesToPrimitivesRowTransformer(
 
 # Check simple cases.
 def test_predict_proba():
-    clf = TimeSeriesForestClassifier(n_estimators=2)
+    clf = ComposableTimeSeriesForestClassifier(n_estimators=2)
     clf.fit(X, y)
     proba = clf.predict_proba(X)
 
@@ -115,7 +115,7 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     ]
     estimator = Pipeline(steps)
 
-    clf1 = TimeSeriesForestClassifier(
+    clf1 = ComposableTimeSeriesForestClassifier(
         estimator=estimator, random_state=random_state, n_estimators=n_estimators
     )
     clf1.fit(X_train, y_train)
@@ -123,7 +123,7 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
 
     # default, semi-modular implementation using
     # RandomIntervalFeatureExtractor internally
-    clf2 = TimeSeriesForestClassifier(
+    clf2 = ComposableTimeSeriesForestClassifier(
         random_state=random_state, n_estimators=n_estimators
     )
     clf2.fit(X_train, y_train)

@@ -1,5 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for statsmodels forecasters to be used in sktime framework."""
 
 __author__ = ["Markus Löning"]
 __all__ = ["_StatsModelsAdapter"]
@@ -8,21 +10,25 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 
 
-class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
-    """Base class for interfacing statsmodels forecasting algorithms"""
+class _StatsModelsAdapter(BaseForecaster):
+    """Base class for interfacing statsmodels forecasting algorithms."""
 
     _fitted_param_names = ()
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self):
         self._forecaster = None
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -33,6 +39,7 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -41,20 +48,15 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
             y, X = _coerce_int_to_range_index(y, X)
-
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         self._fit_forecaster(y, X)
-        self._is_fitted = True
         return self
 
     def _fit_forecaster(self, y_train, X_train=None):
-        """Internal fit"""
+        """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """
-        Make forecasts.
+        """Make forecasts.
 
         Parameters
         ----------
@@ -85,20 +87,23 @@ class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
         self.check_is_fitted()
-        return {
-            name: self._fitted_forecaster.params.get(name)
-            for name in self._get_fitted_param_names()
-        }
+        fitted_params = {}
+        for name in self._get_fitted_param_names():
+            if name in ["aic", "aicc", "bic", "hqic"]:
+                fitted_params[name] = getattr(self._fitted_forecaster, name, None)
+            else:
+                fitted_params[name] = self._fitted_forecaster.params.get(name)
+        return fitted_params
 
     def _get_fitted_param_names(self):
-        """Get names of fitted parameters"""
+        """Get names of fitted parameters."""
         return self._fitted_param_names
 
 

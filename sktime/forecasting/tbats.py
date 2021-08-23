@@ -1,6 +1,12 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements TBATS algorithm.
+
+TBATS refers to Exponential smoothing state space model with Box-Cox
+transformation, ARMA errors, Trigonometric Trend and Seasonal components as
+described in De LIvera, Hyndman and Snyder (2011).
+"""
 
 __author__ = ["Martin Walter"]
 __all__ = ["TBATS"]
@@ -13,6 +19,7 @@ _check_soft_dependencies("tbats")
 
 class TBATS(_TbatsAdapter):
     """TBATS estimator used to fit and select best performing model.
+
     TBATS (Exponential smoothing state space model with Box-Cox
     transformation, ARMA errors, Trigonometric Trend and Seasonal components.)
     Model has been described in De Livera, Hyndman & Snyder (2011).
@@ -51,7 +58,25 @@ class TBATS(_TbatsAdapter):
         https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.tbats import TBATS
+    >>> y = load_airline()
+    >>> forecaster = TBATS(
+    ...     use_box_cox=False,
+    ...     use_trend=False,
+    ...     use_damped_trend=False,
+    ...     sp=12,
+    ...     use_arma_errors=False,
+    ...     n_jobs=1)
+    >>> forecaster.fit(y)
+    TBATS(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
+
+    _fitted_param_names = "aic"
 
     # both bats and tbats inherit the same interface from the base class and only
     # instantiate a different model class internally

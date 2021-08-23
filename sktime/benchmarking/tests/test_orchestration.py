@@ -26,10 +26,10 @@ from sktime.benchmarking.results import HDDResults
 from sktime.benchmarking.results import RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.distance_based._proximity_forest import ProximityForest
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_gunpoint
-from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformations.panel.reduce import Tabularizer
 
@@ -168,9 +168,9 @@ def test_stat():
     dataset = RAMDataset(dataset=data, name="gunpoint")
     task = TSCTask(target="class_val")
 
-    fc = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
+    fc = ComposableTimeSeriesForestClassifier(n_estimators=1, random_state=1)
     strategy_fc = TSCStrategy(fc, name="tsf")
-    pf = ProximityForest(n_estimators=1, random_state=1)
+    pf = KNeighborsTimeSeriesClassifier()
     strategy_pf = TSCStrategy(pf, name="pf")
 
     # result backend
