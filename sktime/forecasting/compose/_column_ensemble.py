@@ -90,8 +90,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         else:
             self.forecasters = [
                 (name, forecaster, columns)
-                for ((name, forecaster), (_, _, columns))
-                in zip(value, self.forecasters)
+                for ((name, forecaster), (_, _, columns)) in zip(
+                    value, self.forecasters
+                )
             ]
 
     def _fit(self, y, X=None, fh=None):
