@@ -77,14 +77,22 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         via _HeterogenousMetaEstimator._get_params which expects
         lists of tuples of len 2.
         """
-        return [(name, forecasters) for name, forecasters, _ in self.forecasters]
+        forecasters = self.forecasters
+        if isinstance(forecasters, BaseForecaster):
+            return forecasters
+        else:
+            return [(name, forecasters) for name, forecasters, _ in self.forecasters]
 
     @_forecasters.setter
     def _forecasters(self, value):
-        self.forecasters = [
-            (name, forecasters, columns)
-            for ((name, forecasters), (_, _, columns)) in zip(value, self.forecasters)
-        ]
+        if isinstance(value, BaseForecaster):
+            self.forecasters = value
+        else:
+            self.forecasters = [
+                (name, forecasters, columns)
+                for ((name, forecasters), (_, _, columns))
+                in zip(value, self.forecasters)
+            ]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
