@@ -11,7 +11,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class Croston(BaseForecaster):
-    """Croston's method for forecasting intermittent time series.
+    r"""Croston's method for forecasting intermittent time series.
 
     Implements the method proposed by Croston in [1]_ and described in [2]_.
 
