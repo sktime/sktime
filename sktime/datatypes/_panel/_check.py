@@ -72,7 +72,7 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
     bad_inds = [i for i in range(n) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
-        msg = f"{var_name}[i] must be Sries of mtype pd.DataFrame, not at i={bad_inds}"
+        msg = f"{var_name}[i] must be Series of mtype pd.DataFrame, not at i={bad_inds}"
         return ret(False, msg, None, return_metadata)
 
     metadata = dict()

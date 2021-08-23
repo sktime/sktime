@@ -47,6 +47,8 @@ def test_convert(scitype):
     if len(fixtures[mtypes[0]]) == 0:
         raise RuntimeError("no fixtures defined for scitype " + scitype)
 
+    # by convention, all fixtures are mirrored across all mtypes
+    #  so len(fixtures[mtypes[i]]) does not depend on i
     n_fixtures = len(fixtures[mtypes[0]])
 
     for i in range(n_fixtures):
@@ -60,7 +62,7 @@ def test_convert(scitype):
                 # retrieve indicators whether conversion makes sense
                 # to-fixture is in example dict and is not None
                 cond1 = to_fixture is not None and to_fixture[0] is not None
-                # from-fixture is in example dict andis not None
+                # from-fixture is in example dict and is not None
                 cond2 = from_fixture is not None and from_fixture[0] is not None
                 # from-fixture is not None and not lossy
                 cond3 = cond2 and from_fixture[1] is not None and not from_fixture[1]

@@ -25,6 +25,7 @@ __all__ = [
 
 import numpy as np
 
+from typing import Union
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._registry import mtype_to_scitype
@@ -36,7 +37,11 @@ check_dict.update(check_dict_Panel)
 
 
 def check_is(
-    obj, mtype: str, scitype: str = None, return_metadata=False, var_name="obj"
+    obj,
+    mtype: str,
+    scitype: Union(str, list) = None,
+    return_metadata=False,
+    var_name="obj"
 ):
     """Check object for compliance with mtype specification, return metadata.
 
@@ -136,7 +141,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     ValueError if mtype input argument is not of expected type
     """
     obj_long_name_for_avoiding_linter_clash = obj
-    res = check_is(
+    valid, msg, _ = check_is(
         obj=obj_long_name_for_avoiding_linter_clash,
         mtype=mtype,
         scitype=scitype,
@@ -144,10 +149,10 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         var_name=var_name,
     )
 
-    if res[0]:
+    if valid:
         return True
     else:
-        raise TypeError(res[1])
+        raise TypeError(msg)
 
 
 def mtype(obj, as_scitype: str = None):

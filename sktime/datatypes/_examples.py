@@ -37,7 +37,7 @@ example_dict_lossy.update(example_dict_lossy_Panel)
 
 
 def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
-    """Retrieve the ind-th example for mtype mtype, scitype as_scitype.
+    """Retrieve a dict of examples for mtype `mtype`, scitype `as_scitype`.
 
     Parameters
     ----------
@@ -49,7 +49,7 @@ def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
     Returns
     -------
     fixtures: dict with integer keys, elements being
-        fixture - example for mtype mtype, scitype as_scitype
+        fixture - example for mtype `mtype`, scitype `as_scitype`
         if return_lossy=True, elements are pairs with fixture and
         lossy: bool - whether the example is a lossy representation
     """
