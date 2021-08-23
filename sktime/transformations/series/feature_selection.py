@@ -53,7 +53,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.feature_selection import FeatureSelection
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
-    >>> transformer = FeatureSelection(n_feautures=3, method="feature-selection")
+    >>> transformer = FeatureSelection(method="feature-importances", n_feautures=3)
     >>> Xt = transformer.fit_transform(X, y)
     """
 
@@ -80,12 +80,12 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
         super(FeatureSelection, self).__init__()
 
-    def _fit(self, Z, X=None):
-        """Logic used by fit method on `Z`.
+    def fit(self, Z, X=None):
+        """Fit the transformation on input series `Z`.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
+        Z : pd.DataFrame
             A time series to apply the transformation on.
 
         Returns
@@ -93,6 +93,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         self
         """
         Z = check_series(Z, enforce_multivariate=True)
+
         if self.method == "feature-importances":
             self._check_regressor()
             _check_n_features(self.n_features)
@@ -117,22 +118,28 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             self.columns_ = self.columns
         else:
             raise ValueError("Incorrect method given. Try another method.")
+
+        self._is_fitted = True
         return self
 
-    def _transform(self, Z, X=None):
-        """Logic used by `transform` to apply transformation to `Z`.
+    def transform(self, Z, X=None):
+        """Return transformed version of input series `Z`.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            The timeseries to be transformed.
+        Z : pd.DataFrame
+            A time series to apply the transformation on.
 
         Returns
         -------
         Zt : pd.Series or pd.DataFrame
-            Transformed timeseries.
+            Transformed version of input series `Z`.
         """
+        self.check_is_fitted()
+        Z = check_series(Z, enforce_multivariate=True)
+
         Zt = Z[self.columns_]
+
         return Zt
 
     def _check_regressor(self):
@@ -146,47 +153,6 @@ class FeatureSelection(_SeriesToSeriesTransformer):
                 )
             self.regressor_ = clone(self.regressor)
         return self
-
-    # following methods to be removed after transformer refactoring
-
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
-
-        Returns
-        -------
-        self
-        """
-        Z = check_series(Z)
-
-        self._fit(Z, X=X)
-
-        self._is_fitted = True
-        return self
-
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
-
-        Returns
-        -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        Zt = self._transform(Z, X=X)
-
-        return Zt
 
 
 def _check_n_features(n_features):
