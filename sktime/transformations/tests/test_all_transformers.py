@@ -1,5 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tests for transformers.
+
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -87,6 +90,7 @@ def check_series_to_series_transform_univariate(Estimator):
         out = _construct_fit_transform(
             Estimator,
             n_timepoints=n_timepoints,
+            n_columns=n_columns,
             add_nan=Estimator.get_class_tag("handles-missing-data", False),
         )
         assert isinstance(out, (pd.Series, pd.DataFrame, np.ndarray))
