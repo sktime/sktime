@@ -18,11 +18,15 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
 
+    Applies different univariate forecasters by column.
+
     Parameters
     ----------
-    forecasters : list of tuples (str, estimator, int or str)
-        With name as str, estimator as sktime-like estimator,
-        index as str or int
+    forecasters: forecaster, or list of tuples (str, estimator, int or str)
+        if tuples, with name = str, estimator is forecaster, index as str or int
+
+    If forecaster, clones of forecaster are applied to all columns.
+    If list of tuples, forecaster in tuple is applied to column with the int/str index
 
     Examples
     --------
@@ -52,12 +56,17 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(self, forecasters):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
-        forecaster_requires_fh_in_fit = (
-            forecaster.get_tag("requires-fh-in-fit")
-            for _, forecaster, _ in self.forecasters
-        )
-        at_least_one_requires_fh_in_fit = any(forecaster_requires_fh_in_fit)
-        self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh_in_fit})
+
+        # set requires-fh-in-fit depending on forecasters
+        if isinstance(forecasters, BaseForecaster):
+            self.clone_tags(forecasters, "requires-fh-in-fit")
+        else:
+            forecaster_requires_fh_in_fit = (
+                forecaster.get_tag("requires-fh-in-fit")
+                for _, forecaster, _ in self.forecasters
+            )
+            at_least_one_requires_fh = any(forecaster_requires_fh_in_fit)
+            self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh})
 
     @property
     def _forecasters(self):
@@ -111,7 +120,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.DataFrame
         X : pd.DataFrame
         update_params : bool, optional, default=True
 
@@ -162,6 +171,14 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _check_forecasters(self, y):
+
+        # if a single estimator is passed, replicate across columns
+        if isinstance(self.forecasters, BaseForecaster):
+            ycols = y.columns
+            colrange = range(len(ycols))
+            forecaster_list = [clone(self.forecasters) for _ in colrange]
+            self.forecasters = zip(ycols, forecaster_list, colrange)
+
         if (
             self.forecasters is None
             or len(self.forecasters) == 0
