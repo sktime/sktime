@@ -47,6 +47,8 @@ def test_convert(scitype):
     if len(fixtures[mtypes[0]]) == 0:
         raise RuntimeError("no fixtures defined for scitype " + scitype)
 
+    # by convention, all fixtures are mirrored across all mtypes
+    #  so len(fixtures[mtypes[i]]) does not depend on i
     n_fixtures = len(fixtures[mtypes[0]])
 
     for i in range(n_fixtures):
