@@ -28,6 +28,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
           to select n_features with highest importance values.
         * "random": Randomly select n_features features.
         * "columns": Select features by given names.
+        * "ignore": Remove all columns by setting Z to None.
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
@@ -116,6 +117,8 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             if self.columns is None:
                 raise AttributeError("Parameter columns must be given.")
             self.columns_ = self.columns
+        elif self.method == "ignore":
+            self.columns_ = None
         else:
             raise ValueError("Incorrect method given. Try another method.")
 
@@ -137,9 +140,10 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         Z = check_series(Z, enforce_multivariate=True)
-
-        Zt = Z[self.columns_]
-
+        if self.method == "ignore":
+            Zt = None
+        else:
+            Zt = Z[self.columns_]
         return Zt
 
     def _check_regressor(self):
