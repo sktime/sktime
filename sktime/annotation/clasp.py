@@ -42,11 +42,12 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
     """
     Segments the time series by extracting change points
 
-    :param time_series:
-    :param clasp:
-    :param n_change_points:
-    :param offset:
-    :return:
+    :param time_series: the time series to be segmented
+    :param clasp: the transformer
+    :param n_change_points: the number of change points to find
+    :param offset: the exclusion zone
+    :return: (predicted_change_points, clasp_profiles, scores)
+
     """
 
     period_size = clasp.window_length
@@ -57,10 +58,11 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
     queue.put(
         (
             -np.max(profile),
-            (np.arange(time_series.shape[0]).tolist(), np.argmax(profile)),
+            [np.arange(time_series.shape[0]).tolist(), np.argmax(profile), profile],
         )
     )
 
+    profiles = []
     change_points = []
     scores = []
 
@@ -70,10 +72,11 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
             break
 
         # get profile with highest change point score
-        priority, (profile_range, change_point) = queue.get()
+        priority, (profile_range, change_point, cur_profile) = queue.get()
 
         change_points.append(change_point)
         scores.append(-priority)
+        profiles.append(cur_profile)
 
         if idx == n_change_points - 1:
             break
@@ -88,6 +91,13 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
             left_change_point = np.argmax(left_profile)
             left_score = left_profile[left_change_point]
 
+            cur_profile = np.zeros(len(time_series))
+            cur_profile.fill(0.5)
+            np.copyto(
+                cur_profile[left_range[0] : left_range[0] + len(left_profile)],
+                left_profile.values,
+            )
+
             global_change_point = left_range[0] + left_change_point
 
             if not _is_trivial_match(
@@ -96,13 +106,20 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
                 time_series.shape[0],
                 exclusion_radius=offset,
             ):
-                queue.put((-left_score, [left_range, global_change_point]))
+                queue.put((-left_score, [left_range, global_change_point, cur_profile]))
 
         # create and enqueue right local profile
         if len(right_range) > period_size:
             right_profile = clasp.transform(time_series[right_range])
             right_change_point = np.argmax(right_profile)
             right_score = right_profile[right_change_point]
+
+            cur_profile = np.zeros(len(time_series))
+            cur_profile.fill(0.5)
+            np.copyto(
+                cur_profile[right_range[0] : right_range[0] + len(right_profile)],
+                right_profile.values,
+            )
 
             global_change_point = right_range[0] + right_change_point
 
@@ -112,9 +129,11 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
                 time_series.shape[0],
                 exclusion_radius=offset,
             ):
-                queue.put((-right_score, [right_range, global_change_point]))
+                queue.put(
+                    (-right_score, [right_range, global_change_point, cur_profile])
+                )
 
-    return profile, np.array(change_points), np.array(scores)
+    return np.array(change_points), np.array(profiles, dtype=object), np.array(scores)
 
 
 class ClaSPSegmentation(BaseSeriesAnnotator):
@@ -141,6 +160,11 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         size of window for sliding, based on the period length of the data
     n_cps:                 int, default = 1
         the number of change points to search
+
+    Returns
+    -------
+    Tuple (numpy.array, numpy.array, numpy.array):
+        predicted_change_points, clasp_profiles, scores
 
     """
 

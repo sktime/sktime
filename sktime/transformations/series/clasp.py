@@ -205,7 +205,7 @@ def _roc_auc_score(y_score, y_true):
     return area
 
 
-@njit(fastmath=True, cache=True)
+@njit(fastmath=True)
 def _calc_profile(window_size, knn_mask, score, offset):
     """clasp profile calculation for the kNN indices and a score
 

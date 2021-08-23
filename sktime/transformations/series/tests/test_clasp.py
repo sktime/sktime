@@ -15,5 +15,5 @@ def test_clasp():
 
     # compute a ClaSP segmentation
     clasp = ClaSPSegmentation(period_size, n_cps=1).fit(ts)
-    profile, found_cps, scores = clasp.predict(ts)
+    found_cps, _, _ = clasp.predict(ts)
     assert len(found_cps) == 1 and found_cps[0] == 893
