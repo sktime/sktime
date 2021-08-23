@@ -193,7 +193,6 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 @pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
 def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
-
     f = _construct_instance(Forecaster)
     y, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
