@@ -79,14 +79,16 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
-            return forecasters
+            return [("forecasters", forecasters)]
         else:
             return [(name, forecaster) for name, forecaster, _ in self.forecasters]
 
     @_forecasters.setter
     def _forecasters(self, value):
-        if isinstance(value, BaseForecaster):
+        if len(value) == 1 and isinstance(value, BaseForecaster):
             self.forecasters = value
+        elif len(value) == 1 and isinstance(value, list):
+            self.forecasters = value[0][1]
         else:
             self.forecasters = [
                 (name, forecaster, columns)
@@ -111,12 +113,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        self._check_forecasters(y)
+        forecasters = self._check_forecasters(y)
 
         self.forecasters_ = []
         self.y_columns = list(y.columns)
 
-        for (name, forecaster, index) in self.forecasters:
+        for (name, forecaster, index) in forecasters:
             forecaster_ = clone(forecaster)
 
             forecaster_.fit(y.iloc[:, index], X, fh)
@@ -186,7 +188,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             ycols = [str(col) for col in y.columns]
             colrange = range(len(ycols))
             forecaster_list = [clone(self.forecasters) for _ in colrange]
-            self.forecasters = list(zip(ycols, forecaster_list, colrange))
+            return list(zip(ycols, forecaster_list, colrange))
 
         if (
             self.forecasters is None
@@ -217,4 +219,4 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             raise ValueError(
                 "One estimator per column required. Found %s" % len(indices)
             )
-        return names, forecasters, indices
+        return self.forecasters
