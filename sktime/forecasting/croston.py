@@ -25,15 +25,15 @@ class Croston(BaseForecaster):
 
     The method is (equivalent to) the following:
 
-    - Let :math:`v_0,\\ldots,v_n` be the non-zero values of the time series
-    - Let :math:`v` be the exponentially smoothed average of :math:`v_0,\\ldots,v_n`
-    - Let :math:`z_0,\\ldots,z_n` be the number of consecutive zeros plus 1 between
+    - Let :math:`v_0,\ldots,v_n` be the non-zero values of the time series
+    - Let :math:`v` be the exponentially smoothed average of :math:`v_0,\ldots,v_n`
+    - Let :math:`z_0,\ldots,z_n` be the number of consecutive zeros plus 1 between
       the :math:`v_i` in the original time series.
-    - Let :math:`z` be the exponentially smoothed average of :math:`z_0,\\ldots,z_n`
-    - Then the forecast is :math:`\\frac{v}{z}`
+    - Let :math:`z` be the exponentially smoothed average of :math:`z_0,\ldots,z_n`
+    - Then the forecast is :math:`\frac{v}{z}`
 
     The intuition is that :math:`v` is a weighted average of the non-zero time
-    series values and :math:`\\frac{1}{z}` estimates the probability of getting a
+    series values and :math:`\frac{1}{z}` estimates the probability of getting a
     non-zero value.
 
     Example to illustrate the :math:`v` and :math:`d` notation.
