@@ -42,9 +42,10 @@ def deep_equals(x, y):
     if isinstance(x, pd.Series):
         if x.dtype != y.dtype:
             return False
-        # if columns are object, recurse over entries
+        # if columns are object, recurse over entries and index
         if x.dtype == "object":
-            return deep_equals(list(x.values), list(y.values))
+            index_equal = x.index.equals(y.index)
+            return index_equal and deep_equals(list(x.values), list(y.values))
         else:
             return x.equals(y)
     elif isinstance(x, pd.DataFrame):
