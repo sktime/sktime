@@ -160,9 +160,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
@@ -272,9 +269,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
         y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
