@@ -425,6 +425,7 @@ class ARIMA(_PmdArimaAdapter):
     method : str, optional (default='lbfgs')
         The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
+
         - 'newton' for Newton-Raphson
         - 'nm' for Nelder-Mead
         - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
@@ -433,6 +434,7 @@ class ARIMA(_PmdArimaAdapter):
         - 'cg' for conjugate gradient
         - 'ncg' for Newton-conjugate gradient
         - 'basinhopping' for global basin-hopping solver
+
         The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
