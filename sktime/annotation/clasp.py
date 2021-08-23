@@ -72,11 +72,11 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
             break
 
         # get profile with highest change point score
-        priority, (profile_range, change_point, cur_profile) = queue.get()
+        priority, (profile_range, change_point, full_profile) = queue.get()
 
         change_points.append(change_point)
         scores.append(-priority)
-        profiles.append(cur_profile)
+        profiles.append(full_profile)
 
         if idx == n_change_points - 1:
             break
@@ -85,53 +85,29 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
         left_range = np.arange(profile_range[0], change_point).tolist()
         right_range = np.arange(change_point, profile_range[-1]).tolist()
 
-        # create and enqueue left local profile
-        if len(left_range) > period_size:
-            left_profile = clasp.transform(time_series[left_range])
-            left_change_point = np.argmax(left_profile)
-            left_score = left_profile[left_change_point]
+        for ranges in [left_range, right_range]:
+            # create and enqueue left local profile
+            if len(ranges) > period_size:
+                profile = clasp.transform(time_series[ranges])
+                change_point = np.argmax(profile)
+                score = profile[change_point]
 
-            cur_profile = np.zeros(len(time_series))
-            cur_profile.fill(0.5)
-            np.copyto(
-                cur_profile[left_range[0] : left_range[0] + len(left_profile)],
-                left_profile.values,
-            )
-
-            global_change_point = left_range[0] + left_change_point
-
-            if not _is_trivial_match(
-                global_change_point,
-                change_points,
-                time_series.shape[0],
-                exclusion_radius=offset,
-            ):
-                queue.put((-left_score, [left_range, global_change_point, cur_profile]))
-
-        # create and enqueue right local profile
-        if len(right_range) > period_size:
-            right_profile = clasp.transform(time_series[right_range])
-            right_change_point = np.argmax(right_profile)
-            right_score = right_profile[right_change_point]
-
-            cur_profile = np.zeros(len(time_series))
-            cur_profile.fill(0.5)
-            np.copyto(
-                cur_profile[right_range[0] : right_range[0] + len(right_profile)],
-                right_profile.values,
-            )
-
-            global_change_point = right_range[0] + right_change_point
-
-            if not _is_trivial_match(
-                global_change_point,
-                change_points,
-                time_series.shape[0],
-                exclusion_radius=offset,
-            ):
-                queue.put(
-                    (-right_score, [right_range, global_change_point, cur_profile])
+                full_profile = np.zeros(len(time_series))
+                full_profile.fill(0.5)
+                np.copyto(
+                    full_profile[ranges[0] : ranges[0] + len(profile)],
+                    profile.values,
                 )
+
+                global_change_point = ranges[0] + change_point
+
+                if not _is_trivial_match(
+                    global_change_point,
+                    change_points,
+                    time_series.shape[0],
+                    exclusion_radius=offset,
+                ):
+                    queue.put((-score, [ranges, global_change_point, full_profile]))
 
     return np.array(change_points), np.array(profiles, dtype=object), np.array(scores)
 
