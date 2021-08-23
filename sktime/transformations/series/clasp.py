@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Arik Ermshaus, Patrick Schäfer"]
-__all__ = ["ClaSPTransformer", "segmentation"]
+__all__ = ["ClaSPTransformer"]
 
 import numpy as np
-import numpy.fft as fft
 
+# import numpy.fft as fft
 import pandas as pd
 
-from queue import PriorityQueue
 from numba import njit
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
+from sktime.transformations.panel.matrix_profile import _sliding_dot_products
 
 
 def _sliding_window(a, window):
@@ -27,16 +27,8 @@ def _sliding_window(a, window):
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
 
+""" using the implementation in matrix_profile for now
 def _sliding_dot_product(query, ts):
-    """
-    the sliding dot product between a query subsequence and a time series
-    :param query:
-    :param ts:
-    :return:
-    """
-    m = len(query)
-    n = len(ts)
-
     ts_add = 0
     if n % 2 == 1:
         ts = np.insert(ts, 0, 0)
@@ -52,6 +44,7 @@ def _sliding_dot_product(query, ts):
     trim = m - 1 + ts_add
     dot_product = fft.irfft(fft.rfft(ts) * fft.rfft(query))
     return dot_product[trim:]
+"""
 
 
 def _sliding_mean_std(TS, m):
@@ -88,7 +81,8 @@ def _compute_distances_iterative(TS, m, k):
     for order in range(0, length):
         # first iteration O(n log n)
         if order == 0:
-            dot_first = _sliding_dot_product(TS[:m], TS)
+            # dot_first = _sliding_dot_product(TS[:m], TS)
+            dot_first = _sliding_dot_products(TS[:m], TS, len(TS[:m]), len(TS))
             dot_rolled = dot_first
         # O(1) further operations
         else:
@@ -268,120 +262,23 @@ def clasp(
     return profile, knn_mask
 
 
-def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0.05):
-    """
-    Checks if a candidate change point is in close proximity to other change points
-
-    :param candidate:
-    :param change_points:
-    :param n_timepoints:
-    :param exclusion_radius:
-    :return:
-    """
-    change_points = [0] + change_points + [n_timepoints]
-    exclusion_radius = np.int64(n_timepoints * exclusion_radius)
-
-    for change_point in change_points:
-        left_begin = max(0, change_point - exclusion_radius)
-        right_end = min(n_timepoints, change_point + exclusion_radius)
-        if candidate in range(left_begin, right_end):
-            return True
-
-    return False
-
-
-def segmentation(time_series, window_size, n_change_points=None, offset=0.05):
-    """
-    Segments the time series by extracting change points
-
-    :param time_series:
-    :param window_size:
-    :param n_change_points:
-    :param offset:
-    :return:
-    """
-
-    clasp = ClaSPTransformer(window_length=window_size)
-    queue = PriorityQueue()
-
-    # compute global clasp
-    profile = clasp.fit_transform(time_series)
-    queue.put(
-        (
-            -np.max(profile),
-            (np.arange(time_series.shape[0]).tolist(), np.argmax(profile)),
-        )
-    )
-
-    change_points = []
-    scores = []
-
-    for idx in range(n_change_points):
-        # should not happen ... safety first
-        if queue.empty() is True:
-            break
-
-        # get profile with highest change point score
-        priority, (profile_range, change_point) = queue.get()
-
-        change_points.append(change_point)
-        scores.append(-priority)
-
-        if idx == n_change_points - 1:
-            break
-
-        # create left and right local range
-        left_range = np.arange(profile_range[0], change_point).tolist()
-        right_range = np.arange(change_point, profile_range[-1]).tolist()
-
-        # create and enqueue left local profile
-        if len(left_range) > window_size:
-            left_profile = clasp.fit_transform(time_series[left_range])
-            left_change_point = np.argmax(left_profile)
-            left_score = left_profile[left_change_point]
-
-            global_change_point = left_range[0] + left_change_point
-
-            if not _is_trivial_match(
-                global_change_point,
-                change_points,
-                time_series.shape[0],
-                exclusion_radius=offset,
-            ):
-                queue.put((-left_score, [left_range, global_change_point]))
-
-        # create and enqueue right local profile
-        if len(right_range) > window_size:
-            right_profile = clasp.fit_transform(time_series[right_range])
-            right_change_point = np.argmax(right_profile)
-            right_score = right_profile[right_change_point]
-
-            global_change_point = right_range[0] + right_change_point
-
-            if not _is_trivial_match(
-                global_change_point,
-                change_points,
-                time_series.shape[0],
-                exclusion_radius=offset,
-            ):
-                queue.put((-right_score, [right_range, global_change_point]))
-
-    return profile, np.array(change_points), np.array(scores)
-
-
 class ClaSPTransformer(_SeriesToSeriesTransformer):
     """ClaSP (Classification Score Profile) Transformer, as described in
 
-    @inproceedings{
-      TODO
+    @inproceedings{clasp2021,
+      title={ClaSP - Time Series Segmentation},
+      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
+      booktitle={CIKM},
+      year={2021}
     }
 
     Overview:
 
+    Implementation of the Classification Score Profile of a time series.
 
     Parameters
     ----------
-    window_size:         int, default = 7
+    window_size:         int, default = 8
         size of window for sliding.
 
     """
