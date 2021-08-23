@@ -61,7 +61,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     _tags = {
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
-        "univariate-only": False,
+        "multivariate-only": True,
         "skip-inverse-transform": True,
     }
 

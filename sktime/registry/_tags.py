@@ -52,6 +52,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does forecaster use exogeneous data (X)?",
     ),
     (
+        "multivariate-only",  # todo: rename to "scitype:handles_exogeneous"
+        "forecaster",
+        "bool",
+        "does forecaster only work with exogeneous data (X)?",
+    ),
+    (
         "fit-in-transform",
         "transformer",
         "bool",

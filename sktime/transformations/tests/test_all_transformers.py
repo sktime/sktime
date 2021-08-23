@@ -70,6 +70,8 @@ def check_series_to_primitive_transform_multivariate(Estimator):
     n_columns = 3
     if Estimator.get_class_tag("univariate-only", False):
         _check_raises_error(Estimator, n_columns=n_columns)
+    elif Estimator.get_class_tag("multivariate-only", False):
+        _check_raises_error(Estimator, n_columns=1)
     else:
         out = _construct_fit_transform(Estimator, n_columns=n_columns)
         assert isinstance(out, (pd.Series, np.ndarray))
@@ -78,12 +80,16 @@ def check_series_to_primitive_transform_multivariate(Estimator):
 
 def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 15
-    out = _construct_fit_transform(
-        Estimator,
-        n_timepoints=n_timepoints,
-        add_nan=Estimator.get_class_tag("handles-missing-data", False),
-    )
-    assert isinstance(out, (pd.Series, np.ndarray, pd.DataFrame))
+    n_columns = 1
+    if Estimator.get_class_tag("multivariate-only", False):
+        _check_raises_error(Estimator, n_columns=n_columns)
+    else:
+        out = _construct_fit_transform(
+            Estimator,
+            n_timepoints=n_timepoints,
+            add_nan=Estimator.get_class_tag("handles-missing-data", False),
+        )
+        assert isinstance(out, (pd.Series, pd.DataFrame, np.ndarray))
 
 
 def check_series_to_series_transform_multivariate(Estimator):
