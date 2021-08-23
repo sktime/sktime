@@ -461,11 +461,12 @@ class ARIMA(_PmdArimaAdapter):
         If performing validation (i.e., if ``out_of_sample_size`` > 0), the
         metric to use for scoring the out-of-sample data:
 
-            * If a string, must be a valid metric name importable from
-                ``sklearn.metrics``.
-            * If a callable, must adhere to the function signature::
+        - If a string, must be a valid metric name importable from
+          ``sklearn.metrics``
 
-                def foo_loss(y_true, y_pred)
+        - If a callable, must adhere to the function signature::
+
+            def foo_loss(y_true, y_pred)
 
         Note that models are selected by *minimizing* loss. If using a
         maximizing metric (such as ``sklearn.metrics.r2_score``), it is the
