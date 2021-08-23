@@ -8,6 +8,7 @@ __author__ = ["Arik Ermshaus, Patrick Schäfer"]
 __all__ = ["ClaSPSegmentation"]
 
 import numpy as np
+import pandas as pd
 
 from queue import PriorityQueue
 
@@ -154,6 +155,9 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     def _predict(self, X):
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
+
+        if isinstance(X, pd.Series):
+            X = X.to_numpy()
 
         clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
 

@@ -316,6 +316,10 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         # self.check_is_fitted()
 
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
-        Xt, self.knn_mask = clasp(X.to_numpy(), self.window_length)
+
+        if isinstance(X, pd.Series):
+            X = X.to_numpy()
+
+        Xt, self.knn_mask = clasp(X, self.window_length)
 
         return pd.Series(Xt)

@@ -27,6 +27,7 @@ __all__ = [
     "load_UCR_UEA_dataset",
     "load_PBS_dataset",
     "load_gun_point_segmentation",
+    "load_electric_devices_segmentation",
 ]
 
 __author__ = [
@@ -808,7 +809,7 @@ def load_gun_point_segmentation():
     Loads the GunPoint time series segmentation problem and returns X
     Parameters
 
-    We group TS of the GunPoint dataset by class label and concatenate
+    We group TS of the UCR GunPoint dataset by class label and concatenate
     all TS to create segments with repeating temporal patterns and
     characteristics. The location at which different classes were
     concatenated are marked as change points.
@@ -835,6 +836,45 @@ def load_gun_point_segmentation():
 
     period_length = int(10)
     change_points = np.int32([900])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
+
+
+def load_electric_devices_segmentation():
+    """
+    Loads the Electric Devices segmentation problem and returns X
+    Parameters
+
+    We group TS of the UCR Electric Devices dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "ElectricDevices"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
     ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
