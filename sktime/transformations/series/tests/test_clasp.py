@@ -11,9 +11,9 @@ from sktime.datasets import load_gun_point_segmentation
 
 def test_clasp():
     # load the test dataset
-    ts, window_size, cps = load_gun_point_segmentation()
+    ts, period_size, cps = load_gun_point_segmentation()
 
     # compute a ClaSP segmentation
-    clasp = ClaSPSegmentation(window_size, len(cps)).fit(ts)
+    clasp = ClaSPSegmentation(period_size, len(cps)).fit(ts)
     profile, found_cps, scores = clasp.predict(ts)
     assert len(found_cps) == 1 and found_cps[0] == 893

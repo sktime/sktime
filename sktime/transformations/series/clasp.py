@@ -276,6 +276,11 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
     Implementation of the Classification Score Profile of a time series.
 
+    ClaSP hierarchically splits a TS into two parts, where each split point is
+    determined by training a binary TS classifier for each possible split point and
+    selecting the one with highest accuracy, i.e., the one that is best at identifying
+    subsequences to be from either of the partitions.
+
     Parameters
     ----------
     window_size:         int, default = 8

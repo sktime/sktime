@@ -37,7 +37,7 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
     return False
 
 
-def segmentation(time_series, clasp, n_change_points=None, offset=0.05):
+def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
     """
     Segments the time series by extracting change points
 
@@ -130,7 +130,9 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     Overview:
 
-    Implementation of ClaSP's recursive split segmentation algorithm.
+    Using ClaSP for the CPD problem is straightforward: We first compute the profile
+    and then choose its global maximum as the change point. The following CPDs
+    are obtained using a bespoke recursive split segmentation algorithm.
 
     Parameters
     ----------
@@ -155,6 +157,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
         clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
 
-        return segmentation(
+        return _segmentation(
             X, clasp_transformer, n_change_points=self.n_cps, offset=0.05
         )
