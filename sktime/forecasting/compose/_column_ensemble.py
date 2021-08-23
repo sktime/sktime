@@ -81,7 +81,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if isinstance(forecasters, BaseForecaster):
             return forecasters
         else:
-            return [(name, forecasters) for name, forecasters, _ in self.forecasters]
+            return [(name, forecaster) for name, forecaster, _ in self.forecasters]
 
     @_forecasters.setter
     def _forecasters(self, value):
@@ -89,8 +89,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self.forecasters = value
         else:
             self.forecasters = [
-                (name, forecasters, columns)
-                for ((name, forecasters), (_, _, columns))
+                (name, forecaster, columns)
+                for ((name, forecaster), (_, _, columns))
                 in zip(value, self.forecasters)
             ]
 
