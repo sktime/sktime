@@ -193,17 +193,19 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 @pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
 def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
-    y, X = make_forecasting_problem(index_type=index_type, make_X=True)
-    cutoff = y.index[len(y) // 2]
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
-
-    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
     f = _construct_instance(Forecaster)
+    y, X = make_forecasting_problem(index_type=index_type, make_X=True)
+
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
     if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1, index_type=index_type)
+        y = _make_series(n_columns=1, index_type=index_type)
+        cutoff = y.index[-1]
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+
+        y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+
         try:
             f.fit(y_train, X_train, fh=fh)
             y_pred = f.predict(X=X_test)
@@ -212,7 +214,10 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
             pass
 
     if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=1, index_type=index_type)
+        y = _make_series(n_columns=2, index_type=index_type)
+        cutoff = y.index[-1]
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
         try:
             f.fit(y_train, X_train, fh=fh)
