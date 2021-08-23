@@ -41,7 +41,7 @@ def check_is(
     mtype: str,
     scitype: Union(str, list) = None,
     return_metadata=False,
-    var_name="obj"
+    var_name="obj",
 ):
     """Check object for compliance with mtype specification, return metadata.
 
