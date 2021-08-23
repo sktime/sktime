@@ -183,10 +183,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         # if a single estimator is passed, replicate across columns
         if isinstance(self.forecasters, BaseForecaster):
-            ycols = y.columns
+            ycols = [str(col) for col in y.columns]
             colrange = range(len(ycols))
             forecaster_list = [clone(self.forecasters) for _ in colrange]
-            self.forecasters = zip(ycols, forecaster_list, colrange)
+            self.forecasters = list(zip(ycols, forecaster_list, colrange))
 
         if (
             self.forecasters is None
