@@ -138,7 +138,7 @@ def _calc_knn_labels(knn_mask, split_idx, window_size):
     """
     k_neighbours, n_timepoints = knn_mask.shape
 
-    # create hypothetical labels
+    # create labels for given potential split
     y_true = np.concatenate(
         (
             np.zeros(split_idx, dtype=np.int64),
