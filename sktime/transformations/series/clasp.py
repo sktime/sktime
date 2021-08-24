@@ -70,6 +70,10 @@ def _sliding_mean_std(TS, m):
     segSumSq = sSq[m:] - sSq[:-m]
     movmean = segSum / m
     movstd = np.sqrt(segSumSq / m - (segSum / m) ** 2)
+
+    # avoid dividing by too small std, like 0
+    movstd = np.where(abs(movstd) < 0.001, 1, movstd)
+
     return [movmean, movstd]
 
 
@@ -301,7 +305,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
 
     def __init__(self, window_length=10):
-        self.window_length = window_length
+        self.window_length = int(window_length)
         self.knn_mask = None
         super(ClaSPTransformer, self).__init__()
 

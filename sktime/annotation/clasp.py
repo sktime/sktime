@@ -154,7 +154,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     """
 
     def __init__(self, period_length=10, n_cps=1):
-        self.period_length = period_length
+        self.period_length = int(period_length)
         self.n_cps = n_cps
         super(ClaSPSegmentation, self).__init__()
 
