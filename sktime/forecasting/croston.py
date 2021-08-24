@@ -36,12 +36,12 @@ class Croston(BaseForecaster):
     series values and :math:`\frac{1}{z}` estimates the probability of getting a
     non-zero value.
 
-    Example to illustrate the :math:`v` and :math:`d` notation.
+    Example to illustrate the :math:`v` and :math:`z` notation.
 
     - If the original time series is :math:`0,0,2,7,0,0,0,-5` then:
 
         - The :math:`v`'s are :math:`2,7,-5`
-        - The :math:`d`'s are :math:`3,1,4`
+        - The :math:`z`'s are :math:`3,1,4`
 
     Parameters
     ----------
