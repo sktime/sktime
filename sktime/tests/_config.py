@@ -52,6 +52,7 @@ from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import AutoEnsembleForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
@@ -160,7 +161,6 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
 FORECASTER = ExponentialSmoothing()
-COLUMN_ENSEMBLE_FORECASTER = [("naive", NaiveForecaster(), 0)]
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
 STEPS_y = [
     ("transformer", Detrender(ThetaForecaster())),
@@ -171,7 +171,7 @@ STEPS_X = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    ColumnEnsembleForecaster: {"forecasters": COLUMN_ENSEMBLE_FORECASTER},
+    ColumnEnsembleForecaster: {"forecasters": FORECASTER},
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
@@ -193,7 +193,8 @@ ESTIMATOR_TEST_PARAMS = {
     TransformedTargetForecaster: {"steps": STEPS_y},
     ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
-    StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
+    StackingForecaster: {"forecasters": FORECASTERS},
+    AutoEnsembleForecaster: {"forecasters": FORECASTERS},
     Detrender: {"forecaster": FORECASTER},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
