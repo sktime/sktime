@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+"""ClaSP (Classification Score Profile) Transformer implementation,
+    as described in
+
+    @inproceedings{clasp2021,
+      title={ClaSP - Time Series Segmentation},
+      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
+      booktitle={CIKM},
+      year={2021}
+    }
+"""
 
 __author__ = ["Arik Ermshaus, Patrick Schäfer"]
 __all__ = ["ClaSPTransformer"]
@@ -283,14 +293,14 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_size:         int, default = 8
+    window_size:         int, default = 10
         size of window for sliding.
 
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
 
-    def __init__(self, window_length=8):
+    def __init__(self, window_length=10):
         self.window_length = window_length
         self.knn_mask = None
         super(ClaSPTransformer, self).__init__()

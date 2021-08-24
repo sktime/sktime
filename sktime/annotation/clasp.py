@@ -1,6 +1,15 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+ClaSP (Classification Score Profile) Segmentation,
+as described in
+
+@inproceedings{clasp2021,
+  title={ClaSP - Time Series Segmentation},
+  author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
+  booktitle={CIKM},
+  year={2021}
+}
+"""
 
 from sktime.annotation.base import BaseSeriesAnnotator
 
@@ -132,7 +141,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     Parameters
     ----------
-    period_length:         int, default = 8
+    period_length:         int, default = 10
         size of window for sliding, based on the period length of the data
     n_cps:                 int, default = 1
         the number of change points to search
@@ -144,7 +153,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     """
 
-    def __init__(self, period_length=8, n_cps=1):
+    def __init__(self, period_length=10, n_cps=1):
         self.period_length = period_length
         self.n_cps = n_cps
         super(ClaSPSegmentation, self).__init__()
