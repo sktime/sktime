@@ -16,6 +16,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
+from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.base import BaseEstimator
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
@@ -337,6 +338,7 @@ ESTIMATOR_TEST_PARAMS = {
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
+    ClaSPTransformer: {"window_length": 5},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
