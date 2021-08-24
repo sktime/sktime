@@ -54,6 +54,18 @@ class AutoAR(_StatsModelsAdapter):
     References
     ----------
     ..[1] https://www.statsmodels.org/stable/_modules/statsmodels/tsa/ar_model.html
+
+
+    Example
+    ----------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.ar import AutoAR
+    >>> y = load_airline()
+    >>> forecaster = AutoAR(maxlag=20)
+    >>> forecaster.fit(y)
+    AutoAR(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+
     """
 
     def __init__(
@@ -63,53 +75,22 @@ class AutoAR(_StatsModelsAdapter):
         seasonal=False,
         hold_back=None,
         sp=None,
+        # exog=None,
         missing="none",
         ic="bic",
         glob=False,
         old_names=True,
-        deterministic=None,
-        dates=None,
-        freq=None,
-        method="cmle",
-        cov_type="nonrobust",
-        cov_kwds=None,
-        use_t=False,
-        transparams=True,
-        start_params=None,
-        solver="lbfgs",
-        maxiter=35,
-        full_output=1,
-        disp=1,
-        callback=None,
-        normalized_cov_params=None,
-        scale=1.0,
-        **kwargs
     ):
         self.maxlag = maxlag
         self.trend = trend
         self.seasonal = seasonal
         self.hold_back = hold_back
         self.sp = sp
+        # self.exog = exog
         self.missing = missing
         self.glob = glob
         self.ic = ic
         self.old_names = old_names
-        self.deterministic = deterministic
-        self.dates = dates
-        self.freq = freq
-        self.cov_type = cov_type
-        self.cov_kwds = cov_kwds
-        self.use_t = use_t
-        self.start_params = start_params
-        self.method = method
-        self.transparams = transparams
-        self.normalized_cov_params = normalized_cov_params
-        self.solver = solver
-        self.maxiter = maxiter
-        self.full_output = full_output
-        self.disp = disp
-        self.scale = scale
-        self.callback = callback
 
         super(AutoAR, self).__init__()
 
