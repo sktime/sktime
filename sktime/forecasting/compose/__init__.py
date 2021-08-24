@@ -8,6 +8,7 @@ __author__ = ["mloning"]
 __all__ = [
     "ColumnEnsembleForecaster",
     "EnsembleForecaster",
+    "AutoEnsembleForecaster",
     "TransformedTargetForecaster",
     "ForecastingPipeline",
     "DirectTabularRegressionForecaster",
@@ -26,6 +27,7 @@ __all__ = [
 
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
+from sktime.forecasting.compose._ensemble import AutoEnsembleForecaster
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.compose._pipeline import ForecastingPipeline
 from sktime.forecasting.compose._reduce import DirRecTabularRegressionForecaster
