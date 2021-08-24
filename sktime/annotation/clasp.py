@@ -186,12 +186,11 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         """
         return self.fit(X).predict(X)
 
-    # def get_fitted_params(self):
-    #     """Get fitted parameters.
-    #
-    #     Returns
-    #     -------
-    #     fitted_params : dict
-    #     """
-    #     return {"profiles": self.profiles, "scores": self.scores}
-    # This will cause: AssertionError: Estimator: ... changes __dict__ during predict
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        return {"profiles": self.profiles, "scores": self.scores}
