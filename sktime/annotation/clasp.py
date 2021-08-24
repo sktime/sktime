@@ -180,6 +180,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     def get_fitted_params(self):
         """Get fitted parameters.
+
         Returns
         -------
         fitted_params : dict
