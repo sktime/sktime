@@ -176,6 +176,12 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         return pd.Series(self.found_cps)
 
     def fit_predict(self, X, Y=None):
+        """Get shortcut for fit and predict.
+
+        :param X:
+        :param Y:
+        :return:
+        """
         return self.fit(X).predict(X)
 
     def get_fitted_params(self):
