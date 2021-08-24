@@ -18,6 +18,6 @@ def test_clasp():
     ts, period_size, cps = load_gun_point_segmentation()
 
     # compute a ClaSP segmentation
-    clasp = ClaSPSegmentation(period_size, n_cps=1).fit(ts)
-    found_cps, _, _ = clasp.predict(ts)
+    clasp = ClaSPSegmentation(period_size, n_cps=1)
+    found_cps = clasp.fit_predict(ts)
     assert len(found_cps) == 1 and found_cps[0] == 893

@@ -169,6 +169,19 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
         clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
 
-        return _segmentation(
+        self.found_cps, self.profiles, self.scores = _segmentation(
             X, clasp_transformer, n_change_points=self.n_cps, offset=0.05
         )
+
+        return pd.Series(self.found_cps)
+
+    def fit_predict(self, X, Y=None):
+        return self.fit(X).predict(X)
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+        Returns
+        -------
+        fitted_params : dict
+        """
+        return {"profiles": self.profiles, "scores": self.scores}
