@@ -333,9 +333,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-        # No need to fit
-        # self.check_is_fitted()
-
+        self.check_is_fitted()
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
 
         if isinstance(X, pd.Series):
