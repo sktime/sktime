@@ -805,9 +805,7 @@ def load_uschange(y_name="Consumption"):
 
 
 def load_gun_point_segmentation():
-    """
-    Loads the GunPoint time series segmentation problem and returns X
-    Parameters
+    """Load the GunPoint time series segmentation problem and returns X.
 
     We group TS of the UCR GunPoint dataset by class label and concatenate
     all TS to create segments with repeating temporal patterns and
@@ -820,6 +818,7 @@ def load_gun_point_segmentation():
     [10,20,50,100] to avoid over-fitting.
 
     -----------
+
     Returns
     -------
         X : pd.Series
@@ -844,9 +843,7 @@ def load_gun_point_segmentation():
 
 
 def load_electric_devices_segmentation():
-    """
-    Loads the Electric Devices segmentation problem and returns X
-    Parameters
+    """Load the Electric Devices segmentation problem and returns X.
 
     We group TS of the UCR Electric Devices dataset by class label and concatenate
     all TS to create segments with repeating temporal patterns and
@@ -859,6 +856,7 @@ def load_electric_devices_segmentation():
     [10,20,50,100] to avoid over-fitting.
 
     -----------
+
     Returns
     -------
         X : pd.Series

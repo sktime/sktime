@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-ClaSP (Classification Score Profile) Segmentation,
-as described in
+ClaSP (Classification Score Profile) Segmentation.
 
+As described in
 @inproceedings{clasp2021,
   title={ClaSP - Time Series Segmentation},
   author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
@@ -28,7 +28,7 @@ from sktime.utils.validation.series import check_series
 
 def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0.05):
     """
-    Checks if a candidate change point is in close proximity to other change points
+    Check if a candidate change point is in close proximity to other change points.
 
     :param candidate:
     :param change_points:
@@ -50,16 +50,14 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
 
 def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
     """
-    Segments the time series by extracting change points
+    Segments the time series by extracting change points.
 
     :param time_series: the time series to be segmented
     :param clasp: the transformer
     :param n_change_points: the number of change points to find
     :param offset: the exclusion zone
     :return: (predicted_change_points, clasp_profiles, scores)
-
     """
-
     period_size = clasp.window_length
     queue = PriorityQueue()
 
@@ -124,9 +122,9 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
 
 class ClaSPSegmentation(BaseSeriesAnnotator):
     """
-    ClaSP (Classification Score Profile) Segmentation,
-    as described in
+    ClaSP (Classification Score Profile) Segmentation.
 
+    As described in
     @inproceedings{clasp2021,
       title={ClaSP - Time Series Segmentation},
       author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},

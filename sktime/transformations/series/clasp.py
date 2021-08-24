@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-"""ClaSP (Classification Score Profile) Transformer implementation,
-    as described in
 
-    @inproceedings{clasp2021,
-      title={ClaSP - Time Series Segmentation},
-      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
-      booktitle={CIKM},
-      year={2021}
-    }
+"""
+ClaSP (Classification Score Profile) Transformer implementation.
+
+As described in
+@inproceedings{clasp2021,
+  title={ClaSP - Time Series Segmentation},
+  author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
+  booktitle={CIKM},
+  year={2021}
+}
 """
 
 __author__ = ["Arik Ermshaus, Patrick Schäfer"]
@@ -26,8 +28,8 @@ from sktime.transformations.panel.matrix_profile import _sliding_dot_products
 
 
 def _sliding_window(a, window):
-    """
-    the sliding windows for a time series and a window size
+    """Return the sliding windows for a time series and a window size.
+
     :param a:
     :param window:
     :return:
@@ -58,8 +60,8 @@ def _sliding_dot_product(query, ts):
 
 
 def _sliding_mean_std(TS, m):
-    """
-    the sliding mean and std for a time series and a window size
+    """Return the sliding mean and std for a time series and a window size.
+
     :param TS:
     :param m:
     :return:
@@ -79,8 +81,11 @@ def _sliding_mean_std(TS, m):
 
 def _compute_distances_iterative(TS, m, k):
     """
-    kNN indices with dot-product / no-loops for a time series,
-    a window size and k neighbours
+    Compute kNN indices with dot-product.
+
+    Mo-loops implementation for a time series, given
+    a window size and k neighbours.
+
     :param TS:
     :param m:
     :param k:
@@ -129,8 +134,8 @@ def _compute_distances_iterative(TS, m, k):
 
 @njit(fastmath=True, cache=True)
 def _calc_knn_labels(knn_mask, split_idx, window_size):
-    """
-    kNN indices relabeling at a given split index
+    """Compute kNN indices relabeling at a given split index.
+
     :param knn_mask:
     :param split_idx:
     :param window_size:
@@ -167,7 +172,7 @@ def _calc_knn_labels(knn_mask, split_idx, window_size):
 
 @njit(fastmath=True, cache=True)
 def _roc_auc_score(y_score, y_true):
-    """roc-auc score calculation
+    """Compute roc-auc score.
 
     :param y_score:
     :param y_true:
@@ -221,7 +226,7 @@ def _roc_auc_score(y_score, y_true):
 
 @njit(fastmath=True)
 def _calc_profile(window_size, knn_mask, score, offset):
-    """clasp profile calculation for the kNN indices and a score
+    """Calculate ClaSP profile for the kNN indices and a score.
 
     :param window_size:
     :param knn_mask:
@@ -253,8 +258,7 @@ def clasp(
     interpolate=True,
     offset=0.05,
 ):
-    """
-    clasp calculation for a time series and a window size
+    """Calculate ClaSP for a time series and a window size.
 
     :param time_series:
     :param window_size:
@@ -277,7 +281,9 @@ def clasp(
 
 
 class ClaSPTransformer(_SeriesToSeriesTransformer):
-    """ClaSP (Classification Score Profile) Transformer, as described in
+    """ClaSP (Classification Score Profile) Transformer.
+
+    As described in
 
     @inproceedings{clasp2021,
       title={ClaSP - Time Series Segmentation},
@@ -311,6 +317,8 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
     def transform(self, X, y=None):
         """
+        Compute ClaSP.
+
         Takes as input a single time series dataset and returns the
         Classification Score profile for that single time series.
 
@@ -325,7 +333,6 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-
         # No need to fit
         # self.check_is_fitted()
 
