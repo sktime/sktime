@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-# from sktime.metrics.distances._dtw_based import LowerBounding, dtw
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.benchmarking._internal_benchmarks.profiling import time_function_call
 
-# from tslearn.metrics.dtw_variants import dtw as tslearn_dtw
+from sktime.metrics.distances._squared_dist import SquaredDistance
+from sktime.metrics.distances.dtw._dtw import Dtw
+from sktime.distances.elastic_cython import dtw_distance
+
+from tslearn.metrics.dtw_variants import dtw as tslearn_dtw
 
 
 def run_distance_benchmark(
@@ -37,31 +40,56 @@ def run_distance_benchmark(
     return time_taken
 
 
-def benchmakr_tslearn():
-    # no_bounding = run_distance_benchmark(
-    #     num_timeseries=2,
-    #     timeseries_length=1000,
-    #     timeseries_dimensions=1000,
-    #     distance_func=tslearn_dtw,
-    # )
-    # sakoe_bounding = run_distance_benchmark(
-    #     num_timeseries=2,
-    #     timeseries_length=1000,
-    #     timeseries_dimensions=1000,
-    #     distance_func=tslearn_dtw,
-    #     global_constraint="sakoe_chiba",
-    # )
-    # itakura_bounding = run_distance_benchmark(
-    #     num_timeseries=2,
-    #     timeseries_length=1000,
-    #     timeseries_dimensions=1000,
-    #     distance_func=tslearn_dtw,
-    #     global_constraint="itakura",
-    # )
-    # print("ts learn no bounding", no_bounding)
-    # print("ts learn sakoe", sakoe_bounding)
-    # print("ts leran itakura", itakura_bounding)
+def benchmark_dtws():
+    tslearn = run_distance_benchmark(
+        num_timeseries=2,
+        timeseries_length=1000,
+        timeseries_dimensions=1000,
+        distance_func=tslearn_dtw,
+    )
+    ours = run_distance_benchmark(
+        num_timeseries=2,
+        timeseries_length=1000,
+        timeseries_dimensions=1000,
+        distance_func=Dtw().distance,
+    )
+    cython_currnent = run_distance_benchmark(
+        num_timeseries=2,
+        timeseries_length=1000,
+        timeseries_dimensions=1000,
+        distance_func=dtw_distance,
+    )
+    print("tslearn", tslearn)
+    print("ours", ours)
+    print("cython current", cython_currnent)
     pass
+
+
+# def benchmakr_tslearn():
+#     no_bounding = run_distance_benchmark(
+#         num_timeseries=2,
+#         timeseries_length=1000,
+#         timeseries_dimensions=1000,
+#         distance_func=tslearn_dtw,
+#     )
+#     sakoe_bounding = run_distance_benchmark(
+#         num_timeseries=2,
+#         timeseries_length=1000,
+#         timeseries_dimensions=1000,
+#         distance_func=tslearn_dtw,
+#         global_constraint="sakoe_chiba",
+#     )
+#     itakura_bounding = run_distance_benchmark(
+#         num_timeseries=2,
+#         timeseries_length=1000,
+#         timeseries_dimensions=1000,
+#         distance_func=tslearn_dtw,
+#         global_constraint="itakura",
+#     )
+#     print("ts learn no bounding", no_bounding)
+#     print("ts learn sakoe", sakoe_bounding)
+#     print("ts leran itakura", itakura_bounding)
+#     pass
 
 
 def benchmark_distance():
@@ -126,4 +154,4 @@ def benchmark_bounding():
 
 if __name__ == "__main__":
     # benchmark_bounding()
-    benchmark_distance()
+    benchmark_dtws()

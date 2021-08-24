@@ -1,40 +1,24 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from typing import List
 
-from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.metrics.distances._dtw_based import dtw, LowerBounding, dtw_and_cost_matrix
-
-
-def _create_test_ts(dimensions: List[int]):
-    nested, _ = make_classification_problem(
-        n_instances=2, n_columns=dimensions[0], n_timepoints=10, n_classes=1
-    )
-    numpy_ts = from_nested_to_3d_numpy(nested)
-    x = numpy_ts[0]
-    nested, _ = make_classification_problem(
-        n_instances=2, n_columns=dimensions[1], n_timepoints=10, n_classes=1
-    )
-    numpy_ts = from_nested_to_3d_numpy(nested)
-    y = numpy_ts[0]
-    return x, y
+from sktime.metrics.distances.tests.utils import _create_test_ts_distances
 
 
 def test_dtw_distance():
-    x, y = _create_test_ts([4, 4])
+    x, y = _create_test_ts_distances([4, 4])
     dtw(x, y, lower_bounding=1)
     dtw(x, y, lower_bounding=2)
     dtw(x, y, lower_bounding=3)
 
 
 def test_dtw_with_cost_matrix_distance():
-    x, y = _create_test_ts([10, 10])
+    x, y = _create_test_ts_distances([10, 10])
     dtw_and_cost_matrix(x, y, lower_bounding=1)
 
 
 def test_lower_bounding():
-    x, y = _create_test_ts([10, 10])
+    x, y = _create_test_ts_distances([10, 10])
     no_constraints = LowerBounding.NO_BOUNDING
 
     assert np.array_equal(
