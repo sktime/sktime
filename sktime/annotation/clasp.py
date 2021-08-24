@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 ClaSP (Classification Score Profile) Segmentation,
 as described in
