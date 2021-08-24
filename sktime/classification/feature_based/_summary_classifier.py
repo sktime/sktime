@@ -1,34 +1,36 @@
 # -*- coding: utf-8 -*-
-"""Martrix Profile classifier.
+"""Catch22 Classifier.
 
-Pipeline classifier using the Matrix Profile transformer and an estimator.
+Pipeline classifier using the Catch22 transformer and an estimator.
 """
 
 __author__ = ["MatthewMiddlehurst"]
-__all__ = ["MatrixProfileClassifier"]
+__all__ = ["SummaryClassifier"]
 
 import numpy as np
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.matrix_profile import MatrixProfile
-from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.transformations.panel.catch22 import Catch22
+from sktime.utils.validation.panel import check_X_y, check_X
 
 
-class MatrixProfileClassifier(BaseClassifier):
-    """Martrix Profile (MP) classifier.
+class SummaryClassifier(BaseClassifier):
+    """Canonical Time-series Characteristics (catch22) classifier.
 
-    This classifier simply transforms the input data using the MatrixProfile [1]
+    This classifier simply transforms the input data using the Catch22 [1]
     transformer and builds a provided estimator using the transformed data.
 
     Parameters
     ----------
-    subsequence_length : int, default=10
-        The subsequence length for the MatrixProfile transformer.
+    outlier_norm : bool, default=False
+        Normalise each series during the two outlier catch22 features, which can take a
+        while to process for large values
     estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
-        1-nearest neighbour classifier.
+        Random Forest with 200 trees.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -44,30 +46,36 @@ class MatrixProfileClassifier(BaseClassifier):
 
     See Also
     --------
-    MatrixProfile
+    Catch22
+
+    Notes
+    -----
+    Authors `catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
+
+    For the Java version, see `tsml <https://github.com/uea-machine-learning/tsml/blob
+    /master/src/main/java/tsml/classifiers/hybrids/Catch22Classifier.java>`_.
 
     References
     ----------
-    .. [1] Yeh, Chin-Chia Michael, et al. "Time series joins, motifs, discords and
-        shapelets: a unifying view that exploits the matrix profile." Data Mining and
-        Knowledge Discovery 32.1 (2018): 83-123.
-        https://link.springer.com/article/10.1007/s10618-017-0519-9
+    .. [1] Lubba, Carl H., et al. "catch22: Canonical time-series characteristics."
+        Data Mining and Knowledge Discovery 33.6 (2019): 1821-1852.
+        https://link.springer.com/article/10.1007/s10618-019-00647-x
 
     Examples
     --------
-    >>> from sktime.classification.feature_based import MatrixProfileClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MatrixProfileClassifier()
+    >>> from sktime.classification.feature_based import Catch22Classifier
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = Catch22Classifier()
     >>> clf.fit(X_train, y_train)
-    MatrixProfileClassifier(...)
+    Catch22Classifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags
     capabilities = {
-        "multivariate": False,
+        "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
         "train_estimate": False,
@@ -76,12 +84,12 @@ class MatrixProfileClassifier(BaseClassifier):
 
     def __init__(
         self,
-        subsequence_length=10,
+        outlier_norm=False,
         estimator=None,
         n_jobs=1,
         random_state=None,
     ):
-        self.subsequence_length = subsequence_length
+        self.outlier_norm = outlier_norm
         self.estimator = estimator
 
         self.n_jobs = n_jobs
@@ -91,15 +99,14 @@ class MatrixProfileClassifier(BaseClassifier):
         self._estimator = None
         self.n_classes = 0
         self.classes_ = []
-
-        super(MatrixProfileClassifier, self).__init__()
+        super(SummaryClassifier, self).__init__()
 
     def fit(self, X, y):
-        """Fit an estimator using transformed data from the MatrixProfile transformer.
+        """Fit an estimator using transformed data from the Catch22 transformer.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
+        X : nested pandas DataFrame of shape [n_instances, n_dims]
             Nested dataframe with univariate time-series in cells.
         y : array-like, shape = [n_instances] The class labels.
 
@@ -107,13 +114,13 @@ class MatrixProfileClassifier(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        self.classes_ = np.unique(y)
-        self.n_classes = self.classes_.shape[0]
+        X, y = check_X_y(X, y)
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        self.n_classes = np.unique(y).shape[0]
 
-        self._transformer = MatrixProfile(m=self.subsequence_length)
+        self._transformer = Catch22(outlier_norm=self.outlier_norm)
         self._estimator = _clone_estimator(
-            KNeighborsClassifier(n_neighbors=1)
+            RandomForestClassifier(n_estimators=200)
             if self.estimator is None
             else self.estimator,
             self.random_state,
@@ -124,6 +131,7 @@ class MatrixProfileClassifier(BaseClassifier):
             self._estimator.n_jobs = self.n_jobs
 
         X_t = self._transformer.fit_transform(X, y)
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         self._estimator.fit(X_t, y)
 
         self._is_fitted = True
@@ -134,7 +142,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, 1)
+        X : pd.DataFrame of shape (n_instances, n_dims)
 
         Returns
         -------
@@ -142,16 +150,18 @@ class MatrixProfileClassifier(BaseClassifier):
             Predicted class.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X)
 
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+        return self._estimator.predict(X_t)
 
     def predict_proba(self, X):
         """Predict class probabilities for n_instances in X.
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, 1)
+        X : pd.DataFrame of shape (n_instances, n_dims)
 
         Returns
         -------
@@ -159,14 +169,17 @@ class MatrixProfileClassifier(BaseClassifier):
             Predicted probability of each class.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X)
+
+        X_t = self._transformer.transform(X)
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
 
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            return self._estimator.predict_proba(X_t)
         else:
             dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists
