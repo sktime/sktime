@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Catch22 Classifier.
+"""Random Interval Classifier.
 
 Pipeline classifier using the Catch22 transformer and an estimator.
 """
