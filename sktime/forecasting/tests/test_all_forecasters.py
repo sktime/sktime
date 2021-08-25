@@ -107,17 +107,19 @@ def test_y_multivariate_raises_error(Forecaster):
     """Test that wrong y scitype raises error (uni/multivariate if not supported)."""
     f = _construct_instance(Forecaster)
 
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
+    if f.get_tag("scitype:y") in ["univariate"]:
 
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
+    if f.get_tag("scitype:y") in ["multivariate"]:
 
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
             f.fit(y, fh=FH0)
+    if f.get_tag("scitype:y") in ["univariate"]:
+        pass
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -216,7 +218,7 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
         y = _make_series(n_columns=2, index_type=index_type)
         cutoff = y.index[len(y) // 2]
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
-        y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh)
+        y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
         try:
             f.fit(y_train, X_train, fh=fh)
