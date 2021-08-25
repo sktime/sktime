@@ -31,7 +31,7 @@ mtype_to_scitype(mtype: str) - convenience function that returns scitype for an 
 ---
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""    ("pd.Series", "Series", "pd.Series representation of a univariate series"),
+"""
 
 from sktime.datatypes._series._registry import (
     MTYPE_REGISTER_SERIES,
