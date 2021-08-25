@@ -14,7 +14,6 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
-from sktime.utils.validation.panel import check_X_y, check_X
 
 
 class SummaryClassifier(BaseClassifier):
@@ -39,7 +38,7 @@ class SummaryClassifier(BaseClassifier):
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         Number of classes. Extracted from the data.
     classes_ : ndarray of shape (n_classes)
         Holds the label for each class.
@@ -73,13 +72,12 @@ class SummaryClassifier(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -97,26 +95,13 @@ class SummaryClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes = 0
+        self.n_classes_ = 0
         self.classes_ = []
         super(SummaryClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """Fit an estimator using transformed data from the Catch22 transformer.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, n_dims]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y)
+    def _fit(self, X, y):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.n_classes = np.unique(y).shape[0]
+        self.n_classes_ = np.unique(y).shape[0]
 
         self._transformer = Catch22(outlier_norm=self.outlier_norm)
         self._estimator = _clone_estimator(
@@ -134,52 +119,16 @@ class SummaryClassifier(BaseClassifier):
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         self._estimator.fit(X_t, y)
 
-        self._is_fitted = True
-        return self
+    def _predict(self, X):
+        return self._estimator.predict(self._transformer.transform(X))
 
-    def predict(self, X):
-        """Predict class values of n_instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
-
-        Returns
-        -------
-        preds : np.ndarray of shape (n, 1)
-            Predicted class.
-        """
-        self.check_is_fitted()
-        X = check_X(X)
-
-        X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
-        return self._estimator.predict(X_t)
-
-    def predict_proba(self, X):
-        """Predict class probabilities for n_instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
-
-        Returns
-        -------
-        predicted_probs : array of shape (n_instances, n_classes)
-            Predicted probability of each class.
-        """
-        self.check_is_fitted()
-        X = check_X(X)
-
-        X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
-
+    def _predict_proba(self, X):
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(X_t)
+            return self._estimator.predict_proba(self._transformer.transform(X))
         else:
-            dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self._estimator.predict(X_t)
+            dists = np.zeros((X.shape[0], self.n_classes_))
+            preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists

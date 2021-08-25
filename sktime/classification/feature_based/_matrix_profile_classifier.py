@@ -13,7 +13,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.matrix_profile import MatrixProfile
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class MatrixProfileClassifier(BaseClassifier):
@@ -37,7 +36,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         Number of classes. Extracted from the data.
     classes_ : ndarray of shape (n_classes)
         Holds the label for each class.
@@ -65,13 +64,12 @@ class MatrixProfileClassifier(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -89,27 +87,14 @@ class MatrixProfileClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes = 0
+        self.n_classes_ = 0
         self.classes_ = []
 
         super(MatrixProfileClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """Fit an estimator using transformed data from the MatrixProfile transformer.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+    def _fit(self, X, y):
         self.classes_ = np.unique(y)
-        self.n_classes = self.classes_.shape[0]
+        self.n_classes_ = self.classes_.shape[0]
 
         self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(
@@ -126,46 +111,15 @@ class MatrixProfileClassifier(BaseClassifier):
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
 
-        self._is_fitted = True
-        return self
-
     def predict(self, X):
-        """Predict class values of n_instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, 1)
-
-        Returns
-        -------
-        preds : np.ndarray of shape (n, 1)
-            Predicted class.
-        """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-
         return self._estimator.predict(self._transformer.transform(X))
 
     def predict_proba(self, X):
-        """Predict class probabilities for n_instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, 1)
-
-        Returns
-        -------
-        predicted_probs : array of shape (n_instances, n_classes)
-            Predicted probability of each class.
-        """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
-            dists = np.zeros((X.shape[0], self.n_classes))
+            dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1

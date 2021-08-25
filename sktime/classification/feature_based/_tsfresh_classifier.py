@@ -17,7 +17,6 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -49,7 +48,7 @@ class TSFreshClassifier(BaseClassifier):
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         Number of classes. Extracted from the data.
     classes_ : ndarray of shape (n_classes)
         Holds the label for each class.
@@ -77,13 +76,12 @@ class TSFreshClassifier(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -107,27 +105,14 @@ class TSFreshClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes = 0
+        self.n_classes_ = 0
         self.classes_ = []
 
         super(TSFreshClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """Fit an estimator using transformed data from the Catch22 transformer.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, n_dims]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y)
+    def _fit(self, X, y):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.n_classes = np.unique(y).shape[0]
+        self.n_classes_ = np.unique(y).shape[0]
 
         self._transformer = (
             TSFreshRelevantFeatureExtractor(
@@ -164,43 +149,15 @@ class TSFreshClassifier(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
-        """Predict class values of n_instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
-
-        Returns
-        -------
-        preds : np.ndarray of shape (n, 1)
-            Predicted class.
-        """
-        self.check_is_fitted()
-        X = check_X(X)
-
+    def _predict(self, X):
         return self._estimator.predict(self._transformer.transform(X))
 
-    def predict_proba(self, X):
-        """Predict class probabilities for n_instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
-
-        Returns
-        -------
-        predicted_probs : array of shape (n_instances, n_classes)
-            Predicted probability of each class.
-        """
-        self.check_is_fitted()
-        X = check_X(X)
-
+    def _predict_proba(self, X):
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
-            dists = np.zeros((X.shape[0], self.n_classes))
+            dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
