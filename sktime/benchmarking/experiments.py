@@ -616,7 +616,9 @@ def set_classifier(cls, resample_id=None):
         return Arsenal(random_state=resample_id)
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(random_state=resample_id, n_estimators=500)
+        return ShapeletTransformClassifier(
+            random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
+        )
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     else:

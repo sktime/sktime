@@ -2,10 +2,10 @@
 """ShapeletTransformClassifier test code."""
 import numpy as np
 from numpy import testing
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
-from sktime.classification.shapelet_based.dev import (
-    MultivariateShapeletTransformClassifier,
-)
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
@@ -17,7 +17,13 @@ def test_stc_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train STC
-    stc = MultivariateShapeletTransformClassifier(n_estimators=10, random_state=0)
+    rf = RandomForestClassifier(n_estimators=10)
+    stc = ShapeletTransformClassifier(
+        # n_shapelets=100,
+        transform_limit_in_minutes=0.025,
+        random_state=0,
+        estimator=rf,
+    )
     stc.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -25,26 +31,27 @@ def test_stc_on_unit_test_data():
     testing.assert_array_equal(probas, stc_unit_test_probas)
 
     # test train estimate
-    # train_probas = stc._get_train_probs(X_train, y_train)
-    # train_preds = stc.classes_[np.argmax(train_probas, axis=1)]
-    # assert accuracy_score(y_train, train_preds) >= 0.85
+    train_probas = stc._get_train_probs(X_train, y_train)
+    train_preds = stc.classes_[np.argmax(train_probas, axis=1)]
+    assert accuracy_score(y_train, train_preds) >= 0.85
 
 
-# def test_contracted_stc_on_unit_test_data():
-#     """Test of contracted ShapeletTransformClassifier on unit test data."""
-#     # load unit test data
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#
-#     # train contracted STC
-#     stc = MultivariateShapeletTransformClassifier(
-#         time_limit_in_minutes=0.025,
-#         random_state=0,
-#     )
-#     stc.fit(X_train, y_train)
-#
-#     assert len(stc.estimators_) > 1
-#     assert accuracy_score(y_test, stc.predict(X_test)) >= 0.8
+def test_contracted_stc_on_unit_test_data():
+    """Test of contracted ShapeletTransformClassifier on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+
+    # train contracted STC
+    stc = ShapeletTransformClassifier(
+        # time_limit_in_minutes=0.025,
+        transform_limit_in_minutes=0.025,
+        random_state=0,
+    )
+    stc.fit(X_train, y_train)
+
+    # assert len(stc.estimators_) > 1
+    assert accuracy_score(y_test, stc.predict(X_test)) >= 0.8
 
 
 def test_stc_on_basic_motions():
@@ -55,7 +62,12 @@ def test_stc_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train STC
-    stc = MultivariateShapeletTransformClassifier(n_estimators=10, random_state=0)
+    rf = RandomForestClassifier(n_estimators=10)
+    stc = ShapeletTransformClassifier(
+        n_shapelets=100,
+        random_state=0,
+        estimator=rf,
+    )
     stc.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -174,14 +186,14 @@ stc_basic_motions_probas = np.array(
 
 
 # def print_array(array):
-#     print('[')
+#     print("[")
 #     for sub_array in array:
-#         print('[')
+#         print("[")
 #         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
+#             print(value.astype(str), end="")
+#             print(", ")
+#         print("],")
+#     print("]")
 #
 #
 # if __name__ == "__main__":
@@ -189,7 +201,13 @@ stc_basic_motions_probas = np.array(
 #     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     stc_u = MultivariateShapeletTransformClassifier(n_estimators=10, random_state=0)
+#     rf = RandomForestClassifier(n_estimators=10)
+#     stc_u = ShapeletTransformClassifier(
+#         # n_shapelets=100,
+#         transform_limit_in_minutes=0.025,
+#         random_state=0,
+#         estimator=rf,
+#     )
 #
 #     stc_u.fit(X_train, y_train)
 #     probas = stc_u.predict_proba(X_test.iloc[indices])
@@ -199,7 +217,12 @@ stc_basic_motions_probas = np.array(
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
-#     stc_m = MultivariateShapeletTransformClassifier(n_estimators=10, random_state=0)
+#     rf = RandomForestClassifier(n_estimators=10)
+#     stc_m = ShapeletTransformClassifier(
+#         n_shapelets=100,
+#         random_state=0,
+#         estimator=rf,
+#     )
 #
 #     stc_m.fit(X_train.iloc[indices], y_train[indices])
 #     probas = stc_m.predict_proba(X_test.iloc[indices])
