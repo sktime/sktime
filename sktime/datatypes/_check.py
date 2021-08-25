@@ -27,7 +27,7 @@ __all__ = [
 
 import numpy as np
 
-from typing import Union
+from typing import Union, List
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._registry import mtype_to_scitype
@@ -40,7 +40,7 @@ check_dict.update(check_dict_Panel)
 
 def check_is(
     obj,
-    mtype: Union[str, list[str]],
+    mtype: Union[str, List[str]],
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
