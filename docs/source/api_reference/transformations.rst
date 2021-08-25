@@ -191,7 +191,7 @@ Adapt
 
     TabularToSeriesAdaptor
 
-Box-cox
+Box-Cox
 ~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.boxcox
@@ -250,7 +250,7 @@ Matrix Profile
     MatrixProfileTransformer
 
 Missing value imputation
-~~~~~~~~~~~~~~~~~~~~~~~~s
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
 
