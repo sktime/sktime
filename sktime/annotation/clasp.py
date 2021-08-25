@@ -152,7 +152,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
+    _tags = {"univariate-only": True, "fit-in-predict": True}  # for unit test cases
 
     def __init__(self, period_length=10, n_cps=1):
         self.period_length = int(period_length)

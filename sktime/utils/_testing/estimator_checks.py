@@ -429,6 +429,12 @@ def check_methods_do_not_change_state(Estimator):
                 # so transform will actually change the state of these estimator.
                 continue
 
+            if method == "predict" and Estimator.get_class_tag("fit-in-predict"):
+                # Some annotators fit during predict, as they apply
+                # some transformation to each series passed to predict,
+                # so predict will actually change the state of these estimator.
+                continue
+
             assert (
                 estimator.__dict__ == dict_before
             ), f"Estimator: {estimator} changes __dict__ during {method}"
