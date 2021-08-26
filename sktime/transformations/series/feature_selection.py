@@ -22,25 +22,27 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    method : str
+    method : str, required
         The method of how to select the features. Implemeted methods are:
         * "feature-importances": Use feature_importances_ of the regressor (meta-model)
           to select n_features with highest importance values.
-        * "random": Randomly select n_features features.
+          Requires parameter n_features.
+        * "random": Randomly select n_features features. Requires parameter n_features.
         * "columns": Select features by given names.
-        * "ignore": Remove all columns by setting Z to None.
+        * "none": Remove all columns by setting Z to None.
+        * "all": Slect all given features.
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
         then a GradientBoostingRegressor(max_depth=5) is used.
-    n_features : int
+    n_features : int, optional
         Number of feautres (columns) to select. n_features must be <=
-        number of X columns.
+        number of X columns. Some methods require n_features to be given.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
+        Requires n_features to be given.
     columns : list of str
-        A list of columns to select. If columns is given, n_features
-        must be set to None.
+        A list of columns to select. If columns is given.
 
     Attributes
     ----------
@@ -68,7 +70,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     def __init__(
         self,
         method="feature-importances",
-        n_features=2,
+        n_features=None,
         regressor=None,
         random_state=None,
         columns=None,
@@ -97,7 +99,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
         if self.method == "feature-importances":
             self._check_regressor()
-            _check_n_features(self.n_features)
+            self._check_n_features()
             X = check_series(X)
             # fit regressor with Z as exog data and X as endog data (target)
             self.regressor_.fit(X=Z, y=X)
@@ -107,7 +109,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             d = {k: d[k] for k in sorted(d, key=d.get, reverse=True)}
             self.columns_ = list(d.keys())[: self.n_features]
         elif self.method == "random":
-            _check_n_features(self.n_features)
+            self._check_n_features()
             self.columns_ = list(
                 Z.sample(
                     n=self.n_features, random_state=self.random_state, axis=1
@@ -117,8 +119,10 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             if self.columns is None:
                 raise AttributeError("Parameter columns must be given.")
             self.columns_ = self.columns
-        elif self.method == "ignore":
+        elif self.method == "none":
             self.columns_ = None
+        elif self.method == "all":
+            self.columns_ = list(Z.columns)
         else:
             raise ValueError("Incorrect method given. Try another method.")
 
@@ -158,7 +162,8 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             self.regressor_ = clone(self.regressor)
         return self
 
-
-def _check_n_features(n_features):
-    if not isinstance(n_features, int):
-        raise ValueError("Parameter n_features must be int")
+    def _check_n_features(self):
+        if not isinstance(self.n_features, int):
+            raise ValueError(
+                f"Parameter n_features must be int if method = {self.method}"
+            )
