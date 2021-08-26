@@ -105,7 +105,7 @@ def yield_estimator_checks(exclude=None):
         yield check
 
 
-def check_required_params(Estimator):
+def check_required_params(Estimator, **kwargs):
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
         required_params = Estimator._required_parameters
@@ -135,7 +135,7 @@ def check_required_params(Estimator):
             )
 
 
-def check_estimator_tags(Estimator):
+def check_estimator_tags(Estimator, **kwargs):
     assert hasattr(Estimator, "get_class_tags")
     all_tags = Estimator.get_class_tags()
     assert isinstance(all_tags, dict)
@@ -157,7 +157,7 @@ def check_estimator_tags(Estimator):
         )
 
 
-def check_inheritance(Estimator):
+def check_inheritance(Estimator, **kwargs):
     # Check that estimator inherits from BaseEstimator
     assert issubclass(Estimator, BaseEstimator), (
         f"Estimator: {Estimator} " f"is not a sub-class of " f"BaseEstimator."
@@ -176,7 +176,7 @@ def check_inheritance(Estimator):
         assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 
-def check_has_common_interface(Estimator):
+def check_has_common_interface(Estimator, **kwargs):
     # Check estimator implements the common interface
 
     # Check class for type of attribute
@@ -204,7 +204,7 @@ def check_has_common_interface(Estimator):
         assert hasattr(estimator, "predict")
 
 
-def check_get_params(Estimator):
+def check_get_params(Estimator, **kwargs):
     # Check get params works correctly
     estimator = _construct_instance(Estimator)
     params = estimator.get_params()
@@ -212,7 +212,7 @@ def check_get_params(Estimator):
     _check_get_params_invariance(estimator.__class__.__name__, estimator)
 
 
-def check_set_params(Estimator):
+def check_set_params(Estimator, **kwargs):
     # Check set_params works correctly
     estimator = _construct_instance(Estimator)
     params = estimator.get_params()
@@ -220,19 +220,19 @@ def check_set_params(Estimator):
     _check_set_params(estimator.__class__.__name__, estimator)
 
 
-def check_clone(Estimator):
+def check_clone(Estimator, **kwargs):
     # Check we can call clone from scikit-learn
     estimator = _construct_instance(Estimator)
     clone(estimator)
 
 
-def check_repr(Estimator):
+def check_repr(Estimator, **kwargs):
     # Check we can call repr
     estimator = _construct_instance(Estimator)
     repr(estimator)
 
 
-def check_constructor(Estimator):
+def check_constructor(Estimator, **kwargs):
     # Check that the constructor behaves correctly
     estimator = _construct_instance(Estimator)
 
@@ -538,7 +538,7 @@ def check_multiprocessing_idempotent(Estimator, **kwargs):
                 )
 
 
-def check_valid_estimator_tags(Estimator):
+def check_valid_estimator_tags(Estimator, **kwargs):
     # check if Estimator tags are in VALID_ESTIMATOR_TAGS
     for tag in Estimator.get_class_tags().keys():
         assert tag in VALID_ESTIMATOR_TAGS
