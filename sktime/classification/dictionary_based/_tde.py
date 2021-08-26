@@ -789,31 +789,22 @@ class IndividualTDE(BaseClassifier):
 
 
 def histogram_intersection(first, second):
-    """Find the distance between two histograms.
+    """Find the distance between two histograms using the histogram intersection.
 
-    This returns the distance between first and second dictionaries, using a non
-    symmetric distance measure. It is used to find the distance between historgrams
-    of words.
-
-    This distance function is designed for sparse matrix, represented as either a
-    dictionary or an arrray. It only measures the distance between counts present in
-    the first dictionary and the second. Hence dist(a,b) does not necessarily equal
-    dist(b,a).
+    This distance function is designed for sparse matrix, represented as a
+    dictionary or numba Dict, but can accept arrays.
 
     Parameters
     ----------
-    first : dict
-        Base dictionary used in distance measurement.
-    second : dict
+    first : dict, numba.Dict or array
+        First dictionary used in distance measurement.
+    second : dict, numba.Dict or array
         Second dictionary that will be used to measure distance from `first`.
-    best_dist : int, float or sys.float_info.max
-        Largest distance value. Values above this will be replaced by
-        sys.float_info.max.
 
     Returns
     -------
     dist : float
-        The boss distance between the first and second dictionaries. todo above
+        The histogram intersection distance between the first and second dictionaries.
     """
     if isinstance(first, dict):
         sim = 0
@@ -821,7 +812,7 @@ def histogram_intersection(first, second):
             val_b = second.get(word, 0)
             sim += min(val_a, val_b)
         return sim
-    if isinstance(first, Dict):
+    elif isinstance(first, Dict):
         return _histogram_intersection_dict(first, second)
     else:
         return np.sum(
