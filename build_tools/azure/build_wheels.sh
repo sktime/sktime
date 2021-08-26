@@ -30,6 +30,10 @@ cd /io/ # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install requirements
+  if [[ "$PYTHON" == "/opt/python/cp37-cp37m/bin" ]]
+  then
+    pip install -i https://pypi.anaconda.org/numba/label/linux_python37_numpy_117/simple numba
+  fi
   "${PYTHON}/pip" install -r "$REQUIREMENTS"
 
   # Build wheel
