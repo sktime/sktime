@@ -69,7 +69,10 @@ def check_estimator(Estimator, exclude=None):
         If Estimator does not comply
     """
     for check in yield_estimator_checks(exclude=exclude):
-        check(Estimator)
+        if Estimator.get_class_tag("scitype:y") == "multivariate":
+            check(Estimator, n_columns=2)
+        else:
+            check(Estimator)
 
 
 def yield_estimator_checks(exclude=None):
@@ -302,7 +305,7 @@ def check_constructor(Estimator):
                 assert param_value == param.default, param.name
 
 
-def check_fit_updates_state(Estimator):
+def check_fit_updates_state(Estimator, **kwargs):
     # Check that fit updates the is-fitted states
     attrs = ["_is_fitted", "is_fitted"]
 
@@ -312,8 +315,7 @@ def check_fit_updates_state(Estimator):
         assert not getattr(
             estimator, attr
         ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
-
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     estimator.fit(*fit_args)
 
     # Check states are updated after calling fit
@@ -323,16 +325,16 @@ def check_fit_updates_state(Estimator):
         ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
 
-def check_fit_returns_self(Estimator):
+def check_fit_returns_self(Estimator, **kwargs):
     # Check that fit returns self
     estimator = _construct_instance(Estimator)
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     assert (
         estimator.fit(*fit_args) is estimator
     ), f"Estimator: {estimator} does not return self when calling fit"
 
 
-def check_raises_not_fitted_error(Estimator):
+def check_raises_not_fitted_error(Estimator, **kwargs):
     # Check that we raise appropriate error for unfitted estimators
     estimator = _construct_instance(Estimator)
 
@@ -340,26 +342,26 @@ def check_raises_not_fitted_error(Estimator):
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            args = _make_args(estimator, method)
+            args = _make_args(estimator, method, **kwargs)
             with pytest.raises(NotFittedError, match=r"has not been fitted"):
                 getattr(estimator, method)(*args)
 
 
-def check_fit_idempotent(Estimator):
+def check_fit_idempotent(Estimator, **kwargs):
     # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
 
     set_random_state(estimator)
 
     # Fit for the first time
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     estimator.fit(*fit_args)
 
     results = dict()
     args = dict()
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            args[method] = _make_args(estimator, method)
+            args[method] = _make_args(estimator, method, **kwargs)
             results[method] = getattr(estimator, method)(*args[method])
 
     # Fit again
@@ -376,7 +378,7 @@ def check_fit_idempotent(Estimator):
             )
 
 
-def check_fit_does_not_overwrite_hyper_params(Estimator):
+def check_fit_does_not_overwrite_hyper_params(Estimator, **kwargs):
     # Check that we do not overwrite hyper-parameters in fit
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
@@ -386,7 +388,7 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
     original_params = deepcopy(params)
 
     # Fit the model
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     estimator.fit(*fit_args)
 
     # Compare the state of the model parameters with the original parameters
@@ -407,20 +409,20 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
         )
 
 
-def check_methods_do_not_change_state(Estimator):
+def check_methods_do_not_change_state(Estimator, **kwargs):
     # Check that methods that are not supposed to change attributes of the
     # estimators do not change anything (including hyper-parameters and
     # fitted parameters)
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
 
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     estimator.fit(*fit_args)
     dict_before = estimator.__dict__.copy()
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            args = _make_args(estimator, method)
+            args = _make_args(estimator, method, **kwargs)
             getattr(estimator, method)(*args)
 
             if method == "transform" and Estimator.get_class_tag("fit-in-transform"):
@@ -434,7 +436,7 @@ def check_methods_do_not_change_state(Estimator):
             ), f"Estimator: {estimator} changes __dict__ during {method}"
 
 
-def check_methods_have_no_side_effects(Estimator):
+def check_methods_have_no_side_effects(Estimator, **kwargs):
     # Check that calling methods has no side effects on args
 
     if not isclass(Estimator):
@@ -445,7 +447,7 @@ def check_methods_have_no_side_effects(Estimator):
     set_random_state(estimator)
 
     # Fit for the first time
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     old_fit_args = deepcopy(fit_args)
     estimator.fit(*fit_args)
 
@@ -455,7 +457,7 @@ def check_methods_have_no_side_effects(Estimator):
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            new_args = _make_args(estimator, method)
+            new_args = _make_args(estimator, method, **kwargs)
             old_args = deepcopy(new_args)
             getattr(estimator, method)(*new_args)
 
@@ -464,11 +466,11 @@ def check_methods_have_no_side_effects(Estimator):
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
-def check_persistence_via_pickle(Estimator):
+def check_persistence_via_pickle(Estimator, **kwargs):
     # Check that we can pickle all estimators
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
-    fit_args = _make_args(estimator, "fit")
+    fit_args = _make_args(estimator, "fit", **kwargs)
     estimator.fit(*fit_args)
 
     # Generate results before pickling
@@ -476,7 +478,7 @@ def check_persistence_via_pickle(Estimator):
     args = dict()
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            args[method] = _make_args(estimator, method)
+            args[method] = _make_args(estimator, method, **kwargs)
             results[method] = getattr(estimator, method)(*args[method])
 
     # Pickle and unpickle
@@ -494,7 +496,7 @@ def check_persistence_via_pickle(Estimator):
         )
 
 
-def check_multiprocessing_idempotent(Estimator):
+def check_multiprocessing_idempotent(Estimator, **kwargs):
     # Check that running an estimator on a single process is no different to running
     # it on multiple processes. We also check that we can set n_jobs=-1 to make use
     # of all CPUs. The test is not really necessary though, as we rely on joblib for
@@ -510,13 +512,13 @@ def check_multiprocessing_idempotent(Estimator):
         estimator = _construct_instance(Estimator)
         estimator.set_params(n_jobs=1)
         set_random_state(estimator)
-        args["fit"] = _make_args(estimator, "fit")
+        args["fit"] = _make_args(estimator, "fit", **kwargs)
         estimator.fit(*args["fit"])
 
         # compute and store results
         for method in NON_STATE_CHANGING_METHODS:
             if hasattr(estimator, method):
-                args[method] = _make_args(estimator, method)
+                args[method] = _make_args(estimator, method, **kwargs)
                 results[method] = getattr(estimator, method)(*args[method])
 
         # run on multiple processes, reusing the same input arguments
