@@ -25,9 +25,6 @@ Raises
 ------
 ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
-
----
-
 """
 
 __author__ = ["fkiraly"]
