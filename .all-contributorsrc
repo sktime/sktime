@@ -1104,6 +1104,15 @@
       ]
     },
     {
+      "login": "freddyaboulton",
+      "name": "Freddy A Boulton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41651716?v=4",
+      "profile": "https://github.com/freddyaboulton",
+      "contributions": [
+        "infra",
+        "test"
+      ]
+    },
       "login": "Riyabelle25",
       "name": "Riya Elizabeth John",
       "avatar_url": "https://avatars.githubusercontent.com/u/55790848?v=4",
@@ -1165,6 +1174,15 @@
         "doc"
       ]
     },
+    {
+      "login": "AreloTanoh",
+      "name": "Arelo Tanoh",
+      "avatar_url": "https://avatars.githubusercontent.com/AreloTanoh",
+      "profile": "https://github.com/AreloTanoh",
+       "contributions": [
+         "doc"
+      ]
+      },
      {
       "login": "pul95",
       "name": "Pulkit Verma",
