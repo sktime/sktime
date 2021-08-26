@@ -4,7 +4,7 @@
 kernel based ensemble of ROCKET classifiers.
 """
 
-__author__ = ["MatthewMiddlehurst", "Oleksii Kachaiev"]
+__author__ = ["MatthewMiddlehurst", "kachayev"]
 __all__ = ["Arsenal"]
 
 import time
