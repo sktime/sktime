@@ -6,53 +6,54 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-
-from sktime.registry import (
-    ESTIMATOR_TAG_LIST,
-    BASE_CLASS_LIST,
-    BASE_CLASS_LOOKUP,
-    TRANSFORMER_MIXIN_LIST,
-)
-
-from pyod.models.knn import KNN
 from hcrystalball.wrappers import HoltSmoothingWrapper
+from pyod.models.knn import KNN
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
-
-from sktime.base import BaseEstimator
-
 from sktime.annotation.adapters import PyODAnnotator
+from sktime.base import BaseEstimator
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+from sktime.classification.feature_based import (
+    Catch22Classifier,
+    MatrixProfileClassifier,
+    TSFreshClassifier,
+    SignatureClassifier,
+)
 from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.classification.interval_based import DrCIF
-from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
+from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
-from sktime.classification.kernel_based import ROCKETClassifier
+from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
 from sktime.classification.kernel_based import Arsenal
+from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
-from sktime.forecasting.compose import DirectTabularRegressionForecaster
-from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose import DirRecTabularRegressionForecaster
+from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import DirectTabularRegressionForecaster
+from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
 from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import AutoEnsembleForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
-from sktime.forecasting.compose import ForecastingPipeline
-from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
@@ -64,6 +65,12 @@ from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+from sktime.registry import (
+    ESTIMATOR_TAG_LIST,
+    BASE_CLASS_LIST,
+    BASE_CLASS_LOOKUP,
+    TRANSFORMER_MIXIN_LIST,
+)
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.panel.compose import ColumnTransformer
@@ -77,7 +84,6 @@ from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelets import ContractedShapeletTransform
 from sktime.transformations.panel.shapelets import ShapeletTransform
 from sktime.transformations.panel.signature_based import SignatureTransformer
-from sktime.classification.signature_based import SignatureClassifier
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.transformations.panel.tsfresh import (
@@ -86,13 +92,13 @@ from sktime.transformations.panel.tsfresh import (
 from sktime.transformations.series.acf import AutoCorrelationTransformer
 from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.compose import OptionalPassthrough
+from sktime.transformations.series.compose import ColumnwiseTransformer
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.outlier_detection import HampelFilter
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.dists_kernels.compose_tab_to_panel import AggrDist
-from sktime.dists_kernels.scipy_dist import ScipyDist
+
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -164,6 +170,7 @@ STEPS_X = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
+    ColumnEnsembleForecaster: {"forecasters": FORECASTER},
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
@@ -185,7 +192,8 @@ ESTIMATOR_TEST_PARAMS = {
     TransformedTargetForecaster: {"steps": STEPS_y},
     ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
-    StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
+    StackingForecaster: {"forecasters": FORECASTERS},
+    AutoEnsembleForecaster: {"forecasters": FORECASTERS},
     Detrender: {"forecaster": FORECASTER},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
@@ -255,6 +263,16 @@ ESTIMATOR_TEST_PARAMS = {
         "depth": 3,
         "window_name": "global",
     },
+    Catch22Classifier: {
+        "estimator": RandomForestClassifier(n_estimators=3),
+    },
+    MatrixProfileClassifier: {
+        "subsequence_length": 4,
+    },
+    TSFreshClassifier: {
+        "estimator": RandomForestClassifier(n_estimators=3),
+        "default_fc_parameters": "minimal",
+    },
     ROCKETClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
@@ -314,6 +332,7 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
 }
