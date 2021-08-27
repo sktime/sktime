@@ -169,7 +169,7 @@ def check_transform_inverse_transform_equivalent(Estimator, **kwargs):
     _assert_array_almost_equal(X, Xit)
 
 
-def check_transformer_type(Estimator):
+def check_transformer_type(Estimator, **kwargs):
     assert issubclass(Estimator, BaseTransformer)
     assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
