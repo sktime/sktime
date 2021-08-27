@@ -170,6 +170,30 @@ def _calc_knn_labels(knn_mask, split_idx, window_size):
     return y_true, y_pred
 
 
+@njit(fastmath=True, cache=False)
+def _binary_f1_score(y_true, y_pred):
+    """Compute f1-score.
+
+    :param y_score:
+    :param y_true:
+    :return:
+    """
+    f1_scores = np.zeros(shape=2, dtype=np.float64)
+
+    for label in (0, 1):
+        tp = np.sum(np.logical_and(y_true == label, y_pred == label))
+        fp = np.sum(np.logical_and(y_true != label, y_pred == label))
+        fn = np.sum(np.logical_and(y_true == label, y_pred != label))
+
+        pr = tp / (tp + fp)
+        re = tp / (tp + fn)
+
+        f1 = 2 * (pr * re) / (pr + re)
+        f1_scores[label] = f1
+
+    return np.mean(f1_scores)
+
+
 @njit(fastmath=True, cache=True)
 def _roc_auc_score(y_score, y_true):
     """Compute roc-auc score.
@@ -306,13 +330,17 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
     window_size:         int, default = 10
         size of window for sliding.
 
+    scoring_metric:      string, default = ROC_AUC
+        the scoring metric to use in ClaSP - choose from ROC_AUC or F1
+
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
 
-    def __init__(self, window_length=10):
+    def __init__(self, window_length=10, scoring_metric="ROC_AUC"):
         self.window_length = int(window_length)
         self.knn_mask = None
+        self.scoring_metric = scoring_metric
         super(ClaSPTransformer, self).__init__()
 
     def transform(self, X, y=None):
@@ -335,10 +363,27 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
+        self._check_scoring_metric(self.scoring_metric)
 
         if isinstance(X, pd.Series):
             X = X.to_numpy()
 
-        Xt, self.knn_mask = clasp(X, self.window_length)
+        Xt, self.knn_mask = clasp(X, self.window_length, score=self.scoring_metric_call)
 
         return pd.Series(Xt)
+
+    def _check_scoring_metric(self, scoring_metric):
+        """Check which scoring metric to use.
+
+        :param scoring_metric: choose from "ROC_AUC" or "F1"
+        :return:
+        """
+        valid_scores = ("ROC_AUC", "F1")
+
+        if scoring_metric not in valid_scores:
+            raise ValueError(f"invalid input, please use one of {valid_scores}")
+
+        if scoring_metric == "ROC_AUC":
+            self.scoring_metric_call = _roc_auc_score
+        elif scoring_metric == "F1":
+            self.scoring_metric_call = _binary_f1_score
