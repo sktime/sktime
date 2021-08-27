@@ -294,7 +294,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 random_state=self.random_state,
             )
             tde.fit(X_subsample, y_subsample)
-            tde.subsample = subsample
+            tde._subsample = subsample
 
             if self.save_train_predictions:
                 tde._train_predictions = np.zeros(subsample_size)
@@ -401,7 +401,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if train_estimate_method.lower() == "loocv":
             for i, clf in enumerate(self.estimators_):
-                subsample = clf.subsample
+                subsample = clf._subsample
                 preds = (
                     clf._train_predictions
                     if self.save_train_predictions
@@ -421,7 +421,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         elif train_estimate_method.lower() == "oob":
             indices = range(n_instances)
             for i, clf in enumerate(self.estimators_):
-                oob = [n for n in indices if n not in clf.subsample]
+                oob = [n for n in indices if n not in clf._subsample]
                 preds = clf.predict(X[oob])
 
                 for n, pred in enumerate(preds):
@@ -479,38 +479,43 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
 
 class IndividualTDE(BaseClassifier):
-    """Single TDE classifier, based off the Bag of SFA Symbols (BOSS) model.
+    """Single TDE classifier, an extension of the Bag of SFA Symbols (BOSS) model.
 
-    Bag of SFA Symbols Ensemble: implementation of a single BOSS Schaffer, the base
-    classifier for the boss ensemble.
+    Base classifier for the TDE classifier. Implementation of single TDE base model
+    from Middlehurst (2021). [1]_
 
-    Implementation of single BOSS model from Schäfer (2015). [1]_
-
-    This is the underlying classifier for each classifier in the BOSS ensemble.
-
-    Overview: input "n" series of length "m" and IndividualBoss performs a SFA
+    Overview: input "n" series of length "m" and IndividualTDE performs a SFA
     transform to form a sparse dictionary of discretised words. The resulting
-    dictionary is used with the BOSS distance function in a 1-nearest neighbor.
+    dictionary is used with the histogram intersection distance function in a
+    1-nearest neighbor.
 
-    Fit involves finding "n" histograms.
+    fit involves finding "n" histograms.
 
-    Predict uses 1 nearest neighbor with a bespoke BOSS distance function.
+    predict uses 1 nearest neighbor with the histogram intersection distance function.
 
     Parameters
     ----------
-    window_size : int
-        Size of the window to use in BOSS algorithm.
-    word_length : int
-        Length of word to use to use in BOSS algorithm.
-    norm : bool, default = False
-        Whether to normalize words by dropping the first Fourier coefficient.
-    alphabet_size : default = 4
+    window_size : int, default=10
+        Size of the window to use in the SFA transform.
+    word_length : int, default=8
+        Length of word to use to use in the SFA transform.
+    norm : bool, default=False
+        Whether to normalize SFA words by dropping the first Fourier coefficient.
+    levels : int, default=1
+        The number of spatial pyramid levels for the SFA transform.
+    igb : bool, default=False
+        Whether to use Information Gain Binning (IGB) or
+        Multiple Coefficient Binning (MCB) for the SFA transform.
+    alphabet_size : default=4
         Number of possible letters (values) for each word.
-    save_words : bool, default = True
-        Whether to keep NumPy array of words in SFA transformation even after
-        the dictionary of words is returned. If True, the array is saved, which
-        can shorten the time to calculate dictionaries using a shorter
-        `word_length` (since the last "n" letters can be removed).
+    bigrams : bool, default=False
+        Whether to record word bigrams in the SFA transform.
+    dim_threshold : float, default=0.85
+        Accuracy threshold as a propotion of the highest accuracy dimension for words
+        extracted from each dimensions. Only applicable for multivariate data.
+    max_dims : int, default=20
+        Maximum number of dimensions words are extracted from. Only applicable for
+        multivariate data.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -520,18 +525,19 @@ class IndividualTDE(BaseClassifier):
     Attributes
     ----------
     n_classes : int
-        Number of classes. Extracted from the data.
+        The number of classes.
     n_instances : int
-        Number of instances. Extracted from the data.
-    n_estimators : int
-        The final number of classifiers used. Will be <= `max_ensemble_size` if
-        `max_ensemble_size` has been specified.
+        The number of train cases.
+    n_dims : int
+        The number of dimensions per case.
     series_length : int
-        Length of all series (assumed equal). todo above
+        The length of each series.
+    classes_ : list
+        The classes labels.
 
     See Also
     --------
-    TemporalDictinaryEnsemble
+    TemporalDictinaryEnsemble, SFA
 
     Notes
     -----
@@ -557,6 +563,14 @@ class IndividualTDE(BaseClassifier):
     IndividualTDE(...)
     >>> y_pred = clf.predict(X_test)
     """
+
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
+    }
 
     def __init__(
         self,
@@ -587,20 +601,21 @@ class IndividualTDE(BaseClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.transformers = []
-        self.transformed_data = []
-        self.dims = []
-        self._highest_dim_bit = 0
-        self.subsample = []
-        self._accuracy = 0
-        self._train_predictions = []
+        self.n_classes = 0
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
-        self.class_vals = []
-        self.num_classes = 0
         self.classes_ = []
-        self.class_dictionary = {}
+
+        self._transformers = []
+        self._transformed_data = []
+        self._class_vals = []
+        self._dims = []
+        self._highest_dim_bit = 0
+        self._accuracy = 0
+        self._subsample = []
+        self._train_predictions = []
+        self._class_dictionary = {}
         self._n_jobs = n_jobs
 
         super(IndividualTDE, self).__init__()
@@ -609,30 +624,30 @@ class IndividualTDE(BaseClassifier):
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_instances, self.n_dims, self.series_length = X.shape
-        self.class_vals = y
-        self.num_classes = np.unique(y).shape[0]
+        self._class_vals = y
+        self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
+            self._class_dictionary[classVal] = index
 
         # select dimensions using accuracy estimate if multivariate
         if self.n_dims > 1:
-            self.dims, self.transformers = self._select_dims(X, y)
+            self._dims, self._transformers = self._select_dims(X, y)
 
             words = [defaultdict(int) for _ in range(self.n_instances)]
 
-            for i, dim in enumerate(self.dims):
+            for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(self.n_instances, 1, self.series_length)
-                dim_words = self.transformers[i].transform(X_dim, y)
+                dim_words = self._transformers[i].transform(X_dim, y)
                 dim_words = dim_words[0]
 
                 for n in range(self.n_instances):
                     for word, count in dim_words[n].items():
                         words[n][word << self._highest_dim_bit | dim] = count
 
-            self.transformed_data = words
+            self._transformed_data = words
         else:
-            self.transformers.append(
+            self._transformers.append(
                 SFA(
                     word_length=self.word_length,
                     alphabet_size=self.alphabet_size,
@@ -648,8 +663,8 @@ class IndividualTDE(BaseClassifier):
                     n_jobs=self._n_jobs,
                 )
             )
-            sfa = self.transformers[0].fit_transform(X, y)
-            self.transformed_data = sfa[0]
+            sfa = self._transformers[0].fit_transform(X, y)
+            self._transformed_data = sfa[0]
 
     def _predict(self, X):
         num_cases = X.shape[0]
@@ -657,9 +672,9 @@ class IndividualTDE(BaseClassifier):
         if self.n_dims > 1:
             words = [defaultdict(int) for _ in range(num_cases)]
 
-            for i, dim in enumerate(self.dims):
+            for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length)
-                dim_words = self.transformers[i].transform(X_dim)
+                dim_words = self._transformers[i].transform(X_dim)
                 dim_words = dim_words[0]
 
                 for n in range(num_cases):
@@ -668,7 +683,7 @@ class IndividualTDE(BaseClassifier):
 
             test_bags = words
         else:
-            test_bags = self.transformers[0].transform(X)
+            test_bags = self._transformers[0].transform(X)
             test_bags = test_bags[0]
 
         classes = Parallel(n_jobs=self._n_jobs)(
@@ -682,10 +697,10 @@ class IndividualTDE(BaseClassifier):
 
     def _predict_proba(self, X):
         preds = self._predict(X)
-        dists = np.zeros((X.shape[0], self.num_classes))
+        dists = np.zeros((X.shape[0], self.n_classes))
 
         for i in range(0, X.shape[0]):
-            dists[i, self.class_dictionary.get(preds[i])] += 1
+            dists[i, self._class_dictionary.get(preds[i])] += 1
 
         return dists
 
@@ -695,12 +710,12 @@ class IndividualTDE(BaseClassifier):
         best_sim = -1
         nn = None
 
-        for n, bag in enumerate(self.transformed_data):
+        for n, bag in enumerate(self._transformed_data):
             sim = histogram_intersection(test_bag, bag)
 
             if sim > best_sim or (sim == best_sim and rng.random() < 0.5):
                 best_sim = sim
-                nn = self.class_vals[n]
+                nn = self._class_vals[n]
 
         return nn
 
@@ -711,7 +726,7 @@ class IndividualTDE(BaseClassifier):
 
         # select dimensions based on reduced bag size accuracy
         for i in range(self.n_dims):
-            self.dims.append(i)
+            self._dims.append(i)
             transformers.append(
                 SFA(
                     word_length=self.word_length,
@@ -769,7 +784,7 @@ class IndividualTDE(BaseClassifier):
 
     def _train_predict(self, train_num, bags=None):
         if bags is None:
-            bags = self.transformed_data
+            bags = self._transformed_data
 
         test_bag = bags[train_num]
         best_sim = -1
@@ -783,7 +798,7 @@ class IndividualTDE(BaseClassifier):
 
             if sim > best_sim:
                 best_sim = sim
-                nn = self.class_vals[n]
+                nn = self._class_vals[n]
 
         return nn
 
