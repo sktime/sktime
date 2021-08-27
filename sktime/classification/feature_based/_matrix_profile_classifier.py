@@ -44,7 +44,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
     See Also
     --------
-    :py:class:`MatrixProfile`
+    MatrixProfile
 
     References
     ----------
@@ -53,8 +53,8 @@ class MatrixProfileClassifier(BaseClassifier):
         Knowledge Discovery 32.1 (2018): 83-123.
         https://link.springer.com/article/10.1007/s10618-017-0519-9
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.feature_based import MatrixProfileClassifier
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)

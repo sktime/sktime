@@ -1,4 +1,7 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements functions to be used in evaluating forecasting models."""
 
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = ["evaluate"]
@@ -49,13 +52,13 @@ def evaluate(
         y_pred, y_test.
 
     Returns
-    ----------
+    -------
     pd.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter

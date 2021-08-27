@@ -91,8 +91,7 @@ def _download_and_extract(url, extract_path=None):
 
 
 def _list_downloaded_datasets(extract_path):
-    """
-    Return a list of all the currently downloaded datasets.
+    """Return a list of all the currently downloaded datasets.
 
     Modified version of
     https://github.com/tslearn-team/tslearn/blob
@@ -117,34 +116,42 @@ def _list_downloaded_datasets(extract_path):
 
 
 def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
-    """
-    Load dataset from UCR UEA time series archive.
+    """Load dataset from UCR UEA time series archive.
 
-    Datasets to be found here: http://www.timeseriesclassification.com/dataset.php
-    Downloads and extracts dataset if not already downloaded.
+    Downloads and extracts dataset if not already downloaded. Data is assumed to be
+    in the standard .ts format: each row is a (possibly multivariate) time series.
+    Each dimension is separated by a colon, each value in a series is comma
+    separated. For examples see sktime.datasets.data.tsc. ArrowHead is an example of
+    a univariate equal length problem, BasicMotions an equal length multivariate
+    problem.
 
     Parameters
     ----------
     name : str
-        Name of data set.
-        Possible strings can be found at:
-        http://www.timeseriesclassification.com/dataset.php .
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        Name of data set. If a dataset that is listed in tsc_dataset_names is given,
+        this function will look in the extract_path first, and if it is not present,
+        attempt to download the data from www.timeseriesclassification.com, saving it to
+        the extract_path.
+    split : None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By default it
+        loads both into a single dataset, otherwise it looks only for files of the
+        format <name>_TRAIN.ts or <name>_TEST.ts.
+    return_X_y : bool, optional (default=False)
+        it returns two objects, if False, it appends the class labels to the dataframe.
     extract_path : str, optional (default=None)
-        Default extract path is `sktime/datasets/data/`
+        the path to look for the data. If no path is provided, the function
+        looks in `sktime/datasets/data/`.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: pandas DataFrame
+        The time series data for the problem with n_cases rows and either
+        n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
+        series associated with each case. If return_X_y is False, column
+        n_dimensions+1 contains the class labels/target variable.
+    y: numpy array, optional
+        The class labels for each case in X, returned separately if return_X_y is
+        True, or appended to X if False
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
@@ -224,13 +231,15 @@ def load_gunpoint(split=None, return_X_y=False):
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
-    Details
-    -------
+
+    Notes
+    -----
     Dimensionality:     univariate
     Series length:      150
     Train cases:        50
     Test cases:         150
     Number of classes:  2
+
     This dataset involves one female actor and one male actor making a
     motion with their
     hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors
@@ -276,8 +285,8 @@ def load_osuleaf(split=None, return_X_y=False):
     y: numpy array
         The class labels for each case in X
 
-    Details
-    -------
+    Notes
+    -----
     Dimensionality:     univariate
     Series length:      427
     Train cases:        200
@@ -319,8 +328,8 @@ def load_italy_power_demand(split=None, return_X_y=False):
     y: numpy array
         The class labels for each case in X
 
-    Details
-    -------
+    Notes
+    -----
     Dimensionality:     univariate
     Series length:      24
     Train cases:        67
@@ -395,8 +404,8 @@ def load_japanese_vowels(split=None, return_X_y=False):
     y: numpy array
         The class labels for each case in X
 
-    Details
-    -------
+    Notes
+    -----
     Dimensionality:     multivariate, 12
     Series length:      29
     Train cases:        270
@@ -448,8 +457,8 @@ def load_arrow_head(split=None, return_X_y=False):
     y: numpy array
         The class labels for each case in X
 
-    Details
-    -------
+    Notes
+    -----
     Dimensionality:     univariate
     Series length:      251
     Train cases:        36
@@ -496,8 +505,8 @@ def load_acsf1(split=None, return_X_y=False):
     y: numpy array
         The class labels for each case in X
 
-    Details
-    -------
+    Notes
+    -----
     Dimensionality:     univariate
     Series length:      1460
     Train cases:        100
@@ -541,8 +550,8 @@ def load_basic_motions(split=None, return_X_y=False):
     y: numpy array
         The class labels for each case in X
 
-    Details
-    -------
+    Notes
+    -----
     Dimensionality:     univariate
     Series length:      100
     Train cases:        40
@@ -573,8 +582,8 @@ def load_shampoo_sales():
     y : pandas Series/DataFrame
         Shampoo sales dataset
 
-    Details
-    -------
+    Notes
+    -----
     This dataset describes the monthly number of sales of shampoo over a 3
     year period.
     The units are a sales count.
@@ -616,8 +625,8 @@ def load_longley(y_name="TOTEMP"):
     X: pandas.DataFrame
         The exogenous time series data for the problem.
 
-    Details
-    -------
+    Notes
+    -----
     This mulitvariate time series dataset contains various US macroeconomic
     variables from 1947 to 1962 that are known to be highly collinear.
 
@@ -664,8 +673,8 @@ def load_lynx():
     y : pandas Series/DataFrame
         Lynx sales dataset
 
-    Details
-    -------
+    Notes
+    -----
     The annual numbers of lynx trappings for 1821–1934 in Canada. This
     time-series records the number of skins of
     predators (lynx) that were collected over several years by the Hudson's
@@ -678,8 +687,6 @@ def load_lynx():
     Frequency:          Yearly
     Number of cases:    1
 
-    Notes
-    -----
     This data shows aperiodic, cyclical patterns, as opposed to periodic,
     seasonal patterns.
 
@@ -712,8 +719,8 @@ def load_airline():
     y : pd.Series
      Time series
 
-    Details
-    -------
+    Notes
+    -----
     The classic Box & Jenkins airline data. Monthly totals of international
     airline passengers, 1949 to 1960.
 
@@ -722,8 +729,6 @@ def load_airline():
     Frequency:          Monthly
     Number of cases:    1
 
-    Notes
-    -----
     This data shows an increasing trend, non-constant (increasing) variance
     and periodic, seasonal patterns.
 
@@ -755,8 +760,8 @@ def load_uschange(y_name="Consumption"):
     X : pandas Dataframe
         columns with explanatory variables
 
-    Details
-    -------
+    Notes
+    -----
     Percentage changes in quarterly personal consumption expenditure,
     personal disposable income, production, savings and the
     unemployment rate for the US, 1960 to 2016.
@@ -769,8 +774,6 @@ def load_uschange(y_name="Consumption"):
     Frequency:          Quarterly
     Number of cases:    1
 
-    Notes
-    -----
     This data shows an increasing trend, non-constant (increasing) variance
     and periodic, seasonal patterns.
 
@@ -798,16 +801,15 @@ def load_uschange(y_name="Consumption"):
 
 
 def load_PBS_dataset():
-    """
-    Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
+    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
 
     Returns
     -------
     y : pd.Series
      Time series
 
-    Details
-    -------
+    Notes
+    -----
     The Pharmaceutical Benefits Scheme (PBS) is the Australian government drugs
     subsidy scheme.
     Data comprises of the numbers of scripts sold each month for immune sera
@@ -819,8 +821,6 @@ def load_PBS_dataset():
     Frequency:          Monthly
     Number of cases:    1
 
-    Notes
-    -----
     The time series is intermittent, i.e contains small counts,
     with many months registering no sales at all,
     and only small numbers of items sold in other months.

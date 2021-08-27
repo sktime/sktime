@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements framework for applying online ensembling algorithms to forecasters."""
+
 import numpy as np
 import pandas as pd
 
@@ -10,7 +14,7 @@ from sktime.utils.validation.forecasting import check_y
 
 
 class OnlineEnsembleForecaster(EnsembleForecaster):
-    """Online Updating Ensemble of forecasters
+    """Online Updating Ensemble of forecasters.
 
     Parameters
     ----------
@@ -47,19 +51,22 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
         """
-
         names, forecasters = self._check_forecasters()
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
     def _fit_ensemble(self, y, X=None):
-        """Fits the ensemble by allowing forecasters to predict and
-           compares to the actual parameters.
+        """Fit the ensemble.
+
+        This makes predictions with individual forecasters and compares the
+        results to actual values. This is then used to update ensemble
+        weights.
 
         Parameters
         ----------
@@ -87,7 +94,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : an instance of self
         """
-
         if len(y) >= 1 and self.ensemble_algorithm is not None:
             self._fit_ensemble(y, X)
 
