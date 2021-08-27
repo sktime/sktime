@@ -148,7 +148,9 @@
         "code",
         "doc",
         "test",
-        "tutorial"
+        "tutorial",
+        "review",
+        "bug"
       ]
     },
     {
