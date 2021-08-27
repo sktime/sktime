@@ -49,7 +49,7 @@ from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils._testing.panel import make_clustering_problem
-from sktime.datatypes._panel._convert import is_nested_dataframe
+from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.clustering.base.base import BaseClusterer
 
 from sktime.annotation.base import BaseSeriesAnnotator
@@ -73,7 +73,7 @@ def check_estimator(Estimator, exclude=None):
 
 
 def yield_estimator_checks(exclude=None):
-    """Init iterator to yield estimator checks."""
+    """Return iterator to yield estimator checks."""
     checks = [
         check_inheritance,
         check_required_params,
@@ -103,6 +103,7 @@ def yield_estimator_checks(exclude=None):
 
 
 def check_required_params(Estimator):
+    """Check required parameter interface."""
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
         required_params = Estimator._required_parameters
@@ -576,10 +577,7 @@ def _construct_instance(Estimator):
 
 
 def _make_args(estimator, method, **kwargs):
-    """Generate appropriate arguments.
-
-    Used for testing different estimator types and their methods.
-    """
+    """Generate testing arguments for estimator methods."""
     if method == "fit":
         return _make_fit_args(estimator, **kwargs)
     if method == "update":
@@ -689,10 +687,7 @@ def _make_inverse_transform_args(estimator, **kwargs):
 
 
 def _make_primitives(n_columns=1, random_state=None):
-    """Generate one or more primitives.
-
-    Useful for checking inverse-transform of series-to-primitives transformer
-    """
+    """Generate one or more primitives, for checking inverse-transform."""
     rng = check_random_state(random_state)
     if n_columns == 1:
         return rng.rand()
@@ -700,10 +695,7 @@ def _make_primitives(n_columns=1, random_state=None):
 
 
 def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
-    """Generate tabular X.
-
-    Useful for checking inverse-transform of panel-to-tabular transformer
-    """
+    """Generate tabular X, for checking inverse-transform."""
     rng = check_random_state(random_state)
     X = rng.rand(n_instances, n_columns)
     if return_numpy:
@@ -714,7 +706,7 @@ def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state
 
 def _compare_nested_frame(func, x, y, **kwargs):
     """Compare two nested pd.DataFrames.
-
+    
     Parameters
     ----------
     func : function
