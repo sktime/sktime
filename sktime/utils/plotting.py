@@ -31,7 +31,7 @@ from sktime.utils.validation.series import check_consistent_index_type
 
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from sktime.forecasting.base.convertIO import convert_to
+from sktime.datatypes import convert_to
 
 
 def plot_series(
