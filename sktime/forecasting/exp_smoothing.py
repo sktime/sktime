@@ -39,8 +39,9 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     use_boxcox : {True, False, 'log', float}, default=None
         Should the Box-Cox transform be applied to the data first? 
         If 'log' then apply the log. If float then use lambda equal to float.     
-    initialization_method: {'estimated','heuristic','legacy-heuristic','known',None}, default='estimated'
-        Method for initialize the recursions. Takes one of
+    initialization_method:{'estimated','heuristic','legacy-heuristic','known',None},
+        default='estimated'
+        Method for initialize the recursions.
         If 'known' initialization is used, then `initial_level` must be
         passed, as well as `initial_trend` and `initial_seasonal` if
         applicable.
