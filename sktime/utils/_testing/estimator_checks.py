@@ -706,7 +706,7 @@ def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state
 
 def _compare_nested_frame(func, x, y, **kwargs):
     """Compare two nested pd.DataFrames.
-    
+
     Parameters
     ----------
     func : function
