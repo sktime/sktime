@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster"]
 __author__ = ["Markus Löning", "Piyush Gade"]
@@ -16,13 +17,14 @@ from sktime.utils.validation import check_window_length
 
 
 class NaiveForecaster(_BaseWindowForecaster):
-    """
+    """Forecast based on naive assumptions about past trends continuing.
+
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
 
     Parameters
     ----------
-    strategy : str{"last", "mean", "drift"}, optional (default="last")
+    strategy : {"last", "mean", "drift"}, default="last"
         Strategy used to make forecasts:
 
         * "last" : forecast the last value in the
@@ -38,17 +40,17 @@ class NaiveForecaster(_BaseWindowForecaster):
                      forecasted for each season.
         * "drift": forecast by fitting a line between the
                     first and last point of the window and
-                     extrapolating it into the future
+                     extrapolating it into the future.
 
-    sp : int, optional (default=1)
+    sp : int, default=1
         Seasonal periodicity to use in the seasonal forecasting.
 
-    window_length : int or None, optional (default=None)
+    window_length : int or None, default=None
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
@@ -73,10 +75,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         y : pd.Series
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list or np.array, default=None
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        X : pd.DataFrame, default=None
+            Exogenous variables are ignored.
+
         Returns
         -------
         self : returns an instance of self.
@@ -155,7 +158,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Internal predict"""
+        """Calculate predictions for use in predict."""
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
 
