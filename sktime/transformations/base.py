@@ -44,6 +44,8 @@ __all__ = [
     "_PanelToPanelTransformer",
 ]
 
+import warnings
+
 from typing import Union
 
 import numpy as np
@@ -69,6 +71,23 @@ Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 
 class BaseTransformer(BaseEstimator):
     """Transformer base class."""
+
+    # default tag values - these typically make the "safest" assumption
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Panel or Series
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:transform-labels": "None",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+    }
 
     def __init__(self):
         super(BaseTransformer, self).__init__()
@@ -177,6 +196,9 @@ def _handle_alias(X, Z):
     if Z is None:
         return X
     elif X is None:
+        warnings.warn(
+            "argument Z will be deprecated in transformers, sktime version 0.9.0"
+        )
         return Z
     else:
         raise ValueError("X and Z are aliases, at most one of them should be passed")
