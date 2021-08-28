@@ -316,6 +316,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     _required_parameters = ["steps"]
     _tags = {
         "ignores-exogeneous-X": True,
+        "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
