@@ -1,5 +1,5 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tests for transformers."""
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -18,7 +18,7 @@ from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.estimator_checks import _make_args
-from sktime.datatypes._panel._convert import is_nested_dataframe
+from sktime.datatypes._panel._check import is_nested_dataframe
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
 

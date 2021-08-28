@@ -9,7 +9,10 @@ __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel
 from joblib import delayed
+
 from sklearn.base import clone
+from sklearn.base import is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -26,6 +29,18 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         self.forecasters_ = None
         self.n_jobs = n_jobs
         super(_HeterogenousEnsembleForecaster, self).__init__()
+
+    def _check_regressor(self):
+        if self.regressor is None:
+            self.regressor_ = GradientBoostingRegressor(max_depth=5)
+        else:
+            if not is_regressor(self.regressor):
+                raise ValueError(
+                    f"`regressor` should be a regressor, "
+                    f"but found: {self.regressor}"
+                )
+            self.regressor_ = clone(self.regressor)
+        return self
 
     def _check_forecasters(self):
         if (
@@ -81,6 +96,23 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
             for forecaster in self.forecasters_
         ]
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional, default=True
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        for forecaster in self.forecasters_:
+            forecaster.update(y, X, update_params=update_params)
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
