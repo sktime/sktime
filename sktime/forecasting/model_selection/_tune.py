@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import pandas as pd
@@ -28,7 +28,7 @@ class BaseGridSearch(BaseForecaster):
     _tags = {
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(

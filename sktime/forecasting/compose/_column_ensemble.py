@@ -47,7 +47,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
