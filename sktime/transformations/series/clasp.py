@@ -174,8 +174,8 @@ def _calc_knn_labels(knn_mask, split_idx, window_size):
 def _binary_f1_score(y_true, y_pred):
     """Compute f1-score.
 
-    :param y_score:
     :param y_true:
+    :param y_pred:
     :return:
     """
     f1_scores = np.zeros(shape=2, dtype=np.float64)
@@ -327,7 +327,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_size:         int, default = 10
+    window_length:         int, default = 10
         size of window for sliding.
 
     scoring_metric:      string, default = ROC_AUC
