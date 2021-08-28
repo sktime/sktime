@@ -3,6 +3,88 @@ Changelog
 
 All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
+
+[0.7.0] - 2021-07-12
+--------------------
+
+Added
+~~~~~
+* new module (experimental): Time Series Clustering (#1049) @TonyBagnall
+* new module (experimental): Pairwise transformers, kernels/distances on tabular data and panel data - base class, examples, extension templates (#1071) @fkiraly @chrisholder
+* new module (experimental): Series annotation and PyOD adapter (#1021) @fkiraly @satya-pattnaik
+* Clustering extension templates, docstrings & get_fitted_params (#1100) @fkiraly
+* New Classifier: Implementation of signature based methods.  (#714) @jambo6
+* New Forecaster: Croston's method (#730) @Riyabelle25
+* New Forecaster: ForecastingPipeline for pipelining with exog data (#967) @aiwalter
+* New Transformer: Multivariate Detrending (#1042) @SveaMeyer13
+* New Transformer: ThetaLines transformer (#923) @GuzalBulatova
+* sktime registry (#1067) @fkiraly
+* Feature/information criteria get_fitted_params (#942) @ltsaprounis
+* Add plot_correlations() to plot series and acf/pacf (#850) @RNKuhns
+* Add doc-quality tests on changed files (#752) @mloning
+* Docs: Create add_dataset.rst (#970) @Riyabelle25
+* Added two new related software packages (#1019) @aiwalter
+* Added orbit as related software (#1128) @aiwalter
+* adding fkiraly as codeowner for forecasting base classes (#989) @fkiraly
+* added mloning and aiwalter as forecasting/base code owners (#1108) @fkiraly
+
+Changed
+~~~~~~~
+* Update metric to handle y_train (#858) @RNKuhns
+* TSC base template refactor (#1026) @fkiraly
+* Forecasting refactor: base class refactor and extension template (#912) @fkiraly
+* Forecasting refactor: base/template docstring fixes, added fit_predict method (#1109) @fkiraly
+* Forecasters refactor: NaiveForecaster (#953) @fkiraly
+* Forecasters refactor: BaseGridSearch, ForecastingGridSearchCV, ForecastingRandomizedSearchCV (#1034) @GuzalBulatova
+* Forecasting refactor: polynomial trend forecaster (#1003) @thayeylolu
+* Forecasting refactor: Stacking, Multiplexer, Ensembler and TransformedTarget Forecasters (#977) @thayeylolu
+* Forecasting refactor: statsmodels and  theta forecaster (#1029) @thayeylolu
+* Forecasting refactor: reducer (#1031) @Lovkush-A
+* Forecasting refactor: ensembler, online-ensembler-forecaster and descendants (#1015) @thayeylolu
+* Forecasting refactor: TbatAdapter (#1017) @thayeylolu
+* Forecasting refactor: PmdArimaAdapter (#1016) @thayeylolu
+* Forecasting refactor: Prophet (#1005) @thayeylolu
+* Forecasting refactor: CrystallBall Forecaster (#1004) @thayeylolu
+* Forecasting refactor: default tags in BaseForecaster; added some new tags (#1013) @fkiraly
+* Forecasting refactor: removing _SktimeForecaster and horizon mixins (#1088) @fkiraly
+* Forecasting tutorial rework (#972) @fkiraly
+* Added tuning tutorial to forecasting example notebook - fkiraly suggestions on top of #1047 (#1053) @fkiraly
+* Classification: Kernel based refactor (#875) @MatthewMiddlehurst
+* Classification: catch22 Remake (#864) @MatthewMiddlehurst
+* Forecasting: Remove step_length hyper-parameter from reduction classes (#900) @mloning
+* Transformers: Make OptionalPassthrough to support multivariate input (#1112) @aiwalter
+* Transformers: Improvement to Multivariate-Detrending (#1077) @SveaMeyer13
+* Update plot_series to handle pd.Int64 and pd.Range index uniformly (#892) @Dbhasin1
+* Including floating numbers as a window length (#827) @thayeylolu
+* update docs on loading data (#885) @SveaMeyer13
+* Update docs (#887) @mloning
+* [DOC] Updated docstrings to inform that methods accept ForecastingHorizon (#872) @julramos
+
+Fixed
+~~~~~
+* Fix use of seasonal periodicity in naive model with mean strategy (from PR #917) (#1124) @mloning
+* Fix ForecastingPipeline import (#1118) @mloning
+* Bugfix - forecasters should use internal interface _all_tags for self-inspection, not _has_tag (#1068) @fkiraly
+* bugfix: Prophet adapter fails to clone after setting parameters (#911) @Yard1
+* Fix seeding issue in Minirocket Classifier (#1094) @Lovkush-A
+* fixing soft dependencies link (#1035) @fkiraly
+* Fix minor typos in docstrings (#889) @GuzalBulatova
+* Fix manylinux CI (#914) @mloning
+* Add limits.h to ensure pip install on certain OS's (#915) @tombh
+* Fix side effect on input for Imputer and HampelFilter (#1089) @aiwalter
+* BaseCluster class issues resolved (#1075) @chrisholder
+* Cleanup metric docstrings and fix bug in _RelativeLossMixin (#999) @RNKuhns
+* minor clarifications in forecasting extension template preamble (#1069) @fkiraly
+* Fix fh in imputer method based on in-sample forecasts (#861) @julramos
+* Arsenal fix, extended capabilities and HC1 unit tests (#902) @MatthewMiddlehurst
+* minor bugfix - setting _is_fitted to False before input checks in forecasters (#941) @fkiraly
+* Properly process random_state when fitting Time Series Forest ensemble in parallel (#819) @kachayev
+* bump nbqa (#998) @MarcoGorelli
+* datetime: Construct Timedelta from parsed pandas frequency (#873) @ckastner
+
+All contributors: @Dbhasin1, @GuzalBulatova, @Lovkush-A, @MarcoGorelli, @MatthewMiddlehurst, @RNKuhns, @Riyabelle25, @SveaMeyer13, @TonyBagnall, @Yard1, @aiwalter, @chrisholder, @ckastner, @fkiraly, @jambo6, @julramos, @kachayev, @ltsaprounis, @mloning, @thayeylolu and @tombh
+
+
 [0.6.1] - 2021-05-14
 --------------------
 
@@ -228,8 +310,7 @@ Changed
 
 Fixed
 ~~~~~
-* Fix links in Readthedocs and Binder launch button (#416)
-@mloning
+* Fix links in Readthedocs and Binder launch button (#416) @mloning
 * Fixed small bug in performance metrics (#422) @krumeto
 * Resolved warnings in notebook examples (#418) @alwinw
 * Resolves #325 ModuleNotFoundError for soft dependencies (#410) @alwinw

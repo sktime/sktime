@@ -173,7 +173,8 @@ f.kiraly@ucl.ac.uk.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you do not feel comfortable contacting Dr Franz Király, please report
-an incident to Martina Vilas who is not part of the core developer team.
+an incident to [Martina Vilas](https://martinagvilas.github.io/) who
+is not part of the core developer team.
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

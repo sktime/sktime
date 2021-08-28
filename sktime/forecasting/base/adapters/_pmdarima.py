@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for pmdarima forecasters to be used in sktime framework."""
 
 __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
@@ -8,12 +9,18 @@ __all__ = ["_PmdArimaAdapter"]
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 
 
-class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
-    """Base class for interfacing pmdarima"""
+class _PmdArimaAdapter(BaseForecaster):
+    """Base class for interfacing pmdarima."""
+
+    _tags = {
+        "univariate-only": True,
+        "capability:pred_int": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self):
         self._forecaster = None
@@ -22,7 +29,7 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
@@ -33,16 +40,13 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
         """
-        self._is_fitted = False
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X, **fit_params)
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -122,7 +126,7 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             return pd.Series(result[fh_idx], index=fh_abs)
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -131,7 +135,19 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.check_is_fitted()
         names = self._get_fitted_param_names()
         params = self._get_fitted_params()
-        return {name: param for name, param in zip(names, params)}
+        fitted_params = {name: param for name, param in zip(names, params)}
+
+        if hasattr(self._forecaster, "model_"):  # AutoARIMA
+            res = self._forecaster.model_.arima_res_
+        elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
+            res = self._forecaster.arima_res_
+        else:
+            res = None
+
+        for name in ["aic", "aicc", "bic", "hqic"]:
+            fitted_params[name] = getattr(res, name, None)
+
+        return fitted_params
 
     def _get_fitted_params(self):
         # Return parameter values under `arima_res_`
@@ -152,5 +168,5 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             raise NotImplementedError()
 
     def summary(self):
-        """Summary of the fitted model"""
+        """Summary of the fitted model."""
         return self._forecaster.summary()

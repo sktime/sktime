@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements framework for applying online ensembling algorithms to forecasters."""
+
 import numpy as np
 import pandas as pd
 
@@ -10,7 +14,7 @@ from sktime.utils.validation.forecasting import check_y
 
 
 class OnlineEnsembleForecaster(EnsembleForecaster):
-    """Online Updating Ensemble of forecasters
+    """Online Updating Ensemble of forecasters.
 
     Parameters
     ----------
@@ -23,6 +27,11 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _required_parameters = ["forecasters"]
+    _tags = {
+        "univariate-only": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
 
@@ -31,7 +40,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -42,22 +51,22 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
         """
-
-        self._set_y_X(y, X)
-        self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
-        self._is_fitted = True
         return self
 
     def _fit_ensemble(self, y, X=None):
-        """Fits the ensemble by allowing forecasters to predict and
-           compares to the actual parameters.
+        """Fit the ensemble.
+
+        This makes predictions with individual forecasters and compares the
+        results to actual values. This is then used to update ensemble
+        weights.
 
         Parameters
         ----------
@@ -72,7 +81,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         self.ensemble_algorithm.update(estimator_predictions.T, y)
 
-    def update(self, y, X=None, update_params=False):
+    def _update(self, y, X=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
 
         Parameters
@@ -85,9 +94,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : an instance of self
         """
-        self.check_is_fitted()
-        self._update_y_X(y, X)
-
         if len(y) >= 1 and self.ensemble_algorithm is not None:
             self._fit_ensemble(y, X)
 
