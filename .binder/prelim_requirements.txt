@@ -5,7 +5,7 @@ hcrystalball>=0.1.9
 LunarCalendar >= 0.0.9
 matplotlib
 notebook
-numba>=0.53
+numba==0.53
 numpy>=1.19
 pystan==2.19.1.1
 seaborn
