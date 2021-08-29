@@ -16,7 +16,7 @@ MTYPE_REGISTER_SERIES = [
         "pd.DataFrame representation of a uni- or multivariate series",
     ),
     (
-        "np.npdarray",
+        "np.ndarray",
         "Series",
         "2D numpy.ndarray with rows=samples, cols=variables, index=integers",
     ),
