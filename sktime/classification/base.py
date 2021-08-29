@@ -61,6 +61,9 @@ classifier_list = [
     "ROCKET",
     "MrSEQLClassifier",
 ]
+_tags = {
+    "coerce-X-to-numpy": True,
+}
 
 
 class BaseClassifier(BaseEstimator):
@@ -72,10 +75,6 @@ class BaseClassifier(BaseEstimator):
     Specific implementations of these methods is deferred to concrete
     forecasters.
     """
-
-    _tags = {
-        "coerce-X-to-numpy": True,
-    }
 
     def __init__(self):
         self._is_fitted = False
@@ -104,8 +103,11 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
+        # X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce_to_pandas", False)
+        X, y = check_X_y(
+            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
 
         self._fit(X, y)
 
@@ -130,7 +132,11 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
 
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        # X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce_to_pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
 
         y = self._predict(X)
@@ -153,7 +159,11 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
 
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        # X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce_to_pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
         return self._predict_proba(X)
 

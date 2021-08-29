@@ -104,6 +104,8 @@ class MUSE(BaseClassifier):
         "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": False,
+        "coerce-X-to-numpy": False,
+        "coerce_to_pandas": True,
     }
 
     def __init__(
