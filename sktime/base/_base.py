@@ -112,6 +112,67 @@ class BaseObject(_BaseEstimator):
 
         return collected_tags.get(tag_name, tag_value_default)
 
+    @classmethod
+    def get_test_params(cls):
+        """get default parameters of the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Default parameters related to the estimator class
+
+
+        """
+        # if non-default parameters are required, but none have been found,
+        # raise error
+        if hasattr(cls, "_required_parameters"):
+            required_parameters = getattr(cls, "required_parameters", [])
+            if len(required_parameters) > 0:
+                raise ValueError(
+                    f"Estimator: {cls} requires "
+                    f"non-default parameters for construction, "
+                    f"but none were given. Please set them "
+                    f"as given in the extension template"
+                )
+
+        # construct with parameter configuration for testing, otherwise construct with
+        # default parameters (empty dict)
+
+        # Returns empty dictionary, to be overriden
+        return {}
+
+    @classmethod
+    def create_test_instance(cls):
+        """Construct Estimator instance if possible.
+
+        Returns
+        -------
+        instance : object of the class with default parameters
+
+        Notes
+        -----
+        get_test_params can return dict or list of dict.
+        This function takes first or single dict that get_test_params returns, and
+        constructs the object with that.
+
+        """
+        params = cls.get_test_params()
+        if isinstance(params, list):
+            if isinstance(params[0], dict):
+                params = params[0]
+            else:
+                raise TypeError(
+                    "get_test_params should either return a dict or list of dict."
+                )
+        elif isinstance(params, dict):
+            pass
+        else:
+            raise TypeError(
+                "get_test_params should either return a dict or list of dict."
+            )
+
+        return cls(**params)
+
     def get_tags(self):
         """Get tags from estimator class and dynamic tag overrides.
 
