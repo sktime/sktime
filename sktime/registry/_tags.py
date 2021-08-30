@@ -112,6 +112,12 @@ ESTIMATOR_TAG_REGISTER = [
         "which series type does the forecaster support? multivariate means >1 vars",
     ),
     (
+        "scitype:Z",
+        "transformer",
+        ("str", ["univariate", "multivariate", "both"]),
+        "which series type does the transformer support? multivariate means >1 vars",
+    ),
+    (
         "y_inner_mtype",
         "forecaster",
         ("list", ["pd.Series", "pd.DataFrame", "np.array"]),

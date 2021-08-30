@@ -64,7 +64,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
-        "scitype:y": "multivariate",
+        "scitype:Z": "multivariate",
     }
 
     def __init__(

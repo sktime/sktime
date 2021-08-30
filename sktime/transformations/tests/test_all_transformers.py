@@ -30,7 +30,7 @@ def test_all_transformers(Estimator):
 
 def check_transformer(Estimator):
     for check in _yield_transformer_checks(Estimator):
-        if Estimator.get_class_tag("scitype:y") == "multivariate":
+        if Estimator.get_class_tag("scitype:Z") == "multivariate":
             check(Estimator, n_columns=2)
         else:
             check(Estimator)
@@ -82,7 +82,7 @@ def check_series_to_primitive_transform_multivariate(Estimator):
 def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 15
     n_columns = 1
-    if Estimator.get_class_tag("scitype:y") == "multivariate":
+    if Estimator.get_class_tag("scitype:Z") == "multivariate":
         _check_raises_error(Estimator, n_columns=n_columns)
     else:
         out = _construct_fit_transform(
