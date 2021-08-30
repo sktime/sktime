@@ -579,6 +579,8 @@ def _make_args(estimator, method, **kwargs):
         and "n_columns" not in kwargs
     ):
         n_columns = 2
+    else:
+        n_columns = 1
     if method == "fit":
         return _make_fit_args(estimator, n_columns, **kwargs)
     if method == "update":
