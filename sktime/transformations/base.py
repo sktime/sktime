@@ -6,7 +6,7 @@ Base class template for transformers.
 
 Covers all types of transformers.
 Type and behaviour of transformer is determined by the following tags:
-    "scitype:transform-output" tag with values "Primivites", or "Series"
+    "scitype:transform-output" tag with values "Primitives", or "Series"
         this determines type of output of transform
         if "Primitives", output is pd.DataFrame with as many rows as X has instances
             i-th instance of X is transformed into i-th row of output
@@ -52,6 +52,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes import convert_to
+from sktime.datatypes._series_as_panel import (
+    convert_Series_to_Panel, convert_Panel_to_Series
+)
+from sktime.utils.validation.series import check_series, check_equal_time_index
+
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, np.float, float, str]
@@ -95,6 +101,8 @@ class BaseTransformer(BaseEstimator):
     }
 
     def __init__(self):
+
+        self._is_fitted = False
         super(BaseTransformer, self).__init__()
 
     def fit(self, X, y=None, Z=None):
@@ -117,10 +125,34 @@ class BaseTransformer(BaseEstimator):
         """
         X = _handle_alias(X, Z)
 
-        self._is_fitted = True
+        self._is_fitted = False
+
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        # checking X
+        enforce_univariate = self.get_tag("univariate_only")
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_X_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_index_type": enforce_index_type,
+            "allow_None": False,
+        }
+
+        X = check_series(X, **check_X_args, var_name="X")
+        # end checking X
+
+        # checking y
+        if y is not None:
+            y = check_series(y, enforce_index_type=enforce_index_type, var_name="y")
+            if self.get_tag("X-y-must-have-same-index"):
+                check_equal_time_index(X, y)
+        # end checking y
 
         self._fit(X=X, y=y)
 
+        self._is_fitted = True
         return self
 
     def transform(self, X, y=None, Z=None):
@@ -185,7 +217,7 @@ class BaseTransformer(BaseEstimator):
         X = _handle_alias(X, Z)
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self.fit(X, y, Z).transform(X, y, Z)
+        return self.fit(X, y).transform(X, y)
 
     # def inverse_transform(self, Z, X=None):
     #     raise NotImplementedError("abstract method")
