@@ -162,6 +162,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "contract time setting, i.e. does the estimator support limiting max fit time?",
     ),
+    (
+        "coerce_to_pandas",
+        ["classifier", "transformer"],
+        "bool",
+        "should X be coerced to a nested pandas DataFrame.? yes/no",
+    ),
     # (
     #     "handles-panel",
     #     "annotator",
