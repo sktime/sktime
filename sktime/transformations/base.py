@@ -150,7 +150,7 @@ class BaseTransformer(BaseEstimator):
         y_inner_mtype = self.get_tag("y_inner_mtype")
         if not isinstance(y_inner_mtype, list):
             y_inner_mtype = [y_inner_mtype]
-        y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
+        # y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
 
         # treating Series vs Panel conversion for X
         ###########################################
@@ -284,7 +284,7 @@ class BaseTransformer(BaseEstimator):
         y_inner_mtype = self.get_tag("y_inner_mtype")
         if not isinstance(y_inner_mtype, list):
             y_inner_mtype = [y_inner_mtype]
-        y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
+        # y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
 
         # treating Series vs Panel conversion for X
         ###########################################
