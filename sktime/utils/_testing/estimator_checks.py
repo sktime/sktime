@@ -574,13 +574,11 @@ def _construct_instance(Estimator):
 
 def _make_args(estimator, method, **kwargs):
     """Generate testing arguments for estimator methods."""
-    if (
-        estimator.get_class_tag("scitype:y") == "multivariate"
-        and "n_columns" not in kwargs
-    ):
-        n_columns = 2
-    else:
-        n_columns = 1
+    if "n_columns" not in kwargs:
+        if estimator.get_class_tag("scitype:y") == "multivariate":
+            n_columns = 2
+        else:
+            n_columns = 1
     if method == "fit":
         return _make_fit_args(estimator, n_columns, **kwargs)
     if method == "update":
