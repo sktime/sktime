@@ -56,7 +56,8 @@ from sklearn.base import clone
 from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype, mtype_to_scitype, check_is
 from sktime.datatypes._series_as_panel import (
-    convert_Series_to_Panel, convert_Panel_to_Series
+    convert_Series_to_Panel,
+    convert_Panel_to_Series,
 )
 
 
