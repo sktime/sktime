@@ -180,6 +180,8 @@ class BaseTransformer(BaseEstimator):
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
             # recurse and leave function - recursion does input checks/conversion
+            # also set is_fitted flag to True since we leave function here
+            self._is_fitted = True
             return self
 
         # input checks and minor coercions on X, y
