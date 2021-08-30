@@ -75,7 +75,7 @@ class BaseTransformer(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Panel or Series
+        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:transform-labels": "None",
@@ -84,7 +84,7 @@ class BaseTransformer(BaseEstimator):
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # this can be a Panel mtype even if transform-input is Series, vectorized 
+        # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
@@ -94,17 +94,18 @@ class BaseTransformer(BaseEstimator):
         super(BaseTransformer, self).__init__()
 
     def fit(self, X, y=None, Z=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X, optionally to y.
 
         By default, fit is empty. Fittable transformations overwrite fit method.
 
         Parameters
         ----------
-        X : TimeSeries
-            Data to be transformed
-        y : TimeSeries, optional (default=None)
-            Extra data
+        X : Series or Panel, any supported mtype
+            Data to fit transform to
+        y : Series or Panel, optional (default=None)
+            Additional data, e.g., labels for transformation
+        Z : possible alias for X; should not be passed when X is passed
+            alias Z will be deprecated in version 0.9.0
 
         Returns
         -------
@@ -114,12 +115,34 @@ class BaseTransformer(BaseEstimator):
 
         self._is_fitted = True
 
-        self.fit(X=X, y=y)
+        self._fit(X=X, y=y)
 
         return self
 
     def transform(self, X, y=None, Z=None):
-        """Transform data. Returns a transformed version of X."""
+        """Transform X and return a transformed version.
+
+        Parameters
+        ----------
+        X : Series or Panel, any supported mtype
+            Data to be transformed
+        y : Series or Panel, optional (default=None)
+            Additional data, e.g., labels for transformation
+        Z : possible alias for X; should not be passed when X is passed
+            alias Z will be deprecated in version 0.9.0
+
+        Returns
+        -------
+        transformed version of X
+        type depends on type of X and scitype:transform-output tag:
+            |   `X`    | `tf-output`  |     `type`     |
+            |----------|--------------|----------------|
+            | `Series` | `Primitives` | `pd.DataFrame` |
+            | `Series` | `Series`     | `Series`       |
+            | `Panel`  | `Series`     | `Panel`        |
+            | `Series` | `Panel`      | `Panel`        |
+        other combinations are currently not supported
+        """
         X = _handle_alias(X, Z)
 
         return self._transform(X=X, y=y)
@@ -132,15 +155,24 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        Z : pd.DataFrame, pd.Series or np.ndarray
+        X : Series or Panel, any supported mtype
             Data to be transformed
-        X : pd.Series or np.ndarray, optional (default=None)
-            Target values of data to be transformed.
+        y : Series or Panel, optional (default=None)
+            Additional data, e.g., labels for transformation
+        Z : possible alias for X; should not be passed when X is passed
+            alias Z will be deprecated in version 0.9.0
 
         Returns
         -------
-        Zt : pd.DataFrame, pd.Series or np.ndarray
-            Transformed data.
+        transformed version of X
+        type depends on type of X and scitype:transform-output tag:
+            |   `X`    | `tf-output`  |     `type`     |
+            |----------|--------------|----------------|
+            | `Series` | `Primitives` | `pd.DataFrame` |
+            | `Series` | `Series`     | `Series`       |
+            | `Panel`  | `Series`     | `Panel`        |
+            | `Series` | `Panel`      | `Panel`        |
+        other combinations are currently not supported
         """
         X = _handle_alias(X, Z)
         # Non-optimized default implementation; override when a better
@@ -161,20 +193,44 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : TimeSeries
-            Data to be transformed
-        y : TimeSeries, optional (default=None)
-            Extra data
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, optional, default=None
+            Additional data, e.g., labels for tarnsformation
 
         Returns
         -------
-        self : a fitted instance of the estimator
+        self: a fitted instance of the estimator
         """
         # default fit is "no fitting happens"
         return self
 
     def _transform(self, X, y=None):
-        """Transform data. Returns a transformed version of X."""
+        """Transform X and return a transformed version.
+
+        core logic
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel, optional (default=None)
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        type depends on type of X and scitype:transform-output tag:
+            |   `X`    | `tf-output`  |     `type`     |
+            |----------|--------------|----------------|
+            | `Series` | `Primitives` | `pd.DataFrame` |
+            | `Series` | `Series`     | `Series`       |
+            | `Panel`  | `Series`     | `Panel`        |
+            | `Series` | `Panel`      | `Panel`        |
+        other combinations are currently not supported
+        """
         raise NotImplementedError("abstract method")
 
 
