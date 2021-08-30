@@ -552,7 +552,6 @@ def _get_err_msg(estimator):
 
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
-
     # return the instance of the class with default parameters
     return Estimator.create_test_instance()
 
