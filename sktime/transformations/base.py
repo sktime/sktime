@@ -88,6 +88,10 @@ class BaseTransformer(BaseEstimator):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "transform-returns-same-time-index": False,
+        # does transform return have the same time index as input X
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
     }
 
     def __init__(self):
@@ -182,7 +186,7 @@ class BaseTransformer(BaseEstimator):
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
         return self.fit(X, y, Z).transform(X, y, Z)
-#
+
     # def inverse_transform(self, Z, X=None):
     #     raise NotImplementedError("abstract method")
     #
