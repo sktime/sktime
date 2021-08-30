@@ -221,7 +221,10 @@ class BaseTransformer(BaseEstimator):
             as_scitype=y_scitype,
         )
 
-        self._fit(X=X_inner, y=y_inner)
+        # uncomment this once Z is completely gone
+        # self._fit(X=X_inner, y=y_inner)
+        # less robust workaround until then
+        self._fit(X_inner, y_inner)
 
         self._is_fitted = True
         return self
@@ -276,7 +279,7 @@ class BaseTransformer(BaseEstimator):
         X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
 
         y_inner_mtype = self.get_tag("y_inner_mtype")
-        if not isinstance(X_inner_mtype, list):
+        if not isinstance(y_inner_mtype, list):
             y_inner_mtype = [y_inner_mtype]
         y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
 
@@ -379,7 +382,10 @@ class BaseTransformer(BaseEstimator):
         # carry out the transformation
         ###################################################
 
-        Xt = self._transform(X=X_inner, y=y_inner)
+        # uncomment this once Z is completely gone
+        # Xt = self._transform(X=X_inner, y=y_inner)
+        # less robust workaround until then
+        Xt = self._transform(X_inner, y_inner)
 
         # convert transformed X back to input mtype
         ###########################################
