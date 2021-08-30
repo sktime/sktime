@@ -574,22 +574,30 @@ def _construct_instance(Estimator):
 
 def _make_args(estimator, method, **kwargs):
     """Generate testing arguments for estimator methods."""
+    # set n_columns for multivariate estimators
+    n_columns = None
     if "n_columns" not in kwargs:
         if estimator.get_class_tag("scitype:y") or estimator.get_class_tag(
             "scitype:Z"
         ) in ["multivariate", "both"]:
-            kwargs["n_columns"] = 2
+            n_columns = 2
         else:
-            kwargs["n_columns"] = 1
+            n_columns = 1
     if method == "fit":
-        return _make_fit_args(estimator, **kwargs)
+        if n_columns is not None:
+            kwargs["n_columns"] = n_columns
+        return _make_fit_args(estimator, n_columns, **kwargs)
     if method == "update":
         raise NotImplementedError()
     elif method in ("predict", "predict_proba", "decision_function"):
         return _make_predict_args(estimator, **kwargs)
     elif method == "transform":
+        if n_columns is not None:
+            kwargs["n_columns"] = n_columns
         return _make_transform_args(estimator, **kwargs)
     elif method == "inverse_transform":
+        if n_columns is not None:
+            kwargs["n_columns"] = n_columns
         return _make_inverse_transform_args(estimator, **kwargs)
     else:
         raise ValueError(f"Method: {method} not supported")
