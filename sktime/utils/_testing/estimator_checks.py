@@ -586,7 +586,7 @@ def _make_args(estimator, method, **kwargs):
     if method == "fit":
         if n_columns is not None:
             kwargs["n_columns"] = n_columns
-        return _make_fit_args(estimator, n_columns, **kwargs)
+        return _make_fit_args(estimator, **kwargs)
     if method == "update":
         raise NotImplementedError()
     elif method in ("predict", "predict_proba", "decision_function"):
