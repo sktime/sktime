@@ -78,7 +78,7 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
         raise TypeError("input is not a pd.DataFrame")
 
     if len(obj.columns) != 1:
-        raise ValueError("pd.DataFrame must be pd.DataFrame with one column")
+        raise ValueError("input must be unviariate pd.DataFrame, with one column")
 
     if isinstance(store, dict):
         store["columns"] = obj.columns[[0]]
