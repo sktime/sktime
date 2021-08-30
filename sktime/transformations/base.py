@@ -147,7 +147,7 @@ class BaseTransformer(BaseEstimator):
         X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
 
         y_inner_mtype = self.get_tag("y_inner_mtype")
-        if not isinstance(X_inner_mtype, list):
+        if not isinstance(y_inner_mtype, list):
             y_inner_mtype = [y_inner_mtype]
         y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
 
