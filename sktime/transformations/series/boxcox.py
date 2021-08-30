@@ -99,7 +99,11 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+        "X_inner_mtype": "pd.Series",
+    }
 
     def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds
@@ -108,7 +112,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         self.sp = sp
         super(BoxCoxTransformer, self).__init__()
 
-    def fit(self, Z, X=None):
+    def _fit(self, Z, X=None):
         """Fit data.
 
         Parameters
@@ -131,7 +135,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, Z, X=None):
+    def _transform(self, Z, X=None):
         """Transform data.
 
         Parameters
