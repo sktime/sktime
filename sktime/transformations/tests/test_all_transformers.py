@@ -53,8 +53,8 @@ def _construct_fit(Estimator, **kwargs):
     return estimator.fit(*args)
 
 
-def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
-    out = _construct_fit_transform(Estimator, **kwargs)
+def check_series_to_primitive_transform_univariate(Estimator):
+    out = _construct_fit_transform(Estimator)
     assert isinstance(out, (int, np.integer, float, np.floating, str))
 
 
@@ -69,7 +69,7 @@ def _check_raises_error(Estimator, **kwargs):
             _construct_fit(Estimator, **kwargs)
 
 
-def check_series_to_primitive_transform_multivariate(Estimator, **kwargs):
+def check_series_to_primitive_transform_multivariate(Estimator):
     n_columns = 3
     if Estimator.get_class_tag("univariate-only", False):
         _check_raises_error(Estimator, n_columns=n_columns)
@@ -79,7 +79,7 @@ def check_series_to_primitive_transform_multivariate(Estimator, **kwargs):
         assert out.shape == (n_columns,)
 
 
-def check_series_to_series_transform_univariate(Estimator, **kwargs):
+def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 15
     n_columns = 1
     if Estimator.get_class_tag("scitype:y") == "multivariate":
@@ -94,7 +94,7 @@ def check_series_to_series_transform_univariate(Estimator, **kwargs):
         assert isinstance(out, (pd.Series, pd.DataFrame, np.ndarray))
 
 
-def check_series_to_series_transform_multivariate(Estimator, **kwargs):
+def check_series_to_series_transform_multivariate(Estimator):
     n_columns = 3
     n_timepoints = 15
     if Estimator.get_class_tag("univariate-only", False):
@@ -107,14 +107,14 @@ def check_series_to_series_transform_multivariate(Estimator, **kwargs):
         assert out.shape == (n_timepoints, n_columns)
 
 
-def check_panel_to_tabular_transform_univariate(Estimator, **kwargs):
+def check_panel_to_tabular_transform_univariate(Estimator):
     n_instances = 5
     out = _construct_fit_transform(Estimator, n_instances=n_instances)
     assert isinstance(out, (pd.DataFrame, np.ndarray))
     assert out.shape[0] == n_instances
 
 
-def check_panel_to_tabular_transform_multivariate(Estimator, **kwargs):
+def check_panel_to_tabular_transform_multivariate(Estimator):
     n_instances = 5
     if Estimator.get_class_tag("univariate-only", False):
         _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
@@ -124,7 +124,7 @@ def check_panel_to_tabular_transform_multivariate(Estimator, **kwargs):
         assert out.shape[0] == n_instances
 
 
-def check_panel_to_panel_transform_univariate(Estimator, **kwargs):
+def check_panel_to_panel_transform_univariate(Estimator):
     n_instances = 5
     out = _construct_fit_transform(Estimator, n_instances=n_instances)
     assert isinstance(out, (pd.DataFrame, np.ndarray))
@@ -135,7 +135,7 @@ def check_panel_to_panel_transform_univariate(Estimator, **kwargs):
         assert is_nested_dataframe(out)
 
 
-def check_panel_to_panel_transform_multivariate(Estimator, **kwargs):
+def check_panel_to_panel_transform_multivariate(Estimator):
     n_instances = 5
     if Estimator.get_class_tag("univariate-only", False):
         _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
@@ -149,27 +149,27 @@ def check_panel_to_panel_transform_multivariate(Estimator, **kwargs):
             assert is_nested_dataframe(out)
 
 
-def check_transform_returns_same_time_index(Estimator, **kwargs):
+def check_transform_returns_same_time_index(Estimator):
     assert issubclass(Estimator, _SeriesToSeriesTransformer)
     estimator = _construct_instance(Estimator)
-    fit_args = _make_args(estimator, "fit", **kwargs)
+    fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
     for method in ["transform", "inverse_transform"]:
         if hasattr(estimator, method):
-            X = _make_args(estimator, method, **kwargs)[0]
+            X = _make_args(estimator, method)[0]
             Xt = estimator.transform(X)
             np.testing.assert_array_equal(X.index, Xt.index)
 
 
-def check_transform_inverse_transform_equivalent(Estimator, **kwargs):
+def check_transform_inverse_transform_equivalent(Estimator):
     estimator = _construct_instance(Estimator)
-    X = _make_args(estimator, "fit", **kwargs)[0]
+    X = _make_args(estimator, "fit")[0]
     Xt = estimator.fit_transform(X)
     Xit = estimator.inverse_transform(Xt)
     _assert_array_almost_equal(X, Xit)
 
 
-def check_transformer_type(Estimator, **kwargs):
+def check_transformer_type(Estimator):
     assert issubclass(Estimator, BaseTransformer)
     assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
