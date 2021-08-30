@@ -135,13 +135,15 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     `type`     |
-            |----------|--------------|----------------|
-            | `Series` | `Primitives` | `pd.DataFrame` |
-            | `Series` | `Series`     | `Series`       |
-            | `Panel`  | `Series`     | `Panel`        |
-            | `Series` | `Panel`      | `Panel`        |
-        other combinations are currently not supported
+            |   `X`    | `tf-output`  |     type of return     |
+            |----------|--------------|------------------------|
+            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
+            | `Panel`  | `Primitives` | `pd.DataFrame`         |
+            | `Series` | `Series`     | `Series`               |
+            | `Panel`  | `Series`     | `Panel`                |
+            | `Series` | `Panel`      | `Panel`                |
+        instances in return correspond to instances in `X`
+        combinations not in the table are currently not supported
         """
         X = _handle_alias(X, Z)
 
@@ -166,13 +168,15 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     `type`     |
-            |----------|--------------|----------------|
-            | `Series` | `Primitives` | `pd.DataFrame` |
-            | `Series` | `Series`     | `Series`       |
-            | `Panel`  | `Series`     | `Panel`        |
-            | `Series` | `Panel`      | `Panel`        |
-        other combinations are currently not supported
+            |   `X`    | `tf-output`  |     type of return     |
+            |----------|--------------|------------------------|
+            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
+            | `Panel`  | `Primitives` | `pd.DataFrame`         |
+            | `Series` | `Series`     | `Series`               |
+            | `Panel`  | `Series`     | `Panel`                |
+            | `Series` | `Panel`      | `Panel`                |
+        instances in return correspond to instances in `X`
+        combinations not in the table are currently not supported
         """
         X = _handle_alias(X, Z)
         # Non-optimized default implementation; override when a better
@@ -223,13 +227,15 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     `type`     |
-            |----------|--------------|----------------|
-            | `Series` | `Primitives` | `pd.DataFrame` |
-            | `Series` | `Series`     | `Series`       |
-            | `Panel`  | `Series`     | `Panel`        |
-            | `Series` | `Panel`      | `Panel`        |
-        other combinations are currently not supported
+            |   `X`    | `tf-output`  |     type of return     |
+            |----------|--------------|------------------------|
+            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
+            | `Panel`  | `Primitives` | `pd.DataFrame`         |
+            | `Series` | `Series`     | `Series`               |
+            | `Panel`  | `Series`     | `Panel`                |
+            | `Series` | `Panel`      | `Panel`                |
+        instances in return correspond to instances in `X`
+        combinations not in the table are currently not supported
         """
         raise NotImplementedError("abstract method")
 
@@ -262,28 +268,64 @@ def _handle_alias(X, Z):
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):
-    """Transformer base class for series to primitive(s) transforms"""
+    """Transformer base class for series to primitive(s) transforms."""
 
-    def transform(self, Z: Series, X=None) -> Primitives:
-        raise NotImplementedError("abstract method")
+    # class is temporary for downwards compatibility
+
+    # default tag values for "Series-to-Primitives"
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+    }
 
 
 class _SeriesToSeriesTransformer(BaseTransformer):
-    """Transformer base class for series to series transforms"""
+    """Transformer base class for series to series transforms."""
 
-    def transform(self, Z: Series, X=None) -> Series:
-        raise NotImplementedError("abstract method")
+    # class is temporary for downwards compatibility
+
+    # default tag values for "Series-to-Series"
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+    }
 
 
 class _PanelToTabularTransformer(BaseTransformer):
-    """Transformer base class for panel to tabular transforms"""
+    """Transformer base class for panel to tabular transforms."""
 
-    def transform(self, X: Panel, y=None) -> Tabular:
-        raise NotImplementedError("abstract method")
+    # class is temporary for downwards compatibility
+
+    # default tag values for "Series-to-Series"
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+    }
 
 
 class _PanelToPanelTransformer(BaseTransformer):
-    """Transformer base class for panel to panel transforms"""
+    """Transformer base class for panel to panel transforms."""
 
-    def transform(self, X: Panel, y=None) -> Panel:
-        raise NotImplementedError("abstract method")
+    # class is temporary for downwards compatibility
+
+    # default tag values for "Series-to-Series"
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+    }
