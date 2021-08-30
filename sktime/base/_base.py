@@ -210,7 +210,7 @@ class BaseObject(_BaseEstimator):
 
     @classmethod
     def get_test_params(cls):
-        """get default parameters of the estimator.
+        """Get default parameters of the estimator.
 
         Returns
         -------
