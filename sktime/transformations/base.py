@@ -35,7 +35,7 @@ State:
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning, fkiraly"]
 __all__ = [
     "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
@@ -51,12 +51,13 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+from sklearn.base import clone
+
 from sktime.base import BaseEstimator
-from sktime.datatypes import convert_to
+from sktime.datatypes import convert_to, mtype, mtype_to_scitype, check_is
 from sktime.datatypes._series_as_panel import (
     convert_Series_to_Panel, convert_Panel_to_Series
 )
-from sktime.utils.validation.series import check_series, check_equal_time_index
 
 
 # single/multiple primitives
@@ -127,30 +128,100 @@ class BaseTransformer(BaseEstimator):
 
         self._is_fitted = False
 
+        # skip everything if fit-in-transform is True
+        if self.get_tag("fit-in-transform"):
+            self._is_fitted = True
+            return self
+
+        # retrieve mtypes/scitypes of all objects
+        #########################################
+
+        X_mtype = mtype(X)
+        X_scitype = mtype_to_scitype(X_mtype)
+        y_mtype = mtype(y)
+        y_scitype = mtype_to_scitype(y_mtype)
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        if not isinstance(X_inner_mtype, list):
+            X_inner_mtype = [X_inner_mtype]
+        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        if not isinstance(X_inner_mtype, list):
+            y_inner_mtype = [y_inner_mtype]
+        y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
+
+        # treating Series vs Panel conversion for X
+        ###########################################
+
+        # there are three cases to treat:
+        # 1. if the internal _fit supports X's scitype, move on to mtype conversion
+        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
+        # 3. internal only has Series but X is Panel:  loop over instances
+        #     currently this is enabled by conversion to df-list mtype
+        #     and this does not support y (unclear what should happen here)
+
+        # 1. nothing to do - simply don't enter any of the ifs below
+
+        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
+        if X_scitype == "Series" and "Series" not in X_inner_scitypes:
+            X = convert_Series_to_Panel(X)
+            X_mtype = mtype(X)
+            X_scitype = mtype_to_scitype(X_mtype)
+
+        # 3. internal only has Series but X is Panel: loop over instances
+        if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+            if y is not None:
+                raise ValueError(
+                    "no default behaviour if _fit does not support Panel, "
+                    " but X is Panel and y is not None"
+                )
+            X = convert_to(X, to_type="df-list", as_scitype="Panel")
+            # this fits one transformer per instance
+            self.transformers_ = [clone(self).fit(Xi) for Xi in X]
+            # recurse and leave function - recursion does input checks/conversion
+            return self
+
         # input checks and minor coercions on X, y
         ###########################################
 
+        valid, msg, metadata = check_is(
+            X, mtype=X_mtype, return_metadata=True, var_name="X"
+        )
+        if not valid:
+            raise ValueError(msg)
+
         # checking X
         enforce_univariate = self.get_tag("univariate_only")
-        enforce_index_type = self.get_tag("enforce_index_type")
+        if enforce_univariate and not metadata["is_univariate"]:
+            raise ValueError("X must be univariate but is not")
 
-        check_X_args = {
-            "enforce_univariate": enforce_univariate,
-            "enforce_index_type": enforce_index_type,
-            "allow_None": False,
-        }
+        # convert X/y to supported inner type, if necessary
+        ###################################################
 
-        X = check_series(X, **check_X_args, var_name="X")
-        # end checking X
+        # subset to the mtypes that are of the same scitype as X/y
+        X_inner_mtype = [
+            mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
+        ]
 
-        # checking y
-        if y is not None:
-            y = check_series(y, enforce_index_type=enforce_index_type, var_name="y")
-            if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
-        # end checking y
+        y_inner_mtype = [
+            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
+        ]
 
-        self._fit(X=X, y=y)
+        # convert X and y to a supported internal type
+        #  if X/y type is already supported, no conversion takes place
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype=X_scitype,
+        )
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype=y_scitype,
+        )
+
+        self._fit(X=X_inner, y=y_inner)
 
         self._is_fitted = True
         return self
@@ -183,7 +254,147 @@ class BaseTransformer(BaseEstimator):
         """
         X = _handle_alias(X, Z)
 
-        return self._transform(X=X, y=y)
+        # check whether is fitted, unless fit-in-transform is true
+        if self.get_tag("fit-in-transform"):
+            self._is_fitted = True
+        elif not self._is_fitted:
+            raise RuntimeError("fit must be called before transform")
+
+        # retrieve mtypes/scitypes of all objects
+        #########################################
+
+        X_mtype = mtype(X)
+        X_scitype = mtype_to_scitype(X_mtype)
+        y_mtype = mtype(y)
+        y_scitype = mtype_to_scitype(y_mtype)
+
+        output_scitype = self.get_tag("scitype:transform-output")
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        if not isinstance(X_inner_mtype, list):
+            X_inner_mtype = [X_inner_mtype]
+        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        if not isinstance(X_inner_mtype, list):
+            y_inner_mtype = [y_inner_mtype]
+        y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
+
+        # treating Series vs Panel conversion for X
+        ###########################################
+
+        # there are three cases to treat:
+        # 1. if the internal _fit supports X's scitype, move on to mtype conversion
+        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
+        # 3. internal only has Series but X is Panel:  loop over instances
+        #     currently this is enabled by conversion to df-list mtype
+        #     and this does not support y (unclear what should happen here)
+
+        # 1. nothing to do - simply don't enter any of the ifs below
+
+        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
+        if X_scitype == "Series" and "Series" not in X_inner_scitypes:
+            X_orig_mtype = X_mtype
+            X_orig_scitype = X_scitype
+            X = convert_Series_to_Panel(X)
+            X_mtype = mtype(X)
+            X_scitype = mtype_to_scitype(X_mtype)
+            # remember that we did this
+            X_was_Series = True
+        else:
+            X_was_Series = False
+            X_orig_mtype = X_mtype
+            X_orig_scitype = X_scitype
+
+        # 3. internal only has Series but X is Panel: loop over instances
+        if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+            if y is not None:
+                ValueError(
+                    "no default behaviour if _fit does not support Panel, "
+                    " but X is Panel and y is not None"
+                )
+            X = convert_to(X, to_type="df-list", as_scitype="Panel")
+
+            if self.get_tag("fit-in-transform"):
+                Xt = [clone(self).transform(Xi) for Xi in X]
+            else:
+                fitted_trafos = self.transformers_
+                if len(fitted_trafos) != len(X):
+                    raise RuntimeError(
+                        "found different number of instances in transform than in fit"
+                    )
+                else:
+                    Xt = [fitted_trafos[i].transform(X[i]) for i in range(len(X))]
+            # now we have a list of transformed instances
+
+            # if the output is Series, Xt is a Panel and we convert back
+            if output_scitype == "Series":
+                Xt = convert_to(X, to_type=X_mtype, as_scitype="Panel")
+            # if the output is Primitives, we have a list of one-row dataframes
+            # we concatenate those and overwrite the index with that of X
+            elif output_scitype == "Primitives":
+                Xt = pd.concat(Xt)
+                Xt.index = X.index
+            return Xt
+
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        valid, msg, metadata = check_is(
+            X, mtype=X_mtype, return_metadata=True, var_name="X"
+        )
+        if not valid:
+            ValueError(msg)
+
+        # checking X
+        enforce_univariate = self.get_tag("univariate_only")
+        if enforce_univariate and not metadata["is_univariate"]:
+            ValueError("X must be univariate but is not")
+
+        # convert X/y to supported inner type, if necessary
+        ###################################################
+
+        # subset to the mtypes that are of the same scitype as X/y
+        X_inner_mtype = [
+            mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
+        ]
+
+        y_inner_mtype = [
+            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
+        ]
+
+        # convert X and y to a supported internal type
+        #  if X/y type is already supported, no conversion takes place
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype=X_scitype,
+        )
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype=y_scitype,
+        )
+
+        # carry out the transformation
+        ###################################################
+
+        Xt = self._transform(X=X_inner, y=y_inner)
+
+        # convert transformed X back to input mtype
+        ###########################################
+
+        # if we converted Series to "one-instance-Panel", revert that
+        if X_was_Series:
+            Xt = convert_Panel_to_Series(Xt)
+
+        Xt = convert_to(
+            Xt,
+            to_type=X_orig_mtype,
+            as_scitype=X_orig_scitype,
+        )
+
+        return Xt
 
     def fit_transform(self, X, y=None, Z=None):
         """Fit to data, then transform it.
