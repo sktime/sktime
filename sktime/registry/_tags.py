@@ -114,29 +114,35 @@ ESTIMATOR_TAG_REGISTER = [
     (
         "y_inner_mtype",
         ["forecaster", "transformer"],
-        ("list", [
-            "pd.Series",
-            "pd.DataFrame",
-            "np.array",
-            "nested_univ",
-            "pd-multiindex",
-            "numpy3D",
-            "df-list",
-        ]),
+        (
+            "list",
+            [
+                "pd.Series",
+                "pd.DataFrame",
+                "np.array",
+                "nested_univ",
+                "pd-multiindex",
+                "numpy3D",
+                "df-list",
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (
         "X_inner_mtype",
         ["forecaster", "transformer"],
-        ("list", [
-            "pd.Series",
-            "pd.DataFrame",
-            "np.array",
-            "nested_univ",
-            "pd-multiindex",
-            "numpy3D",
-            "df-list",
-        ]),
+        (
+            "list",
+            [
+                "pd.Series",
+                "pd.DataFrame",
+                "np.array",
+                "nested_univ",
+                "pd-multiindex",
+                "numpy3D",
+                "df-list",
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (
