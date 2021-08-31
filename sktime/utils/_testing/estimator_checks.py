@@ -588,17 +588,17 @@ def _check_n_columns(estimator, **kwargs):
 def _make_args(estimator, method, **kwargs):
     """Generate testing arguments for estimator methods."""
     if method == "fit":
-        kwargs = _check_n_columns(**kwargs)
+        kwargs = _check_n_columns(estimator, **kwargs)
         return _make_fit_args(estimator, **kwargs)
     if method == "update":
         raise NotImplementedError()
     elif method in ("predict", "predict_proba", "decision_function"):
         return _make_predict_args(estimator, **kwargs)
     elif method == "transform":
-        kwargs = _check_n_columns(**kwargs)
+        kwargs = _check_n_columns(estimator, **kwargs)
         return _make_transform_args(estimator, **kwargs)
     elif method == "inverse_transform":
-        kwargs = _check_n_columns(**kwargs)
+        kwargs = _check_n_columns(estimator, **kwargs)
         return _make_inverse_transform_args(estimator, **kwargs)
     else:
         raise ValueError(f"Method: {method} not supported")
