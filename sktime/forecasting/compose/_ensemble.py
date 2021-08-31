@@ -13,6 +13,7 @@ __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
+from scipy.stats.mstats import gmean as _weighted_gmean
 from sklearn.pipeline import Pipeline
 from sklearn.utils.stats import _weighted_percentile
 
@@ -309,7 +310,7 @@ def _check_aggfunc(aggfunc, weighted=False):
         "median": {"unweighted": np.median, "weighted": _weighted_median},
         "min": {"unweighted": np.min, "weighted": _weighted_min},
         "max": {"unweighted": np.max, "weighted": _weighted_max},
-        "gmean": {"unweighted": gmean, "weighted": gmean},
+        "gmean": {"unweighted": gmean, "weighted": _weighted_gmean},
     }
     if aggfunc not in valid_aggfuncs.keys():
         raise ValueError("Aggregation function %s not recognized." % aggfunc)
