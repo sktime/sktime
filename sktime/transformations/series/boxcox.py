@@ -103,6 +103,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "X_inner_mtype": "pd.Series",
+        "fit-in-transform": False,
     }
 
     def __init__(self, bounds=None, method="mle", sp=None):
@@ -132,7 +133,6 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         else:
             self.lambda_ = _guerrero(z, self.sp, self.bounds)
 
-        self._is_fitted = True
         return self
 
     def _transform(self, Z, X=None):
@@ -150,7 +150,6 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         Zt : pd.Series
             Transformed series.
         """
-        self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         zt = boxcox(z.to_numpy(), self.lambda_)
         return pd.Series(zt, index=z.index)
