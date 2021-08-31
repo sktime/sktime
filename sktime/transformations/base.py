@@ -171,7 +171,7 @@ class BaseTransformer(BaseEstimator):
             X_scitype = mtype_to_scitype(X_mtype)
 
         # 3. internal only has Series but X is Panel: loop over instances
-        if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+        elif X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None:
                 raise ValueError(
                     "no default behaviour if _fit does not support Panel, "
@@ -313,7 +313,7 @@ class BaseTransformer(BaseEstimator):
             X_orig_scitype = X_scitype
 
         # 3. internal only has Series but X is Panel: loop over instances
-        if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+        if X_orig_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None:
                 ValueError(
                     "no default behaviour if _fit does not support Panel, "
