@@ -576,15 +576,15 @@ def _make_args(estimator, method, **kwargs):
     """Generate testing arguments for estimator methods."""
     # set n_columns for multivariate estimators
     n_columns = None
-    if "n_columns" not in kwargs:
-        if estimator.get_class_tag("scitype:y") or estimator.get_class_tag(
-            "scitype:Z"
-        ) in ["multivariate", "both"]:
-            n_columns = 2
-        else:
-            n_columns = 1
+    if estimator.get_class_tag("scitype:y") or estimator.get_class_tag("scitype:Z") in [
+        "multivariate",
+        "both",
+    ]:
+        n_columns = 2
+    else:
+        n_columns = 1
     if method == "fit":
-        if n_columns is not None:
+        if "n_columns" not in kwargs and n_columns is not None:
             kwargs["n_columns"] = n_columns
         return _make_fit_args(estimator, **kwargs)
     if method == "update":
@@ -592,7 +592,7 @@ def _make_args(estimator, method, **kwargs):
     elif method in ("predict", "predict_proba", "decision_function"):
         return _make_predict_args(estimator, **kwargs)
     elif method == "transform":
-        if n_columns is not None:
+        if "n_columns" not in kwargs and n_columns is not None:
             kwargs["n_columns"] = n_columns
         return _make_transform_args(estimator, **kwargs)
     elif method == "inverse_transform":
