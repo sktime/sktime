@@ -540,7 +540,8 @@ def check_multiprocessing_idempotent(Estimator):
 def check_valid_estimator_tags(Estimator):
     # check if Estimator tags are in VALID_ESTIMATOR_TAGS
     for tag in Estimator.get_class_tags().keys():
-        assert tag in VALID_ESTIMATOR_TAGS
+        msg = f"Invalid estimator tag: {tag}, all tags must be in the registry"
+        assert tag in VALID_ESTIMATOR_TAGS, msg
 
 
 def _get_err_msg(estimator):
