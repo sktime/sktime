@@ -37,8 +37,8 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         The gamma value of the holt winters seasonal method, if the value
         is set then this value will be used as the value.
     use_boxcox : {True, False, 'log', float}, default=None
-        Should the Box-Cox transform be applied to the data first? 
-        If 'log' then apply the log. If float then use lambda equal to float.     
+        Should the Box-Cox transform be applied to the data first?
+        If 'log' then apply the log. If float then use lambda equal to float.
     initialization_method:{'estimated','heuristic','legacy-heuristic','known',None},
         default='estimated'
         Method for initialize the recursions.
