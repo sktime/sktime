@@ -29,6 +29,7 @@ sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/exponent.py @rnkuhns
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
+sktime/forecasting/naive.py @Flix6x
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
 sktime/forecasting/fbprophet.py @aiwalter
