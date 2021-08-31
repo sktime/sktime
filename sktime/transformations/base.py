@@ -534,7 +534,6 @@ class _SeriesToPrimitivesTransformer(BaseTransformer):
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
     }
 
@@ -550,7 +549,6 @@ class _SeriesToSeriesTransformer(BaseTransformer):
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
     }
 
@@ -565,7 +563,6 @@ class _PanelToTabularTransformer(BaseTransformer):
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
-        # what scitype is returned: Primitives, Series, Panel
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
     }
@@ -582,6 +579,5 @@ class _PanelToPanelTransformer(BaseTransformer):
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
     }
