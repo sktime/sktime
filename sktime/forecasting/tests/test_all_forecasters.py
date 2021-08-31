@@ -164,26 +164,26 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
     """Check that predicted time index matches forecasting horizon."""
     f = _construct_instance(Forecaster)
     if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1, index_type=index_type)
+        y_train = _make_series(n_columns=1, index_type=index_type, n_timepoints=50)
         cutoff = y_train.index[-1]
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
         try:
             f.fit(y_train, fh=fh)
             y_pred = f.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh)
         except NotImplementedError:
             pass
 
     if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2, index_type=index_type)
+        y_train = _make_series(n_columns=2, index_type=index_type, n_timepoints=50)
         cutoff = y_train.index[-1]
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
         try:
             f.fit(y_train, fh=fh)
             y_pred = f.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh)
         except NotImplementedError:
             pass
 
