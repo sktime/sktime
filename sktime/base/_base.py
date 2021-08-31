@@ -66,6 +66,52 @@ class BaseObject(_BaseEstimator):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
 
+    @classmethod
+    def get_class_tags(cls):
+        """Get class tags from estimator class and all its parent classes.
+
+        Returns
+        -------
+        collected_tags : dict
+            Dictionary of tag name : tag value pairs. Collected from _tags
+            class attribute via nested inheritance. NOT overridden by dynamic
+            tags set by set_tags or mirror_tags.
+        """
+        collected_tags = dict()
+
+        # We exclude the last two parent classes: sklearn.base.BaseEstimator and
+        # the basic Python object.
+        for parent_class in reversed(inspect.getmro(cls)[:-2]):
+            if hasattr(parent_class, "_tags"):
+                # Need the if here because mixins might not have _more_tags
+                # but might do redundant work in estimators
+                # (i.e. calling more tags on BaseEstimator multiple times)
+                more_tags = parent_class._tags
+                collected_tags.update(more_tags)
+
+        return deepcopy(collected_tags)
+
+    @classmethod
+    def get_class_tag(cls, tag_name, tag_value_default=None):
+        """Get tag value from estimator class (only class tags).
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag value.
+        tag_value_default : any type
+            Default/fallback value if tag is not found.
+
+        Returns
+        -------
+        tag_value :
+            Value of the `tag_name` tag in self. If not found, returns
+            `tag_value_default`.
+        """
+        collected_tags = cls.get_class_tags()
+
+        return collected_tags.get(tag_name, tag_value_default)
+
     def get_tags(self):
         """Get tags from estimator class and dynamic tag overrides.
 
@@ -161,52 +207,6 @@ class BaseObject(_BaseEstimator):
         self.set_tags(**update_dict)
 
         return self
-
-    @classmethod
-    def get_class_tags(cls):
-        """Get class tags from estimator class and all its parent classes.
-
-        Returns
-        -------
-        collected_tags : dict
-            Dictionary of tag name : tag value pairs. Collected from _tags
-            class attribute via nested inheritance. NOT overridden by dynamic
-            tags set by set_tags or mirror_tags.
-        """
-        collected_tags = dict()
-
-        # We exclude the last two parent classes: sklearn.base.BaseEstimator and
-        # the basic Python object.
-        for parent_class in reversed(inspect.getmro(cls)[:-2]):
-            if hasattr(parent_class, "_tags"):
-                # Need the if here because mixins might not have _more_tags
-                # but might do redundant work in estimators
-                # (i.e. calling more tags on BaseEstimator multiple times)
-                more_tags = parent_class._tags
-                collected_tags.update(more_tags)
-
-        return deepcopy(collected_tags)
-
-    @classmethod
-    def get_class_tag(cls, tag_name, tag_value_default=None):
-        """Get tag value from estimator class (only class tags).
-
-        Parameters
-        ----------
-        tag_name : str
-            Name of tag value.
-        tag_value_default : any type
-            Default/fallback value if tag is not found.
-
-        Returns
-        -------
-        tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
-        """
-        collected_tags = cls.get_class_tags()
-
-        return collected_tags.get(tag_name, tag_value_default)
 
     @classmethod
     def get_test_params(cls):
