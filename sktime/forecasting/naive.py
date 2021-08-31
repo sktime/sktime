@@ -73,7 +73,10 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
-    _tags = {"requires-fh-in-fit": False}
+    _tags = {
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,  # todo: switch to True if GH1367 is fixed
+    }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
         super(NaiveForecaster, self).__init__()
