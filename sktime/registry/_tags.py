@@ -154,7 +154,7 @@ ESTIMATOR_TAG_REGISTER = [
     (
         "scitype:transform-output",
         "transformer",
-        ("list", ["Series", "Primitives" "Panel"]),
+        ("list", ["Series", "Primitives", "Panel"]),
         "what is the scitype of the transformer output, the transformed X",
     ),
     (
@@ -162,6 +162,12 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "does the transformer transform instances independently?",
+    ),
+    (
+        "scitype:transform-labels",
+        "transformer",
+        ("list", ["None", "Series", "Primitives", "Panel"]),
+        "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
         "capability:pred_int",
