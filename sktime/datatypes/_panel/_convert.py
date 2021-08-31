@@ -1050,3 +1050,13 @@ def from_numpy3D_to_dflist(obj, store=None):
 
 
 convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
+
+
+def from_nested_to_df_list(obj, store=None):
+
+    # this is not already implemented, so chain two conversions
+    obj = from_nested_to_multi_index_adp(obj, store=store)
+    return from_multiindex_to_dflist(obj, store=store)
+
+
+convert_dict[("nested_univ", "df-list", "Panel")] = from_multi_index_to_nested_adp
