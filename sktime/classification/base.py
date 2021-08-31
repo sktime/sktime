@@ -104,7 +104,7 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-        coerce_to_pandas = self.get_tag("coerce_to_pandas", False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
         X, y = check_X_y(
             X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
         )
