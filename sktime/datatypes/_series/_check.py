@@ -77,8 +77,8 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = (f"{var_name} should not have column of 'object' dtype")
+    if "object" in obj.dtypes:
+        msg = f"{var_name} should not have column of 'object' dtype"
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
@@ -125,7 +125,7 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
 
     # check that dtype is not object
     if "object" == obj.dtypes:
-        msg = (f"{var_name} should not be of 'object' dtype")
+        msg = f"{var_name} should not be of 'object' dtype"
         return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
