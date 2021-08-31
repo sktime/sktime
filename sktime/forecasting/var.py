@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#
+
 """Vector Auto Regressor."""
 __all__ = ["VectorAutoRegression"]
 __author__ = ["Taiwo Owoseni"]
@@ -115,9 +115,9 @@ class VectorAutoRegression(_StatsModelsAdapter):
 
         lagged = self._fitted_forecaster.k_ar
         y_pred = self._fitted_forecaster.forecast(
-            y=self._fitted_forecaster.y[-lagged:], steps=fh_int[-1]
+            y=self._y.values[-lagged:], steps=fh_int[-1]
         )
         new_arr = []
-        for i in fh:
+        for i in fh_int:
             new_arr.append(y_pred[i - 1])
         return np.array(new_arr)
