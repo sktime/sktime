@@ -3,54 +3,38 @@ import numpy as np
 from numpy import testing
 
 from sktime.datasets import load_gunpoint, load_basic_motions
-from sktime.transformations.panel.catch22 import Catch22
+from sktime.transformations.panel.random_intervals import RandomIntervals
 
 
-def test_catch22_on_gunpoint():
+def test_random_intervals_on_gunpoint():
     # load gunpoint data
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # fit catch22
-    c22 = Catch22()
-    c22.fit(X_train.iloc[indices], y_train[indices])
+    # fit random intervals
+    ri = RandomIntervals(n_intervals=3)
+    ri.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
-    testing.assert_array_almost_equal(data, catch22_gunpoint_data)
+    data = ri.transform(X_train.iloc[indices])
+    testing.assert_array_almost_equal(data, random_intervals_gunpoint_data)
 
 
-def test_catch22_single_feature_on_gunpoint():
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
-
-    # fit catch22
-    c22 = Catch22()
-    c22.fit(X_train.iloc[indices], y_train[indices])
-
-    # assert transformed data is the same
-    data = []
-    for i in range(22):
-        data.append(c22._transform_single_feature(X_train.iloc[indices], i))
-    testing.assert_array_almost_equal(data, catch22_single_feature_gunpoint_data)
-
-
-def test_catch22_on_basic_motions():
+def test_random_intervals_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     indices = np.random.RandomState(0).permutation(20)
 
-    # fit catch22
-    c22 = Catch22()
-    c22.fit(X_train.iloc[indices], y_train[indices])
+    # fit random intervals
+    ri = RandomIntervals(n_intervals=3)
+    ri.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
-    testing.assert_array_almost_equal(data, catch22_basic_motions_data)
+    data = ri.transform(X_train.iloc[indices])
+    testing.assert_array_almost_equal(data, random_intervals_basic_motions_data)
 
 
-catch22_gunpoint_data = np.array(
+random_intervals_gunpoint_data = np.array(
     [
         [
             -0.5340330004692078,
@@ -294,275 +278,7 @@ catch22_gunpoint_data = np.array(
         ],
     ]
 )
-catch22_single_feature_gunpoint_data = np.array(
-    [
-        [
-            -0.5340330004692078,
-            -0.008949995040893555,
-            -0.45477402210235596,
-            0.9494199752807617,
-            -0.5402599573135376,
-            0.6714509725570679,
-            0.33238399028778076,
-            -0.5347490310668945,
-            -0.5196340084075928,
-            -0.551160991191864,
-        ],
-        [
-            -0.6583515405654907,
-            -1.004485011100769,
-            -0.5941169857978821,
-            1.075909972190857,
-            -0.6772300004959106,
-            0.7845205068588257,
-            0.46317198872566223,
-            -0.6635295152664185,
-            -0.6510469913482666,
-            -0.6888254880905151,
-        ],
-        [
-            50.0,
-            77.0,
-            43.0,
-            71.0,
-            46.0,
-            89.0,
-            113.0,
-            49.0,
-            47.0,
-            49.0,
-        ],
-        [
-            0.026666666666666734,
-            -0.18666666666666662,
-            -0.05999999999999994,
-            -0.01333333333333327,
-            0.026666666666666734,
-            -0.019999999999999938,
-            0.18666666666666673,
-            -0.019999999999999938,
-            0.10000000000000007,
-            -0.053333333333333274,
-        ],
-        [
-            -0.36,
-            0.5466666666666667,
-            0.3000000000000001,
-            0.48666666666666675,
-            -0.30666666666666664,
-            0.6333333333333334,
-            -0.7966666666666666,
-            0.3366666666666668,
-            -0.3266666666666666,
-            0.35333333333333344,
-        ],
-        [
-            21.0,
-            21.0,
-            18.0,
-            23.0,
-            19.0,
-            19.0,
-            19.0,
-            21.0,
-            19.0,
-            20.0,
-        ],
-        [
-            53.0,
-            71.0,
-            48.0,
-            64.0,
-            50.0,
-            83.0,
-            106.0,
-            53.0,
-            48.0,
-            50.0,
-        ],
-        [
-            0.9891347486540218,
-            0.9856024313477253,
-            0.9897830203618154,
-            0.9830263343008879,
-            0.9901767250643734,
-            0.982208455624619,
-            0.9748317705206727,
-            0.9894573682044566,
-            0.9899716947443201,
-            0.9901896245955241,
-        ],
-        [
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-            0.04908738521234052,
-        ],
-        [
-            0.14031287549910743,
-            0.13407420576778473,
-            0.16069747492186845,
-            0.11145162796784516,
-            0.14268463418853075,
-            0.13976072683243265,
-            0.14450721853733675,
-            0.13483798131609315,
-            0.14680900551692314,
-            0.14099862347379769,
-        ],
-        [
-            0.0004932560523963748,
-            0.0003505433403922421,
-            -0.00020938216969741563,
-            8.572850232464896e-05,
-            -6.245959731104885e-05,
-            0.00026650590367927637,
-            0.0005655017923872651,
-            0.00019436396634169123,
-            -2.738106572734594e-05,
-            0.00031279548603681994,
-        ],
-        [
-            0.7720925140620327,
-            0.8515090675700048,
-            0.7032491208737225,
-            1.058963848184742,
-            0.7535346860231785,
-            0.8168335974002957,
-            0.6543521253348017,
-            0.7919401876906283,
-            0.7484418959395499,
-            0.7782319338279381,
-        ],
-        [
-            28.0,
-            33.0,
-            24.0,
-            31.0,
-            26.0,
-            26.0,
-            28.0,
-            28.0,
-            26.0,
-            26.0,
-        ],
-        [
-            0.2214765100671141,
-            0.2080536912751678,
-            0.21476510067114093,
-            0.30201342281879195,
-            0.2483221476510067,
-            0.174496644295302,
-            0.16778523489932887,
-            0.24161073825503357,
-            0.2214765100671141,
-            0.2751677852348993,
-        ],
-        [
-            34.0,
-            26.0,
-            19.0,
-            35.0,
-            26.0,
-            29.0,
-            14.0,
-            33.0,
-            29.0,
-            30.0,
-        ],
-        [
-            1.2532075490830958,
-            1.415882200884052,
-            1.3231592758318387,
-            1.2298893149751353,
-            1.3333730700119033,
-            1.3158531729493108,
-            1.4799761177886066,
-            1.2963293092153911,
-            1.3158470923962604,
-            1.2532075490830958,
-        ],
-        [
-            1.0333333333333334,
-            0.6,
-            0.5769230769230769,
-            1.3333333333333333,
-            0.7037037037037037,
-            0.9285714285714286,
-            0.4,
-            0.9655172413793104,
-            0.6428571428571429,
-            0.75,
-        ],
-        [
-            3.003340098266461,
-            3.527077008825863,
-            3.2211369624886736,
-            5.044065129305102,
-            3.736262227381728,
-            3.3890366309883193,
-            3.03779506371995,
-            3.9201995337307496,
-            2.704906570998835,
-            3.332550873259107,
-        ],
-        [
-            0.85,
-            0.675,
-            0.85,
-            0.775,
-            0.825,
-            0.7,
-            0.8,
-            0.85,
-            0.85,
-            0.85,
-        ],
-        [
-            0.775,
-            0.15,
-            0.2,
-            0.15,
-            0.775,
-            0.15,
-            0.5,
-            0.75,
-            0.15,
-            0.75,
-        ],
-        [
-            0.0625,
-            0.0625,
-            0.04000000000000001,
-            0.0625,
-            0.04000000000000001,
-            0.04000000000000001,
-            0.0625,
-            0.04000000000000001,
-            0.08000000000000002,
-            0.06666666666666668,
-        ],
-        [
-            0.0,
-            47.0,
-            0.0,
-            43.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ],
-    ]
-)
-catch22_basic_motions_data = np.array(
+random_intervals_basic_motions_data = np.array(
     [
         [
             -0.12603044509887695,
