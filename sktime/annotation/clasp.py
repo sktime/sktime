@@ -3,6 +3,8 @@
 """
 ClaSP (Classification Score Profile) Segmentation.
 
+References
+----------
 As described in
 @inproceedings{clasp2021,
   title={ClaSP - Time Series Segmentation},
@@ -30,11 +32,21 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
     """
     Check if a candidate change point is in close proximity to other change points.
 
-    :param candidate:
-    :param change_points:
-    :param n_timepoints:
-    :param exclusion_radius:
-    :return:
+    Parameters
+    ----------
+    candidate: int
+        Candidate change point
+    change_points: array
+        Change points chosen so far
+    n_timepoints: int
+        Total length
+    exclusion_radius: int
+        Exclusion Radius for change points
+
+    Returns
+    -------
+    trivial_match: bool
+        If the candidate change point is a trivial match
     """
     change_points = [0] + change_points + [n_timepoints]
     exclusion_radius = np.int64(n_timepoints * exclusion_radius)
@@ -48,25 +60,35 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
     return False
 
 
-def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
+def _segmentation(TS, clasp, n_change_points=None, exclusion_radius=0.05):
     """
     Segments the time series by extracting change points.
 
-    :param time_series: the time series to be segmented
-    :param clasp: the transformer
-    :param n_change_points: the number of change points to find
-    :param offset: the exclusion zone
-    :return: (predicted_change_points, clasp_profiles, scores)
+    Parameters
+    ----------
+    TS: array
+        the time series to be segmented
+    clasp:
+        the transformer
+    n_change_points: int
+        the number of change points to find
+    exclusion_radius:
+        the exclusion zone
+
+    Returns
+    -------
+    Tuple (array, array, array):
+        (predicted_change_points, clasp_profiles, scores)
     """
     period_size = clasp.window_length
     queue = PriorityQueue()
 
     # compute global clasp
-    profile = clasp.transform(time_series)
+    profile = clasp.transform(TS)
     queue.put(
         (
             -np.max(profile),
-            [np.arange(time_series.shape[0]).tolist(), np.argmax(profile), profile],
+            [np.arange(TS.shape[0]).tolist(), np.argmax(profile), profile],
         )
     )
 
@@ -96,11 +118,11 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
         for ranges in [left_range, right_range]:
             # create and enqueue left local profile
             if len(ranges) > period_size:
-                profile = clasp.transform(time_series[ranges])
+                profile = clasp.transform(TS[ranges])
                 change_point = np.argmax(profile)
                 score = profile[change_point]
 
-                full_profile = np.zeros(len(time_series))
+                full_profile = np.zeros(len(TS))
                 full_profile.fill(0.5)
                 np.copyto(
                     full_profile[ranges[0] : ranges[0] + len(profile)],
@@ -112,8 +134,8 @@ def _segmentation(time_series, clasp, n_change_points=None, offset=0.05):
                 if not _is_trivial_match(
                     global_change_point,
                     change_points,
-                    time_series.shape[0],
-                    exclusion_radius=offset,
+                    TS.shape[0],
+                    exclusion_radius=exclusion_radius,
                 ):
                     queue.put((-score, [ranges, global_change_point, full_profile]))
 
@@ -124,16 +146,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     """
     ClaSP (Classification Score Profile) Segmentation.
 
-    As described in
-    @inproceedings{clasp2021,
-      title={ClaSP - Time Series Segmentation},
-      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
-      booktitle={CIKM},
-      year={2021}
-    }
-
     Overview:
-
+    ---------
     Using ClaSP for the CPD problem is straightforward: We first compute the profile
     and then choose its global maximum as the change point. The following CPDs
     are obtained using a bespoke recursive split segmentation algorithm.
@@ -147,9 +161,18 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     Returns
     -------
-    Tuple (numpy.array, numpy.array, numpy.array):
-        predicted_change_points, clasp_profiles, scores
+    pd.Series():
+        Found change points
 
+    References
+    ----------
+    As described in
+    @inproceedings{clasp2021,
+      title={ClaSP - Time Series Segmentation},
+      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
+      booktitle={CIKM},
+      year={2021}
+    }
     """
 
     _tags = {"univariate-only": True, "fit-in-predict": True}  # for unit test cases
@@ -172,18 +195,13 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
 
         self.found_cps, self.profiles, self.scores = _segmentation(
-            X, clasp_transformer, n_change_points=self.n_cps, offset=0.05
+            X, clasp_transformer, n_change_points=self.n_cps, exclusion_radius=0.05
         )
 
         return pd.Series(self.found_cps)
 
     def fit_predict(self, X, Y=None):
-        """Get shortcut for fit and predict.
-
-        :param X:
-        :param Y:
-        :return:
-        """
+        """Get shortcut for fit and predict."""
         return self.fit(X).predict(X)
 
     def get_fitted_params(self):

@@ -3,6 +3,8 @@
 """
 ClaSP (Classification Score Profile) Transformer implementation.
 
+References
+----------
 As described in
 @inproceedings{clasp2021,
   title={ClaSP - Time Series Segmentation},
@@ -27,44 +29,40 @@ from sktime.utils.validation.series import check_series
 from sktime.transformations.panel.matrix_profile import _sliding_dot_products
 
 
-def _sliding_window(a, window):
+def _sliding_window(TS, m):
     """Return the sliding windows for a time series and a window size.
 
-    :param a:
-    :param window:
-    :return:
+    Parameters
+    ----------
+    TS: array
+        The time series
+    m: int
+        The window size to generate sliding windows
+
+    Returns
+    -------
+    windows: array
+        The sliding windows
     """
-    shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
-    strides = a.strides + (a.strides[-1],)
-    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-
-
-""" using the implementation in matrix_profile for now
-def _sliding_dot_product(query, ts):
-    ts_add = 0
-    if n % 2 == 1:
-        ts = np.insert(ts, 0, 0)
-        ts_add = 1
-
-    q_add = 0
-    if m % 2 == 1:
-        query = np.insert(query, 0, 0)
-        q_add = 1
-
-    query = query[::-1]
-    query = np.pad(query, (0, n - m + ts_add - q_add), "constant")
-    trim = m - 1 + ts_add
-    dot_product = fft.irfft(fft.rfft(ts) * fft.rfft(query))
-    return dot_product[trim:]
-"""
+    shape = TS.shape[:-1] + (TS.shape[-1] - m + 1, m)
+    strides = TS.strides + (TS.strides[-1],)
+    return np.lib.stride_tricks.as_strided(TS, shape=shape, strides=strides)
 
 
 def _sliding_mean_std(TS, m):
     """Return the sliding mean and std for a time series and a window size.
 
-    :param TS:
-    :param m:
-    :return:
+    Parameters
+    ----------
+    TS: array
+        The time series
+    m: int
+        The window size to generate sliding windows
+
+    Returns
+    -------
+    Tuple (float, float)
+        The moving mean and moving std
     """
     s = np.insert(np.cumsum(TS), 0, 0)
     sSq = np.insert(np.cumsum(TS ** 2), 0, 0)
@@ -83,13 +81,22 @@ def _compute_distances_iterative(TS, m, k):
     """
     Compute kNN indices with dot-product.
 
-    Mo-loops implementation for a time series, given
+    No-loops implementation for a time series, given
     a window size and k neighbours.
 
-    :param TS:
-    :param m:
-    :param k:
-    :return:
+    Parameters
+    ----------
+    TS: array
+        The time series
+    m: int
+        The window size to generate sliding windows
+    k: int
+        The number of nearest neighbors
+
+    Returns
+    -------
+    knns: array
+        The knns (offsets!) for each subsequence in TS
     """
     length = len(TS) - m + 1
     knns = np.zeros(shape=(length, k), dtype=np.int64)
@@ -133,13 +140,22 @@ def _compute_distances_iterative(TS, m, k):
 
 
 @njit(fastmath=True, cache=True)
-def _calc_knn_labels(knn_mask, split_idx, window_size):
+def _calc_knn_labels(knn_mask, split_idx, m):
     """Compute kNN indices relabeling at a given split index.
 
-    :param knn_mask:
-    :param split_idx:
-    :param window_size:
-    :return:
+    Parameters
+    ----------
+    knn_mask: array
+        The knn indices
+    split_idx: int
+        The split index to use
+    m: int
+        The window size to generate sliding windows
+
+    Returns
+    -------
+    Tuple (array, array):
+        True labels and predicted labels
     """
     k_neighbours, n_timepoints = knn_mask.shape
 
@@ -164,8 +180,8 @@ def _calc_knn_labels(knn_mask, split_idx, window_size):
     y_pred = np.asarray(ones > zeros, dtype=np.int64)
 
     # apply exclusion zone at split point
-    exclusion_zone = np.arange(split_idx - window_size, split_idx)
-    y_pred[exclusion_zone] = np.ones(window_size, dtype=np.int64)
+    exclusion_zone = np.arange(split_idx - m, split_idx)
+    y_pred[exclusion_zone] = np.ones(m, dtype=np.int64)
 
     return y_true, y_pred
 
@@ -174,9 +190,17 @@ def _calc_knn_labels(knn_mask, split_idx, window_size):
 def _binary_f1_score(y_true, y_pred):
     """Compute f1-score.
 
-    :param y_true:
-    :param y_pred:
-    :return:
+    Parameters
+    ----------
+    y_true: array
+        True labels for each subsequence
+    y_pred: array
+        Predicted labels for each subsequence
+
+    Returns
+    -------
+    F1: float
+        F1-score
     """
     f1_scores = np.zeros(shape=2, dtype=np.float64)
 
@@ -198,9 +222,17 @@ def _binary_f1_score(y_true, y_pred):
 def _roc_auc_score(y_score, y_true):
     """Compute roc-auc score.
 
-    :param y_score:
-    :param y_true:
-    :return:
+    Parameters
+    ----------
+    y_true: array
+        True labels for each subsequence
+    y_pred: array
+        Predicted labels for each subsequence
+
+    Returns
+    -------
+    F1: float
+        ROC-AUC-score
     """
     # make y_true a boolean vector
     y_true = y_true == 1
@@ -249,55 +281,71 @@ def _roc_auc_score(y_score, y_true):
 
 
 @njit(fastmath=True)
-def _calc_profile(window_size, knn_mask, score, offset):
+def _calc_profile(m, knn_mask, score, exclusion_zone):
     """Calculate ClaSP profile for the kNN indices and a score.
 
-    :param window_size:
-    :param knn_mask:
-    :param score:
-    :param offset:
-    :return:
+    Parameters
+    ----------
+    m: int
+        The window size to generate sliding windows
+    knn_mask: array
+        The knn indices
+    score: function
+        Scoring method used
+    exclusion_zone: int
+        Exclusion zone
+
+    Returns
+    -------
+    profile: array
+        The ClaSP
     """
     n_timepoints = knn_mask.shape[1]
     profile = np.full(shape=n_timepoints, fill_value=np.nan, dtype=np.float64)
 
-    for split_idx in range(offset, n_timepoints - offset):
-        y_true, y_pred = _calc_knn_labels(knn_mask, split_idx, window_size)
-
-        # try:
+    for split_idx in range(exclusion_zone, n_timepoints - exclusion_zone):
+        y_true, y_pred = _calc_knn_labels(knn_mask, split_idx, m)
         profile[split_idx] = score(y_true, y_pred)
-        # except:
-        # roc_auc_score fails if y_true only has one class,
-        # may (and does) happen in principal
-        #    pass
 
     return profile
 
 
 def clasp(
-    time_series,
-    window_size,
+    TS,
+    m,
     k_neighbours=3,
     score=_roc_auc_score,
     interpolate=True,
-    offset=0.05,
+    exclusion_radius=0.05,
 ):
     """Calculate ClaSP for a time series and a window size.
 
-    :param time_series:
-    :param window_size:
-    :param k_neighbours:
-    :param score:
-    :param interpolate:
-    :param offset:
-    :return:
+    Parameters
+    ----------
+    TS: array
+        The time series
+    m: int
+        The window size to generate sliding windows
+    k_neighbours: int
+        The number of knn to use
+    score: function
+        Scoring method used
+    interpolate:
+        Interpolate the profile
+    exclusion_radius: int
+        Blind spot of the profile to the corners
+
+    Returns
+    -------
+    Tuple (array, array)
+        The ClaSP and the knn_mask
     """
-    knn_mask = _compute_distances_iterative(time_series, window_size, k_neighbours).T
+    knn_mask = _compute_distances_iterative(TS, m, k_neighbours).T
 
     n_timepoints = knn_mask.shape[1]
-    offset = np.int64(n_timepoints * offset)
+    exclusion_radius = np.int64(n_timepoints * exclusion_radius)
 
-    profile = _calc_profile(window_size, knn_mask, score, offset)
+    profile = _calc_profile(m, knn_mask, score, exclusion_radius)
 
     if interpolate is True:
         profile = pd.Series(profile).interpolate(limit_direction="both").to_numpy()
@@ -307,17 +355,8 @@ def clasp(
 class ClaSPTransformer(_SeriesToSeriesTransformer):
     """ClaSP (Classification Score Profile) Transformer.
 
-    As described in
-
-    @inproceedings{clasp2021,
-      title={ClaSP - Time Series Segmentation},
-      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
-      booktitle={CIKM},
-      year={2021}
-    }
-
     Overview:
-
+    ---------
     Implementation of the Classification Score Profile of a time series.
 
     ClaSP hierarchically splits a TS into two parts, where each split point is
@@ -327,12 +366,20 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_length:         int, default = 10
+    window_length:       int, default = 10
         size of window for sliding.
-
     scoring_metric:      string, default = ROC_AUC
         the scoring metric to use in ClaSP - choose from ROC_AUC or F1
 
+    References
+    ----------
+    As described in
+    @inproceedings{clasp2021,
+      title={ClaSP - Time Series Segmentation},
+      author={Sch"afer, Patrick and Ermshaus, Arik and Leser, Ulf},
+      booktitle={CIKM},
+      year={2021}
+    }
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
@@ -375,8 +422,10 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
     def _check_scoring_metric(self, scoring_metric):
         """Check which scoring metric to use.
 
-        :param scoring_metric: choose from "ROC_AUC" or "F1"
-        :return:
+        Parameters
+        ----------
+        scoring_metric: string
+            Choose from "ROC_AUC" or "F1"
         """
         valid_scores = ("ROC_AUC", "F1")
 

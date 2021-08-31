@@ -11,8 +11,6 @@ from sktime.datasets import load_gun_point_segmentation
 def test_clasp():
     """
     Test ClaSP.
-
-    :return:
     """
     # load the test dataset
     ts, period_size, cps = load_gun_point_segmentation()
