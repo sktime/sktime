@@ -263,8 +263,8 @@ class BaseTransformer(BaseEstimator):
         # check whether is fitted, unless fit-in-transform is true
         if self.get_tag("fit-in-transform"):
             self._is_fitted = True
-        elif not self._is_fitted:
-            raise RuntimeError("fit must be called before transform")
+        else:
+            self.check_is_fitted()
 
         # retrieve mtypes/scitypes of all objects
         #########################################
