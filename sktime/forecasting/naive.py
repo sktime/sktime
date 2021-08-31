@@ -20,27 +20,40 @@ class NaiveForecaster(_BaseWindowForecaster):
     """Forecast based on naive assumptions about past trends continuing.
 
     NaiveForecaster is a forecaster that makes forecasts using simple
-    strategies.
+    strategies. Two out of three strategies are robust against NaNs.
+
+    Internally, this forecaster does the following:
+    - obtains the so-called "last window", a 1D array that denotes the
+      most recent time window that the forecaster is allowed to use
+    - reshapes the last window into a 2D array according to the given
+      seasonal periodicity (prepended with NaN values to make it fit);
+    - make a prediction for each column, using the given strategy:
+      - "last": last non-NaN row
+      - "mean": np.nanmean over rows
+    - tile the predictions using the seasonal periodicity
 
     Parameters
     ----------
     strategy : {"last", "mean", "drift"}, default="last"
         Strategy used to make forecasts:
 
-        * "last" : forecast the last value in the
+        * "last":   (robust against NaN values)
+                    forecast the last value in the
                     training series when sp is 1.
                     When sp is not 1,
                     last value of each season
                     in the last window will be
                     forecasted for each season.
-        * "mean" : forecast the mean of last window
-                     of training series when sp is 1.
-                     When sp is not 1, mean of all values
-                     in a season from last window will be
-                     forecasted for each season.
-        * "drift": forecast by fitting a line between the
+        * "mean":   (robust against NaN values)
+                    forecast the mean of last window
+                    of training series when sp is 1.
+                    When sp is not 1, mean of all values
+                    in a season from last window will be
+                    forecasted for each season.
+        * "drift":  (not robust against NaN values)
+                    forecast by fitting a line between the
                     first and last point of the window and
-                     extrapolating it into the future.
+                    extrapolating it into the future.
 
     sp : int, default=1
         Seasonal periodicity to use in the seasonal forecasting.
