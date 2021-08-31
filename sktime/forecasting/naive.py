@@ -176,7 +176,7 @@ class NaiveForecaster(_BaseWindowForecaster):
                 # reshape last window, one column per season
                 last_window = self._reshape_last_window_for_sp(last_window)
 
-                # select last non-NaN item for every row
+                # select last non-NaN row for every column
                 y_pred = last_window[
                     (~np.isnan(last_window)).cumsum(0).argmax(0).T,
                     range(last_window.shape[1]),
@@ -195,7 +195,7 @@ class NaiveForecaster(_BaseWindowForecaster):
                 # reshape last window, one column per season
                 last_window = self._reshape_last_window_for_sp(last_window)
 
-                # compute seasonal mean, averaging over rows
+                # compute seasonal mean, averaging over non-NaN rows for every column
                 y_pred = np.nanmean(last_window, axis=0)
 
                 # tile prediction according to seasonal periodicity
