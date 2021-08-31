@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (ROCKET)."""
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst", "victordremov"]
 __all__ = ["ROCKETClassifier"]
 
 import numpy as np
@@ -11,8 +11,6 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import Rocket
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class ROCKETClassifier(BaseClassifier):
@@ -49,13 +47,12 @@ class ROCKETClassifier(BaseClassifier):
     tsml/classifiers/shapelet_based/ROCKETClassifier.java
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -76,7 +73,7 @@ class ROCKETClassifier(BaseClassifier):
 
         super(ROCKETClassifier, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a pipeline containing the ROCKET transformer and RidgeClassifierCV.
 
         Parameters
@@ -89,8 +86,6 @@ class ROCKETClassifier(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
-
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -106,10 +101,9 @@ class ROCKETClassifier(BaseClassifier):
         )
         rocket_pipeline.fit(X, y)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X.
 
         Parameters
@@ -124,11 +118,9 @@ class ROCKETClassifier(BaseClassifier):
         -------
         output : array of shape = [n_test_instances]
         """
-        self.check_is_fitted()
-        X = check_X(X)
         return self.classifier.predict(X)
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -146,9 +138,6 @@ class ROCKETClassifier(BaseClassifier):
         output : array of shape = [n_test_instances, num_classes] of
         probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         dists = np.zeros((X.shape[0], self.n_classes))
         preds = self.classifier.predict(X)
         for i in range(0, X.shape[0]):

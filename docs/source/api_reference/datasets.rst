@@ -1,12 +1,16 @@
 .. _datasets_ref:
 
-sktime.datasets: Datasets
-=========================
+Datasets
+========
 
-.. currentmodule:: sktime.datasets.base
+.. automodule:: sktime.datasets
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.datasets
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     load_airline

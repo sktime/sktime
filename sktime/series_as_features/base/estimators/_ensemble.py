@@ -1,4 +1,8 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements base class for time series forests."""
+
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["BaseTimeSeriesForest"]
 
@@ -42,8 +46,7 @@ def _parallel_build_trees(
     class_weight=None,
     n_samples_bootstrap=None,
 ):
-    """
-    Private function used to fit a single tree in parallel."""
+    """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))  # noqa: T001
 
@@ -80,9 +83,7 @@ def _parallel_build_trees(
 
 
 class BaseTimeSeriesForest(BaseForest):
-    """
-    Base class for forests of trees.
-    """
+    """Base class for forests of trees."""
 
     @abstractmethod
     def __init__(
@@ -113,6 +114,7 @@ class BaseTimeSeriesForest(BaseForest):
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `estimator_` attribute.
+
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
@@ -128,8 +130,8 @@ class BaseTimeSeriesForest(BaseForest):
         return estimator
 
     def fit(self, X, y, sample_weight=None):
-        """
-        Build a forest of trees from the training set (X, y).
+        """Build a forest of trees from the training set (X, y).
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
@@ -145,6 +147,7 @@ class BaseTimeSeriesForest(BaseForest):
             ignored while searching for a split in each node. In the case of
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
+
         Returns
         -------
         self : object
@@ -270,9 +273,14 @@ class BaseTimeSeriesForest(BaseForest):
         return self
 
     def apply(self, X):
+        """Abstract method that is implemented by concrete estimators."""
         raise NotImplementedError()
 
     def decision_path(self, X):
+        """Decision path of decision tree.
+
+        Abstract method that is implemented by concrete estimators.
+        """
         raise NotImplementedError()
 
     def _validate_X_predict(self, X):
@@ -287,8 +295,8 @@ class BaseTimeSeriesForest(BaseForest):
         return X
 
     @property
-    def feature_importances_(self):
-        """Compute feature importances for time series forest"""
+    def feature_importances_(self, normalise_time_points=False):
+        """Compute feature importances for time series forest."""
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
         # as in modular tsf
@@ -324,6 +332,8 @@ class BaseTimeSeriesForest(BaseForest):
 
         # preallocate array for feature importances
         fis = np.zeros((n_timepoints, n_features))
+        if normalise_time_points:
+            fis_count = np.zeros((n_timepoints, n_features))
 
         for i in range(n_estimators):
             # select tree
@@ -352,10 +362,18 @@ class BaseTimeSeriesForest(BaseForest):
 
                     # add feature importance for all time points of interval
                     fis[interval_time_points, k] += fi[column_index]
+                    if normalise_time_points:
+                        fis_count[interval_time_points, k] += 1
 
         # normalise by number of estimators and number of intervals
         fis = fis / n_estimators / n_intervals
 
         # format output
         fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+
+        if normalise_time_points:
+            fis_count = fis_count / n_estimators / n_intervals
+            fis_count = pd.DataFrame(fis_count, columns=feature_names, index=time_index)
+            fis /= fis_count
+
         return fis

@@ -1,41 +1,110 @@
-.. sktime documentation main file, created by
-   sphinx-quickstart on Sat Jan 26 21:22:05 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. _home:
 
-.. include:: ../../README.rst
+Welcome to sktime
+=================
+
+  A unified framework for machine learning with time series
+
+sktime provides time series algorithms and scikit-learn compatible tools to build, tune and validate time series models. sktime provides a unified interface for multiple time series learning tasks, including time series classification, regression, clustering, annotation and forecasting.
 
 
-Navigation
-----------
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   get_started
+   users
+   api_reference
+   get_involved
+   developers
+   about
 
 From here, you can navigate to:
 
-.. toctree::
-   :caption: Users
-   :maxdepth: 1
+.. panels::
+    :card: + intro-card text-center
 
-   installation
-   tutorials
-   user_guide
-   api_reference
-   changelog
+    ---
 
-.. toctree::
-   :caption: Developers
-   :maxdepth: 1
+    Get Started
+    ^^^^^^^^^^^
 
-   contributing
-   developer_guide
-   roadmap
-   mentoring
-   code_of_conduct
-   governance
+    Get started using ``sktime`` quickly.
 
-.. toctree::
-   :caption: About
-   :maxdepth: 1
+    +++
 
-   about
-   contributors
-   related_software
+    .. link-button:: get_started
+            :type: ref
+            :text: Get Started
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Users
+    ^^^^^
+
+    Find user documentation.
+
+    +++
+
+    .. link-button:: users
+            :type: ref
+            :text: Users
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    API Reference
+    ^^^^^^^^^^^^^
+
+    Understand sktime's API.
+
+    +++
+
+    .. link-button:: api_reference
+            :type: ref
+            :text: API Reference
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Get Involved
+    ^^^^^^^^^^^^
+
+    Find out how you can contribute.
+
+    +++
+
+    .. link-button:: get_involved
+            :type: ref
+            :text: Get Involved
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Developers
+    ^^^^^^^^^^
+
+    Information for developers.
+
+    +++
+
+    .. link-button:: developers
+            :type: ref
+            :text: Developers
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    About
+    ^^^^^
+
+    Learn more about ``sktime``.
+
+    +++
+
+    .. link-button:: about
+            :type: ref
+            :text: Learn More
+            :classes: btn-block btn-secondary stretched-link

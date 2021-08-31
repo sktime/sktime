@@ -24,7 +24,7 @@ import pytest
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.utils import all_estimators
+from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
@@ -73,10 +73,12 @@ def test_oh_setting(Forecaster):
 # check setting/getting API for forecasting horizon
 
 # divide Forecasters into groups based on when fh is required
-FORECASTERS_REQUIRED = [f for f in FORECASTERS if f._all_tags()["requires-fh-in-fit"]]
+FORECASTERS_REQUIRED = [
+    f for f in FORECASTERS if f.get_class_tag("requires-fh-in-fit", True)
+]
 
 FORECASTERS_OPTIONAL = [
-    f for f in FORECASTERS if not f._all_tags()["requires-fh-in-fit"]
+    f for f in FORECASTERS if not f.get_class_tag("requires-fh-in-fit", True)
 ]
 
 
