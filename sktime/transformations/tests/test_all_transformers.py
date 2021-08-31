@@ -30,10 +30,7 @@ def test_all_transformers(Estimator):
 
 def check_transformer(Estimator):
     for check in _yield_transformer_checks(Estimator):
-        if Estimator.get_class_tag("scitype:Z") == "multivariate":
-            check(Estimator, n_columns=2)
-        else:
-            check(Estimator)
+        check(Estimator)
 
 
 def _construct_fit_transform(Estimator, **kwargs):
@@ -116,10 +113,13 @@ def check_panel_to_tabular_transform_univariate(Estimator):
 
 def check_panel_to_tabular_transform_multivariate(Estimator):
     n_instances = 5
+    n_columns = 3
     if Estimator.get_class_tag("univariate-only", False):
-        _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
+        _check_raises_error(Estimator, n_instances=n_instances, n_columns=n_columns)
     else:
-        out = _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
+        out = _construct_fit_transform(
+            Estimator, n_instances=n_instances, n_columns=n_columns
+        )
         assert isinstance(out, (pd.DataFrame, np.ndarray))
         assert out.shape[0] == n_instances
 
