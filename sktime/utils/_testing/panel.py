@@ -108,7 +108,7 @@ def make_regression_problem(
 
 
 def make_clustering_problem(
-    n_instances=20, series_size=20, return_numpy=True, random_state=None
+    n_instances=20, series_size=20, return_numpy=True, random_state=None, n_columns=None
 ):
     # Can only currently support univariate so converting
     # to univaritate for the time being
