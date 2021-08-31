@@ -13,7 +13,6 @@ __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
-from scipy.stats.mstats import gmean as _weighted_gmean
 from sklearn.pipeline import Pipeline
 from sklearn.utils.stats import _weighted_percentile
 
@@ -301,6 +300,11 @@ def _aggregate(y, aggfunc, weights):
         y_agg = aggfunc(y, axis=1, weights=np.array(weights))
 
     return pd.Series(y_agg, index=y.index)
+
+
+def _weighted_gmean(a, axis=0, weights=None):
+    avg = np.exp(a)
+    return np.log(np.average(avg, axis=axis, weights=weights))
 
 
 def _check_aggfunc(aggfunc, weighted=False):
