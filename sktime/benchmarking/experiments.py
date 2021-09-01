@@ -309,6 +309,7 @@ def set_clusterer(cls, resample_id=None):
         raise Exception("UNKNOWN CLUSTERER")
 
 
+
 def run_classification_experiment(
     trainX,
     trainY,
@@ -512,11 +513,11 @@ def load_and_run_classification_experiment(
         classifier = set_classifier(cls_name, resample_id)
     run_classification_experiment(
         trainX,
-        classifier,
-        results_path,
         trainY,
         testX,
         testY,
+        classifier,
+        results_path,
         cls_name=cls_name,
         dataset=dataset,
         resample_id=resample_id,
