@@ -6,24 +6,23 @@
 
 set -e -x
 echo "$REQUIREMENTS"
-echo "$EXCLUDE_PYTHON_VERSIONS"
+echo "$INCLUDED_VERSIONS"
 
-# Collect the available Pythons versions
-PYTHON_VERSIONS=(/opt/python/*/bin)
-# echo "All Python versions: ${PYTHON_VERSIONS[@]}"
+# Split input string of included Python version by comma into array
+IFS=',' read -ra INCLUDED_VERSIONS <<< "$INCLUDED_VERSIONS"
 
-# Filter out Python versions
-# echo "${EXCLUDE_PYTHON_VERSIONS[@]}"
-# split string by comma into array
-IFS=',' read -ra EXCLUDE_PYTHON_VERSIONS <<< "$EXCLUDE_PYTHON_VERSIONS"
+# Initialize empty array
+PYTHON_VERSIONS=()
 
-for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
-  # remove dot and whitespace from version number
-  VERSION="$(echo -e "${VERSION//./}" | tr -d '[:space:]')"
+# Include Python versions
+for VERSION in "${INCLUDED_VERSIONS[@]}"; do
+  # Trim white space
+  VERSION="$(echo -e "${VERSION}" | tr -d '[:space:]')"
 
-  # remove versions
-  PYTHON_VERSIONS=(${PYTHON_VERSIONS[@]//*"$VERSION"*/})
+  # Append version
+  PYTHON_VERSIONS+=("/opt/python/$VERSION/bin")
 done
+
 echo "Included Python versions: " "${PYTHON_VERSIONS[@]}"
 
 # Build wheels
@@ -42,10 +41,10 @@ for wheel in dist/sktime-*.whl; do
   auditwheel repair --plat "$PLATFORM" --wheel-dir dist/ "$wheel"
 done
 
-# Install built whee wheel and test
+# Install built wheel and test
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install from wheel
-  "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
+  "${PYTHON}/pip" install --pre --no-index --no-deps --find-links dist/ sktime
 
   # Run tests
   "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=sktime --cov-report=xml --cov-report=html --pyargs sktime

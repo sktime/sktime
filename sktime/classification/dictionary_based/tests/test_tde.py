@@ -1,90 +1,232 @@
+# -*- coding: utf-8 -*-
+"""TDE test code."""
 import numpy as np
 from numpy import testing
+from sklearn.metrics import accuracy_score
 
-from sktime.classification.dictionary_based._tde import \
-    TemporalDictionaryEnsemble, IndividualTDE
-from sktime.datasets import load_gunpoint
+from sktime.classification.dictionary_based._tde import TemporalDictionaryEnsemble
+from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_tde_on_gunpoint():
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
+def test_tde_on_unit_test_data():
+    """Test of TDE on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
-    # train tde
-    tde = TemporalDictionaryEnsemble(random_state=0)
+    # train TDE
+    tde = TemporalDictionaryEnsemble(
+        n_parameter_samples=10,
+        max_ensemble_size=5,
+        randomly_selected_params=5,
+        random_state=0,
+    )
+    tde.fit(X_train, y_train)
+
+    # assert probabilities are the same
+    probas = tde.predict_proba(X_test.iloc[indices]).round(6)
+    testing.assert_array_equal(probas, tde_unit_test_probas)
+
+    # test loocv train estimate
+    train_probas = tde._get_train_probs(X_train, y_train)
+    train_preds = tde.classes_[np.argmax(train_probas, axis=1)]
+    assert accuracy_score(y_train, train_preds) >= 0.85
+
+    # test oob estimate
+    train_probas = tde._get_train_probs(X_train, y_train, train_estimate_method="oob")
+    train_preds = tde.classes_[np.argmax(train_probas, axis=1)]
+    assert accuracy_score(y_train, train_preds) >= 0.8
+
+
+def test_contracted_tde_on_unit_test_data():
+    """Test of contracted TDE on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+
+    # train contracted TDE
+    tde = TemporalDictionaryEnsemble(
+        time_limit_in_minutes=0.025,
+        max_ensemble_size=5,
+        randomly_selected_params=5,
+        random_state=0,
+    )
+    tde.fit(X_train, y_train)
+
+    assert len(tde.estimators_) > 1
+    assert accuracy_score(y_test, tde.predict(X_test)) >= 0.8
+
+
+def test_tde_on_basic_motions():
+    """Test of TDE on basic motions data."""
+    # load basic motions data
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+
+    # train TDE
+    tde = TemporalDictionaryEnsemble(
+        n_parameter_samples=10,
+        max_ensemble_size=5,
+        randomly_selected_params=5,
+        random_state=0,
+    )
     tde.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = tde.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, tde_gunpoint_probas)
+    probas = tde.predict_proba(X_test.iloc[indices]).round(6)
+    testing.assert_array_equal(probas, tde_basic_motions_probas)
 
 
-def test_individual_tde_on_gunpoint():
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
-
-    # train individual tde
-    indiv_tde = IndividualTDE(random_state=0)
-    indiv_tde.fit(X_train.iloc[indices], y_train[indices])
-
-    # assert probabilities are the same
-    probas = indiv_tde.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, individual_tde_gunpoint_probas)
-
-
-tde_gunpoint_probas = np.array([
-    [0.06646431771223787, 0.933535682287762, ],
-    [0.3909966904975225, 0.6090033095024778, ],
-    [0.6869686054378235, 0.3130313945621766, ],
-    [0.5247664149494433, 0.4752335850505569, ],
-    [0.2849280503190653, 0.7150719496809348, ],
-    [0.47890877840961055, 0.5210912215903898, ],
-    [0.2562944542977822, 0.7437055457022181, ],
-    [0.5773527637088371, 0.4226472362911632, ],
-    [0.6583167248724654, 0.3416832751275348, ],
-    [0.15295021118648408, 0.8470497888135161, ],
-])
-individual_tde_gunpoint_probas = np.array([
-    [0.0, 1.0, ],
-    [0.0, 1.0, ],
-    [1.0, 0.0, ],
-    [1.0, 0.0, ],
-    [0.0, 1.0, ],
-    [1.0, 0.0, ],
-    [0.0, 1.0, ],
-    [1.0, 0.0, ],
-    [1.0, 0.0, ],
-    [0.0, 1.0, ],
-])
+tde_unit_test_probas = np.array(
+    [
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.492418,
+            0.507582,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.904333,
+            0.095667,
+        ],
+        [
+            0.801624,
+            0.198376,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.705957,
+            0.294043,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.801624,
+            0.198376,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+    ]
+)
+tde_basic_motions_probas = np.array(
+    [
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ],
+        [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+        ],
+        [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            0.626119,
+            0.373881,
+            0.0,
+        ],
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ],
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ],
+        [
+            0.747762,
+            0.0,
+            0.0,
+            0.252238,
+        ],
+        [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            0.747762,
+            0.252238,
+            0.0,
+        ],
+        [
+            0.0,
+            0.747762,
+            0.252238,
+            0.0,
+        ],
+    ]
+)
 
 
 # def print_array(array):
 #     print('[')
 #     for sub_array in array:
-#         print('[', end='')
+#         print('[')
 #         for value in sub_array:
 #             print(value.astype(str), end='')
-#             print(', ', end='')
+#             print(', ')
 #         print('],')
 #     print(']')
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-#     X_test, y_test = load_gunpoint(split='test', return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     tde = TemporalDictionaryEnsemble(random_state=0)
-#     indiv_tde = IndividualTDE(random_state=0)
+#     tde_u = TemporalDictionaryEnsemble(
+#         n_parameter_samples=10,
+#         max_ensemble_size=5,
+#         randomly_selected_params=5,
+#         random_state=0,
+#     )
 #
-#     tde.fit(X_train.iloc[indices], y_train[indices])
-#     probas = tde.predict_proba(X_test.iloc[indices])
+#     tde_u.fit(X_train, y_train)
+#     probas = tde_u.predict_proba(X_test.iloc[indices]).round(6)
 #     print_array(probas)
 #
-#     indiv_tde.fit(X_train.iloc[indices], y_train[indices])
-#     probas = indiv_tde.predict_proba(X_test.iloc[indices])
+#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+#
+#     tde_m = TemporalDictionaryEnsemble(
+#         n_parameter_samples=10,
+#         max_ensemble_size=5,
+#         randomly_selected_params=5,
+#         random_state=0
+#     )
+#
+#     tde_m.fit(X_train.iloc[indices], y_train[indices])
+#     probas = tde_m.predict_proba(X_test.iloc[indices]).round(6)
 #     print_array(probas)

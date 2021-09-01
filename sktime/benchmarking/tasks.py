@@ -25,7 +25,7 @@ class BaseTask:
     ----------
     target : str
         The column name for the target variable to be predicted.
-    features : list of str, optinal, (default=None)
+    features : list of str, optional, (default=None)
         The column name(s) for the feature variable. If None, every column
         apart from target will be used as a feature.
     metadata : pandas.DataFrame
@@ -202,7 +202,7 @@ class TSCTask(BaseTask):
     ----------
     target : str
         The column name for the target variable to be predicted.
-    features : list of str, optinal (default=None)
+    features : list of str, optional (default=None)
         The column name(s) for the feature variable. If None, every column
         apart from target will be used as a feature.
     metadata : pandas.DataFrame, optional (default=None)
@@ -229,7 +229,7 @@ class TSRTask(BaseTask):
     ----------
     target : str
         The column name for the target variable to be predicted.
-    features : list of str, optinal (default=None)
+    features : list of str, optional (default=None)
         The column name(s) for the feature variable. If None, every column
         apart from target will be used as a feature.
     metadata : pandas.DataFrame, optional (default=None)

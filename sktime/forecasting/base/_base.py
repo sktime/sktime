@@ -1,89 +1,443 @@
-#!/usr/bin/env python3 -u
-# coding: utf-8
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+# -*- coding: utf-8 -*-
+"""
+Base class template for forecaster scitype.
 
-__author__ = ["Markus Löning", "@big-o"]
-__all__ = [
-    "BaseForecaster",
-    "DEFAULT_ALPHA",
-    "is_forecaster"
-]
+    class name: BaseForecaster
+
+Scitype defining methods:
+    fitting         - fit(self, y, X=None, fh=None)
+    forecasting     - predict(self, fh=None, X=None, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA)
+    fit&forecast    - fit_predict(self, y, X=None, fh=None,
+                              return_pred_int=False, alpha=DEFAULT_ALPHA)
+    updating        - update(self, y, X=None, update_params=True)
+    update&forecast - update_predict(y, cv=None, X=None, update_params=True,
+                        return_pred_int=False, alpha=DEFAULT_ALPHA)
+
+Inspection methods:
+    hyper-parameter inspection  - get_params()
+    fitted parameter inspection - get_fitted_params()
+
+State:
+    fitted model/strategy   - by convention, any attributes ending in "_"
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+
+
+__author__ = ["Markus Löning", "@big-o", "fkiraly"]
+__all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
+
+from contextlib import contextmanager
+from warnings import warn
+
+import numpy as np
+import pandas as pd
+
+from sktime.utils.datetime import _shift
+from sktime.utils.validation.forecasting import check_X
+from sktime.utils.validation.forecasting import check_alpha
+from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_y_X
+from sktime.utils.validation.series import check_series, check_equal_time_index
+
+from sktime.datatypes import convert_to, mtype
+
 
 DEFAULT_ALPHA = 0.05
 
 
 class BaseForecaster(BaseEstimator):
-    """Base forecaster"""
+    """Base forecaster template class.
+
+    The base forecaster specifies the methods and method
+    signatures that all forecasters have to implement.
+
+    Specific implementations of these methods is deferred to concrete
+    forecasters.
+    """
+
+    # default tag values - these typically make the "safest" assumption
+    _tags = {
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "univariate-only": True,  # does estimator use the exogeneous X?
+        "capability:pred_int": False,  # can the estimator produce prediction intervals?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
+        "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+    }
 
     def __init__(self):
         self._is_fitted = False
-        super(BaseEstimator, self).__init__()
 
-    def fit(self, y_train, fh=None, X_train=None):
-        """Fit to training data.
+        self._y = None
+        self._X = None
+
+        # forecasting horizon
+        self._fh = None
+        self._cutoff = None  # reference point for relative fh
+
+        self.converter_store_y = dict()  # storage dictionary for in/output conversion
+
+        super(BaseForecaster, self).__init__()
+
+    def fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series, pd.DataFrame, or np.array
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
+
         Returns
         -------
-        self : returns an instance of self.
-        """
-        raise NotImplementedError("abstract method")
+        self :
+            Reference to self.
 
-    def predict(self, fh=None, X=None, return_pred_int=False,
-                alpha=DEFAULT_ALPHA):
-        """Make forecasts
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        stores data in self._X and self._y
+        stores fh, if passed
+        updates self.cutoff to most recent time in y
+        creates fitted model (attributes ending in "_")
+        sets is_fitted flag to true
+        """
+        # if fit is called, fitted state is re-set
+        self._is_fitted = False
+
+        self._set_fh(fh)
+
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        # checking y
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_y_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_multivariate": enforce_multivariate,
+            "enforce_index_type": enforce_index_type,
+            "allow_None": False,
+        }
+
+        y = check_series(y, **check_y_args, var_name="y")
+        # end checking y
+
+        # checking X
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+        if self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
+        # end checking X
+
+        self._X = X
+        self._y = y
+
+        self._set_cutoff_from_y(y)
+
+        # convert y to supported inner type, if necessary
+        ##################################################
+
+        # retrieve supported mtypes for _fit
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+
+        # convert y and X to a supported internal type
+        #  it y/X type is already supported, no conversion takes place
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self.converter_store_y,
+        )
+
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+        )
+
+        # checks and conversions complete, pass to inner fit
+        #####################################################
+
+        self._fit(y=y_inner, X=X_inner, fh=fh)
+
+        # this should happen last
+        self._is_fitted = True
+
+        return self
+
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
 
         Parameters
         ----------
-        fh : int, list or np.array
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
         X : pd.DataFrame, optional (default=None)
+            Exogenous time series
         return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-        raise NotImplementedError("abstract method")
+        # handle inputs
+        self.check_is_fitted()
+        self._set_fh(fh)
 
-    def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        if return_pred_int and not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. Please set return_pred_int=False. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+
+        # input check for X
+        enforce_index_type = self.get_tag("enforce_index_type")
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+
+        # convert X if needed
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=None,
+        )
+
+        # this should be here, but it breaks the ARIMA forecasters
+        #  that is because check_alpha converts to list, but ARIMA forecaster
+        #  doesn't do the check, and needs it as a float or it breaks
+        # todo: needs fixing in ARIMA and AutoARIMA
+        # alpha = check_alpha(alpha)
+
+        y_pred = self._predict(
+            self.fh,
+            X=X_inner,
+            return_pred_int=return_pred_int,
+            alpha=alpha,
+        )
+
+        # todo: clean this up, predictive intervals should be returned by other method
+        if return_pred_int:
+            pred_int = y_pred[1]
+            y_pred = y_pred[0]
+
+        # convert to default output type, dependent on scitype
+        scitype_y = self.get_tag("scitype:y")
+        to_dict = {
+            "univariate": "pd.Series",
+            "multivariate": "pd.DataFrame",
+            "both": "pd.DataFrame",
+        }
+        y_out = convert_to(
+            y_pred,
+            to_dict[scitype_y],
+            as_scitype="Series",
+            store=self.converter_store_y,
+        )
+
+        if return_pred_int:
+            return (y_out, pred_int)
+        else:
+            return y_out
+
+    def fit_predict(
+        self, y, X=None, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        """Fit and forecast time series at future horizon.
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
-        update_params : bool, optional (default=False)
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
-        self : an instance of self
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
         """
-        raise NotImplementedError("abstract method")
+        self.fit(y=y, X=X, fh=fh)
 
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
-                       return_pred_int=False,
-                       alpha=DEFAULT_ALPHA):
+        return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction intervals for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple intervals will be calculated.
+
+        public method including checks & utility
+        dispatches to core logic in _compute_pred_int
+
+        Parameters
+        ----------
+        y_pred : pd.Series
+            Point predictions.
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
+        """
+        self.check_is_fitted()
+        alphas = check_alpha(alpha)
+        errors = self._compute_pred_int(alphas)
+
+        # compute prediction intervals
+        pred_int = [
+            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
+            for error in errors
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if isinstance(alpha, float):
+            return pred_int[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int
+
+    def update(self, y, X=None, update_params=True):
+        """Update cutoff value and, optionally, fitted parameters.
+
+        This is useful in an online learning setting where new data is observed as
+        time moves on. Updating the cutoff value allows to generate new predictions
+        from the most recent time point that was observed. Updating the fitted
+        parameters allows to incrementally update the parameters without having to
+        completely refit. However, note that if no estimator-specific update method
+        has been implemented for updating parameters refitting is the default fall-back
+        option.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+
+        Notes
+        -----
+        Update self._y and self._X with `y` and `X`, respectively.
+        Updates  self._cutoff to last index seen in `y`. If update_params=True,
+        updates fitted model that updates attributes ending in "_".
+        """
+        self.check_is_fitted()
+
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        # checking y
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_y_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_multivariate": enforce_multivariate,
+            "enforce_index_type": enforce_index_type,
+        }
+
+        # update only for non-empty data
+        y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
+        # end checking y
+
+        # checking X
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+        if self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
+        # end checking X
+
+        self._update_y_X(y, X)
+
+        # convert y to supported inner type, if necessary
+        ##################################################
+
+        # retrieve supported mtypes for _fit
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+
+        # convert y and X to a supported internal type
+        #  it y/X type is already supported, no conversion takes place
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self.converter_store_y,
+        )
+
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+        )
+
+        # checks and conversions complete, pass to inner fit
+        #####################################################
+
+        self._update(y=y_inner, X=X_inner, update_params=update_params)
+
+        return self
+
+    def update_predict(
+        self,
+        y,
+        cv=None,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
         """Make and update predictions iteratively over the test set.
 
         Parameters
         ----------
-        y_test : pd.Series
-        cv : cross-validation generator, optional (default=None)
-        X_test : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=False)
+        y : pd.Series
+        cv : temporal cross-validation generator, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
+        update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
 
@@ -94,30 +448,103 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame
             Prediction intervals
         """
-        raise NotImplementedError("abstract method")
+        self.check_is_fitted()
 
-    def update_predict_single(self, y_new, fh=None, X=None,
-                              update_params=False, return_pred_int=False,
-                              alpha=DEFAULT_ALPHA):
-        # when nowcasting, X may be longer than y, X must be cut to same
-        # length as y so that same time points are
-        # passed to update, the remaining time points of X are passed to
-        # predict
-        if X is not None or return_pred_int:
-            raise NotImplementedError()
+        if return_pred_int and not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. Please set return_pred_int=False. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
 
-        self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int,
-                            alpha=alpha)
+        # input checks and minor coercions on X, y
+        ###########################################
 
-    def score(self, y_test, fh=None, X=None):
-        """Compute the sMAPE loss for the given forecasting horizon.
+        # checking y
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_y_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_multivariate": enforce_multivariate,
+            "enforce_index_type": enforce_index_type,
+        }
+
+        # update only for non-empty data
+        y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
+        # end checking y
+
+        # checking X
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+        if self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
+        # end checking X
+
+        cv = check_cv(cv)
+
+        return self._predict_moving_cutoff(
+            y,
+            cv,
+            X,
+            update_params=update_params,
+            return_pred_int=return_pred_int,
+            alpha=alpha,
+        )
+
+    def update_predict_single(
+        self,
+        y_new,
+        fh=None,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
+        """Update and make forecasts.
+
+        This method is useful for updating forecasts in a single step,
+        allowing to make use of more efficient
+        updating algorithms than calling update and predict sequentially.
 
         Parameters
         ----------
-        y_test : pd.Series
+        y_new : pd.Series
+        fh : int, list, np.array or ForecastingHorizon
+        X : pd.DataFrame
+        update_params : bool, optional (default=False)
+        return_pred_int : bool, optional (default=False)
+            If True, prediction intervals are returned in addition to point
+            predictions.
+        alpha : float or list of floats
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        pred_ints : pd.DataFrame
+            Prediction intervals
+        """
+        self.check_is_fitted()
+        self._set_fh(fh)
+        return self._update_predict_single(
+            y_new,
+            self.fh,
+            X,
+            update_params=update_params,
+            return_pred_int=return_pred_int,
+            alpha=alpha,
+        )
+
+    def score(self, y, X=None, fh=None):
+        """Scores forecast against ground truth, using MAPE.
+
+        Parameters
+        ----------
+        y : pd.Series
             Target time series to which to compare the forecasts.
-        fh : int, list or array-like, optional (default=None)
+        fh : int, list, array-like or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
@@ -125,19 +552,23 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            sMAPE loss of self.predict(fh=fh, X=X) with respect to y_test.
+            sMAPE loss of self.predict(fh, X) with respect to y_test.
 
         See Also
         --------
-        :meth:`sktime.performance_metrics.forecasting.smape_loss`.`
+        :meth:`sktime.performance_metrics.forecasting.mean_absolute_percentage_error`
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        from sktime.performance_metrics.forecasting import smape_loss
-        return smape_loss(y_test, self.predict(fh=fh, X=X))
+        # symmetric=True is default for mean_absolute_percentage_error
+        from sktime.performance_metrics.forecasting import (
+            mean_absolute_percentage_error,
+        )
+
+        return mean_absolute_percentage_error(y, self.predict(fh, X))
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -145,18 +576,483 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def _set_y_X(self, y, X=None, enforce_index_type=None):
+        """Set training data.
 
-def is_forecaster(estimator):
-    """Return True if the given estimator is (probably) a forecaster.
+        Parameters
+        ----------
+        y : pd.Series
+            Endogenous time series
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        """
+        # set initial training data
+        self._y, self._X = check_y_X(
+            y, X, allow_empty=False, enforce_index_type=enforce_index_type
+        )
+
+        # set initial cutoff to the end of the training data
+        self._set_cutoff_from_y(y)
+
+    def _update_X(self, X, enforce_index_type=None):
+        if X is not None:
+            X = check_X(X, enforce_index_type=enforce_index_type)
+            if X is len(X) > 0:
+                self._X = X.combine_first(self._X)
+
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
+        """Update training data.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            Endogenous time series
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        """
+        if len(y) > 0:
+            self._y = y.combine_first(self._y)
+
+            # set cutoff to the end of the observation horizon
+            self._set_cutoff_from_y(y)
+
+            # update X if given
+            if X is not None:
+                self._X = X.combine_first(self._X)
+
+    def _get_y_pred(self, y_in_sample, y_out_sample):
+        """Combine in- & out-sample prediction, slices given fh.
+
+        Parameters
+        ----------
+        y_in_sample : pd.Series
+            In-sample prediction
+        y_out_sample : pd.Series
+            Out-sample prediction
+
+        Returns
+        -------
+        pd.Series
+            y_pred, sliced by fh
+        """
+        y_pred = y_in_sample.append(y_out_sample, ignore_index=True).rename("y_pred")
+        y_pred = pd.DataFrame(y_pred)
+        # Workaround for slicing with negative index
+        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
+        y_pred.index = self.fh.to_absolute(self.cutoff)
+        y_pred = y_pred["y_pred"].rename(None)
+        return y_pred
+
+    def _get_pred_int(self, lower, upper):
+        """Combine lower/upper bounds of pred.intervals, slice on fh.
+
+        Parameters
+        ----------
+        lower : pd.Series
+            Lower bound (can contain also in-sample bound)
+        upper : pd.Series
+            Upper bound (can contain also in-sample bound)
+
+        Returns
+        -------
+        pd.DataFrame
+            pred_int, predicion intervalls (out-sample, sliced by fh)
+        """
+        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+        # Out-sample fh
+        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
+        # If pred_int contains in-sample prediction intervals
+        if len(pred_int) > len(self._y):
+            len_out = len(pred_int) - len(self._y)
+            # Workaround for slicing with negative index
+            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
+        # If pred_int does not contain in-sample prediction intervals
+        else:
+            pred_int["idx"] = [x for x in range(len(pred_int))]
+        pred_int = pred_int.loc[
+            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
+        ]
+        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int = pred_int.drop(columns=["idx"])
+        return pred_int
+
+    @property
+    def cutoff(self):
+        """Cut-off = "present time" state of forecaster.
+
+        Returns
+        -------
+        cutoff : int
+        """
+        return self._cutoff
+
+    def _set_cutoff(self, cutoff):
+        """Set and update cutoff.
+
+        Parameters
+        ----------
+        cutoff: pandas compatible index element
+
+        Notes
+        -----
+        Set self._cutoff is to `cutoff`.
+        """
+        self._cutoff = cutoff
+
+    def _set_cutoff_from_y(self, y):
+        """Set and update cutoff from series y.
+
+        Parameters
+        ----------
+        y: pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+
+        Notes
+        -----
+        Set self._cutoff to last index seen in `y`.
+        """
+        if mtype(y, as_scitype="Series") in ["pd.Series", "pd.DataFrame"]:
+            self._cutoff = y.index[-1]
+        elif mtype(y, as_scitype="Series") == "np.ndarray":
+            self._cutoff = len(y)
+        else:
+            raise TypeError("y does not have a supported type")
+
+    @contextmanager
+    def _detached_cutoff(self):
+        """Detached cutoff mode.
+
+        When in detached cutoff mode, the cutoff can be updated but will
+        be reset to the initial value after leaving the detached cutoff mode.
+
+        This is useful during rolling-cutoff forecasts when the cutoff needs
+        to be repeatedly reset, but afterwards should be restored to the
+        original value.
+        """
+        cutoff = self.cutoff  # keep initial cutoff
+        try:
+            yield
+        finally:
+            # re-set cutoff to initial value
+            self._set_cutoff(cutoff)
+
+    @property
+    def fh(self):
+        """Forecasting horizon that was passed."""
+        # raise error if some method tries to accessed it before it has been set
+        if self._fh is None:
+            raise ValueError(
+                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
+            )
+
+        return self._fh
+
+    def _set_fh(self, fh):
+        """Check, set and update the forecasting horizon.
+
+        Parameters
+        ----------
+        fh : None, int, list, np.ndarray or ForecastingHorizon
+        """
+        requires_fh = self.get_tag("requires-fh-in-fit")
+
+        msg = (
+            f"This is because fitting of the `"
+            f"{self.__class__.__name__}` "
+            f"depends on `fh`. "
+        )
+
+        # below loop treats four cases from three conditions:
+        #  A. forecaster is fitted yes/no - self.is_fitted
+        #  B. no fh is passed yes/no - fh is None
+        #  C. fh is optional in fit yes/no - optfh
+
+        # B. no fh is passed
+        if fh is None:
+            # A. strategy fitted (call of predict or similar)
+            if self._is_fitted:
+                # in case C. fh is optional in fit:
+                # if there is none from before, there is none overall - raise error
+                if not requires_fh and self._fh is None:
+                    raise ValueError(
+                        "The forecasting horizon `fh` must be passed "
+                        "either to `fit` or `predict`, "
+                        "but was found in neither."
+                    )
+                # in case C. fh is not optional in fit: this is fine
+                # any error would have already been caught in fit
+
+            # A. strategy not fitted (call of fit)
+            elif requires_fh:
+                # in case fh is not optional in fit:
+                # fh must be passed in fit
+                raise ValueError(
+                    "The forecasting horizon `fh` must be passed to "
+                    "`fit`, but none was found. " + msg
+                )
+                # in case C. fh is optional in fit:
+                # this is fine, nothing to check/raise
+
+        # B. fh is passed
+        else:
+            # If fh is passed, validate (no matter the situation)
+            fh = check_fh(fh)
+
+            # fh is written to self if one of the following is true
+            # - estimator has not been fitted yet (for safety from side effects)
+            # - fh has not been seen yet
+            # - fh has been seen, but was optional in fit,
+            #     this means fh needs not be same and can be overwritten
+            if not requires_fh or not self._fh or not self._is_fitted:
+                self._fh = fh
+            # there is one error condition:
+            # - fh is mandatory in fit, i.e., fh in predict must be same if passed
+            # - fh already passed, and estimator is fitted
+            # - fh that was passed in fit is not the same as seen in predict
+            # note that elif means: optfh == False, and self._is_fitted == True
+            elif self._fh and not np.array_equal(fh, self._fh):
+                # raise error if existing fh and new one don't match
+                raise ValueError(
+                    "A different forecasting horizon `fh` has been "
+                    "provided from "
+                    "the one seen in `fit`. If you want to change the "
+                    "forecasting "
+                    "horizon, please re-fit the forecaster. " + msg
+                )
+            # if existing one and new match, ignore new one
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+            core logic
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+            core logic
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
+        raise NotImplementedError("abstract method")
+
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+            core logic
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+
+        Notes
+        -----
+        Update self._y and self._X with `y` and `X`, respectively.
+        Updates  self._cutoff to last index seen in `y`. If update_params=True,
+        updates fitted model that updates attributes ending in "_".
+        """
+        if update_params:
+            # default to re-fitting if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called."
+            )
+            # refit with updated data, not only passed data
+            self.fit(self._y, self._X, self.fh)
+            # todo: should probably be self._fit, not self.fit
+            # but looping to self.fit for now to avoid interface break
+
+        return self
+
+    def _update_predict_single(
+        self,
+        y,
+        fh,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
+        """Update forecaster and then make forecasts.
+
+        Implements default behaviour of calling update and predict
+        sequentially, but can be overwritten by subclasses
+        to implement more efficient updating algorithms when available.
+        """
+        self.update(y, X, update_params=update_params)
+        return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def _compute_pred_int(self, alphas):
+        """Calculate the prediction errors for each point.
+
+        Parameters
+        ----------
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+        errors : list of pd.Series
+            Each series in the list will contain the errors for each point in
+            the forecast for the corresponding alpha.
+        """
+        # this should be the NotImplementedError
+        # but current interface assumes private method
+        # _compute_pred_err(alphas), not _compute_pred_int
+        # so looping this through in order for existing classes to work
+        return self._compute_pred_err(alphas)
+
+        # todo: fix this in descendants, and change to
+        # raise NotImplementedError("abstract method")
+
+    def _compute_pred_err(self, alphas):
+        """Temporary loopthrough for _compute_pred_err."""
+        raise NotImplementedError("abstract method")
+
+    def _predict_moving_cutoff(
+        self,
+        y,
+        cv,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
+        """Make single-step or multi-step moving cutoff predictions.
+
+        Parameters
+        ----------
+        y : pd.Series
+        cv : temporal cross-validation generator
+        X : pd.DataFrame
+        update_params : bool
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series
+        """
+        if return_pred_int:
+            raise NotImplementedError()
+
+        fh = cv.get_fh()
+        y_preds = []
+        cutoffs = []
+
+        # enter into a detached cutoff mode
+        with self._detached_cutoff():
+            # set cutoff to time point before data
+            self._set_cutoff(_shift(y.index[0], by=-1))
+            # iterate over data
+            for new_window, _ in cv.split(y):
+                y_new = y.iloc[new_window]
+
+                # we cannot use `update_predict_single` here, as this would
+                # re-set the forecasting horizon, instead we use
+                # the internal `_update_predict_single` method
+                y_pred = self._update_predict_single(
+                    y_new,
+                    fh,
+                    X,
+                    update_params=update_params,
+                    return_pred_int=return_pred_int,
+                    alpha=alpha,
+                )
+                y_preds.append(y_pred)
+                cutoffs.append(self.cutoff)
+        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+
+def _format_moving_cutoff_predictions(y_preds, cutoffs):
+    """Format moving-cutoff predictions.
 
     Parameters
     ----------
-    estimator : object
-        Estimator object to test.
+    y_preds: list of pd.Series or pd.DataFrames, of length n
+            must have equal index and equal columns
+    cutoffs: iterable of cutoffs, of length n
 
     Returns
     -------
-    out : bool
-        True if estimator is a forecaster and False otherwise.
+    y_pred: pd.DataFrame, composed of entries of y_preds
+        if length of elements in y_preds is 2 or larger:
+            row-index = index common to the y_preds elements
+            col-index = (cutoff[i], y_pred.column)
+            entry is forecast at horizon given by row, from cutoff/variable at column
+        if length of elements in y_preds is 1:
+            row-index = forecasting horizon
+            col-index = y_pred.column
     """
-    return isinstance(estimator, BaseForecaster)
+    # check that input format is correct
+    if not isinstance(y_preds, list):
+        raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
+    if len(y_preds) == 0:
+        return pd.DataFrame(columns=cutoffs)
+    if not isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+        raise ValueError("y_preds must be a list of pd.Series or pd.DataFrame")
+    ylen = len(y_preds[0])
+    ytype = type(y_preds[0])
+    if isinstance(y_preds[0], pd.DataFrame):
+        ycols = y_preds[0].columns
+    for y_pred in y_preds:
+        if not isinstance(y_pred, ytype):
+            raise ValueError("all elements of y_preds must be of the same type")
+        if not len(y_pred) == ylen:
+            raise ValueError("all elements of y_preds must be of the same length")
+    if isinstance(y_preds[0], pd.DataFrame):
+        for y_pred in y_preds:
+            if not y_pred.columns.equals(ycols):
+                raise ValueError("all elements of y_preds must have the same columns")
+
+    if len(y_preds[0]) == 1:
+        # return series for single step ahead predictions
+        y_pred = pd.concat(y_preds)
+    else:
+        y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
+
+    return y_pred

@@ -1,3 +1,0 @@
-colorama
-twine
-flake8

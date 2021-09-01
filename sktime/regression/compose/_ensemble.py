@@ -1,5 +1,10 @@
+#!/usr/bin/env python3 -u
+# -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements a composite Time series Forest Regressor that accepts a pipeline."""
+
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
-__all__ = ["TimeSeriesForestRegressor"]
+__all__ = ["ComposableTimeSeriesForestRegressor"]
 
 from warnings import warn
 
@@ -11,18 +16,18 @@ from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.summarize import \
-    RandomIntervalFeatureExtractor
+from sktime.transformations.panel.summarize import (
+    RandomIntervalFeatureExtractor,
+)
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators._ensemble import \
-    BaseTimeSeriesForest
+from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
-class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
+class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -35,7 +40,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     Parameters
     ----------
     estimator : Pipeline
-        A pipeline consisting of series-to-tabular transformers
+        A pipeline consisting of series-to-tabular transformations
         and a decision tree regressor as final estimator.
     n_estimators : integer, optional (default=100)
         The number of trees in the forest.
@@ -110,8 +115,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -122,7 +126,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest.
     None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
@@ -166,25 +170,27 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             sharing both Classifier and Regressor parameters.
     """
 
-    def __init__(self,
-                 estimator=None,
-                 n_estimators=100,
-                 criterion='mse',
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.,
-                 max_features=None,
-                 max_leaf_nodes=None,
-                 min_impurity_decrease=0.,
-                 min_impurity_split=None,
-                 bootstrap=False,
-                 oob_score=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False,
-                 max_samples=None):
+    def __init__(
+        self,
+        estimator=None,
+        n_estimators=100,
+        criterion="mse",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features=None,
+        max_leaf_nodes=None,
+        min_impurity_decrease=0.0,
+        min_impurity_split=None,
+        bootstrap=False,
+        oob_score=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+        max_samples=None,
+    ):
 
         self.estimator = estimator
         # Assign values, even though passed on to base estimator below,
@@ -201,7 +207,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self.max_samples = max_samples
 
         # Pass on params.
-        super(TimeSeriesForestRegressor, self).__init__(
+        super(ComposableTimeSeriesForestRegressor, self).__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,
@@ -211,7 +217,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            max_samples=max_samples
+            max_samples=max_samples,
         )
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -220,36 +226,43 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def _validate_estimator(self):
 
         if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError("n_estimators must be an integer, "
-                             "got {0}.".format(type(self.n_estimators)))
+            raise ValueError(
+                "n_estimators must be an integer, "
+                "got {0}.".format(type(self.n_estimators))
+            )
 
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero, "
-                             "got {0}.".format(self.n_estimators))
+            raise ValueError(
+                "n_estimators must be greater than zero, "
+                "got {0}.".format(self.n_estimators)
+            )
 
         # Set base estimator
         if self.estimator is None:
             # Set default time series forest
-            features = [np.mean, np.std, time_series_slope]
-            steps = [('transform',
-                     RandomIntervalFeatureExtractor(
-                        n_intervals='sqrt',
+            features = [np.mean, np.std, _slope]
+            steps = [
+                (
+                    "transform",
+                    RandomIntervalFeatureExtractor(
+                        n_intervals="sqrt",
                         features=features,
-                        random_state=self.random_state)),
-                     ('clf', DecisionTreeRegressor(
-                        random_state=self.random_state))]
+                        random_state=self.random_state,
+                    ),
+                ),
+                ("clf", DecisionTreeRegressor(random_state=self.random_state)),
+            ]
             self.estimator_ = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
             # transformations and final decision tree
             if not isinstance(self.estimator, Pipeline):
-                raise ValueError('`estimator` must be '
-                                 'pipeline with transforms.')
-            if not isinstance(self.estimator.steps[-1][1],
-                              DecisionTreeRegressor):
-                raise ValueError('Last step in `estimator` must be '
-                                 'DecisionTreeRegressor.')
+                raise ValueError("`estimator` must be pipeline with transforms.")
+            if not isinstance(self.estimator.steps[-1][1], DecisionTreeRegressor):
+                raise ValueError(
+                    "Last step in `estimator` must be DecisionTreeRegressor."
+                )
             self.estimator_ = self.estimator
 
         # Set parameters according to naming in pipeline
@@ -265,9 +278,10 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             "min_impurity_split": self.min_impurity_split,
         }
         final_estimator = self.estimator_.steps[-1][0]
-        self.estimator_params = {f'{final_estimator}__{pname}': pval
-                                 for pname, pval
-                                 in estimator_params.items()}
+        self.estimator_params = {
+            f"{final_estimator}__{pname}": pval
+            for pname, pval in estimator_params.items()
+        }
 
         # Set renamed estimator parameters
         for pname, pval in self.estimator_params.items():
@@ -275,14 +289,17 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
     def predict(self, X):
         """Predict regression target for X.
+
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the trees in the forest.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
@@ -298,13 +315,13 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         # Parallel loop
         y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(e.predict)(X, check_input=True) for e in self.estimators_)
+            delayed(e.predict)(X, check_input=True) for e in self.estimators_
+        )
 
         return np.sum(y_hat, axis=0) / len(self.estimators_)
 
     def _set_oob_score(self, X, y):
-        """
-        Compute out-of-bag scores."""
+        """Compute out-of-bag scores."""
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         n_samples = y.shape[0]
@@ -312,16 +329,14 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
-        )
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_samples, self.max_samples)
 
         for estimator in self.estimators_:
             final_estimator = estimator.steps[-1][1]
             unsampled_indices = _generate_unsampled_indices(
-                final_estimator.random_state, n_samples, n_samples_bootstrap)
-            p_estimator = estimator.predict(
-                X[unsampled_indices, :], check_input=False)
+                final_estimator.random_state, n_samples, n_samples_bootstrap
+            )
+            p_estimator = estimator.predict(X[unsampled_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
@@ -330,23 +345,23 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             n_predictions[unsampled_indices, :] += 1
 
         if (n_predictions == 0).any():
-            warn("Some inputs do not have OOB scores. "
-                 "This probably means too few trees were used "
-                 "to compute any reliable oob estimates.")
+            warn(
+                "Some inputs do not have OOB scores. "
+                "This probably means too few trees were used "
+                "to compute any reliable oob estimates."
+            )
             n_predictions[n_predictions == 0] = 1
 
         predictions /= n_predictions
         self.oob_prediction_ = predictions
 
         if self.n_outputs_ == 1:
-            self.oob_prediction_ = \
-                self.oob_prediction_.reshape((n_samples, ))
+            self.oob_prediction_ = self.oob_prediction_.reshape((n_samples,))
 
         self.oob_score_ = 0.0
 
         for k in range(self.n_outputs_):
-            self.oob_score_ += r2_score(y[:, k],
-                                        predictions[:, k])
+            self.oob_score_ += r2_score(y[:, k], predictions[:, k])
 
         self.oob_score_ /= self.n_outputs_
 
