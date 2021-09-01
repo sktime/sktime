@@ -59,6 +59,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 # helper function
 def _get_n_columns(tag):
+    n_columns_list = []
     if tag == "univariate":
         n_columns_list = [1]
     elif tag == "multivariate":
@@ -72,8 +73,8 @@ def _get_n_columns(tag):
 def test_get_fitted_params(Forecaster):
     """Test get_fitted_params."""
     f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
-    for n_columns in n_columns_list:
+    columns = _get_n_columns(f.get_tag("y:scitype"))
+    for n_columns in columns:
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=FH0)
         try:
