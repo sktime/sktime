@@ -397,11 +397,21 @@ class BaseTransformer(BaseEstimator):
         if X_was_Series:
             Xt = convert_Panel_to_Series(Xt)
 
-        Xt = convert_to(
-            Xt,
-            to_type=X_orig_mtype,
-            as_scitype=X_orig_scitype,
-        )
+        if output_scitype == "Series":
+            Xt = convert_to(
+                Xt,
+                to_type=X_orig_mtype,
+                as_scitype=X_orig_scitype,
+            )
+        elif output_scitype == "Primitives":
+            # we "abuse" the Series converter to ensure df output
+            Xt = convert_to(
+                Xt,
+                to_type="pd.DataFrame",
+                as_scitype="Series",
+            )
+        else:
+            pass
 
         return Xt
 
