@@ -20,6 +20,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
     signatures window module, this class will compute the signatures over
     each window (for the given signature options) and concatenate the results
     into a tensor of shape [N, num_sig_features * num_windows].
+
     Parameters
     ----------
     num_intervals: int, dimension of the transformed data (default 8)
