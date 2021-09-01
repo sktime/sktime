@@ -59,12 +59,13 @@ class ShapeletTransformClassifier(BaseClassifier):
     """
 
     _tags = {
-        # "coerce-X-to-numpy": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
         "capability:multivariate": True,
-        "capability:unequal_length": False,
+        "capability:unequal_length": True,
         "capability:missing_values": False,
         "capability:train_estimate": True,
-        "contractable": True,
+        "capability:contractable": True,
     }
 
     def __init__(
@@ -93,7 +94,6 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         self.n_instances = 0
         self.n_dims = 0
-        self.series_length = 0
         self.n_classes_ = 0
         self.classes_ = []
         self.transformed_data = []
@@ -109,15 +109,17 @@ class ShapeletTransformClassifier(BaseClassifier):
     def _fit(self, X, y):
         self._n_jobs = check_n_jobs(self.n_jobs)
 
-        self.n_instances, self.n_dims, self.series_length = X.shape
+        self.n_instances, self.n_dims = X.shape
         self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.max_shapelet_length is None:
-            self._max_shapelet_length = self.series_length
+            self._max_shapelet_length = X.applymap(lambda x: len(x)).to_numpy().min()
 
         if self.max_shapelets is None:
-            self._max_shapelets = 10 * len(X) if 10 * len(X) < 1000 else 1000
+            self._max_shapelets = (
+                10 * self.n_instances if 10 * self.n_instances < 1000 else 1000
+            )
 
         # TODO
         self._transformer = (
@@ -167,15 +169,11 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def _get_train_probs(self, X, y):
         self.check_is_fitted()
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
+        X, y = check_X_y(X, y, coerce_to_pandas=True)
 
-        n_instances, n_dims, series_length = X.shape
+        n_instances, n_dims = X.shape
 
-        if (
-            n_instances != self.n_instances
-            or n_dims != self.n_dims
-            or series_length != self.series_length
-        ):
+        if n_instances != self.n_instances or n_dims != self.n_dims:
             raise ValueError(
                 "n_instances, n_dims, series_length mismatch. X should be "
                 "the same as the training data used in fit for generating train "
