@@ -116,8 +116,11 @@ convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Serie
 
 def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
 
-    if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
-        raise TypeError("input must be a np.ndarray of dim 2")
+    if not isinstance(obj, np.ndarray) and len(obj.shape) > 2:
+        raise TypeError("input must be a np.ndarray of dim 1 or 2")
+
+    if len(obj.shape) == 1:
+        obj = np.reshape(obj, (-1, 1))
 
     if (
         isinstance(store, dict)

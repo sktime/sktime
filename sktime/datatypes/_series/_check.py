@@ -173,13 +173,18 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
-    if not len(obj.shape) == 2:
-        msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
+    if len(obj.shape) == 2:
+        # we now know obj is a 2D np.ndarray
+        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+        metadata["is_univariate"] = obj.shape[1] < 2
+    elif len(obj.shape) == 1:
+        # we now know obj is a 1D np.ndarray
+        metadata["is_empty"] = len(obj) < 1
+        metadata["is_univariate"] = True
+    else:
+        msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)
 
-    # we now know obj is a 2D np.ndarray
-    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
-    metadata["is_univariate"] = obj.shape[1] < 2
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
 
