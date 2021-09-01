@@ -4,7 +4,7 @@
 """Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster"]
-__author__ = ["Markus Löning", "Piyush Gade", "Felix Claessen"]
+__author__ = ["mloning", "Piyush Gade", "Flix6x"]
 
 from warnings import warn
 
