@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning", "Piyush Gade"]
+__author__ = ["Markus Löning", "Piyush Gade", "Felix Claessen"]
 
 import numpy as np
 import pandas as pd
@@ -182,7 +182,11 @@ def test_strategy_drift_window_length(fh, window_length):
 def test_strategy_mean_and_last_seasonal_additional_combinations(
     n, window_length, sp, strategy
 ):
-    """Check time series of n * window_length with a 1:n-1 train/test split,
+    """Check that naive forecasters yield the right forecasts,
+     given perfectly cyclic data, and are robust against a missing value.
+
+    More specifically,
+    check time series of n * window_length with a 1:n-1 train/test split,
     for different combinations of the period and seasonal periodicity.
     The time series contains perfectly cyclic data,
     so switching between the "mean" and "last" strategies should not make a difference.
@@ -230,9 +234,11 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
     fh = ForecastingHorizon(test_data.index, is_relative=False)
     model = NaiveForecaster(strategy=strategy, sp=sp)
-    assert model.get_tag("handles-missing-data") is True
     model.fit(train_data)
     forecast_data = model.predict(fh)
+
+    # Make sure that the model (object) reports that it handles missing data
+    assert model.get_tag("handles-missing-data") is True
 
     if sp < window_length:
         # We expect a perfect forecast given our perfectly cyclic data
