@@ -3,26 +3,32 @@
 
 Wrapper implementation of a shapelet transform classifier pipeline that simply
 performs a (configurable) shapelet transform then builds (by default) a random
-forest. This is a stripped down version for basic usage.
+forest.
 """
 
-__author__ = "Tony Bagnall"
+__author__ = ["TonyBagnall", "a-pasos-ruiz", "MatthewMiddlehurst"]
 __all__ = ["ShapeletTransformClassifier"]
 
 import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_predict
 from sklearn.utils.multiclass import class_distribution
 
+from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.shapelet_based.dev.factories.shapelet_factory import (
+    ShapeletFactoryIndependent,
+)
+from sktime.classification.shapelet_based.dev.filters.random_filter import RandomFilter
 from sktime.transformations.panel.shapelets import ContractedShapeletTransform
-from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation.panel import check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
     """Shapelet Transform Classifier.
 
+    TODO
     Basic implementation along the lines of [1,2]
 
     Parameters
@@ -52,121 +58,150 @@ class ShapeletTransformClassifier(BaseClassifier):
     java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        # "coerce-X-to-numpy": True,
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
+        "contractable": True,
     }
 
     def __init__(
-        self, transform_contract_in_mins=60, n_estimators=200, random_state=None
+        self,
+        n_shapelets=10000,
+        max_shapelets=None,
+        max_shapelet_length=None,
+        estimator=None,
+        transform_limit_in_minutes=60,
+        time_limit_in_minutes=0,
+        save_transformed_data=False,
+        n_jobs=1,
+        random_state=None,
     ):
-        self.transform_contract_in_mins = transform_contract_in_mins
-        self.n_estimators = n_estimators
-        self.random_state = random_state
+        self.n_shapelets = n_shapelets
+        self.max_shapelets = max_shapelets
+        self.max_shapelet_length = max_shapelet_length
+        self.estimator = estimator
 
-        #        self.shapelet_transform=ContractedShapeletTransform(
-        #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
-        #        self.classifier=RandomForestClassifier(
-        #        n_estimators=self.n_estimators,criterion="entropy")
-        #        self.st_X=None;
+        self.transform_limit_in_minutes = transform_limit_in_minutes
+        self.time_limit_in_minutes = time_limit_in_minutes
+        self.save_transformed_data = save_transformed_data
+
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+        self.n_instances = 0
+        self.n_dims = 0
+        self.series_length = 0
+        self.n_classes_ = 0
+        self.classes_ = []
+        self.transformed_data = []
+
+        self._max_shapelets = max_shapelets
+        self._max_shapelet_length = max_shapelet_length
+        self._transformer = None
+        self._estimator = estimator
+        self._n_jobs = n_jobs
+
         super(ShapeletTransformClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """Perform a shapelet transform then builds a random forest.
+    def _fit(self, X, y):
+        self._n_jobs = check_n_jobs(self.n_jobs)
 
-        Contract default for ST is 5 hours
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_instances,
-        series_length] or shape = [n_instances,n_columns]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification. RISE has no bespoke method for multivariate
-            classification as yet.
-        y : array-like, shape =  [n_instances]    The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-
-        # if y is a pd.series then convert to array.
-        if isinstance(y, pd.Series):
-            y = y.to_numpy()
-
-        # generate pipeline in fit so that random state can be propagated properly.
-        self.classifier_ = Pipeline(
-            [
-                (
-                    "st",
-                    ContractedShapeletTransform(
-                        time_contract_in_mins=self.transform_contract_in_mins,
-                        verbose=False,
-                        random_state=self.random_state,
-                    ),
-                ),
-                (
-                    "rf",
-                    RandomForestClassifier(
-                        n_estimators=self.n_estimators, random_state=self.random_state
-                    ),
-                ),
-            ]
-        )
-
+        self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        self.classifier_.fit(X, y)
+        if self.max_shapelet_length is None:
+            self._max_shapelet_length = self.series_length
 
-        self._is_fitted = True
-        return self
+        if self.max_shapelets is None:
+            self._max_shapelets = 10 * len(X) if 10 * len(X) < 1000 else 1000
 
-    def predict(self, X):
-        """Find predictions for all cases in X.
+        # TODO
+        self._transformer = (
+            RandomFilter(
+                shapelet_factory=ShapeletFactoryIndependent(),
+                max_shapelet_length=self._max_shapelet_length,
+                num_shapelets=self._max_shapelets,
+                num_iterations=self.n_shapelets,
+                #    time_contract_in_mins=self.transform_contract_in_mins,
+                #    verbose=False,
+                random_state=self.random_state,
+            )
+            if self.n_dims > 1
+            else ContractedShapeletTransform(
+                time_contract_in_mins=self.transform_limit_in_minutes,
+                verbose=False,
+                random_state=self.random_state,
+            )
+        )
 
-        Parameters
-        ----------
-        X : The training input samples. array-like or pandas data frame.
-        If a Pandas data frame is passed, a check is performed that it only
-        has one column.
-        If not, an exception is thrown, since this classifier does not yet have
-        multivariate capability.
+        self._estimator = _clone_estimator(
+            RandomForestClassifier(n_estimators=200, n_jobs=self._n_jobs)
+            if self.estimator is None
+            else self.estimator,
+            self.random_state,
+        )
 
-        Returns
-        -------
-        output : array of shape = [n_test_instances]
-        """
-        X = check_X(X, enforce_univariate=True)
+        if self.save_transformed_data:
+            self.transformed_data = self._transformer.fit_transform(X, y)
+            self._estimator.fit(self.transformed_data, y)
+        else:
+            self._estimator.fit(self._transformer.fit_transform(X, y), y)
+
+    def _predict(self, X):
+        return self._estimator.predict(self._transformer.transform(X))
+
+    def _predict_proba(self, X):
+        m = getattr(self._estimator, "predict_proba", None)
+        if callable(m):
+            return self._estimator.predict_proba(self._transformer.transform(X))
+        else:
+            dists = np.zeros((X.shape[0], self.n_classes_))
+            preds = self._estimator.predict(self._transformer.transform(X))
+            for i in range(0, X.shape[0]):
+                dists[i, np.where(self.classes_ == preds[i])] = 1
+            return dists
+
+    def _get_train_probs(self, X, y):
         self.check_is_fitted()
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        return self.classifier_.predict(X)
+        n_instances, n_dims, series_length = X.shape
 
-    def predict_proba(self, X):
-        """Find probability estimates for each class for all cases in X.
+        if (
+            n_instances != self.n_instances
+            or n_dims != self.n_dims
+            or series_length != self.series_length
+        ):
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
 
-        Parameters
-        ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances, series_length]
-            If a Pandas data frame is passed (sktime format) a check is
-            performed that it only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
+        if not self.save_transformed_data:
+            raise ValueError("Currently only works with saved transform data from fit.")
 
-        Returns
-        -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
-        """
-        X = check_X(X, enforce_univariate=True)
-        self.check_is_fitted()
+        m = getattr(self._estimator, "predict_proba", None)
+        if not callable(m):
+            raise ValueError("Estimator must have a predict_proba method.")
 
-        return self.classifier_.predict_proba(X)
+        cv_size = 10
+        _, counts = np.unique(y, return_counts=True)
+        min_class = np.min(counts)
+        if min_class < cv_size:
+            cv_size = min_class
+
+        classifier = _clone_estimator(
+            RandomForestClassifier(n_estimators=200)
+            if self.estimator is None
+            else self.estimator,
+            self.random_state,
+        )
+
+        return cross_val_predict(
+            classifier, X=self.transformed_data, y=y, cv=cv_size, method="predict_proba"
+        )
