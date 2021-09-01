@@ -83,8 +83,9 @@ class _AddTime(_SeriesToSeriesTransformer):
 
 
 class _InvisibilityReset(_SeriesToSeriesTransformer):
-    """Adds an 'invisibility-reset' dimension to the path. This adds
-    sensitivity to translation.
+    """Add 'invisibility-reset' dimension to the path.
+
+    This adds sensitivity to translation.
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
