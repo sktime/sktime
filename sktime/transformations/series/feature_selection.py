@@ -6,6 +6,7 @@
 __author__ = ["aiwalter"]
 __all__ = ["FeatureSelection"]
 
+import math
 from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
@@ -25,9 +26,9 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     method : str, required
         The method of how to select the features. Implemeted methods are:
         * "feature-importances": Use feature_importances_ of the regressor (meta-model)
-          to select n_features with highest importance values.
-          Requires parameter n_features.
-        * "random": Randomly select n_features features. Requires parameter n_features.
+          to select n_columns with highest importance values.
+          Requires parameter n_columns.
+        * "random": Randomly select n_columns features. Requires parameter n_columns.
         * "columns": Select features by given names.
         * "none": Remove all columns by setting Z to None.
         * "all": Slect all given features.
@@ -35,12 +36,12 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
         then a GradientBoostingRegressor(max_depth=5) is used.
-    n_features : int, optional
-        Number of feautres (columns) to select. n_features must be <=
-        number of X columns. Some methods require n_features to be given.
+    n_columns : int, optional
+        Number of feautres (columns) to select. n_columns must be <=
+        number of X columns. Some methods require n_columns to be given.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
-        Requires n_features to be given.
+        Requires n_columns to be given.
     columns : list of str
         A list of columns to select. If columns is given.
 
@@ -50,13 +51,17 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         List of columns that have been selected as features.
     regressor_ : sklearn-like regressor
         Fitted regressor (meta-model).
+    n_columns_: : int,
+        Derived from number of features if n_columns is None, then
+        n_columns_ is calculated as int(math.ceil(Z.shape[1] / 2)). So taking
+        half of given features only as default.
 
     Examples
     --------
     >>> from sktime.transformations.series.feature_selection import FeatureSelection
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
-    >>> transformer = FeatureSelection(method="feature-importances", n_features=3)
+    >>> transformer = FeatureSelection(method="feature-importances", n_columns=3)
     >>> Xt = transformer.fit_transform(X, y)
     """
 
@@ -70,12 +75,12 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     def __init__(
         self,
         method="feature-importances",
-        n_features=None,
+        n_columns=None,
         regressor=None,
         random_state=None,
         columns=None,
     ):
-        self.n_features = n_features
+        self.n_columns = n_columns
         self.method = method
         self.regressor = regressor
         self.random_state = random_state
@@ -96,10 +101,11 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         self
         """
         Z = check_series(Z, enforce_multivariate=True)
+        self.n_columns_ = self.n_columns
 
         if self.method == "feature-importances":
             self._check_regressor()
-            self._check_n_features()
+            self._check_n_columns(Z)
             X = check_series(X)
             # fit regressor with Z as exog data and X as endog data (target)
             self.regressor_.fit(X=Z, y=X)
@@ -107,12 +113,12 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             d = dict(zip(Z.columns, self.regressor_.feature_importances_))
             # sort d descending
             d = {k: d[k] for k in sorted(d, key=d.get, reverse=True)}
-            self.columns_ = list(d.keys())[: self.n_features]
+            self.columns_ = list(d.keys())[: self.n_columns_]
         elif self.method == "random":
-            self._check_n_features()
+            self._check_n_columns(Z)
             self.columns_ = list(
                 Z.sample(
-                    n=self.n_features, random_state=self.random_state, axis=1
+                    n=self.n_columns_, random_state=self.random_state, axis=1
                 ).columns
             )
         elif self.method == "columns":
@@ -144,7 +150,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         Z = check_series(Z, enforce_multivariate=True)
-        if self.method == "ignore":
+        if self.method == "none":
             Zt = None
         else:
             Zt = Z[self.columns_]
@@ -162,8 +168,6 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             self.regressor_ = clone(self.regressor)
         return self
 
-    def _check_n_features(self):
-        if not isinstance(self.n_features, int):
-            raise ValueError(
-                f"Parameter n_features must be int if method = {self.method}"
-            )
+    def _check_n_columns(self, Z):
+        if not isinstance(self.n_columns_, int):
+            self.n_columns_ = int(math.ceil(Z.shape[1] / 2))
