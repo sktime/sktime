@@ -230,6 +230,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
     fh = ForecastingHorizon(test_data.index, is_relative=False)
     model = NaiveForecaster(strategy=strategy, sp=sp)
+    assert model.get_tag("handles-missing-data") is True
     model.fit(train_data)
     forecast_data = model.predict(fh)
 
