@@ -130,7 +130,7 @@ class _LeadLag(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y):
+    def transform(self, X, y´None):
         # Interleave
         X_repeat = X.repeat(2, axis=1)
 
