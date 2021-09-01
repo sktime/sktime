@@ -55,7 +55,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, data):
+    def transform(self, data, y=None):
         # Input checks
         self.check_is_fitted()
 

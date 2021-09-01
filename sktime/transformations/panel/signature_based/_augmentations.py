@@ -72,7 +72,7 @@ class _AddTime(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, data):
+    def transform(self, data, y=None):
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]
 
@@ -93,7 +93,7 @@ class _InvisibilityReset(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         # Batch, length, channels
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
 
@@ -129,7 +129,7 @@ class _LeadLag(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y):
         # Interleave
         X_repeat = X.repeat(2, axis=1)
 
@@ -161,7 +161,7 @@ class _CumulativeSum(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         if self.append_zero:
             X = _BasePoint().fit_transform(X)
         return np.cumsum(X, 1)
@@ -177,6 +177,6 @@ class _BasePoint(_SeriesToSeriesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         zero_vec = np.zeros(shape=(X.shape[0], 1, X.shape[2]))
         return np.concatenate((zero_vec, X), axis=1)
