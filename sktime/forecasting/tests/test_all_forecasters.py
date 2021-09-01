@@ -57,21 +57,24 @@ y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
+# helper function
+def _get_n_columns(tag):
+    if tag == "univariate":
+        n_columns_list = [1]
+    elif tag == "multivariate":
+        n_columns_list = [2]
+    elif tag == "both":
+        n_columns_list = [1, 2]
+    return n_columns_list
+
+
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_get_fitted_params(Forecaster):
     """Test get_fitted_params."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1)
-        f.fit(y_train, fh=FH0)
-        try:
-            params = f.get_fitted_params()
-            assert isinstance(params, dict)
-
-        except NotImplementedError:
-            pass
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=FH0)
         try:
             params = f.get_fitted_params()
@@ -118,7 +121,7 @@ def test_y_multivariate_raises_error(Forecaster):
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
             f.fit(y, fh=FH0)
-    if f.get_tag("scitype:y") in ["univariate"]:
+    if f.get_tag("scitype:y") in ["both"]:
         pass
 
 
@@ -136,17 +139,10 @@ def test_y_invalid_type_raises_error(Forecaster, y):
 def test_X_invalid_type_raises_error(Forecaster, X):
     """Test that invalid X input types raise error."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1)
-        try:
-            with pytest.raises(TypeError, match=r"type"):
-                f.fit(y_train, X, fh=FH0)
-        except NotImplementedError as e:
-            msg = str(e).lower()
-            assert "exogenous" in msg
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
         try:
             with pytest.raises(TypeError, match=r"type"):
                 f.fit(y_train, X, fh=FH0)
@@ -163,20 +159,12 @@ def test_X_invalid_type_raises_error(Forecaster, X):
 def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1, index_type=index_type, n_timepoints=50)
-        cutoff = y_train.index[-1]
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-        try:
-            f.fit(y_train, fh=fh)
-            y_pred = f.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh)
-        except NotImplementedError:
-            pass
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2, index_type=index_type, n_timepoints=50)
+    for n_columns in n_columns_list:
+        y_train = _make_series(
+            n_columns=n_columns, index_type=index_type, n_timepoints=50
+        )
         cutoff = y_train.index[-1]
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
@@ -196,28 +184,17 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
     f = _construct_instance(Forecaster)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+
     z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y = _make_series(n_columns=1, index_type=index_type)
+    for n_columns in n_columns_list:
+        y = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y.index[len(y) // 2]
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-        y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
-
-        try:
-            f.fit(y_train, X_train, fh=fh)
-            y_pred = f.predict(X=X_test)
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
-        except NotImplementedError:
-            pass
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y = _make_series(n_columns=2, index_type=index_type)
-        cutoff = y.index[len(y) // 2]
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
         y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
         try:
@@ -237,21 +214,10 @@ def test_predict_time_index_in_sample_full(
 ):
     """Check that predicted time index equals fh for full in-sample predictions."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1, index_type=index_type)
-        cutoff = y_train.index[-1]
-        steps = -np.arange(len(y_train))
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-        try:
-            f.fit(y_train, fh=fh)
-            y_pred = f.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
-        except NotImplementedError:
-            pass
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2, index_type=index_type)
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
@@ -308,19 +274,10 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             and no NotImplementedError is raised when asking predict for pred.int
     """
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1)
-        f.fit(y_train, fh=fh)
-        if f.get_tag("capability:pred_int"):
-            y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
-            _check_pred_ints(pred_ints, y_train, y_pred, fh)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-        else:
-            with pytest.raises(NotImplementedError, match="prediction intervals"):
-                f.predict(return_pred_int=True, alpha=alpha)
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
         if f.get_tag("capability:pred_int"):
             y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
@@ -336,24 +293,10 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 def test_score(Forecaster, fh):
     """Check score method."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y = _make_series(n_columns=1)
-        y_train, y_test = temporal_train_test_split(y)
-        f.fit(y_train, fh=fh)
-        y_pred = f.predict()
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-        fh_idx = check_fh(fh).to_indexer()  # get zero based index
-        actual = f.score(y_test.iloc[fh_idx], fh=fh)
-        expected = mean_absolute_percentage_error(
-            y_pred, y_test.iloc[fh_idx], symmetric=True
-        )
-
-        # compare expected score with actual score
-        actual = f.score(y_test.iloc[fh_idx], fh=fh)
-        assert actual == expected
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y = _make_series(n_columns=2)
+    for n_columns in n_columns_list:
+        y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
         f.fit(y_train, fh=fh)
         y_pred = f.predict()
@@ -375,16 +318,10 @@ def test_score(Forecaster, fh):
 def test_update_predict_single(Forecaster, fh, update_params):
     """Check correct time index of update-predict."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y = _make_series(n_columns=1)
-        y_train, y_test = temporal_train_test_split(y)
-        f.fit(y_train, fh=fh)
-        y_pred = f.update_predict_single(y_test, update_params=update_params)
-        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y = _make_series(
-            n_columns=2,
-        )
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+
+    for n_columns in n_columns_list:
+        y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
         f.fit(y_train, fh=fh)
         y_pred = f.update_predict_single(y_test, update_params=update_params)
@@ -395,25 +332,12 @@ def _check_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
 ):
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y = _make_series(n_columns=1, all_positive=True, index_type="datetime")
-        y_train, y_test = temporal_train_test_split(y)
-        cv = SlidingWindowSplitter(
-            fh,
-            window_length=window_length,
-            step_length=step_length,
-            start_with_window=False,
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+
+    for n_columns in n_columns_list:
+        y_train = _make_series(
+            n_columns=n_columns, all_positive=True, index_type="datetime"
         )
-        f.fit(y_train, fh=fh)
-        y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
-        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
-        expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
-        actual = y_pred.index
-        np.testing.assert_array_equal(actual, expected)
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y = _make_series(n_columns=2, all_positive=True, index_type="datetime")
-
         y_train, y_test = temporal_train_test_split(y)
         cv = SlidingWindowSplitter(
             fh,
