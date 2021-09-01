@@ -18,11 +18,13 @@ class VectorAutoRegression(_StatsModelsAdapter):
 
     Parameters
     ----------
-    dates: np.ndarray, optional (default=None)
-        An array-like object of datetime objects
-    freq: str, optional (default=None)
-        The frequency of the time-series.
-        Pandas offset or ‘B’, ‘D’, ‘W’, ‘M’, ‘A’, or ‘Q’.
+    maxlags: int or None (default= None)
+        Maximum number of lags to check for order selection,
+        defaults to 12 * (nobs/100.)**(1./4)
+    method : str
+        Estimation method to use
+    verbose : bool (default = False)
+        Print order selection output to the screen
     missing: str, optional (default='none')
         A string specifying if data is missing
 
@@ -50,7 +52,7 @@ class VectorAutoRegression(_StatsModelsAdapter):
     >>> y_pred = sktime_model.predict(fh=fh)
     """
 
-    _fitted_param_names = ("aic", "fpe", "hqic", "bic")
+    _fitted_param_names = ("aic", "fpe", "hqic", "bic", None)
 
     _tags = {
         "scitype:y": "multivariate",
@@ -59,10 +61,19 @@ class VectorAutoRegression(_StatsModelsAdapter):
         "univariate-only": False,
     }
 
-    def __init__(self, dates=None, freq=None, missing="none"):
+    def __init__(
+        self,
+        maxlags=None,
+        method="ols",
+        verbose=False,
+        trend=None,
+        missing="none",
+    ):
         # Model params
-        self.dates = dates
-        self.freq = freq
+        self.trend = trend
+        self.maxlags = maxlags
+        self.method = method
+        self.verbose = verbose
         self.missing = missing
 
         super(VectorAutoRegression, self).__init__()
@@ -84,10 +95,13 @@ class VectorAutoRegression(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
-        self._forecaster = _VAR(
-            y, dates=self.dates, freq=self.freq, missing=self.missing
+        self._forecaster = _VAR(y, missing=self.missing)
+        self._fitted_forecaster = self._forecaster.fit(
+            trend=self.trend,
+            maxlags=self.maxlags,
+            method=self.method,
+            verbose=self.verbose,
         )
-        self._fitted_forecaster = self._forecaster.fit()
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
