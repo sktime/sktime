@@ -21,6 +21,7 @@ from sktime.classification.shapelet_based.dev.factories.shapelet_factory import 
 )
 from sktime.classification.shapelet_based.dev.filters.random_filter import RandomFilter
 from sktime.transformations.panel.shapelets import ContractedShapeletTransform
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -58,10 +59,11 @@ class ShapeletTransformClassifier(BaseClassifier):
     """
 
     _tags = {
-        "multivariate": True,
-        "unequal_length": True,
-        "missing_values": False,
-        "train_estimate": True,
+        # "coerce-X-to-numpy": True,
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
         "contractable": True,
     }
 
@@ -73,6 +75,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         estimator=None,
         transform_limit_in_minutes=60,
         time_limit_in_minutes=0,
+        save_transformed_data=False,
+        n_jobs=1,
         random_state=None,
     ):
         self.n_shapelets = n_shapelets
@@ -82,29 +86,40 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         self.transform_limit_in_minutes = transform_limit_in_minutes
         self.time_limit_in_minutes = time_limit_in_minutes
-        self.random_state = random_state
+        self.save_transformed_data = save_transformed_data
 
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+        self.n_instances = 0
+        self.n_dims = 0
+        self.series_length = 0
         self.n_classes_ = 0
         self.classes_ = []
+        self.transformed_data = []
 
         self._max_shapelets = max_shapelets
         self._max_shapelet_length = max_shapelet_length
         self._transformer = None
         self._estimator = estimator
+        self._n_jobs = n_jobs
 
         super(ShapeletTransformClassifier, self).__init__()
 
     def _fit(self, X, y):
-        _, n_dims, series_length = X.shape
+        self._n_jobs = check_n_jobs(self.n_jobs)
+
+        self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.max_shapelet_length is None:
-            self._max_shapelet_length = X.applymap(lambda x: len(x)).to_numpy().min()
+            self._max_shapelet_length = self.series_length
 
         if self.max_shapelets is None:
             self._max_shapelets = 10 * len(X) if 10 * len(X) < 1000 else 1000
 
+        # TODO
         self._transformer = (
             RandomFilter(
                 shapelet_factory=ShapeletFactoryIndependent(),
@@ -115,7 +130,7 @@ class ShapeletTransformClassifier(BaseClassifier):
                 #    verbose=False,
                 random_state=self.random_state,
             )
-            if n_dims > 1
+            if self.n_dims > 1
             else ContractedShapeletTransform(
                 time_contract_in_mins=self.transform_limit_in_minutes,
                 verbose=False,
@@ -124,13 +139,17 @@ class ShapeletTransformClassifier(BaseClassifier):
         )
 
         self._estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
+            RandomForestClassifier(n_estimators=200, n_jobs=self._n_jobs)
             if self.estimator is None
             else self.estimator,
             self.random_state,
         )
 
-        self._estimator.fit(X, y)
+        if self.save_transformed_data:
+            self.transformed_data = self._transformer.fit_transform(X, y)
+            self._estimator.fit(self.transformed_data, y)
+        else:
+            self._estimator.fit(self._transformer.fit_transform(X, y), y)
 
     def _predict(self, X):
         return self._estimator.predict(self._transformer.transform(X))
@@ -150,18 +169,25 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        # n_instances, n_dims, series_length = X.shape
-        #
-        # if (
-        #     n_instances != self.n_instances
-        #     or n_dims != self.n_dims
-        #     or series_length != self.series_length
-        # ):
-        #     raise ValueError(
-        #         "n_instances, n_dims, series_length mismatch. X should be "
-        #         "the same as the training data used in fit for generating train "
-        #         "probabilities."
-        #     )
+        n_instances, n_dims, series_length = X.shape
+
+        if (
+            n_instances != self.n_instances
+            or n_dims != self.n_dims
+            or series_length != self.series_length
+        ):
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
+
+        if not self.save_transformed_data:
+            raise ValueError("Currently only works with saved transform data from fit.")
+
+        m = getattr(self._estimator, "predict_proba", None)
+        if not callable(m):
+            raise ValueError("Estimator must have a predict_proba method.")
 
         cv_size = 10
         _, counts = np.unique(y, return_counts=True)
@@ -177,5 +203,5 @@ class ShapeletTransformClassifier(BaseClassifier):
         )
 
         return cross_val_predict(
-            classifier, X=X, y=y, cv=cv_size, method="predict_proba"
+            classifier, X=self.transformed_data, y=y, cv=cv_size, method="predict_proba"
         )
