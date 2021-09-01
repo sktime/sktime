@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.datasets import load_japanese_vowels, load_unit_test
 
 
 def test_stc_on_unit_test_data():
@@ -54,12 +54,12 @@ def test_contracted_stc_on_unit_test_data():
     assert accuracy_score(y_test, stc.predict(X_test)) >= 0.8
 
 
-def test_stc_on_basic_motions():
-    """Test of ShapeletTransformClassifier on basic motions data."""
-    # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+def test_stc_on_japanese_vowels():
+    """Test of ShapeletTransformClassifier on japanese vowels data."""
+    # load japanese vowels data
+    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
+    indices = [0, 1, 2, 3, 31, 32, 33, 34, 69, 70, 71, 72]
 
     # train STC
     rf = RandomForestClassifier(n_estimators=10)
@@ -72,7 +72,7 @@ def test_stc_on_basic_motions():
 
     # assert probabilities are the same
     probas = stc.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, stc_basic_motions_probas)
+    testing.assert_array_equal(probas, stc_japanese_vowels_probas)
 
 
 stc_unit_test_probas = np.array(
@@ -119,7 +119,7 @@ stc_unit_test_probas = np.array(
         ],
     ]
 )
-stc_basic_motions_probas = np.array(
+stc_japanese_vowels_probas = np.array(
     [
         [
             0.0,
@@ -213,8 +213,8 @@ stc_basic_motions_probas = np.array(
 #     probas = stc_u.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
 #
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+#     X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
+#     X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
 #     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
 #     rf = RandomForestClassifier(n_estimators=10)
