@@ -84,6 +84,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         self.sp = sp
         self.window_length = window_length
 
+        # Override tag for handling missing data
+        # todo: remove if GH1367 is fixed
+        if self.strategy in ("last", "mean"):
+            self.set_tags(**{"handles-missing-data": True})
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
