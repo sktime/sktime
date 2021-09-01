@@ -31,11 +31,11 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         * "random": Randomly select n_columns features. Requires parameter n_columns.
         * "columns": Select features by given names.
         * "none": Remove all columns by setting Z to None.
-        * "all": Slect all given features.
+        * "all": Select all given features.
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
-        then a GradientBoostingRegressor(max_depth=5) is used.
+        then a GradientBoostingRegressor(max_depth=5, random_state=1) is used.
     n_columns : int, optional
         Number of feautres (columns) to select. n_columns must be <=
         number of X columns. Some methods require n_columns to be given.
@@ -51,10 +51,14 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         List of columns that have been selected as features.
     regressor_ : sklearn-like regressor
         Fitted regressor (meta-model).
-    n_columns_: : int,
+    n_columns_: int
         Derived from number of features if n_columns is None, then
         n_columns_ is calculated as int(math.ceil(Z.shape[1] / 2)). So taking
         half of given features only as default.
+    feature_importances_ : dict or None
+        A dictionary with column name as key and feature imporatnce value as value.
+        The dict is sorted descending on value. This attribute is a dict if
+        method="feature-importances", else None.
 
     Examples
     --------
@@ -102,6 +106,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         """
         Z = check_series(Z, enforce_multivariate=True)
         self.n_columns_ = self.n_columns
+        self.feature_importances_ = None
 
         if self.method == "feature-importances":
             self._check_regressor()
@@ -113,6 +118,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             d = dict(zip(Z.columns, self.regressor_.feature_importances_))
             # sort d descending
             d = {k: d[k] for k in sorted(d, key=d.get, reverse=True)}
+            self.feature_importances_ = d
             self.columns_ = list(d.keys())[: self.n_columns_]
         elif self.method == "random":
             self._check_n_columns(Z)
@@ -158,7 +164,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
     def _check_regressor(self):
         if self.regressor is None:
-            self.regressor_ = GradientBoostingRegressor(max_depth=5)
+            self.regressor_ = GradientBoostingRegressor(max_depth=5, random_state=1)
         else:
             if not is_regressor(self.regressor):
                 raise ValueError(

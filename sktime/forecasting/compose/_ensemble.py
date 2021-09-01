@@ -37,8 +37,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
-        a GradientBoostingRegressor(max_depth=5) is used. The regressor can also be a
-        sklearn.Pipeline().
+        a GradientBoostingRegressor(max_depth=5, random_state=1) is used.
+        The regressor can also be a sklearn.Pipeline().
     test_size : int or float, optional, default=None
         Used to do an internal temporal_train_test_split(). The test_size data
         will be the endog data of the regressor and it is the most recent data.

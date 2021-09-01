@@ -30,8 +30,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         The regressor is used as a meta-model and trained with the predictions
         of the ensemble forecasters as exog data and with y as endog data. The
         length of the data is dependent to the given fh. If None, then
-        a GradientBoostingRegressor(max_depth=5) is used. The regressor can also
-        be a sklearn.Pipeline().
+        a GradientBoostingRegressor(max_depth=5, random_state=1) is used.
+        The regressor can also be a sklearn.Pipeline().
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
