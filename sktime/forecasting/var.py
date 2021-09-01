@@ -8,6 +8,7 @@ from statsmodels.tsa.api import VAR as _VAR
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 import numpy as np
+import pandas as pd
 
 
 class VectorAutoRegression(_StatsModelsAdapter):
@@ -52,7 +53,7 @@ class VectorAutoRegression(_StatsModelsAdapter):
     >>> y_pred = sktime_model.predict(fh=fh)
     """
 
-    _fitted_param_names = ("aic", "fpe", "hqic", "bic", None)
+    _fitted_param_names = ("aic", "fpe", "hqic", "bic")
 
     _tags = {
         "scitype:y": "multivariate",
@@ -66,7 +67,7 @@ class VectorAutoRegression(_StatsModelsAdapter):
         maxlags=None,
         method="ols",
         verbose=False,
-        trend=None,
+        trend="c",
         missing="none",
     ):
         # Model params
@@ -125,8 +126,8 @@ class VectorAutoRegression(_StatsModelsAdapter):
             Returns series of predicted values.
         """
         # fh in stats
-        fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
-
+        # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
+        fh_int = fh.to_relative(self.cutoff)
         lagged = self._fitted_forecaster.k_ar
         y_pred = self._fitted_forecaster.forecast(
             y=self._y.values[-lagged:], steps=fh_int[-1]
@@ -134,4 +135,5 @@ class VectorAutoRegression(_StatsModelsAdapter):
         new_arr = []
         for i in fh_int:
             new_arr.append(y_pred[i - 1])
-        return np.array(new_arr)
+        pred_df = pd.DataFrame(np.array(new_arr), index=fh.to_absolute(self.cutoff))
+        return pred_df

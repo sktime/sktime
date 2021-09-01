@@ -29,6 +29,6 @@ def test_var():
     lagged = stats_fit.k_ar
     y_pred_stats = stats_fit.forecast(train.values[-lagged:], steps=fh_int[-1])
     new_arr = []
-    for i in fh:
+    for i in fh_int:
         new_arr.append(y_pred_stats[i - 1])
     assert_allclose(y_pred, new_arr)
