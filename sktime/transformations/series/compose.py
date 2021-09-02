@@ -80,6 +80,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         self.passthrough = passthrough
         self._is_fitted = False
         super(OptionalPassthrough, self).__init__()
+        self.clone_tags(transformer)
 
     def fit(self, Z, X=None):
         """Fit the model.
