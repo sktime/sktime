@@ -79,7 +79,7 @@ class Detrender(_SeriesToSeriesTransformer):
         Y : pd.Series
             Endogenous time series to fit a trend to.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables
+            Exogenous variables.
 
         Returns
         -------
@@ -109,14 +109,14 @@ class Detrender(_SeriesToSeriesTransformer):
         Parameters
         ----------
         y : pd.Series
-            Time series to be detrended
+            Time series to be detrended.
         X : pd.DataFrame, optional (default=False)
-            Exogenous variables
+            Exogenous variables.
 
         Returns
         -------
         y_hat : pd.Series
-            De-trended series
+            De-trended series.
         """
         self.check_is_fitted()
         z = check_series(Z)
@@ -149,14 +149,14 @@ class Detrender(_SeriesToSeriesTransformer):
         Parameters
         ----------
         y : pd.Series, list
-            Detrended time series to revert
+            Detrended time series to revert.
         X : pd.DataFrame, optional (default=False)
-            Exogenous variables
+            Exogenous variables.
 
         Returns
         -------
         y_hat : pd.Series
-            Series with the trend
+            Series with the trend.
         """
         self.check_is_fitted()
         z = check_series(Z)
@@ -189,9 +189,9 @@ class Detrender(_SeriesToSeriesTransformer):
         Parameters
         ----------
         y_new : pd.Series
-            New time series
+            New time series.
         update_params : bool, optional (default=True)
-            Update the parameters of the detrender model with
+            Update the parameters of the detrender model.
 
         Returns
         -------
