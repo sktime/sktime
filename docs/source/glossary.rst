@@ -67,11 +67,11 @@ sktime.
         In ``sktime`` reduction is used to allow one learning task to be adapted as a solution for an alternative task.
 
     Variable
-        Refers to some measurement of in terest. Variables may be cross-sectional (e.g. time-invarient measurements like a patient's place of birth) or
+        Refers to some measurement of interest. Variables may be cross-sectional (e.g. time-invariant measurements like a patient's place of birth) or
         :term:`time series`.
 
     Timepoint
-        The point in time that an observation is made. A timee point may represent an exact point in time (a timestamp),
+        The point in time that an observation is made. A time point may represent an exact point in time (a timestamp),
         a timeperiod (e.g. minutes, hours or days), or simply an index indicating the position of an observation in the sequence of values.
 
     Instance
@@ -85,3 +85,9 @@ sktime.
     Seasonality
         When a :term: `time series` is affected by seasonal characteristics such as the time of year or the day of the week, it is called a seasonal pattern.
         The duration of a season is always fixed and known.
+        
+    Tabular
+        Is a setting where each :term:`timepoint` of the :term:`univariate time series` being measured for each instance are treated as features and
+        stored as a primitive data type in the DataFrame’s cells. E.g., there are N :term:`instances <instance>` of time series and each has T
+        :term:`timepoints <timepoint>`, this would yield a pandas DataFrame with shape (N, T): N rows, T columns.
+

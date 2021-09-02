@@ -80,6 +80,16 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         # todo: change "MyTrafoPwPanel" to the name of the class
         super(MyTrafoPwPanel, self).__init__()
 
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+
     # todo: implement this, mandatory
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix between time series.
