@@ -558,22 +558,8 @@ def _get_err_msg(estimator):
 
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
-    # if non-default parameters are required, but none have been found,
-    # raise error
-    if hasattr(Estimator, "_required_parameters"):
-        required_parameters = getattr(Estimator, "required_parameters", [])
-        if len(required_parameters) > 0:
-            raise ValueError(
-                f"Estimator: {Estimator} requires "
-                f"non-default parameters for construction, "
-                f"but none were given. Please set them in "
-                f"sktime/tests/_config.py"
-            )
-
-    # construct with parameter configuration for testing, otherwise construct with
-    # default parameters (empty param dict)
-    params = ESTIMATOR_TEST_PARAMS.get(Estimator, {})
-    return Estimator(**params)
+    # return the instance of the class with default parameters
+    return Estimator.create_test_instance()
 
 
 def _make_args(estimator, method, **kwargs):
