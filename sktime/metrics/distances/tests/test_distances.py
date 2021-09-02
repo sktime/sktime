@@ -12,7 +12,6 @@ from sktime.metrics.distances.dtw._dtw_path import DtwPath
 from sktime.metrics.distances.dtw._fast_dtw import FastDtw
 from sktime.metrics.distances.base.base import BaseDistance
 
-
 pytest_distance_parameters = [
     (SquaredDistance()),
     (Dtw()),
@@ -43,18 +42,14 @@ def test_univariate(distance: BaseDistance):
     x_single_dimension = x[0]
     y_single_dimension = y[1]
 
-    single_dim_result = distance.distance(x_single_dimension, y_single_dimension)
-
-    assert single_dim_result
+    distance.distance(x_single_dimension, y_single_dimension)
 
     # Test 2d array but with 1 item in the out array
     generated_ts = create_test_distance(2, 10, 1)
     x_two_dimension = generated_ts[0]
     y_two_dimension = generated_ts[1]
 
-    two_dim_result = distance.distance(x_two_dimension, y_two_dimension)
-
-    assert two_dim_result
+    distance.distance(x_two_dimension, y_two_dimension)
 
 
 @pytest.mark.parametrize("distance", pytest_distance_parameters)
@@ -64,9 +59,7 @@ def test_multivariate(distance: BaseDistance):
     x = generated_ts[0]
     y = generated_ts[1]
 
-    multivariate_result = distance.distance(x, y)
-
-    assert multivariate_result
+    distance.distance(x, y)
 
 
 @pytest.mark.parametrize("distance", pytest_distance_parameters)
@@ -75,14 +68,10 @@ def test_pairwise(distance: BaseDistance):
     x_univariate_matrix = create_test_distance(10, 10, 1)
     y_univariate_matrix = create_test_distance(10, 10, 1, random_state=2)
 
-    pairwise_result_uni = distance.pairwise(x_univariate_matrix, y_univariate_matrix)
-
-    assert pairwise_result_uni
+    distance.pairwise(x_univariate_matrix, y_univariate_matrix)
 
     # Test 3d array (assuming bunch of multivariate)
     x = create_test_distance(10, 10, 10)
     y = create_test_distance(10, 10, 10, random_state=2)
 
-    pairwise_result_multi = distance.pairwise(x, y)
-
-    assert pairwise_result_multi
+    distance.pairwise(x, y)
