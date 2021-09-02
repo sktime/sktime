@@ -240,6 +240,8 @@ def check_package_status(package, min_version):
     """
     if package == "scikit-learn":
         package = "sklearn"
+    elif package == "esig":
+        return
 
     package_status = {}
     try:
