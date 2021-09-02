@@ -21,7 +21,7 @@ from sktime.utils.validation.series import check_series
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
-    """A transformer that removes seasonal components from time series.
+    """Remove seasonal components from a time serie.
 
     Fit computes :term:`seasonal components <Seasonality>` and
     stores them in `seasonal_`.
@@ -51,9 +51,9 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     -----
     For further explanation on seasonal components and additive vs.
     multiplicative models see
-    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`.
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
-    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`.
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
     Examples
     --------
@@ -239,9 +239,9 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     -----
     For further explanation on seasonal components and additive vs.
     multiplicative models see
-    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`.
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
-    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`.
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
 
     Examples
