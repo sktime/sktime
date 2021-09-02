@@ -184,7 +184,7 @@ class ForecastingPipeline(_Pipeline):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
