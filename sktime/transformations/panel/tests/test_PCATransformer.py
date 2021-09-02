@@ -7,8 +7,8 @@ from sklearn.decomposition import PCA
 from sktime.exceptions import NotFittedError
 from sktime.transformations.panel.pca import PCATransformer
 from sktime.utils._testing.panel import _make_nested_from_array
-from sktime.utils.data_processing import from_2d_array_to_nested
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_2d_array_to_nested
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 
 # Check that exception is raised for bad input args.

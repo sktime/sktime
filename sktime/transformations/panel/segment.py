@@ -6,9 +6,9 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.utils.data_processing import _concat_nested_arrays
-from sktime.utils.data_processing import _get_column_names
-from sktime.utils.data_processing import _get_time_index
+from sktime.datatypes._panel._convert import _concat_nested_arrays
+from sktime.datatypes._panel._convert import _get_column_names
+from sktime.datatypes._panel._convert import _get_time_index
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.panel import check_X
 
@@ -176,8 +176,17 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self : RandomIntervalSegmenter
             This estimator
         """
-        check_window_length(self.min_length, "min_length")
-        check_window_length(self.max_length, "max_length")
+        if y is not None:
+            n_timepoints = y.shape[0]
+        else:
+            n_timepoints = 1
+
+        self.min_length = check_window_length(
+            self.min_length, n_timepoints, "min_length"
+        )
+        self.max_length = check_window_length(
+            self.max_length, n_timepoints, "max_length"
+        )
         if self.min_length is None:
             min_length = 2
         else:

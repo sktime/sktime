@@ -4,14 +4,14 @@
 
 # adapted from scikit-learn's estimator_checks
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["check_estimator"]
 
 import numbers
 import pickle
 import types
 from copy import deepcopy
-from inspect import signature
+from inspect import signature, isclass
 
 import joblib
 import numpy as np
@@ -28,25 +28,32 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
+from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
-from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
-from sktime.utils.data_processing import is_nested_dataframe
+from sktime.utils._testing.panel import make_clustering_problem
+from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.clustering.base.base import BaseClusterer
+
+from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.utils._testing.annotation import make_annotation_problem
 
 
 def check_estimator(Estimator, exclude=None):
@@ -66,7 +73,7 @@ def check_estimator(Estimator, exclude=None):
 
 
 def yield_estimator_checks(exclude=None):
-    """Iterator to yield estimator checks"""
+    """Return iterator to yield estimator checks."""
     checks = [
         check_inheritance,
         check_required_params,
@@ -83,8 +90,10 @@ def yield_estimator_checks(exclude=None):
         check_fit_idempotent,
         check_fit_does_not_overwrite_hyper_params,
         check_methods_do_not_change_state,
+        check_methods_have_no_side_effects,
         check_persistence_via_pickle,
         check_multiprocessing_idempotent,
+        check_valid_estimator_tags,
     ]
     for check in checks:
         # check if associated test is not included in the exclusion list
@@ -94,6 +103,7 @@ def yield_estimator_checks(exclude=None):
 
 
 def check_required_params(Estimator):
+    """Check required parameter interface."""
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
         required_params = Estimator._required_parameters
@@ -124,16 +134,10 @@ def check_required_params(Estimator):
 
 
 def check_estimator_tags(Estimator):
-    assert hasattr(Estimator, "_all_tags")
-    all_tags = Estimator._all_tags()
+    assert hasattr(Estimator, "get_class_tags")
+    all_tags = Estimator.get_class_tags()
     assert isinstance(all_tags, dict)
-    assert all(
-        [
-            isinstance(key, str) and isinstance(value, bool)
-            for key, value in all_tags.items()
-        ]
-    )
-
+    assert all([isinstance(key, str) for key in all_tags.keys()])
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
         assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
@@ -245,7 +249,7 @@ def check_constructor(Estimator):
     # Ensure that init does nothing but set parameters
     # No logic/interaction with other parameters
     def param_filter(p):
-        """Identify hyper parameters of an estimator"""
+        """Identify hyper parameters of an estimator."""
         return (
             p.name != "self" and p.kind != p.VAR_KEYWORD and p.kind != p.VAR_POSITIONAL
         )
@@ -345,6 +349,7 @@ def check_raises_not_fitted_error(Estimator):
 def check_fit_idempotent(Estimator):
     # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
+
     set_random_state(estimator)
 
     # Fit for the first time
@@ -419,7 +424,7 @@ def check_methods_do_not_change_state(Estimator):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if method == "transform" and _has_tag(Estimator, "fit-in-transform"):
+            if method == "transform" and Estimator.get_class_tag("fit-in-transform"):
                 # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.
@@ -428,6 +433,36 @@ def check_methods_do_not_change_state(Estimator):
             assert (
                 estimator.__dict__ == dict_before
             ), f"Estimator: {estimator} changes __dict__ during {method}"
+
+
+def check_methods_have_no_side_effects(Estimator):
+    # Check that calling methods has no side effects on args
+
+    if not isclass(Estimator):
+        Estimator = type(Estimator)
+
+    estimator = _construct_instance(Estimator)
+
+    set_random_state(estimator)
+
+    # Fit for the first time
+    fit_args = _make_args(estimator, "fit")
+    old_fit_args = deepcopy(fit_args)
+    estimator.fit(*fit_args)
+
+    assert deep_equals(
+        old_fit_args, fit_args
+    ), f"Estimator: {estimator} has side effects on arguments of fit"
+
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            new_args = _make_args(estimator, method)
+            old_args = deepcopy(new_args)
+            getattr(estimator, method)(*new_args)
+
+            assert deep_equals(
+                old_args, new_args
+            ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
 def check_persistence_via_pickle(Estimator):
@@ -502,6 +537,12 @@ def check_multiprocessing_idempotent(Estimator):
                 )
 
 
+def check_valid_estimator_tags(Estimator):
+    # check if Estimator tags are in VALID_ESTIMATOR_TAGS
+    for tag in Estimator.get_class_tags().keys():
+        assert tag in VALID_ESTIMATOR_TAGS
+
+
 def _get_err_msg(estimator):
     return (
         f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
@@ -510,28 +551,13 @@ def _get_err_msg(estimator):
 
 
 def _construct_instance(Estimator):
-    """Construct Estimator instance if possible"""
-    # if non-default parameters are required, but none have been found,
-    # raise error
-    if hasattr(Estimator, "_required_parameters"):
-        required_parameters = getattr(Estimator, "required_parameters", [])
-        if len(required_parameters) > 0:
-            raise ValueError(
-                f"Estimator: {Estimator} requires "
-                f"non-default parameters for construction, "
-                f"but none were given. Please set them in "
-                f"sktime/tests/_config.py"
-            )
-
-    # construct with parameter configuration for testing, otherwise construct with
-    # default parameters (empty param dict)
-    params = ESTIMATOR_TEST_PARAMS.get(Estimator, {})
-    return Estimator(**params)
+    """Construct Estimator instance if possible."""
+    # return the instance of the class with default parameters
+    return Estimator.create_test_instance()
 
 
 def _make_args(estimator, method, **kwargs):
-    """Helper function to generate appropriate arguments for testing different
-    estimator types and their methods"""
+    """Generate testing arguments for estimator methods."""
     if method == "fit":
         return _make_fit_args(estimator, **kwargs)
     if method == "update":
@@ -556,6 +582,9 @@ def _make_fit_args(estimator, **kwargs):
         fh = 1
         X = None
         return y, X, fh
+    elif isinstance(estimator, BaseSeriesAnnotator):
+        X = make_annotation_problem(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
@@ -567,6 +596,12 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseClusterer):
+        return (make_clustering_problem(**kwargs),)
+    elif isinstance(estimator, BasePairwiseTransformer):
+        return None, None
+    elif isinstance(estimator, BasePairwiseTransformerPanel):
+        return None, None
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -576,6 +611,12 @@ def _make_predict_args(estimator, **kwargs):
         fh = 1
         return (fh,)
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+        X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseSeriesAnnotator):
+        X = make_annotation_problem(n_timepoints=10, **kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseClusterer):
         X = _make_panel_X(**kwargs)
         return (X,)
     else:
@@ -597,6 +638,13 @@ def _make_transform_args(estimator, **kwargs):
     ):
         X = _make_panel_X(**kwargs)
         return (X,)
+    elif isinstance(estimator, BasePairwiseTransformer):
+        d = {"col1": [1, 2], "col2": [3, 4]}
+        return pd.DataFrame(d), pd.DataFrame(d)
+    elif isinstance(estimator, BasePairwiseTransformerPanel):
+        d = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+        X = [d, d]
+        return X, X
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -619,8 +667,7 @@ def _make_inverse_transform_args(estimator, **kwargs):
 
 
 def _make_primitives(n_columns=1, random_state=None):
-    """Generate one or more primitives. Useful for checking inverse-transform
-    of series-to-primitives transformer"""
+    """Generate one or more primitives, for checking inverse-transform."""
     rng = check_random_state(random_state)
     if n_columns == 1:
         return rng.rand()
@@ -628,8 +675,7 @@ def _make_primitives(n_columns=1, random_state=None):
 
 
 def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
-    """Generate tabular X. Useful for checking inverse-transform
-    of panel-to-tabular transformer"""
+    """Generate tabular X, for checking inverse-transform."""
     rng = check_random_state(random_state)
     X = rng.rand(n_instances, n_columns)
     if return_numpy:
@@ -639,7 +685,7 @@ def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state
 
 
 def _compare_nested_frame(func, x, y, **kwargs):
-    """Helper function to compare two nested pd.DataFrames
+    """Comper two nested pd.DataFrames.
 
     Parameters
     ----------
@@ -699,7 +745,7 @@ def _assert_array_equal(x, y, err_msg=""):
 
 
 def _get_args(function, varargs=False):
-    """Helper to get function arguments"""
+    """Get function arguments."""
     try:
         params = signature(function).parameters
     except ValueError:
@@ -721,9 +767,3 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
-
-
-def _has_tag(Estimator, tag):
-    assert tag in VALID_ESTIMATOR_TAGS
-    # Check if tag is in all tags
-    return Estimator._all_tags().get(tag, False)

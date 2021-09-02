@@ -48,10 +48,6 @@ Libraries
      - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
      - Scipy-based dynamic time warping
-   * - `GENDIS <https://github.com/IBCNServices/GENDIS>`_
-     - Shapelet discovery by genetic algorithms
-   * - `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_
-     - scikit-learn compatible wrapper around the GLM module in `statsmodels <https://github.com/statsmodels/statsmodels>`_
    * - `Featuretools <https://github.com/Featuretools/featuretools>`_
      - Time series feature extraction, with possible conditionality on other variables with a pandas compatible relational-database-like data container
    * - `fecon235 <https://github.com/rsvp/fecon235>`_
@@ -60,12 +56,20 @@ Libraries
      - financial function library
    * - `flint <https://github.com/twosigma/flint>`_
      - A Time Series Library for Apache Spark
+   * - `GENDIS <https://github.com/IBCNServices/GENDIS>`_
+     - Shapelet discovery by genetic algorithms
+   * - `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_
+     - scikit-learn compatible wrapper around the GLM module in `statsmodels <https://github.com/statsmodels/statsmodels>`_
    * - `gluon-ts <https://github.com/awslabs/gluon-ts>`_
      - Probabilistic forecasting and anomaly detection using deep learning by Amazon
+   * - `greykite <https://github.com/linkedin/greykite>`_
+     - A Time Series Library for rorecasting by LinkedIn which contains the interpretable "Silverkite" algorithm.
    * - `hctsa <https://github.com/benfulcher/hctsa>`_
      - Matlab based feature extraction which can be controlled from python
    * - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_
      - Hidden Markov Models with scikit-learn compatible API
+   * - `kats <https://github.com/facebookresearch/kats>`_
+     - A toolkit by Facebook for time series analysis, including detection, forecasting, feature extraction/embedding, multivariate analysis, etc.
    * - `khiva-python <https://github.com/shapelets/khiva-python>`_
      - A Time Series library with accelerated analytics on GPUS, it provides feature extraction and motif discovery among other functionalities.
    * - `lifelines <https://github.com/CamDavidsonPilon/lifelines>`_
@@ -84,6 +88,8 @@ Libraries
      - Time series analysis for neuroscience data
    * - `NoLiTSA <https://github.com/manu-mannattil/nolitsa>`_
      - Non-linear time series analysis
+   * - `orbit <https://github.com/uber/orbit>`_
+     - Bayesian time series forecasting package by uber
    * - `pomegranate <https://pomegranate.readthedocs.io/en/latest/index.html>`_
      - Probabilistic models ranging from individual probability distributions to compositional models such as Bayesian networks and hidden Markov models.
    * - `Pastas <https://github.com/pastas/pastas>`_
@@ -146,6 +152,8 @@ Libraries
      - Direct time series classifiers and regressors
    * - `tspreprocess <https://github.com/MaxBenChrist/tspreprocess>`_
      - Preprocess time series (resampling, denoising etc.), still WIP
+   * - `alibi-detect <https://github.com/SeldonIO/alibi-detect>`_
+     - Toolbox for Outlier, Adversarial and Drift detection
 
 
 Specific model implementations

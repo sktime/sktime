@@ -1,11 +1,20 @@
 .. _exceptions_ref:
 
-sktime.exceptions: Exceptions
-=============================
+Exceptions
+==========
 
 The :mod:`sktime.exceptions` module contains classes for exceptions and warnings.
 
+.. automodule:: sktime.exceptions
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.exceptions
+
 .. autosummary::
+    :toctree: auto_generated/
     :template: class.rst
 
-    sktime.exceptions
+    NotEvaluatedError
+    NotFittedError
+    FitFailedWarning
