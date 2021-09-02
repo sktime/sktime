@@ -78,3 +78,10 @@ sktime.
         A member of the set of entities being studied and which an ML practitioner wishes to generalize. For example,
         patients, chemical process runs, machines, countries, etc. May also be referred to as samples, examples, observations or records
         depending on the discipline and context.
+
+    Trend
+        When data shows a long-term increase or decrease, this is referred to as a trend. Trends can also be non-linear.
+
+    Seasonality
+        When a :term: `time series` is affected by seasonal characteristics such as the time of year or the day of the week, it is called a seasonal pattern.
+        The duration of a season is always fixed and known.

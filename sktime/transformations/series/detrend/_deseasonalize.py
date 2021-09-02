@@ -23,24 +23,23 @@ from sktime.utils.validation.series import check_series
 class Deseasonalizer(_SeriesToSeriesTransformer):
     """A transformer that removes seasonal components from time series.
 
-    Fit computes seasonal components and stores them in `_seasonal`.
+    Fit computes :term:`seasonal components <Seasonality>` and
+    stores them in `seasonal_`.
 
     Transform aligns seasonal components stored in `_seasonal` with
-    the time index of the passed series and then
-    substracts them ("additive" model) from the passed series
+    the time index of the passed :term:`series <Time series>` and then
+    substracts them ("additive" model) from the passed :term:`series <Time series>`
     or divides the passed series by them ("multiplicative" model).
 
     Parameters
     ----------
     sp : int, default=1
         Seasonal periodicity
-    model : str {"additive", "multiplicative"}, default="additive"
+    model : {"additive", "multiplicative"}, default="additive"
         Model to use for estimating seasonal component
 
     Attributes
     ----------
-    _y_index : Index
-        Time index of the series passed in fit.
     seasonal_ : array of length sp
         Seasonal components computed in seasonal decomposition.
 
@@ -52,9 +51,9 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     -----
     - For further explanation on seasonal components and additive vs.
     multiplicative models see
-    https://otexts.com/fpp3/components.html
-    - seasonal decomposition is computed using statsmodels
-    https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`
+    - seasonal decomposition is computed using `statsmodels
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`
 
     Examples
     --------
@@ -199,12 +198,15 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 class ConditionalDeseasonalizer(Deseasonalizer):
     """Remove seasonal components from time series, conditional on seasonality test.
 
-    Fit tests for seasonality and if the passed time series has a seasonal component
-    it applies seasonal decomposition provided by statsmodels to compute
-    the seasonal component. If the test is negative `_seasonal` is set to all ones
-    (if `model` is "multiplicative") or to all zeros (if `model` is "additive").
+    Fit tests for :term:`seasonality <Seasonality>` and if the passed time series
+    has a seasonal component it applies seasonal decomposition provided by `statsmodels
+    <https://www.statsmodels.org>`
+    to compute the seasonal component.
+    If the test is negative `_seasonal` is set
+    to all ones (if `model` is "multiplicative")
+    or to all zeros (if `model` is "additive").
 
-    Transform aligns seasonal components stored in `_seasonal` with
+    Transform aligns seasonal components stored in `seasonal_` with
     the time index of the passed series and then
     substracts them ("additive" model) from the passed series
     or divides the passed series by them ("multiplicative" model).
@@ -218,7 +220,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         90% autocorrelation seasonality test is used.
     sp : int, default=1
         Seasonal periodicity
-    model : str {"additive", "multiplicative"}, default="additive"
+    model : {"additive", "multiplicative"}, default="additive"
         Model to use for estimating seasonal component
 
     Attributes
@@ -237,9 +239,9 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     -----
     - For further explanation on seasonal components and additive vs.
     multiplicative models see
-    https://otexts.com/fpp3/components.html
-    - seasonal decomposition is computed using statsmodels
-    https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`
+    - seasonal decomposition is computed using `statsmodels
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`
 
 
     Examples

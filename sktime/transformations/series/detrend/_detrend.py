@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["mloning", "sveameyer13"]
+__author__ = ["mloning", "SveaMeyer13"]
 
 from sklearn.base import clone
 import pandas as pd
@@ -16,7 +16,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
-    """Remove a trend from a series.
+    """Remove a :term:`trend <Trend>` from a series.
 
     This transformer uses any forecaster and returns the in-sample residuals
     of the forecaster's predicted values.
@@ -24,7 +24,7 @@ class Detrender(_SeriesToSeriesTransformer):
     The Detrender works by first fitting the forecaster to the input data.
     To transform data, it uses the fitted forecaster to generate
     forecasts for the time points of the passed data and returns the residuals
-     of the forecasts.
+    of the forecasts.
     Depending on the passed data, this will require it to generate in-sample
     or out-of-sample forecasts.
 
