@@ -34,9 +34,9 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     Parameters
     ----------
     sp : int, default=1
-        Seasonal periodicity
+        Seasonal periodicity.
     model : {"additive", "multiplicative"}, default="additive"
-        Model to use for estimating seasonal component
+        Model to use for estimating seasonal component.
 
     Attributes
     ----------
@@ -49,11 +49,11 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
     Notes
     -----
-    - For further explanation on seasonal components and additive vs.
+    For further explanation on seasonal components and additive vs.
     multiplicative models see
-    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`
-    - seasonal decomposition is computed using `statsmodels
-    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`.
+    Seasonal decomposition is computed using `statsmodels
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`.
 
     Examples
     --------
@@ -219,9 +219,9 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         seasonal and False otherwise. If None,
         90% autocorrelation seasonality test is used.
     sp : int, default=1
-        Seasonal periodicity
+        Seasonal periodicity.
     model : {"additive", "multiplicative"}, default="additive"
-        Model to use for estimating seasonal component
+        Model to use for estimating seasonal component.
 
     Attributes
     ----------
@@ -237,11 +237,11 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
     Notes
     -----
-    - For further explanation on seasonal components and additive vs.
+    For further explanation on seasonal components and additive vs.
     multiplicative models see
-    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`
-    - seasonal decomposition is computed using `statsmodels
-    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`.
+    Seasonal decomposition is computed using `statsmodels
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`.
 
 
     Examples

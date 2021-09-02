@@ -42,12 +42,12 @@ class Detrender(_SeriesToSeriesTransformer):
     forecaster : estimator object, default=None
         If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
         The forecasting model to remove the trend with
-        (e.g. PolynomialTrendForecaster)
+        (e.g. PolynomialTrendForecaster).
 
     Attributes
     ----------
     forecaster_ : estimator object
-        Model that defines the trend in the series
+        Model that defines the trend in the series.
 
     See Also
     --------
