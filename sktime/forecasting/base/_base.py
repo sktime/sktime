@@ -43,7 +43,6 @@ from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.series import check_series, check_equal_time_index
 
@@ -101,6 +100,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogeneous data
+
         Returns
         -------
         self :
@@ -450,9 +450,38 @@ class BaseForecaster(BaseEstimator):
         """
         self.check_is_fitted()
 
-        if return_pred_int:
-            raise NotImplementedError()
-        y = check_y(y)
+        if return_pred_int and not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. Please set return_pred_int=False. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        # checking y
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        check_y_args = {
+            "enforce_univariate": enforce_univariate,
+            "enforce_multivariate": enforce_multivariate,
+            "enforce_index_type": enforce_index_type,
+        }
+
+        # update only for non-empty data
+        y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
+        # end checking y
+
+        # checking X
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+        if self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
+        # end checking X
+
         cv = check_cv(cv)
 
         return self._predict_moving_cutoff(
