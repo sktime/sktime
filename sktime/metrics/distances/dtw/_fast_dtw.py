@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 import math
-from typing import Union, Tuple, Callable
+from typing import Tuple, Callable, List, Set
 import numpy as np
 from numba import njit, prange
 
-from sktime.metrics.distances.dtw._lower_bouding import LowerBounding
-from sktime.metrics.distances.base.base import BaseDistance, BasePairwise
-from sktime.metrics.distances._squared_dist import SquaredDistance
-from sktime.utils.numba_utils import np_mean
-
-
-def coarsening(self, x, y):
-    pass
+from sktime.metrics.distances.dtw._lower_bouding import _plot_values_on_matrix
+from sktime.metrics.distances.base.base import BaseDistance, NumbaSupportedDistance
+from sktime.metrics.distances.dtw._dtw_path import DtwPath
 
 
 @njit(parallel=True)
@@ -30,59 +25,325 @@ def _reduce_by_half(x: np.ndarray):
         Time series that is reduced by half
     """
     x_size = x.shape[0]
-    dim_size = x.shape[1]
-    half_x_size = math.floor(dim_size / 2)
-    half_arr = np.zeros((x_size, half_x_size))
-    for i in prange(x_size):
-        num_points = dim_size
-        if dim_size % 2 != 0:
-            num_points -= 1
+    time_series_size = x.shape[1]
+    half_x_size = math.floor(x_size / 2)
+    half_arr = np.zeros((half_x_size, time_series_size))
 
-        # inside njit np.mean doesn't work so calling a utils method to replace it
-        half_arr[i, :] = np_mean(np.reshape(x[i][:num_points], (-1, 2)))
+    for i in prange(half_x_size):
+        curr_index = i * 2
+        half_arr[i, :] = (x[curr_index] + x[curr_index + 1]) / 2
 
     return half_arr
 
 
-def projection(self, x, y):
-    pass
+@njit()
+def permutations(
+    arr: List,
+    arr_len: int,
+    x_val: int,
+    y_val: int,
+    execute_func: Callable[[int, int, int, int], Tuple],
+    return_arr: Set,
+) -> None:
+    """
+    Method that is used to calculate the permutations of each value in the array
+
+    Parameters
+    ----------
+    arr: List
+        Array containing the values to calculate permutations for
+    arr_len: int
+        Integer that is the array length
+    x_val: List
+        x_val to pass to the execute function
+    y_val: List
+        y_val to pass to the execute function
+    execute_func: Callable[[int, int, int, int], Tuple]
+        Function to execute for each permutation
+    return_arr: Set
+        Set containing the result of each execution of execute_func for each
+        permutation
+
+    Returns
+    -------
+    Set
+        Set containing the result of each execution of execute_func for each
+        permutation
+    """
+    for i in range(arr_len):
+        curr_i_val = arr[i]
+        for j in range(arr_len):
+            curr_j_val = arr[j]
+            execute_val = execute_func(curr_i_val, curr_j_val, x_val, y_val)
+            return_arr.add(execute_val)
 
 
-def refinment(self, x, y):
-    pass
+@njit()
+def _path_permutation_func(a: int, b: int, x_val: int, y_val: int) -> Tuple:
+    return x_val + a, y_val + b
 
 
-def _fast_dtw(x, y, radius, dist):
+@njit()
+def _calculate_path_values(path: np.ndarray, radius: int) -> Set:
+    """
+    Method used to calculate the path values
+
+    Parameters
+    ----------
+    path: List
+        Optimal dtw path
+    radius: int
+        Radius of fast dtw
+
+    Returns
+    -------
+    Set
+        Set containing the path values in range of the radius
+    """
+    path_permutations = set()
+    for i in range(len(path)):
+        path_permutations.add((path[i][0], path[i][1]))
+
+    radius_values = list(range(-radius, radius + 1))
+    radius_values_len = len(radius_values)
+
+    for i in range(len(path)):
+        x_val = path[i][0]
+        y_val = path[i][1]
+
+        permutations(
+            radius_values,
+            radius_values_len,
+            x_val,
+            y_val,
+            _path_permutation_func,
+            path_permutations,
+        )
+
+    return path_permutations
+
+
+@njit()
+def _window_permutation_func(a: int, b: int, x_val: int, y_val: int) -> Tuple:
+    """
+    Function executed for each window permutation
+
+    Parameters
+    ----------
+    a: int
+        First path coordinate
+    b: int
+        Second path coordinate
+    x_val: int
+
+    y_val
+
+    Returns
+    -------
+
+    """
+    return (x_val * 2 + a), (y_val * 2 + b)
+
+
+@njit()
+def _calculate_window_values(path_permutations: Set) -> Set:
+    """
+    Method used to calculate values to go into the bounding matrix for dtw
+    Parameters
+    ----------
+    path_permutations: List
+        Different path permutations
+
+    Returns
+    -------
+    List
+        Window values that will make up the bounding matrix
+    """
+    window_values = set()
+    window_values.add((0, 0))
+
+    permutation_values = [0, 1]
+
+    for path_coords in path_permutations:
+        permutations(
+            permutation_values,
+            2,
+            path_coords[0],
+            path_coords[1],
+            _window_permutation_func,
+            window_values,
+        )
+
+    return window_values
+
+
+@njit()
+def _construct_window(window_values, x_size, y_size):
+    """
+    Method use to construct the values that will make up the bounding matrix for dtw
+
+    Parameters
+    ----------
+    window_values: List
+        List of values to construct the window from
+    x_size: int
+        Size of x time series
+    y_size: int
+        Size of y time series
+
+    Returns
+    -------
+    List
+        Window containing the values that will make up the bounding matrix
+    """
+    # try:
+    window = []
+    start_j = 0
+    for i in range(0, x_size):
+        new_start_j = None
+        for j in range(start_j, y_size):
+            if (i, j) in window_values:
+                window.append([i, j])
+                if new_start_j is None:
+                    new_start_j = j
+            elif new_start_j is not None:
+                break
+        start_j = new_start_j
+    return window
+
+
+@njit()
+def _expand_window(path: np.ndarray, x_size: int, y_size: int, radius: int) -> List:
+    """
+    Method used to take a reduced path and expand it into a larger one
+
+    Parameters
+    ----------
+    path: np.ndarray
+        Warping path
+    x_size: int
+        Size of x time series
+    y_size: int
+        Size of y time series
+    radius: int
+        Size of the radius to consider for the warping path
+
+    Returns
+    -------
+    List
+        Expanded window to be used for dtw bounding matrix
+    """
+    path_permutations: Set = _calculate_path_values(path, radius)
+
+    window_values = _calculate_window_values(path_permutations)
+
+    return _construct_window(window_values, x_size, y_size)
+
+
+@njit()
+def _fast_dtw(
+    x: np.ndarray,
+    y: np.ndarray,
+    dist_func: Callable[[np.ndarray, np.ndarray, np.ndarray], Tuple],
+    radius: int,
+) -> Tuple[float, np.ndarray]:
+    """
+    Recursive method used to calculate fast dtw
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+    dist_func: Callable[[np.ndarray, np.ndarray, np.ndarray],  Tuple]
+        Numba compatible distance function to calculate dtw path
+    radius: int
+        Radius to calculate fast dtw over
+
+    Returns
+    -------
+    float
+        Distance between time series x and y
+    np.ndarray
+        Warping path between time series x and y
+    """
+
     min_time_size = radius + 2
 
-    while x.shape[1] >= min_time_size or y.shape[1] >= min_time_size:
-        x = _reduce_by_half(x)
-        y = _reduce_by_half(y)
+    if x.shape[0] < min_time_size or y.shape[0] < min_time_size:
+        return dist_func(x, y)
 
-    distance, path = _fast_dtw(x_shrinked, y_shrinked, radius=radius, dist=dist)
-    # window = _expand_window(path, len(x), len(y), radius)
-    return
-    # return __dtw(x, y, window, dist=dist)
+    x_reduce = _reduce_by_half(x)
+    y_reduce = _reduce_by_half(y)
+
+    distance, path = _fast_dtw(x_reduce, y_reduce, dist_func, radius)
+
+    window = _expand_window(path, x.shape[0], y.shape[0], radius)
+
+    matrix = np.full((y.shape[0], x.shape[0]), np.inf)
+
+    bounding_matrix = _plot_values_on_matrix(matrix, np.array(window))
+
+    return dist_func(x, y, bounding_matrix)
 
 
-class FastDtw(BaseDistance, BasePairwise):
+class FastDtw(BaseDistance, NumbaSupportedDistance):
     """
     Class that defines the FastDtw distance algorithm
 
     Parameters
     ----------
-    radius: int, defaults = 2
+    radius: int, defaults = 0
         Distance to search outside of the projected warp path from the previous
         resolution when refining the warp path
     """
 
-    def __init__(self, radius=2):
+    def __init__(self, radius=1):
         super(FastDtw, self).__init__("fastdtw", {"fast dynamic me warping"})
         self.radius = radius
 
     def _distance(self, x: np.ndarray, y: np.ndarray):
-        test = _reduce_by_half(x)
-        pass
+        """
+        Method used to compute the distance between two timeseries
 
-    def _pairwise(self, x: np.ndarray, y: np.ndarray, symmetric: bool) -> np.ndarray:
-        pass
+        Parameters
+        ----------
+        x: np.ndarray
+            First time series
+        y: np.ndarray
+            Second time series
+
+        Returns
+        -------
+        float
+            Distance between time series x and time series y
+        """
+        radius = self._check_params()
+        numba_dtw = DtwPath().numba_distance(x, y)
+        distance, _ = _fast_dtw(x, y, numba_dtw, radius)
+        return distance
+
+    def _check_params(self) -> int:
+        """
+        Method used to check the parameters for fast dtw
+
+        Returns
+        -------
+        int
+            Radius to use in fast dtw
+        """
+        if self.radius < 0:
+            raise ValueError("Radius must be a positive number")
+        return self.radius
+
+    def numba_distance(self, x, y) -> Callable[[np.ndarray, np.ndarray, int], float]:
+        radius = self._check_params()
+        numba_dtw = DtwPath().numba_distance(x, y)
+
+        @njit()
+        def numba_fast_dtw(x: np.ndarray, y: np.ndarray, radius: int = radius) -> float:
+            distance, _ = _fast_dtw(x, y, numba_dtw, radius)
+            return distance
+
+        return numba_fast_dtw

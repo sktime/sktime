@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
+import warnings
 from typing import Union, Tuple, Callable
 import numpy as np
 from numba import njit
 
 from sktime.metrics.distances.dtw._lower_bouding import LowerBounding
-from sktime.metrics.distances.base.base import BaseDistance, BasePairwise
+from sktime.metrics.distances.base.base import (
+    BaseDistance,
+    NumbaSupportedDistance,
+    _numba_pairwise,
+)
 from sktime.metrics.distances._squared_dist import SquaredDistance
 
 
-@njit
+@njit()
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
@@ -44,7 +49,7 @@ def _cost_matrix(
     return cost_matrix[1:, 1:]
 
 
-class Dtw(BaseDistance, BasePairwise):
+class Dtw(BaseDistance, NumbaSupportedDistance):
     """
     Class that is used to calculate the dynamic time warping distance
 
@@ -61,9 +66,11 @@ class Dtw(BaseDistance, BasePairwise):
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope of itakura
     custom_cost_matrix_distance: BasePairwise or Callable
-        Distance pairwise to use a custom distance for calculating cost matrix. If
+        Custom pairwise distance function for distances used in dtw. If
         passing a custom Callable it takes the form: func(x, y) -> np.ndarray
         where the return is a matrix of the pairwise distance
+    custom_bounding_matrix: np.ndarray, default = None
+        Custom bounding matrix to use
     """
 
     def __init__(
@@ -71,19 +78,24 @@ class Dtw(BaseDistance, BasePairwise):
         lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
         sakoe_chiba_window_radius: int = 2,
         itakura_max_slope: float = 2.0,
-        custom_cost_matrix_distance: Union[BasePairwise, Callable] = SquaredDistance(),
+        custom_cost_matrix_distance: Union[BaseDistance, Callable] = None,
+        custom_bounding_matrix: np.ndarray = None,
     ):
         super(Dtw, self).__init__("dtw", {"dynamic me warping"})
         self.lower_bounding: Union[LowerBounding, int] = lower_bounding
         self.sakoe_chiba_window_radius: int = sakoe_chiba_window_radius
         self.itakura_max_slope: float = itakura_max_slope
-        self.custom_cost_matrix_distance: Union[
-            BasePairwise, Callable
-        ] = custom_cost_matrix_distance
+
+        if custom_cost_matrix_distance is None:
+            self.custom_cost_matrix_distance = SquaredDistance()
+        else:
+            self.custom_cost_matrix_distance = custom_cost_matrix_distance
+
+        self.custom_bounding_matrix: np.ndarray = custom_bounding_matrix
 
     def _distance(self, x: np.ndarray, y: np.ndarray):
         """
-        Method used to compute the distance between two ts series
+        Method used to compute the distance between two timeseries
 
         Parameters
         ----------
@@ -103,38 +115,6 @@ class Dtw(BaseDistance, BasePairwise):
         cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
 
         return np.sqrt(cost_matrix[-1, -1])
-
-    def _pairwise(self, x: np.ndarray, y: np.ndarray, symmetric: bool) -> np.ndarray:
-        """
-        Method to compute a pairwise distance on a matrix (i.e. distance between each
-        ts in the matrix)
-
-        Parameters
-        ----------
-        x: np.ndarray
-            First matrix of multiple time series
-        y: np.ndarray
-            Second matrix of multiple time series.
-        symmetric: bool
-            boolean that is true when the two time series are equal to each other
-
-        Returns
-        -------
-        np.ndarray
-            Matrix containing the pairwise distance between each point
-        """
-
-        bounding_matrix, pre_computed_distances = self._dtw_setup(x, y)
-
-        @njit
-        def pairwise_wrapper(x: np.ndarray, y: np.ndarray) -> float:
-            cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
-            return np.sqrt(cost_matrix[-1, -1])
-
-        distance_matrix = self.compute_pairwise_matrix(
-            x, y, symmetric, pairwise_wrapper
-        )
-        return distance_matrix
 
     def _check_params(self):
         """
@@ -163,6 +143,24 @@ class Dtw(BaseDistance, BasePairwise):
 
         return lower_bounding, sakoe_chiba_window_radius, itakura_max_slope
 
+    def _resolve_bounding_matrix(self, x, y):
+        (
+            lower_bounding,
+            sakoe_chiba_window_radius,
+            itakura_max_slope,
+        ) = self._check_params()
+
+        if self.custom_bounding_matrix is None:
+            bounding_matrix = lower_bounding.create_bounding_matrix(
+                x,
+                y,
+                sakoe_chiba_window_radius=sakoe_chiba_window_radius,
+                itakura_max_slope=itakura_max_slope,
+            )
+        else:
+            bounding_matrix = self.custom_bounding_matrix
+        return bounding_matrix
+
     def _dtw_setup(self, x, y) -> Tuple[np.ndarray, np.ndarray]:
         """
         Method used to validate and setup parameters to perform dtw
@@ -181,19 +179,81 @@ class Dtw(BaseDistance, BasePairwise):
         pre_computed_distances: np.ndarray
             Pairwise matrix of distances between each point
         """
-        (
-            lower_bounding,
-            sakoe_chiba_window_radius,
-            itakura_max_slope,
-        ) = self._check_params()
+        bounding_matrix = self._resolve_bounding_matrix(x, y)
 
-        bounding_matrix = lower_bounding.create_bounding_matrix(
-            x, y, sakoe_chiba_window_radius, itakura_max_slope
-        )
-
-        if isinstance(self.custom_cost_matrix_distance, BasePairwise):
+        if isinstance(self.custom_cost_matrix_distance, BaseDistance):
             pre_computed_distances = self.custom_cost_matrix_distance.pairwise(x, y)
         else:
             pre_computed_distances = self.custom_cost_matrix_distance(x, y)
 
         return bounding_matrix, pre_computed_distances
+
+    def _numba_parameter_check(self, x, y):
+        """
+        Method used to check the incoming parameters for the numba distance function
+
+        Parameters
+        ----------
+        x: np.ndarray
+            First time series
+        y: np.ndarray
+            Second time series
+
+        Returns
+        -------
+        np.ndarray
+            Bounding matrix for dtw
+        Callable
+            Distance function to use in dtw
+        """
+        bounding_matrix = self._resolve_bounding_matrix(x, y)
+
+        if isinstance(self.custom_cost_matrix_distance, NumbaSupportedDistance):
+            dist_func = self.custom_cost_matrix_distance.numba_distance(x, y)
+        elif isinstance(self.custom_cost_matrix_distance, Callable):
+            dist_func = self.custom_cost_matrix_distance
+        else:
+            warnings.warn(
+                "The current distance metric passed isn't numba compatible,"
+                "defaulting to SquaredDistance"
+            )
+            dist_func = SquaredDistance().numba_distance(x, y)
+
+        return bounding_matrix, dist_func
+
+    def numba_distance(self, x, y) -> Callable[[np.ndarray, np.ndarray], float]:
+        """
+        Method used to return a numba callable distance, this assume that all checks
+        have been done so the function returned doesn't need to check but checks
+        should be done before the return
+
+        Parameters
+        ----------
+        x: np.ndarray
+            First time series
+        y: np.ndarray
+            Second time series
+
+        Returns
+        -------
+        Callable
+            Numba compiled function (i.e. has @njit decorator)
+        """
+        bounding_matrix, dist_func = self._numba_parameter_check(x, y)
+
+        @njit()
+        def numba_dtw(
+            x: np.ndarray,
+            y: np.ndarray,
+            bounding_matrix: np.ndarray = bounding_matrix,
+            dist_func: Callable = dist_func,
+        ) -> float:
+            symmetric = np.array_equal(x, y)
+
+            computed_distances = _numba_pairwise(x, y, symmetric, dist_func)
+
+            cost_matrix = _cost_matrix(x, y, bounding_matrix, computed_distances)
+
+            return np.sqrt(cost_matrix[-1, -1])
+
+        return numba_dtw

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from typing import List
+from typing import List, Any
 from scipy.spatial.distance import cdist
 
-from sktime.metrics.distances.base.base import BaseDistance, BasePairwise
+from sktime.metrics.distances.base.base import BaseDistance
 
 
-class ScipyDistance(BaseDistance, BasePairwise):
+class ScipyDistance(BaseDistance):
     """
     Class that supports the scipy distance functions for time series
 
@@ -22,9 +22,9 @@ class ScipyDistance(BaseDistance, BasePairwise):
         ‘yule’.
     """
 
-    def __init__(self, metric: str, kwargs={}):
-        self.metric = metric
-        self.kwargs = kwargs
+    def __init__(self, metric: str, kwargs=None):
+        self.metric: str = metric
+        self.kwargs: Any = kwargs
         super(ScipyDistance, self).__init__("scipy", {"scipy distance"})
 
     def _distance(self, x: np.ndarray, y: np.ndarray) -> float:
@@ -43,41 +43,14 @@ class ScipyDistance(BaseDistance, BasePairwise):
         float
             Distance between time series x and time series y
         """
-        return float(np.sum(cdist(x, y, metric=self.metric, **self.kwargs)))
+        if self.kwargs is None:
+            kwargs = {}
+        distances = cdist(x, y, metric=self.metric, **kwargs)
+        dist_sum = 0.0
+        for i in range(x.shape[1]):
+            dist_sum += distances[i, i]
 
-    def _pairwise(self, x: np.ndarray, y: np.ndarray, symmetric: bool) -> np.ndarray:
-        """
-        Method to compute a pairwise distance on a matrix (i.e. distance between each
-        ts in the matrix)
-
-        Parameters
-        ----------
-        x: np.ndarray
-            First matrix of multiple time series
-        y: np.ndarray
-            Second matrix of multiple time series.
-        symmetric: bool
-            boolean that is true when the two time series are equal to each other
-
-        Returns
-        -------
-        np.ndarray
-            Matrix containing the pairwise distance between each point
-        """
-        x_size = x.shape[0]
-        y_size = y.shape[0]
-
-        pairwise_matrix = np.zeros((x_size, y_size))
-
-        for i in range(x_size):
-            curr_x = x[i]
-            for j in range(y_size):
-                if symmetric and j < i:
-                    pairwise_matrix[i, j] = pairwise_matrix[j, i]
-                else:
-                    pairwise_matrix[i, j] = self.distance(curr_x, y[j])
-
-        return pairwise_matrix
+        return dist_sum
 
     @staticmethod
     def supported_scipy_distances() -> List:

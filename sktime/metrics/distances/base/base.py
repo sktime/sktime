@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Union, Any, List, Tuple, Callable, Set
-
+from typing import Union, Tuple, Callable, Set
 import numpy as np
 from numba import njit, prange
 
@@ -77,8 +76,6 @@ class BaseDistance:
         """
         raise NotImplementedError("Missing distance implementation")
 
-
-class BasePairwise:
     def pairwise(self, x: SktimeMatrix, y: SktimeMatrix = None) -> np.ndarray:
         """
         Method to compute a pairwise distance on a matrix (i.e. distance between each
@@ -100,29 +97,49 @@ class BasePairwise:
         if x.ndim <= 2:
             x = np.reshape(x, x.shape + (1,))
             y = np.reshape(y, y.shape + (1,))
-        x, y, symmetric = BasePairwise._format_pairwise_matrix(x, y)
-        return self._pairwise(x, y, symmetric)
+        x, y, symmetric = BaseDistance._format_pairwise_matrix(x, y)
+        if isinstance(self, NumbaSupportedDistance):
+            return _numba_pairwise(x, y, symmetric, self.numba_distance(x, y))
+        else:
+            return self._pairwise(x, y, symmetric)
 
-    def _pairwise(self, x: np.ndarray, y: np.ndarray, symmetric: bool) -> np.ndarray:
+    def _pairwise(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        symmetric: bool,
+    ) -> np.ndarray:
         """
-        Method to compute a pairwise distance on a matrix (i.e. distance between each
-        ts in the matrix)
+        Method that takes a distance function and computes the pairwise distance
 
         Parameters
         ----------
         x: np.ndarray
-            First matrix of multiple time series
+            First 3d numpy array containing multiple timeseries
         y: np.ndarray
-            Second matrix of multiple time series.
+            Second 3d numpy array containing multiple timeseries
         symmetric: bool
-            boolean that is true when the two time series are equal to each other
+            Boolean when true means the two matrices are the same
 
         Returns
         -------
         np.ndarray
-            Matrix containing the pairwise distance between each point
+            Matrix containing the pairwise distance between the two matrices
         """
-        raise NotImplementedError("Missing distance implementation")
+        x_size = x.shape[0]
+        y_size = y.shape[0]
+
+        pairwise_matrix = np.zeros((x_size, y_size))
+
+        for i in range(x_size):
+            curr_x = x[i]
+            for j in range(y_size):
+                if symmetric and j < i:
+                    pairwise_matrix[i, j] = pairwise_matrix[j, i]
+                else:
+                    pairwise_matrix[i, j] = self.distance(curr_x, y[j])
+
+        return pairwise_matrix
 
     @staticmethod
     def _format_pairwise_matrix(
@@ -162,45 +179,69 @@ class BasePairwise:
 
         return x, y, symmetric
 
-    @staticmethod
-    @njit(parallel=True)
-    def compute_pairwise_matrix(
-        x: np.ndarray,
-        y: np.ndarray,
-        symmetric: bool,
-        dist_func: Callable[[np.ndarray, np.ndarray], float],
-    ) -> np.ndarray:
+
+class NumbaSupportedDistance:
+    def numba_distance(self, x, y) -> Callable[[np.ndarray, np.ndarray], float]:
         """
-        Method that takes a distance function and computes the pairwise distance
+        Method used to return a numba callable distance, this assume that all checks
+        have been done so the function returned doesn't need to check but checks
+        should be done before the return
 
         Parameters
         ----------
         x: np.ndarray
-            First 3d numpy array containing multiple timeseries
+            First time series
         y: np.ndarray
-            Second 3d numpy array containing multiple timeseries
-        symmetric: bool
-            Boolean when true means the two matrices are the same
-        dist_func: Callable[[np.ndarray, np.ndarray], float]
-            Callable that is a distance function to measure the distance between two
-            time series. NOTE: This must be a numba compatible function (i.e. @njit)
+            Second time series
 
         Returns
         -------
-        np.ndarray
-            Matrix containing the pairwise distance between the two matrices
+        Callable
+            Numba compiled function (i.e. has @njit decorator)
         """
-        x_size = x.shape[0]
-        y_size = y.shape[0]
 
-        pairwise_matrix = np.zeros((x_size, y_size))
+        raise NotImplementedError("Implement method")
 
-        for i in prange(x_size):
-            curr_x = x[i]
-            for j in range(y_size):
-                if symmetric and j < i:
-                    pairwise_matrix[i, j] = pairwise_matrix[j, i]
-                else:
-                    pairwise_matrix[i, j] = dist_func(curr_x, y[j])
 
-        return pairwise_matrix
+@njit(parallel=True)
+def _numba_pairwise(
+    x: np.ndarray,
+    y: np.ndarray,
+    symmetric: bool,
+    dist_func: Callable[[np.ndarray, np.ndarray], float],
+) -> np.ndarray:
+    """
+    Method that takes a distance function and computes the pairwise distance
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First 3d numpy array containing multiple timeseries
+    y: np.ndarray
+        Second 3d numpy array containing multiple timeseries
+    symmetric: bool
+        Boolean when true means the two matrices are the same
+    dist_func: Callable[[np.ndarray, np.ndarray], float]
+        Callable that is a distance function to measure the distance between two
+        time series. NOTE: This must be a numba compatible function (i.e. @njit)
+
+    Returns
+    -------
+    np.ndarray
+        Matrix containing the pairwise distance between the two matrices
+    """
+    x_size = x.shape[0]
+    y_size = y.shape[0]
+
+    pairwise_matrix = np.zeros((x_size, y_size))
+
+    for i in range(x_size):
+        curr_x = x[i]
+
+        for j in prange(y_size):
+            if symmetric and j < i:
+                pairwise_matrix[i, j] = pairwise_matrix[j, i]
+            else:
+                pairwise_matrix[i, j] = dist_func(curr_x, y[j])
+
+    return pairwise_matrix

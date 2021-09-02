@@ -6,6 +6,14 @@ import math
 from numba import njit
 
 
+@njit()
+def _plot_values_on_matrix(bounding_matrix: np.ndarray, values: np.ndarray):
+    for i in range(values.shape[0]):
+        arr = values[i]
+        bounding_matrix[arr[0], arr[1]] = 0.0
+    return bounding_matrix
+
+
 class LowerBounding(Enum):
     """
     Enum for dtw lower bounding implementations
@@ -224,7 +232,12 @@ class LowerBounding(Enum):
         return line
 
     @staticmethod
-    @njit
+    @njit()
+    def plot_values_on_matrix(bounding_matrix: np.ndarray, values: np.ndarray):
+        return _plot_values_on_matrix(bounding_matrix, values)
+
+    @staticmethod
+    @njit()
     def create_shape_on_matrix(
         bounding_matrix: np.ndarray,
         y_upper_line: np.ndarray,

@@ -944,8 +944,8 @@ def to_numpy_time_series(x: Union[pd.Series, np.ndarray, List]) -> np.ndarray:
             X_copy = np.nan_to_num(X_copy)
         if X_copy.ndim <= 1:
             X_copy = X_copy.reshape((-1, 1))
-        if X_copy.dtype != np.float:
-            X_copy = X_copy.astype(np.float)
+        if X_copy.dtype != float:
+            X_copy = X_copy.astype(float)
         return X_copy
     elif isinstance(x, pd.Series):
         return to_numpy_time_series(from_nested_to_2d_array(x, return_numpy=True))

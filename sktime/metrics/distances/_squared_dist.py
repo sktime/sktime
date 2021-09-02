@@ -1,11 +1,44 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from numba import njit
+from typing import Callable
 
-from sktime.metrics.distances.base.base import BaseDistance, BasePairwise
+from sktime.metrics.distances.base.base import BaseDistance, NumbaSupportedDistance
 
 
-class SquaredDistance(BaseDistance, BasePairwise):
+@njit()
+def _squared_dist(x: np.ndarray, y: np.ndarray) -> float:
+    """
+    Method used to calculate the squared distance between two series
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First time series
+    y: np.ndarray
+        Second time series
+
+    Returns
+    -------
+    distance: float
+        squared distance between the two series
+    """
+    x_size = x.shape[0]
+    distance = 0.0
+
+    dimension_size = x.shape[1]
+
+    for i in range(x_size):
+        curr_x = x[i]
+        curr_y = y[i]
+        for j in range(dimension_size):
+            curr = curr_x[j] - curr_y[j]
+            distance += curr * curr
+
+    return distance
+
+
+class SquaredDistance(BaseDistance, NumbaSupportedDistance):
     """
     Class that is used to calculate the squared distance between a time series. This
     is calculated as follows.
@@ -42,31 +75,13 @@ class SquaredDistance(BaseDistance, BasePairwise):
         float
             Distance between time series x and time series y
         """
+        return _squared_dist(x, y)
 
-        return self._squared_dist(x, y)
-
-    def _pairwise(self, x: np.ndarray, y: np.ndarray, symmetric: bool) -> np.ndarray:
+    def numba_distance(self, x, y) -> Callable[[np.ndarray, np.ndarray], float]:
         """
-        Method to compute a pairwise distance on a matrix (i.e. distance between each
-        ts in the matrix)
-
-        Returns
-        -------
-        x: np.ndarray
-            First matrix of multiple time series
-        y: np.ndarray
-            Second matrix of multiple time series.
-        kwargs: Any
-            Key word arguments
-        """
-
-        return self.compute_pairwise_matrix(x, y, symmetric, self._squared_dist)
-
-    @staticmethod
-    @njit
-    def _squared_dist(x: np.ndarray, y: np.ndarray) -> float:
-        """
-        Method used to calculate the squared distance between two series
+        Method used to return a numba callable distance, this assume that all checks
+        have been done so the function returned doesn't need to check but checks
+        should be done before the return
 
         Parameters
         ----------
@@ -77,18 +92,21 @@ class SquaredDistance(BaseDistance, BasePairwise):
 
         Returns
         -------
-        distance: float
-            squared distance between the two series
+        Callable
+            Numba compiled function (i.e. has @njit decorator)
         """
-        x_size = x.shape[0]
-        distance = 0.0
-        dimension_size = x.shape[1]
 
-        for i in range(x_size):
-            curr_x = x[i]
-            curr_y = y[i]
-            for j in range(dimension_size):
-                curr = curr_x[j] - curr_y[j]
-                distance += curr * curr
+        @njit()
+        def _numba_squared_dist(x: np.ndarray, y: np.ndarray) -> float:
+            if x.ndim < 2:
+                _x = np.reshape(x, (-1, 1))
+            else:
+                _x = x
+            if y.ndim < 2:
+                _y = np.reshape(y, (-1, 1))
+            else:
+                _y = y
 
-        return distance
+            return _squared_dist(_x, _y)
+
+        return _numba_squared_dist
