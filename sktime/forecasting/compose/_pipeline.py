@@ -74,18 +74,21 @@ class _Pipeline(
         """Return the length of the Pipeline."""
         return len(self.steps)
 
-    def _get_inverse_transform(self, y):
+    def _get_inverse_transform(self, y, X):
         """Iterate over transformers.
 
         Inverse transform y (used for y_pred and pred_int)
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
+            Target series
+        X : pd.Series, pd.DataFrame
+            Exogenous series.
 
         Returns
         -------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
             Inverse transformed y
         """
         for _, _, transformer in self._iter_transformers(reverse=True):
@@ -93,7 +96,7 @@ class _Pipeline(
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             skip_trafo = transformer.get_tag("skip-inverse-transform", False)
             if not skip_trafo:
-                y = transformer.inverse_transform(y)
+                y = transformer.inverse_transform(y, X)
         return y
 
     @property
@@ -315,7 +318,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     _required_parameters = ["steps"]
     _tags = {
-        "univariate-only": True,
+        "scitype:y": "both",
+        "univariate-only": False,
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -341,7 +346,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y, X)
+        # self._set_y_X(y, X)
 
         # transform
         for step_idx, name, transformer in self._iter_transformers():
@@ -382,14 +387,14 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
                 fh, X, return_pred_int=return_pred_int, alpha=alpha
             )
             # inverse transform pred_int
-            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"])
-            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"])
+            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"], X)
+            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"], X)
         else:
             y_pred = forecaster.predict(
                 fh, X, return_pred_int=return_pred_int, alpha=alpha
             )
         # inverse transform y_pred
-        y_pred = self._get_inverse_transform(y_pred)
+        y_pred = self._get_inverse_transform(y_pred, X)
         if return_pred_int:
             return y_pred, pred_int
         else:
