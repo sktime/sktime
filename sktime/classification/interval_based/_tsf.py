@@ -14,7 +14,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators.interval_based import (
     BaseTimeSeriesForest,
 )
-from sktime.utils.validation.panel import check_X
 from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
 
 
@@ -66,7 +65,7 @@ class TimeSeriesForestClassifier(
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -81,10 +80,10 @@ class TimeSeriesForestClassifier(
         -------
         output : array of shape = [n_test_instances]
         """
-        proba = self.predict_proba(X)
+        proba = self._predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -102,8 +101,6 @@ class TimeSeriesForestClassifier(
         output : nd.array of shape = (n_instances, n_classes)
             Predicted probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         _, series_length = X.shape

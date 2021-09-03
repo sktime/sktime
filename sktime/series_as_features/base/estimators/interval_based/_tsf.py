@@ -34,12 +34,12 @@ class BaseTimeSeriesForest:
     """Base time series forest classifier."""
 
     # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -69,7 +69,7 @@ class BaseTimeSeriesForest:
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -87,7 +87,7 @@ class BaseTimeSeriesForest:
         X, y = check_X_y(
             X,
             y,
-            enforce_univariate=not self.capabilities["multivariate"],
+            enforce_univariate=not self._tags["capability:multivariate"],
             coerce_to_numpy=True,
         )
         X = X.squeeze(1)
