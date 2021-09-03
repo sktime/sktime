@@ -68,7 +68,14 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
-        Y_pred = self._pipe.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        # Call predict on the forecaster directly, not on the pipeline
+        # because of output conversion
+        Y_pred = self._pipe.steps_[-1][-1].predict(
+            fh, X, return_pred_int=return_pred_int, alpha=alpha
+        )
 
         return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
+
+    def _update(self, y, X=None, update_params=True):
+        self._pipe._update(y, X=None, update_params=True)
+        return self
