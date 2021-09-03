@@ -75,7 +75,7 @@ from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
-
+from sktime.transformations.series.compose import ConditionalImputer
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -239,6 +239,7 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
+    ConditionalImputer: {"imputer": Imputer("mean"), "annotator": HampelFilter(3)},
 }
 
 # These methods should not change the state of the estimator, that is, they should

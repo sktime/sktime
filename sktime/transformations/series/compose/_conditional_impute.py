@@ -1,28 +1,31 @@
 # -*- coding: utf-8 -*-
 
-__author__ = ["Markus Löning", "Satya Pattnaik"]
 
 import numpy as np
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
+from sklearn import clone
+
+__author__ = ["Markus Löning", "satya-pattnaik"]
+_required_parameters = ["imputer", "annotator"]
 
 
 class ConditionalImputer(_SeriesToSeriesTransformer):
 
     """Conditonal Imputer that uses a Sktime Imputer to
-       impute values set to nan by the detector.
+       impute values set to nan by the annotator.
     Parameters
     ----------
     imputer : Sktime Imputer
-    detector : Sktime Annotator/Detector
+    annotator : Sktime Annotator/annotator
     """
 
     _tags = {"skip-inverse-transform": True}
 
-    def __init__(self, imputer, detector):
+    def __init__(self, imputer, annotator):
         self.imputer = imputer
-        self.detector = detector
+        self.annotator = annotator
 
     def fit(self, Z, X=None):
         """
@@ -40,10 +43,12 @@ class ConditionalImputer(_SeriesToSeriesTransformer):
 
         z = check_series(Z, enforce_univariate=True)
 
-        self.detector_ = self.detector.fit(z)
+        self.annotator_ = clone(self.annotator)
+        self.annotator_.set_params({"fmt": "dense"})
+        self.annotator_.fit(z)
 
-        z = z.to_numpy().reshape(-1, 1)
-        self.imputer_ = self.imputer.fit(z)
+        self.imputer_ = clone(self.imputer)
+        self.imputer_.fit(z)
 
         return self
 
@@ -63,40 +68,8 @@ class ConditionalImputer(_SeriesToSeriesTransformer):
 
         z = check_series(Z, enforce_univariate=True)
 
-        outliers = self.detector_.transform(z)
+        outliers = self.annotator_.transform(z)
 
-        Zt = Z.copy()
-        Zt.iloc[outliers[outliers].index] = np.nan
-
-        z = Zt
-        zt = self.imputer_.transform(z)
-        return zt
-
-    def fit_transform(self, Z, X=None):
-        """
-        Fit to training data.
-        Returns a transformed version of Z.
-        Parameters
-        ----------
-        Z : pd.Series
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-        Returns
-        -------
-        Zt : pd.Series
-            Transformed(Conditionally Imputed) time series.
-        """
-
-        z = check_series(Z, enforce_univariate=True)
-
-        self.detector_ = self.detector.fit(z)
-
-        outliers = self.detector_.transform(z)
-
-        Zt = Z.copy()
-        Zt[outliers[outliers].index] = np.nan
-
-        z = Zt
-        self.imputer_ = self.imputer.fit(z)
-        zt = self.imputer_.fit_transform(z)
-        return zt
+        z.iloc[outliers[outliers].index] = np.nan
+        z = self.imputer_.transform(z)
+        return z
