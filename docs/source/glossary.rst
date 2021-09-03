@@ -79,9 +79,6 @@ sktime.
         patients, chemical process runs, machines, countries, etc. May also be referred to as samples, examples, observations or records
         depending on the discipline and context.
 
-
-
-
     Trend
         When data shows a long-term increase or decrease, this is referred to as a trend. Trends can also be non-linear.
 
