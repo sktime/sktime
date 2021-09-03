@@ -83,7 +83,7 @@ guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rs
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
+All contributors are listed `here <contributors.md>`_.
 
 .. _algorithm-maintainers:
 
@@ -136,9 +136,7 @@ Core developers are contributors who have shown that they are dedicated
 to the continued development of the project through ongoing engagement
 with the community.
 
-Current core developers are listed in the `core-developers
-team <https://github.com/orgs/sktime/teams/core-developers/members>`__
-within the sktime organisation on GitHub.
+Current core developers are listed in :ref:`team`.
 
 .. _rights-and-responsibilities-1:
 
@@ -188,8 +186,7 @@ CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
 CoC members are contributors with special rights and responsibilities.
-The current members of the CoC committee are listed in the
-`CoC <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+The current members of the CoC committee are listed in :ref:`team`.
 
 .. _rights-and-responsibilities-2:
 
@@ -231,9 +228,7 @@ CC (community council) members are core developers with additional rights and
 responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
-Current CC members are listed in the `community-council
-team <https://github.com/orgs/sktime/teams/community-council/members>`__
-within the sktime organisation on GitHub.
+Current CC members are listed in :ref:`team`.
 
 .. _rights-and-responsibilities-3:
 
@@ -452,8 +447,7 @@ of contributions and are committed to recognising each of them fairly.
 
 We follow the `all-contributors <https://allcontributors.org>`__
 specification to recognise all contributors, including those that don’t
-contribute code. Please see `our list of all
-contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
+contribute code. Please see our list of all contributors `here <contributors.md>`_.
 
 If you think, we’ve missed anything, please let us know or open a PR
 with the appropriate changes to

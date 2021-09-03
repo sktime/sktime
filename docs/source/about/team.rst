@@ -1,8 +1,8 @@
-.. _roles:
+.. _team:
 
-===============
-Community roles
-===============
+=====
+Roles
+=====
 
 The roles are described in sktime's :ref:`governance` document.
 A list of all contributors can be found `here <contributors.md>`_.
@@ -15,7 +15,7 @@ Community Council
 
    * - Name
      - GitHub ID
-   * - Tony Bagnall
+   * - Anthony Bagnall
      - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
@@ -30,7 +30,7 @@ Code of Conduct Committee
 
    * - Name
      - GitHub ID
-   * - Tony Bagnall
+   * - Anthony Bagnall
      - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
@@ -47,28 +47,28 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Tony Bagnall
-     - :user:`TonyBagnall`
-   * - Franz Kiraly
-     - :user:`fkiraly`
-   * - Markus Löning
-     - :user:`mloning`
-   * - Lovkush Agarwal
-     - :user:`lovkush-a`
    * - Aaron Bostrom
      - :user:`abostrom`
+   * - Anthony Bagnall
+     - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
-   * - James Large
-     - :user:`james-large`
-   * - Matthew Middlehurst
-     - :user:`mattewmiddlehurst`
+   * - Franz Kiraly
+     - :user:`fkiraly`
    * - George Oastler
      - :user:`goastler`
+   * - Markus Löning
+     - :user:`mloning`
+   * - James Large
+     - :user:`james-large`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
    * - Martin Walter
      - :user:`aiwalter`
+   * - Matthew Middlehurst
+     - :user:`mattewmiddlehurst`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
 
 Former Core Developers (inactive)
 ---------------------------------
@@ -84,9 +84,9 @@ Former Core Developers (inactive)
      - :user:`hyang1996`
    * - Jason Lines
      - :user:`jasonlines`
-   * - -
-     - :user:`big-o`
-   * - Patrick Rockenschaub
-     - :user:`prockenschaub`
    * - Mathew Smith
      - :user:`matteogales`
+   * - Patrick Rockenschaub
+     - :user:`prockenschaub`
+   * -
+     - :user:`big-o`
