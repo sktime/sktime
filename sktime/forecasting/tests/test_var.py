@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Tests the VAR model."""
+__author__ = ["Taiwo Owoseni"]
+
 from sktime.forecasting.var import VectorAutoRegression as VAR
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.base import ForecastingHorizon
@@ -17,6 +20,7 @@ df = pd.DataFrame(
 
 
 def test_var():
+    """Compares Sktime's and Statsmodel's VAR."""
     train, test = temporal_train_test_split(df)
     sktime_model = VAR()
     fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
