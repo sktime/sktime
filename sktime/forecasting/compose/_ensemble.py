@@ -61,8 +61,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     --------
     EnsembleForecaster
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import AutoEnsembleForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
