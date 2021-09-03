@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-# from sktime.forecasting.base._sktime import _SktimeForecaster
-# from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-# from sktime.base import _HeterogenousMetaEstimator
+"""Non-linear, network pipeline in which steps are not executed sequentially"""
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
 from sktime.forecasting.base import BaseForecaster
 
-__author__ = ["Viktor Kazakov"]
+__author__ = ["ViktorKaz"]
 __all__ = ["NetworkPipelineForecaster"]
 
 
@@ -23,12 +22,21 @@ class NetworkPipelineForecaster(BaseForecaster):
 
     Parameters
     ----------
-    steps : array of lists
+    steps : list of tuples
         list comprised of three elements:
             1. name of step (string),
             2. estimator (object),
-            3. arguments (dictionary) key value paris for
-            fit_transform or predict method of estimator
+                must be sktime transformer or forecaster
+            3. arguments (dictionary) key value pairs for
+            fit_transform or predict method of estimator.
+                Keys: parameters of fit_transform or predict.
+                Values: actual values or key words. Key words refer to
+                values passed to the fit, predict and update methods of
+                the pipeline.
+                    Key words:
+                    original_X: X
+                    original_y: y,
+                    original_fh: fh
 
     See Also
     --------
@@ -216,8 +224,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
 
     def _fit(self, y, X=None, fh=None):
         self.steps_ = self._check_steps_for_consistency()
-        self._set_y_X(y, X)
-        self._set_fh(fh)
+
         for name, est, arguments in self._iter(method="fit"):
             # check arguments of pipeline.
             # Inspect the `fit` key of the step arguments
