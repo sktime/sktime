@@ -59,7 +59,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 # helper function
 def _get_n_columns(tag):
-    """Returns the the number of columns to use in tests."""
+    """Return the the number of columns to use in tests."""
     n_columns_list = []
     if tag == "univariate":
         n_columns_list = [1]
