@@ -170,7 +170,7 @@ STEPS_X = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    ColumnEnsembleForecaster: {"forecasters": FORECASTERS},
+    ColumnEnsembleForecaster: {"forecasters": FORECASTER},
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
