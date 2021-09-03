@@ -65,6 +65,7 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "fit-in-transform": True,
+        "skip-inverse-transform": True,
     }
 
     def __init__(self, theta=(0, 2)):

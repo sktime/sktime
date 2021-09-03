@@ -27,13 +27,15 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, theta_values=(0, 2), aggfunc="mean", weights=None):
-        super(ThetaNewForecaster, self).__init__()
         self.aggfunc = aggfunc
-        self.forecasters = (None,)
+        self.forecasters = []
         self.weights = weights
         self.theta_values = theta_values
+        super(ThetaNewForecaster, self).__init__(forecasters=self.forecasters)
 
     def _fit(self, y, X=None, fh=None):
+        # TODO TransformedTargetForecaster should be able to work with multivariate data
+
         self.forecasters = []
         for i, theta in enumerate(self.theta_values):
             if theta == 0:
@@ -50,11 +52,23 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
                 ("forecaster", ColumnEnsembleForecaster(forecasters=self.forecasters)),
             ]
         )
-        self._pipe.fit()
+        # for i, theta in enumerate(self.theta_values):
+        #     if theta == 0:
+        #         forecaster_ = PolynomialTrendForecaster()
+        #     else:
+        #         forecaster_ = ExponentialSmoothing()
+        #     self._pipe = TransformedTargetForecaster(
+        #         steps=[
+        #             ("transformer", ThetaLinesTransformer(theta=theta)),
+        #             ("forecaster", forecaster_),
+        #         ]
+        #     )
+
+        self._pipe.fit(y=y, X=X, fh=fh)
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
 
         Y_pred = self._pipe.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-        return _aggregate(Y_pred)
+        return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
