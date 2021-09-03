@@ -24,8 +24,8 @@ MTYPE_REGISTER_PANEL = [
         "Panel",
         "2D np.array of format (n_instances, n_columns*n_timepoints)",
     ),
-    ("pd-multiindex", "Panel", "pd.DataFrame with multi-index (instance, time point)"),
-    ("pd-wide", "Panel", "pd.DataFrame in wide format, cols = (instance*time point)"),
+    ("pd-multiindex", "Panel", "pd.DataFrame with multi-index (instances, timepoints)"),
+    ("pd-wide", "Panel", "pd.DataFrame in wide format, cols = (instance*timepoints)"),
     (
         "pd-long",
         "Panel",
