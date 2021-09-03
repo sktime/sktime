@@ -100,6 +100,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogeneous data
+
         Returns
         -------
         self :
