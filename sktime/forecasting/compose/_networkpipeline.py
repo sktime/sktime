@@ -85,7 +85,6 @@ class NetworkPipelineForecaster(BaseForecaster):
     _tags = {
         "univariate-only": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
     }
 
     def __init__(self, steps, *args):
@@ -98,11 +97,10 @@ class NetworkPipelineForecaster(BaseForecaster):
         self._y_transformers = []
         super().__init__()
 
-        # for step in steps:
-        #     # TODO if there are conflicting tags
-        #     # the tags of the later steps will be used
-        #     # There might be a better solution
-        #     self._tags.update(step[1]._tags)
+        for step in steps:
+            # If there are conflicting tags
+            # the tags of the later steps will be used.
+            self._tags.update(step[1]._tags)
 
     def _iter(self, method):
         """
