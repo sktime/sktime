@@ -10,6 +10,7 @@ import os
 
 import pandas as pd
 
+from sktime.utils.validation.forecasting import check_y_X
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 from contextlib import contextmanager
@@ -43,7 +44,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._instantiate_model()
         self._check_changepoints()
-        self.check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
+        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
