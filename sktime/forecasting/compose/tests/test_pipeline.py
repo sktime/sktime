@@ -12,11 +12,12 @@ from sktime.datasets import load_airline
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+from sklearn.preprocessing import MinMaxScaler
 
 
 def test_pipeline():
@@ -27,7 +28,7 @@ def test_pipeline():
     forecaster = TransformedTargetForecaster(
         [
             ("t1", ExponentTransformer()),
-            ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
+            ("t2", TabularToSeriesAdaptor(MinMaxScaler())),
             ("forecaster", NaiveForecaster()),
         ]
     )
@@ -40,7 +41,7 @@ def test_pipeline():
         yt = y_train.copy()
         t1 = ExponentTransformer()
         yt = t1.fit_transform(yt)
-        t2 = Detrender(PolynomialTrendForecaster(degree=1))
+        t2 = TabularToSeriesAdaptor(MinMaxScaler())
         yt = t2.fit_transform(yt)
         forecaster = NaiveForecaster()
         forecaster.fit(yt, fh=fh)
