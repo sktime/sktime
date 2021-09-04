@@ -92,9 +92,9 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=T
 
         # reindex X to the alignment positions
         #  this also deals with np.nan indices
-        loc_inds = pd.Series(Xi.index, dtype="Int64").reindex(
-            align[indi], copy=copy
-        ).values
+        loc_inds = (
+            pd.Series(Xi.index, dtype="Int64").reindex(align[indi], copy=copy).values
+        )
         align[indi] = loc_inds
 
     return align
