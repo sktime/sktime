@@ -61,7 +61,7 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": False}
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster
@@ -73,7 +73,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Y : pd.Series
+        Z : pd.Series, pd.DataFrame
             Endogenous time series to fit a trend to.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables
@@ -105,14 +105,14 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y : pd.Series
+        Z : pd.Series, pd.DataFrame
             Time series to be detrended
         X : pd.DataFrame, optional (default=False)
             Exogenous variables
 
         Returns
         -------
-        y_hat : pd.Series
+        Zt : pd.Series, pd.DataFrame
             De-trended series
         """
         self.check_is_fitted()
@@ -145,14 +145,14 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y : pd.Series, list
-            Detrended time series to revert
+        Z : pd.Series, pd.DataFrame
+            Detrended series to inverse transform (add back trend)
         X : pd.DataFrame, optional (default=False)
             Exogenous variables
 
         Returns
         -------
-        y_hat : pd.Series
+        Z_inv : pd.Series, pd.DataFrame
             Series with the trend
         """
         self.check_is_fitted()
@@ -185,7 +185,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y_new : pd.Series
+        Z : pd.Series, pd.DataFrame
             New time series
         update_params : bool, optional (default=True)
             Update the parameters of the detrender model with

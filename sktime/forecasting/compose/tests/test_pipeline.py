@@ -13,10 +13,10 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.exponent import ExponentTransformer
 
 
 def test_pipeline():
@@ -25,7 +25,7 @@ def test_pipeline():
 
     forecaster = TransformedTargetForecaster(
         [
-            ("t1", Deseasonalizer(sp=12, model="multiplicative")),
+            ("t1", ExponentTransformer()),
             ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
             ("forecaster", NaiveForecaster()),
         ]
@@ -37,7 +37,7 @@ def test_pipeline():
     def compute_expected_y_pred(y_train, fh):
         # fitting
         yt = y_train.copy()
-        t1 = Deseasonalizer(sp=12, model="multiplicative")
+        t1 = ExponentTransformer()
         yt = t1.fit_transform(yt)
         t2 = Detrender(PolynomialTrendForecaster(degree=1))
         yt = t2.fit_transform(yt)
