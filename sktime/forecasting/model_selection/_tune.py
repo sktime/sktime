@@ -26,9 +26,9 @@ from sktime.utils.validation.forecasting import check_scoring
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
+        "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "univariate-only": True,
     }
 
     def __init__(
@@ -55,6 +55,7 @@ class BaseGridSearch(BaseForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
+        self.clone_tags(forecaster)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
