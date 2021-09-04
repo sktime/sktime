@@ -11,7 +11,7 @@ Community Showcase
      - Short Description
      - User
    * - `sktime: a unified python library for time series machine learning <https://towardsdatascience.com/sktime-a-unified-python-library-for-time-series-machine-learning-3c103c139a55>`_
-     -
+     -  Gives insights on importance of skime over scikit-learn, Proper Data Model for Time Series, and Highlights on unique features of sktime like sktime API, Code Examples of Time Series Models
      - :user:`Alexandra Amidon <lynnssi>`
    * - `Why start using sktime for forecasting? <https://medium.com/@jlenczuk/why-start-using-sktime-for-forecasting-8d6881c0a518>`_
      - Overview of sktime’s features that distinguish it from other forecasting frameworks
