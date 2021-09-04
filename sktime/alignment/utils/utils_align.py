@@ -40,15 +40,17 @@ def reindex_iloc(df, inds, copy=True):
     return df_ret
 
 
-def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
+def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=True):
     """Convert iloc alignment to loc alignment, using reference data frame.
 
     Parameters
     ----------
     align: pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
-        cols contain loc index of X[i] mapped to alignment coordinate for alignment
+        cols contain iloc index of X[i] mapped to alignment coordinate for alignment
     align_name: str, optional - name of "align" to display in error messages
     df_name: str, optional - name of "X" to display in error messages
+    copy: bool, optional, default=True - whether returned data frame is a new object
+        if not, values are references; passed to copy arg of df.reindex
 
     Returns
     -------
@@ -68,8 +70,6 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
     # from sktime.datatypes import check_is
     # check_is(align, "align-frame", var_name=df_name)
 
-    align_loc_df = align.copy()
-
     if not isinstance(X, list):
         raise ValueError(f"{df_name} must be a list of pandas.DataFrame")
 
@@ -77,6 +77,8 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
         if not isinstance(Xi, pd.DataFrame):
             raise ValueError(f"{df_name} must be a list of pandas.DataFrame")
 
+    if copy:
+        align = align.copy()
     n = len(X)
 
     if not n == len(align.columns):
@@ -86,12 +88,13 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
         )
 
     for i, Xi in enumerate(X):
-
         indi = "ind" + str(i)
 
         # reindex X to the alignment positions
         #  this also deals with np.nan indices
-        loc_inds = pd.Series(Xi.index, dtype="Int64").reindex(align_loc_df[indi]).values
-        align_loc_df[indi] = loc_inds
+        loc_inds = pd.Series(Xi.index, dtype="Int64").reindex(
+            align[indi], copy=copy
+        ).values
+        align[indi] = loc_inds
 
-    return align_loc_df
+    return align
