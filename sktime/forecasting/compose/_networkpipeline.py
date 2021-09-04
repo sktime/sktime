@@ -96,7 +96,12 @@ class NetworkPipelineForecaster(BaseForecaster):
         self._fitted_estimators = {}
         self._y_transformers = []
         super().__init__()
-
+        # for passing unit tests.
+        # otherwise unnecessary tags accumulate.
+        self._tags = {
+            "univariate-only": False,
+            "requires-fh-in-fit": False,
+        }
         for step in steps:
             # If there are conflicting tags
             # the tags of the later steps will be used.
