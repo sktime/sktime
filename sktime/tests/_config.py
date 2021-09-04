@@ -63,7 +63,6 @@ from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
     ESTIMATOR_TAG_LIST,
@@ -161,11 +160,7 @@ TIME_SERIES_CLASSIFIERS = [
 ]
 FORECASTER = ExponentialSmoothing()
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
-STEPS_y = [
-    ("transformer", Detrender(ThetaForecaster())),
-    ("forecaster", NaiveForecaster()),
-]
-STEPS_X = [
+STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
@@ -189,8 +184,8 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS_y},
-    ForecastingPipeline: {"steps": STEPS_X},
+    TransformedTargetForecaster: {"steps": STEPS},
+    ForecastingPipeline: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
