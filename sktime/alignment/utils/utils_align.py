@@ -23,24 +23,19 @@ def reindex_iloc(df, inds, copy=True):
     -------
     df_ret : pd.DataFrame - df reindexed to inds
         identical to df.iloc[inds] if inds contains no out of bound index
-        out of bound incides will result in np.nan values
-    entries are reference (not copy)
+        out of bound indices will result in np.nan values
+        entries are references to original data frame if copy=False
 
     Example
     -------
-    X = pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14])
-    reindex_iloc(X, [1, 2, 6])
+    >>> X = pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14])
+    >>> reindex_iloc(X, [1, 2, 6])
+        a
+    1	2.0
+    2	3.0
+    6	NaN
     """
-    indexname = df.index.name
-
-    if indexname is None:
-        newindexname = "index"
-    else:
-        newindexname = indexname
-
-    df_ret = df.reset_index().reindex(inds, copy=copy).set_index(newindexname)
-
-    df_ret.index.name = indexname
+    df_ret = df.reset_index(drop=True).reindex(inds, copy=copy)
 
     return df_ret
 
@@ -95,7 +90,8 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X"):
         indi = "ind" + str(i)
 
         # reindex X to the alignment positions
-        #  this also deels with np.nan indices
-        align_loc_df[indi] = reindex_iloc(Xi, align_loc_df[indi], copy=False).index
+        #  this also deals with np.nan indices
+        loc_inds = pd.Series(Xi.index, dtype="Int64").reindex(align_loc_df[indi]).values
+        align_loc_df[indi] = loc_inds
 
     return align_loc_df
