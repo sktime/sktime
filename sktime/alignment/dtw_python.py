@@ -14,6 +14,7 @@ from sktime.alignment._base import BaseAligner
 
 _check_soft_dependencies("dtw")
 
+
 class AlignerDTW(BaseAligner):
     """Aligner interface for dtw-python.
 
