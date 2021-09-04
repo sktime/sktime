@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Non-linear, network pipeline in which steps are not executed sequentially"""
+"""Non-linear, network pipeline in which steps are not executed sequentially."""
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
@@ -82,7 +82,11 @@ class NetworkPipelineForecaster(BaseForecaster):
     """
 
     _required_parameters = ["steps"]
-    _tags = {"univariate-only": False, "requires-fh-in-fit": False}
+    _tags = {
+        "univariate-only": False,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(self, steps, *args):
         self.steps = steps
@@ -93,6 +97,12 @@ class NetworkPipelineForecaster(BaseForecaster):
         self._fitted_estimators = {}
         self._y_transformers = []
         super().__init__()
+
+        # for step in steps:
+        #     # TODO if there are conflicting tags
+        #     # the tags of the later steps will be used
+        #     # There might be a better solution
+        #     self._tags.update(step[1]._tags)
 
     def _iter(self, method):
         """
@@ -157,7 +167,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
         # TODO implement checks for consistency
         return self.steps
 
-    def _process_arguments(self, step_name, arguments, method):
+    def _process_arguments(self, step_name, arguments, method, X=None, y=None):
         """
         Check arguments for consistency.
 
@@ -186,12 +196,12 @@ Iterator can be called by "fit", "predict" and "update" only.'
             return arguments
         for argument_name, argument_value in returned_arguments_kwarg.items():
             if argument_value == "original_X":
-                returned_arguments_kwarg[argument_name] = self._X
+                returned_arguments_kwarg[argument_name] = X
                 continue
             if argument_value == "original_y":
                 if method == "fit":
                     self._y_transformers.append(step_name)
-                returned_arguments_kwarg[argument_name] = self._y
+                returned_arguments_kwarg[argument_name] = y
                 continue
             if argument_value == "original_fh":
                 returned_arguments_kwarg[argument_name] = self._fh
@@ -235,7 +245,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
                 # this step must be skipped
                 continue
             processed_arguments = self._process_arguments(
-                step_name=name, arguments=arguments, method="fit"
+                step_name=name, arguments=arguments, method="fit", y=y, X=X
             )
 
             if "X" in processed_arguments and processed_arguments["X"] is not None:
@@ -268,8 +278,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if X is not None:
-            self._X = X
+
         # iterate in normal order
         for name, est, arguments in self._iter(method="predict"):
             processed_arguments = {}
@@ -282,9 +291,24 @@ Iterator can be called by "fit", "predict" and "update" only.'
             # y is not used when the steps are executed in normal order.
             if "y" in arguments["predict"]:
                 arguments["predict"].pop("y", None)
+            # skip step if original_y is used
+            if "original_y" in arguments["predict"].values():
+                # set output to None so that subsequent transofmrations
+                # of y are also skipped
+                self._step_results_predict[name] = None
+                continue
+            # skip step if it depends on output of step with `None` output
+            for val in arguments["predict"].values():
+                if (
+                    (isinstance(val, str))
+                    and (val in self._step_results_predict)
+                    and (self._step_results_predict[val] is None)
+                ):
+                    self._step_results_predict[name] = None
+                    continue
 
             processed_arguments = self._process_arguments(
-                step_name=name, arguments=arguments, method="predict"
+                step_name=name, arguments=arguments, method="predict", X=X
             )
 
             # if estimator has a `transform()` method, it is a transformer
@@ -354,7 +378,7 @@ Iterator can be called by "fit", "predict" and "update" only.'
             # assume update takes same arguments as fit
 
             processed_arguments = self._process_arguments(
-                step_name=name, arguments=arguments, method="update"
+                step_name=name, arguments=arguments, method="update", y=y, X=X
             )
 
             processed_arguments["update_params"] = update_params
