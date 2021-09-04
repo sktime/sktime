@@ -43,7 +43,6 @@ from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y_X
 from sktime.utils.validation.series import check_series, check_equal_time_index
 
 from sktime.datatypes import convert_to, mtype
@@ -575,24 +574,6 @@ class BaseForecaster(BaseEstimator):
         fitted_params : dict
         """
         raise NotImplementedError("abstract method")
-
-    def _set_y_X(self, y, X=None, enforce_index_type=None):
-        """Set training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Endogenous time series
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        """
-        # set initial training data
-        self._y, self._X = check_y_X(
-            y, X, allow_empty=False, enforce_index_type=enforce_index_type
-        )
-
-        # set initial cutoff to the end of the training data
-        self._set_cutoff_from_y(y)
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None:

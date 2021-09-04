@@ -195,9 +195,6 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        # Some transformers can not deal with X=None, therefore X is mandatory
-        self._set_y_X(y, X)
-
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
             # transform X
@@ -346,8 +343,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : returns an instance of self.
         """
-        # self._set_y_X(y, X)
-
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)

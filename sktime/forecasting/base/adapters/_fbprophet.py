@@ -43,7 +43,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._instantiate_model()
         self._check_changepoints()
-        self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
+        self.check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
