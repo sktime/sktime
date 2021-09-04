@@ -53,7 +53,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     ...     ("trend", PolynomialTrendForecaster()),
     ...     ("naive", NaiveForecaster()),
     ... ]
-    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    >>> forecaster = StackingForecaster(forecasters=forecasters)
+    >>> forecaster.fit(y=y, fh=[1,2,3])
     StackingForecaster(...)
     >>> y_pred = forecaster.predict()
     """
