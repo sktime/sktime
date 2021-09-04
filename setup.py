@@ -21,11 +21,11 @@ from pkg_resources import parse_version
 
 MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
-    "numpy": "1.19.0",
+    "numpy": "1.19.3",
     "pandas": "1.1.0",
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
-    "numba": "0.50",
+    "numba": "0.53",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
