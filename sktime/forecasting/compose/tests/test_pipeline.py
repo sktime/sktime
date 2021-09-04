@@ -20,6 +20,7 @@ from sktime.transformations.series.exponent import ExponentTransformer
 
 
 def test_pipeline():
+    """Test results of TransformedTargetForecaster."""
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
