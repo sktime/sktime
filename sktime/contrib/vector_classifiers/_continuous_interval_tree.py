@@ -17,7 +17,6 @@ from numba import njit
 from numba.typed import List
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_X_y, check_random_state
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.slope_and_trend import _slope
@@ -96,15 +95,20 @@ class ContinuousIntervalTree(BaseEstimator):
         -------
         self : object
         """
-        if not isinstance(X, np.ndarray) or len(X.shape) > 2:
+        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
+            X = np.reshape(X, (X.shape[0], -1))
+        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
                 "ContinuousIntervalTree is not a time series classifier. "
                 "A 2d numpy array is required."
             )
         X, y = check_X_y(X, y)
 
-        self.n_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        # replace missing and infinite values with 0
+        X = np.nan_to_num(X, False, 0, 0, 0)
+
+        self.classes_ = np.unique(y)
+        self.n_classes = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
@@ -168,7 +172,9 @@ class ContinuousIntervalTree(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
-        if not isinstance(X, np.ndarray) or len(X.shape) > 2:
+        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
+            X = np.reshape(X, (X.shape[0], -1))
+        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
                 "ContinuousIntervalTree is not a time series classifier. "
                 "A 2d numpy array is required."

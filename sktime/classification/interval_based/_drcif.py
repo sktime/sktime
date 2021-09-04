@@ -20,7 +20,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.classification_intervals._continuous_interval_tree import (
+from sktime.contrib.vector_classifiers._continuous_interval_tree import (
     _drcif_feature,
     ContinuousIntervalTree,
 )
