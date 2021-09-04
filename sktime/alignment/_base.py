@@ -147,26 +147,9 @@ class BaseAligner(BaseEstimator):
         for i, Xi_orig in enumerate(X_aligned_list):
 
             indi = "ind" + str(i)
-            X_aligned_list[i] = self._apply_alignment(Xi_orig, align[indi])
+            X_aligned_list[i] = reindex_iloc(Xi_orig, align[indi])
 
         return X_aligned_list
-
-    def _apply_alignment(self, Xi, align_inds):
-        """Apply a column of an alignment to a sequence, private helper function.
-
-        Parameters
-        ----------
-        Xi: pd.DataFrame, sequence to be realigned/reindexed
-        align_inds: pd.Series, iloc indices for realignment/reindexing
-
-        Returns
-        -------
-        Xi_aligned: pd.DataFrame, Xi aligned/reindexed via align_inds
-        """
-        Xi_aligned = reindex_iloc(Xi, align_inds)
-        Xi_aligned.index = align_inds.index
-
-        return Xi_aligned
 
     def get_distance(self):
         """Return overall distance of alignment.
