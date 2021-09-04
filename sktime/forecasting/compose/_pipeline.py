@@ -169,7 +169,8 @@ class ForecastingPipeline(_Pipeline):
 
     _required_parameters = ["steps"]
     _tags = {
-        "univariate-only": False,
+        "scitype:y": "both",
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -178,6 +179,8 @@ class ForecastingPipeline(_Pipeline):
         self.steps = steps
         self.steps_ = self._check_steps()
         super(ForecastingPipeline, self).__init__()
+        _, forecaster = self.steps[-1]
+        self.clone_tags(forecaster)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -316,7 +319,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
-        "univariate-only": False,
         "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -326,6 +328,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.steps = steps
         self.steps_ = self._check_steps()
         super(TransformedTargetForecaster, self).__init__()
+        _, forecaster = self.steps[-1]
+        self.clone_tags(forecaster)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
