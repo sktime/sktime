@@ -70,7 +70,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = load_airline()
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster()),
-    ...     ("naive", NaiveForecaster())]
+    ...     ("naive", NaiveForecaster()),
+    ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     AutoEnsembleForecaster(...)
@@ -216,8 +217,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = load_airline()
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster()),
-    ...     ("naive", NaiveForecaster())]
-    >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[1, 10])
+    ...     ("naive", NaiveForecaster()),
+    ... ]
+    >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
