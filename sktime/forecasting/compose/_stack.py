@@ -42,16 +42,17 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     regressor_ : sklearn-like regressor
         Fitted meta-model (regressor)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import StackingForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecasters = [("trend", PolynomialTrendForecaster()),\
-                        ("naive", NaiveForecaster())]
-    >>> forecaster = StackingForecaster(forecasters=forecasters, n_jobs=2)
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster()),
+    ...     ("naive", NaiveForecaster()),
+    ... ]
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     StackingForecaster(...)
     >>> y_pred = forecaster.predict()
