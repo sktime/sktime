@@ -43,6 +43,7 @@ class RotationForest(BaseEstimator):
         self._base_estimator = base_estimator
         self._min = 0
         self._ptp = 0
+        self._useful_atts = []
         self._pcas = []
         self._groups = []
         self._n_jobs = n_jobs
@@ -70,8 +71,11 @@ class RotationForest(BaseEstimator):
         if self.base_estimator is None:
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-        # replace missing and infinite values with 0
+        # replace missing values with 0 and remove useless attributes
         X = np.nan_to_num(X, False, 0, 0, 0)
+        self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
+        X = X[:, self._useful_atts]
+
         # normalise attributes
         self._min = X.min(axis=0)
         self._ptp = X.max(axis=0) - self._min
@@ -117,7 +121,11 @@ class RotationForest(BaseEstimator):
                 "A 2d numpy array is required."
             )
 
-        # Normalise the data
+        # replace missing values with 0 and remove useless attributes
+        X = np.nan_to_num(X, False, 0, 0, 0)
+        X = X[:, self._useful_atts]
+
+        # normalise the data.
         X = (X - self._min) / self._ptp
 
         y_probas = Parallel(n_jobs=self._n_jobs)(
@@ -151,8 +159,7 @@ class RotationForest(BaseEstimator):
                 replace=False,
             )
 
-            # randomly add the classes
-            # with the randomly selected attributes.
+            # randomly add the classes with the randomly selected attributes.
             X_t = np.zeros((0, len(group)))
             for cls_idx in classes:
                 c = X_cls_split[cls_idx]
@@ -197,7 +204,7 @@ class RotationForest(BaseEstimator):
     def generate_groups(self, rng):
         permutation = rng.permutation((np.arange(0, self.n_atts)))
 
-        # select the size of each group
+        # select the size of each group.
         group_size_count = np.zeros(self.max_group - self.min_group + 1)
         n_attributes = 0
         n_groups = 0
