@@ -6,12 +6,13 @@ Exposes basic interface, excluding multivariate case.
 
 __author__ = ["fkiraly"]
 
-from dtw import dtw
 import pandas as pd
 import numpy as np
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.alignment._base import BaseAligner
 
+_check_soft_dependencies("dtw")
 
 class AlignerDTW(BaseAligner):
     """Aligner interface for dtw-python.
@@ -85,6 +86,9 @@ class AlignerDTW(BaseAligner):
         alignment - computed alignment from dtw package
         X - reference to input X
         """
+        # soft dependency import of dtw
+        from dtw import dtw
+
         # these variables from self are accessed
         dist_method = self.dist_method
         step_pattern = self.step_pattern
@@ -250,6 +254,9 @@ class AlignerDTWdist(BaseAligner):
         alignment - computed alignment from dtw package
         X - reference to input X
         """
+        # soft dependency import of dtw
+        from dtw import dtw
+
         # these variables from self are accessed
         dist_trafo = self.dist_trafo
         step_pattern = self.step_pattern
