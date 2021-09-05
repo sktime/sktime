@@ -24,7 +24,7 @@ def reindex_iloc(df, inds, copy=True):
     df_ret : pd.DataFrame - df reindexed to inds
         identical to df.iloc[inds] if inds contains no out of bound index
         out of bound indices will result in np.nan values
-        entries are references to original data frame if copy=False
+        entries are references to original DataFrame if copy=False
 
     Example
     -------
