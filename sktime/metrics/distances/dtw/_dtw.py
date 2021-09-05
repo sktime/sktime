@@ -13,7 +13,7 @@ from sktime.metrics.distances.base.base import (
 from sktime.metrics.distances._squared_dist import SquaredDistance
 
 
-@njit()
+@njit(cache=True)
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
@@ -112,6 +112,7 @@ class Dtw(BaseDistance, NumbaSupportedDistance):
 
         bounding_matrix, pre_computed_distances = self._dtw_setup(x, y)
 
+        # cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
         cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
 
         return np.sqrt(cost_matrix[-1, -1])

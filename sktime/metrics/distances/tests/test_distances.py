@@ -75,3 +75,22 @@ def test_pairwise(distance: BaseDistance):
     y = create_test_distance(10, 10, 10, random_state=2)
 
     distance.pairwise(x, y)
+
+
+def test_runtime():
+    generated_ts = create_test_distance(100, 10, 10, random_state=5)
+
+    x = generated_ts
+    y = generated_ts
+
+    import cProfile
+    import pstats
+
+    test = FastDtw(radius=0)
+
+    with cProfile.Profile() as pr:
+        test.pairwise(x, y)
+
+    stats = pstats.Stats(pr)
+    stats.sort_stats(pstats.SortKey.TIME)
+    stats.print_stats()

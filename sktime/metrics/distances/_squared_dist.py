@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit
+from numba import njit, prange
 from typing import Callable
 
 from sktime.metrics.distances.base.base import BaseDistance, NumbaSupportedDistance
 
 
-@njit()
+@njit(cache=True)
 def _squared_dist(x: np.ndarray, y: np.ndarray) -> float:
     """
     Method used to calculate the squared distance between two series
@@ -31,7 +31,7 @@ def _squared_dist(x: np.ndarray, y: np.ndarray) -> float:
     for i in range(x_size):
         curr_x = x[i]
         curr_y = y[i]
-        for j in range(dimension_size):
+        for j in prange(dimension_size):
             curr = curr_x[j] - curr_y[j]
             distance += curr * curr
 

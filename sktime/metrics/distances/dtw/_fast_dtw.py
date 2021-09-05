@@ -2,17 +2,22 @@
 import math
 from typing import Tuple, Callable, List, Set
 import numpy as np
-from numba import njit, prange
+from numba import njit
 
 from sktime.metrics.distances.dtw._lower_bouding import _plot_values_on_matrix
 from sktime.metrics.distances.base.base import BaseDistance, NumbaSupportedDistance
 from sktime.metrics.distances.dtw._dtw_path import DtwPath
 
 
-@njit(parallel=True)
+@njit(cache=True)
 def _reduce_by_half(x: np.ndarray):
     """
-    Method used to reduce the size of a given time series. This is done by averaging
+    upper_line_y_values = y.sha[0
+    lower_line_y_values = lowe.s[0
+
+    if u!p == lower:
+    raise Va("The number of upper line values must equal the number of lower line values
+
     adjacent points in the series
     Parameters
     ----------
@@ -29,14 +34,14 @@ def _reduce_by_half(x: np.ndarray):
     half_x_size = math.floor(x_size / 2)
     half_arr = np.zeros((half_x_size, time_series_size))
 
-    for i in prange(half_x_size):
+    for i in range(half_x_size):
         curr_index = i * 2
         half_arr[i, :] = (x[curr_index] + x[curr_index + 1]) / 2
 
     return half_arr
 
 
-@njit()
+@njit(cache=True)
 def permutations(
     arr: List,
     arr_len: int,
@@ -78,8 +83,28 @@ def permutations(
             return_arr.add(execute_val)
 
 
-@njit()
+@njit(cache=True)
 def _path_permutation_func(a: int, b: int, x_val: int, y_val: int) -> Tuple:
+    """
+    Method used to calculate path permutations
+
+    Parameters
+    ----------
+    a: int
+        First values
+    b: int
+        Second value
+    x_val: int
+        X value to evaluate on
+    y_val: int
+        Y value to evaluate on
+
+    Returns
+    -------
+    Tuple
+        First value is x coordinate, second is y value
+
+    """
     return x_val + a, y_val + b
 
 
@@ -123,7 +148,7 @@ def _calculate_path_values(path: np.ndarray, radius: int) -> Set:
     return path_permutations
 
 
-@njit()
+@njit(cache=True)
 def _window_permutation_func(a: int, b: int, x_val: int, y_val: int) -> Tuple:
     """
     Function executed for each window permutation
@@ -142,7 +167,7 @@ def _window_permutation_func(a: int, b: int, x_val: int, y_val: int) -> Tuple:
     -------
 
     """
-    return (x_val * 2 + a), (y_val * 2 + b)
+    return x_val * 2 + a, y_val * 2 + b
 
 
 @njit()
@@ -177,7 +202,7 @@ def _calculate_window_values(path_permutations: Set) -> Set:
     return window_values
 
 
-@njit()
+@njit(cache=True)
 def _construct_window(window_values, x_size, y_size):
     """
     Method use to construct the values that will make up the bounding matrix for dtw
@@ -322,6 +347,7 @@ class FastDtw(BaseDistance, NumbaSupportedDistance):
         radius = self._check_params()
         numba_dtw = DtwPath().numba_distance(x, y)
         distance, _ = _fast_dtw(x, y, numba_dtw, radius)
+        # distance, _ = _iterative_dtw(x, y, numba_dtw, radius)
         return distance
 
     def _check_params(self) -> int:

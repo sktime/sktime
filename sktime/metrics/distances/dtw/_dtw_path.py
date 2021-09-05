@@ -6,7 +6,7 @@ from sktime.metrics.distances.dtw._dtw import Dtw, _cost_matrix
 from sktime.metrics.distances.base.base import NumbaSupportedDistance, _numba_pairwise
 
 
-@njit()
+@njit(cache=True)
 def _return_path(cost_matrix: np.ndarray) -> np.ndarray:
     x_size, x_dim_size = cost_matrix.shape
     start_x = x_size - 1
