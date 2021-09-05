@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class UnobservedComponents(_StatsModelsAdapter):
@@ -46,44 +45,5 @@ class UnobservedComponents(_StatsModelsAdapter):
         super(UnobservedComponents, self).__init__()
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-            core logic
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-
-    # todo: implement this, mandatory
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Forecast time series at future horizon.
-            core logic
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
-        Returns
-        -------
-        y_pred : pd.Series
-            Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
+    def _fit_forecaster(self, y, X=None):
+        pass
