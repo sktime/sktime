@@ -162,7 +162,7 @@ FORECASTER = ExponentialSmoothing()
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
 STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
-    ("forecaster", NaiveForecaster()),
+    ("forecaster", ColumnEnsembleForecaster(NaiveForecaster())),
 ]
 ESTIMATOR_TEST_PARAMS = {
     ColumnEnsembleForecaster: {"forecasters": FORECASTER},
