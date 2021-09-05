@@ -22,7 +22,7 @@ from sktime.utils.validation import check_n_jobs
 
 
 class RotationForest(BaseEstimator):
-    """Rotation Forest Classifier
+    """Rotation Forest Classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
     (2013). [1]_

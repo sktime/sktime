@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Non-time series classification algorithms."""
+"""Vector classification algorithms, not designed specifically for time series."""
