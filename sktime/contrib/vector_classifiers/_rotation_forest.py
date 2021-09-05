@@ -100,8 +100,6 @@ class RotationForest(BaseEstimator):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> X_train = from_nested_to_3d_numpy(X_train)
     >>> X_test = from_nested_to_3d_numpy(X_test)
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = RotationForest(n_estimators=10)
     >>> clf.fit(X_train, y_train)
     RotationForest(...)
