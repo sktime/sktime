@@ -80,6 +80,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
+    contract_max_n_parameter_samples : int, default=np.inf
+        Max number of parameter combinations to consider when time_limit_in_minutes is
+        set.
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -156,6 +159,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         dim_threshold=0.85,
         max_dims=20,
         time_limit_in_minutes=0.0,
+        contract_max_n_parameter_samples=np.inf,
         save_train_predictions=False,
         n_jobs=1,
         random_state=None,
@@ -172,6 +176,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.max_dims = max_dims
 
         self.time_limit_in_minutes = time_limit_in_minutes
+        self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
         self.save_train_predictions = save_train_predictions
 
         self.random_state = random_state
@@ -208,7 +213,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 "ensemble member parameters will be fully randomly selected.",
             )
 
-        time_limit = self.time_limit_in_minutes * 60
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -248,8 +252,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         train_time = 0
         if time_limit > 0:
             n_parameter_samples = 0
+            contract_max_n_parameter_samples = self.contract_max_n_parameter_samples
         else:
             n_parameter_samples = self.n_parameter_samples
+            contract_max_n_parameter_samples = np.inf
 
         rng = check_random_state(self.random_state)
 
@@ -263,7 +269,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         # use time limit or n_parameter_samples if limit is 0
         while (
-            train_time < time_limit or num_classifiers < n_parameter_samples
+            (
+                train_time < time_limit
+                and num_classifiers < contract_max_n_parameter_samples
+            )
+            or num_classifiers < n_parameter_samples
         ) and len(possible_parameters) > 0:
             if num_classifiers < self.randomly_selected_params:
                 parameters = possible_parameters.pop(

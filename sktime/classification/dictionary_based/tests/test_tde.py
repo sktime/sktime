@@ -31,12 +31,12 @@ def test_tde_on_unit_test_data():
     # test loocv train estimate
     train_probas = tde._get_train_probs(X_train, y_train)
     train_preds = tde.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.85
+    assert accuracy_score(y_train, train_preds) >= 0.75
 
     # test oob estimate
     train_probas = tde._get_train_probs(X_train, y_train, train_estimate_method="oob")
     train_preds = tde.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.8
+    assert accuracy_score(y_train, train_preds) >= 0.75
 
 
 def test_contracted_tde_on_unit_test_data():
@@ -47,7 +47,8 @@ def test_contracted_tde_on_unit_test_data():
 
     # train contracted TDE
     tde = TemporalDictionaryEnsemble(
-        time_limit_in_minutes=0.025,
+        time_limit_in_minutes=0.1,
+        contract_max_n_parameter_samples=10,
         max_ensemble_size=5,
         randomly_selected_params=5,
         random_state=0,
@@ -55,7 +56,7 @@ def test_contracted_tde_on_unit_test_data():
     tde.fit(X_train, y_train)
 
     assert len(tde.estimators_) > 1
-    assert accuracy_score(y_test, tde.predict(X_test)) >= 0.8
+    assert accuracy_score(y_test, tde.predict(X_test)) >= 0.75
 
 
 def test_tde_on_basic_motions():

@@ -28,7 +28,7 @@ def test_arsenal_on_unit_test_data():
     # test train estimate
     train_probas = arsenal._get_train_probs(X_train, y_train)
     train_preds = arsenal.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.85
+    assert accuracy_score(y_train, train_preds) >= 0.75
 
 
 def test_contracted_arsenal_on_unit_test_data():
@@ -38,11 +38,16 @@ def test_contracted_arsenal_on_unit_test_data():
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 
     # train contracted DrCIF
-    arsenal = Arsenal(time_limit_in_minutes=0.025, random_state=0)
+    arsenal = Arsenal(
+        time_limit_in_minutes=0.1,
+        contract_max_n_estimators=5,
+        num_kernels=500,
+        random_state=0,
+    )
     arsenal.fit(X_train, y_train)
 
     assert len(arsenal.estimators_) > 1
-    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.8
+    assert accuracy_score(y_test, arsenal.predict(X_test)) >= 0.75
 
 
 def test_arsenal_on_basic_motions():
