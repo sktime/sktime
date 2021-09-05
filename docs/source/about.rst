@@ -12,6 +12,7 @@ Learn more about the sktime project and its community.
    about/mission
    about/contributors
    about/team
+   about/showcase.rst
    about/funding
    about/citation
    about/history
