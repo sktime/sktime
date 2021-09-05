@@ -37,9 +37,9 @@ def test_contracted_arsenal_on_unit_test_data():
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 
-    # train contracted DrCIF
+    # train contracted Arsenal
     arsenal = Arsenal(
-        time_limit_in_minutes=0.1,
+        time_limit_in_minutes=0.25,
         contract_max_n_estimators=5,
         num_kernels=500,
         random_state=0,

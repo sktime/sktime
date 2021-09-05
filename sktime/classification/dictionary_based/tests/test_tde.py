@@ -47,7 +47,7 @@ def test_contracted_tde_on_unit_test_data():
 
     # train contracted TDE
     tde = TemporalDictionaryEnsemble(
-        time_limit_in_minutes=0.1,
+        time_limit_in_minutes=0.25,
         contract_max_n_parameter_samples=10,
         max_ensemble_size=5,
         randomly_selected_params=5,

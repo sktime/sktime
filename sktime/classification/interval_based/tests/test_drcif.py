@@ -37,7 +37,7 @@ def test_contracted_drcif_on_unit_test_data():
 
     # train contracted DrCIF
     drcif = DrCIF(
-        time_limit_in_minutes=0.1,
+        time_limit_in_minutes=0.25,
         contract_max_n_estimators=10,
         random_state=0,
     )
