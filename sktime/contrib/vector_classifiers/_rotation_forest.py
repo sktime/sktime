@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Matthew Middlehurst"]
+"""RotationForest vector classifier.
+
+Rotation Forest, sktime implementation for continuous values only.
+"""
+
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["RotationForest"]
+
+import time
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -15,6 +22,92 @@ from sktime.utils.validation import check_n_jobs
 
 
 class RotationForest(BaseEstimator):
+    """Rotation Forest Classifier
+
+    Implementation of the Rotation Forest classifier described in Rodriguez et al
+    (2013). [1]_
+    Intended as a benchmark for time series data and a base classifier for
+    transformation based appraoches such as ShapeletTransformClassifier, this sktime
+    implementation only works with continuous attributes.
+
+    Parameters
+    ----------
+    n_estimators : int, default=200
+        Number of estimators to build for the ensemble.
+    min_group : int, default=3
+        The minimum size of a group.
+    max_group : int, default=3
+        The maximum size of a group.
+    remove_proportion : float, default=0.5
+        The proportion of cases to be removed.
+    base_estimator : BaseEstimator or None, default="None"
+        Base estimator for the ensemble. By default uses the sklearn
+        DecisionTreeClassifier using entropy as a splitting measure.
+    time_limit_in_minutes : int, default=0
+        Time contract to limit build time in minutes, overriding n_estimators.
+        Default of 0 means n_estimators is used.
+    contract_max_n_estimators : int, default=500
+        Max number of estimators when time_limit_in_minutes is set.
+    save_transformed_data : bool, default=False
+        Save the data transformed in fit for use in _get_train_probs.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
+
+    Attributes
+    ----------
+    n_classes : int
+        The number of classes.
+    n_instances : int
+        The number of train cases.
+    n_atts : int
+        The number of attributes in each train case.
+    classes_ : list
+        The classes labels.
+    estimators_ : list of shape (n_estimators) of BaseEstimator
+        The collections of estimators trained in fit.
+    transformed_data : list of shape (n_estimators) of ndarray
+        The transformed dataset for all classifiers. Only saved when
+        save_transformed_data is true.
+
+    See Also
+    --------
+    ShapeletTransformClassifier
+
+    Notes
+    -----
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    /weka/classifiers/meta/RotationForest.java>`_.
+
+    References
+    ----------
+    .. [1] Rodriguez, Juan José, Ludmila I. Kuncheva, and Carlos J. Alonso. "Rotation
+       forest: A new classifier ensemble method." IEEE transactions on pattern analysis
+       and machine intelligence 28.10 (2006).
+
+    .. [2] Bagnall, A., et al. "Is rotation forest the best classifier for problems
+       with continuous features?." arXiv preprint arXiv:1809.06705 (2018).
+
+    Examples
+    --------
+    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train = from_nested_to_3d_numpy(X_train)
+    >>> X_test = from_nested_to_3d_numpy(X_test)
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = RotationForest(n_estimators=10)
+    >>> clf.fit(X_train, y_train)
+    RotationForest(...)
+    >>> y_pred = clf.predict(X_test)
+    """
+
     def __init__(
         self,
         n_estimators=200,
@@ -22,6 +115,9 @@ class RotationForest(BaseEstimator):
         max_group=3,
         remove_proportion=0.5,
         base_estimator=None,
+        time_limit_in_minutes=0.0,
+        contract_max_n_estimators=500,
+        save_transformed_data=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -31,6 +127,10 @@ class RotationForest(BaseEstimator):
         self.remove_proportion = remove_proportion
         self.base_estimator = base_estimator
 
+        self.time_limit_in_minutes = time_limit_in_minutes
+        self.contract_max_n_estimators = contract_max_n_estimators
+        self.save_transformed_data = save_transformed_data
+
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -39,7 +139,9 @@ class RotationForest(BaseEstimator):
         self.n_atts = 0
         self.classes_ = []
         self.estimators_ = []
+        self.transformed_data = []
 
+        self._n_estimators = n_estimators
         self._base_estimator = base_estimator
         self._min = 0
         self._ptp = 0
@@ -53,11 +155,24 @@ class RotationForest(BaseEstimator):
         super(RotationForest, self).__init__()
 
     def fit(self, X, y):
+        """Fit a forest of trees on cases (X,y), where y is the target variable.
+
+        Parameters
+        ----------
+        X : ndarray of shape = [n_instances,n_attributes]
+            The training input samples.
+        y : array-like, shape = [n_instances]
+            The class labels.
+
+        Returns
+        -------
+        self : object
+        """
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
         elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
-                "ContinuousIntervalTree is not a time series classifier. "
+                "RotationForest is not a time series classifier. "
                 "A 2d numpy array is required."
             )
         X, y = check_X_y(X, y)
@@ -67,6 +182,10 @@ class RotationForest(BaseEstimator):
         self.n_instances, self.n_atts = X.shape
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
+
+        time_limit = self.time_limit_in_minutes * 60
+        start_time = time.time()
+        train_time = 0
 
         if self.base_estimator is None:
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
@@ -83,22 +202,63 @@ class RotationForest(BaseEstimator):
 
         X_cls_split = [X[np.where(y == i)] for i in self.classes_]
 
-        fit = Parallel(n_jobs=self._n_jobs)(
-            delayed(self._fit_estimator)(
-                X,
-                X_cls_split,
-                y,
-                i,
-            )
-            for i in range(self.n_estimators)
-        )
+        while (
+            train_time < time_limit
+            and self._n_estimators < self.contract_max_n_estimators
+        ):
+            self._n_estimators = 0
+            self.estimators_ = []
+            self._pcas = []
+            self._groups = []
 
-        self.estimators_, self._pcas, self._groups = zip(*fit)
+            fit = Parallel(n_jobs=self._n_jobs)(
+                delayed(self._fit_estimator)(
+                    X,
+                    X_cls_split,
+                    y,
+                    i,
+                )
+                for i in range(self._n_estimators)
+            )
+
+            estimators, pcas, groups, transformed_data = zip(*fit)
+
+            self.estimators_ += estimators
+            self._pcas = pcas
+            self._groups = groups
+            self.transformed_data += transformed_data
+
+            self._n_estimators += self._n_jobs
+            train_time = time.time() - start_time
+        else:
+            fit = Parallel(n_jobs=self._n_jobs)(
+                delayed(self._fit_estimator)(
+                    X,
+                    X_cls_split,
+                    y,
+                    i,
+                )
+                for i in range(self._n_estimators)
+            )
+
+            self.estimators_, self._pcas, self._groups, self.transformed_data = zip(
+                *fit
+            )
 
         self._is_fitted = True
         return self
 
     def predict(self, X):
+        """Predict for all cases in X. Built on top of predict_proba.
+
+        Parameters
+        ----------
+        X : ndarray of shape = [n_instances,n_attributes]
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -108,6 +268,17 @@ class RotationForest(BaseEstimator):
         )
 
     def predict_proba(self, X):
+        """Probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : ndarray of shape = [n_instances,n_attributes]
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances, num_classes] of
+        probabilities
+        """
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
@@ -117,7 +288,7 @@ class RotationForest(BaseEstimator):
             X = np.reshape(X, (X.shape[0], -1))
         elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
-                "ContinuousIntervalTree is not a time series classifier. "
+                "RotationForest is not a time series classifier. "
                 "A 2d numpy array is required."
             )
 
@@ -135,20 +306,70 @@ class RotationForest(BaseEstimator):
                 self._pcas[i],
                 self._groups[i],
             )
-            for i in range(self.n_estimators)
+            for i in range(self._n_estimators)
         )
 
         output = np.sum(y_probas, axis=0) / (
-            np.ones(self.n_classes) * self.n_estimators
+            np.ones(self.n_classes) * self._n_estimators
         )
         return output
+
+    def _get_train_probs(self, X, y):
+        if not self._is_fitted:
+            raise NotFittedError(
+                f"This instance of {self.__class__.__name__} has not "
+                f"been fitted yet; please call `fit` first."
+            )
+        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
+            X = np.reshape(X, (X.shape[0], -1))
+        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
+            raise ValueError(
+                "RotationForest is not a time series classifier. "
+                "A 2d numpy array is required."
+            )
+
+        n_instances, n_atts = X.shape
+
+        if n_instances != self.n_instances or n_atts != self.n_atts:
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
+
+        if not self.save_transformed_data:
+            raise ValueError("Currently only works with saved transform data from fit.")
+
+        p = Parallel(n_jobs=self._n_jobs)(
+            delayed(self._train_probas_for_estimator)(
+                y,
+                i,
+            )
+            for i in range(self._n_estimators)
+        )
+        y_probas, oobs = zip(*p)
+
+        results = np.sum(y_probas, axis=0)
+        divisors = np.zeros(n_instances)
+        for oob in oobs:
+            for inst in oob:
+                divisors[inst] += 1
+
+        for i in range(n_instances):
+            results[i] = (
+                np.ones(self.n_classes) * (1 / self.n_classes)
+                if divisors[i] == 0
+                else results[i] / (np.ones(self.n_classes) * divisors[i])
+            )
+
+        return results
 
     def _fit_estimator(self, X, X_cls_split, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
         rs = None if self.random_state is None else rs * 37 * (idx + 1)
         rng = check_random_state(rs)
 
-        groups = self.generate_groups(rng)
+        groups = self._generate_groups(rng)
         pcas = []
 
         # construct the slices to fit the PCAs too.
@@ -174,7 +395,7 @@ class RotationForest(BaseEstimator):
 
             # try to fit the PCA if it fails, remake it, and add 10 random data instances.
             while True:
-                # ignore err state on PCA because we account if it fails. TODO error and check
+                # ignore err state on PCA because we account if it fails.
                 with np.errstate(divide="ignore", invalid="ignore"):
                     pca = PCA().fit(X_t)
 
@@ -193,7 +414,7 @@ class RotationForest(BaseEstimator):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         tree.fit(X_t, y)
 
-        return tree, pcas, groups
+        return tree, pcas, groups, X_t if self.save_transformed_data else None
 
     def _predict_proba_for_estimator(self, X, clf, pcas, groups):
         X_t = np.concatenate(
@@ -201,7 +422,26 @@ class RotationForest(BaseEstimator):
         )
         return clf.predict_proba(X_t)
 
-    def generate_groups(self, rng):
+    def _train_probas_for_estimator(self, y, idx):
+        rs = 255 if self.random_state == 0 else self.random_state
+        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rng = check_random_state(rs)
+
+        indices = range(self.n_instances)
+        subsample = rng.choice(self.n_instances, size=self.n_instances)
+        oob = [n for n in indices if n not in subsample]
+
+        clf = _clone_estimator(self._base_estimator, rs)
+        clf.fit(self.transformed_data[idx][subsample], y[subsample])
+        probas = clf.predict_proba(self.transformed_data[idx][oob])
+
+        results = np.zeros((self.n_instances, self.n_classes))
+        for n, proba in enumerate(probas):
+            results[oob[n]] += proba
+
+        return [results, oob]
+
+    def _generate_groups(self, rng):
         permutation = rng.permutation((np.arange(0, self.n_atts)))
 
         # select the size of each group.
