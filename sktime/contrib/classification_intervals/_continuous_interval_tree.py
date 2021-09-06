@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-""" Continuous Interval Tree
-    aka Time Series Tree (TST).
+"""CIT vector classifier.
+
+Continuous Interval Tree aka Time Series Tree (TST), base classifier originally used
+in the TimeSeriesForest interval based classification algorithm.
 """
 
 __author__ = ["Matthew Middlehurst"]
@@ -23,25 +25,36 @@ from sktime.utils.validation.panel import check_X
 
 
 class ContinuousIntervalTree(BaseEstimator):
-    """The 'Time Series Tree' described in the Time Series Forest (TSF) paper [1].
+    """Continuous Interval Tree (CIT).
+
+    The 'Time Series Tree' described in the Time Series Forest (TSF) paper Deng et al
+    (2013). [1]_
     A simple information gain based tree for continuous attributes using a bespoke
     margin gain metric for tie breaking.
 
     Parameters
     ----------
-    max_depth          : int, max depth for the tree (default no limit)
-    random_state       : int, seed for random, optional (default to no seed)
+    max_depth : int, default=sys.maxsize
+        Maximum depth for the tree.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
-    root               : tree root node
+    n_classes : int
+        The number of classes.
+    classes_ : list
+        The classes labels.
+    root : _TreeNode
+        Tree root node.
+
+    References
+    ----------
+    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+       classification and feature extraction",Information Sciences, 239, 2013
 
     Notes
     -----
-    ..[1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
-     classification and feature extraction",Information Sciences, 239, 2013
-     Java implementation
-
     Java implementation
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     machine_learning/classifiers/ContinuousIntervalTree.java
@@ -60,15 +73,17 @@ class ContinuousIntervalTree(BaseEstimator):
         self.root = None
         self.n_classes = 0
         self.classes_ = []
-        self.class_dictionary = {}
 
+        self._class_dictionary = {}
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
         super(ContinuousIntervalTree, self).__init__()
 
     def fit(self, X, y):
-        """Build an information gain based tree for continuous attributes using the
+        """Fit a tree on cases (X,y), where y is the target variable.
+
+        Build an information gain based tree for continuous attributes using the
         margin gain metric for ties.
 
         Parameters
@@ -91,14 +106,14 @@ class ContinuousIntervalTree(BaseEstimator):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
+            self._class_dictionary[classVal] = index
 
         rng = check_random_state(self.random_state)
-        self.root = TreeNode(random_state=rng)
+        self.root = _TreeNode(random_state=rng)
 
         thresholds = np.linspace(np.min(X, axis=0), np.max(X, axis=0), 20)
         distribution_cls, distribution = unique_count(y)
-        e = entropy(distribution, distribution.sum())
+        e = _entropy(distribution, distribution.sum())
 
         self.root.build_tree(
             X,
@@ -162,11 +177,12 @@ class ContinuousIntervalTree(BaseEstimator):
         dists = np.zeros((X.shape[0], self.n_classes))
         for i in range(X.shape[0]):
             dists[i] = self.root.predict_proba(
-                X[i], self.n_classes, self.class_dictionary
+                X[i], self.n_classes, self._class_dictionary
             )
         return dists
 
     def predict_proba_cif(self, X, c22, intervals, dims, atts):
+        """Embedded predict proba for the CIF classifier."""
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
@@ -184,11 +200,12 @@ class ContinuousIntervalTree(BaseEstimator):
                 dims,
                 atts,
                 self.n_classes,
-                self.class_dictionary,
+                self._class_dictionary,
             )
         return dists
 
     def predict_proba_drcif(self, X, X_p, X_d, c22, n_intervals, intervals, dims, atts):
+        """Embedded predict proba for the DrCIF classifier."""
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
@@ -212,11 +229,12 @@ class ContinuousIntervalTree(BaseEstimator):
                 dims,
                 atts,
                 self.n_classes,
-                self.class_dictionary,
+                self._class_dictionary,
             )
         return dists
 
     def tree_splits_gain(self):
+        """Recursively find the split and information gain for each tree node."""
         splits = []
         gains = []
 
@@ -226,6 +244,7 @@ class ContinuousIntervalTree(BaseEstimator):
         return splits, gains
 
     def find_splits_gain(self, node, splits, gains):
+        """Recursively find the split and information gain for each tree node."""
         splits.append(node.best_split)
         gains.append(node.best_gain)
 
@@ -234,8 +253,8 @@ class ContinuousIntervalTree(BaseEstimator):
                 self.find_splits_gain(next_node, splits, gains)
 
 
-class TreeNode:
-    """"""
+class _TreeNode:
+    """ContinuousIntervalTree tree node."""
 
     def __init__(
         self,
@@ -312,7 +331,7 @@ class TreeNode:
             self.children = [None, None, None]
 
             if sum(best_splits[0]) > 0:
-                self.children[0] = TreeNode(random_state=self.random_state)
+                self.children[0] = _TreeNode(random_state=self.random_state)
                 self.children[0].build_tree(
                     X[best_splits[0]],
                     y[best_splits[0]],
@@ -325,7 +344,7 @@ class TreeNode:
                     len(best_distributions[0]) == 1,
                 )
             else:
-                self.children[0] = TreeNode(random_state=self.random_state)
+                self.children[0] = _TreeNode(random_state=self.random_state)
                 self.children[0].build_tree(
                     X,
                     y,
@@ -339,7 +358,7 @@ class TreeNode:
                 )
 
             if sum(best_splits[1]) > 0:
-                self.children[1] = TreeNode(random_state=self.random_state)
+                self.children[1] = _TreeNode(random_state=self.random_state)
                 self.children[1].build_tree(
                     X[best_splits[1]],
                     y[best_splits[1]],
@@ -352,7 +371,7 @@ class TreeNode:
                     len(best_distributions[1]) == 1,
                 )
             else:
-                self.children[1] = TreeNode(random_state=self.random_state)
+                self.children[1] = _TreeNode(random_state=self.random_state)
                 self.children[1].build_tree(
                     X,
                     y,
@@ -366,7 +385,7 @@ class TreeNode:
                 )
 
             if sum(best_splits[2]) > 0:
-                self.children[2] = TreeNode(random_state=self.random_state)
+                self.children[2] = _TreeNode(random_state=self.random_state)
                 self.children[2].build_tree(
                     X[best_splits[2]],
                     y[best_splits[2]],
@@ -379,7 +398,7 @@ class TreeNode:
                     len(best_distributions[2]) == 1,
                 )
             else:
-                self.children[2] = TreeNode(random_state=self.random_state)
+                self.children[2] = _TreeNode(random_state=self.random_state)
                 self.children[2].build_tree(
                     X,
                     y,
@@ -511,9 +530,9 @@ class TreeNode:
         sum_left = dist_left.sum()
         sum_right = dist_right.sum()
 
-        entropy_missing = entropy(dist_missing, sum_missing)
-        entropy_left = entropy(dist_left, sum_left)
-        entropy_right = entropy(dist_right, sum_right)
+        entropy_missing = _entropy(dist_missing, sum_missing)
+        entropy_left = _entropy(dist_left, sum_left)
+        entropy_right = _entropy(dist_right, sum_right)
 
         num_cases = X.shape[0]
         info_gain = (
@@ -557,7 +576,7 @@ def unique_count(x):
 
 
 @njit(fastmath=True, cache=True)
-def entropy(x, s):
+def _entropy(x, s):
     e = 0
     for i in x:
         p = i / s if s > 0 else 0
