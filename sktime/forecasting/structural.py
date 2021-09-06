@@ -108,7 +108,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         y : pd.Series
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+            Exogenous variables.
         """
         self._forecaster = _UnobservedComponents(
             endog=y,
