@@ -79,7 +79,7 @@ class MUSE(BaseClassifier):
 
     References
     ----------
-        .. [1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
+    .. [1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
         with WEASEL+MUSE", in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
         https://arxiv.org/abs/1711.11343
 
