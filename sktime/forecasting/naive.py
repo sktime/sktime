@@ -242,7 +242,6 @@ class NaiveForecaster(_BaseWindowForecaster):
             reshaped_last_window = [[nan, nan, 1],
                                     [  2,   3, 4]]
         """
-
         # if window length is not multiple of sp, backward fill window with nan values
         remainder = self.window_length_ % self.sp_
         if remainder > 0:
@@ -269,7 +268,6 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = [2, 3, 1]  # note len(y_pred) = sp
             y_pred_tiled = [2, 3, 1, 2, 3, 1, 2]
         """
-
         # we need to replicate the last window if max(fh) is
         # larger than sp,
         # so that we still make forecasts by repeating the

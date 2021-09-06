@@ -191,7 +191,6 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     The time series contains perfectly cyclic data,
     so switching between the "mean" and "last" strategies should not make a difference.
     """
-
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")
     data = pd.Series(
