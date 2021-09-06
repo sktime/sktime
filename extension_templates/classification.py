@@ -29,6 +29,9 @@ State:
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
 
+Testing
+    get default parameters for test instance - get_test_params()
+
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
@@ -159,8 +162,7 @@ class MyTSC(BaseClassifier):
         """
         # implement here
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the get_test_params method
+    # todo: set default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls):
         """Get default parameters of the estimator.
