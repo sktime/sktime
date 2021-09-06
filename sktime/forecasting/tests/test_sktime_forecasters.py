@@ -42,6 +42,20 @@ WINDOW_FORECASTERS = [
     if issubclass(forecaster, _BaseWindowForecaster)
 ]
 
+
+# helper function
+def _get_n_columns(tag):
+    """Return the the number of columns to use in tests."""
+    n_columns_list = []
+    if tag == "univariate":
+        n_columns_list = [1]
+    elif tag == "multivariate":
+        n_columns_list = [2]
+    elif tag == "both":
+        n_columns_list = [1, 2]
+    return n_columns_list
+
+
 # testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
@@ -53,34 +67,10 @@ def test_oh_setting(Forecaster):
     """Check cuttoff and _y."""
     # check _y and cutoff is None after construction
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y = _make_series(n_columns=1)
-        y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-        assert f._y is None
-        assert f.cutoff is None
-
-        # check that _y and cutoff is updated during fit
-        f.fit(y_train, fh=FH0)
-        # assert isinstance(f._y, pd.Series)
-        # action:uncomments the line above
-        # why: fails for multivariates cause they are DataFrames
-        # solution: look for a general solution for Series and DataFrames
-        assert len(f._y) > 0
-        assert f.cutoff == y_train.index[-1]
-
-        # check data pointers
-        np.testing.assert_array_equal(f._y.index, y_train.index)
-
-        # check that _y and cutoff is updated during update
-        f.update(y_test, update_params=False)
-        np.testing.assert_array_equal(
-            f._y.index, np.append(y_train.index, y_test.index)
-        )
-        assert f.cutoff == y_test.index[-1]
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y = _make_series(n_columns=2)
+    for n_columns in n_columns_list:
+        y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
         assert f._y is None
@@ -165,14 +155,10 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
 def test_no_fh_opt(Forecaster):
     """Check if fh is optional in fit."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1)
-        f.fit(y_train)
-        # not passing fh to either fit or predict raises error
-        with pytest.raises(ValueError):
-            f.predict()
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
         f.fit(y_train)
         # not passing fh to either fit or predict raises error
         with pytest.raises(ValueError):
@@ -183,16 +169,10 @@ def test_no_fh_opt(Forecaster):
 def test_fh_in_fit_opt(Forecaster):
     """Check if fh is optional in fit."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1)
-        f = _construct_instance(Forecaster)
-        f.fit(y_train, fh=FH0)
-        np.testing.assert_array_equal(f.fh, FH0)
-        f.predict()
-        np.testing.assert_array_equal(f.fh, FH0)
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
         f = _construct_instance(Forecaster)
         f.fit(y_train, fh=FH0)
         np.testing.assert_array_equal(f.fh, FH0)
@@ -204,16 +184,11 @@ def test_fh_in_fit_opt(Forecaster):
 def test_fh_in_predict_opt(Forecaster):
     """Check if fh is optional in predict."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
         y_train = _make_series(n_columns=1)
-        f = _construct_instance(Forecaster)
-        f.fit(y_train)
-        f.predict(FH0)
-        np.testing.assert_array_equal(f.fh, FH0)
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
-
         f = _construct_instance(Forecaster)
         f.fit(y_train)
         f.predict(FH0)
@@ -224,18 +199,13 @@ def test_fh_in_predict_opt(Forecaster):
 def test_same_fh_in_fit_and_predict_opt(Forecaster):
     """Check if fh is the same in fit and predict."""
     f = _construct_instance(Forecaster)
-    if f.get_tag("scitype:y") in ["univariate", "both"]:
-        y_train = _make_series(n_columns=1)
-        # passing the same fh to both fit and predict works
+    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
 
-        f.fit(y_train, fh=FH0)
-        f.predict(FH0)
-        np.testing.assert_array_equal(f.fh, FH0)
-
-    if f.get_tag("scitype:y") in ["multivariate", "both"]:
-        y_train = _make_series(n_columns=2)
+    for n_columns in n_columns_list:
+        y_train = _make_series(n_columns=n_columns)
 
         # passing the same fh to both fit and predict works
+
         f.fit(y_train, fh=FH0)
         f.predict(FH0)
         np.testing.assert_array_equal(f.fh, FH0)
