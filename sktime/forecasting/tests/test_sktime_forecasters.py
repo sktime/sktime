@@ -27,6 +27,7 @@ from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series import _make_series
+from sktime.utils._testing.forecasting import _get_n_columns
 
 # get all forecasters
 FORECASTERS = [
@@ -41,19 +42,6 @@ WINDOW_FORECASTERS = [
     for (name, forecaster) in all_estimators(estimator_types="forecaster")
     if issubclass(forecaster, _BaseWindowForecaster)
 ]
-
-
-# helper function
-def _get_n_columns(tag):
-    """Return the the number of columns to use in tests."""
-    n_columns_list = []
-    if tag == "univariate":
-        n_columns_list = [1]
-    elif tag == "multivariate":
-        n_columns_list = [2]
-    elif tag == "both":
-        n_columns_list = [1, 2]
-    return n_columns_list
 
 
 # testing data
