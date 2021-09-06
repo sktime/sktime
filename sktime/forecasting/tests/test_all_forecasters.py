@@ -59,6 +59,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 # helper function
 def _get_n_columns(tag):
+    """Return the the number of columns to use in tests."""
     n_columns_list = []
     if tag == "univariate":
         n_columns_list = [1]
@@ -117,12 +118,15 @@ def test_y_multivariate_raises_error(Forecaster):
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
-    if f.get_tag("scitype:y") in ["multivariate"]:
+    if f.get_tag("scitype:y") == "multivariate":
 
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
             f.fit(y, fh=FH0)
     if f.get_tag("scitype:y") in ["both"]:
+        pass
+
+    if f.get_tag("scitype:y") == "both":
         pass
 
 
