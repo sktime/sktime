@@ -158,3 +158,29 @@ class MyTSC(BaseClassifier):
         fitted_params : dict
         """
         # implement here
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete the get_test_params method
+    @classmethod
+    def get_test_params(cls):
+        """Get default parameters of the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Default parameters related to the estimator class
+        """
+        params = super().get_test_params()
+
+        # todo: set the default parameters for the estimators
+        # This method would be called by create_test_instance
+        # create_test_instance creates an instance with default parameters
+        #
+        # example 1: specify params as dictionary
+        # params={param1:value1, param2:value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params=[{param1:value1,param2:value2},{param1:value3,param2:value4}]
+
+        return params
