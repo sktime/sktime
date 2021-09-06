@@ -52,7 +52,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         method="lbfgs",
         maxiter=50,
         full_output=1,
-        disp=5,
+        disp=0,
         callback=None,
         return_params=False,
         optim_score=None,
