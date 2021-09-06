@@ -77,14 +77,13 @@ class NetworkPipelineForecaster(BaseForecaster):
     ... ("y_out", AutoARIMA(suppress_warnings=True), {
     ...    "fh":"original_fh", "y": "new_y", "X": "concat"})
     ... ])
-    >>> pipeline = pipe.fit(y_train,X_train)
-    >>> predictions = pipe.predict(fh=[1,2,3,4], X=X_test)
+    >>> pipeline = pipe.fit(fh=[1,2,3,4], y=y_train,X=X_train)
+    >>> predictions = pipe.predict(X=X_test)
     """
 
     _required_parameters = ["steps"]
     _tags = {
-        "univariate-only": False,
-        "requires-fh-in-fit": False,
+        "requires-fh-in-fit": True,
     }
 
     def __init__(self, steps, *args):
@@ -96,16 +95,6 @@ class NetworkPipelineForecaster(BaseForecaster):
         self._fitted_estimators = {}
         self._y_transformers = []
         super().__init__()
-        # for passing unit tests.
-        # otherwise unnecessary tags accumulate.
-        self._tags = {
-            "univariate-only": False,
-            "requires-fh-in-fit": False,
-        }
-        for step in steps:
-            # If there are conflicting tags
-            # the tags of the later steps will be used.
-            self._tags.update(step[1]._tags)
 
     def _iter(self, method):
         """
