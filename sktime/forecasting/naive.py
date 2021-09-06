@@ -231,8 +231,8 @@ class NaiveForecaster(_BaseWindowForecaster):
                     return y_pred
 
     def _reshape_last_window_for_sp(self, last_window):
-        """Internal util function for reshaping the 1D last window
-        into a 2D last window, prepended with NaN values.
+        """Reshape the 1D last window into a 2D last window, prepended with NaN values.
+
         The 2D array has 1 column per season.
 
         For example:
@@ -258,8 +258,8 @@ class NaiveForecaster(_BaseWindowForecaster):
         return last_window
 
     def _tile_seasonal_prediction(self, y_pred, fh):
-        """Internal util function for tiling a prediction to
-        cover all requested forecasting horizons.
+        """Tile a prediction to cover all requested forecasting horizons.
+
         The original prediction has 1 value per season.
 
         For example:
