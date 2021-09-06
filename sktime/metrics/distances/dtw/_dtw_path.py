@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 import numpy as np
 from typing import Callable, Tuple
 from numba import njit, prange

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 import numpy as np
 from typing import Union, List
 from enum import Enum

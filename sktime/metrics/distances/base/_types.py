@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
 __all__ = ["SktimeSeries", "SktimeMatrix"]
 
 from typing import Union, List

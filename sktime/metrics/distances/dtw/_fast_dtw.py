@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 import math
 from typing import Tuple, Callable, List, Set
 import numpy as np
@@ -325,7 +327,6 @@ class FastDtw(BaseDistance, NumbaSupportedDistance):
     """
 
     def __init__(self, radius=1):
-        super(FastDtw, self).__init__("fastdtw", {"fast dynamic me warping"})
         self.radius = radius
 
     def _distance(self, x: np.ndarray, y: np.ndarray):

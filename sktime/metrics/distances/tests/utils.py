@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 from typing import List
 
 from sktime.utils._testing.panel import make_classification_problem

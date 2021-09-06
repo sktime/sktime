@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 import numpy as np
 from numba import njit, prange
 from typing import Callable
@@ -55,9 +57,6 @@ class SquaredDistance(BaseDistance, NumbaSupportedDistance):
         = 9 + 1 + 4
         = 14
     """
-
-    def __init__(self):
-        super(SquaredDistance, self).__init__("sdistance", {"squared distance"})
 
     def _distance(self, x: np.ndarray, y: np.ndarray):
         """

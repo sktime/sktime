@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 import numpy as np
 from typing import List, Any
 from scipy.spatial.distance import cdist
@@ -25,7 +27,6 @@ class ScipyDistance(BaseDistance):
     def __init__(self, metric: str, kwargs=None):
         self.metric: str = metric
         self.kwargs: Any = kwargs
-        super(ScipyDistance, self).__init__("scipy", {"scipy distance"})
 
     def _distance(self, x: np.ndarray, y: np.ndarray) -> float:
         """

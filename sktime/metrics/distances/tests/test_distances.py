@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
 import pytest
 from sktime.metrics.distances.dtw._dtw import Dtw
 

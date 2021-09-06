@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 from typing import Union, Callable, Any, List
 
 import numpy as np
@@ -30,7 +32,7 @@ _distance_registry = {
     "jaccard": ScipyDistance,
     "jensenshannon": ScipyDistance,
     "kulsinski": ScipyDistance,
-    # "mahalanobis": ScipyDistance,
+    # "mahalanobis": ScipyDistance, # This isn't working currently not sure why
     "matching": ScipyDistance,
     "minkowski": ScipyDistance,
     "rogerstanimoto": ScipyDistance,

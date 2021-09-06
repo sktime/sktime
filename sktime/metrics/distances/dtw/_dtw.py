@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 import warnings
 from typing import Union, Tuple, Callable
 import numpy as np
@@ -81,7 +83,6 @@ class Dtw(BaseDistance, NumbaSupportedDistance):
         custom_cost_matrix_distance: Union[BaseDistance, Callable] = None,
         custom_bounding_matrix: np.ndarray = None,
     ):
-        super(Dtw, self).__init__("dtw", {"dynamic me warping"})
         self.lower_bounding: Union[LowerBounding, int] = lower_bounding
         self.sakoe_chiba_window_radius: int = sakoe_chiba_window_radius
         self.itakura_max_slope: float = itakura_max_slope

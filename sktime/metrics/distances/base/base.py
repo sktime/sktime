@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from typing import Union, Tuple, Callable, Set
+__author__ = ["Chris Holder"]
+
+from typing import Union, Tuple, Callable
 import numpy as np
 from numba import njit, prange
 
@@ -11,21 +13,6 @@ from sktime.utils.data_processing import (
 
 
 class BaseDistance:
-    """
-    Class used as a base for time series distances
-
-    Parameters
-    ----------
-    metric_name: str
-        Str name for the metric (normally abbreviation for full name of distance)
-    metric_aka: Set[str], defaults = None
-        Other names for the metric (this is where full names go)
-    """
-
-    def __init__(self, metric_name: str, metric_aka: Set[str] = None):
-        self.metric_name: str = metric_name
-        self.metric_aka: Set[str] = metric_aka
-
     def distance(
         self,
         x: SktimeSeries,
