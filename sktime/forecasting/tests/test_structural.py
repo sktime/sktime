@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""UnobservedComponents Tests."""
 __author__ = ["Juan Orduz"]
 
 import numpy as np
@@ -6,6 +7,7 @@ import pandas as pd
 from sktime.forecasting.structural import UnobservedComponents, _UnobservedComponents
 from sktime.datasets import load_airline
 from pandas.testing import assert_series_equal
+
 
 # Parameters to generate sample data depending of the model type.
 structure_params = {
@@ -97,6 +99,7 @@ def generate_parametrized_sample_data(
 
 def generate_sample_data(params):
     """Generate sample data for a given model specification.
+
     We add external regressors and a seasonality component.
     """
     min_date = pd.to_datetime("2017-01-01")
@@ -142,8 +145,9 @@ def test_results_consistency(levels=levels):
 
 
 def test_result_consistency_exog(structure_params=structure_params, levels=levels):
-    """Check consistency between wrapper and statsmodels original implementation when
-    adding external regressors.
+    """Check consistency between wrapper and statsmodels original implementation.
+
+    We add external regressors and a seasonality component.
     """
     train_test_ratio = 0.80
 
