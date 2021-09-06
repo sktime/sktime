@@ -47,8 +47,9 @@ class ScipyDistance(BaseDistance):
             kwargs = {}
         distances = cdist(x, y, metric=self.metric, **kwargs)
         dist_sum = 0.0
-        for i in range(x.shape[1]):
-            dist_sum += distances[i, i]
+        for i in range(x.shape[0]):
+            for j in range(y.shape[0]):
+                dist_sum += distances[i, j]
 
         return dist_sum
 

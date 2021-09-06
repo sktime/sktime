@@ -83,16 +83,15 @@ class BaseDistance:
 
         Parameters
         ----------
-        x: np.ndarray
+        x: np.ndarray or pd.Dataframe or List
             First matrix of multiple time series
-        y: np.ndarray
+        y: np.ndarray or pd.Dataframe or List
             Second matrix of multiple time series.
 
         Returns
         -------
         np.ndarray
             Matrix containing the pairwise distance between each point
-
         """
         if x.ndim <= 2:
             x = np.reshape(x, x.shape + (1,))

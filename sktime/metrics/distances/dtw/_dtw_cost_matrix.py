@@ -4,6 +4,7 @@ from typing import Callable, Tuple
 from numba import njit, prange
 from sktime.metrics.distances.dtw._dtw import Dtw, _cost_matrix
 from sktime.metrics.distances.base.base import NumbaSupportedDistance, _numba_pairwise
+from sktime.metrics.distances.base._types import SktimeMatrix
 
 
 class DtwCostMatrix(Dtw, NumbaSupportedDistance):
@@ -32,7 +33,9 @@ class DtwCostMatrix(Dtw, NumbaSupportedDistance):
 
         return np.sqrt(cost_matrix[-1, -1]), cost_matrix
 
-    def pairwise(self, x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def pairwise(
+        self, x: SktimeMatrix, y: SktimeMatrix
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Method that takes a distance function and computes the pairwise distance and
         returns the cost matrix
@@ -51,7 +54,6 @@ class DtwCostMatrix(Dtw, NumbaSupportedDistance):
         np.ndarray
             Matrix containing the cost for each of the pairwise
         """
-
         if x.ndim <= 2:
             x = np.reshape(x, x.shape + (1,))
             y = np.reshape(y, y.shape + (1,))
@@ -136,8 +138,11 @@ def _numba_dtw_path_pairwise(
     x_size = x.shape[0]
     y_size = y.shape[0]
 
+    x_dims = x.shape[1]
+    y_dims = y.shape[1]
+
     pairwise_matrix_dist = np.zeros((x_size, y_size))
-    pairwise_cost_matrix = np.zeros((x_size, y_size, x_size, y_size))
+    pairwise_cost_matrix = np.zeros((x_size, y_size, x_dims, y_dims))
 
     for i in range(x_size):
         curr_x = x[i]
