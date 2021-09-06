@@ -102,7 +102,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
 @pytest.mark.parametrize("n_seasons", [1, 3])
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_mean_seasonal_simple(n_seasons, sp):
-    """Create 2d matrix, rows are different seasons, columns time points of each season."""
+    """Create 2d matrix (seasons on rows, time points of each season on columns)."""
     values = np.random.normal(size=(n_seasons, sp))
     y = pd.Series(values.ravel())
 
