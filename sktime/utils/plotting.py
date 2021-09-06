@@ -31,6 +31,8 @@ from sktime.utils.validation.series import check_consistent_index_type
 
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
+from sktime.datatypes import convert_to
+
 
 def plot_series(
     *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
@@ -39,7 +41,7 @@ def plot_series(
 
     Parameters
     ----------
-    series : pd.Series
+    series : pd.Series or iterable of pd.Series
         One or more time series
     labels : list, default = None
         Names of series, will be displayed in figure legend
@@ -60,6 +62,9 @@ def plot_series(
 
     for y in series:
         check_y(y)
+
+    series = list(series)
+    series = [convert_to(y, "pd.Series", "Series") for y in series]
 
     n_series = len(series)
     _ax_kwarg_is_none = True if ax is None else False
@@ -208,6 +213,7 @@ def plot_correlations(
     import matplotlib.pyplot as plt
 
     series = check_y(series)
+    series = convert_to(series, "pd.Series", "Series")
 
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))
