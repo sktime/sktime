@@ -45,10 +45,10 @@ class ConditionalImputer(_SeriesToSeriesTransformer):
 
         self.annotator_ = clone(self.annotator)
         self.annotator_.set_params({"fmt": "dense"})
-        self.annotator_.fit(z)
+        self.annotator_.fit(z, X)
 
         self.imputer_ = clone(self.imputer)
-        self.imputer_.fit(z)
+        self.imputer_.fit(z, X)
 
         return self
 
@@ -68,8 +68,8 @@ class ConditionalImputer(_SeriesToSeriesTransformer):
 
         z = check_series(Z, enforce_univariate=True)
 
-        outliers = self.annotator_.transform(z)
+        outliers = self.annotator_.predict(z, X)
 
         z.iloc[outliers[outliers].index] = np.nan
-        z = self.imputer_.transform(z)
+        z = self.imputer_.transform(z, X)
         return z
