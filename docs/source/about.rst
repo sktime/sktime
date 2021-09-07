@@ -10,6 +10,7 @@ About
 
    about/mission.md
    about/contributors.md
+   about/showcase.rst
    about/history.md
    about/funding.md
    about/citation.md
