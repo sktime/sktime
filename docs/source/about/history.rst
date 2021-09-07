@@ -15,4 +15,4 @@ machine learning tasks. Development is supported by the original project
 members, new core developers and the broader community (see
 `contributors <contributors.md>`_).
 
-If your interested in contributing, check out our :ref:`get_involved` guide.
+If you are interested in contributing, check out our :ref:`get_involved` guide.
