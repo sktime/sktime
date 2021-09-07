@@ -156,7 +156,7 @@ class HIVECOTEV1(BaseClassifier):
         if self.verbose > 0:
             print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
-        train_probs = self._stc._get_train_probs(X)
+        train_probs = self._stc._get_train_probs(X, y)
         train_preds = self._stc.classes_[np.argmax(train_probs, axis=1)]
         self._stc_weight = accuracy_score(y, train_preds) ** 4
 
@@ -228,7 +228,7 @@ class HIVECOTEV1(BaseClassifier):
             **self._cboss_params, random_state=self.random_state, n_jobs=self._n_jobs
         )
         self._cboss.fit(X, y)
-        train_probs = self._cboss._get_train_probs(X)
+        train_probs = self._cboss._get_train_probs(X, y)
         train_preds = self._cboss.classes_[np.argmax(train_probs, axis=1)]
         self._cboss_weight = accuracy_score(y, train_preds) ** 4
 
