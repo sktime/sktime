@@ -238,7 +238,7 @@ class ShapeletTransformClassifier(BaseClassifier):
             raise ValueError("Currently only works with saved transform data from fit.")
 
         if isinstance(self.estimator, RotationForest):
-            return self._estimator._get_train_probs(X, y)
+            return self._estimator._get_train_probs(self.transformed_data, y)
         else:
             m = getattr(self._estimator, "predict_proba", None)
             if not callable(m):
