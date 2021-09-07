@@ -77,7 +77,7 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {"n_estimators": 500}
+            stc_params = {}
         if tsf_params is None:
             tsf_params = {"n_estimators": 500}
         if rise_params is None:

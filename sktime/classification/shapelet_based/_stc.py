@@ -94,7 +94,7 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ShapeletTransformClassifier(n_estimators=10,
-    >>> transform_limit_in_minutes=0.025)
+    ...     transform_limit_in_minutes=0.025)
     >>> clf.fit(X_train, y_train)
     ShapeletTransformClassifier(...)
     >>> y_pred = clf.predict(X_test)
@@ -214,7 +214,6 @@ class ShapeletTransformClassifier(BaseClassifier):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists
 
-    # TODO
     def _get_train_probs(self, X, y):
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_pandas=True)
