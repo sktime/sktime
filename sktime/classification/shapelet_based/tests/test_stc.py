@@ -2,10 +2,10 @@
 """ShapeletTransformClassifier test code."""
 import numpy as np
 from numpy import testing
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_japanese_vowels, load_unit_test
 
 
@@ -17,12 +17,12 @@ def test_stc_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train STC
-    rf = RandomForestClassifier(n_estimators=10)
+    rotf = RotationForest(n_estimators=10)
     stc = ShapeletTransformClassifier(
         # n_shapelets=100,
         transform_limit_in_minutes=0.025,
         random_state=0,
-        base_estimator=rf,
+        estimator=rotf,
     )
     stc.fit(X_train, y_train)
 
@@ -42,7 +42,7 @@ def test_contracted_stc_on_unit_test_data():
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 
-    # train contracted STC todo fix and comemnt out
+    # train contracted STC todo fix and comment out
     stc = ShapeletTransformClassifier(
         # time_limit_in_minutes=0.025,
         transform_limit_in_minutes=0.025,
@@ -62,11 +62,11 @@ def test_stc_on_japanese_vowels():
     indices = [0, 1, 2, 3, 31, 32, 33, 34, 69, 70, 71, 72]
 
     # train STC
-    rf = RandomForestClassifier(n_estimators=10)
+    rotf = RotationForest(n_estimators=10)
     stc = ShapeletTransformClassifier(
         n_shapelets=100,
         random_state=0,
-        base_estimator=rf,
+        estimator=rotf,
     )
     stc.fit(X_train.iloc[indices], y_train[indices])
 

@@ -9,7 +9,6 @@ __author__ = ["TonyBagnall", "a-pasos-ruiz", "MatthewMiddlehurst"]
 __all__ = ["ShapeletTransformClassifier"]
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_predict
 from sklearn.utils.multiclass import class_distribution
 
@@ -19,6 +18,7 @@ from sktime.classification.shapelet_based.dev.factories.shapelet_factory import 
     ShapeletFactoryIndependent,
 )
 from sktime.classification.shapelet_based.dev.filters.random_filter import RandomFilter
+from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.transformations.panel.shapelets import ContractedShapeletTransform
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
@@ -38,7 +38,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     max_shapelet_length : int or None, default=None
 
-    base_estimator : BaseEstimator or None, default=None
+    estimator : BaseEstimator or None, default=None
 
     transform_limit_in_minutes : int, default=60
         Time contract to limit transform time in minutes for the shapelet transform,
@@ -86,6 +86,7 @@ class ShapeletTransformClassifier(BaseClassifier):
        Series Classification", Transactions on Large-Scale Data and Knowledge Centered
        Systems, 32, 2017.
 
+    TODO
     Examples
     --------
     >>> from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -114,7 +115,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         n_shapelets=10000,
         max_shapelets=None,
         max_shapelet_length=None,
-        base_estimator=None,
+        estimator=None,
         transform_limit_in_minutes=60,
         time_limit_in_minutes=0,
         save_transformed_data=False,
@@ -124,9 +125,10 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.n_shapelets = n_shapelets
         self.max_shapelets = max_shapelets
         self.max_shapelet_length = max_shapelet_length
-        self.base_estimator = base_estimator
+        self.estimator = estimator
 
         self.transform_limit_in_minutes = transform_limit_in_minutes
+        # TODO
         self.time_limit_in_minutes = time_limit_in_minutes
         self.save_transformed_data = save_transformed_data
 
@@ -142,7 +144,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self._max_shapelets = max_shapelets
         self._max_shapelet_length = max_shapelet_length
         self._transformer = None
-        self._base_estimator = base_estimator
+        self._estimator = estimator
         self._n_jobs = n_jobs
 
         super(ShapeletTransformClassifier, self).__init__()
@@ -181,29 +183,33 @@ class ShapeletTransformClassifier(BaseClassifier):
             )
         )
 
-        self._base_estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200, n_jobs=self._n_jobs)
-            if self.base_estimator is None
-            else self.base_estimator,
+        self._estimator = _clone_estimator(
+            RotationForest(save_transformed_data=self.save_transformed_data)
+            if self.estimator is None
+            else self.estimator,
             self.random_state,
         )
 
+        m = getattr(self._estimator, "n_jobs", None)
+        if callable(m):
+            self._estimator.n_jobs = self._n_jobs
+
         if self.save_transformed_data:
             self.transformed_data = self._transformer.fit_transform(X, y)
-            self._base_estimator.fit(self.transformed_data, y)
+            self._estimator.fit(self.transformed_data, y)
         else:
-            self._base_estimator.fit(self._transformer.fit_transform(X, y), y)
+            self._estimator.fit(self._transformer.fit_transform(X, y), y)
 
     def _predict(self, X):
-        return self._base_estimator.predict(self._transformer.transform(X))
+        return self._estimator.predict(self._transformer.transform(X))
 
     def _predict_proba(self, X):
-        m = getattr(self._base_estimator, "predict_proba", None)
+        m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._base_estimator.predict_proba(self._transformer.transform(X))
+            return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self._base_estimator.predict(self._transformer.transform(X))
+            preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists
@@ -225,23 +231,26 @@ class ShapeletTransformClassifier(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        m = getattr(self._base_estimator, "predict_proba", None)
-        if not callable(m):
-            raise ValueError("Estimator must have a predict_proba method.")
+        if isinstance(self.estimator, RotationForest):
+            return self._estimator._get_train_probs(X, y)
+        else:
+            m = getattr(self._estimator, "predict_proba", None)
+            if not callable(m):
+                raise ValueError("Estimator must have a predict_proba method.")
 
-        cv_size = 10
-        _, counts = np.unique(y, return_counts=True)
-        min_class = np.min(counts)
-        if min_class < cv_size:
-            cv_size = min_class
+            cv_size = 10
+            _, counts = np.unique(y, return_counts=True)
+            min_class = np.min(counts)
+            if min_class < cv_size:
+                cv_size = min_class
 
-        classifier = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
-            if self.base_estimator is None
-            else self.base_estimator,
-            self.random_state,
-        )
+            estimator = _clone_estimator(self.estimator, self.random_state)
 
-        return cross_val_predict(
-            classifier, X=self.transformed_data, y=y, cv=cv_size, method="predict_proba"
-        )
+            return cross_val_predict(
+                estimator,
+                X=self.transformed_data,
+                y=y,
+                cv=cv_size,
+                method="predict_proba",
+                n_jobs=self._n_jobs,
+            )
