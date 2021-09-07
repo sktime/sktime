@@ -309,7 +309,6 @@ def set_clusterer(cls, resample_id=None):
         raise Exception("UNKNOWN CLUSTERER")
 
 
-
 def run_classification_experiment(
     trainX,
     trainY,
@@ -618,7 +617,8 @@ def set_classifier(cls, resample_id=None):
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
-            random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
+            random_state=resample_id,
+            base_estimator=RandomForestClassifier(n_estimators=500),
         )
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])

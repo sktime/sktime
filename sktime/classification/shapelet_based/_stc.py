@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Shapelet Transform Classifier.
 
-Wrapper implementation of a shapelet transform classifier pipeline that simply
-performs a (configurable) shapelet transform then builds (by default) a random
-forest.
+Shapelet transform classifier pipeline that simply performs a (configurable) shapelet
+transform then builds (by default) a rotation forest classifier on the output.
 """
 
 __author__ = ["TonyBagnall", "a-pasos-ruiz", "MatthewMiddlehurst"]
@@ -33,29 +32,71 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ----------
-    transform_contract_in_mins : int, search time for shapelets, optional
-    (default = 60)
-    n_estimators               :       200,
-    random_state               :  int, seed for random, optional (default = none)
+    n_shapelets : int, default=10000
+
+    max_shapelets : int or None, default=None
+
+    max_shapelet_length : int or None, default=None
+
+    base_estimator : BaseEstimator or None, default=None
+
+    transform_limit_in_minutes : int, default=60
+        Time contract to limit transform time in minutes for the shapelet transform,
+        overriding n_shapelets. A value of 0 means n_shapelets is used.
+    time_limit_in_minutes : int, default=0
+        Time contract to limit build time in minutes, overriding n_estimators.
+        Default of 0 means n_estimators is used.
+    save_transformed_data : bool, default=False
+        Save the data transformed in fit for use in _get_train_probs.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
-    TO DO
+    n_classes : int
+        The number of classes.
+    n_instances : int
+        The number of train cases.
+    n_dims : int
+        The number of dimensions per case.
+    classes_ : list
+        The classes labels.
+    transformed_data : list of shape (n_estimators) of ndarray
+        The transformed dataset for all classifiers. Only saved when
+        save_transformed_data is true.
+
+    See Also
+    --------
+    RotationForest
 
     Notes
     -----
-    ..[1] Jon Hills et al., "Classification of time series by
-    shapelet transformation",
-        Data Mining and Knowledge Discovery, 28(4), 851--881, 2014
-    https://link.springer.com/article/10.1007/s10618-013-0322-1
-    ..[2] A. Bostrom and A. Bagnall, "Binary Shapelet Transform
-    for Multiclass Time Series Classification",
-    Transactions on Large-Scale Data and Knowledge Centered
-      Systems, 32, 2017
-    https://link.springer.com/chapter/10.1007/978-3-319-22729-0_20
-    Java Version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/
-    java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+    java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java>`_.
+
+    References
+    ----------
+    .. [1] Jon Hills et al., "Classification of time series by shapelet transformation",
+       Data Mining and Knowledge Discovery, 28(4), 851--881, 2014.
+    .. [2] A. Bostrom and A. Bagnall, "Binary Shapelet Transform for Multiclass Time
+       Series Classification", Transactions on Large-Scale Data and Knowledge Centered
+       Systems, 32, 2017.
+
+    Examples
+    --------
+    >>> from sktime.classification.shapelet_based import ShapeletTransformClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ShapeletTransformClassifier(n_estimators=10,
+    >>> transform_limit_in_minutes=0.025)
+    >>> clf.fit(X_train, y_train)
+    ShapeletTransformClassifier(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -73,7 +114,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         n_shapelets=10000,
         max_shapelets=None,
         max_shapelet_length=None,
-        estimator=None,
+        base_estimator=None,
         transform_limit_in_minutes=60,
         time_limit_in_minutes=0,
         save_transformed_data=False,
@@ -83,7 +124,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.n_shapelets = n_shapelets
         self.max_shapelets = max_shapelets
         self.max_shapelet_length = max_shapelet_length
-        self.estimator = estimator
+        self.base_estimator = base_estimator
 
         self.transform_limit_in_minutes = transform_limit_in_minutes
         self.time_limit_in_minutes = time_limit_in_minutes
@@ -94,14 +135,14 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         self.n_instances = 0
         self.n_dims = 0
-        self.n_classes_ = 0
+        self.n_classes = 0
         self.classes_ = []
         self.transformed_data = []
 
         self._max_shapelets = max_shapelets
         self._max_shapelet_length = max_shapelet_length
         self._transformer = None
-        self._estimator = estimator
+        self._base_estimator = base_estimator
         self._n_jobs = n_jobs
 
         super(ShapeletTransformClassifier, self).__init__()
@@ -110,7 +151,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_instances, self.n_dims = X.shape
-        self.n_classes_ = np.unique(y).shape[0]
+        self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.max_shapelet_length is None:
@@ -140,33 +181,34 @@ class ShapeletTransformClassifier(BaseClassifier):
             )
         )
 
-        self._estimator = _clone_estimator(
+        self._base_estimator = _clone_estimator(
             RandomForestClassifier(n_estimators=200, n_jobs=self._n_jobs)
-            if self.estimator is None
-            else self.estimator,
+            if self.base_estimator is None
+            else self.base_estimator,
             self.random_state,
         )
 
         if self.save_transformed_data:
             self.transformed_data = self._transformer.fit_transform(X, y)
-            self._estimator.fit(self.transformed_data, y)
+            self._base_estimator.fit(self.transformed_data, y)
         else:
-            self._estimator.fit(self._transformer.fit_transform(X, y), y)
+            self._base_estimator.fit(self._transformer.fit_transform(X, y), y)
 
     def _predict(self, X):
-        return self._estimator.predict(self._transformer.transform(X))
+        return self._base_estimator.predict(self._transformer.transform(X))
 
     def _predict_proba(self, X):
-        m = getattr(self._estimator, "predict_proba", None)
+        m = getattr(self._base_estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            return self._base_estimator.predict_proba(self._transformer.transform(X))
         else:
-            dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            dists = np.zeros((X.shape[0], self.n_classes))
+            preds = self._base_estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists
 
+    # TODO
     def _get_train_probs(self, X, y):
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_pandas=True)
@@ -183,7 +225,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        m = getattr(self._estimator, "predict_proba", None)
+        m = getattr(self._base_estimator, "predict_proba", None)
         if not callable(m):
             raise ValueError("Estimator must have a predict_proba method.")
 
@@ -195,8 +237,8 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         classifier = _clone_estimator(
             RandomForestClassifier(n_estimators=200)
-            if self.estimator is None
-            else self.estimator,
+            if self.base_estimator is None
+            else self.base_estimator,
             self.random_state,
         )
 
