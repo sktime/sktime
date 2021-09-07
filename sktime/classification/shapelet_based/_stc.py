@@ -90,10 +90,12 @@ class ShapeletTransformClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.shapelet_based import ShapeletTransformClassifier
+    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ShapeletTransformClassifier(n_estimators=10,
+    >>> rotf = RotationForest(n_estimators=10)
+    >>> clf = ShapeletTransformClassifier(estimator=rotf,
     ...     transform_limit_in_minutes=0.025)
     >>> clf.fit(X_train, y_train)
     ShapeletTransformClassifier(...)
@@ -194,22 +196,27 @@ class ShapeletTransformClassifier(BaseClassifier):
         if callable(m):
             self._estimator.n_jobs = self._n_jobs
 
+        X_t = self._transformer.fit_transform(X, y).to_numpy()
+
         if self.save_transformed_data:
-            self.transformed_data = self._transformer.fit_transform(X, y)
-            self._estimator.fit(self.transformed_data, y)
-        else:
-            self._estimator.fit(self._transformer.fit_transform(X, y), y)
+            self.transformed_data = X_t
+
+        self._estimator.fit(X_t, y)
 
     def _predict(self, X):
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X).to_numpy()
+
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
+        X_t = self._transformer.transform(X).to_numpy()
+
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            return self._estimator.predict_proba(X_t)
         else:
             dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists
