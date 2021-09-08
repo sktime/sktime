@@ -14,7 +14,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import SingleWindowSplitter
-from sktime.utils.validation import check_regressor
+from sktime.utils.validation.forecasting import check_regressor
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
