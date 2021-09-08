@@ -27,6 +27,7 @@ from sktime.classification.feature_based import (
     SignatureClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid import HIVECOTEV2
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.classification.interval_based import DrCIF
 from sktime.classification.interval_based import RandomIntervalSpectralForest
@@ -128,6 +129,7 @@ EXCLUDED_TESTS = {
     "ShapeletTransformClassifier": ["check_fit_idempotent"],
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
+    "HIVECOTEV2": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
 }
@@ -283,6 +285,19 @@ ESTIMATOR_TEST_PARAMS = {
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
         "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},
+    },
+    HIVECOTEV2: {
+        "stc_params": {
+            "estimator": RotationForest(n_estimators=2),
+            "transform_limit_in_mins": 0.01,
+        },
+        "drcif_params": {"n_estimators": 2},
+        "arsenal_params": {"num_kernels": 20, "n_estimators": 2},
+        "tde_params": {
+            "n_parameter_samples": 4,
+            "max_ensemble_size": 2,
+            "randomly_selected_params": 2,
+        },
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
