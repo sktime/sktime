@@ -8,12 +8,10 @@ __all__ = ["FeatureSelection"]
 
 import math
 import pandas as pd
-from sklearn.base import clone
-from sklearn.base import is_regressor
-from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
+from sktime.utils.validation import check_regressor
 
 
 class FeatureSelection(_SeriesToSeriesTransformer):
@@ -36,13 +34,13 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
-        then a GradientBoostingRegressor(max_depth=5, random_state=1) is used.
+        then a GradientBoostingRegressor(max_depth=5) is used.
     n_columns : int, optional
         Number of feautres (columns) to select. n_columns must be <=
         number of X columns. Some methods require n_columns to be given.
-    random_state : int/float/str, optional
-        Value to set random.seed() if method="random", default None
-        Requires n_columns to be given.
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor and to
+        set random.seed() if method="random".
     columns : list of str
         A list of columns to select. If columns is given.
 
@@ -112,11 +110,18 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         # multivariate Z
         if not isinstance(Z, pd.Series):
             if self.method == "feature-importances":
-                self._check_regressor()
+                self.regressor_ = check_regressor(
+                    regressor=self.regressor, random_state=self.random_state
+                )
                 self._check_n_columns(Z)
                 X = check_series(X)
                 # fit regressor with Z as exog data and X as endog data (target)
                 self.regressor_.fit(X=Z, y=X)
+                if not hasattr(self.regressor_, "feature_importances_"):
+                    raise ValueError(
+                        """The given regressor must have an
+                        attribute feature_importances_ after fitting."""
+                    )
                 # create dict with columns name (key) and feauter importance (value)
                 d = dict(zip(Z.columns, self.regressor_.feature_importances_))
                 # sort d descending
@@ -160,27 +165,19 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         Z = check_series(Z)
 
+        # multivariate case
         if not isinstance(Z, pd.Series):
             if self.method == "none":
                 Zt = None
             else:
                 Zt = Z[self.columns_]
+        # univariate case
         else:
-            # univariate case gets passed through
-            Zt = Z
+            if self.method == "none":
+                Zt = None
+            else:
+                Zt = Z
         return Zt
-
-    def _check_regressor(self):
-        if self.regressor is None:
-            self.regressor_ = GradientBoostingRegressor(max_depth=5, random_state=1)
-        else:
-            if not is_regressor(self.regressor):
-                raise ValueError(
-                    f"`regressor` should be a regressor, "
-                    f"but found: {self.regressor}"
-                )
-            self.regressor_ = clone(self.regressor)
-        return self
 
     def _check_n_columns(self, Z):
         if not isinstance(self.n_columns_, int):

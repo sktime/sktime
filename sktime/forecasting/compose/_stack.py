@@ -6,14 +6,15 @@
 __author__ = ["Markus Löning"]
 __all__ = ["StackingForecaster"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import SingleWindowSplitter
-
-from warnings import warn
+from sktime.utils.validation import check_regressor
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
@@ -30,8 +31,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         The regressor is used as a meta-model and trained with the predictions
         of the ensemble forecasters as exog data and with y as endog data. The
         length of the data is dependent to the given fh. If None, then
-        a GradientBoostingRegressor(max_depth=5, random_state=1) is used.
+        a GradientBoostingRegressor(max_depth=5) is used.
         The regressor can also be a sklearn.Pipeline().
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor.
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -64,8 +67,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self, forecasters, regressor=None, n_jobs=None):
-        super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+    def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
+        super(StackingForecaster, self).__init__(
+            forecasters=forecasters, random_state=random_state, n_jobs=n_jobs
+        )
         self.regressor = regressor
 
     def _fit(self, y, X=None, fh=None):
@@ -88,7 +93,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             raise NotImplementedError()
 
         _, forecasters = self._check_forecasters()
-        self._check_regressor()
+        self.regressor_ = check_regressor(
+            regressor=self.regressor, random_state=self.random_state
+        )
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
