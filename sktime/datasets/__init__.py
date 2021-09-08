@@ -19,6 +19,7 @@ __all__ = [
     "load_japanese_vowels",
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
+    "load_acsf1",
 ]
 
 from sktime.datasets._data_io import load_airline
@@ -37,3 +38,4 @@ from sktime.datasets._data_io import load_uschange
 from sktime.datasets._data_io import load_PBS_dataset
 from sktime.datasets._data_io import load_gun_point_segmentation
 from sktime.datasets._data_io import load_electric_devices_segmentation
+from sktime.datasets._data_io import load_acsf1

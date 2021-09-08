@@ -11,7 +11,8 @@ These include:
 
 * Documenting code using NumPy docstrings and sktime conventions
 * Following ``sktime's`` docstring convention for public code artifacts and modules
-* Adding new public functionality to the :ref:`api_refernce` and :ref:`user guide <user_guide>`
+* Adding new public functionality to the :ref:`api_reference` and :ref:`user
+guide <user_guide>`
 
 More detailed information on ``sktime's`` documentation format is provided below.
 
