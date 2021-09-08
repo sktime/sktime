@@ -35,10 +35,12 @@ from sktime.classification.interval_based import TimeSeriesForestClassifier as T
 from sktime.classification.kernel_based import Arsenal
 from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
+from sktime.forecasting.compose import AutoEnsembleForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
@@ -52,7 +54,6 @@ from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
-from sktime.forecasting.compose import AutoEnsembleForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
@@ -93,12 +94,11 @@ from sktime.transformations.series.acf import AutoCorrelationTransformer
 from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.compose import ColumnwiseTransformer
+from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
-
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -244,10 +244,10 @@ ESTIMATOR_TEST_PARAMS = {
         "selected_forecaster": "Naive_mean",
     },
     ShapeletTransformClassifier: {
-        "n_estimators": 3,
-        "transform_contract_in_mins": 0.075,
+        "estimator": RotationForest(n_estimators=3),
+        "transform_limit_in_mins": 0.025,
     },
-    ContractedShapeletTransform: {"time_contract_in_mins": 0.075},
+    ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
     ShapeletTransform: {
         "max_shapelets_to_store_per_class": 1,
         "min_shapelet_length": 3,
@@ -276,7 +276,10 @@ ESTIMATOR_TEST_PARAMS = {
     ROCKETClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
-        "stc_params": {"n_estimators": 2, "transform_contract_in_mins": 0.02},
+        "stc_params": {
+            "estimator": RotationForest(n_estimators=2),
+            "transform_limit_in_mins": 0.01,
+        },
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
         "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},

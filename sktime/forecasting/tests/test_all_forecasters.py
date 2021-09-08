@@ -45,6 +45,7 @@ from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
+from sktime.utils._testing.forecasting import _get_n_columns
 
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
@@ -55,19 +56,6 @@ INVALID_y_INPUT_TYPES = [list(), tuple()]
 # testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
-
-
-# helper function
-def _get_n_columns(tag):
-    """Return the the number of columns to use in tests."""
-    n_columns_list = []
-    if tag == "univariate":
-        n_columns_list = [1]
-    elif tag == "multivariate":
-        n_columns_list = [2]
-    elif tag == "both":
-        n_columns_list = [1, 2]
-    return n_columns_list
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
