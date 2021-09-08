@@ -174,6 +174,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 | :woman_mechanic:  **[Developer Guides]**      | How to further develop sktime's code base.                             |
 | :construction: **[Enhancement Proposals]** | Design a new feature for sktime. |
 | :medal_sports: **[Contributors]** | A list of all contributors. |
+| :raising_hand: **[Roles]** | An overview of our core community roles. |
 | :money_with_wings: **[Donate]** | Fund sktime maintenance and development. |
 | :classical_building: **[Governance]** | How and by whom decisions are made in sktime's community.   |
 
@@ -186,6 +187,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [mentoring]: https://github.com/sktime/mentoring
 [meetings]: https://calendar.google.com/calendar/u/0/embed?src=sktime.toolbox@gmail.com&ctz=UTC
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
+[roles]: https://www.sktime.org/en/latest/about/team.html
 
 ## :bulb: Project vision
 
