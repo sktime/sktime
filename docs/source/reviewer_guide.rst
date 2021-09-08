@@ -44,4 +44,4 @@ as similar as possible
 .. warning::
 
     If a Pull Request does not meet sktime's :ref:`documentation guide <developer_guide_documentation>`
-    a reviewer shoudl require the documentation be updated prior to approving the Pull Request.
+    a reviewer should require the documentation be updated prior to approving the Pull Request.
