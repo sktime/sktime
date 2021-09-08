@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests the VAR model."""
 __author__ = ["Taiwo Owoseni"]
-
+#
 from sktime.forecasting.var import VectorAutoRegression as VAR
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.base import ForecastingHorizon
@@ -29,7 +29,7 @@ def test_var():
 
     stats = _VAR(train)
     stats_fit = stats.fit()
-    fh_int = fh.to_absolute_int(train.index[0], train.index[-1])
+    fh_int = fh.to_relative(train.index[-1])
     lagged = stats_fit.k_ar
     y_pred_stats = stats_fit.forecast(train.values[-lagged:], steps=fh_int[-1])
     new_arr = []
