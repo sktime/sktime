@@ -186,11 +186,12 @@ class ShapeletTransformClassifier(BaseClassifier):
         )
 
         self._estimator = _clone_estimator(
-            RotationForest(save_transformed_data=self.save_transformed_data)
-            if self.estimator is None
-            else self.estimator,
+            RotationForest() if self.estimator is None else self.estimator,
             self.random_state,
         )
+
+        if isinstance(self._estimator, RotationForest):
+            self._estimator.save_transformed_data = self.save_transformed_data
 
         m = getattr(self._estimator, "n_jobs", None)
         if callable(m):
