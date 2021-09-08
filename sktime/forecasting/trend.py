@@ -29,8 +29,8 @@ class TrendForecaster(BaseForecaster):
         Define the regression model type. If not set, will default to
          sklearn.linear_model.LinearRegression
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import TrendForecaster
     >>> y = load_airline()

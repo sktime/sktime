@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["Markus Löning", "Svea Meyer"]
+__author__ = ["mloning", "SveaMeyer13"]
 
 from sklearn.base import clone
 import pandas as pd
@@ -16,7 +16,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
-    """Remove a trend from a series.
+    """Remove a :term:`trend <Trend>` from a series.
 
     This transformer uses any forecaster and returns the in-sample residuals
     of the forecaster's predicted values.
@@ -24,7 +24,7 @@ class Detrender(_SeriesToSeriesTransformer):
     The Detrender works by first fitting the forecaster to the input data.
     To transform data, it uses the fitted forecaster to generate
     forecasts for the time points of the passed data and returns the residuals
-     of the forecasts.
+    of the forecasts.
     Depending on the passed data, this will require it to generate in-sample
     or out-of-sample forecasts.
 
@@ -39,16 +39,19 @@ class Detrender(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    forecaster : estimator object, optional
-        default=None. If None, PolynomialTrendForecaster(degree=1) is used.
-
+    forecaster : estimator object, default=None
+        If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
         The forecasting model to remove the trend with
-        (e.g. PolynomialTrendForecaster)
+        (e.g. PolynomialTrendForecaster).
 
     Attributes
     ----------
     forecaster_ : estimator object
-        Model that defines the trend in the series
+        Model that defines the trend in the series.
+
+    See Also
+    --------
+    Deseasonalizer
 
     Examples
     --------
@@ -76,7 +79,7 @@ class Detrender(_SeriesToSeriesTransformer):
         Z : pd.Series, pd.DataFrame
             Endogenous time series to fit a trend to.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables
+            Exogenous variables.
 
         Returns
         -------
@@ -108,7 +111,7 @@ class Detrender(_SeriesToSeriesTransformer):
         Z : pd.Series, pd.DataFrame
             Time series to be detrended
         X : pd.DataFrame, optional (default=False)
-            Exogenous variables
+            Exogenous variables.
 
         Returns
         -------
@@ -148,7 +151,7 @@ class Detrender(_SeriesToSeriesTransformer):
         Z : pd.Series, pd.DataFrame
             Detrended series to inverse transform (add back trend)
         X : pd.DataFrame, optional (default=False)
-            Exogenous variables
+            Exogenous variables.
 
         Returns
         -------
@@ -188,7 +191,7 @@ class Detrender(_SeriesToSeriesTransformer):
         Z : pd.Series, pd.DataFrame
             New time series
         update_params : bool, optional (default=True)
-            Update the parameters of the detrender model with
+            Update the parameters of the detrender model.
 
         Returns
         -------
