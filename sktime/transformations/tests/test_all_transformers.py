@@ -1,9 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests common to all transformers."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
@@ -20,7 +19,7 @@ from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.estimator_checks import _make_args
-from sktime.datatypes._panel._convert import is_nested_dataframe
+from sktime.datatypes._panel._check import is_nested_dataframe
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
 
