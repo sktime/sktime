@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1."""
+"""Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
+
+Hybrid ensemble of classifiers from 4 separate time series classification
+representations, using the weighted probabilistic CAWPE as an ensemble controller.
+"""
 
 __author__ = "Matthew Middlehurst"
 __all__ = ["HIVECOTEV1"]
@@ -30,17 +34,32 @@ class HIVECOTEV1(BaseClassifier):
 
     Parameters
     ----------
-    verbose                 : int, level of output printed to
-    the console (for information only) (default = 0)
-    n_jobs                  : int, optional (default=1)
-    The number of jobs to run in parallel for both `fit` and `predict`.
-    ``-1`` means using all processors.
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
+    stc_params : dict or None, default=None
+        Parameters for the ShapeletTransformClassifier module. If None, uses the
+        default parameters.
+    tsf_params : dict or None, default=None
+        Parameters for the TimeSeriesForestClassifier module. If None, uses the default
+        parameters with n_estimators set to 500.
+    rise_params : dict or None, default=None
+        Parameters for the RandomIntervalSpectralForest module. If None, uses the
+        default parameters with n_estimators set to 500.
+    cboss_params : dict or None, default=None
+        Parameters for the ContractableBOSS module. If None, uses the default
+        parameters.
+    verbose : int, default=0
+        Level of output printed to the console (for information only).
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
-    n_classes               : extracted from the data
+    n_classes : int
+        The number of classes.
+    classes_ : list
+        The classes labels.
 
     See Also
     --------
