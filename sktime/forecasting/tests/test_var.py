@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests the VAR model."""
-__author__ = ["Taiwo Owoseni"]
+__author__ = ["thayeylolu"]
 #
 from sktime.forecasting.var import VectorAutoRegression as VAR
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -19,7 +19,7 @@ df = pd.DataFrame(
 )
 
 
-def test_var():
+def test_VAR_against_statsmodels():
     """Compares Sktime's and Statsmodel's VAR."""
     train, test = temporal_train_test_split(df)
     sktime_model = VAR()
