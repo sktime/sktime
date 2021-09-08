@@ -2,12 +2,11 @@
 
 """Vector Auto Regressor."""
 __all__ = ["VectorAutoRegression"]
-__author__ = ["Taiwo Owoseni"]
+__author__ = ["thayeylolu"]
 
 from statsmodels.tsa.api import VAR as _VAR
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-import numpy as np
 import pandas as pd
 
 
@@ -97,7 +96,7 @@ class VectorAutoRegression(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
-        self._forecaster = _VAR(y, missing=self.missing)
+        self._forecaster = _VAR(y, X, missing=self.missing)
         self._fitted_forecaster = self._forecaster.fit(
             trend=self.trend,
             maxlags=self.maxlags,
@@ -129,12 +128,11 @@ class VectorAutoRegression(_StatsModelsAdapter):
         # fh in stats
         # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
         fh_int = fh.to_relative(self.cutoff)
-        lagged = self._fitted_forecaster.k_ar
+        n_lags = self._fitted_forecaster.k_ar
         y_pred = self._fitted_forecaster.forecast(
-            y=self._y.values[-lagged:], steps=fh_int[-1]
+            y=self._y.values[-n_lags:], steps=fh_int[-1]
         )
-        new_arr = []
-        for i in fh_int:
-            new_arr.append(y_pred[i - 1])
-        pred_df = pd.DataFrame(np.array(new_arr), index=fh.to_absolute(self.cutoff))
-        return pred_df
+        y_pred = pd.DataFrame(
+            y_pred[fh.to_indexer(self.cutoff), :], index=fh.to_absolute(self.cutoff)
+        )
+        return y_pred
