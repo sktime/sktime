@@ -13,6 +13,7 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
+    "check_regressor",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
