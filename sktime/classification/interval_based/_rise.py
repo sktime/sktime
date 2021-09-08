@@ -13,7 +13,6 @@ import numpy as np
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -126,7 +125,7 @@ def _produce_intervals(
     return intervals
 
 
-class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
+class RandomIntervalSpectralForest(BaseClassifier):
     """Random Interval Spectral Forest (RISE).
 
     Input: n series length m
@@ -194,18 +193,17 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         min_interval=16,
         acf_lag=100,
         acf_min_values=4,
+        base_estimator=None,
         n_jobs=None,
         random_state=None,
     ):
-        super(RandomIntervalSpectralForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(random_state=random_state),
-            n_estimators=n_estimators,
-        )
+        super(RandomIntervalSpectralForest, self).__init__()
         self.n_estimators = n_estimators
         self.max_interval = max_interval
         self.min_interval = min_interval
         self.acf_lag = acf_lag
         self.acf_min_values = acf_min_values
+        self.base_estimator = DecisionTreeClassifier()
         self.n_jobs = n_jobs
         self.random_state = random_state
 
