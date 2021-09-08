@@ -70,10 +70,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
-        super(StackingForecaster, self).__init__(
-            forecasters=forecasters, random_state=random_state, n_jobs=n_jobs
-        )
+        super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
+        self.random_state = random_state
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.

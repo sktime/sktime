@@ -99,10 +99,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         super(AutoEnsembleForecaster, self).__init__(
             forecasters=forecasters,
             n_jobs=n_jobs,
-            random_state=random_state,
         )
         self.regressor = regressor
         self.test_size = test_size
+        self.random_state = random_state
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
