@@ -49,7 +49,8 @@ class VectorAutoRegression(_StatsModelsAdapter):
     >>> sktime_model = VAR()
     >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
     >>> sktime_model.fit(train)
-    VectorAutoRegression(dates=None, freq=None, missing='none')
+    VectorAutoRegression(maxlags=None, method='ols', missing='none', trend='c',
+                         verbose=False)
     >>> y_pred = sktime_model.predict(fh=fh)
     """
 
