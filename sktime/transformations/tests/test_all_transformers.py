@@ -50,13 +50,13 @@ def _construct_fit(Estimator, **kwargs):
     return estimator.fit(*args)
 
 
-def check_series_to_primitive_transform_univariate(Estimator):
-    out = _construct_fit_transform(Estimator)
+def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
+    out = _construct_fit_transform(Estimator, **kwargs)
     assert isinstance(out, (int, np.integer, float, np.floating, str))
 
 
 def _check_raises_error(Estimator, **kwargs):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"univariate"):
         if Estimator.get_class_tag("fit-in-transform", False):
             # As some estimators have an empty fit method, we here check if
             # they raise the appropriate error in transform rather than fit.
@@ -78,17 +78,12 @@ def check_series_to_primitive_transform_multivariate(Estimator):
 
 def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 15
-    n_columns = 1
-    if Estimator.get_class_tag("scitype:Z") == "multivariate":
-        _check_raises_error(Estimator, n_columns=n_columns)
-    else:
-        out = _construct_fit_transform(
-            Estimator,
-            n_timepoints=n_timepoints,
-            n_columns=n_columns,
-            add_nan=Estimator.get_class_tag("handles-missing-data", False),
-        )
-        assert isinstance(out, (pd.Series, pd.DataFrame, np.ndarray))
+    out = _construct_fit_transform(
+        Estimator,
+        n_timepoints=n_timepoints,
+        add_nan=Estimator.get_class_tag("handles-missing-data", False),
+    )
+    assert isinstance(out, (pd.Series, np.ndarray, pd.DataFrame))
 
 
 def check_series_to_series_transform_multivariate(Estimator):
@@ -113,13 +108,10 @@ def check_panel_to_tabular_transform_univariate(Estimator):
 
 def check_panel_to_tabular_transform_multivariate(Estimator):
     n_instances = 5
-    n_columns = 3
     if Estimator.get_class_tag("univariate-only", False):
-        _check_raises_error(Estimator, n_instances=n_instances, n_columns=n_columns)
+        _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
     else:
-        out = _construct_fit_transform(
-            Estimator, n_instances=n_instances, n_columns=n_columns
-        )
+        out = _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
         assert isinstance(out, (pd.DataFrame, np.ndarray))
         assert out.shape[0] == n_instances
 

@@ -7,6 +7,7 @@ __author__ = ["aiwalter"]
 __all__ = ["FeatureSelection"]
 
 import math
+import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
@@ -73,7 +74,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
-        "scitype:Z": "multivariate",
+        "univariate-only": False,
     }
 
     def __init__(
@@ -104,39 +105,41 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         -------
         self
         """
-        Z = check_series(Z, enforce_multivariate=True)
+        Z = check_series(Z)
         self.n_columns_ = self.n_columns
         self.feature_importances_ = None
 
-        if self.method == "feature-importances":
-            self._check_regressor()
-            self._check_n_columns(Z)
-            X = check_series(X)
-            # fit regressor with Z as exog data and X as endog data (target)
-            self.regressor_.fit(X=Z, y=X)
-            # create dirctionary with columns name (key) and feauter importance (value)
-            d = dict(zip(Z.columns, self.regressor_.feature_importances_))
-            # sort d descending
-            d = {k: d[k] for k in sorted(d, key=d.get, reverse=True)}
-            self.feature_importances_ = d
-            self.columns_ = list(d.keys())[: self.n_columns_]
-        elif self.method == "random":
-            self._check_n_columns(Z)
-            self.columns_ = list(
-                Z.sample(
-                    n=self.n_columns_, random_state=self.random_state, axis=1
-                ).columns
-            )
-        elif self.method == "columns":
-            if self.columns is None:
-                raise AttributeError("Parameter columns must be given.")
-            self.columns_ = self.columns
-        elif self.method == "none":
-            self.columns_ = None
-        elif self.method == "all":
-            self.columns_ = list(Z.columns)
-        else:
-            raise ValueError("Incorrect method given. Try another method.")
+        # multivariate Z
+        if not isinstance(Z, pd.Series):
+            if self.method == "feature-importances":
+                self._check_regressor()
+                self._check_n_columns(Z)
+                X = check_series(X)
+                # fit regressor with Z as exog data and X as endog data (target)
+                self.regressor_.fit(X=Z, y=X)
+                # create dict with columns name (key) and feauter importance (value)
+                d = dict(zip(Z.columns, self.regressor_.feature_importances_))
+                # sort d descending
+                d = {k: d[k] for k in sorted(d, key=d.get, reverse=True)}
+                self.feature_importances_ = d
+                self.columns_ = list(d.keys())[: self.n_columns_]
+            elif self.method == "random":
+                self._check_n_columns(Z)
+                self.columns_ = list(
+                    Z.sample(
+                        n=self.n_columns_, random_state=self.random_state, axis=1
+                    ).columns
+                )
+            elif self.method == "columns":
+                if self.columns is None:
+                    raise AttributeError("Parameter columns must be given.")
+                self.columns_ = self.columns
+            elif self.method == "none":
+                self.columns_ = None
+            elif self.method == "all":
+                self.columns_ = list(Z.columns)
+            else:
+                raise ValueError("Incorrect method given. Try another method.")
 
         self._is_fitted = True
         return self
@@ -155,11 +158,16 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             Transformed version of input series `Z`.
         """
         self.check_is_fitted()
-        Z = check_series(Z, enforce_multivariate=True)
-        if self.method == "none":
-            Zt = None
+        Z = check_series(Z)
+
+        if not isinstance(Z, pd.Series):
+            if self.method == "none":
+                Zt = None
+            else:
+                Zt = Z[self.columns_]
         else:
-            Zt = Z[self.columns_]
+            # univariate case gets passed through
+            Zt = Z
         return Zt
 
     def _check_regressor(self):
