@@ -100,9 +100,6 @@ class TrendForecaster(BaseForecaster):
         y_pred_int : pd.DataFrame
             Prediction intervals for the forecast
         """
-        if return_pred_int or X is not None:
-            raise NotImplementedError()
-
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
         X_pred = fh.to_numpy().reshape(-1, 1)
