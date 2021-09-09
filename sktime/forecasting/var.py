@@ -40,6 +40,7 @@ class VectorAutoRegression(_StatsModelsAdapter):
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> import pandas as pd
+    >>> import numpy as np
     >>> index = pd.date_range(start="2005", end="2006-12", freq="M")
     >>> df = pd.DataFrame(np.random.randint(0, 100, size=(23, 2)),
     ... columns=list("AB"),
