@@ -206,7 +206,7 @@ To set up pre-commit, follow these steps:
    pre-commit install
 
 Once installed, pre-commit will automatically run our code quality
-checks on the files you changed whenenver you make a new commit.
+checks on the files you changed whenever you make a new commit.
 
 You can find our pre-commit configuration in
 `.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
