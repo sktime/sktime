@@ -18,7 +18,7 @@ from sktime.forecasting.compose import ColumnEnsembleForecaster
 
 
 class _NaiveForecaster(_BaseWindowForecaster):
-    """This class implements a univariate NaiveForecaster."""
+    """Univariate NaiveForecaster."""
 
     _tags = {
         "requires-fh-in-fit": False,
@@ -235,7 +235,10 @@ class NaiveForecaster(_NaiveForecaster):
     """Forecast based on naive assumptions about past trends continuing.
 
     NaiveForecaster is a forecaster that makes forecasts using simple
-    strategies. Two out of three strategies are robust against NaNs.
+    strategies. Two out of three strategies are robust against NaNs. The
+    NaiveForecaster can also be used for multivariate data and it then
+    applies internally the ColumnEnsembleForecaster, so each column
+    is forecasted with the same strategy.
 
     Internally, this forecaster does the following:
     - obtains the so-called "last window", a 1D array that denotes the
