@@ -186,6 +186,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     @classmethod
     def get_test_params(cls):
         """Get default parameters of the estimator.
+
         Returns
         -------
         params : dict or list of dict, default = {}
