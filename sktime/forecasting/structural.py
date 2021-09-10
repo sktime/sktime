@@ -13,7 +13,174 @@ from statsmodels.tsa.statespace.structural import (
 
 
 class UnobservedComponents(_StatsModelsAdapter):
-    """TODO: Add docstrings.
+    r"""Wrapper class of the UnobservedComponents model from statsmodels.
+
+    The input parameters (and doc-strings) are taken from the original implementation.
+
+    Parameters
+    ----------
+    level : {bool, str}, optional
+        Whether or not to include a level component. Default is False. Can also
+        be a string specification of the level / trend component.
+    trend : bool, optional
+        Whether or not to include a trend component. Default is False. If True,
+        `level` must also be True.
+    seasonal : {int, None}, optional
+        The period of the seasonal component, if any. Default is None.
+    freq_seasonal : {list[dict], None}, optional.
+        Whether (and how) to model seasonal component(s) with trig. functions.
+        If specified, there is one dictionary for each frequency-domain
+        seasonal component.  Each dictionary must have the key, value pair for
+        'period' -- integer and may have a key, value pair for
+        'harmonics' -- integer. If 'harmonics' is not specified in any of the
+        dictionaries, it defaults to the floor of period/2.
+    cycle : bool, optional
+        Whether or not to include a cycle component. Default is False.
+    autoregressive : {int, None}, optional
+        The order of the autoregressive component. Default is None.
+    irregular : bool, optional
+        Whether or not to include an irregular component. Default is False.
+    stochastic_level : bool, optional
+        Whether or not any level component is stochastic. Default is False.
+    stochastic_trend : bool, optional
+        Whether or not any trend component is stochastic. Default is False.
+    stochastic_seasonal : bool, optional
+        Whether or not any seasonal component is stochastic. Default is True.
+    stochastic_freq_seasonal : list[bool], optional
+        Whether or not each seasonal component(s) is (are) stochastic.  Default
+        is True for each component.  The list should be of the same length as
+        freq_seasonal.
+    stochastic_cycle : bool, optional
+        Whether or not any cycle component is stochastic. Default is False.
+    damped_cycle : bool, optional
+        Whether or not the cycle component is damped. Default is False.
+    cycle_period_bounds : tuple, optional
+        A tuple with lower and upper allowed bounds for the period of the
+        cycle. If not provided, the following default bounds are used:
+        (1) if no date / time information is provided, the frequency is
+        constrained to be between zero and :math:`\pi`, so the period is
+        constrained to be in [0.5, infinity].
+        (2) If the date / time information is provided, the default bounds
+        allow the cyclical component to be between 1.5 and 12 years; depending
+        on the frequency of the endogenous variable, this will imply different
+        specific bounds.
+    mle_regression : bool, optional
+        Whether or not to estimate regression coefficients by maximum likelihood
+        as one of hyperparameters. Default is True.
+        If False, the regression coefficients are estimated by recursive OLS,
+        included in the state vector.
+    use_exact_diffuse : bool, optional
+        Whether or not to use exact diffuse initialization for non-stationary
+        states. Default is False (in which case approximate diffuse
+        initialization is used).
+    start_params : array_like, optional
+        Initial guess of the solution for the loglikelihood maximization.
+    transformed : bool, optional
+        Whether or not `start_params` is already transformed. Default is
+        True.
+    includes_fixed : bool, optional
+        If parameters were previously fixed with the `fix_params` method,
+        this argument describes whether or not `start_params` also includes
+        the fixed parameters, in addition to the free parameters. Default
+        is False.
+    cov_type : str, optional
+        The `cov_type` keyword governs the method for calculating the
+        covariance matrix of parameter estimates. Can be one of:
+        - 'opg' for the outer product of gradient estimator
+        - 'oim' for the observed information matrix estimator, calculated
+            using the method of Harvey (1989)
+        - 'approx' for the observed information matrix estimator,
+            calculated using a numerical approximation of the Hessian matrix.
+        - 'robust' for an approximate (quasi-maximum likelihood) covariance
+            matrix that may be valid even in the presence of some
+            misspecifications. Intermediate calculations use the 'oim'
+            method.
+        - 'robust_approx' is the same as 'robust' except that the
+            intermediate calculations use the 'approx' method.
+        - 'none' for no covariance matrix calculation.
+        Default is 'opg' unless memory conservation is used to avoid
+        computing the loglikelihood values for each observation, in which
+        case the default is 'approx'.
+    cov_kwds : dict or None, optional
+        A dictionary of arguments affecting covariance matrix computation.
+        **opg, oim, approx, robust, robust_approx**
+        - 'approx_complex_step' : bool, optional - If True, numerical
+            approximations are computed using complex-step methods. If False,
+            numerical approximations are computed using finite difference
+            methods. Default is True.
+        - 'approx_centered' : bool, optional - If True, numerical
+            approximations computed using finite difference methods use a
+            centered approximation. Default is False.
+    method : str, optional
+        The `method` determines which solver from `scipy.optimize`
+        is used, and it can be chosen from among the following strings:
+        - 'newton' for Newton-Raphson
+        - 'nm' for Nelder-Mead
+        - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+        - 'lbfgs' for limited-memory BFGS with optional box constraints
+        - 'powell' for modified Powell's method
+        - 'cg' for conjugate gradient
+        - 'ncg' for Newton-conjugate gradient
+        - 'basinhopping' for global basin-hopping solver
+        The explicit arguments in `fit` are passed to the solver,
+        with the exception of the basin-hopping solver. Each
+        solver has several optional arguments that are not the same across
+        solvers. See the notes section below (or scipy.optimize) for the
+        available arguments and for the list of explicit arguments that the
+        basin-hopping solver supports.
+    maxiter : int, optional
+        The maximum number of iterations to perform.
+    full_output : bool, optional
+        Set to True to have all available output in the Results object's
+        mle_retvals attribute. The output is dependent on the solver.
+        See LikelihoodModelResults notes section for more information.
+    disp : bool, optional
+        Set to True to print convergence messages. Default is 0.
+    callback : callable callback(xk), optional
+        Called after each iteration, as callback(xk), where xk is the
+        current parameter vector.
+    return_params : bool, optional
+        Whether or not to return only the array of maximizing parameters.
+        Default is False.
+    optim_score : {'harvey', 'approx'} or None, optional
+        The method by which the score vector is calculated. 'harvey' uses
+        the method from Harvey (1989), 'approx' uses either finite
+        difference or complex step differentiation depending upon the
+        value of `optim_complex_step`, and None uses the built-in gradient
+        approximation of the optimizer. Default is None. This keyword is
+        only relevant if the optimization method uses the score.
+    optim_complex_step : bool, optional
+        Whether or not to use complex step differentiation when
+        approximating the score; if False, finite difference approximation
+        is used. Default is True. This keyword is only relevant if
+        `optim_score` is set to 'harvey' or 'approx'.
+    optim_hessian : {'opg','oim','approx'}, optional
+        The method by which the Hessian is numerically approximated. 'opg'
+        uses outer product of gradients, 'oim' uses the information
+        matrix formula from Harvey (1989), and 'approx' uses numerical
+        approximation. This keyword is only relevant if the
+        optimization method uses the Hessian matrix.
+    low_memory : bool, optional
+        If set to True, techniques are applied to substantially reduce
+        memory usage. If used, some features of the results object will
+        not be available (including smoothed results and in-sample
+        prediction), although out-of-sample forecasting is possible.
+        Default is False.
+
+    See Also
+    --------
+    statsmodels.tsa.statespace.structural.UnobservedComponents
+    statsmodels.tsa.statespace.structural.UnobservedComponentsResults
+
+    References
+    ----------
+    .. [1] Seabold, Skipper, and Josef Perktold. “statsmodels: Econometric
+       and statistical modeling with python.” Proceedings of the 9th Python
+       in Science Conference. 2010.
+
+    .. [2] Durbin, James, and Siem Jan Koopman. 2012.
+       Time Series Analysis by State Space Methods: Second Edition.
+       Oxford University Press.
 
     Examples
     --------
@@ -23,7 +190,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> forecaster = UnobservedComponents(level='local linear trend')
     >>> forecaster.fit(y)
     UnobservedComponents(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     def __init__(
@@ -169,7 +336,70 @@ class UnobservedComponents(_StatsModelsAdapter):
         repetitions=None,
         **kwargs
     ):
-        """TODO: Add docstrings."""
+        r"""Simulate a new time series following the state space model.
+
+        Taken from the original statsmodels implementation.
+
+        Parameters
+        ----------
+        nsimulations : int
+            The number of observations to simulate. If the model is
+            time-invariant this can be any number. If the model is
+            time-varying, then this number must be less than or equal to the
+            number of observations.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+        measurement_shocks : array_like, optional
+            If specified, these are the shocks to the measurement equation,
+            :math:`\varepsilon_t`. If unspecified, these are automatically
+            generated using a pseudo-random number generator. If specified,
+            must be shaped `nsimulations` x `k_endog`, where `k_endog` is the
+            same as in the state space model.
+        state_shocks : array_like, optional
+            If specified, these are the shocks to the state equation,
+            :math:`\eta_t`. If unspecified, these are automatically
+            generated using a pseudo-random number generator. If specified,
+            must be shaped `nsimulations` x `k_posdef` where `k_posdef` is the
+            same as in the state space model.
+        initial_state : array_like, optional
+            If specified, this is the initial state vector to use in
+            simulation, which should be shaped (`k_states` x 1), where
+            `k_states` is the same as in the state space model. If unspecified,
+            but the model has been initialized, then that initialization is
+            used. This must be specified if `anchor` is anything other than
+            "start" or 0 (or else you can use the `simulate` method on a
+            results object rather than on the model object).
+        anchor : int, str, or datetime, optional
+            First period for simulation. The simulation will be conditional on
+            all existing datapoints prior to the `anchor`.  Type depends on the
+            index of the given `endog` in the model. Two special cases are the
+            strings 'start' and 'end'. `start` refers to beginning the
+            simulation at the first period of the sample, and `end` refers to
+            beginning the simulation at the first period after the sample.
+            Integer values can run from 0 to `nobs`, or can be negative to
+            apply negative indexing. Finally, if a date/time index was provided
+            to the model, then this argument can be a date string to parse or a
+            datetime type. Default is 'start'.
+        repetitions : int, optional
+            Number of simulated paths to generate. Default is 1 simulated path.
+
+        See Also
+        --------
+        statsmodels.tsa.statespace.mlemodel.MLEResults
+
+        Returns
+        -------
+        simulated_obs : ndarray
+            An array of simulated observations. If `repetitions=None`, then it
+            will be shaped (nsimulations x k_endog) or (nsimulations,) if
+            `k_endog=1`. Otherwise it will be shaped
+            (nsimulations x k_endog x repetitions). If the model was given
+            Pandas input then the output will be a Pandas object. If
+            `k_endog > 1` and `repetitions` is not None, then the output will
+            be a Pandas DataFrame that has a MultiIndex for the columns, with
+            the first level containing the names of the `endog` variables and
+            the second level containing the repetition number.
+        """
         return self._fitted_forecaster.simulate(
             nsimulations=nsimulations,
             measurement_shocks=measurement_shocks,
@@ -184,7 +414,34 @@ class UnobservedComponents(_StatsModelsAdapter):
     def plot_diagnostics(
         self, variable=0, lags=10, fig=None, figsize=None, truncate_endog_names=24
     ):
-        """TODO: Add docstrings."""
+        """Diagnostic plots for standardized residuals of one endogenous variable.
+
+        Taken from the original statsmodels implementation.
+
+        Parameters
+        ----------
+        variable : int, optional
+            Index of the endogenous variable for which the diagnostic plots
+            should be created. Default is 0.
+        lags : int, optional
+            Number of lags to include in the correlogram. Default is 10.
+        fig : Figure, optional
+            If given, subplots are created in this figure instead of in a new
+            figure. Note that the 2x2 grid will be created in the provided
+            figure using `fig.add_subplot()`.
+        figsize : tuple, optional
+            If a figure is created, this argument allows specifying a size.
+            The tuple is (width, height).
+
+        See Also
+        --------
+        statsmodels.tsa.statespace.mlemodel.MLEResults
+
+        Returns
+        -------
+        Figure
+            Figure instance with diagnostic plots.
+        """
         self._fitted_forecaster.plot_diagnostics(
             variable=variable,
             lags=lags,
