@@ -64,10 +64,14 @@ __author__ = ["fkiraly"]
 __all__ = [
     "convert",
     "convert_to",
+    "Scitype",
+    "Mtype"
 ]
 
 import numpy as np
 import pandas as pd
+from typing import List, Union, Dict
+from enum import Enum
 
 from sktime.datatypes._series import convert_dict_Series
 
@@ -82,7 +86,107 @@ convert_dict.update(convert_dict_Series)
 convert_dict.update(convert_dict_Panel)
 
 
-def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=None):
+def _conversions_defined(scitype: str):
+    """Return an indicator matrix which conversions are defined for scitype.
+
+    Parameters
+    ----------
+    scitype: str - name of scitype for which conversions are queried
+
+    Returns
+    -------
+    conv_df: pd.DataFrame, columns and index is list of mtypes for scitype
+            entry of row i, col j is 1 if conversion from i to j is defined,
+                                     0 if conversion from i to j is not defined
+    """
+    pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
+    cols0 = set([x[0] for x in list(convert_dict.keys()) if x[2] == scitype])
+    cols1 = set([x[1] for x in list(convert_dict.keys()) if x[2] == scitype])
+    cols = sorted(list(cols0.union(cols1)))
+
+    mat = np.zeros((len(cols), len(cols)), dtype=int)
+    nkeys = len(cols)
+    for i in range(nkeys):
+        for j in range(nkeys):
+            if (cols[i], cols[j]) in pairs:
+                mat[i, j] = 1
+
+    conv_df = pd.DataFrame(mat, index=cols, columns=cols)
+
+    return conv_df
+
+
+class Scitype(Enum):
+    """
+    Enum defined for sktime scitypes
+
+    Attributes
+    ----------
+    value: str
+        String value of the enum
+    conversion_dict: Dict
+        Dict of dicts showing all the valid direct conversions of timeseries formats
+
+    Parameters
+    ----------
+    value: str
+        String value of the enum
+    """
+    PANEL = 'Panel'
+    SERIES = 'Series'
+
+    def __init__(self, value: str):
+        super().__init__()
+        self._value_ = value
+        self.conversion_dict: Dict = _conversions_defined(value).to_dict()
+
+
+class Mtype(Enum):
+    """
+    Enum defined for sktime mtypes
+
+    Attributes
+    ----------
+    value: str
+        String value of the enum
+    scitype: Scitype
+        Scitype the mtype is categorised under
+    conversion_dict: Dict
+        Dict containing valid conversions where if the value is 1 then the format
+        can be converted to, 0 where the format can't be directly converted to
+
+    Parameters
+    ----------
+    value: str
+        string name of the mtype
+    scitype: Scitype
+        Scitype the mtype is categorised under
+    """
+    DF_LIST = ('df-list', Scitype.PANEL)
+    NESTED_UNIV = ('nested_univ', Scitype.PANEL)
+    NUMPY_3D = ('numpy3D', Scitype.PANEL)
+    NUMPY_FLAT = ('numpyflat', Scitype.PANEL)
+    PD_LONG = ('pd-long', Scitype.PANEL)
+    PD_MULTIINDEX = ('pd-multiindex', Scitype.PANEL)
+    PD_WIDE = ('pd-wide', Scitype.PANEL)
+    NP_NDARRAY = ('np.ndarray', Scitype.SERIES)
+    PD_DATAFRAME = ('pd.DataFrame', Scitype.SERIES)
+    PD_SERIES = ('pd.Series', Scitype.SERIES)
+
+    def __init__(self, value: str, scitype: Scitype):
+        super().__init__()
+        self._value_ = value
+        self.scitype = scitype
+        self.conversion_dict: Dict = scitype.conversion_dict[value]
+
+
+def convert(
+        obj,
+        from_type: Union[str, Mtype],
+        to_type: Union[str, Mtype],
+        as_scitype: Union[str, Scitype] = None,
+        store=None
+):
     """Convert objects between different machine representations, subject to scitype.
 
     Parameters
@@ -103,6 +207,13 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
     ------
     KeyError if conversion is not implemented
     """
+    if isinstance(from_type, Mtype):
+        from_type = from_type.value
+    if isinstance(to_type, Mtype):
+        to_type = to_type.value
+    if isinstance(as_scitype, Scitype):
+        as_scitype = as_scitype.value
+
     if obj is None:
         return None
 
@@ -118,17 +229,35 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
     key = (from_type, to_type, as_scitype)
 
     if key not in convert_dict.keys():
-        raise NotImplementedError(
-            "no conversion defined from type " + str(from_type) + " to " + str(to_type)
-        )
-
-    converted_obj = convert_dict[key](obj, store=store)
-
-    return converted_obj
+        conversion_path = _find_conversion_path(as_scitype, from_type, to_type)
+        if len(conversion_path) > 0:
+            converted_object = obj
+            curr_type = from_type
+            for next_type in conversion_path:
+                converted_object = convert(
+                    obj=converted_object,
+                    from_type=curr_type,
+                    to_type=next_type,
+                    as_scitype=as_scitype
+                )
+                curr_type = next_type
+            return converted_object
+        else:
+            raise NotImplementedError(
+                "no conversion defined from type " + str(from_type) + " to " + str(
+                    to_type)
+            )
+    else:
+        return convert_dict[key](obj, store=store)
 
 
 # conversion based on queriable type to specified target
-def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
+def convert_to(
+        obj,
+        to_type: Union[str, Mtype],
+        as_scitype: Union[str, Mtype] = None,
+        store=None
+):
     """Convert object to a different machine representation, subject to scitype.
 
     Parameters
@@ -152,6 +281,11 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     TypeError if machine type of input "obj" is not recognized
     KeyError if conversion is not implemented
     """
+    if isinstance(to_type, Mtype):
+        to_type = to_type.value
+    if isinstance(as_scitype, Scitype):
+        as_scitype = as_scitype.value
+
     if obj is None:
         return None
 
@@ -191,31 +325,66 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     return converted_obj
 
 
-def _conversions_defined(scitype: str):
-    """Return an indicator matrix which conversions are defined for scitype.
+def _find_conversion_path(
+        scitype: str,
+        from_type: str,
+        to_type: str
+) -> List[str]:
+    """
+    Method used to try find an alternative path to get the desired transformation
+    using dijsktra to find optimal path
+
+    Adapted from:
+    https://benalexkeen.com/implementing-djikstras-shortest-path-algorithm-with-python/
 
     Parameters
     ----------
-    scitype: str - name of scitype for which conversions are queried
+    scitype: str
+        Scitype the timeseries falls under
+    from_type: str
+        Type to convert from
+    to_type: str
+        Type to convert to
 
     Returns
     -------
-    conv_df: pd.DataFrame, columns and index is list of mtypes for scitype
-            entry of row i, col j is 1 if conversion from i to j is defined,
-                                     0 if conversion from i to j is not defined
+    List[str]
+        Conversion path to get the desired result. If there is no path found then
+        [] is returned.
     """
-    pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
-    cols0 = set([x[0] for x in list(convert_dict.keys()) if x[2] == scitype])
-    cols1 = set([x[1] for x in list(convert_dict.keys()) if x[2] == scitype])
-    cols = sorted(list(cols0.union(cols1)))
+    adjacency_matrix = _conversions_defined(scitype=scitype)
+    current_node = from_type
+    visited = set()
 
-    mat = np.zeros((len(cols), len(cols)), dtype=int)
-    nkeys = len(cols)
-    for i in range(nkeys):
-        for j in range(nkeys):
-            if (cols[i], cols[j]) in pairs:
-                mat[i, j] = 1
+    paths = {from_type: (None, 0)}
 
-    conv_df = pd.DataFrame(mat, index=cols, columns=cols)
+    while current_node != to_type:
+        visited.add(current_node)
+        potential_paths = [
+            x for x in adjacency_matrix.columns
+            if adjacency_matrix[current_node][x] > 0
+        ]
+        weight_to_current_node = paths[current_node][1]
 
-    return conv_df
+        for node in potential_paths:
+            weight = 1 + weight_to_current_node
+            if node not in paths:
+                paths[node] = (current_node, weight)
+            else:
+                current_shortest = paths[node][1]
+                if current_shortest > weight:
+                    paths[node] = (node, weight)
+
+        next_node = {node: paths[node] for node in paths if node not in visited}
+
+        if not next_node:
+            return []
+        current_node = min(next_node, key=lambda k: next_node[k][1])
+
+    path = []
+    while current_node is not None and current_node is not from_type:
+        path.append(current_node)
+        next_node = paths[current_node][0]
+        current_node = next_node
+    path = path[::-1]
+    return path
