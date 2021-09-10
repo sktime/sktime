@@ -875,7 +875,11 @@
       "contributions": [
         "code",
         "doc",
-        "tutorial"
+        "tutorial",
+        "example",
+        "ideas",
+        "review",
+        "test"
       ]
     },
     {
@@ -1173,6 +1177,14 @@
       "profile": "https://sites.google.com/view/corvinpaul/",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "xloem",
+      "name": "patiently pending world peace",
+      "profile": "https://github.com/xloem",
+      "contributions": [
+        "code"
       ]
     },
     {
