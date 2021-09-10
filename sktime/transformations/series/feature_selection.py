@@ -192,5 +192,5 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         params : dict or list of dict, default = {}
             Default parameters related to the estimator class
         """
-        params = ({"method": "all"},)
+        params = {"method": "all"}
         return params
