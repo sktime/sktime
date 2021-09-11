@@ -30,8 +30,9 @@ State:
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
 
-Testing
+Testing:
     get default parameters for test instance - get_test_params()
+    create an instance of estimator class    - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -193,17 +194,35 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         params : dict or list of dict, default = {}
             Default parameters related to the estimator class
         """
-        params = super().get_test_params()
 
         # todo: set the default parameters for the estimators
-        # This method would be called by create_test_instance
-        # create_test_instance creates an instance with default parameters
+        # Default parameters can be dictionary or list of dictionaries
         #
         # example 1: specify params as dictionary
-        # params={param1:value1, param2:value2}
+        # any number of params can be specified
+        # params={"est":value0, "parama":value1, "paramb":value2}
         #
         # example 2: specify params as list of dictionary
         # note: Only first dictionary will be used by create_test_instance
-        # params=[{param1:value1,param2:value2},{param1:value3,param2:value4}]
-
-        return params
+        # list of dictionary can be of any length
+        # params=[{"parama":value1,paramb:value2},{"parama":value3,"paramb":value4}]
+        #
+        # This method would be called by create_test_instance.
+        # create_test_instance creates an instance of the estimator class.
+        # It fetches the parameters from this method inorder to create an instance,
+        # of the estimator class
+        #
+        # case 1: (see example 1)
+        # If cls.get_test_params() returns a dictionary of params,
+        # cls.create_test_instance() simply returns cls(**params)
+        #
+        # case 2: (see example 2)
+        # If cls.get_test_params() returns a list a of dictionaries
+        # cls.create_test_instance() returns cls(**params[0])
+        #
+        # Both create_test_instance and get_test_params are class methods.
+        # To call create_test_instance, do the following
+        # annotator_instance = MySeriesAnnotator.create_test_instance()
+        #
+        # Don't forget to return the params
+        # return params
