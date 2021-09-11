@@ -65,7 +65,7 @@ ALL_ESTIMATORS = all_estimators(
 )
 
 
-def pytest_generate_test(metafunc):
+def pytest_generate_tests(metafunc):
     """Test parameterization routine for pytest.
 
     Fixtures parameterized
@@ -78,6 +78,9 @@ def pytest_generate_test(metafunc):
     """
     # get name of the test
     test_name = metafunc.function.__name__
+    # previously, the tests were called "check_", so temporarily we do this
+    #  (ultimately, entries in the "exclude" list should be renamed)
+    test_name = test_name.replace("test_", "check_")
 
     # tests can be tests for classes or instances
     # tests for classes use estimator_class fixture name
