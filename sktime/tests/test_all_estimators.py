@@ -212,7 +212,6 @@ def test_has_common_interface(estimator_class):
         "fit",
         "check_is_fitted",
         "is_fitted",  # read-only property
-        "_is_fitted",  # underlying estimator state
         "set_params",
         "get_params",
     ]
@@ -335,6 +334,11 @@ def test_fit_updates_state(estimator_instance):
     attrs = ["_is_fitted", "is_fitted"]
 
     estimator = estimator_instance
+
+    assert hasattr(
+        estimator, "_is_fitted"
+    ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
+
     # Check it's not fitted before calling fit
     for attr in attrs:
         assert not getattr(
