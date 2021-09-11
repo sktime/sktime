@@ -112,6 +112,14 @@ def pytest_generate_test(metafunc):
         metafunc.parametrize("estimator_instance", estimator_instances_to_test)
 
 
+def test_create_test_instance(estimator_class):
+    """Check first that create_test_instance logic works."""
+    estimator = estimator_class.create_test_instance()
+
+    # Check that init does not construct object of other class than itself
+    assert isinstance(estimator, estimator_class)
+
+
 def test_required_params(estimator_class):
     """Check required parameter interface."""
     Estimator = estimator_class
@@ -190,14 +198,14 @@ def test_inheritance(estimator_class):
         assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 
-def check_has_common_interface(Estimator):
+def test_has_common_interface(estimator_class):
     """Check estimator implements the common interface."""
+    estimator = estimator_class
 
     # Check class for type of attribute
-    assert isinstance(Estimator.is_fitted, property)
+    assert isinstance(estimator.is_fitted, property)
 
-    # Check instance
-    estimator = _construct_instance(Estimator)
+    # Check for attributes
     common_attrs = [
         "fit",
         "check_is_fitted",
@@ -208,7 +216,7 @@ def check_has_common_interface(Estimator):
     ]
     for attr in common_attrs:
         assert hasattr(estimator, attr), (
-            f"Estimator: {estimator.__class__.__name__} does not implement "
+            f"Estimator: {estimator.__name__} does not implement "
             f"attribute: {attr}"
         )
     assert hasattr(estimator, "predict") or hasattr(estimator, "transform")
@@ -218,40 +226,37 @@ def check_has_common_interface(Estimator):
         assert hasattr(estimator, "predict")
 
 
-def check_get_params(Estimator):
-    # Check get params works correctly
-    estimator = _construct_instance(Estimator)
+def test_get_params(estimator_instance):
+    """Check that get_params works correctly."""
+    estimator = estimator_instance
     params = estimator.get_params()
     assert isinstance(params, dict)
     _check_get_params_invariance(estimator.__class__.__name__, estimator)
 
 
-def check_set_params(Estimator):
-    # Check set_params works correctly
-    estimator = _construct_instance(Estimator)
+def test_set_params(estimator_instance):
+    """Check that set_params works correctly."""
+    estimator = estimator_instance
     params = estimator.get_params()
     assert estimator.set_params(**params) is estimator
     _check_set_params(estimator.__class__.__name__, estimator)
 
 
-def check_clone(Estimator):
-    # Check we can call clone from scikit-learn
-    estimator = _construct_instance(Estimator)
+def test_clone(estimator_instance):
+    """Check we can call clone from scikit-learn."""
+    estimator = estimator_instance
     clone(estimator)
 
 
-def check_repr(Estimator):
-    # Check we can call repr
-    estimator = _construct_instance(Estimator)
+def test_repr(estimator_instance):
+    """Check we can call repr."""
+    estimator = estimator_instance
     repr(estimator)
 
 
-def check_constructor(Estimator):
-    # Check that the constructor behaves correctly
-    estimator = _construct_instance(Estimator)
-
-    # Check that init does not construct object of other class than itself
-    assert isinstance(estimator, Estimator)
+def check_constructor(estimator_class):
+    """Check that the constructor behaves correctly."""
+    estimator = estimator_class.create_test_instance()
 
     # Ensure that each parameter is set in init
     init_params = _get_args(type(estimator).__init__)
@@ -279,7 +284,11 @@ def check_constructor(Estimator):
     # Filter out required parameters with no default value and parameters
     # set for running tests
     required_params = getattr(estimator, "_required_parameters", tuple())
-    test_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
+
+    test_params = estimator_class.get_test_params()
+    if isinstance(test_params, list):
+        test_params = test_params[0]
+    test_params = test_params.keys()
 
     init_params = [
         param
