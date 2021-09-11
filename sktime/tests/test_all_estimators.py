@@ -33,7 +33,6 @@ from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransforme
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
@@ -328,11 +327,12 @@ def check_constructor(estimator_class):
                 assert param_value == param.default, param.name
 
 
-def check_fit_updates_state(Estimator):
+def test_fit_updates_state(estimator_instance):
+    """Check fit/update state change."""
     # Check that fit updates the is-fitted states
     attrs = ["_is_fitted", "is_fitted"]
 
-    estimator = _construct_instance(Estimator)
+    estimator = estimator_instance
     # Check it's not fitted before calling fit
     for attr in attrs:
         assert not getattr(
@@ -349,19 +349,18 @@ def check_fit_updates_state(Estimator):
         ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
 
-def check_fit_returns_self(Estimator):
-    # Check that fit returns self
-    estimator = _construct_instance(Estimator)
+def test_fit_returns_self(estimator_instance):
+    """Check that fit returns self."""
+    estimator = estimator_instance
     fit_args = _make_args(estimator, "fit")
     assert (
         estimator.fit(*fit_args) is estimator
     ), f"Estimator: {estimator} does not return self when calling fit"
 
 
-def check_raises_not_fitted_error(Estimator):
-    # Check that we raise appropriate error for unfitted estimators
-    estimator = _construct_instance(Estimator)
-
+def test_raises_not_fitted_error(estimator_instance):
+    """Check that we raise appropriate error for unfitted estimators."""
+    estimator = estimator_instance
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
@@ -371,9 +370,9 @@ def check_raises_not_fitted_error(Estimator):
                 getattr(estimator, method)(*args)
 
 
-def check_fit_idempotent(Estimator):
-    # Check that calling fit twice is equivalent to calling it once
-    estimator = _construct_instance(Estimator)
+def test_fit_idempotent(estimator_instance):
+    """Check that calling fit twice is equivalent to calling it once."""
+    estimator = estimator_instance
 
     set_random_state(estimator)
 
@@ -402,9 +401,9 @@ def check_fit_idempotent(Estimator):
             )
 
 
-def check_fit_does_not_overwrite_hyper_params(Estimator):
-    # Check that we do not overwrite hyper-parameters in fit
-    estimator = _construct_instance(Estimator)
+def test_fit_does_not_overwrite_hyper_params(estimator_instance):
+    """Check that we do not overwrite hyper-parameters in fit."""
+    estimator = estimator_instance
     set_random_state(estimator)
 
     # Make a physical copy of the original estimator parameters before fitting.
@@ -433,11 +432,11 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
         )
 
 
-def check_methods_do_not_change_state(Estimator):
+def test_methods_do_not_change_state(estimator_instance):
     # Check that methods that are not supposed to change attributes of the
     # estimators do not change anything (including hyper-parameters and
     # fitted parameters)
-    estimator = _construct_instance(Estimator)
+    estimator = estimator_instance
     set_random_state(estimator)
 
     fit_args = _make_args(estimator, "fit")
@@ -460,13 +459,9 @@ def check_methods_do_not_change_state(Estimator):
             ), f"Estimator: {estimator} changes __dict__ during {method}"
 
 
-def check_methods_have_no_side_effects(Estimator):
-    # Check that calling methods has no side effects on args
-
-    if not isclass(Estimator):
-        Estimator = type(Estimator)
-
-    estimator = _construct_instance(Estimator)
+def test_methods_have_no_side_effects(estimator_instance):
+    """Check that calling methods has no side effects on args."""
+    estimator = estimator_instance
 
     set_random_state(estimator)
 
@@ -490,9 +485,9 @@ def check_methods_have_no_side_effects(Estimator):
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
-def check_persistence_via_pickle(Estimator):
-    # Check that we can pickle all estimators
-    estimator = _construct_instance(Estimator)
+def test_persistence_via_pickle(estimator_instance):
+    """Check that we can pickle all estimators."""
+    estimator = estimator_instance
     set_random_state(estimator)
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
@@ -520,12 +515,15 @@ def check_persistence_via_pickle(Estimator):
         )
 
 
-def check_multiprocessing_idempotent(Estimator):
-    # Check that running an estimator on a single process is no different to running
-    # it on multiple processes. We also check that we can set n_jobs=-1 to make use
-    # of all CPUs. The test is not really necessary though, as we rely on joblib for
-    # parallelization and can trust that it works as expected.
-    estimator = _construct_instance(Estimator)
+def test_multiprocessing_idempotent(estimator_class):
+    """Test that single and multi-process run results are identical.
+
+    Check that running an estimator on a single process is no different to running
+    it on multiple processes. We also check that we can set n_jobs=-1 to make use
+    of all CPUs. The test is not really necessary though, as we rely on joblib for
+    parallelization and can trust that it works as expected.
+    """
+    estimator = estimator_class.create_test_instance()
     params = estimator.get_params()
 
     if "n_jobs" in params:
@@ -533,7 +531,7 @@ def check_multiprocessing_idempotent(Estimator):
         args = dict()
 
         # run on a single process
-        estimator = _construct_instance(Estimator)
+        estimator = estimator_class.create_test_instance()
         estimator.set_params(n_jobs=1)
         set_random_state(estimator)
         args["fit"] = _make_args(estimator, "fit")
@@ -546,7 +544,7 @@ def check_multiprocessing_idempotent(Estimator):
                 results[method] = getattr(estimator, method)(*args[method])
 
         # run on multiple processes, reusing the same input arguments
-        estimator = _construct_instance(Estimator)
+        estimator = estimator_class.create_test_instance()
         estimator.set_params(n_jobs=-1)
         set_random_state(estimator)
         estimator.fit(*args["fit"])
@@ -562,8 +560,8 @@ def check_multiprocessing_idempotent(Estimator):
                 )
 
 
-def check_valid_estimator_tags(Estimator):
-    # check if Estimator tags are in VALID_ESTIMATOR_TAGS
+def test_valid_estimator_tags(estimator_class):
+    """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
     for tag in Estimator.get_class_tags().keys():
         assert tag in VALID_ESTIMATOR_TAGS
 
