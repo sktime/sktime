@@ -218,8 +218,7 @@ def test_has_common_interface(estimator_class):
     ]
     for attr in common_attrs:
         assert hasattr(estimator, attr), (
-            f"Estimator: {estimator.__name__} does not implement "
-            f"attribute: {attr}"
+            f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
         )
     assert hasattr(estimator, "predict") or hasattr(estimator, "transform")
     if hasattr(estimator, "inverse_transform"):
