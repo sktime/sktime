@@ -65,8 +65,8 @@ def all_estimators(
         'forecaster' to get estimators only of these specific types, or a list of
         these to get the estimators that fit at least one of the types.
     return_names: bool, optional (default=True)
-        If True, return estimators as list of (name, estimator) tuples.
-        If False, return list of estimators.
+        If True, return estimators as list of (name, estimator class) tuples.
+        If False, return list of estimators classes.
     filter_tags: dict of (str or list of str), optional (default=None)
         subsets the returned estimators as follows:
             each key/value pair is statement in "and"/conjunction
@@ -81,8 +81,8 @@ def all_estimators(
 
     Returns
     -------
-    estimators: list of class, if return_names=True,
-            or list of tuples (str, class), if return_names=False
+    estimators: list of class, if return_names=False,
+            or list of tuples (str, class), if return_names=True
         if list of estimators:
             entries are estimator classes matching the query,
             in alphabetical order of class name
