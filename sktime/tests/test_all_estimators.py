@@ -12,7 +12,7 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
-from inspect import signature, isclass
+from inspect import signature
 
 import joblib
 import numpy as np
@@ -448,7 +448,7 @@ def test_methods_do_not_change_state(estimator_instance):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if method == "transform" and Estimator.get_class_tag("fit-in-transform"):
+            if method == "transform" and estimator.get_class_tag("fit-in-transform"):
                 # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.
@@ -560,9 +560,15 @@ def test_multiprocessing_idempotent(estimator_class):
                 )
 
 
-def test_valid_estimator_tags(estimator_class):
+def test_valid_estimator_class_tags(estimator_class):
+    """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
+    for tag in estimator_class.get_class_tags().keys():
+        assert tag in VALID_ESTIMATOR_TAGS
+
+
+def test_valid_estimator_tags(estimator_instance):
     """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
-    for tag in Estimator.get_class_tags().keys():
+    for tag in estimator_instance.get_tags().keys():
         assert tag in VALID_ESTIMATOR_TAGS
 
 
