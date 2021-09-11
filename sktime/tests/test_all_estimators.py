@@ -436,9 +436,12 @@ def test_fit_does_not_overwrite_hyper_params(estimator_instance):
 
 
 def test_methods_do_not_change_state(estimator_instance):
-    # Check that methods that are not supposed to change attributes of the
-    # estimators do not change anything (including hyper-parameters and
-    # fitted parameters)
+    """Check that non-state-changing methods do not change state.
+
+    Check that methods that are not supposed to change attributes of the
+    estimators do not change anything (including hyper-parameters and
+    fitted parameters)
+    """
     estimator = estimator_instance
     set_random_state(estimator)
 
