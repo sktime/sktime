@@ -138,7 +138,7 @@ class BaseForecaster(BaseEstimator):
 
         y = check_series(y, **check_y_args, var_name="y")
 
-        self.y_mtype = mtype(y)
+        self._y_mtype_last_seen = mtype(y)
         # end checking y
 
         # checking X
@@ -250,7 +250,7 @@ class BaseForecaster(BaseEstimator):
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
             y_pred,
-            self.y_mtype,
+            self._y_mtype_last_seen,
             as_scitype="Series",
             store=self.converter_store_y,
         )
@@ -379,7 +379,7 @@ class BaseForecaster(BaseEstimator):
         # update only for non-empty data
         y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
 
-        self.y_mtype = mtype(y)
+        self._y_mtype_last_seen = mtype(y)
         # end checking y
 
         # checking X
