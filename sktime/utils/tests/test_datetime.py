@@ -9,6 +9,7 @@ from sktime.utils.datetime import _get_freq
 
 
 def test_get_freq():
+    """Test whether get_freq runs without error."""
     x = pd.Series(
         index=pd.date_range(start="2017-01-01", periods=700, freq="W"),
         data=np.random.randn(700),
