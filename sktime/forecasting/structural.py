@@ -4,7 +4,7 @@
 """Wraps the UnobservedComponents (state space) model from statsmodels."""
 
 __all__ = ["UnobservedComponents"]
-__author__ = ["Juan Orduz"]
+__author__ = ["juanitorduz"]
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from statsmodels.tsa.statespace.structural import (
