@@ -19,6 +19,8 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
     Transformer to enable tuneable feauture selection of exogenous data. The
     FeatureSelection implements multiple methods to select features (columns).
+    In case Z is a pd.Series, then it is just passed through, unless method="none",
+    then None is returned in transform().
 
     Parameters
     ----------
@@ -96,8 +98,11 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.DataFrame
+        Z : pd.Series, pd.DataFrame
             A time series to apply the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous variables are usd in method="feature-importances"
+            to fit the meta-model (regressor).
 
         Returns
         -------
@@ -154,8 +159,10 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.DataFrame
+        Z : pd.Series, pd.DataFrame
             A time series to apply the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous data is ignored in transform.
 
         Returns
         -------
