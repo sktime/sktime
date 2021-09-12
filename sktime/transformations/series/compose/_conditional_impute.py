@@ -7,7 +7,7 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 from sklearn import clone
 
-__author__ = ["Markus Löning", "satya-pattnaik"]
+__author__ = ["mloning", "satya-pattnaik"]
 _required_parameters = ["imputer", "annotator"]
 
 
@@ -70,6 +70,6 @@ class ConditionalImputer(_SeriesToSeriesTransformer):
 
         outliers = self.annotator_.predict(z, X)
 
-        z.iloc[outliers[outliers].index] = np.nan
+        z.iloc[outliers] = np.nan
         z = self.imputer_.transform(z, X)
         return z
