@@ -1,12 +1,14 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Test functionality of time series plotting functions."""
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.utils.plotting import plot_series, plot_correlations
+from sktime.utils.plotting import plot_series, plot_correlations, plot_lags
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import VALID_DATA_TYPES
 
@@ -15,7 +17,12 @@ y_airline = load_airline()
 y_airline_true = y_airline.iloc[y_airline.index < "1960-01"]
 y_airline_test = y_airline.iloc[y_airline.index >= "1960-01"]
 series_to_test = [y_airline, (y_airline_true, y_airline_test)]
-invalid_input_types = [y_airline.values, pd.DataFrame(y_airline), "this_is_a_string"]
+invalid_input_types = [
+    y_airline.values,
+    pd.DataFrame({"y1": y_airline, "y2": y_airline}),
+    "this_is_a_string",
+]
+univariate_plots = [plot_correlations, plot_lags]
 
 
 # Need to use _plot_series to make it easy for test cases to pass either a
@@ -27,8 +34,12 @@ def _plot_series(series, ax=None, **kwargs):
         return plot_series(series, ax=ax, **kwargs)
 
 
+all_plots = univariate_plots + [_plot_series]
+
+
 @pytest.fixture
 def valid_data_types():
+    """Filter valid data types for those that work with plotting functions."""
     valid_data_types = tuple(
         filter(
             lambda x: x is not np.ndarray and x is not pd.DataFrame, VALID_DATA_TYPES
@@ -39,6 +50,7 @@ def valid_data_types():
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_runs_without_error(series_to_plot):
+    """Verify plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -47,12 +59,14 @@ def test_plot_series_runs_without_error(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
-def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
+@pytest.mark.parametrize("plot_func", all_plots)
+def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
+    """Verify all plots raise input errors with invalid input."""
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
     with pytest.raises((TypeError, ValueError)):
-        _plot_series(series_to_plot)
+        plot_func(series_to_plot)
 
 
 @pytest.mark.parametrize(
@@ -61,6 +75,7 @@ def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
+    """Verify plot_series raises expected error with unequal index types."""
     match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
@@ -68,6 +83,7 @@ def test_plot_series_with_unequal_index_type_raises_error(
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
+    """Verify plot_series raises expected error for inconsistent marker length."""
     match = """There must be one marker for each time series,
                 but found inconsistent numbers of series and
                 markers."""
@@ -84,6 +100,7 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
+    """Verify plot_series raises expected error for inconsistent label length."""
     match = """There must be one label for each time series,
                 but found inconsistent numbers of series and
                 labels."""
@@ -100,6 +117,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
+    """Verify output of plot series is correct."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -131,31 +149,24 @@ def test_plot_series_output_type(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", [y_airline])
-def test_plot_correlations_runs_without_error(series_to_plot):
+@pytest.mark.parametrize("plot_func", univariate_plots)
+def test_univariate_plots_run_without_error(series_to_plot, plot_func):
+    """Verify plots that accept univariate series run without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
-    plot_correlations(series_to_plot)
+    plot_func(series_to_plot)
     plt.gcf().canvas.draw_idle()
 
 
-@pytest.mark.parametrize("series_to_plot", invalid_input_types)
-def test_plot_correlations_invalid_input_type_raises_error(
-    series_to_plot, valid_data_types
-):
-    # TODO: Is it possible to dynamically create the matching str if it includes
-    #       characters that need to be escaped (like .)
-    # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
-    with pytest.raises((TypeError, ValueError)):
-        plot_correlations(series_to_plot)
-
-
 @pytest.mark.parametrize("series_to_plot", [y_airline])
-def test_plot_correlations_output_type(series_to_plot):
+@pytest.mark.parametrize("plot_func", univariate_plots)
+def test_univariate_plots_output_type(series_to_plot, plot_func):
+    """Verify plots that accept univariate series have the correct output types."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
-    fig, ax = plot_correlations(series_to_plot)
+    fig, ax = plot_func(series_to_plot)
 
     is_fig_figure = isinstance(fig, plt.Figure)
     is_ax_array = isinstance(ax, np.ndarray)
@@ -163,13 +174,14 @@ def test_plot_correlations_output_type(series_to_plot):
 
     assert is_fig_figure and is_ax_array and is_ax_array_axis, "".join(
         [
-            "plot_correlations should return plt.Figure and array of plt.Axes,",
+            f"{plot_func.__name__} should return plt.Figure and array of plt.Axes,",
             f"but returned: {type(fig)} and {type(ax)}",
         ]
     )
 
 
 def test_plot_series_uniform_treatment_of_int64_range_index_types():
+    """Verify that plot_series treats Int64 and Range indices equally."""
     # We test that int64 and range indices are treated uniformly and do not raise an
     # error of inconsistent index types
     _check_soft_dependencies("matplotlib")
