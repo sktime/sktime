@@ -134,7 +134,7 @@ def check_is(
             f"Error in check_is, more than one mtype identified: {found_mtype}"
         )
     # b. one mtype is found - then return that mtype
-    elif len(found_mtype == 1):
+    elif len(found_mtype) == 1:
         if return_metadata:
             # add the mtype return to the metadata
             final_result[2]["mtype"] = found_mtype[0]
