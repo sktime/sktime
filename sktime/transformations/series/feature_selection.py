@@ -182,3 +182,15 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     def _check_n_columns(self, Z):
         if not isinstance(self.n_columns_, int):
             self.n_columns_ = int(math.ceil(Z.shape[1] / 2))
+
+    @classmethod
+    def get_test_params(cls):
+        """Get default parameters of the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Default parameters related to the estimator class
+        """
+        params = {"method": "all"}
+        return params
