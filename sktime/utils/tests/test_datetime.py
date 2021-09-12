@@ -4,7 +4,6 @@
 import pandas as pd
 import numpy as np
 import datetime
-import pytest
 
 from sktime.utils.datetime import _get_freq
 

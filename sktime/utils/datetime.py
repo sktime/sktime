@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 """
-add comment to in align with the doc-quality
+pandas.datetime functions related utilities
 
 modified the _get_freq function
 """
