@@ -32,32 +32,35 @@ mtype_to_scitype(mtype: str) - convenience function that returns scitype for an 
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-
-from sktime.datatypes._series._registry import (
-    MTYPE_REGISTER_SERIES,
-    MTYPE_LIST_SERIES,
-)
-
-from sktime.datatypes._panel._registry import (
-    MTYPE_REGISTER_PANEL,
-    MTYPE_LIST_PANEL,
-)
-
-MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL
-
-
 __all__ = [
     "MTYPE_REGISTER",
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
     "SCITYPE_REGISTER",
+    "Scitype"
 ]
 
+from sktime.registry._registry_enum import BaseRegistryEnum
+from sktime.datatypes._series._registry import (
+    MTYPE_REGISTER_SERIES,
+    MTYPE_LIST_SERIES,
+    SeriesMtype
+)
+from sktime.datatypes._panel._registry import (
+    MTYPE_REGISTER_PANEL,
+    MTYPE_LIST_PANEL,
+    PanelMtype
+)
 
-SCITYPE_REGISTER = [
-    ("Series", "uni- or multivariate time series"),
-    ("Panel", "panel of uni- or multivariate time series"),
-]
+MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL
+
+
+class Scitype(BaseRegistryEnum):
+    PANEL = ("Panel", PanelMtype, "panel of uni- or multivariate time series")
+    SERIES = ("Series", SeriesMtype, "uni- or multivariate time series")
+
+
+SCITYPE_REGISTER = [tuple(mtype) for mtype in Scitype]
 
 
 def mtype_to_scitype(mtype: str):

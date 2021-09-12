@@ -65,20 +65,18 @@ __all__ = [
     "convert",
     "convert_to",
     "Scitype",
-    "Mtype"
 ]
 
 import numpy as np
 import pandas as pd
 from typing import List, Union, Dict
-from enum import Enum
 
 from sktime.datatypes._series import convert_dict_Series
 
 from sktime.datatypes._panel import convert_dict_Panel
 
 from sktime.datatypes._check import mtype as infer_mtype
-from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes._registry import mtype_to_scitype, Scitype, PanelMtype, SeriesMtype
 
 # pool convert_dict-s and infer_mtype_dict-s
 convert_dict = dict()
@@ -116,74 +114,74 @@ def _conversions_defined(scitype: str):
     return conv_df
 
 
-class Scitype(Enum):
-    """
-    Enum defined for sktime scitypes
-
-    Attributes
-    ----------
-    value: str
-        String value of the enum
-    conversion_dict: Dict
-        Dict of dicts showing all the valid direct conversions of timeseries formats
-
-    Parameters
-    ----------
-    value: str
-        String value of the enum
-    """
-    PANEL = 'Panel'
-    SERIES = 'Series'
-
-    def __init__(self, value: str):
-        super().__init__()
-        self._value_ = value
-        self.conversion_dict: Dict = _conversions_defined(value).to_dict()
-
-
-class Mtype(Enum):
-    """
-    Enum defined for sktime mtypes
-
-    Attributes
-    ----------
-    value: str
-        String value of the enum
-    scitype: Scitype
-        Scitype the mtype is categorised under
-    conversion_dict: Dict
-        Dict containing valid conversions where if the value is 1 then the format
-        can be converted to, 0 where the format can't be directly converted to
-
-    Parameters
-    ----------
-    value: str
-        string name of the mtype
-    scitype: Scitype
-        Scitype the mtype is categorised under
-    """
-    DF_LIST = ('df-list', Scitype.PANEL)
-    NESTED_UNIV = ('nested_univ', Scitype.PANEL)
-    NUMPY_3D = ('numpy3D', Scitype.PANEL)
-    NUMPY_FLAT = ('numpyflat', Scitype.PANEL)
-    PD_LONG = ('pd-long', Scitype.PANEL)
-    PD_MULTIINDEX = ('pd-multiindex', Scitype.PANEL)
-    PD_WIDE = ('pd-wide', Scitype.PANEL)
-    NP_NDARRAY = ('np.ndarray', Scitype.SERIES)
-    PD_DATAFRAME = ('pd.DataFrame', Scitype.SERIES)
-    PD_SERIES = ('pd.Series', Scitype.SERIES)
-
-    def __init__(self, value: str, scitype: Scitype):
-        super().__init__()
-        self._value_ = value
-        self.scitype = scitype
-        self.conversion_dict: Dict = scitype.conversion_dict[value]
-
+# class Scitype(Enum):
+#     """
+#     Enum defined for sktime scitypes
+#
+#     Attributes
+#     ----------
+#     value: str
+#         String value of the enum
+#     conversion_dict: Dict
+#         Dict of dicts showing all the valid direct conversions of timeseries formats
+#
+#     Parameters
+#     ----------
+#     value: str
+#         String value of the enum
+#     """
+#     PANEL = 'Panel'
+#     SERIES = 'Series'
+#
+#     def __init__(self, value: str):
+#         super().__init__()
+#         self._value_ = value
+#         self.conversion_dict: Dict = _conversions_defined(value).to_dict()
+#
+#
+# class Mtype(Enum):
+#     """
+#     Enum defined for sktime mtypes
+#
+#     Attributes
+#     ----------
+#     value: str
+#         String value of the enum
+#     scitype: Scitype
+#         Scitype the mtype is categorised under
+#     conversion_dict: Dict
+#         Dict containing valid conversions where if the value is 1 then the format
+#         can be converted to, 0 where the format can't be directly converted to
+#
+#     Parameters
+#     ----------
+#     value: str
+#         string name of the mtype
+#     scitype: Scitype
+#         Scitype the mtype is categorised under
+#     """
+#     DF_LIST = ('df-list', Scitype.PANEL)
+#     NESTED_UNIV = ('nested_univ', Scitype.PANEL)
+#     NUMPY_3D = ('numpy3D', Scitype.PANEL)
+#     NUMPY_FLAT = ('numpyflat', Scitype.PANEL)
+#     PD_LONG = ('pd-long', Scitype.PANEL)
+#     PD_MULTIINDEX = ('pd-multiindex', Scitype.PANEL)
+#     PD_WIDE = ('pd-wide', Scitype.PANEL)
+#     NP_NDARRAY = ('np.ndarray', Scitype.SERIES)
+#     PD_DATAFRAME = ('pd.DataFrame', Scitype.SERIES)
+#     PD_SERIES = ('pd.Series', Scitype.SERIES)
+#
+#     def __init__(self, value: str, scitype: Scitype):
+#         super().__init__()
+#         self._value_ = value
+#         self.scitype = scitype
+#         self.conversion_dict: Dict = scitype.conversion_dict[value]
+#
 
 def convert(
         obj,
-        from_type: Union[str, Mtype],
-        to_type: Union[str, Mtype],
+        from_type: Union[str, SeriesMtype, PanelMtype],
+        to_type: Union[str, SeriesMtype, PanelMtype],
         as_scitype: Union[str, Scitype] = None,
         store=None
 ):
@@ -207,9 +205,9 @@ def convert(
     ------
     KeyError if conversion is not implemented
     """
-    if isinstance(from_type, Mtype):
+    if isinstance(from_type, SeriesMtype) or isinstance(PanelMtype):
         from_type = from_type.value
-    if isinstance(to_type, Mtype):
+    if isinstance(from_type, SeriesMtype) or isinstance(PanelMtype):
         to_type = to_type.value
     if isinstance(as_scitype, Scitype):
         as_scitype = as_scitype.value
@@ -218,13 +216,13 @@ def convert(
         return None
 
     if not isinstance(to_type, str):
-        raise TypeError("to_type must be a str")
+        raise TypeError("to_type must be a str or SeriesMtype or PaneMtype")
     if not isinstance(from_type, str):
-        raise TypeError("from_type must be a str")
+        raise TypeError("from_type must be a str or SeriesMtype or PaneMtype")
     if as_scitype is None:
         as_scitype = mtype_to_scitype(to_type)
     elif not isinstance(as_scitype, str):
-        raise TypeError("as_scitype must be str or None")
+        raise TypeError("as_scitype must be str or Scitype or None")
 
     key = (from_type, to_type, as_scitype)
 
@@ -254,8 +252,8 @@ def convert(
 # conversion based on queriable type to specified target
 def convert_to(
         obj,
-        to_type: Union[str, Mtype],
-        as_scitype: Union[str, Mtype] = None,
+        to_type: Union[str, SeriesMtype, PanelMtype],
+        as_scitype: Union[str, SeriesMtype, PanelMtype] = None,
         store=None
 ):
     """Convert object to a different machine representation, subject to scitype.
@@ -281,7 +279,7 @@ def convert_to(
     TypeError if machine type of input "obj" is not recognized
     KeyError if conversion is not implemented
     """
-    if isinstance(to_type, Mtype):
+    if isinstance(to_type, SeriesMtype) or isinstance(to_type, PanelMtype):
         to_type = to_type.value
     if isinstance(as_scitype, Scitype):
         as_scitype = as_scitype.value
@@ -291,7 +289,7 @@ def convert_to(
 
     if isinstance(to_type, list):
         if not np.all(isinstance(x, str) for x in to_type):
-            raise TypeError("to_type must be a str or list of str")
+            raise TypeError("to_type must be a str or list of str ")
     elif not isinstance(to_type, str):
         raise TypeError("to_type must be a str or list of str")
 
