@@ -141,7 +141,7 @@ def plot_lags(series, lags=1, suptitle=None):
     ----------
     series : pd.Series
         Time series for plotting lags.
-    lags : int or array-like
+    lags : int or array-like, default=1
         The lag or lags to plot.
 
         - int plots the specified lag
