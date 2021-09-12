@@ -1,25 +1,8 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Common timeseries plotting functionality.
+"""Common timeseries plotting functionality."""
 
-Functions
----------
-plot_series(*series, labels=None, markers=None, ax=None)
-plot_correlations(
-    series,
-    lags=24,
-    alpha=0.05,
-    zero_lag=True,
-    acf_fft=False,
-    acf_adjusted=True,
-    pacf_method="ywadjusted",
-    suptitle=None,
-    series_title=None,
-    acf_title="Autocorrelation",
-    pacf_title="Partial Autocorrelation",
-)
-"""
 __all__ = ["plot_series", "plot_correlations"]
 __author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
 
