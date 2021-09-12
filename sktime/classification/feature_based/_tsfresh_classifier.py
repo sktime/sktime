@@ -56,7 +56,7 @@ class TSFreshClassifier(BaseClassifier):
 
     See Also
     --------
-    :py:class:`TSFreshFeatureExtractor`, :py:class:`TSFreshRelevantFeatureExtractor`
+    TSFreshFeatureExtractor, TSFreshRelevantFeatureExtractor
 
     References
     ----------
@@ -65,8 +65,8 @@ class TSFreshClassifier(BaseClassifier):
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.feature_based import TSFreshClassifier
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)

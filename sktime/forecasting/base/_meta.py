@@ -2,12 +2,17 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+"""Implements meta forecaster for forecasters composed of other estimators."""
+
+__author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel
 from joblib import delayed
+
 from sklearn.base import clone
+from sklearn.base import is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -15,7 +20,7 @@ from sktime.forecasting.base._base import BaseForecaster
 
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Base class for heterogenous ensemble forecasters"""
+    """Base class for heterogeneous ensemble forecasters."""
 
     _required_parameters = ["forecasters"]
 
@@ -24,6 +29,18 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         self.forecasters_ = None
         self.n_jobs = n_jobs
         super(_HeterogenousEnsembleForecaster, self).__init__()
+
+    def _check_regressor(self):
+        if self.regressor is None:
+            self.regressor_ = GradientBoostingRegressor(max_depth=5)
+        else:
+            if not is_regressor(self.regressor):
+                raise ValueError(
+                    f"`regressor` should be a regressor, "
+                    f"but found: {self.regressor}"
+                )
+            self.regressor_ = clone(self.regressor)
+        return self
 
     def _check_forecasters(self):
         if (
@@ -57,10 +74,10 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel"""
+        """Fit all forecasters in parallel."""
 
         def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster"""
+            """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
@@ -80,9 +97,47 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             for forecaster in self.forecasters_
         ]
 
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional, default=True
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        for forecaster in self.forecasters_:
+            forecaster.update(y, X, update_params=update_params)
+        return self
+
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **params):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
         self._set_params("forecasters", **params)
         return self
