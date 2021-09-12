@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements automatic and manually exponential time series smoothing models."""
+
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
@@ -10,8 +14,7 @@ import numpy as np
 
 
 class AutoETS(_StatsModelsAdapter):
-    """
-    ETS models with both manual and automatic fitting capabilities.
+    """ETS models with both manual and automatic fitting capabilities.
 
     Manual fitting is adapted from statsmodels' version,
     while automatic fitting is adapted from R version of ets.
@@ -146,12 +149,12 @@ class AutoETS(_StatsModelsAdapter):
 
     References
     ----------
-    [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
-        principles and practice*, 3rd edition, OTexts: Melbourne,
-        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
+       principles and practice*, 3rd edition, OTexts: Melbourne,
+       Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.ets import AutoETS
     >>> y = load_airline()
@@ -160,6 +163,8 @@ class AutoETS(_StatsModelsAdapter):
     AutoETS(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
+
+    _fitted_param_names = ("aic", "aicc", "bic", "hqic")
 
     def __init__(
         self,
@@ -358,9 +363,9 @@ class AutoETS(_StatsModelsAdapter):
             )
 
     def summary(self):
-        """
-        Get a summary of the fitted forecaster,
-        same as the implementation in statsmodels:
+        """Get a summary of the fitted forecaster.
+
+        This is the same as the implementation in statsmodels:
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()
