@@ -1,8 +1,9 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests simple forecasts based on naive assumptions."""
 
-__author__ = ["Markus Löning", "Piyush Gade"]
+__author__ = ["mloning", "Piyush Gade", "Flix6x"]
 
 import numpy as np
 import pandas as pd
@@ -25,6 +26,7 @@ y_test = s.iloc[n_train:]
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_strategy_last(fh):
+    """Test last strategy."""
     f = NaiveForecaster(strategy="last")
     f.fit(y_train)
     y_pred = f.predict(fh)
@@ -35,6 +37,7 @@ def test_strategy_last(fh):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_mean(fh, window_length):
+    """Test mean strategy."""
     f = NaiveForecaster(strategy="mean", window_length=window_length)
     f.fit(y_train)
     y_pred = f.predict(fh)
@@ -49,6 +52,7 @@ def test_strategy_mean(fh, window_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_last_seasonal(fh, sp):
+    """Test last strategy on seasonal data."""
     f = NaiveForecaster(strategy="last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
@@ -67,6 +71,7 @@ def test_strategy_last_seasonal(fh, sp):
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_mean_seasonal(fh, sp, window_length):
+    """Test mean strategy on seasonal data."""
     if (window_length is not None and window_length > sp) or (window_length is None):
         f = NaiveForecaster(strategy="mean", sp=sp, window_length=window_length)
         f.fit(y_train)
@@ -97,8 +102,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
 @pytest.mark.parametrize("n_seasons", [1, 3])
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_mean_seasonal_simple(n_seasons, sp):
-    # create 2d matrix, rows are different seasons, columns time points of
-    # each season
+    """Create 2d matrix (seasons on rows, time points of each season on columns)."""
     values = np.random.normal(size=(n_seasons, sp))
     y = pd.Series(values.ravel())
 
@@ -116,7 +120,7 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_unit_slope(fh, window_length):
-    # drift strategy for constant slope 1
+    """Test drift strategy for constant slope 1."""
     if window_length != 1:
         f = NaiveForecaster(strategy="drift", window_length=window_length)
         f.fit(y_train)
@@ -135,7 +139,7 @@ def test_strategy_drift_unit_slope(fh, window_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_flat_line(fh, window_length):
-    # test for flat time series data
+    """Test flat time series data."""
     if window_length != 1:
         y_train = pd.Series(np.ones(20))
         f = NaiveForecaster(strategy="drift", window_length=window_length)
@@ -155,7 +159,7 @@ def test_strategy_drift_flat_line(fh, window_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_window_length(fh, window_length):
-    # test for checking if window_length is properly working
+    """Test whether window_length is properly working."""
     if window_length != 1:
         if window_length is None:
             window_length = len(y_train)
@@ -178,12 +182,19 @@ def test_strategy_drift_window_length(fh, window_length):
 @pytest.mark.parametrize("n", [3, 5])
 @pytest.mark.parametrize("window_length", list({4, 5, *TEST_WINDOW_LENGTHS}))
 @pytest.mark.parametrize("sp", list({3, 4, 8, *TEST_SPS}))
-def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
-    """Check time series of n * window_length with a 1:n-1 train/test split,
-    for different combinations of the period and seasonal periodicity.
-    The time series contains perfectly cyclic data.
-    """
+@pytest.mark.parametrize("strategy", ["last", "mean"])
+def test_strategy_mean_and_last_seasonal_additional_combinations(
+    n, window_length, sp, strategy
+):
+    """Check that naive forecasters yield the right forecasts given simple data.
 
+    Test for perfectly cyclic data, and for robustness against a missing value.
+    More specifically,
+    check time series of n * window_length with a 1:n-1 train/test split,
+    for different combinations of the period and seasonal periodicity.
+    The time series contains perfectly cyclic data,
+    so switching between the "mean" and "last" strategies should not make a difference.
+    """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")
     data = pd.Series(
@@ -195,6 +206,11 @@ def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
         ],
     )
 
+    # For selected cases, remove a redundant data point by making it NaN
+    if window_length > sp:
+        # create a trailing NaN value in the training set
+        data[window_length - 1] = np.nan
+
     # Split into train and test data
     train_data = data[:window_length]
     test_data = data[window_length:]
@@ -202,27 +218,30 @@ def test_strategy_mean_seasonal_additional_combinations(n, window_length, sp):
     # Forecast data does not retain the original frequency
     test_data.index.freq = None
 
-    # For example, for n=2, periods=4 and sp=3:
+    # For example, for n=2, window_length=4, sp=3:
 
     # print(train_data)
     # 2021-06-01 00:00:00    1.0
     # 2021-06-01 01:00:00    2.0
     # 2021-06-01 02:00:00    3.0
-    # 2021-06-01 03:00:00    1.0
+    # 2021-06-01 03:00:00    NaN
     # Freq: H, dtype: int64
 
     # print(test_data)
     # 2021-06-01 04:00:00    2.0  # (value of 3 hours earlier)
     # 2021-06-01 05:00:00    3.0  # (value of 3 hours earlier)
-    # 2021-06-01 06:00:00    1.0  # (mean value of 3 and 6 hours earlier)
+    # 2021-06-01 06:00:00    1.0  # (value of 6 hours earlier)
     # 2021-06-01 07:00:00    2.0  # (value of 6 hours earlier)
     # dtype: float64
 
-    # let's forecast the next <2 x period> hours with a periodicity of <sp> hours
+    # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
     fh = ForecastingHorizon(test_data.index, is_relative=False)
-    model = NaiveForecaster(strategy="mean", sp=sp)
+    model = NaiveForecaster(strategy=strategy, sp=sp)
     model.fit(train_data)
     forecast_data = model.predict(fh)
+
+    # Make sure that the model (object) reports that it handles missing data
+    assert model.get_tag("handles-missing-data")
 
     if sp < window_length:
         # We expect a perfect forecast given our perfectly cyclic data
