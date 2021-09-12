@@ -11,10 +11,12 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
+from typing import Union, List
 from sklearn.utils.validation import check_random_state
 
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.clustering.tests._clustering_tests import generate_univaritate_series
+from sktime.datatypes import convert_to
 
 
 def _make_panel_X(
@@ -163,3 +165,4 @@ def _make_nested_from_array(array, n_instances=20, n_columns=1):
         [[pd.Series(array) for _ in range(n_columns)] for _ in range(n_instances)],
         columns=[f"col{c}" for c in range(n_columns)],
     )
+

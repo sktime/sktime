@@ -12,6 +12,9 @@ __all__ = [
 ]
 import pandas as pd
 import numpy as np
+from typing import Union, List
+
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
@@ -271,3 +274,38 @@ def check_consistent_index_type(a, b):
         # types inherit from each other, hence we check for type equality
         if not type(a) is type(b):  # noqa
             raise TypeError(msg)
+
+
+def to_numpy_time_series(x: Union[pd.Series, np.ndarray, List]) -> np.ndarray:
+    """
+    Method used to take a number of different time series
+    and format them to a numpy time series
+    Both univariate and multivariate series are supported
+    Nan values are converted to 0
+    Parameters
+    ----------
+    x: pd.series, numpy, list
+        Input time series to convert
+    Returns
+    -------
+    np.ndarray
+        Numpy version of the input
+    """
+    if isinstance(x, np.ndarray):
+        X_copy = np.array(x, copy=True)
+        if np.isnan(X_copy).any():
+            X_copy = np.nan_to_num(X_copy)
+        if X_copy.ndim <= 1:
+            X_copy = X_copy.reshape((-1, 1))
+        if X_copy.dtype != float:
+            X_copy = X_copy.astype(float)
+        return X_copy
+    elif isinstance(x, pd.Series) or isinstance(x, pd.DataFrame):
+        return to_numpy_time_series(from_nested_to_2d_array(x, return_numpy=True))
+    elif isinstance(x, list):
+        return to_numpy_time_series(np.array(x))
+    else:
+        raise TypeError(
+            "The series passed is the incorrect type. It must be"
+            " a pd.Series, np.ndarray or a list"
+        )

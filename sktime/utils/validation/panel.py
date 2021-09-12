@@ -10,23 +10,25 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_consistent_length
+from typing import Union, List
 
+from sklearn.utils.validation import check_consistent_length
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.utils.validation.series import to_numpy_time_series
 
 VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
 
 
 def check_X(
-    X,
-    enforce_univariate=False,
-    enforce_min_instances=1,
-    enforce_min_columns=1,
-    coerce_to_numpy=False,
-    coerce_to_pandas=False,
+        X,
+        enforce_univariate=False,
+        enforce_min_instances=1,
+        enforce_min_columns=1,
+        coerce_to_numpy=False,
+        coerce_to_pandas=False,
 ):
     """Validate input data.
 
@@ -146,13 +148,13 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
 
 
 def check_X_y(
-    X,
-    y,
-    enforce_univariate=False,
-    enforce_min_instances=1,
-    enforce_min_columns=1,
-    coerce_to_numpy=False,
-    coerce_to_pandas=False,
+        X,
+        y,
+        enforce_univariate=False,
+        enforce_min_instances=1,
+        enforce_min_columns=1,
+        coerce_to_numpy=False,
+        coerce_to_pandas=False,
 ):
     """Validate input data.
 
@@ -202,4 +204,36 @@ def _enforce_min_instances(x, min_instances=1):
         raise ValueError(
             f"Found array with: {n_instances} instance(s) "
             f"but a minimum of: {min_instances} is required."
+        )
+
+
+def to_numpy_time_series_matrix(x: Union[np.ndarray, pd.DataFrame, List]):
+    """
+    Method that is used to take a matrix of time series and format them into a valid
+    numpy matrix by performing checks and reformatting where appropriate
+    Parameters
+    ----------
+    x: np.ndarray or pd.Dataframe or List
+        Input time series matrix to format
+    Returns
+    -------
+    np.ndarray
+        Numpy matrix containing valid time series
+    """
+    if isinstance(x, np.ndarray):
+        x_copy = np.array(x, copy=True)
+        if x_copy.ndim <= 2:
+            x_copy = np.reshape(x_copy, x_copy.shape + (1,))
+        valid_x = np.zeros_like(x_copy)
+        for i in range(x_copy.shape[0]):
+            valid_x[i] = to_numpy_time_series(x_copy[i])
+        return valid_x
+    elif isinstance(x, pd.DataFrame):
+        return to_numpy_time_series_matrix(from_nested_to_3d_numpy(x))
+    elif isinstance(x, list):
+        return to_numpy_time_series_matrix(np.array(x))
+    else:
+        raise TypeError(
+            "The matrix passed is not of valid type. It must be one of the following:"
+            "np.ndarray, pd.Dataframe, List[pd.Dataframe], List[np.ndarray], List[List]"
         )
