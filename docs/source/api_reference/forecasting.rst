@@ -127,7 +127,7 @@ Prophet
 
     Prophet
 
-UnobservedComponents
+Unobserved Components
 --------------------
 
 .. currentmodule:: sktime.forecasting.structural
