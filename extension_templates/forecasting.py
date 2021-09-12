@@ -2,9 +2,13 @@
 """
 Extension template for forecasters.
 
-How to use this:
-- this is meant as a "fill in" template for easy extension
-- do NOT import this file directly - it will break
+Purpose of this implementation template:
+    quick implementation of new estimators following the template
+    NOT a concrete class to import! This is NOT a base class or concrete class!
+    This is to be used as a "fill-in" coding template.
+
+How to use this implementation template to implement a new estimator:
+- make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
 - you can add more private methods, but do not override BaseEstimator's private methods
@@ -25,7 +29,8 @@ Optional implements:
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - check_is_fitted()
+    fitted state flag       - is_fitted (property)
+    fitted state inspection - check_is_fitted()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -61,12 +66,18 @@ class MyForecaster(BaseForecaster):
     """
 
     # todo: fill out estimator tags here
+    #  tags are inherited from parent class if they are not set
     _tags = {
-        "fh_in_fit": True,  # is the forecasting horizon already required in fit?
-        "handles_missing_data": False,  # can the estimator handle missing data?
-        "univariate_only": True,  # can the estimator deal with multivariate series?
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "univariate-only": True,  # does estimator use the exogeneous X?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
-    # in case of inheritance, concrete class should set all tags
+    # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
@@ -89,6 +100,16 @@ class MyForecaster(BaseForecaster):
 
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
+
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):

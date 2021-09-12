@@ -21,13 +21,17 @@ plot_correlations(
 )
 """
 __all__ = ["plot_series", "plot_correlations"]
-__author__ = ["Markus Löning", "Ryan Kuhns"]
+__author__ = ["Markus Löning", "Ryan Kuhns", "Drishti Bhasin"]
 
 import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.series import check_consistent_index_type
+
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+from sktime.datatypes import convert_to
 
 
 def plot_series(
@@ -37,13 +41,13 @@ def plot_series(
 
     Parameters
     ----------
-    series : pd.Series
+    series : pd.Series or iterable of pd.Series
         One or more time series
     labels : list, default = None
         Names of series, will be displayed in figure legend
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
-        Lenght of list has to match with number of series
+        The length of the list has to match with the number of series.
 
     Returns
     -------
@@ -58,6 +62,9 @@ def plot_series(
 
     for y in series:
         check_y(y)
+
+    series = list(series)
+    series = [convert_to(y, "pd.Series", "Series") for y in series]
 
     n_series = len(series)
     _ax_kwarg_is_none = True if ax is None else False
@@ -88,10 +95,8 @@ def plot_series(
     # create combined index
     index = series[0].index
     for y in series[1:]:
-        # check types, note that isinstance() does not work here because index
-        # types inherit from each other, hence we check for type equality
-        if not type(index) is type(y.index):  # noqa
-            raise TypeError("Found series with different index types.")
+        # check index types
+        check_consistent_index_type(index, y.index)
         index = index.union(y.index)
 
     # generate integer x-values
@@ -208,6 +213,7 @@ def plot_correlations(
     import matplotlib.pyplot as plt
 
     series = check_y(series)
+    series = convert_to(series, "pd.Series", "Series")
 
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    Time Series Forest Regressor (TSF).
-"""
+"""Time Series Forest Regressor (TSF)."""
 
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
 __all__ = ["TimeSeriesForestRegressor"]
@@ -36,10 +34,10 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
      intervals with replacement and does not use the splitting criteria tiny
      refinement described in [1]. This is an intentionally stripped down, non
      configurable version for use as a hive-cote component. For a configurable
-     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier.
 
-     Parameters
-     ----------
+    Parameters
+    ----------
      n_estimators    : int, ensemble size, optional (default = 200)
      min_interval    : int, minimum width of an interval, optional (default
      to 3)
@@ -48,14 +46,14 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
          ``-1`` means using all processors.
      random_state    : int, seed for random, optional (default = none)
 
-     Attributes
-     ----------
+    Attributes
+    ----------
      n_classes    : int
      n_intervals  : int
      classes_    : List of classes for a given problem
 
-     References
-     ----------
+    References
+    ----------
      .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
      classification and feature extraction",Information Sciences, 239, 2013
      Java implementation
@@ -67,7 +65,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     _base_estimator = DecisionTreeRegressor()
 
     def predict(self, X):
-        """Predict
+        """Predict.
 
         Parameters
         ----------
