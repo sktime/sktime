@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """UnobservedComponents Tests."""
-__author__ = ["Juan Orduz"]
+__author__ = ["juanitorduz"]
 
 import numpy as np
 import pandas as pd
