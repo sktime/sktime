@@ -65,14 +65,12 @@ def _coerce_duration_to_int(duration, freq=None):
 
 
 def _get_freq(x):
-    """Get unit for conversion of time deltas to integer
-    
-    """
+    """Get unit for conversion of time deltas to integer"""
     if hasattr(x, "freqstr"):
-        if x.freqstr == None:
+        if x.freqstr is None:
             return None
-        elif '-' in x.freqstr:
-            return x.freqstr.split('-')[0]
+        elif "-" in x.freqstr:
+            return x.freqstr.split("-")[0]
         else:
             return x.freqstr
     else:

@@ -6,11 +6,15 @@ import pytest
 
 from sktime.utils.datetime import _get_freq
 
+
 @pytest.fixture
 def test_get_freq():
-    x = pd.Series(index=pd.date_range(start='2017-01-01', periods=700, freq='W'), data=np.random.randn(700))
+    x = pd.Series(
+        index=pd.date_range(start="2017-01-01", periods=700, freq="W"),
+        data=np.random.randn(700),
+    )
     x1 = x.index
-    x2 = x.resample('W').sum().index
+    x2 = x.resample("W").sum().index
     x3 = pd.Series(
         index=[
             datetime.datetime(2017, 1, 1) + datetime.timedelta(days=int(i))
@@ -21,8 +25,7 @@ def test_get_freq():
         datetime.datetime(2017, 1, 1) + datetime.timedelta(days=int(i))
         for i in np.arange(1, 100, 7)
     ]
-    assert _get_freq(x1) == 'W'
-    assert _get_freq(x2) == 'W'
-    assert _get_freq(x3) == None
-    assert _get_freq(x4) == None
-    
+    assert _get_freq(x1) == "W"
+    assert _get_freq(x2) == "W"
+    assert _get_freq(x3) is None
+    assert _get_freq(x4) is None
