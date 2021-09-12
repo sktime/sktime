@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Tests for datetime functions."""
+
 import pandas as pd
 import numpy as np
 import datetime
@@ -7,7 +9,6 @@ import pytest
 from sktime.utils.datetime import _get_freq
 
 
-@pytest.fixture
 def test_get_freq():
     x = pd.Series(
         index=pd.date_range(start="2017-01-01", periods=700, freq="W"),
