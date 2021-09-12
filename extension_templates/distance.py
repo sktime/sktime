@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Extension template for time series distance between time series
 
@@ -31,6 +32,7 @@ from sktime.metrics.distances.base.base import BaseDistance, NumbaSupportedDista
 
 
 # Todo: add any necessary imports here
+
 
 class MyDistanceMetric(BaseDistance):
     """
@@ -86,21 +88,21 @@ class MyDistanceMetric(BaseDistance):
 """
 In the above example, while you haven't implemented .pairwise(x, y), it can be called
 and a pairwise between time series in a matrix will be performed using the
-.distance(x, y) that is implemented. This is done by calling the .distance(x, y) for 
+.distance(x, y) that is implemented. This is done by calling the .distance(x, y) for
 each combination of time series between two matrices.
 
-While this greatly simplifies initial implementation of distance, by only requiring 
-the developer to work out how to perform the distance between two time series, 
-it leaves much to be desired in terms of performance. To resolve this one can speed 
-up the distance computation by rewriting the function using numbas @njit() decorator. 
+While this greatly simplifies initial implementation of distance, by only requiring
+the developer to work out how to perform the distance between two time series,
+it leaves much to be desired in terms of performance. To resolve this one can speed
+up the distance computation by rewriting the function using numbas @njit() decorator.
 
-In the example below it shows moving the logic of the distance computation outside 
+In the example below it shows moving the logic of the distance computation outside
 of the .distance(x, y) and out of the class. The function when not attached to a class
 allows for the @njit() decorator to be used without having to define types or writing
 additional code (which is what you would have to do if you were using a jitclass).
 In many instances creating an njit version of the distance leads to performance gains
 when performing distance computation between two time series.
- 
+
 However, calling .distance(x, y) requires us to be in 'object mode' (defined in numba as
 running python code). This means we can't call this function from inside another @njit
 function without first coming out of nopython mode. This leads to great performance
@@ -229,11 +231,11 @@ class MyDistanceMetric(BaseDistance, NumbaSupportedDistance):
         # numba_compiled_version
         @njit()
         def numba_compiled_version(
-                x: np.ndarray,
-                y: np.ndarray,
-                parama: Any = self.parama,
-                paramb: Any = self.paramb,
-                paramc: Any = self.paramc
+            x: np.ndarray,
+            y: np.ndarray,
+            parama: Any = self.parama,
+            paramb: Any = self.paramb,
+            paramc: Any = self.paramc,
         ) -> float:
             """
             In theory numba_compiled_version should only be numba_compiled_version(x, y)
@@ -244,13 +246,7 @@ class MyDistanceMetric(BaseDistance, NumbaSupportedDistance):
             function does not work. To reiterate parameter x and y are required but
             any other parameters MUST BE optional.
             """
-            return distance_computation_outside_class(
-                x,
-                y,
-                parama,
-                paramb,
-                paramc
-            )
+            return distance_computation_outside_class(x, y, parama, paramb, paramc)
 
         # The compiled numba function is returned
         return numba_compiled_version

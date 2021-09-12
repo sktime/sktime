@@ -17,13 +17,13 @@ from sktime.metrics.distances.base.base import BaseDistance
 
 
 def create_test_distance_df(
-        n_instances,
-        n_columns,
-        n_timepoints,
-        random_state=1,
+    n_instances,
+    n_columns,
+    n_timepoints,
+    random_state=1,
 ):
     if n_instances > 1:
-         return _make_panel_X(
+        return _make_panel_X(
             n_instances=n_instances,
             n_columns=n_columns,
             n_timepoints=n_timepoints,
@@ -34,10 +34,10 @@ def create_test_distance_df(
 
 
 def create_test_distance_numpy(
-        n_instances,
-        n_columns,
-        n_timepoints,
-        random_state=1,
+    n_instances,
+    n_columns,
+    n_timepoints,
+    random_state=1,
 ):
     df = create_test_distance_df(
         n_instances=n_instances,
@@ -46,16 +46,16 @@ def create_test_distance_numpy(
         random_state=random_state,
     )
     if n_instances > 1:
-        return convert_to(df, to_type='numpy3D')
+        return convert_to(df, to_type="numpy3D")
     else:
-        return convert_to(df, to_type='np.ndarray')
+        return convert_to(df, to_type="np.ndarray")
 
 
 def create_test_distance_list(
-        n_instance,
-        n_columns,
-        n_timepoints,
-        random_state=1,
+    n_instance,
+    n_columns,
+    n_timepoints,
+    random_state=1,
 ):
     numpy = create_test_distance_numpy(
         n_instances=n_instance,
@@ -67,7 +67,6 @@ def create_test_distance_list(
 
 
 class AbsoluteDistance(BaseDistance):
-
     def _distance(self, x: np.ndarray, y: np.ndarray) -> float:
         abs_distance = 0.0
 
@@ -90,11 +89,12 @@ def test_distances_and_pairwise():
     ts_create_arr = [
         create_test_distance_numpy,
         create_test_distance_df,
-        create_test_distance_list
+        create_test_distance_list,
     ]
     for create_time_series in ts_create_arr:
         distance_alternative_metric_test(
-            absolute_distance_callable, AbsoluteDistance(), create_time_series)
+            absolute_distance_callable, AbsoluteDistance(), create_time_series
+        )
         # pairwise_alternative_metric_test(
         #     absolute_distance_callable, AbsoluteDistance(), create_time_series)
         # for metric_str in get_available_distances():
@@ -106,7 +106,11 @@ def test_distances_and_pairwise():
 def univariate_test(metric_str: str, create_time_series: Callable):
     # Method used to test a univariate time series
     generated_univariate_ts = create_time_series(2, 10, 1)
-    x_univariate = create_time_series(1, 1, 10, )
+    x_univariate = create_time_series(
+        1,
+        1,
+        10,
+    )
     y_univariate = generated_univariate_ts[1]
 
     generated_ts = create_time_series(2, 10, 10, random_state=5)
@@ -142,9 +146,7 @@ def pairwise_distance_test(metric_str: str, create_time_series: Callable):
 
 
 def distance_alternative_metric_test(
-        callable: Callable,
-        base_dist: BaseDistance,
-        create_time_series: Callable
+    callable: Callable, base_dist: BaseDistance, create_time_series: Callable
 ):
     # Method used to test using BaseDistance or Callable in the distance function
     # call
@@ -154,7 +156,6 @@ def distance_alternative_metric_test(
 
     distance(x_univariate, y_univariate, callable)
     distance(x_univariate, y_univariate, base_dist)
-
 
     generated_univariate_ts = create_time_series(2, 10, 1)
 
@@ -173,9 +174,7 @@ def distance_alternative_metric_test(
 
 
 def pairwise_alternative_metric_test(
-        callable: Callable,
-        base_dist: BaseDistance,
-        create_time_series: Callable
+    callable: Callable, base_dist: BaseDistance, create_time_series: Callable
 ):
     # Method used to test BaseDistance or Callable in the pairwise function
     # call
@@ -190,6 +189,7 @@ def pairwise_alternative_metric_test(
 
     pairwise(x_multivariate_matrix, y_multivariate_matrix, callable)
     pairwise(x_multivariate_matrix, y_multivariate_matrix, base_dist)
+
 
 # def test_runtime():
 #     generated_ts = create_test_distance(100, 10, 10, random_state=5)

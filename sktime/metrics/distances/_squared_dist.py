@@ -56,7 +56,6 @@ def _squared_dist(x: np.ndarray, y: np.ndarray) -> float:
         squared distance between the two series
     """
 
-
     distance = 0.0
 
     for i in prange(x.shape[0]):
@@ -86,13 +85,11 @@ class SquaredDistance(BaseDistance):
 
     @staticmethod
     def pad_along_axis(
-            array: np.ndarray,
-            target_length: int,
-            axis: int = 0
+        array: np.ndarray, target_length: int, axis: int = 0
     ) -> np.ndarray:
         """
         Method used to pad a time series along an axis
-        
+
         Source: https://stackoverflow.com/questions/19349410/how-to-pad-with-zeros-
                                                         a-tensor-along-some-axis-python
 
@@ -118,12 +115,10 @@ class SquaredDistance(BaseDistance):
         npad = [(0, 0)] * array.ndim
         npad[axis] = (0, pad_size)
 
-        return np.pad(array, pad_width=npad, mode='constant', constant_values=0)
+        return np.pad(array, pad_width=npad, mode="constant", constant_values=0)
 
     def _check_params(
-            self,
-            x: np.ndarray,
-            y: np.ndarray
+        self, x: np.ndarray, y: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Method used to check the parameters of x and y. This is needed in case they
@@ -145,7 +140,7 @@ class SquaredDistance(BaseDistance):
         """
         if x.shape[0] == y.shape[0]:
             padded_x = x
-            padded_y= y
+            padded_y = y
         elif x.shape[0] > y.shape[0]:
             new_x = x.copy()
             new_y = y.copy()
@@ -158,11 +153,7 @@ class SquaredDistance(BaseDistance):
             padded_y = new_y
         return padded_x, padded_y
 
-    def _distance(
-            self,
-            x: np.ndarray,
-            y: np.ndarray
-    ) -> float:
+    def _distance(self, x: np.ndarray, y: np.ndarray) -> float:
         """
         Method used to compute the distance between two ts series
         ----------

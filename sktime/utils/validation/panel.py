@@ -23,12 +23,12 @@ VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
 
 
 def check_X(
-        X,
-        enforce_univariate=False,
-        enforce_min_instances=1,
-        enforce_min_columns=1,
-        coerce_to_numpy=False,
-        coerce_to_pandas=False,
+    X,
+    enforce_univariate=False,
+    enforce_min_instances=1,
+    enforce_min_columns=1,
+    coerce_to_numpy=False,
+    coerce_to_pandas=False,
 ):
     """Validate input data.
 
@@ -148,13 +148,13 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
 
 
 def check_X_y(
-        X,
-        y,
-        enforce_univariate=False,
-        enforce_min_instances=1,
-        enforce_min_columns=1,
-        coerce_to_numpy=False,
-        coerce_to_pandas=False,
+    X,
+    y,
+    enforce_univariate=False,
+    enforce_min_instances=1,
+    enforce_min_columns=1,
+    coerce_to_numpy=False,
+    coerce_to_pandas=False,
 ):
     """Validate input data.
 

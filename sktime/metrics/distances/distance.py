@@ -70,7 +70,7 @@ def _resolve_metric(metric: str, **kwargs: Any) -> BaseDistance:
 def distance(
     x: SktimeSeries,
     y: SktimeSeries,
-    metric: Union[str, BaseDistance, Callable] = 'euclidean',
+    metric: Union[str, BaseDistance, Callable] = "euclidean",
     **kwargs: Any
 ) -> float:
     """
@@ -109,7 +109,7 @@ def distance(
 def pairwise(
     x: SktimeMatrix,
     y: SktimeMatrix = None,
-    metric: Union[str, BaseDistance, Callable] = 'euclidean',
+    metric: Union[str, BaseDistance, Callable] = "euclidean",
     **kwargs: Any
 ) -> np.ndarray:
     """
