@@ -1,4 +1,3 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test functionality of time series plotting functions."""
@@ -50,7 +49,7 @@ def valid_data_types():
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_runs_without_error(series_to_plot):
-    """Verify plot_series runs without error."""
+    """Test whether plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -59,14 +58,13 @@ def test_plot_series_runs_without_error(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
-@pytest.mark.parametrize("plot_func", all_plots)
-def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
-    """Verify all plots raise input errors with invalid input."""
+def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
+    """Tests whether plot_series raises error for invalid input types."""
     # TODO: Is it possible to dynamically create the matching str if it includes
     #       characters that need to be escaped (like .)
     # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
     with pytest.raises((TypeError, ValueError)):
-        plot_func(series_to_plot)
+        _plot_series(series_to_plot)
 
 
 @pytest.mark.parametrize(
@@ -75,7 +73,7 @@ def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
-    """Verify plot_series raises expected error with unequal index types."""
+    """Tests whether plot_series raises error for series with unequal index."""
     match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
@@ -83,7 +81,7 @@ def test_plot_series_with_unequal_index_type_raises_error(
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
-    """Verify plot_series raises expected error for inconsistent marker length."""
+    """Tests whether plot_series raises error for inconsistent series/markers."""
     match = """There must be one marker for each time series,
                 but found inconsistent numbers of series and
                 markers."""
@@ -100,7 +98,7 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
-    """Verify plot_series raises expected error for inconsistent label length."""
+    """Tests whether plot_series raises error for inconsistent series/labels."""
     match = """There must be one label for each time series,
                 but found inconsistent numbers of series and
                 labels."""
@@ -117,7 +115,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
-    """Verify output of plot series is correct."""
+    """Tests whether plot_series returns plt.fig and plt.ax."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -151,7 +149,7 @@ def test_plot_series_output_type(series_to_plot):
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 def test_univariate_plots_run_without_error(series_to_plot, plot_func):
-    """Verify plots that accept univariate series run without error."""
+    """Tests whether plots that accept univariate series run without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 

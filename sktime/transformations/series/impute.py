@@ -20,29 +20,34 @@ import pandas as pd
 class Imputer(_SeriesToSeriesTransformer):
     """Missing value imputation.
 
+    The Imputer transforms input series by replacing missing values according
+    to an imputation strategy specified by `method`.
+
     Parameters
     ----------
-    method : str, optional (default="drift")
+    method : str, default="drift"
         Method to fill the missing values values.
+
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
         * "linear" : linear interpolation, by pd.Series.interpolate()
         * "nearest" : use nearest value, by pd.Series.interpolate()
         * "constant" : same constant value (given in arg value) for all NaN
         * "mean" : pd.Series.mean()
         * "median" : pd.Series.median()
-        * "backfill"/"bfill" : adapted from pd.Series.fillna()
-        * "pad"/"ffill" : adapted from pd.Series.fillna()
+        * "backfill" ot "bfill" : adapted from pd.Series.fillna()
+        * "pad" or "ffill" : adapted from pd.Series.fillna()
         * "random" : random values between pd.Series.min() and .max()
         * "forecaster" : use an sktime Forecaster, given in arg forecaster
-    missing_values : int/float/str, optional
+
+    missing_values : int/float/str, default=None
         The placeholder for the missing values. All occurrences of
-        missing_values will be imputed. Default, None (np.nan)
-    value : int/float, optional
-        Value to fill NaN, by default None
-    forecaster : Any Forecaster based on sktime.BaseForecaster, optinal
-        Use a given Forecaster to impute by insample predictions. Before
-        fitting, missing data is imputed with method="ffill"/"bfill"
-        as heuristic.
+        missing_values will be imputed. If None then np.nan is used.
+    value : int/float, default=None
+        Value to use to fill missing values when method="constant".
+    forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
+        Use a given Forecaster to impute by insample predictions when
+        method="forecaster". Before fitting, missing data is imputed with
+        method="ffill" or "bfill" as heuristic.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 

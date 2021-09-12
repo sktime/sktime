@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Testing utility to compare equality in value for nested objects
+"""Testing utility to compare equality in value for nested objects.
 
 Objects compared can have one of the following valid types:
     types compatible with != comparison
@@ -18,7 +17,7 @@ import pandas as pd
 
 
 def deep_equals(x, y):
-    """Tests two objects for equality in value
+    """Test two objects for equality in value.
 
     Correct if x/y are one of the following valid types:
         types compatible with != comparison
@@ -35,24 +34,36 @@ def deep_equals(x, y):
     bool - True if x and y are equal in value
         x and y do not need to be equal in reference
     """
-
     if type(x) != type(y):
         return False
 
     # we now know all types are the same
     # so now we compare values
-    if type(x) in [pd.DataFrame, pd.Series]:
-        if not x.equals(y):
-            return False
-    elif type(x) is np.ndarray:
+    if isinstance(x, pd.Series):
         if x.dtype != y.dtype:
             return False
-        if not np.array_equal(x, y, equal_nan=True):
+        # if columns are object, recurse over entries and index
+        if x.dtype == "object":
+            index_equal = x.index.equals(y.index)
+            return index_equal and deep_equals(list(x.values), list(y.values))
+        else:
+            return x.equals(y)
+    elif isinstance(x, pd.DataFrame):
+        if not x.columns.equals(y.columns):
             return False
+        # if columns are equal and at least one is object, recurse over Series
+        if sum(x.dtypes == "object") > 0:
+            return np.all([deep_equals(x[c], y[c]) for c in x.columns])
+        else:
+            return x.equals(y)
+    elif isinstance(x, np.ndarray):
+        if x.dtype != y.dtype:
+            return False
+        return np.array_equal(x, y, equal_nan=True)
     # recursion through lists, tuples and dicts
-    elif type(x) in [list, tuple]:
+    elif isinstance(x, (list, tuple)):
         return _tuple_equals(x, y)
-    elif type(x) is dict:
+    elif isinstance(x, dict):
         return _dict_equals(x, y)
     elif x != y:
         return False
@@ -61,7 +72,7 @@ def deep_equals(x, y):
 
 
 def _tuple_equals(x, y):
-    """Tests two tuples or lists for equality.
+    """Test two tuples or lists for equality.
 
     Correct if tuples/lists contain the following valid types:
         types compatible with != comparison
@@ -78,7 +89,6 @@ def _tuple_equals(x, y):
     bool - True if x and y are equal in value
         x and y do not need to be equal in reference
     """
-
     n = len(x)
 
     if n != len(y):
@@ -97,7 +107,7 @@ def _tuple_equals(x, y):
 
 
 def _dict_equals(x, y):
-    """Tests two dicts for equality.
+    """Test two dicts for equality.
 
     Correct if dicts contain the following valid types:
         types compatible with != comparison

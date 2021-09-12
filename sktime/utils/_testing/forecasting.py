@@ -20,6 +20,18 @@ from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
 
 
+def _get_n_columns(tag):
+    """Return the the number of columns to use in tests."""
+    n_columns_list = []
+    if tag == "univariate":
+        n_columns_list = [1]
+    elif tag == "multivariate":
+        n_columns_list = [2]
+    elif tag == "both":
+        n_columns_list = [1, 2]
+    return n_columns_list
+
+
 def _get_expected_index_for_update_predict(y, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # time points at which to make predictions
