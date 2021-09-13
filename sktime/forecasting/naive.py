@@ -231,7 +231,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
 
-class NaiveForecaster(_NaiveForecaster):
+class NaiveForecaster(_BaseWindowForecaster):
     """Forecast based on naive assumptions about past trends continuing.
 
     NaiveForecaster is a forecaster that makes forecasts using simple
