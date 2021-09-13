@@ -15,7 +15,7 @@ from statsmodels.tsa.statespace.structural import (
 class UnobservedComponents(_StatsModelsAdapter):
     r"""Wrapper class of the UnobservedComponents model from statsmodels.
 
-    The input parameters (and doc-strings) are taken from the original implementation.
+    Input parameters and doc-stringsare taken from the original implementation.
 
     Parameters
     ----------
@@ -65,8 +65,8 @@ class UnobservedComponents(_StatsModelsAdapter):
         on the frequency of the endogenous variable, this will imply different
         specific bounds.
     mle_regression : bool, optional
-        Whether or not to estimate regression coefficients by maximum likelihood
-        as one of hyperparameters. Default is True.
+        Whether or not to estimate regression coefficients by maximum
+        likelihood as one of hyperparameters. Default is True.
         If False, the regression coefficients are estimated by recursive OLS,
         included in the state vector.
     use_exact_diffuse : bool, optional
@@ -412,9 +412,15 @@ class UnobservedComponents(_StatsModelsAdapter):
         )
 
     def plot_diagnostics(
-        self, variable=0, lags=10, fig=None, figsize=None, truncate_endog_names=24
+        self,
+        variable=0,
+        lags=10,
+        fig=None,
+        figsize=None,
+        truncate_endog_names=24,
     ):
-        """Diagnostic plots for standardized residuals of one endogenous variable.
+        """Diagnostic plots for standardized residuals of one
+        endogenous variable.
 
         Taken from the original statsmodels implementation.
 
