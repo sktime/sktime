@@ -419,8 +419,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         figsize=None,
         truncate_endog_names=24,
     ):
-        """Diagnostic plots for standardized residuals of one
-        endogenous variable.
+        """Diagnostic plots for standardized residuals.
 
         Taken from the original statsmodels implementation.
 
