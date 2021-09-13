@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 """
-pandas.datetime functions related utilities
+pandas.datetime functions related utilities.
 
 modified the _get_freq function
 """
@@ -18,7 +18,7 @@ from sktime.utils.validation.series import check_time_index
 
 
 def _coerce_duration_to_int(duration, freq=None):
-    """Coerce durations into integer representations for a given unit of duration
+    """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
     ----------
@@ -65,7 +65,7 @@ def _coerce_duration_to_int(duration, freq=None):
 
 
 def _get_freq(x):
-    """Get unit for conversion of time deltas to integer"""
+    """Get unit for conversion of time deltas to integer."""
     if hasattr(x, "freqstr"):
         if x.freqstr is None:
             return None
@@ -78,7 +78,7 @@ def _get_freq(x):
 
 
 def _shift(x, by=1):
-    """Shift time point `x` by a step (`by`) given frequency of `x`
+    """Shift time point `x` by a step (`by`) given frequency of `x`.
 
     Parameters
     ----------
@@ -101,8 +101,9 @@ def _shift(x, by=1):
 
 
 def _get_duration(x, y=None, coerce_to_int=False, unit=None):
-    """Compute duration of time index `x` or durations between time points
-    `x` and `y` if `y` is given
+    """Compute duration of time index.
+    
+    `x` or durations between time points `x` and `y` if `y` is given
 
     Parameters
     ----------
