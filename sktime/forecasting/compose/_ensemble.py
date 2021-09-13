@@ -27,7 +27,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     The AutoEnsembleForecaster uses a meta-model (regressor) to calculate the optimal
     weights for ensemble aggregation with mean. The regressor has to be sklearn-like
-    and needs to have either an attribute "feature_importances_" or "coef_", as this
+    and needs to have either an attribute `feature_importances_` or `coef_`, as this
     is used as weights. Regressor can also be a sklearn.Pipeline.
 
     Parameters
@@ -61,16 +61,18 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     --------
     EnsembleForecaster
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import AutoEnsembleForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecasters = [("trend", PolynomialTrendForecaster()),\
-                        ("naive", NaiveForecaster())]
-    >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters, n_jobs=2)
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster()),
+    ...     ("naive", NaiveForecaster()),
+    ... ]
+    >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
@@ -213,10 +215,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecasters = [("trend", PolynomialTrendForecaster()),\
-                        ("naive", NaiveForecaster())]
-    >>> forecaster = EnsembleForecaster(forecasters=forecasters,\
-                                        aggfunc="mean", weights=[1, 10])
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster()),
+    ...     ("naive", NaiveForecaster()),
+    ... ]
+    >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
     >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
