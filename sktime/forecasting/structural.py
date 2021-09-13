@@ -169,8 +169,8 @@ class UnobservedComponents(_StatsModelsAdapter):
 
     See Also
     --------
-    :func:`statsmodels.tsa.statespace.structural.UnobservedComponents`
-    :func:`statsmodels.tsa.statespace.structural.UnobservedComponentsResults`
+    statsmodels.tsa.statespace.structural.UnobservedComponents
+    statsmodels.tsa.statespace.structural.UnobservedComponentsResults
 
     References
     ----------
