@@ -75,7 +75,7 @@ def plot_time_series_with_profiles(
     ----------
     ts_name: str
         the name of the time series
-    TS: array
+    ts: array
         the time series to be segmented
     profiles: array
         the profiles computed by the method used
