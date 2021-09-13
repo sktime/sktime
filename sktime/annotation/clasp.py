@@ -44,7 +44,6 @@ def find_dominant_window_sizes(TS, offset=0.05):
     trivial_match: bool
         If the candidate change point is a trivial match
     """
-
     fourier = np.absolute(np.fft.fft(TS))
     freq = np.fft.fftfreq(TS.shape[0], 1)
 
@@ -281,7 +280,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         return self.found_cps, self.profiles, self.scores
 
     def _get_interval_series(self, X, found_cps):
-        """Gets the segmentation results based on the found change points.
+        """Get the segmentation results based on the found change points.
 
         Parameters
         ----------

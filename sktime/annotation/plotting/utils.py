@@ -21,7 +21,7 @@ __author__ = "Patrick Schäfer"
 
 def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     """
-    Plots the time series with the known change points.
+    Plot the time series with the known change points.
 
     Parameters
     ----------
@@ -38,7 +38,6 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     -------
     ax
     """
-
     plt.figure(figsize=(20, 5))
     segments = [0] + true_cps.tolist() + [ts.shape[0]]
 
@@ -70,8 +69,7 @@ def plot_time_series_with_profiles(
     font_size=16,
 ):
     """
-    Plots the time series with the known and found change points
-    but also the profiles used for segmentation.
+    Plot the TS with the known and found change points and profiles from segmentation.
 
     Parameters
     ----------
@@ -94,7 +92,6 @@ def plot_time_series_with_profiles(
     -------
     ax
     """
-
     fig, ax = plt.subplots(
         len(profiles) + 1,
         1,
