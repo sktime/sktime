@@ -292,6 +292,7 @@ class NaiveForecaster(_NaiveForecaster):
     """
 
     _tags = {
+        "y_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,  # todo: switch to True if GH1367 is fixed
