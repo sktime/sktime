@@ -17,7 +17,7 @@ As described in
 from sktime.annotation.base import BaseSeriesAnnotator
 
 __author__ = ["Arik Ermshaus, Patrick Schäfer"]
-__all__ = ["ClaSPSegmentation"]
+__all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,45 @@ from queue import PriorityQueue
 
 from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
+
+
+def find_dominant_window_sizes(TS, offset=0.05):
+    """
+    Determine the Window-Size using dominant FFT-frequencies.
+
+    Parameters
+    ----------
+    TS: array
+        the time series to determine the periodicity
+    offset: float
+        Exclusion Radius
+
+    Returns
+    -------
+    trivial_match: bool
+        If the candidate change point is a trivial match
+    """
+
+    fourier = np.absolute(np.fft.fft(TS))
+    freq = np.fft.fftfreq(TS.shape[0], 1)
+
+    coefs = []
+    window_sizes = []
+
+    for coef, freq in zip(fourier, freq):
+        if coef and freq > 0:
+            coefs.append(coef)
+            window_sizes.append(1 / freq)
+
+    coefs = np.array(coefs)
+    window_sizes = np.asarray(window_sizes, dtype=np.int64)
+
+    idx = np.argsort(coefs)[::-1]
+    for window_size in window_sizes[idx]:
+        if window_size not in range(20, int(TS.shape[0] * offset)):
+            continue
+
+        return int(window_size / 2)
 
 
 def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0.05):
