@@ -33,6 +33,10 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
         the known change points
     font_size: int
         for plotting
+
+    Returns
+    -------
+    ax
     """
 
     plt.figure(figsize=(20, 5))
@@ -53,7 +57,7 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
 
     plt.legend(loc="best")
     plt.title(ts_name, fontsize=font_size)
-    _ = plt.show()
+    return ax
 
 
 def plot_time_series_with_profiles(
@@ -85,6 +89,10 @@ def plot_time_series_with_profiles(
         name of the method used
     font_size: int
         for plotting
+
+    Returns
+    -------
+    ax
     """
 
     fig, ax = plt.subplots(
@@ -145,4 +153,4 @@ def plot_time_series_with_profiles(
             )
 
     ax[0].legend(prop={"size": font_size})
-    _ = plt.show()
+    return ax

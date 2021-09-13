@@ -197,6 +197,10 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         size of window for sliding, based on the period length of the data
     n_cps:                 int, default = 1
         the number of change points to search
+    fmt :                  str {"dense", "sparse"}, optional (default="sparse")
+        Annotation output format:
+        * If "sparse", a pd.Series of the found Change Points is returned
+        * If "dense", a pd.IndexSeries with the Segmenation of the TS is returned
 
     Returns
     -------
@@ -216,28 +220,38 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     _tags = {"univariate-only": True, "fit-in-predict": True}  # for unit test cases
 
-    def __init__(self, period_length=10, n_cps=1):
+    def __init__(self, period_length=10, n_cps=1, fmt="sparse"):
         self.period_length = int(period_length)
         self.n_cps = n_cps
-        super(ClaSPSegmentation, self).__init__()
+        super(ClaSPSegmentation, self).__init__(fmt)
 
     def _fit(self, X, Y=None):
         # nothing to do
         return True
 
     def _predict(self, X):
-        X = check_series(X, enforce_univariate=True, allow_numpy=True)
+        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
-        if isinstance(X, pd.Series):
-            X = X.to_numpy()
+        # Change Points
+        if self.fmt == "sparse":
+            return pd.Series(self.found_cps)
 
-        clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
+        # Segmentation
+        elif self.fmt == "dense":
+            return self._get_interval_series(X, self.found_cps)
 
-        self.found_cps, self.profiles, self.scores = _segmentation(
-            X, clasp_transformer, n_change_points=self.n_cps, exclusion_radius=0.05
-        )
+    def _predict_scores(self, X):
+        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
-        return pd.Series(self.found_cps)
+        # Scores of the Change Points
+        if self.fmt == "sparse":
+            return pd.Series(self.scores)
+
+        # Full Profile of Segmentation
+        # ClaSP creates multiple profiles. Hard to map.
+        # Thus, we return the main (first) one
+        elif self.fmt == "dense":
+            return pd.Series(self.profiles[0])
 
     def fit_predict(self, X, Y=None):
         """Get shortcut for fit and predict."""
@@ -251,3 +265,38 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         fitted_params : dict
         """
         return {"profiles": self.profiles, "scores": self.scores}
+
+    def _run_clasp(self, X):
+        X = check_series(X, enforce_univariate=True, allow_numpy=True)
+
+        if isinstance(X, pd.Series):
+            X = X.to_numpy()
+
+        clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
+
+        self.found_cps, self.profiles, self.scores = _segmentation(
+            X, clasp_transformer, n_change_points=self.n_cps, exclusion_radius=0.05
+        )
+
+        return self.found_cps, self.profiles, self.scores
+
+    def _get_interval_series(self, X, found_cps):
+        """Gets the segmentation results based on the found change points.
+
+        Parameters
+        ----------
+        X:             array
+            The time series to be segmented
+        found_cps:     array
+            Array of change points found
+
+        Returns
+        -------
+        IntervalIndex:
+            Segmentation based on found change pints
+
+        """
+        cps = np.array(found_cps)
+        start = np.insert(cps, 0, 0)
+        end = np.append(cps, len(X))
+        return pd.IntervalIndex.from_arrays(start, end)
