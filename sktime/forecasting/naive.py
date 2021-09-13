@@ -9,6 +9,7 @@ __author__ = ["mloning", "Piyush Gade", "Flix6x"]
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -292,7 +293,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,  # todo: switch to True if GH1367 is fixed
@@ -320,7 +321,16 @@ class NaiveForecaster(_BaseWindowForecaster):
         -------
         self : returns an instance of self.
         """
-        self._forecaster = ColumnEnsembleForecaster(_NaiveForecaster())
+        if isinstance(y, pd.Series):
+            self._forecaster = _NaiveForecaster(
+                strategy=self.strategy, sp=self.sp, window_length=self.window_length
+            )
+        else:
+            self._forecaster = ColumnEnsembleForecaster(
+                _NaiveForecaster(
+                    strategy=self.strategy, sp=self.sp, window_length=self.window_length
+                )
+            )
         self._forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
