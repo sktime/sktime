@@ -9,7 +9,6 @@ __author__ = ["mloning", "Piyush Gade", "Flix6x"]
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
