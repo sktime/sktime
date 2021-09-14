@@ -20,6 +20,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.validation.forecasting import check_regressor
 
 
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -37,13 +38,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
-        a GradientBoostingRegressor(max_depth=5) is used. The regressor can also be a
-        sklearn.Pipeline().
+        a GradientBoostingRegressor(max_depth=5) is used.
+        The regressor can also be a sklearn.Pipeline().
     test_size : int or float, optional, default=None
         Used to do an internal temporal_train_test_split(). The test_size data
         will be the endog data of the regressor and it is the most recent data.
         The exog data of the regressor are the predictions from the temporarily
         trained ensemble models. If None, it will be set to 0.25.
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -90,13 +93,16 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         forecasters,
         regressor=None,
         test_size=None,
+        random_state=None,
         n_jobs=None,
     ):
         super(AutoEnsembleForecaster, self).__init__(
-            forecasters=forecasters, n_jobs=n_jobs
+            forecasters=forecasters,
+            n_jobs=n_jobs,
         )
         self.regressor = regressor
         self.test_size = test_size
+        self.random_state = random_state
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -115,7 +121,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : returns an instance of self.
         """
         _, forecasters = self._check_forecasters()
-        self._check_regressor()
+        self.regressor_ = check_regressor(
+            regressor=self.regressor, random_state=self.random_state
+        )
 
         # get training data for meta-model
         if X is not None:
@@ -176,7 +184,10 @@ def _get_weights(regressor):
     elif hasattr(regressor, "coef_"):
         weights = regressor.coef_
     else:
-        raise NotImplementedError("The given regressor is not supported.")
+        raise NotImplementedError(
+            """The given regressor is not supported. It must have
+            either an attribute feature_importances_ or coef_ after fitting."""
+        )
     # avoid ZeroDivisionError if all weights are 0
     if weights.sum() == 0:
         weights += 1
