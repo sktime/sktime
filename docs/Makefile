@@ -3,7 +3,7 @@
 # You can set these variables from the command line.
 PREPROCESS    = sphinx-apidoc
 APIDOCTEMPLATEDIR = source/_templates/apidoc
-AUTOGENDIR    = source/modules/auto_generated
+AUTOGENDIR    = source/api_reference/auto_generated
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
@@ -23,6 +23,7 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	./symlink_examples.sh
+	python make_estimator_overview_table.py
 	rm -rf $(AUTOGENDIR)
 	@$(PREPROCESS) -eMT --templatedir $(APIDOCTEMPLATEDIR) -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATHS)"
 	-rm -rf $(BUILDDIR)
