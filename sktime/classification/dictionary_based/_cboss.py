@@ -79,6 +79,9 @@ class ContractableBOSS(BaseClassifier):
        List of DecisionTree classifiers.
     weights :
         Weight of each classifier in the ensemble.
+    class_dictionary: dict
+        Dictionary of classes. Extracted from the data.
+
 
     See Also
     --------
@@ -294,7 +297,7 @@ class ContractableBOSS(BaseClassifier):
 
         Returns
         -------
-        predicted_probs : array of shape (n_instances, n_classes)
+        dists : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
         sums = np.zeros((X.shape[0], self.n_classes))
