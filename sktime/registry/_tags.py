@@ -46,55 +46,55 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "univariate_only",  # todo: rename to "scitype:handles_exogeneous"
+        "univariate-only",  # todo: rename to "scitype:handles_exogeneous"
         "forecaster",
         "bool",
         "does forecaster use exogeneous data (X)?",
     ),
     (
-        "fit_in_transform",
+        "fit-in-transform",
         "transformer",
         "bool",
         "does fit contain no logic and can be skipped? yes/no",
     ),
     (
-        "transform_returns_same_time_index",
+        "transform-returns-same-time-index",
         "transformer",
         "bool",
         "does transform return same time index as input?",
     ),
     (
-        "handles_missing_data",
+        "handles-missing-data",
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
     ),
     (
-        "skip_inverse_transform",
+        "skip-inverse-transform",
         "transformer",
         "bool",
         "behaviour flag: skips inverse_transform when called yes/no",
     ),
     (
-        "requires_fh_in_fit",
+        "requires-fh-in-fit",
         "forecaster",
         "bool",
         "does forecaster require fh passed already in fit? yes/no",
     ),
     (
-        "X_y_must_have_same_index",
+        "X-y-must-have-same-index",
         ["forecaster", "classifier", "regressor"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
     (
-        "enforce_index_type",
+        "enforce-index-type",
         ["forecaster", "classifier", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "coerce_X_to_numpy",
+        "coerce-X-to-numpy",
         ["forecaster", "classifier", "regressor"],
         "bool",
         "should X be coerced to numpy type in check_X? yes/no",
