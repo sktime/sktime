@@ -22,7 +22,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
-from sktime.utils.data_processing import from_nested_to_3d_numpy
+from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -46,47 +46,59 @@ class MUSE(BaseClassifier):
              binning_strategy: the binning strategy used to disctrtize into
                                SFA words.
 
-
     Parameters
     ----------
-    anova:               boolean, default = True
+    anova: boolean, default = True
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
-
-    bigrams:             boolean, default = True
+    bigrams: boolean, default = True
         whether to create bigrams of SFA words
-
-    window_inc:          int, default = 4
+    window_inc: int, default = 4
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
-
-     p_threshold:      int, default = 0.05 (disabled by default)
+     p_threshold: int, default = 0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-
-    use_first_order_differences:    boolean, default = True
+    use_first_order_differences: boolean, default = True
         If set to True will add the first order differences of each dimension
         to the data.
-
-    random_state:        int or None,
+    random_state: int or None,
         Seed for random, integer
+
+    Attributes
+    ----------
+    word_length:
+    norm_option:
 
     See Also
     --------
     WEASEL
 
+    References
+    ----------
+    .. [1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
+        with WEASEL+MUSE", in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
+        https://arxiv.org/abs/1711.11343
+
     Notes
     -----
-    ..[1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
-    with WEASEL+MUSE",    in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
-    https://arxiv.org/abs/1711.11343
-    Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
-    classifiers/multivariate/WEASEL_MUSE.java
+    For the Java version, see
+    `MUSE <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/multivariate/WEASEL_MUSE.java>`_.
 
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import MUSE
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = MUSE()
+    >>> clf.fit(X_train, y_train)
+    MUSE(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags

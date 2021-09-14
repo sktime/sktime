@@ -66,11 +66,14 @@ class MyForecaster(BaseForecaster):
     """
 
     # todo: fill out estimator tags here
-    #  delete the tags that you *didn't* change - these defaults are inherited
+    #  tags are inherited from parent class if they are not set
     _tags = {
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "univariate-only": True,  # does estimator use the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
-        "univariate-only": True,  # can estimator deal with multivariate series y?
+        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
     }
@@ -97,6 +100,16 @@ class MyForecaster(BaseForecaster):
 
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
+
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):

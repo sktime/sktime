@@ -99,6 +99,17 @@ class WEASEL(BaseClassifier):
       year={2017}
     }
     https://dl.acm.org/doi/10.1145/3132847.3132980
+
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import WEASEL
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> clf = WEASEL()
+    >>> clf.fit(X_train, y_train)
+    WEASEL(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     # Capability tags

@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for pmdarima forecasters to be used in sktime framework."""
 
 __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
@@ -12,10 +13,11 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class _PmdArimaAdapter(BaseForecaster):
-    """Base class for interfacing pmdarima"""
+    """Base class for interfacing pmdarima."""
 
     _tags = {
         "univariate-only": True,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -38,6 +40,7 @@ class _PmdArimaAdapter(BaseForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -123,7 +126,7 @@ class _PmdArimaAdapter(BaseForecaster):
             return pd.Series(result[fh_idx], index=fh_abs)
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -165,5 +168,5 @@ class _PmdArimaAdapter(BaseForecaster):
             raise NotImplementedError()
 
     def summary(self):
-        """Summary of the fitted model"""
+        """Summary of the fitted model."""
         return self._forecaster.summary()
