@@ -75,7 +75,6 @@ class AutoAR(_StatsModelsAdapter):
         seasonal=False,
         hold_back=None,
         sp=None,
-        # exog=None,
         missing="none",
         ic="bic",
         glob=False,
@@ -86,7 +85,6 @@ class AutoAR(_StatsModelsAdapter):
         self.seasonal = seasonal
         self.hold_back = hold_back
         self.sp = sp
-        # self.exog = exog
         self.missing = missing
         self.glob = glob
         self.ic = ic
