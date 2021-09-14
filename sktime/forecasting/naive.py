@@ -11,7 +11,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation import check_window_length
@@ -23,7 +23,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
 
     _tags = {
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,  # todo: switch to True if GH1367 is fixed
+        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
         "scitype:y": "univariate",
     }
 
@@ -232,7 +232,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
 
-class NaiveForecaster(_BaseWindowForecaster):
+class NaiveForecaster(BaseForecaster):
     """Forecast based on naive assumptions about past trends continuing.
 
     NaiveForecaster is a forecaster that makes forecasts using simple
@@ -293,10 +293,10 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,  # todo: switch to True if GH1367 is fixed
+        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -321,16 +321,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         -------
         self : returns an instance of self.
         """
-        if isinstance(y, pd.Series):
-            self._forecaster = _NaiveForecaster(
+        self._forecaster = ColumnEnsembleForecaster(
+            _NaiveForecaster(
                 strategy=self.strategy, sp=self.sp, window_length=self.window_length
             )
-        else:
-            self._forecaster = ColumnEnsembleForecaster(
-                _NaiveForecaster(
-                    strategy=self.strategy, sp=self.sp, window_length=self.window_length
-                )
-            )
+        )
         self._forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
