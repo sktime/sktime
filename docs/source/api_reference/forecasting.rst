@@ -63,6 +63,17 @@ Exponential Smoothing
 
     AutoETS
 
+AUTO REGRESSION
+---------------
+
+.. currentmodule:: sktime.forecasting.ar
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoAR
+
 ARIMA
 -----
 
