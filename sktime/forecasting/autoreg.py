@@ -1,7 +1,9 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements the Autoregressive AR-X(p) model."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "afzal442"]
 __all__ = ["AutoAR"]
 
 from statsmodels.tsa.ar_model import ar_select_order
@@ -10,10 +12,11 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class AutoAR(_StatsModelsAdapter):
-    """
-    Auto-regressive AR-X(p) model.
+    """Auto-regressive AR-X(p) model.
+
     Estimate an AR-X model using Conditional Maximum Likelihood (OLS)
     and automatically selecting the value for p.
+
     Parameters
     ----------
     maxlag : int, optional (default=None)
@@ -51,10 +54,10 @@ class AutoAR(_StatsModelsAdapter):
         Flag indicating whether to use the v0.11 names or the v0.12+ names.
         After v0.12 is released, the default names will change to the new
         names.
+
     References
     ----------
     ..[1] https://www.statsmodels.org/stable/_modules/statsmodels/tsa/ar_model.html
-
 
     Example
     ----------
@@ -65,7 +68,6 @@ class AutoAR(_StatsModelsAdapter):
     >>> forecaster.fit(y)
     AutoAR(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
-
     """
 
     def __init__(

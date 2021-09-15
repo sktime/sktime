@@ -63,8 +63,8 @@ Exponential Smoothing
 
     AutoETS
 
-AUTO REGRESSION
----------------
+Auto-regressive AR-X(p)
+-----------------------
 
 .. currentmodule:: sktime.forecasting.ar
 
