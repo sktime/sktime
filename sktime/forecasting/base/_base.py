@@ -239,7 +239,6 @@ class BaseForecaster(BaseEstimator):
             y_pred = self._predict(
                 self.fh,
                 X=X_inner,
-                alpha=alpha,
             )
 
             # convert to default output type, dependent on scitype
