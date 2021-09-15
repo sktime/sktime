@@ -27,7 +27,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 
-__author__ = ["Markus Löning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
@@ -182,7 +182,14 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(
+        self,
+        fh=None,
+        X=None,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+        old_predict_interval_logic=True,
+    ):
         """Forecast time series at future horizon.
 
         Parameters
@@ -227,42 +234,71 @@ class BaseForecaster(BaseEstimator):
             store=None,
         )
 
-        # this should be here, but it breaks the ARIMA forecasters
-        #  that is because check_alpha converts to list, but ARIMA forecaster
-        #  doesn't do the check, and needs it as a float or it breaks
-        # todo: needs fixing in ARIMA and AutoARIMA
-        # alpha = check_alpha(alpha)
+        # this is how it is supposed to be after the refactor is complete and in place
+        if not return_pred_int:
+            y_pred = self._predict(
+                self.fh,
+                X=X_inner,
+                alpha=alpha,
+            )
 
-        y_pred = self._predict(
-            self.fh,
-            X=X_inner,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
-
-        # todo: clean this up, predictive intervals should be returned by other method
-        if return_pred_int:
-            pred_int = y_pred[1]
-            y_pred = y_pred[0]
-
-        # convert to default output type, dependent on scitype
-        scitype_y = self.get_tag("scitype:y")
-        to_dict = {
-            "univariate": "pd.Series",
-            "multivariate": "pd.DataFrame",
-            "both": "pd.DataFrame",
-        }
-        y_out = convert_to(
-            y_pred,
-            to_dict[scitype_y],
-            as_scitype="Series",
-            store=self.converter_store_y,
-        )
-
-        if return_pred_int:
-            return (y_out, pred_int)
-        else:
+            # convert to default output type, dependent on scitype
+            scitype_y = self.get_tag("scitype:y")
+            to_dict = {
+                "univariate": "pd.Series",
+                "multivariate": "pd.DataFrame",
+                "both": "pd.DataFrame",
+            }
+            y_out = convert_to(
+                y_pred,
+                to_dict[scitype_y],
+                as_scitype="Series",
+                store=self.converter_store_y,
+            )
             return y_out
+
+        # keep following code for downward compatibility,
+        # todo: can be deleted once refactor is completed and effective
+        else:
+            # todo add deprecation waring once refactor
+            #  is also established in inheriting classes
+            # warn("return_pred_int in predict() is deprecated;
+            # use predict_interval().", DeprecationWarning)
+
+            # this should be here, but it breaks the ARIMA forecasters
+            #  that is because check_alpha converts to list, but ARIMA forecaster
+            #  doesn't do the check, and needs it as a float or it breaks
+            # todo: needs fixing in ARIMA and AutoARIMA
+            # alpha = check_alpha(alpha)
+
+            y_pred = self._predict(
+                self.fh,
+                X=X_inner,
+                return_pred_int=return_pred_int,
+                alpha=alpha,
+            )
+            if old_predict_interval_logic:
+                pred_int = y_pred[1]
+                y_pred = y_pred[0]
+            else:
+                y_pred = y_pred[0]
+                pred_int = self.predict_interval(fh=fh, X=X, alpha=alpha)
+
+            # convert to default output type, dependent on scitype
+            scitype_y = self.get_tag("scitype:y")
+            to_dict = {
+                "univariate": "pd.Series",
+                "multivariate": "pd.DataFrame",
+                "both": "pd.DataFrame",
+            }
+            y_out = convert_to(
+                y_pred,
+                to_dict[scitype_y],
+                as_scitype="Series",
+                store=self.converter_store_y,
+            )
+
+            return (y_out, pred_int)
 
     def fit_predict(
         self, y, X=None, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -292,7 +328,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+    def predict_interval(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
         """
         Compute/return prediction intervals for a forecast.
 
@@ -301,37 +337,26 @@ class BaseForecaster(BaseEstimator):
         If alpha is iterable, multiple intervals will be calculated.
 
         public method including checks & utility
-        dispatches to core logic in _compute_pred_int
+        dispatches to core logic in _predict_interval
 
         Parameters
         ----------
-        y_pred : pd.Series
-            Point predictions.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
         alpha : float or list, optional (default=0.95)
             A significance level or list of significance levels.
 
         Returns
         -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
+        pred_int : pd.DataFrame
+            Prediction intervals with fh as row index. Column multi-index with
+            first level being the variable name, second level being the alpha value.
         """
         self.check_is_fitted()
-        alphas = check_alpha(alpha)
-        errors = self._compute_pred_int(alphas)
-
-        # compute prediction intervals
-        pred_int = [
-            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
-            for error in errors
-        ]
-
-        # for a single alpha, return single pd.DataFrame
-        if isinstance(alpha, float):
-            return pred_int[0]
-
-        # otherwise return list of pd.DataFrames
+        alpha = check_alpha(alpha)
+        pred_int = self._predict_interval(fh=fh, X=X, alpha=alpha)
         return pred_int
 
     def update(self, y, X=None, update_params=True):
@@ -644,39 +669,6 @@ class BaseForecaster(BaseEstimator):
         y_pred = y_pred["y_pred"].rename(None)
         return y_pred
 
-    def _get_pred_int(self, lower, upper):
-        """Combine lower/upper bounds of pred.intervals, slice on fh.
-
-        Parameters
-        ----------
-        lower : pd.Series
-            Lower bound (can contain also in-sample bound)
-        upper : pd.Series
-            Upper bound (can contain also in-sample bound)
-
-        Returns
-        -------
-        pd.DataFrame
-            pred_int, predicion intervalls (out-sample, sliced by fh)
-        """
-        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
-        # Out-sample fh
-        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
-        # If pred_int contains in-sample prediction intervals
-        if len(pred_int) > len(self._y):
-            len_out = len(pred_int) - len(self._y)
-            # Workaround for slicing with negative index
-            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
-        # If pred_int does not contain in-sample prediction intervals
-        else:
-            pred_int["idx"] = [x for x in range(len(pred_int))]
-        pred_int = pred_int.loc[
-            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
-        ]
-        pred_int.index = fh_out.to_absolute(self.cutoff)
-        pred_int = pred_int.drop(columns=["idx"])
-        return pred_int
-
     @property
     def cutoff(self):
         """Cut-off = "present time" state of forecaster.
@@ -852,6 +844,7 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
+        # todo deprecate these two arguments
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
@@ -860,6 +853,7 @@ class BaseForecaster(BaseEstimator):
         -------
         y_pred : pd.Series
             Point predictions
+        #todo no longer return y_pred_int
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
@@ -926,28 +920,32 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _compute_pred_int(self, alphas):
-        """Calculate the prediction errors for each point.
+    def _predict_interval(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction intervals for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple intervals will be calculated.
+
+        Core logic
 
         Parameters
         ----------
+        fh : int, list, np.array or ForecastingHorizon
+           Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+           Exogenous time series
         alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
+           A significance level or list of significance levels.
 
         Returns
         -------
-        errors : list of pd.Series
-            Each series in the list will contain the errors for each point in
-            the forecast for the corresponding alpha.
+        pred_int : pd.DataFrame
+           Prediction intervals with fh as row index. Column multi-index with
+           first level being the variable name, second level being the alpha value.
         """
-        # this should be the NotImplementedError
-        # but current interface assumes private method
-        # _compute_pred_err(alphas), not _compute_pred_int
-        # so looping this through in order for existing classes to work
-        return self._compute_pred_err(alphas)
-
-        # todo: fix this in descendants, and change to
-        # raise NotImplementedError("abstract method")
+        raise NotImplementedError("abstract method")
 
     def _compute_pred_err(self, alphas):
         """Temporary loopthrough for _compute_pred_err."""
