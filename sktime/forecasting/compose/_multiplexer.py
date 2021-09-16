@@ -1,17 +1,19 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements forecaster for selecting among different model classes."""
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
 
-__author__ = ["Kutay Koralturk"]
+__author__ = ["Kutay Koralturk", "Martin Walter"]
 __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(_HeterogenousEnsembleForecaster):
-    """
+    """MultiplexForecaster for selecting among different models.
+
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
     It should be used in conjunction with ForecastingGridSearchCV
@@ -46,12 +48,12 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
 
     Attributes
     ----------
-    _forecaster : Sktime forecaster
+    forecaster_ : Sktime forecaster
         forecaster that MultiplexForecaster will currently
         forecast with.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.forecasting.all import (
     ...     MultiplexForecaster,
     ...     AutoETS,
@@ -74,8 +76,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ...     forecaster=forecaster)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
-    >>> gscv.best_forecaster_.selected_forecaster
-    'arima'
     """
 
     _tags = {
@@ -91,7 +91,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ):
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
-        self._forecaster = None
 
     def _check_fit_params(self, fit_params):
         forecaster_fit_params = {}
@@ -127,7 +126,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         if self.selected_forecaster is not None:
             for name, forecaster in self.forecasters:
                 if self.selected_forecaster == name:
-                    self._forecaster = clone(forecaster)
+                    self.forecaster_ = clone(forecaster)
 
     def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
@@ -145,15 +144,15 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             of forecaster names and fit params to be
             used for each forecaster.
             Example: {"ARIMA": ..., "ETS": ...}
+
         Returns
         -------
         self : returns an instance of self.
         """
-
         self._check_forecasters()
         self._set_forecaster()
         forecaster_fit_params = self._check_fit_params(fit_params=fit_params)
-        self._forecaster.fit(y, X=X, fh=fh, **forecaster_fit_params)
+        self.forecaster_.fit(y, X=X, fh=fh, **forecaster_fit_params)
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -176,7 +175,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-        return self._forecaster.predict(
+        return self.forecaster_.predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
@@ -193,5 +192,5 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self
         """
-        self._forecaster.update(y, X, update_params=update_params)
+        self.forecaster_.update(y, X, update_params=update_params)
         return self

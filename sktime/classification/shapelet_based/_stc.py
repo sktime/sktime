@@ -14,6 +14,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
+
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.shapelets import ContractedShapeletTransform
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -27,8 +28,8 @@ class ShapeletTransformClassifier(BaseClassifier):
     Parameters
     ----------
     transform_contract_in_mins : int, search time for shapelets, optional
-    (default = 300)
-    n_estimators               :       500,
+    (default = 60)
+    n_estimators               :       200,
     random_state               :  int, seed for random, optional (default = none)
 
     Attributes
@@ -61,7 +62,7 @@ class ShapeletTransformClassifier(BaseClassifier):
     }
 
     def __init__(
-        self, transform_contract_in_mins=60, n_estimators=500, random_state=None
+        self, transform_contract_in_mins=60, n_estimators=200, random_state=None
     ):
         self.transform_contract_in_mins = transform_contract_in_mins
         self.n_estimators = n_estimators
@@ -78,6 +79,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         """Perform a shapelet transform then builds a random forest.
 
         Contract default for ST is 5 hours
+
+        Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
         series_length] or shape = [n_instances,n_columns]
