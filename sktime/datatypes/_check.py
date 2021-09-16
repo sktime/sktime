@@ -31,6 +31,7 @@ from typing import Union, List
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes.types import Mtypes, Scitypes
 
 # pool convert_dict-s
 check_dict = dict()
@@ -40,8 +41,8 @@ check_dict.update(check_dict_Panel)
 
 def check_is(
     obj,
-    mtype: Union[str, List[str]],
-    scitype: str = None,
+    mtype: Union[Mtypes, List[str], List[Mtypes]],
+    scitype: Scitypes = None,
     return_metadata=False,
     var_name="obj",
 ):
@@ -50,8 +51,10 @@ def check_is(
     Parameters
     ----------
     obj - object to check
-    mtype: str or list of str, mtype to check obj as
-    scitype: str, optional, scitype to check obj as; default = inferred from mtype
+    mtype: str or SeriesMtype enum or PanelMtype enum or List[str] or List PanelMtype
+            or SeriesMtype
+        Type to check
+    scitype: str or Scitype enum optional,  default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
@@ -75,6 +78,15 @@ def check_is(
     TypeError if no checks defined for mtype/scitype combination
     ValueError if mtype input argument is not of expected type
     """
+    if isinstance(mtype, list):
+        temp = []
+        for val in mtype:
+            temp.append(str(val))
+        mtype = temp
+    else:
+        mtype = str(mtype)
+
+    scitype = str(scitype)
 
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
@@ -119,14 +131,16 @@ def check_is(
     return ret(False, msg, None, return_metadata)
 
 
-def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
+def check_raise(obj, mtype: Mtypes, scitype: Scitypes = None, var_name: str = "input"):
     """Check object for compliance with mtype specification, raise errors.
 
     Parameters
     ----------
     obj - object to check
-    mtype: str or list of str, mtype to check obj as
-    scitype: str, optional, scitype to check obj as; default = inferred from mtype
+    mtype: str or SeriesMtype enum or PanelMtype enum or List[str] or List PanelMtype
+            or SeriesMtype
+        Type to check
+    scitype: str or Scitype enum optional,  default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
     var_name: str, optional, default="input" - name of input in error messages
 
@@ -142,6 +156,8 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     TypeError if no checks defined for mtype/scitype combination
     ValueError if mtype input argument is not of expected type
     """
+    mtype = str(mtype)
+    scitype = str(scitype)
     obj_long_name_for_avoiding_linter_clash = obj
     valid, msg, _ = check_is(
         obj=obj_long_name_for_avoiding_linter_clash,
@@ -157,14 +173,14 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         raise TypeError(msg)
 
 
-def mtype(obj, as_scitype: str = None):
+def mtype(obj, as_scitype: Scitypes = None):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
     ----------
     obj : object to infer type of - any type, should comply with and mtype spec
         if as_scitype is provided, this needs to be mtype belonging to scitype
-    as_scitype : str, optional, default=None
+    as_scitype : str or Scitype enum, optional, defaults=None
         name of scitype the object "obj" is considered as, finds mtype for that
         if None (default), does not assume a specific as_scitype and tests all mtypes
             generally, as_scitype should be provided for maximum efficiency
@@ -181,6 +197,7 @@ def mtype(obj, as_scitype: str = None):
     if obj is None:
         return None
 
+    as_scitype = str(as_scitype)
     valid_as_scitypes = list(set([x[1] for x in check_dict.keys()]))
 
     if as_scitype is not None and as_scitype not in valid_as_scitypes:

@@ -7,11 +7,14 @@ import pytest
 
 from sktime.datatypes._convert import convert, _conversions_defined
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes import SCITYPE_REGISTER
+from sktime.datatypes import SCITYPE_REGISTER, Scitype, PanelMtype, SeriesMtype
 
 from sktime.utils._testing.deep_equals import deep_equals
 
-SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
+SCITYPES = [sci[0] for sci in SCITYPE_REGISTER] + [scitype for scitype in Scitype]
+
+ENUM_SERIES_MTYPES = [mtype for mtype in SeriesMtype]
+ENUM_PANEL_MTYPES = [mtype for mtype in PanelMtype]
 
 
 @pytest.mark.parametrize("scitype", SCITYPES)
@@ -29,6 +32,11 @@ def test_convert(scitype):
     """
     conv_mat = _conversions_defined(scitype)
     mtypes = conv_mat.index.values
+
+    if str(scitype) == "Series":
+        mtypes = [*mtypes, *ENUM_SERIES_MTYPES]
+    else:
+        mtypes = [*mtypes, *ENUM_PANEL_MTYPES]
 
     if len(mtypes) == 0:
         raise RuntimeError("no mtypes defined for scitype " + scitype)
@@ -56,8 +64,8 @@ def test_convert(scitype):
             for to_type in mtypes:
 
                 # retrieve from/to fixture for conversion
-                to_fixture = fixtures[to_type].get(i)
-                from_fixture = fixtures[from_type].get(i)
+                to_fixture = fixtures[str(to_type)].get(i)
+                from_fixture = fixtures[str(from_type)].get(i)
 
                 # retrieve indicators whether conversion makes sense
                 # to-fixture is in example dict and is not None
@@ -67,7 +75,7 @@ def test_convert(scitype):
                 # from-fixture is not None and not lossy
                 cond3 = cond2 and from_fixture[1] is not None and not from_fixture[1]
                 # conversion is implemented
-                cond4 = conv_mat[to_type][from_type]
+                cond4 = conv_mat[str(to_type)][str(from_type)]
 
                 msg = f"conversion {from_type} to {to_type} failed for fixture {i}"
 
