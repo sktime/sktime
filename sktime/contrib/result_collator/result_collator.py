@@ -19,7 +19,7 @@ class ResultCollator:
         self.urls: List[str] = urls
 
     def _format_result(self, response: str) -> Any:
-        """Takes the result and formats it for your use case.
+        """Take a result and formats it for your use case.
 
         Parameters
         ----------
@@ -49,7 +49,7 @@ class ResultCollator:
 
     @staticmethod
     def request_resource(url: str, num_attempts: int = 3) -> requests.Response:
-        """Requests a resource.
+        """Request a resource.
 
         Parameters
         ----------
