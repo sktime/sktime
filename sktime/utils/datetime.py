@@ -101,9 +101,7 @@ def _shift(x, by=1):
 
 
 def _get_duration(x, y=None, coerce_to_int=False, unit=None):
-    """Compute duration of time index.
-    
-    `x` or durations between time points `x` and `y` if `y` is given
+    """Compute duration of time index 'x' or 'x' and 'y'.
 
     Parameters
     ----------
