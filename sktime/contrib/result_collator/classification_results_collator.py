@@ -79,14 +79,12 @@ FALLBACK_DICT = {
 
 @lru_cache(maxsize=None)
 def get_enum_from_url(url: str, key: str):
-    """
-    Method that is used to get a enum list from a url
+    """Method that is used to get a enum list from a url.
 
     Parameters
     ----------
     url: str
         Url to get enum values from
-
     key: str
         json key that will be the values
 
@@ -114,29 +112,22 @@ def get_enum_from_url(url: str, key: str):
 
 
 class ClassificationResultCollator(ResultCollator):
-    """
-    ClassificationResultCollator collates results for classifiers from
-    timeseriesclassification.com
+    """ClassificationResultCollator collates results for classifiers from a url.
 
     Parameters
     ----------
     urls: List[str]
         Array of urls to get results from
-
     classifiers: ListOrStr, defaults = "*"
         List[str] or str of classifiers to get results for. If * then will
         get results for all classifiers
-
     problem_list: ListOrStr, defaults = "*"
         List[str] or str of problems names to get results for. If * then will
         get results for all problem sets
-
     metric: str, defaults = "accuracy"
         Metric to measure classifiers over.
-
     resamples: int, defaults = 1
         Int that is the number of resmaples/folds. Max is 30
-
     toolkit: str, defaults = "sktime"
         Str that is the source of the results (i.e. results from sktime or tsml
         implementations)
@@ -170,9 +161,7 @@ class ClassificationResultCollator(ResultCollator):
         self._problem_list: List[str] = []
 
     def get_results(self) -> List[Any]:
-        """
-        Method used to get results by requesting and formatting response
-        from urls
+        """Method used to get results by requesting and formatting response from urls.
 
         Returns
         -------
@@ -219,9 +208,7 @@ class ClassificationResultCollator(ResultCollator):
         return super(ClassificationResultCollator, self).get_results()
 
     def _format_result(self, response: str) -> Any:
-        """
-        Method that is used to take the result and format it for your
-        use case.
+        """Method that is used to take the result and format it for your use case.
 
         Parameters
         ----------
@@ -240,17 +227,14 @@ class ClassificationResultCollator(ResultCollator):
     def _check_valid_parameters(
         check_values: ListOrStr, valid_list: List[str], parameter_name: str
     ) -> ListOrStr:
-        """
-        Method used to check a parameter appears in the list of valid parameters
+        """Method used to check a parameter appears in the list of valid parameters.
 
         Parameters
         ----------
         check_values: ListOrStr
             List or str to check values of
-
         valid_list: List[str]
             List to check if the parameter appears in
-
         parameter_name: str
             Name of parameter
         """

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""File contains classes needed to collect results from https resource."""
 __all__ = ["ResultCollator"]
 
 from typing import List, Any
@@ -6,9 +7,7 @@ import requests
 
 
 class ResultCollator:
-    """
-    ResultCollator is a class used to collate results from external sources
-    i.e. timeseriesclassification.com
+    """ResultCollator is a class used to collate results from external sources.
 
     Parameters
     ----------
@@ -37,9 +36,7 @@ class ResultCollator:
         raise NotImplementedError("abstract method")
 
     def get_results(self) -> List[Any]:
-        """
-        Method used to get results by requesting and formatting response
-        from urls
+        """Method used to get results by requesting and formatting response from urls.
 
         Returns
         -------
@@ -54,8 +51,7 @@ class ResultCollator:
 
     @staticmethod
     def request_resource(url: str, num_attempts: int = 3) -> requests.Response:
-        """
-        Method used to request a resource
+        """Method used to request a resource.
 
         Parameters
         ----------
@@ -73,7 +69,7 @@ class ResultCollator:
         """
         try:
             response: requests.Response = requests.get(url)
-        except (requests.exceptions.Timeout, requests.exceptions.RequestException) as e:
+        except (requests.exceptions.Timeout, requests.exceptions.RequestException):
             if num_attempts >= 1:
                 ResultCollator.request_resource(url, num_attempts=num_attempts - 1)
             else:
