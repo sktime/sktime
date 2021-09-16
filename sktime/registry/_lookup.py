@@ -134,20 +134,29 @@ def all_estimators(
     # packages
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
+        warnings.simplefilter("module", category=ImportWarning)
         for _, module_name, _ in pkgutil.walk_packages(path=[ROOT], prefix="sktime."):
 
             # Filter modules
             if _is_ignored_module(module_name) or _is_private_module(module_name):
                 continue
 
-            module = import_module(module_name)
-            classes = inspect.getmembers(module, inspect.isclass)
+            try:
+                module = import_module(module_name)
+                classes = inspect.getmembers(module, inspect.isclass)
 
-            # Filter classes
-            estimators = [
-                (name, klass) for name, klass in classes if _is_estimator(name, klass)
-            ]
-            all_estimators.extend(estimators)
+                # Filter classes
+                estimators = [
+                    (name, klass)
+                    for name, klass in classes
+                    if _is_estimator(name, klass)
+                ]
+                all_estimators.extend(estimators)
+            except ModuleNotFoundError as e:
+                # Skip missing soft dependencies
+                if "soft dependency" not in str(e):
+                    raise e
+                warnings.warn(str(e), ImportWarning)
 
     # Drop duplicates
     all_estimators = set(all_estimators)
