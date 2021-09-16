@@ -7,7 +7,7 @@ import requests
 
 
 class ResultCollator:
-    """ResultCollator is a class used to collate results from external sources.
+    """Collate results from external sources and formats.
 
     Parameters
     ----------
@@ -19,9 +19,7 @@ class ResultCollator:
         self.urls: List[str] = urls
 
     def _format_result(self, response: str) -> Any:
-        """
-        Method that is used to take the result and format it for your
-        use case.
+        """Takes the result and formats it for your use case.
 
         Parameters
         ----------
@@ -36,7 +34,7 @@ class ResultCollator:
         raise NotImplementedError("abstract method")
 
     def get_results(self) -> List[Any]:
-        """Method used to get results by requesting and formatting response from urls.
+        """Get results by requesting and formatting response from urls.
 
         Returns
         -------
@@ -51,7 +49,7 @@ class ResultCollator:
 
     @staticmethod
     def request_resource(url: str, num_attempts: int = 3) -> requests.Response:
-        """Method used to request a resource.
+        """Requests a resource.
 
         Parameters
         ----------

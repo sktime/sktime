@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This file contains method to process and collate classification results"""
 __all__ = ["ClassificationResultCollator"]
 
 from typing import List, Any, Union
@@ -79,7 +80,7 @@ FALLBACK_DICT = {
 
 @lru_cache(maxsize=None)
 def get_enum_from_url(url: str, key: str):
-    """Method that is used to get a enum list from a url.
+    """Get an enum list from a url.
 
     Parameters
     ----------
@@ -112,7 +113,7 @@ def get_enum_from_url(url: str, key: str):
 
 
 class ClassificationResultCollator(ResultCollator):
-    """ClassificationResultCollator collates results for classifiers from a url.
+    """Collates results for classifiers from a url.
 
     Parameters
     ----------
@@ -161,7 +162,7 @@ class ClassificationResultCollator(ResultCollator):
         self._problem_list: List[str] = []
 
     def get_results(self) -> List[Any]:
-        """Method used to get results by requesting and formatting response from urls.
+        """Get results by requesting and formatting response from urls.
 
         Returns
         -------
@@ -208,7 +209,7 @@ class ClassificationResultCollator(ResultCollator):
         return super(ClassificationResultCollator, self).get_results()
 
     def _format_result(self, response: str) -> Any:
-        """Method that is used to take the result and format it for your use case.
+        """Take the result and format it for your use case.
 
         Parameters
         ----------
@@ -227,7 +228,7 @@ class ClassificationResultCollator(ResultCollator):
     def _check_valid_parameters(
         check_values: ListOrStr, valid_list: List[str], parameter_name: str
     ) -> ListOrStr:
-        """Method used to check a parameter appears in the list of valid parameters.
+        """Check a parameter appears in the list of valid parameters.
 
         Parameters
         ----------
