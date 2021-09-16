@@ -19,6 +19,7 @@ Plotting
     :template: function.rst
 
     plot_series
+    plot_lags
     plot_correlations
 
 Data Processing
