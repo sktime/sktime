@@ -57,7 +57,7 @@ class AutoAR(_StatsModelsAdapter):
 
     References
     ----------
-    ..[1] https://www.statsmodels.org/stable/_modules/statsmodels/tsa/ar_model.html
+    .. [1] https://www.statsmodels.org/stable/_modules/statsmodels/tsa/ar_model.html
 
     Example
     ----------
