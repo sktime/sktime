@@ -1,8 +1,9 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Test OnlineEnsembleForecaster."""
 
-__author__ = ["William Zheng"]
+__author__ = ["magittan"]
 
 import numpy as np
 from sktime.datasets import load_airline
@@ -23,6 +24,7 @@ cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 
 
 def test_weights_for_airline_averaging():
+    """Test weights."""
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
@@ -51,6 +53,7 @@ def test_weights_for_airline_averaging():
 
 
 def test_weights_for_airline_normal_hedge():
+    """Test weights."""
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
@@ -73,6 +76,7 @@ def test_weights_for_airline_normal_hedge():
 
 
 def test_weights_for_airline_nnls():
+    """Test weights."""
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 

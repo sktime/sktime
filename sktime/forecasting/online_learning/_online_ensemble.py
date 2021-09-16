@@ -3,6 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements framework for applying online ensembling algorithms to forecasters."""
 
+__author__ = ["magittan, mloning"]
+
 import numpy as np
 import pandas as pd
 
