@@ -66,7 +66,7 @@ Exponential Smoothing
 Auto-regressive AR-X(p)
 -----------------------
 
-.. currentmodule:: sktime.forecasting.ar
+.. currentmodule:: sktime.forecasting.autoreg
 
 .. autosummary::
     :toctree: auto_generated/

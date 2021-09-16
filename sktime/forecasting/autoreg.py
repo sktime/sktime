@@ -62,7 +62,7 @@ class AutoAR(_StatsModelsAdapter):
     Example
     ----------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.ar import AutoAR
+    >>> from sktime.forecasting.autoreg import AutoAR
     >>> y = load_airline()
     >>> forecaster = AutoAR(maxlag=20)
     >>> forecaster.fit(y)
