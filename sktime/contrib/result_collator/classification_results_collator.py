@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""File containing method to process and collate classification results"""
+"""File containing method to process and collate classification results."""
 __all__ = ["ClassificationResultCollator"]
 
 from typing import List, Any, Union
