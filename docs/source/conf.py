@@ -126,6 +126,9 @@ add_function_parentheses = False
 # the corresponding warning that this override happens.
 suppress_warnings = ["myst.mathjax"]
 
+# Link to GitHub repo for github_issues extension
+issues_github_path = "alan-turing-institute/sktime"
+
 
 def linkcode_resolve(domain, info):
     """Return URL to source code corresponding.
