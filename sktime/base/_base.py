@@ -214,12 +214,15 @@ class BaseObject(_BaseEstimator):
 
     @classmethod
     def get_test_params(cls):
-        """Get default parameters of the estimator.
+        """Return testing parameter settings for the estimator.
 
         Returns
         -------
         params : dict or list of dict, default = {}
-            Default parameters related to the estimator class
+            Testing parameters related to the estimator class.
+            Each dict are parameters to construct an "interesting" test instance, (i.e),
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # imported inside the function to avoid circular imports
         from sktime.tests._config import ESTIMATOR_TEST_PARAMS
@@ -251,7 +254,7 @@ class BaseObject(_BaseEstimator):
 
         Notes
         -----
-        get_test_params can return dict or list of dict.
+        `get_test_params` can return dict or list of dict.
         This function takes first or single dict that get_test_params returns, and
         constructs the object with that.
         """
