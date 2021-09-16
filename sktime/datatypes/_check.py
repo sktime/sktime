@@ -96,7 +96,7 @@ def check_is(
         mtype = str(mtype)
 
     scitype = str(scitype)
-    
+
     _check_scitype_valid(scitype)
 
     def ret(valid, msg, metadata, return_metadata):
@@ -234,7 +234,6 @@ def mtype(obj, as_scitype: Scitypes = None):
 
     if as_scitype is not None and as_scitype not in valid_as_scitypes:
         raise TypeError(as_scitype + " is not a supported scitype")
-        
     _check_scitype_valid(as_scitype)
 
     if as_scitype is None:
