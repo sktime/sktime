@@ -72,9 +72,10 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        collected_tags : dictionary of tag names : tag values
-            collected from _tags class attribute via nested inheritance
-            NOT overridden by dynamic tags set by set_tags or mirror_tags
+        collected_tags : dict
+            Dictionary of tag name : tag value pairs. Collected from _tags
+            class attribute via nested inheritance. NOT overridden by dynamic
+            tags set by set_tags or mirror_tags.
         """
         collected_tags = dict()
 
@@ -96,13 +97,16 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        tag_name : str, name of tag value
-        tag_value_default : any type, default/fallback value if tag is not found
+        tag_name : str
+            Name of tag value.
+        tag_value_default : any type
+            Default/fallback value if tag is not found.
 
         Returns
         -------
-        tag_value : value of the tag tag_name in self if found
-                    if tag is not found, returns tag_value_default
+        tag_value :
+            Value of the `tag_name` tag in self. If not found, returns
+            `tag_value_default`.
         """
         collected_tags = cls.get_class_tags()
 
@@ -113,9 +117,10 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        collected_tags : dictionary of tag names : tag values
-            collected from _tags class attribute via nested inheritance
-            then any overrides and new tags from _tags_dynamic object attribute
+        collected_tags : dict
+            Dictionary of tag name : tag value pairs. Collected from _tags
+            class attribute via nested inheritance and then any overrides
+            and new tags from _tags_dynamic object attribute.
         """
         collected_tags = self.get_class_tags()
 
@@ -129,13 +134,16 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        tag_name : str, name of tag value
-        tag_value_default : any type, default/fallback value if tag is not found
+        tag_name : str
+            Name of tag value.
+        tag_value_default : any type
+            Default/fallback value if tag is not found.
 
         Returns
         -------
-        tag_value : value of the tag tag_name in self if found
-                    if tag is not found, returns tag_value_default
+        tag_value :
+            Value of the `tag_name` tag in self. If not found, returns
+            `tag_value_default`.
         """
         collected_tags = self.get_tags()
 
@@ -146,15 +154,18 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        tag_dict : dictionary of tag names : tag values
+        tag_dict : dict
+            Dictionary of tag name : tag value pairs.
 
         Returns
         -------
-        reference to self
+        Self :
+            Reference to self.
 
-        State change
-        ------------
-        sets tag values in tag_dict as dynamic tags in self
+        Notes
+        -----
+        Changes object state by settting tag values in tag_dict as dynamic tags
+        in self.
         """
         self._tags_dynamic.update(deepcopy(tag_dict))
 
@@ -165,17 +176,20 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        estimator : an estimator inheriting from BaseEstimator
-        tag_names : list of str, or str; names of tags to clone
-            default = list of all tags in estimator
+        estimator : estimator inheriting from :class:BaseEstimator
+        tag_names : str or list of str, default = None
+            Names of tags to clone. If None then all tags in estimator are used
+            as `tag_names`.
 
         Returns
         -------
-        reference to self
+        Self :
+            Reference to self.
 
-        State change
-        ------------
-        sets tag values in tag_set from estimator as dynamic tags in self
+        Notes
+        -----
+        Changes object state by setting tag values in tag_set from estimator as
+        dynamic tags in self.
         """
         tags_est = deepcopy(estimator.get_tags())
 
@@ -193,6 +207,66 @@ class BaseObject(_BaseEstimator):
         self.set_tags(**update_dict)
 
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Get default parameters of the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Default parameters related to the estimator class
+        """
+        # imported inside the function to avoid circular imports
+        from sktime.tests._config import ESTIMATOR_TEST_PARAMS
+
+        # if non-default parameters are required, but none have been found,
+        # raise error
+        if hasattr(cls, "_required_parameters"):
+            required_parameters = getattr(cls, "required_parameters", [])
+            if len(required_parameters) > 0:
+                raise ValueError(
+                    f"Estimator: {cls} requires "
+                    f"non-default parameters for construction, "
+                    f"but none were given. Please set them "
+                    f"as given in the extension template"
+                )
+
+        # construct with parameter configuration for testing, otherwise construct with
+        # default parameters (empty dict)
+        params = ESTIMATOR_TEST_PARAMS.get(cls, {})
+        return params
+
+    @classmethod
+    def create_test_instance(cls):
+        """Construct Estimator instance if possible.
+
+        Returns
+        -------
+        instance : object of the class with default parameters
+
+        Notes
+        -----
+        get_test_params can return dict or list of dict.
+        This function takes first or single dict that get_test_params returns, and
+        constructs the object with that.
+        """
+        params = cls.get_test_params()
+        if isinstance(params, list):
+            if isinstance(params[0], dict):
+                params = params[0]
+            else:
+                raise TypeError(
+                    "get_test_params should either return a dict or list of dict."
+                )
+        elif isinstance(params, dict):
+            pass
+        else:
+            raise TypeError(
+                "get_test_params should either return a dict or list of dict."
+            )
+
+        return cls(**params)
 
 
 class BaseEstimator(BaseObject):

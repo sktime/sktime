@@ -28,7 +28,7 @@ from sktime.dists_kernels import BasePairwiseTransformer
 
 
 class MyTrafoPw(BasePairwiseTransformer):
-    """Custom distance/kernel. todo: write docstring.
+    """Custom distance/kernel (on data frame rows). todo: write docstring.
 
     todo: describe your custom distance/kernel here
 
@@ -80,9 +80,20 @@ class MyTrafoPw(BasePairwiseTransformer):
         # todo: change "MyTrafoPw" to the name of the class
         super(MyTrafoPw, self).__init__()
 
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+
     # todo: implement this, mandatory
     def _transform(self, X, X2=None):
-        """
+        """Compute distance/kernel matrix between samples.
+
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
@@ -90,14 +101,14 @@ class MyTrafoPw(BasePairwiseTransformer):
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
+        X: pd.DataFrame of length n, or 2D np.array with n rows
+        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
             default X2 = X
 
         Returns
         -------
         distmat: np.array of shape [n, m]
-            (i,j)-th entry contains distance/kernel between X[i] and X2[j]
+            (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
         # implement here
         # IMPORTANT: avoid side effects to X, X2

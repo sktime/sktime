@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for pmdarima forecasters to be used in sktime framework."""
 
 __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
@@ -39,6 +40,7 @@ class _PmdArimaAdapter(BaseForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
