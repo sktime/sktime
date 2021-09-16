@@ -168,13 +168,15 @@ def check_raise(obj, mtype: Mtypes, scitype: Scitypes = None, var_name: str = "i
 
     Parameters
     ----------
-    obj - object to check
+    obj: Any
+        object to check
     mtype: str or SeriesMtype enum or PanelMtype enum or List[str] or List PanelMtype
             or SeriesMtype
         Type to check
     scitype: str or Scitype enum optional,  default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
-    var_name: str, optional, default="input" - name of input in error messages
+    var_name: str, optional, default="input"
+        name of input in error messages
 
     Returns
     -------
