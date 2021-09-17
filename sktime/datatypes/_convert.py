@@ -111,7 +111,6 @@ def convert(
     ------
     KeyError if conversion is not implemented
     """
-
     if from_type is not None:
         from_type = str(from_type)
     if to_type is not None:

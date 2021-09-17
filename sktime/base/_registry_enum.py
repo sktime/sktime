@@ -29,7 +29,7 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         self.instance = instance
 
     def __iter__(self):
-        """Generator for iterating over an enum values
+        """Iterate over an enum values.
 
         Returns
         -------
@@ -42,7 +42,7 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         yield self.description
 
     def __str__(self):
-        """Returns string value of enum.
+        """String value of enum.
 
         Returns
         -------
