@@ -49,7 +49,7 @@ In-memory data types
 Forecasting
 ^^^^^^^^^^^
 
-* Forecasters can now be passed `pd.DataFrame`, `pd.Series`, `np.ndarray` as `X`, `y` and return forecasts of the same type as passed for `y`
+* Forecasters can now be passed `pd.DataFrame`, `pd.Series`, `np.ndarray` as `X` or `y`, and return forecasts of the same type as passed for `y`
 * whether forecaster can deal with multivariate series can be inspected via `get_tag("scitype:y")`, which can return `"univariate"`, `"multivariate"`, or `"both"`
 * further tags have been introduced, see `registry/all_tags`
 
