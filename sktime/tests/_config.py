@@ -39,6 +39,7 @@ from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose import DirRecTabularRegressionForecaster
 from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
@@ -209,7 +210,7 @@ ESTIMATOR_TEST_PARAMS = {
         ]
     },
     FittedParamExtractor: {
-        "forecaster": FORECASTER,
+        "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
     },
     SeriesToPrimitivesRowTransformer: {
