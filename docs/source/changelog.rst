@@ -10,6 +10,196 @@ All notable changes to this project will be documented in this file. We keep tra
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `Twitter <https://twitter.com/sktime_toolbox>`_.
 
+
+
+[0.8.0] - 2021-09-17
+--------------------
+
+Highlights
+~~~~~~~~~~
+
+* python 3.9 support for linux/osx (#1255) @freddyaboulton
+* `conda-forge` metapackage for installing `sktime` with all extras @freddyaboulton
+* framework support for multivariate forecasting (#980 #1195 #1286 #1301 #1306 #1311 #1401 #1410) @aiwalter @fkiraly @thayeylolu
+* consolidated lookup of estimators and tags using `registry.all_estimators` and `registry.all_tags` (#1196) @fkiraly
+* [DOC] major overhaul of `sktime`'s [online documentation](https://www.sktime.org/en/latest/)
+* [DOC] [searchable, auto-updating estimators register](https://www.sktime.org/en/latest/estimator_overview.html) in online documentation (#930 #1138) @afzal442 @mloning
+* [MNT] working Binder in-browser notebook showcase (#1266) @corvusrabus
+* [DOC] tutorial notebook for in-memory data format conventions, validation, and conversion (#1232) @fkiraly
+* easy conversion functionality for estimator inputs, series and panel data (#1061 #1187 #1201 #1225) @fkiraly
+* consolidated tags system, dynamic tagging (#1091 #1134) @fkiraly
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseEstimator/BaseObject
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* estimator (class and object) capabilities are inspectable by `get_tag` and `get_tags` interface
+* list all tags applying to an estimator type by `registry/all_tags`
+* list all estimators of a specific type, with certain tags, by `registry/all_estimators`
+
+In-memory data types
+^^^^^^^^^^^^^^^^^^^^
+
+* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see [in-memory data types tutorial](https://github.com/alan-turing-institute/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb)
+* loose conversion methods now in `_convert` files in `datatypes` will be deprecated in 0.10.0
+
+Forecasting
+^^^^^^^^^^^
+
+* Forecasters can now be passed `pd.DataFrame`, `pd.Series`, `np.ndarray` as `X`, `y` and return forecasts of the same type as passed for `y`
+* whether forecaster can deal with multivariate series can be inspected via `get_tag("scitype:y")`, which can return `"univariate"`, `"multivariate"`, or `"both"`
+* further tags have been introduced, see `registry/all_tags`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* tags have been introduced, see `registry/all_tags`
+
+
+Added
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* Multivariate `ColumnEnsembleForecaster` (#1082 #1349) @fkiraly @GuzalBulatova
+* Multivariate `NaiveForecaster` (#1401) @aiwalter
+* `UnobservedComponents` `statsmodels` wrapper (#1394) @juanitorduz
+* `AutoEnsembleForecaster` (#1220) @aiwalter
+* `TrendForecaster` (using `sklearn` regressor for value vs time index) (#1209) @tensorflow-as-tf
+* Multivariate moving cutoff formatting (#1213) @fkiraly
+* Prophet custom seasonalities (#1378) @IlyasMoutawwakil
+* Extend aggregation functionality in `EnsembleForecaster` (#1190) @GuzalBulatova
+* `plot_lags` to plot series against its lags (#1330) @RNKuhns
+* Added `n_best_forecasters` summary to grid searches (#1139) @aiwalter
+* Forecasting grid search: cloning more tags (#1360) @fkiraly
+* `ForecastingHorizon` supporting more input types, `is_relative` detection on construction from index type (#1169) @fkiraly
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Rotation forest time series classifier (#1391) @MatthewMiddlehurst
+* Transform classifiers (#1180) @MatthewMiddlehurst
+* New Proximity forest version (#733) @moradabaz
+* Enhancement on RISE (#975) @whackteachers
+
+
+Transformers
+^^^^^^^^^^^^
+
+* `ColumnwiseTransformer` (multivariate transformer compositor) (#1044) @SveaMeyer13
+* `Differencer` transformaer (#945) @RNKuhns
+* `FeatureSelection` transformer (#1347) @aiwalter
+* `ExponentTransformer` and `SqrtTransformer` (#1127) @RNKuhns
+
+
+Benchmarking and evaluation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Critical Difference Diagrams (#1277) @SveaMeyer13
+* Classification experiments (#1260) @TonyBagnall
+* Clustering experiments (#1221) @TonyBagnall
+* change to classification experiments (#1137) @TonyBagnall
+
+Documentation
+^^^^^^^^^^^^^
+
+* Update documentation backend and reduce warnings in doc creation (#1199) (#1205) @mloning
+* [DOC] Development community showcase page (#1337) @afzal442
+* [DOC] additional clarifying details to documentation guide (in developer's guide) (#1315) @RNKuhns
+* [DOC] Add annotation ext template (#1151) @mloning
+* [DOC] roadmap document (#1145) @mloning
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* unit test for absence of side effects in estimator methods (#1078) @fkiraly
+
+
+Fixed
+~~~~~
+
+* Refactor forecasting: `StackingForecaster` (#1220) @aiwalter
+
+* Refactor TSC: DrCIF and CIF to new interface (#1269) @MatthewMiddlehurst
+* Refactor TSC: TDE additions and documentation for HC2 (#1357) @MatthewMiddlehurst
+* Refactor TSC: Arsenal additions and documentation for HC2 (#1305) @MatthewMiddlehurst
+* Refactor TSC: _cboss (#1295) @BINAYKUMAR943
+* Refactor TSC: rocket classifier (#1239) @victordremov
+* Refactor TSC: Dictionary based classifiers (#1084) @MatthewMiddlehurst
+
+* Refactor tests: estimator test parameters with the estimator (#1361) @Aparna-Sakshi
+
+* Update _data_io.py (#1308) @TonyBagnall
+* Data io (#1248) @TonyBagnall
+
+* [BUG] checking of input types in plotting (#1197) @fkiraly
+* [BUG] `NaiveForecaster` behaviour fix for trailing NaN values (#1130) @Flix6x
+* [BUG] Fix `all_estimators` when extras are missing. (#1259) @xloem
+* [BUG] Contract test fix (#1392) @MatthewMiddlehurst
+* [BUG] Data writing updates and JapaneseVowels dataset fix (#1278) @MatthewMiddlehurst
+* [BUG] Fixed ESTIMATOR_TEST_PARAMS reference in `test_all_estimators` (#1406) @fkiraly
+* [BUG] remove incorrect exogeneous and return_pred_int errors (#1368) @fkiraly
+* [BUG] - broken binder and test_examples check (#1343) @fkiraly
+* [BUG] Fix minor silent issues in `TransformedTargetForecaster` (#845) @aiwalter
+* [BUG] Troubleshooting for C compiler after pytest failed (#1262) @tensorflow-as-tf
+* [BUG] bugfix in tutorial documentation of univariate time series classification. (#1140) @BINAYKUMAR943
+* [BUG] removed format check from index test (#1193) @fkiraly
+* [BUG] bugfix - convertIO broken references to np.ndarray (#1191) @fkiraly
+* [BUG] STSF test fix (#1170) @MatthewMiddlehurst
+* [BUG] `set_tags` call in `BaseObject.clone_tags` used incorrect signature (#1179) @fkiraly
+
+* [DOC] Update transformer docstrings Boss (#1320) @thayeylolu
+* [DOC] Updated docstring of exp_smoothing.py (#1339) @mathco-wf
+* [DOC] updated the link in CONTRIBUTING.md (#1428) @Aparna-Sakshi
+* [DOC] Correct typo in contributing guidelines (#1398) @juanitorduz
+* [DOC] Fix community repo link (#1400) @mloning
+* [DOC] Fix minor typo in README (#1416) @justinshenk
+* [DOC] Fixed a typo in citation page (#1310) @AreloTanoh
+* [DOC] EnsembleForecaster and AutoEnsembleForecaster docstring example (#1382) @aiwalter
+* [DOC] multiple minor fixes to docs (#1328) @mloning
+* [DOC] Docstring improvements for bats, tbats, arima, croston (#1309) @Lovkush-A
+* [DOC] Update detrend module docstrings (#1335) @SveaMeyer13
+* [DOC] updated extension templates - object tags (#1340) @fkiraly
+* [DOC] Update ThetaLinesTransformer's docstring (#1312) @GuzalBulatova
+* [DOC] Update ColumnwiseTransformer and TabularToSeriesAdaptor docstrings (#1322) @GuzalBulatova
+* [DOC] Update transformer docstrings (#1314) @RNKuhns
+* [DOC] Description and link to cosine added (#1326) @AreloTanoh
+* [DOC] naive forcasting docstring edits (#1333) @AreloTanoh
+* [DOC] Update .all-contributorsrc (#1336) @pul95
+* [DOC] Typo in transformations.rst fixed (#1324) @AreloTanoh
+* [DOC] Add content to documentation guide for use in docsprint (#1297) @RNKuhns
+* [DOC] Added slack and google calendar to README (#1283) @aiwalter
+* [DOC] Add binder badge to README (#1285) @mloning
+* [DOC] docstring fix for distances/series extension templates (#1256) @fkiraly
+* [DOC] adding binder link to readme (landing page) (#1282) @fkiraly
+* [DOC] Update contributors (#1243) @mloning
+* [DOC] add conda-forge max dependency recipe to installation and readme (#1226) @fkiraly
+* [DOC] Adding table of content in the forecasting tutorial (#1200) @bilal-196
+* [DOC] Complete docstring of EnsembleForecaster  (#1165) @GuzalBulatova
+* [DOC] Add annotation to docs (#1156) @mloning
+* [DOC] Add funding (#1173) @mloning
+* [DOC] Minor update to See Also of BOSS Docstrings (#1172) @RNKuhns
+* [DOC] Refine the Docstrings for BOSS Classifiers (#1166) @RNKuhns
+* [DOC] add examples in docstrings in classification (#1164) @ltoniazzi
+* [DOC] adding example in docstring of KNeighborsTimeSeriesClassifier (#1155) @ltoniazzi
+* [DOC] Update README  (#1024) @fkiraly
+* [DOC] rework of installation guidelines (#1103) @fkiraly
+
+* [MNT] Update codecov config (#1396) @mloning
+* [MNT] removing tests for data downloader dependent on third party website, change in test dataset for test_time_series_neighbors (#1258) @TonyBagnall
+* [MNT] Fix appveyor CI (#1253) @mloning
+* [MNT] Update feature_request.md (#1242) @aiwalter
+* [MNT] Format setup files (#1236) @TonyBagnall
+* [MNT] Fix pydocstyle config (#1149) @mloning
+* [MNT] Update release script (#1135) @mloning
+
+All contributors: @Aparna-Sakshi, @AreloTanoh, @BINAYKUMAR943, @Flix6x, @GuzalBulatova, @IlyasMoutawwakil, @Lovkush-A, @MatthewMiddlehurst, @RNKuhns, @SveaMeyer13, @TonyBagnall, @afzal442, @aiwalter, @bilal-196, @corvusrabus, @fkiraly, @freddyaboulton, @juanitorduz, @justinshenk, @ltoniazzi, @mathco-wf, @mloning, @moradabaz, @pul95, @tensorflow-as-tf, @thayeylolu, @victordremov, @whackteachers and @xloem
+
+
 [0.7.0] - 2021-07-12
 --------------------
 
