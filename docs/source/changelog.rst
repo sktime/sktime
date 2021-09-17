@@ -44,7 +44,7 @@ In-memory data types
 ^^^^^^^^^^^^^^^^^^^^
 
 * introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see [in-memory data types tutorial](https://github.com/alan-turing-institute/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb)
-* loose conversion methods now in `_convert` files in `datatypes` will be deprecated in 0.10.0
+* loose conversion methods now in `_convert` files in `datatypes` will no longer be publicly accessible in 0.10.0
 
 Forecasting
 ^^^^^^^^^^^
