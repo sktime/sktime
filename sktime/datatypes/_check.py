@@ -93,9 +93,11 @@ def check_is(
             temp.append(str(val))
         mtype = temp
     else:
-        mtype = str(mtype)
+        if mtype is not None:
+            mtype = str(mtype)
 
-    scitype = str(scitype)
+    if scitype is not None:
+        scitype = str(scitype)
 
     _check_scitype_valid(scitype)
 
@@ -190,8 +192,10 @@ def check_raise(obj, mtype: Mtypes, scitype: Scitypes = None, var_name: str = "i
     TypeError if no checks defined for mtype/scitype combination
     ValueError if mtype input argument is not of expected type
     """
-    mtype = str(mtype)
-    scitype = str(scitype)
+    if mtype is not None:
+        mtype = str(mtype)
+    if scitype is not None:
+        scitype = str(scitype)
     obj_long_name_for_avoiding_linter_clash = obj
     valid, msg, _ = check_is(
         obj=obj_long_name_for_avoiding_linter_clash,
@@ -231,7 +235,8 @@ def mtype(obj, as_scitype: Scitypes = None):
     if obj is None:
         return None
 
-    as_scitype = str(as_scitype)
+    if as_scitype is not None:
+        as_scitype = str(as_scitype)
     valid_as_scitypes = list(set([x[1] for x in check_dict.keys()]))
 
     if as_scitype is not None and as_scitype not in valid_as_scitypes:

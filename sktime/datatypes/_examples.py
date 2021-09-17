@@ -61,8 +61,10 @@ def get_examples(
         lossy: bool - whether the example is a lossy representation
     """
     # retrieve all keys that match the query
-    mtype = str(mtype)
-    as_scitype = str(as_scitype)
+    if mtype is not None:
+        mtype = str(mtype)
+    if as_scitype is not None:
+        as_scitype = str(as_scitype)
     exkeys = example_dict.keys()
     keys = [k for k in exkeys if k[0] == mtype and k[1] == as_scitype]
 

@@ -111,9 +111,13 @@ def convert(
     ------
     KeyError if conversion is not implemented
     """
-    from_type = str(from_type)
-    to_type = str(to_type)
-    as_scitype = str(as_scitype)
+
+    if from_type is not None:
+        from_type = str(from_type)
+    if to_type is not None:
+        to_type = str(to_type)
+    if as_scitype is not None:
+        as_scitype = str(as_scitype)
 
     if obj is None:
         return None
@@ -176,9 +180,11 @@ def convert_to(
             temp.append(str(val))
         to_type = temp
     else:
-        to_type = str(to_type)
+        if to_type is not None:
+            to_type = str(to_type)
 
-    as_scitype = str(as_scitype)
+    if as_scitype is not None:
+        as_scitype = str(as_scitype)
 
     if obj is None:
         return None
@@ -233,7 +239,8 @@ def _conversions_defined(scitype: Scitypes):
             entry of row i, col j is 1 if conversion from i to j is defined,
                                      0 if conversion from i to j is not defined
     """
-    scitype = str(scitype)
+    if scitype is not None:
+        scitype = str(scitype)
 
     pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
     cols0 = set([x[0] for x in list(convert_dict.keys()) if x[2] == scitype])

@@ -85,7 +85,8 @@ def mtype_to_scitype(mtype: Union[PanelMtype, SeriesMtype, str]) -> str:
         (this should not happen in general)
     ValueError, if there is no scitype with that mtype
     """
-    mtype = str(mtype)
+    if mtype is not None:
+        mtype = str(mtype)
     scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
 
     if len(scitype) > 1:
