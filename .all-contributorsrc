@@ -875,7 +875,11 @@
       "contributions": [
         "code",
         "doc",
-        "tutorial"
+        "tutorial",
+        "example",
+        "ideas",
+        "review",
+        "test"
       ]
     },
     {
@@ -1176,6 +1180,14 @@
       ]
     },
     {
+      "login": "xloem",
+      "name": "patiently pending world peace",
+      "profile": "https://github.com/xloem",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "AreloTanoh",
       "name": "Arelo Tanoh",
       "avatar_url": "https://avatars.githubusercontent.com/AreloTanoh",
@@ -1191,6 +1203,16 @@
       "profile": "https://github.com/pul95",
       "contributions": [
         "doc"
+      ]
+    },
+     {
+      "login": "IlyasMoutawwakil",
+      "name": Ilyas Moutawwakil",
+      "avatar_url": "https://avatars.githubusercontent.com/IlyasMoutawwakil",
+      "profile": "https://github.com/IlyasMoutawwakil",
+      "contributions": [
+        "code",
+	      "doc"
       ]
     },
     {
