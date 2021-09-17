@@ -20,7 +20,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.classification_intervals._continuous_interval_tree import (
+from sktime.contrib.vector_classifiers._continuous_interval_tree import (
     _drcif_feature,
     ContinuousIntervalTree,
 )
@@ -110,7 +110,7 @@ class DrCIF(BaseClassifier):
     transformed_data : list of shape (n_estimators) of ndarray with shape
     (n_instances,total_intervals * att_subsample_size)
         The transformed dataset for all classifiers. Only saved when
-        save_transformed_data is true
+        save_transformed_data is true.
 
     See Also
     --------
@@ -528,7 +528,7 @@ class DrCIF(BaseClassifier):
     ):
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
-            return classifier.predict_proba_drcif(
+            return classifier._predict_proba_drcif(
                 X, X_p, X_d, c22, self._n_intervals, intervals, dims, atts
             )
         else:

@@ -158,9 +158,6 @@ class HCrystalBallForecaster(BaseForecaster):
             Point predictions for the forecast
         y_pred_int : pd.DataFrame
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
         y_pred = self.model_.predict(X=X_pred)
         return _adapt_y_pred(y_pred)
