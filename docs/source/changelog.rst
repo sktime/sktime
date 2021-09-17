@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file. We keep tra
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `Twitter <https://twitter.com/sktime_toolbox>`_.
 
-
+For planned changes and upcoming releases, see our :ref:`roadmap`.
 
 [0.8.0] - 2021-09-17
 --------------------
@@ -18,16 +18,16 @@ All notable changes to this project will be documented in this file. We keep tra
 Highlights
 ~~~~~~~~~~
 
-* python 3.9 support for linux/osx (#1255) @freddyaboulton
-* `conda-forge` metapackage for installing `sktime` with all extras @freddyaboulton
-* framework support for multivariate forecasting (#980 #1195 #1286 #1301 #1306 #1311 #1401 #1410) @aiwalter @fkiraly @thayeylolu
-* consolidated lookup of estimators and tags using `registry.all_estimators` and `registry.all_tags` (#1196) @fkiraly
-* [DOC] major overhaul of `sktime`'s [online documentation](https://www.sktime.org/en/latest/)
-* [DOC] [searchable, auto-updating estimators register](https://www.sktime.org/en/latest/estimator_overview.html) in online documentation (#930 #1138) @afzal442 @mloning
-* [MNT] working Binder in-browser notebook showcase (#1266) @corvusrabus
-* [DOC] tutorial notebook for in-memory data format conventions, validation, and conversion (#1232) @fkiraly
-* easy conversion functionality for estimator inputs, series and panel data (#1061 #1187 #1201 #1225) @fkiraly
-* consolidated tags system, dynamic tagging (#1091 #1134) @fkiraly
+* Python 3.9 support for linux/osx (:pr:`1255`) :user:`freddyaboulton`
+* :code:`conda-forge` metapackage for installing `sktime` with all extras :user:`freddyaboulton`
+* framework support for multivariate forecasting (:pr:`980` :pr:`1195` :pr:`1286` :pr:`1301` :pr:`1306` :pr:`1311` :pr:`1401` :pr:`1410`) :user:`aiwalter` :user:`fkiraly` :user:`thayeylolu`
+* consolidated lookup of estimators and tags using :code:`registry.all_estimators` and :code:`registry.all_tags` (:pr:`1196`) :user:`fkiraly`
+* [DOC] major overhaul of :code:`sktime`'s `online documentation <https://www.sktime.org/en/latest/>`_
+* [DOC] `searchable, auto-updating estimators register <https://www.sktime.org/en/latest/estimator_overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
+* [MNT] working Binder in-browser notebook showcase (:pr:`1266`) :user:`corvusrabus`
+* [DOC] tutorial notebook for in-memory data format conventions, validation, and conversion (:pr:`1232`) :user:`fkiraly`
+* easy conversion functionality for estimator inputs, series and panel data (:pr:`1061` :pr:`1187` :pr:`1201` :pr:`1225`) :user:`fkiraly`
+* consolidated tags system, dynamic tagging (:pr:`1091` :pr:`1134`) :user:`fkiraly`
 
 
 Core interface changes
@@ -36,28 +36,28 @@ Core interface changes
 BaseEstimator/BaseObject
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-* estimator (class and object) capabilities are inspectable by `get_tag` and `get_tags` interface
-* list all tags applying to an estimator type by `registry/all_tags`
-* list all estimators of a specific type, with certain tags, by `registry/all_estimators`
+* estimator (class and object) capabilities are inspectable by :code:`get_tag` and :code:`get_tags` interface
+* list all tags applying to an estimator type by :code:`registry/all_tags`
+* list all estimators of a specific type, with certain tags, by :code:`registry/all_estimators`
 
 In-memory data types
 ^^^^^^^^^^^^^^^^^^^^
 
-* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see [in-memory data types tutorial](https://github.com/alan-turing-institute/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb)
-* loose conversion methods now in `_convert` files in `datatypes` will no longer be publicly accessible in 0.10.0
+* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see `in-memory data types tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb>`_
+* loose conversion methods now in :code:`_convert` files in :code:`datatypes` will no longer be publicly accessible in 0.10.0
 
 Forecasting
 ^^^^^^^^^^^
 
-* Forecasters can now be passed `pd.DataFrame`, `pd.Series`, `np.ndarray` as `X` or `y`, and return forecasts of the same type as passed for `y`
-* `sktime` now supports multivariate forecasters, with all core interface methods returning sensible return types in that case
-* whether forecaster can deal with multivariate series can be inspected via `get_tag("scitype:y")`, which can return `"univariate"`, `"multivariate"`, or `"both"`
-* further tags have been introduced, see `registry/all_tags`
+* Forecasters can now be passed :code:`pd.DataFrame`, :code:`pd.Series`, :code:`np.ndarray` as :code:`X` or :code:`y`, and return forecasts of the same type as passed for :code:`y`
+* :code:`sktime` now supports multivariate forecasters, with all core interface methods returning sensible return types in that case
+* whether forecaster can deal with multivariate series can be inspected via :code:`get_tag("scitype:y")`, which can return :code:`"univariate"`, :code:`"multivariate"`, or :code:`"both"`
+* further tags have been introduced, see :code:`registry/all_tags`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* tags have been introduced, see `registry/all_tags`
+* tags have been introduced, see :code:`registry/all_tags`
 
 
 Added
@@ -66,139 +66,139 @@ Added
 Forecasting
 ^^^^^^^^^^^
 
-* Multivariate `ColumnEnsembleForecaster` (#1082 #1349) @fkiraly @GuzalBulatova
-* Multivariate `NaiveForecaster` (#1401) @aiwalter
-* `UnobservedComponents` `statsmodels` wrapper (#1394) @juanitorduz
-* `AutoEnsembleForecaster` (#1220) @aiwalter
-* `TrendForecaster` (using `sklearn` regressor for value vs time index) (#1209) @tensorflow-as-tf
-* Multivariate moving cutoff formatting (#1213) @fkiraly
-* Prophet custom seasonalities (#1378) @IlyasMoutawwakil
-* Extend aggregation functionality in `EnsembleForecaster` (#1190) @GuzalBulatova
-* `plot_lags` to plot series against its lags (#1330) @RNKuhns
-* Added `n_best_forecasters` summary to grid searches (#1139) @aiwalter
-* Forecasting grid search: cloning more tags (#1360) @fkiraly
-* `ForecastingHorizon` supporting more input types, `is_relative` detection on construction from index type (#1169) @fkiraly
+* Multivariate :code:`ColumnEnsembleForecaster` (:pr:`1082` :pr:`1349`) :user:`fkiraly` :user:`GuzalBulatova`
+* Multivariate :code:`NaiveForecaster` (:pr:`1401`) :user:`aiwalter`
+* :code:`UnobservedComponents` :code:`statsmodels` wrapper (:pr:`1394`) :user:`juanitorduz`
+* :code:`AutoEnsembleForecaster` (:pr:`1220`) :user:`aiwalter`
+* :code:`TrendForecaster` (using :code:`sklearn` regressor for value vs time index) (:pr:`1209`) :user:`tensorflow-as-tf`
+* Multivariate moving cutoff formatting (:pr:`1213`) :user:`fkiraly`
+* Prophet custom seasonalities (:pr:`1378`) :user:`IlyasMoutawwakil`
+* Extend aggregation functionality in :code:`EnsembleForecaster` (:pr:`1190`) :user:`GuzalBulatova`
+* :code:`plot_lags` to plot series against its lags (:pr:`1330`) :user:`RNKuhns`
+* Added :code:`n_best_forecasters` summary to grid searches (:pr:`1139`) :user:`aiwalter`
+* Forecasting grid search: cloning more tags (:pr:`1360`) :user:`fkiraly`
+* :code:`ForecastingHorizon` supporting more input types, :code:`is_relative` detection on construction from index type (:pr:`1169`) :user:`fkiraly`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Rotation forest time series classifier (#1391) @MatthewMiddlehurst
-* Transform classifiers (#1180) @MatthewMiddlehurst
-* New Proximity forest version (#733) @moradabaz
-* Enhancement on RISE (#975) @whackteachers
+* Rotation forest time series classifier (:pr:`1391`) :user:`MatthewMiddlehurst`
+* Transform classifiers (:pr:`1180`) :user:`MatthewMiddlehurst`
+* New Proximity forest version (:pr:`733`) :user:`moradabaz`
+* Enhancement on RISE (:pr:`975`) :user:`whackteachers`
 
 
 Transformers
 ^^^^^^^^^^^^
 
-* `ColumnwiseTransformer` (multivariate transformer compositor) (#1044) @SveaMeyer13
-* `Differencer` transformaer (#945) @RNKuhns
-* `FeatureSelection` transformer (#1347) @aiwalter
-* `ExponentTransformer` and `SqrtTransformer` (#1127) @RNKuhns
+* :code:`ColumnwiseTransformer` (multivariate transformer compositor) (:pr:`1044`) :user:`SveaMeyer13`
+* :code:`Differencer` transformer (:pr:`945`) :user:`RNKuhns`
+* :code:`FeatureSelection` transformer (:pr:`1347`) :user:`aiwalter`
+* :code:`ExponentTransformer` and :code:`SqrtTransformer` (:pr:`1127`) :user:`RNKuhns`
 
 
 Benchmarking and evaluation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Critical Difference Diagrams (#1277) @SveaMeyer13
-* Classification experiments (#1260) @TonyBagnall
-* Clustering experiments (#1221) @TonyBagnall
-* change to classification experiments (#1137) @TonyBagnall
+* Critical Difference Diagrams (:pr:`1277`) :user:`SveaMeyer13`
+* Classification experiments (:pr:`1260`) :user:`TonyBagnall`
+* Clustering experiments (:pr:`1221`) :user:`TonyBagnall`
+* change to classification experiments (:pr:`1137`) :user:`TonyBagnall`
 
 Documentation
 ^^^^^^^^^^^^^
 
-* Update documentation backend and reduce warnings in doc creation (#1199) (#1205) @mloning
-* [DOC] Development community showcase page (#1337) @afzal442
-* [DOC] additional clarifying details to documentation guide (in developer's guide) (#1315) @RNKuhns
-* [DOC] Add annotation ext template (#1151) @mloning
-* [DOC] roadmap document (#1145) @mloning
+* Update documentation backend and reduce warnings in doc creation (:pr:`1199`) (:pr:`1205`) :user:`mloning`
+* [DOC] Development community showcase page (:pr:`1337`) :user:`afzal442`
+* [DOC] additional clarifying details to documentation guide (in developer's guide) (:pr:`1315`) :user:`RNKuhns`
+* [DOC] Add annotation ext template (:pr:`1151`) :user:`mloning`
+* [DOC] roadmap document (:pr:`1145`) :user:`mloning`
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
-* unit test for absence of side effects in estimator methods (#1078) @fkiraly
+* unit test for absence of side effects in estimator methods (:pr:`1078`) :user:`fkiraly`
 
 
 Fixed
 ~~~~~
 
-* Refactor forecasting: `StackingForecaster` (#1220) @aiwalter
+* Refactor forecasting: :code:`StackingForecaster` (:pr:`1220`) :user:`aiwalter`
 
-* Refactor TSC: DrCIF and CIF to new interface (#1269) @MatthewMiddlehurst
-* Refactor TSC: TDE additions and documentation for HC2 (#1357) @MatthewMiddlehurst
-* Refactor TSC: Arsenal additions and documentation for HC2 (#1305) @MatthewMiddlehurst
-* Refactor TSC: _cboss (#1295) @BINAYKUMAR943
-* Refactor TSC: rocket classifier (#1239) @victordremov
-* Refactor TSC: Dictionary based classifiers (#1084) @MatthewMiddlehurst
+* Refactor TSC: DrCIF and CIF to new interface (:pr:`1269`) :user:`MatthewMiddlehurst`
+* Refactor TSC: TDE additions and documentation for HC2 (:pr:`1357`) :user:`MatthewMiddlehurst`
+* Refactor TSC: Arsenal additions and documentation for HC2 (:pr:`1305`) :user:`MatthewMiddlehurst`
+* Refactor TSC: _cboss (:pr:`1295`) :user:`BINAYKUMAR943`
+* Refactor TSC: rocket classifier (:pr:`1239`) :user:`victordremov`
+* Refactor TSC: Dictionary based classifiers (:pr:`1084`) :user:`MatthewMiddlehurst`
 
-* Refactor tests: estimator test parameters with the estimator (#1361) @Aparna-Sakshi
+* Refactor tests: estimator test parameters with the estimator (:pr:`1361`) :user:`Aparna-Sakshi`
 
-* Update _data_io.py (#1308) @TonyBagnall
-* Data io (#1248) @TonyBagnall
+* Update _data_io.py (:pr:`1308`) :user:`TonyBagnall`
+* Data io (:pr:`1248`) :user:`TonyBagnall`
 
-* [BUG] checking of input types in plotting (#1197) @fkiraly
-* [BUG] `NaiveForecaster` behaviour fix for trailing NaN values (#1130) @Flix6x
-* [BUG] Fix `all_estimators` when extras are missing. (#1259) @xloem
-* [BUG] Contract test fix (#1392) @MatthewMiddlehurst
-* [BUG] Data writing updates and JapaneseVowels dataset fix (#1278) @MatthewMiddlehurst
-* [BUG] Fixed ESTIMATOR_TEST_PARAMS reference in `test_all_estimators` (#1406) @fkiraly
-* [BUG] remove incorrect exogeneous and return_pred_int errors (#1368) @fkiraly
-* [BUG] - broken binder and test_examples check (#1343) @fkiraly
-* [BUG] Fix minor silent issues in `TransformedTargetForecaster` (#845) @aiwalter
-* [BUG] Troubleshooting for C compiler after pytest failed (#1262) @tensorflow-as-tf
-* [BUG] bugfix in tutorial documentation of univariate time series classification. (#1140) @BINAYKUMAR943
-* [BUG] removed format check from index test (#1193) @fkiraly
-* [BUG] bugfix - convertIO broken references to np.ndarray (#1191) @fkiraly
-* [BUG] STSF test fix (#1170) @MatthewMiddlehurst
-* [BUG] `set_tags` call in `BaseObject.clone_tags` used incorrect signature (#1179) @fkiraly
+* [BUG] checking of input types in plotting (:pr:`1197`) :user:`fkiraly`
+* [BUG] :code:`NaiveForecaster` behaviour fix for trailing NaN values (:pr:`1130`) :user:`Flix6x`
+* [BUG] Fix :code:`all_estimators` when extras are missing. (:pr:`1259`) :user:`xloem`
+* [BUG] Contract test fix (:pr:`1392`) :user:`MatthewMiddlehurst`
+* [BUG] Data writing updates and JapaneseVowels dataset fix (:pr:`1278`) :user:`MatthewMiddlehurst`
+* [BUG] Fixed ESTIMATOR_TEST_PARAMS reference in :code:`test_all_estimators` (:pr:`1406`) :user:`fkiraly`
+* [BUG] remove incorrect exogeneous and return_pred_int errors (:pr:`1368`) :user:`fkiraly`
+* [BUG] - broken binder and test_examples check (:pr:`1343`) :user:`fkiraly`
+* [BUG] Fix minor silent issues in :code:`TransformedTargetForecaster` (:pr:`845`) :user:`aiwalter`
+* [BUG] Troubleshooting for C compiler after pytest failed (:pr:`1262`) :user:`tensorflow-as-tf`
+* [BUG] bugfix in tutorial documentation of univariate time series classification. (:pr:`1140`) :user:`BINAYKUMAR943`
+* [BUG] removed format check from index test (:pr:`1193`) :user:`fkiraly`
+* [BUG] bugfix - convertIO broken references to np.ndarray (:pr:`1191`) :user:`fkiraly`
+* [BUG] STSF test fix (:pr:`1170`) :user:`MatthewMiddlehurst`
+* [BUG] :code:`set_tags` call in :code:`BaseObject.clone_tags` used incorrect signature (:pr:`1179`) :user:`fkiraly`
 
-* [DOC] Update transformer docstrings Boss (#1320) @thayeylolu
-* [DOC] Updated docstring of exp_smoothing.py (#1339) @mathco-wf
-* [DOC] updated the link in CONTRIBUTING.md (#1428) @Aparna-Sakshi
-* [DOC] Correct typo in contributing guidelines (#1398) @juanitorduz
-* [DOC] Fix community repo link (#1400) @mloning
-* [DOC] Fix minor typo in README (#1416) @justinshenk
-* [DOC] Fixed a typo in citation page (#1310) @AreloTanoh
-* [DOC] EnsembleForecaster and AutoEnsembleForecaster docstring example (#1382) @aiwalter
-* [DOC] multiple minor fixes to docs (#1328) @mloning
-* [DOC] Docstring improvements for bats, tbats, arima, croston (#1309) @Lovkush-A
-* [DOC] Update detrend module docstrings (#1335) @SveaMeyer13
-* [DOC] updated extension templates - object tags (#1340) @fkiraly
-* [DOC] Update ThetaLinesTransformer's docstring (#1312) @GuzalBulatova
-* [DOC] Update ColumnwiseTransformer and TabularToSeriesAdaptor docstrings (#1322) @GuzalBulatova
-* [DOC] Update transformer docstrings (#1314) @RNKuhns
-* [DOC] Description and link to cosine added (#1326) @AreloTanoh
-* [DOC] naive forcasting docstring edits (#1333) @AreloTanoh
-* [DOC] Update .all-contributorsrc (#1336) @pul95
-* [DOC] Typo in transformations.rst fixed (#1324) @AreloTanoh
-* [DOC] Add content to documentation guide for use in docsprint (#1297) @RNKuhns
-* [DOC] Added slack and google calendar to README (#1283) @aiwalter
-* [DOC] Add binder badge to README (#1285) @mloning
-* [DOC] docstring fix for distances/series extension templates (#1256) @fkiraly
-* [DOC] adding binder link to readme (landing page) (#1282) @fkiraly
-* [DOC] Update contributors (#1243) @mloning
-* [DOC] add conda-forge max dependency recipe to installation and readme (#1226) @fkiraly
-* [DOC] Adding table of content in the forecasting tutorial (#1200) @bilal-196
-* [DOC] Complete docstring of EnsembleForecaster  (#1165) @GuzalBulatova
-* [DOC] Add annotation to docs (#1156) @mloning
-* [DOC] Add funding (#1173) @mloning
-* [DOC] Minor update to See Also of BOSS Docstrings (#1172) @RNKuhns
-* [DOC] Refine the Docstrings for BOSS Classifiers (#1166) @RNKuhns
-* [DOC] add examples in docstrings in classification (#1164) @ltoniazzi
-* [DOC] adding example in docstring of KNeighborsTimeSeriesClassifier (#1155) @ltoniazzi
-* [DOC] Update README  (#1024) @fkiraly
-* [DOC] rework of installation guidelines (#1103) @fkiraly
+* [DOC] Update transformer docstrings Boss (:pr:`1320`) :user:`thayeylolu`
+* [DOC] Updated docstring of exp_smoothing.py (:pr:`1339`) :user:`mathco-wf`
+* [DOC] updated the link in CONTRIBUTING.md (:pr:`1428`) :user:`Aparna-Sakshi`
+* [DOC] Correct typo in contributing guidelines (:pr:`1398`) :user:`juanitorduz`
+* [DOC] Fix community repo link (:pr:`1400`) :user:`mloning`
+* [DOC] Fix minor typo in README (:pr:`1416`) :user:`justinshenk`
+* [DOC] Fixed a typo in citation page (:pr:`1310`) :user:`AreloTanoh`
+* [DOC] EnsembleForecaster and AutoEnsembleForecaster docstring example (:pr:`1382`) :user:`aiwalter`
+* [DOC] multiple minor fixes to docs (:pr:`1328`) :user:`mloning`
+* [DOC] Docstring improvements for bats, tbats, arima, croston (:pr:`1309`) :user:`Lovkush-A`
+* [DOC] Update detrend module docstrings (:pr:`1335`) :user:`SveaMeyer13`
+* [DOC] updated extension templates - object tags (:pr:`1340`) :user:`fkiraly`
+* [DOC] Update ThetaLinesTransformer's docstring (:pr:`1312`) :user:`GuzalBulatova`
+* [DOC] Update ColumnwiseTransformer and TabularToSeriesAdaptor docstrings (:pr:`1322`) :user:`GuzalBulatova`
+* [DOC] Update transformer docstrings (:pr:`1314`) :user:`RNKuhns`
+* [DOC] Description and link to cosine added (:pr:`1326`) :user:`AreloTanoh`
+* [DOC] naive forcasting docstring edits (:pr:`1333`) :user:`AreloTanoh`
+* [DOC] Update .all-contributorsrc (:pr:`1336`) :user:`pul95`
+* [DOC] Typo in transformations.rst fixed (:pr:`1324`) :user:`AreloTanoh`
+* [DOC] Add content to documentation guide for use in docsprint (:pr:`1297`) :user:`RNKuhns`
+* [DOC] Added slack and google calendar to README (:pr:`1283`) :user:`aiwalter`
+* [DOC] Add binder badge to README (:pr:`1285`) :user:`mloning`
+* [DOC] docstring fix for distances/series extension templates (:pr:`1256`) :user:`fkiraly`
+* [DOC] adding binder link to readme (landing page) (:pr:`1282`) :user:`fkiraly`
+* [DOC] Update contributors (:pr:`1243`) :user:`mloning`
+* [DOC] add conda-forge max dependency recipe to installation and readme (:pr:`1226`) :user:`fkiraly`
+* [DOC] Adding table of content in the forecasting tutorial (:pr:`1200`) :user:`bilal-196`
+* [DOC] Complete docstring of EnsembleForecaster  (:pr:`1165`) :user:`GuzalBulatova`
+* [DOC] Add annotation to docs (:pr:`1156`) :user:`mloning`
+* [DOC] Add funding (:pr:`1173`) :user:`mloning`
+* [DOC] Minor update to See Also of BOSS Docstrings (:pr:`1172`) :user:`RNKuhns`
+* [DOC] Refine the Docstrings for BOSS Classifiers (:pr:`1166`) :user:`RNKuhns`
+* [DOC] add examples in docstrings in classification (:pr:`1164`) :user:`ltoniazzi`
+* [DOC] adding example in docstring of KNeighborsTimeSeriesClassifier (:pr:`1155`) :user:`ltoniazzi`
+* [DOC] Update README  (:pr:`1024`) :user:`fkiraly`
+* [DOC] rework of installation guidelines (:pr:`1103`) :user:`fkiraly`
 
-* [MNT] Update codecov config (#1396) @mloning
-* [MNT] removing tests for data downloader dependent on third party website, change in test dataset for test_time_series_neighbors (#1258) @TonyBagnall
-* [MNT] Fix appveyor CI (#1253) @mloning
-* [MNT] Update feature_request.md (#1242) @aiwalter
-* [MNT] Format setup files (#1236) @TonyBagnall
-* [MNT] Fix pydocstyle config (#1149) @mloning
-* [MNT] Update release script (#1135) @mloning
+* [MNT] Update codecov config (:pr:`1396`) :user:`mloning`
+* [MNT] removing tests for data downloader dependent on third party website, change in test dataset for test_time_series_neighbors (:pr:`1258`) :user:`TonyBagnall`
+* [MNT] Fix appveyor CI (:pr:`1253`) :user:`mloning`
+* [MNT] Update feature_request.md (:pr:`1242`) :user:`aiwalter`
+* [MNT] Format setup files (:pr:`1236`) :user:`TonyBagnall`
+* [MNT] Fix pydocstyle config (:pr:`1149`) :user:`mloning`
+* [MNT] Update release script (:pr:`1135`) :user:`mloning`
 
-All contributors: @Aparna-Sakshi, @AreloTanoh, @BINAYKUMAR943, @Flix6x, @GuzalBulatova, @IlyasMoutawwakil, @Lovkush-A, @MatthewMiddlehurst, @RNKuhns, @SveaMeyer13, @TonyBagnall, @afzal442, @aiwalter, @bilal-196, @corvusrabus, @fkiraly, @freddyaboulton, @juanitorduz, @justinshenk, @ltoniazzi, @mathco-wf, @mloning, @moradabaz, @pul95, @tensorflow-as-tf, @thayeylolu, @victordremov, @whackteachers and @xloem
+All contributors: :user:`Aparna-Sakshi`, :user:`AreloTanoh`, :user:`BINAYKUMAR943`, :user:`Flix6x`, :user:`GuzalBulatova`, :user:`IlyasMoutawwakil`, :user:`Lovkush-A`, :user:`MatthewMiddlehurst`, :user:`RNKuhns`, :user:`SveaMeyer13`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`bilal-196`, :user:`corvusrabus`, :user:`fkiraly`, :user:`freddyaboulton`, :user:`juanitorduz`, :user:`justinshenk`, :user:`ltoniazzi`, :user:`mathco-wf`, :user:`mloning`, :user:`moradabaz`, :user:`pul95`, :user:`tensorflow-as-tf`, :user:`thayeylolu`, :user:`victordremov`, :user:`whackteachers` and :user:`xloem`
 
 
 [0.7.0] - 2021-07-12
@@ -206,80 +206,80 @@ All contributors: @Aparna-Sakshi, @AreloTanoh, @BINAYKUMAR943, @Flix6x, @GuzalBu
 
 Added
 ~~~~~
-* new module (experimental): Time Series Clustering (#1049) @TonyBagnall
-* new module (experimental): Pairwise transformers, kernels/distances on tabular data and panel data - base class, examples, extension templates (#1071) @fkiraly @chrisholder
-* new module (experimental): Series annotation and PyOD adapter (#1021) @fkiraly @satya-pattnaik
-* Clustering extension templates, docstrings & get_fitted_params (#1100) @fkiraly
-* New Classifier: Implementation of signature based methods.  (#714) @jambo6
-* New Forecaster: Croston's method (#730) @Riyabelle25
-* New Forecaster: ForecastingPipeline for pipelining with exog data (#967) @aiwalter
-* New Transformer: Multivariate Detrending (#1042) @SveaMeyer13
-* New Transformer: ThetaLines transformer (#923) @GuzalBulatova
-* sktime registry (#1067) @fkiraly
-* Feature/information criteria get_fitted_params (#942) @ltsaprounis
-* Add plot_correlations() to plot series and acf/pacf (#850) @RNKuhns
-* Add doc-quality tests on changed files (#752) @mloning
-* Docs: Create add_dataset.rst (#970) @Riyabelle25
-* Added two new related software packages (#1019) @aiwalter
-* Added orbit as related software (#1128) @aiwalter
-* adding fkiraly as codeowner for forecasting base classes (#989) @fkiraly
-* added mloning and aiwalter as forecasting/base code owners (#1108) @fkiraly
+* new module (experimental): Time Series Clustering (:pr:`1049`) :user:`TonyBagnall`
+* new module (experimental): Pairwise transformers, kernels/distances on tabular data and panel data - base class, examples, extension templates (:pr:`1071`) :user:`fkiraly` :user:`chrisholder`
+* new module (experimental): Series annotation and PyOD adapter (:pr:`1021`) :user:`fkiraly` :user:`satya-pattnaik`
+* Clustering extension templates, docstrings & get_fitted_params (:pr:`1100`) :user:`fkiraly`
+* New Classifier: Implementation of signature based methods.  (:pr:`714`) :user:`jambo6`
+* New Forecaster: Croston's method (:pr:`730`) :user:`Riyabelle25`
+* New Forecaster: ForecastingPipeline for pipelining with exog data (:pr:`967`) :user:`aiwalter`
+* New Transformer: Multivariate Detrending (:pr:`1042`) :user:`SveaMeyer13`
+* New Transformer: ThetaLines transformer (:pr:`923`) :user:`GuzalBulatova`
+* sktime registry (:pr:`1067`) :user:`fkiraly`
+* Feature/information criteria get_fitted_params (:pr:`942`) :user:`ltsaprounis`
+* Add plot_correlations() to plot series and acf/pacf (:pr:`850`) :user:`RNKuhns`
+* Add doc-quality tests on changed files (:pr:`752`) :user:`mloning`
+* Docs: Create add_dataset.rst (:pr:`970`) :user:`Riyabelle25`
+* Added two new related software packages (:pr:`1019`) :user:`aiwalter`
+* Added orbit as related software (:pr:`1128`) :user:`aiwalter`
+* adding fkiraly as codeowner for forecasting base classes (:pr:`989`) :user:`fkiraly`
+* added mloning and aiwalter as forecasting/base code owners (:pr:`1108`) :user:`fkiraly`
 
 Changed
 ~~~~~~~
-* Update metric to handle y_train (#858) @RNKuhns
-* TSC base template refactor (#1026) @fkiraly
-* Forecasting refactor: base class refactor and extension template (#912) @fkiraly
-* Forecasting refactor: base/template docstring fixes, added fit_predict method (#1109) @fkiraly
-* Forecasters refactor: NaiveForecaster (#953) @fkiraly
-* Forecasters refactor: BaseGridSearch, ForecastingGridSearchCV, ForecastingRandomizedSearchCV (#1034) @GuzalBulatova
-* Forecasting refactor: polynomial trend forecaster (#1003) @thayeylolu
-* Forecasting refactor: Stacking, Multiplexer, Ensembler and TransformedTarget Forecasters (#977) @thayeylolu
-* Forecasting refactor: statsmodels and  theta forecaster (#1029) @thayeylolu
-* Forecasting refactor: reducer (#1031) @Lovkush-A
-* Forecasting refactor: ensembler, online-ensembler-forecaster and descendants (#1015) @thayeylolu
-* Forecasting refactor: TbatAdapter (#1017) @thayeylolu
-* Forecasting refactor: PmdArimaAdapter (#1016) @thayeylolu
-* Forecasting refactor: Prophet (#1005) @thayeylolu
-* Forecasting refactor: CrystallBall Forecaster (#1004) @thayeylolu
-* Forecasting refactor: default tags in BaseForecaster; added some new tags (#1013) @fkiraly
-* Forecasting refactor: removing _SktimeForecaster and horizon mixins (#1088) @fkiraly
-* Forecasting tutorial rework (#972) @fkiraly
-* Added tuning tutorial to forecasting example notebook - fkiraly suggestions on top of #1047 (#1053) @fkiraly
-* Classification: Kernel based refactor (#875) @MatthewMiddlehurst
-* Classification: catch22 Remake (#864) @MatthewMiddlehurst
-* Forecasting: Remove step_length hyper-parameter from reduction classes (#900) @mloning
-* Transformers: Make OptionalPassthrough to support multivariate input (#1112) @aiwalter
-* Transformers: Improvement to Multivariate-Detrending (#1077) @SveaMeyer13
-* Update plot_series to handle pd.Int64 and pd.Range index uniformly (#892) @Dbhasin1
-* Including floating numbers as a window length (#827) @thayeylolu
-* update docs on loading data (#885) @SveaMeyer13
-* Update docs (#887) @mloning
-* [DOC] Updated docstrings to inform that methods accept ForecastingHorizon (#872) @julramos
+* Update metric to handle y_train (:pr:`858`) :user:`RNKuhns`
+* TSC base template refactor (:pr:`1026`) :user:`fkiraly`
+* Forecasting refactor: base class refactor and extension template (:pr:`912`) :user:`fkiraly`
+* Forecasting refactor: base/template docstring fixes, added fit_predict method (:pr:`1109`) :user:`fkiraly`
+* Forecasters refactor: NaiveForecaster (:pr:`953`) :user:`fkiraly`
+* Forecasters refactor: BaseGridSearch, ForecastingGridSearchCV, ForecastingRandomizedSearchCV (:pr:`1034`) :user:`GuzalBulatova`
+* Forecasting refactor: polynomial trend forecaster (:pr:`1003`) :user:`thayeylolu`
+* Forecasting refactor: Stacking, Multiplexer, Ensembler and TransformedTarget Forecasters (:pr:`977`) :user:`thayeylolu`
+* Forecasting refactor: statsmodels and  theta forecaster (:pr:`1029`) :user:`thayeylolu`
+* Forecasting refactor: reducer (:pr:`1031`) :user:`Lovkush-A`
+* Forecasting refactor: ensembler, online-ensembler-forecaster and descendants (:pr:`1015`) :user:`thayeylolu`
+* Forecasting refactor: TbatAdapter (:pr:`1017`) :user:`thayeylolu`
+* Forecasting refactor: PmdArimaAdapter (:pr:`1016`) :user:`thayeylolu`
+* Forecasting refactor: Prophet (:pr:`1005`) :user:`thayeylolu`
+* Forecasting refactor: CrystallBall Forecaster (:pr:`1004`) :user:`thayeylolu`
+* Forecasting refactor: default tags in BaseForecaster; added some new tags (:pr:`1013`) :user:`fkiraly`
+* Forecasting refactor: removing _SktimeForecaster and horizon mixins (:pr:`1088`) :user:`fkiraly`
+* Forecasting tutorial rework (:pr:`972`) :user:`fkiraly`
+* Added tuning tutorial to forecasting example notebook - fkiraly suggestions on top of :pr:`1047` (:pr:`1053`) :user:`fkiraly`
+* Classification: Kernel based refactor (:pr:`875`) :user:`MatthewMiddlehurst`
+* Classification: catch22 Remake (:pr:`864`) :user:`MatthewMiddlehurst`
+* Forecasting: Remove step_length hyper-parameter from reduction classes (:pr:`900`) :user:`mloning`
+* Transformers: Make OptionalPassthrough to support multivariate input (:pr:`1112`) :user:`aiwalter`
+* Transformers: Improvement to Multivariate-Detrending (:pr:`1077`) :user:`SveaMeyer13`
+* Update plot_series to handle pd.Int64 and pd.Range index uniformly (:pr:`892`) :user:`Dbhasin1`
+* Including floating numbers as a window length (:pr:`827`) :user:`thayeylolu`
+* update docs on loading data (:pr:`885`) :user:`SveaMeyer13`
+* Update docs (:pr:`887`) :user:`mloning`
+* [DOC] Updated docstrings to inform that methods accept ForecastingHorizon (:pr:`872`) :user:`julramos`
 
 Fixed
 ~~~~~
-* Fix use of seasonal periodicity in naive model with mean strategy (from PR #917) (#1124) @mloning
-* Fix ForecastingPipeline import (#1118) @mloning
-* Bugfix - forecasters should use internal interface _all_tags for self-inspection, not _has_tag (#1068) @fkiraly
-* bugfix: Prophet adapter fails to clone after setting parameters (#911) @Yard1
-* Fix seeding issue in Minirocket Classifier (#1094) @Lovkush-A
-* fixing soft dependencies link (#1035) @fkiraly
-* Fix minor typos in docstrings (#889) @GuzalBulatova
-* Fix manylinux CI (#914) @mloning
-* Add limits.h to ensure pip install on certain OS's (#915) @tombh
-* Fix side effect on input for Imputer and HampelFilter (#1089) @aiwalter
-* BaseCluster class issues resolved (#1075) @chrisholder
-* Cleanup metric docstrings and fix bug in _RelativeLossMixin (#999) @RNKuhns
-* minor clarifications in forecasting extension template preamble (#1069) @fkiraly
-* Fix fh in imputer method based on in-sample forecasts (#861) @julramos
-* Arsenal fix, extended capabilities and HC1 unit tests (#902) @MatthewMiddlehurst
-* minor bugfix - setting _is_fitted to False before input checks in forecasters (#941) @fkiraly
-* Properly process random_state when fitting Time Series Forest ensemble in parallel (#819) @kachayev
-* bump nbqa (#998) @MarcoGorelli
-* datetime: Construct Timedelta from parsed pandas frequency (#873) @ckastner
+* Fix use of seasonal periodicity in naive model with mean strategy (from PR :pr:`917`) (:pr:`1124`) :user:`mloning`
+* Fix ForecastingPipeline import (:pr:`1118`) :user:`mloning`
+* Bugfix - forecasters should use internal interface _all_tags for self-inspection, not _has_tag (:pr:`1068`) :user:`fkiraly`
+* bugfix: Prophet adapter fails to clone after setting parameters (:pr:`911`) :user:`Yard1`
+* Fix seeding issue in Minirocket Classifier (:pr:`1094`) :user:`Lovkush-A`
+* fixing soft dependencies link (:pr:`1035`) :user:`fkiraly`
+* Fix minor typos in docstrings (:pr:`889`) :user:`GuzalBulatova`
+* Fix manylinux CI (:pr:`914`) :user:`mloning`
+* Add limits.h to ensure pip install on certain OS's (:pr:`915`) :user:`tombh`
+* Fix side effect on input for Imputer and HampelFilter (:pr:`1089`) :user:`aiwalter`
+* BaseCluster class issues resolved (:pr:`1075`) :user:`chrisholder`
+* Cleanup metric docstrings and fix bug in _RelativeLossMixin (:pr:`999`) :user:`RNKuhns`
+* minor clarifications in forecasting extension template preamble (:pr:`1069`) :user:`fkiraly`
+* Fix fh in imputer method based on in-sample forecasts (:pr:`861`) :user:`julramos`
+* Arsenal fix, extended capabilities and HC1 unit tests (:pr:`902`) :user:`MatthewMiddlehurst`
+* minor bugfix - setting _is_fitted to False before input checks in forecasters (:pr:`941`) :user:`fkiraly`
+* Properly process random_state when fitting Time Series Forest ensemble in parallel (:pr:`819`) :user:`kachayev`
+* bump nbqa (:pr:`998`) :user:`MarcoGorelli`
+* datetime: Construct Timedelta from parsed pandas frequency (:pr:`873`) :user:`ckastner`
 
-All contributors: @Dbhasin1, @GuzalBulatova, @Lovkush-A, @MarcoGorelli, @MatthewMiddlehurst, @RNKuhns, @Riyabelle25, @SveaMeyer13, @TonyBagnall, @Yard1, @aiwalter, @chrisholder, @ckastner, @fkiraly, @jambo6, @julramos, @kachayev, @ltsaprounis, @mloning, @thayeylolu and @tombh
+All contributors: :user:`Dbhasin1`, :user:`GuzalBulatova`, :user:`Lovkush-A`, :user:`MarcoGorelli`, :user:`MatthewMiddlehurst`, :user:`RNKuhns`, :user:`Riyabelle25`, :user:`SveaMeyer13`, :user:`TonyBagnall`, :user:`Yard1`, :user:`aiwalter`, :user:`chrisholder`, :user:`ckastner`, :user:`fkiraly`, :user:`jambo6`, :user:`julramos`, :user:`kachayev`, :user:`ltsaprounis`, :user:`mloning`, :user:`thayeylolu` and :user:`tombh`
 
 
 [0.6.1] - 2021-05-14
@@ -287,31 +287,31 @@ All contributors: @Dbhasin1, @GuzalBulatova, @Lovkush-A, @MarcoGorelli, @Matthew
 
 Fixed
 ~~~~~
-* Exclude Python 3.10 from manylinux CI (#870) @mloning
-* Fix AutoETS handling of infinite information criteria (#848) @ltsaprounis
-* Fix smape import (#851) @mloning
+* Exclude Python 3.10 from manylinux CI (:pr:`870`) :user:`mloning`
+* Fix AutoETS handling of infinite information criteria (:pr:`848`) :user:`ltsaprounis`
+* Fix smape import (:pr:`851`) :user:`mloning`
 
 Changed
 ~~~~~~~
-* ThetaForecaster now works with initial_level (#769) @yashlamba
-* Use joblib to parallelize ensemble fitting for Rocket classifier (#796) @kachayev
-* Update maintenance tools (#829) @mloning
-* Undo pmdarima hotfix and avoid pmdarima 1.8.1 (#831) @aaronreidsmith
-* Hotfix pmdarima version (#828) @aiwalter
+* ThetaForecaster now works with initial_level (:pr:`769`) :user:`yashlamba`
+* Use joblib to parallelize ensemble fitting for Rocket classifier (:pr:`796`) :user:`kachayev`
+* Update maintenance tools (:pr:`829`) :user:`mloning`
+* Undo pmdarima hotfix and avoid pmdarima 1.8.1 (:pr:`831`) :user:`aaronreidsmith`
+* Hotfix pmdarima version (:pr:`828`) :user:`aiwalter`
 
 Added
 ~~~~~
-* Added Guerrero method for lambda estimation to BoxCoxTransformer (#778) (#791) @GuzalBulatova
-* New forecasting metrics (#801) @RNKuhns
-* Implementation of DirRec reduction strategy (#779) @luiszugasti
-* Added cutoff to BaseGridSearch to use any grid search inside evaluate… (#825) @aiwalter
-* Added pd.DataFrame transformation for Imputer and HampelFilter (#830) @aiwalter
-* Added default params for some transformers (#834) @aiwalter
-* Added several docstring examples (#835) @aiwalter
-* Added skip-inverse-transform tag for Imputer and HampelFilter (#788) @aiwalter
-* Added a reference to alibi-detect (#815) @satya-pattnaik
+* Added Guerrero method for lambda estimation to BoxCoxTransformer (:pr:`778`) (:pr:`791`) :user:`GuzalBulatova`
+* New forecasting metrics (:pr:`801`) :user:`RNKuhns`
+* Implementation of DirRec reduction strategy (:pr:`779`) :user:`luiszugasti`
+* Added cutoff to BaseGridSearch to use any grid search inside evaluate… (:pr:`825`) :user:`aiwalter`
+* Added pd.DataFrame transformation for Imputer and HampelFilter (:pr:`830`) :user:`aiwalter`
+* Added default params for some transformers (:pr:`834`) :user:`aiwalter`
+* Added several docstring examples (:pr:`835`) :user:`aiwalter`
+* Added skip-inverse-transform tag for Imputer and HampelFilter (:pr:`788`) :user:`aiwalter`
+* Added a reference to alibi-detect (:pr:`815`) :user:`satya-pattnaik`
 
-All contributors: @GuzalBulatova, @RNKuhns, @aaronreidsmith, @aiwalter, @kachayev, @ltsaprounis, @luiszugasti, @mloning, @satya-pattnaik and @yashlamba
+All contributors: :user:`GuzalBulatova`, :user:`RNKuhns`, :user:`aaronreidsmith`, :user:`aiwalter`, :user:`kachayev`, :user:`ltsaprounis`, :user:`luiszugasti`, :user:`mloning`, :user:`satya-pattnaik` and :user:`yashlamba`
 
 
 [0.6.0] - 2021-04-15
@@ -319,53 +319,53 @@ All contributors: @GuzalBulatova, @RNKuhns, @aaronreidsmith, @aiwalter, @kachaye
 
 Fixed
 ~~~~~
-* Fix counting for Github's automatic language discovery (#812) @xuyxu
-* Fix counting for Github's automatic language discovery (#811) @xuyxu
-* Fix examples CI checks (#793) @mloning
-* Fix TimeSeriesForestRegressor (#777) @mloning
-* Fix Deseasonalizer docstring (#737) @mloning
-* SettingWithCopyWarning in Prophet with exogenous data (#735) @jschemm
-* Correct docstrings for check_X and related functions (#701) @Lovkush-A
-* Fixed bugs mentioned in #694  (#697) @AidenRushbrooke
-* fix typo in CONTRIBUTING.md (#688) @luiszugasti
-* Fix duplicacy in the contribution's list (#685) @afzal442
-* HIVE-COTE 1.0 fix (#678) @MatthewMiddlehurst
+* Fix counting for Github's automatic language discovery (:pr:`812`) :user:`xuyxu`
+* Fix counting for Github's automatic language discovery (:pr:`811`) :user:`xuyxu`
+* Fix examples CI checks (:pr:`793`) :user:`mloning`
+* Fix TimeSeriesForestRegressor (:pr:`777`) :user:`mloning`
+* Fix Deseasonalizer docstring (:pr:`737`) :user:`mloning`
+* SettingWithCopyWarning in Prophet with exogenous data (:pr:`735`) :user:`jschemm`
+* Correct docstrings for check_X and related functions (:pr:`701`) :user:`Lovkush-A`
+* Fixed bugs mentioned in :pr:`694`  (:pr:`697`) :user:`AidenRushbrooke`
+* fix typo in CONTRIBUTING.md (:pr:`688`) :user:`luiszugasti`
+* Fix duplicacy in the contribution's list (:pr:`685`) :user:`afzal442`
+* HIVE-COTE 1.0 fix (:pr:`678`) :user:`MatthewMiddlehurst`
 
 Changed
 ~~~~~~~
-* Update sklearn version (#810) @mloning
-* Remove soft dependency check for numba (#808) @mloning
-* Modify tests for forecasting reductions (#756) @Lovkush-A
-* Upgrade nbqa (#794) @MarcoGorelli
-* Enhanced exception message of splitters (#771) @aiwalter
-* Enhance forecasting model selection/evaluation (#739) @mloning
-* Pin PyStan version (#751) @mloning
-* master to main conversion in docs folder closes #644 (#667) @ayan-biswas0412
-* Update governance (#686) @mloning
-* remove MSM from unit tests for now (#698) @TonyBagnall
-* Make update_params=true by default (#660) @pabworks
-* update dataset names (#676) @TonyBagnall
+* Update sklearn version (:pr:`810`) :user:`mloning`
+* Remove soft dependency check for numba (:pr:`808`) :user:`mloning`
+* Modify tests for forecasting reductions (:pr:`756`) :user:`Lovkush-A`
+* Upgrade nbqa (:pr:`794`) :user:`MarcoGorelli`
+* Enhanced exception message of splitters (:pr:`771`) :user:`aiwalter`
+* Enhance forecasting model selection/evaluation (:pr:`739`) :user:`mloning`
+* Pin PyStan version (:pr:`751`) :user:`mloning`
+* master to main conversion in docs folder closes :pr:`644` (:pr:`667`) :user:`ayan-biswas0412`
+* Update governance (:pr:`686`) :user:`mloning`
+* remove MSM from unit tests for now (:pr:`698`) :user:`TonyBagnall`
+* Make update_params=true by default (:pr:`660`) :user:`pabworks`
+* update dataset names (:pr:`676`) :user:`TonyBagnall`
 
 Added
 ~~~~~
-* Add support for exogenous variables to forecasting reduction (#757) @mloning
-* Added forecasting docstring examples (#772) @aiwalter
-* Added the agg argument to EnsembleForecaster (#774) @Ifeanyi30
-* Added OptionalPassthrough transformer (#762) @aiwalter
-* Add doctests (#766) @mloning
-* Multiplexer forecaster (#715) @koralturkk
-* Upload source tarball to PyPI during releases (#749) @dsherry
-* Create developer guide (#734) @mloning
-* Refactor TSF classifier into TSF regressor (#693) @luiszugasti
-* Outlier detection with HampelFilter (#708) @aiwalter
-* changes to contributing.md to include directions to installation (#695) @kanand77
-* Evaluate (example and fix) (#690) @aiwalter
-* Knn unit tests (#705) @TonyBagnall
-* Knn transpose fix (#689) @TonyBagnall
-* Evaluate forecaster function (#657) @aiwalter
-* Multioutput reduction strategy for forecasting (#659) @Lovkush-A
+* Add support for exogenous variables to forecasting reduction (:pr:`757`) :user:`mloning`
+* Added forecasting docstring examples (:pr:`772`) :user:`aiwalter`
+* Added the agg argument to EnsembleForecaster (:pr:`774`) :user:`Ifeanyi30`
+* Added OptionalPassthrough transformer (:pr:`762`) :user:`aiwalter`
+* Add doctests (:pr:`766`) :user:`mloning`
+* Multiplexer forecaster (:pr:`715`) :user:`koralturkk`
+* Upload source tarball to PyPI during releases (:pr:`749`) :user:`dsherry`
+* Create developer guide (:pr:`734`) :user:`mloning`
+* Refactor TSF classifier into TSF regressor (:pr:`693`) :user:`luiszugasti`
+* Outlier detection with HampelFilter (:pr:`708`) :user:`aiwalter`
+* changes to contributing.md to include directions to installation (:pr:`695`) :user:`kanand77`
+* Evaluate (example and fix) (:pr:`690`) :user:`aiwalter`
+* Knn unit tests (:pr:`705`) :user:`TonyBagnall`
+* Knn transpose fix (:pr:`689`) :user:`TonyBagnall`
+* Evaluate forecaster function (:pr:`657`) :user:`aiwalter`
+* Multioutput reduction strategy for forecasting (:pr:`659`) :user:`Lovkush-A`
 
-All contributors: @AidenRushbrooke, @Ifeanyi30, @Lovkush-A, @MarcoGorelli, @MatthewMiddlehurst, @TonyBagnall, @afzal442, @aiwalter, @ayan-biswas0412, @dsherry, @jschemm, @kanand77, @koralturkk, @luiszugasti, @mloning, @pabworks and @xuyxu
+All contributors: :user:`AidenRushbrooke`, :user:`Ifeanyi30`, :user:`Lovkush-A`, :user:`MarcoGorelli`, :user:`MatthewMiddlehurst`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`ayan-biswas0412`, :user:`dsherry`, :user:`jschemm`, :user:`kanand77`, :user:`koralturkk`, :user:`luiszugasti`, :user:`mloning`, :user:`pabworks` and :user:`xuyxu`
 
 
 [0.5.3] - 2021-02-06
@@ -373,146 +373,146 @@ All contributors: @AidenRushbrooke, @Ifeanyi30, @Lovkush-A, @MarcoGorelli, @Matt
 
 Fixed
 ~~~~~
-* Fix reduced regression forecaster reference (#658) @mloning
-* Address Bug #640 (#642) @patrickzib
-* Ed knn (#638) @TonyBagnall
-* Euclidean distance for KNNs (#636) @goastler
+* Fix reduced regression forecaster reference (:pr:`658`) :user:`mloning`
+* Address Bug :pr:`640` (:pr:`642`) :user:`patrickzib`
+* Ed knn (:pr:`638`) :user:`TonyBagnall`
+* Euclidean distance for KNNs (:pr:`636`) :user:`goastler`
 
 Changed
 ~~~~~~~
-* Pin NumPy 1.19 (#643) @mloning
-* Update CoC committee (#614) @mloning
-* Benchmarking issue141 (#492) @ViktorKaz
-* Catch22 Refactor & Multithreading (#615) @MatthewMiddlehurst
+* Pin NumPy 1.19 (:pr:`643`) :user:`mloning`
+* Update CoC committee (:pr:`614`) :user:`mloning`
+* Benchmarking issue141 (:pr:`492`) :user:`ViktorKaz`
+* Catch22 Refactor & Multithreading (:pr:`615`) :user:`MatthewMiddlehurst`
 
 Added
 ~~~~~
-* Create new factory method for forecasting via reduction (#635) @Lovkush-A
-* Feature ForecastingRandomizedSearchCV (#634) @pabworks
-* Added Imputer for missing values (#637) @aiwalter
-* Add expanding window splitter (#627) @koralturkk
-* Forecasting User Guide (#595) @Lovkush-A
-* Add data processing functionality to convert between data formats (#553) @RNKuhns
-* Add basic parallel support for `ElasticEnsemble` (#546) @xuyxu
+* Create new factory method for forecasting via reduction (:pr:`635`) :user:`Lovkush-A`
+* Feature ForecastingRandomizedSearchCV (:pr:`634`) :user:`pabworks`
+* Added Imputer for missing values (:pr:`637`) :user:`aiwalter`
+* Add expanding window splitter (:pr:`627`) :user:`koralturkk`
+* Forecasting User Guide (:pr:`595`) :user:`Lovkush-A`
+* Add data processing functionality to convert between data formats (:pr:`553`) :user:`RNKuhns`
+* Add basic parallel support for `ElasticEnsemble` (:pr:`546`) :user:`xuyxu`
 
-All contributors: @Lovkush-A, @MatthewMiddlehurst, @RNKuhns, @TonyBagnall, @ViktorKaz, @aiwalter, @goastler, @koralturkk, @mloning, @pabworks, @patrickzib and @xuyxu
+All contributors: :user:`Lovkush-A`, :user:`MatthewMiddlehurst`, :user:`RNKuhns`, :user:`TonyBagnall`, :user:`ViktorKaz`, :user:`aiwalter`, :user:`goastler`, :user:`koralturkk`, :user:`mloning`, :user:`pabworks`, :user:`patrickzib` and :user:`xuyxu`
 
 [0.5.2] - 2021-01-13
 --------------------
 
 Fixed
 ~~~~~
-* Fix ModuleNotFoundError issue (#613) @Hephaest
-* Fixes _fit(X) in KNN (#610) @TonyBagnall
-* UEA TSC module improvements 2 (#599) @TonyBagnall
-* Fix sktime.classification.frequency_based not found error (#606) @Hephaest
-* UEA TSC module improvements 1 (#579) @TonyBagnall
-* Relax numba pinning (#593) @dhirschfeld
-* Fix fh.to_relative() bug for DatetimeIndex (#582) @aiwalter
+* Fix ModuleNotFoundError issue (:pr:`613`) :user:`Hephaest`
+* Fixes _fit(X) in KNN (:pr:`610`) :user:`TonyBagnall`
+* UEA TSC module improvements 2 (:pr:`599`) :user:`TonyBagnall`
+* Fix sktime.classification.frequency_based not found error (:pr:`606`) :user:`Hephaest`
+* UEA TSC module improvements 1 (:pr:`579`) :user:`TonyBagnall`
+* Relax numba pinning (:pr:`593`) :user:`dhirschfeld`
+* Fix fh.to_relative() bug for DatetimeIndex (:pr:`582`) :user:`aiwalter`
 
-All contributors: @Hephaest, @MatthewMiddlehurst, @TonyBagnall, @aiwalter and @dhirschfeld
+All contributors: :user:`Hephaest`, :user:`MatthewMiddlehurst`, :user:`TonyBagnall`, :user:`aiwalter` and :user:`dhirschfeld`
 
 [0.5.1] - 2020-12-29
 --------------------
 
 Added
 ~~~~~
-* Add ARIMA (#559) @HYang1996
-* Add fbprophet wrapper (#515) @aiwalter
-* Add MiniRocket and MiniRocketMultivariate (#542) @angus924
-* Add Cosine, ACF and PACF transformers (#509) @afzal442
-* Add example notebook Window Splitters (#555) @juanitorduz
-* Add SlidingWindowSplitter visualization on doctrings (#554) @juanitorduz
+* Add ARIMA (:pr:`559`) :user:`HYang1996`
+* Add fbprophet wrapper (:pr:`515`) :user:`aiwalter`
+* Add MiniRocket and MiniRocketMultivariate (:pr:`542`) :user:`angus924`
+* Add Cosine, ACF and PACF transformers (:pr:`509`) :user:`afzal442`
+* Add example notebook Window Splitters (:pr:`555`) :user:`juanitorduz`
+* Add SlidingWindowSplitter visualization on doctrings (:pr:`554`) :user:`juanitorduz`
 
 Fixed
 ~~~~~
-* Pin pandas version to fix pandas-related AutoETS error on Linux  (#581) @mloning
-* Fixed default argument in docstring in SlidingWindowSplitter (#556) @ngupta23
+* Pin pandas version to fix pandas-related AutoETS error on Linux  (:pr:`581`) :user:`mloning`
+* Fixed default argument in docstring in SlidingWindowSplitter (:pr:`556`) :user:`ngupta23`
 
-All contributors: @HYang1996, @TonyBagnall, @afzal442, @aiwalter, @angus924, @juanitorduz, @mloning and @ngupta23
+All contributors: :user:`HYang1996`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`angus924`, :user:`juanitorduz`, :user:`mloning` and :user:`ngupta23`
 
 [0.5.0] - 2020-12-19
 --------------------
 
 Added
 ~~~~~
-* Add tests for forecasting with exogenous variables (#547) @mloning
-* Add HCrystalBall wrapper (#485) @MichalChromcak
-* Tbats (#527) @aiwalter
-* Added matrix profile using stumpy  (#471) @utsavcoding
-* User guide (#377) @mloning
-* Add GitHub workflow for building and testing on macOS (#505) @mloning
-* [DOC] Add dtaidistance (#502) @mloning
-* Implement the `feature_importances_` property for RISE (#497) @AaronX121
-* Add scikit-fda to the list of related software (#495) @vnmabus
-* [DOC] Add roadmap to docs (#467) @mloning
-* Add parallelization for `RandomIntervalSpectralForest` (#482) @AaronX121
-* New Ensemble Forecasting Methods  (#333) @magittan
-* CI run black formatter on notebooks as well as Python scripts (#437) @MarcoGorelli
-* Implementation of catch22 transformer, CIF classifier and dictionary based clean-up (#453) @MatthewMiddlehurst
-* Added write dataset to ts file functionality (#438) @whackteachers
-* Added ability to load from csv containing long-formatted data (#442) @AidenRushbrooke
-* Transform typing (#420) @mloning
+* Add tests for forecasting with exogenous variables (:pr:`547`) :user:`mloning`
+* Add HCrystalBall wrapper (:pr:`485`) :user:`MichalChromcak`
+* Tbats (:pr:`527`) :user:`aiwalter`
+* Added matrix profile using stumpy  (:pr:`471`) :user:`utsavcoding`
+* User guide (:pr:`377`) :user:`mloning`
+* Add GitHub workflow for building and testing on macOS (:pr:`505`) :user:`mloning`
+* [DOC] Add dtaidistance (:pr:`502`) :user:`mloning`
+* Implement the `feature_importances_` property for RISE (:pr:`497`) :user:`AaronX121`
+* Add scikit-fda to the list of related software (:pr:`495`) :user:`vnmabus`
+* [DOC] Add roadmap to docs (:pr:`467`) :user:`mloning`
+* Add parallelization for `RandomIntervalSpectralForest` (:pr:`482`) :user:`AaronX121`
+* New Ensemble Forecasting Methods  (:pr:`333`) :user:`magittan`
+* CI run black formatter on notebooks as well as Python scripts (:pr:`437`) :user:`MarcoGorelli`
+* Implementation of catch22 transformer, CIF classifier and dictionary based clean-up (:pr:`453`) :user:`MatthewMiddlehurst`
+* Added write dataset to ts file functionality (:pr:`438`) :user:`whackteachers`
+* Added ability to load from csv containing long-formatted data (:pr:`442`) :user:`AidenRushbrooke`
+* Transform typing (:pr:`420`) :user:`mloning`
 
 Changed
 ~~~~~~~
-* Refactoring utils and transformer module (#538) @mloning
-* Update README (#454) @mloning
-* Clean up example notebooks (#548) @mloning
-* Update README.rst (#536) @aiwalter
-* [Doc]Updated load_data.py (#496) @Afzal-Ind
-* Update forecasting.py (#487) @raishubham1
-* update basic motion description (#475) @vollmersj
-* [DOC] Update docs in benchmarking/data.py (#489) @Afzal-Ind
-* Edit Jupyter Notebook 01_forecasting (#486) @bmurdata
-* Feature & Performance improvements of SFA/WEASEL (#457) @patrickzib
-* Moved related software from wiki to docs (#439) @mloning
+* Refactoring utils and transformer module (:pr:`538`) :user:`mloning`
+* Update README (:pr:`454`) :user:`mloning`
+* Clean up example notebooks (:pr:`548`) :user:`mloning`
+* Update README.rst (:pr:`536`) :user:`aiwalter`
+* [Doc]Updated load_data.py (:pr:`496`) :user:`Afzal-Ind`
+* Update forecasting.py (:pr:`487`) :user:`raishubham1`
+* update basic motion description (:pr:`475`) :user:`vollmersj`
+* [DOC] Update docs in benchmarking/data.py (:pr:`489`) :user:`Afzal-Ind`
+* Edit Jupyter Notebook 01_forecasting (:pr:`486`) :user:`bmurdata`
+* Feature & Performance improvements of SFA/WEASEL (:pr:`457`) :user:`patrickzib`
+* Moved related software from wiki to docs (:pr:`439`) :user:`mloning`
 
 Fixed
 ~~~~~
-* Fixed issue outlined in issue 522 (#537) @ngupta23
-* Fix plot-series (#533) @gracewgao
-* added mape_loss and cosmetic fixes to notebooks (removed kernel) (#500) @tch
-* Fix azure pipelines (#506) @mloning
-* [DOC] Fix broken docstrings of `RandomIntervalSpectralForest` (#473) @AaronX121
-* Add back missing bibtex reference to classifiers (#468) @whackteachers
-* Avoid seaborn warning (#472) @davidbp
-* Bump pre-commit versions, run again on notebooks (#469) @MarcoGorelli
-* Fix series validation (#463) @mloning
-* Fix soft dependency imports (#446) @mloning
-* Fix bug in AutoETS (#445) @HYang1996
-* Add ForecastingHorizon class to docs (#444) @mloning
+* Fixed issue outlined in issue 522 (:pr:`537`) :user:`ngupta23`
+* Fix plot-series (:pr:`533`) :user:`gracewgao`
+* added mape_loss and cosmetic fixes to notebooks (removed kernel) (:pr:`500`) :user:`tch`
+* Fix azure pipelines (:pr:`506`) :user:`mloning`
+* [DOC] Fix broken docstrings of `RandomIntervalSpectralForest` (:pr:`473`) :user:`AaronX121`
+* Add back missing bibtex reference to classifiers (:pr:`468`) :user:`whackteachers`
+* Avoid seaborn warning (:pr:`472`) :user:`davidbp`
+* Bump pre-commit versions, run again on notebooks (:pr:`469`) :user:`MarcoGorelli`
+* Fix series validation (:pr:`463`) :user:`mloning`
+* Fix soft dependency imports (:pr:`446`) :user:`mloning`
+* Fix bug in AutoETS (:pr:`445`) :user:`HYang1996`
+* Add ForecastingHorizon class to docs (:pr:`444`) :user:`mloning`
 
 Removed
 ~~~~~~~
-* Remove manylinux1 (#458) @mloning
+* Remove manylinux1 (:pr:`458`) :user:`mloning`
 
-All contributors: @AaronX121, @Afzal-Ind, @AidenRushbrooke, @HYang1996, @MarcoGorelli, @MatthewMiddlehurst, @MichalChromcak, @TonyBagnall, @aiwalter, @bmurdata, @davidbp, @gracewgao, @magittan, @mloning, @ngupta23, @patrickzib, @raishubham1, @tch, @utsavcoding, @vnmabus, @vollmersj and @whackteachers
+All contributors: :user:`AaronX121`, :user:`Afzal-Ind`, :user:`AidenRushbrooke`, :user:`HYang1996`, :user:`MarcoGorelli`, :user:`MatthewMiddlehurst`, :user:`MichalChromcak`, :user:`TonyBagnall`, :user:`aiwalter`, :user:`bmurdata`, :user:`davidbp`, :user:`gracewgao`, :user:`magittan`, :user:`mloning`, :user:`ngupta23`, :user:`patrickzib`, :user:`raishubham1`, :user:`tch`, :user:`utsavcoding`, :user:`vnmabus`, :user:`vollmersj` and :user:`whackteachers`
 
 [0.4.3] - 2020-10-20
 --------------------
 
 Added
 ~~~~~
-* Support for 3d numpy array (#405) @mloning
-* Support for downloading dataset from UCR UEA time series classification data set repository (#430) @Emiliathewolf
-* Univariate time series regression example to TSFresh notebook (#428) @evanmiller29
-* Parallelized TimeSeriesForest using joblib. (#408) @kkoziara
-* Unit test for multi-processing (#414) @kkoziara
-* Add date-time support for forecasting framework (#392) @mloning
+* Support for 3d numpy array (:pr:`405`) :user:`mloning`
+* Support for downloading dataset from UCR UEA time series classification data set repository (:pr:`430`) :user:`Emiliathewolf`
+* Univariate time series regression example to TSFresh notebook (:pr:`428`) :user:`evanmiller29`
+* Parallelized TimeSeriesForest using joblib. (:pr:`408`) :user:`kkoziara`
+* Unit test for multi-processing (:pr:`414`) :user:`kkoziara`
+* Add date-time support for forecasting framework (:pr:`392`) :user:`mloning`
 
 Changed
 ~~~~~~~
-* Performance improvements of dictionary classifiers (#398) @patrickzib
+* Performance improvements of dictionary classifiers (:pr:`398`) :user:`patrickzib`
 
 Fixed
 ~~~~~
-* Fix links in Readthedocs and Binder launch button (#416) @mloning
-* Fixed small bug in performance metrics (#422) @krumeto
-* Resolved warnings in notebook examples (#418) @alwinw
-* Resolves #325 ModuleNotFoundError for soft dependencies (#410) @alwinw
+* Fix links in Readthedocs and Binder launch button (:pr:`416`) :user:`mloning`
+* Fixed small bug in performance metrics (:pr:`422`) :user:`krumeto`
+* Resolved warnings in notebook examples (:pr:`418`) :user:`alwinw`
+* Resolves :pr:`325` ModuleNotFoundError for soft dependencies (:pr:`410`) :user:`alwinw`
 
-All contributors: @Emiliathewolf, @alwinw, @evanmiller29, @kkoziara, @krumeto, @mloning and @patrickzib
+All contributors: :user:`Emiliathewolf`, :user:`alwinw`, :user:`evanmiller29`, :user:`kkoziara`, :user:`krumeto`, :user:`mloning` and :user:`patrickzib`
 
 
 [0.4.2] - 2020-10-01
@@ -520,25 +520,25 @@ All contributors: @Emiliathewolf, @alwinw, @evanmiller29, @kkoziara, @krumeto, @
 
 Added
 ~~~~~
-* ETSModel with auto-fitting capability (#393) @HYang1996
-* WEASEL classifier (#391) @patrickzib
-* Full support for exogenous data in forecasting framework (#382) @mloning, (#380) @mloning
-* Multivariate dataset for US consumption over time (#385) @SebasKoel
-* Governance document (#324) @mloning, @fkiraly
+* ETSModel with auto-fitting capability (:pr:`393`) :user:`HYang1996`
+* WEASEL classifier (:pr:`391`) :user:`patrickzib`
+* Full support for exogenous data in forecasting framework (:pr:`382`) :user:`mloning`, (:pr:`380`) :user:`mloning`
+* Multivariate dataset for US consumption over time (:pr:`385`) :user:`SebasKoel`
+* Governance document (:pr:`324`) :user:`mloning`, :user:`fkiraly`
 
 Fixed
 ~~~~~
-* Documentation fixes (#400) @brettkoonce, (#399) @akanz1, (#404) @alwinw
+* Documentation fixes (:pr:`400`) :user:`brettkoonce`, (:pr:`399`) :user:`akanz1`, (:pr:`404`) :user:`alwinw`
 
 Changed
 ~~~~~~~
-* Move documentation to ReadTheDocs with support for versioned documentation (#395) @mloning
-* Refactored SFA implementation (additional features and speed improvements) (#389) @patrickzib
-* Move prediction interval API to base classes in forecasting framework (#387) @big-o
-* Documentation improvements (#364) @mloning
-* Update CI and maintenance tools (#394) @mloning
+* Move documentation to ReadTheDocs with support for versioned documentation (:pr:`395`) :user:`mloning`
+* Refactored SFA implementation (additional features and speed improvements) (:pr:`389`) :user:`patrickzib`
+* Move prediction interval API to base classes in forecasting framework (:pr:`387`) :user:`big-o`
+* Documentation improvements (:pr:`364`) :user:`mloning`
+* Update CI and maintenance tools (:pr:`394`) :user:`mloning`
 
-All contributors: @HYang1996, @SebasKoel, @fkiraly, @akanz1, @alwinw, @big-o, @brettkoonce, @mloning, @patrickzib
+All contributors: :user:`HYang1996`, :user:`SebasKoel`, :user:`fkiraly`, :user:`akanz1`, :user:`alwinw`, :user:`big-o`, :user:`brettkoonce`, :user:`mloning`, :user:`patrickzib`
 
 
 [0.4.1] - 2020-07-09
@@ -546,32 +546,32 @@ All contributors: @HYang1996, @SebasKoel, @fkiraly, @akanz1, @alwinw, @big-o, @b
 
 Added
 ~~~~~
-- New sktime logo @mloning
-- TemporalDictionaryEnsemble (#292) @MatthewMiddlehurst
-- ShapeDTW (#287) @Multivin12
-- Updated sktime artwork (logo) @mloning
-- Truncation transformer (#315) @ABostrom
-- Padding transformer (#316) @ABostrom
-- Example notebook with feature importance graph for time series forest (#319) @HYang1996
-- ACSF1 data set (#314) @BandaSaiTejaReddy
-- Data conversion function from 3d numpy array to nested pandas dataframe (#304) @vedazeren
+- New sktime logo :user:`mloning`
+- TemporalDictionaryEnsemble (:pr:`292`) :user:`MatthewMiddlehurst`
+- ShapeDTW (:pr:`287`) :user:`Multivin12`
+- Updated sktime artwork (logo) :user:`mloning`
+- Truncation transformer (:pr:`315`) :user:`ABostrom`
+- Padding transformer (:pr:`316`) :user:`ABostrom`
+- Example notebook with feature importance graph for time series forest (:pr:`319`) :user:`HYang1996`
+- ACSF1 data set (:pr:`314`) :user:`BandaSaiTejaReddy`
+- Data conversion function from 3d numpy array to nested pandas dataframe (:pr:`304`) :user:`vedazeren`
 
 Changed
 ~~~~~~~
-- Replaced gunpoint dataset in tutorials, added OSULeaf dataset (#295) @marielledado
-- Updated macOS advanced install instructions (#306) (#308) @sophijka
-- Updated contributing guidelines (#301) @Ayushmaanseth
+- Replaced gunpoint dataset in tutorials, added OSULeaf dataset (:pr:`295`) :user:`marielledado`
+- Updated macOS advanced install instructions (:pr:`306`) (:pr:`308`) :user:`sophijka`
+- Updated contributing guidelines (:pr:`301`) :user:`Ayushmaanseth`
 
 Fixed
 ~~~~~
-- Typos (#293) @Mo-Saif, (#285) @Pangoraw, (#305) @hiqbal2
-- Manylinux wheel building (#286) @mloning
-- KNN compatibility with sklearn (#310) @Cheukting
-- Docstrings for AutoARIMA (#307) @btrtts
+- Typos (:pr:`293`) :user:`Mo-Saif`, (:pr:`285`) :user:`Pangoraw`, (:pr:`305`) :user:`hiqbal2`
+- Manylinux wheel building (:pr:`286`) :user:`mloning`
+- KNN compatibility with sklearn (:pr:`310`) :user:`Cheukting`
+- Docstrings for AutoARIMA (:pr:`307`) :user:`btrtts`
 
-All contributors: @Ayushmaanseth, @Mo-Saif, @Pangoraw, @marielledado,
-@mloning, @sophijka, @Cheukting, @MatthewMiddlehurst, @Multivin12,
-@ABostrom, @HYang1996, @BandaSaiTejaReddy, @vedazeren, @hiqbal2, @btrtts
+All contributors: :user:`Ayushmaanseth`, :user:`Mo-Saif`, :user:`Pangoraw`, :user:`marielledado`,
+:user:`mloning`, :user:`sophijka`, :user:`Cheukting`, :user:`MatthewMiddlehurst`, :user:`Multivin12`,
+:user:`ABostrom`, :user:`HYang1996`, :user:`BandaSaiTejaReddy`, :user:`vedazeren`, :user:`hiqbal2`, :user:`btrtts`
 
 
 [0.4.0] - 2020-06-05
