@@ -11,8 +11,7 @@ class _RegistryMetaEnum(EnumMeta):
 
 
 class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
-    """
-    Class that is used to create registry enums.
+    """Creates registry enums.
 
     Parameters
     ----------
@@ -30,10 +29,24 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         self.instance = instance
 
     def __iter__(self):
+        """Generator for iterating over an enum values
+
+        Returns
+        -------
+        Generator
+            Yields values of enum in value, instance, description order.
+        """
         yield self.value
         if self.instance is not None:
             yield self.instance
         yield self.description
 
     def __str__(self):
+        """Returns string value of enum.
+
+        Returns
+        -------
+        str
+            String version of enum
+        """
         return self.value

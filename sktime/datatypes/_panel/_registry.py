@@ -8,6 +8,8 @@ from sktime.base._registry_enum import BaseRegistryEnum
 
 
 class PanelMtype(BaseRegistryEnum):
+    """Enum class for Panel mtypes."""
+
     NESTED_UNIV = (
         "nested_univ",
         "pd.DataFrame with one column per variable, pd.Series in cells",

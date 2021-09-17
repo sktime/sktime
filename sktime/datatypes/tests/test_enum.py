@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-""" File containing tests for the enum types
-"""
+"""File containing tests for the enum types."""
 import numpy as np
 import pytest
 from sktime.datatypes.types import Mtypes, Scitypes

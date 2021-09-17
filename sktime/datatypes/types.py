@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Defines types for the datatypes module."""
 __all__ = ["Mtypes", "Scitypes"]
 
 from typing import Union

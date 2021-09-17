@@ -8,6 +8,8 @@ from sktime.base._registry_enum import BaseRegistryEnum
 
 
 class SeriesMtype(BaseRegistryEnum):
+    """Enum class for series mtypes."""
+
     PD_SERIES = (
         "pd.Series",
         "pd.Series representation of a univariate series",

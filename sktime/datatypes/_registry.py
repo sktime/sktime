@@ -63,6 +63,8 @@ __all__ = [
 
 
 class Scitype(BaseRegistryEnum):
+    """Enum class for scitypes."""
+
     SERIES = ("Series", "uni- or multivariate time series")
     PANEL = ("Panel", "panel of uni- or multivariate time series")
 
@@ -72,6 +74,7 @@ SCITYPE_REGISTER = [tuple(scitype) for scitype in Scitype]
 
 def mtype_to_scitype(mtype: Union[PanelMtype, SeriesMtype, str]) -> str:
     """Infer scitype belonging to mtype.
+
     Parameters
     ----------
     mtype: str or PanelMtype enum or SeriesMtype enum
