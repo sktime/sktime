@@ -54,7 +54,6 @@ from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import AutoEnsembleForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -159,8 +158,8 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
-FORECASTER = ExponentialSmoothing()
-FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
+FORECASTER = NaiveForecaster()
+FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
 STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),

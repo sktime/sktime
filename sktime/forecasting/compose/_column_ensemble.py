@@ -60,7 +60,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
             self.clone_tags(forecasters, "requires-fh-in-fit")
-            self.clone_tags(forecasters, "scitype:y")
         else:
             forecaster_requires_fh_in_fit = (
                 forecaster.get_tag("requires-fh-in-fit")
