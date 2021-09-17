@@ -50,6 +50,7 @@ Forecasting
 ^^^^^^^^^^^
 
 * Forecasters can now be passed `pd.DataFrame`, `pd.Series`, `np.ndarray` as `X` or `y`, and return forecasts of the same type as passed for `y`
+* `sktime` now supports multivariate forecasters, with all core interface methods returning sensible return types in that case
 * whether forecaster can deal with multivariate series can be inspected via `get_tag("scitype:y")`, which can return `"univariate"`, `"multivariate"`, or `"both"`
 * further tags have been introduced, see `registry/all_tags`
 
