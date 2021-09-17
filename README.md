@@ -178,7 +178,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 | :money_with_wings: **[Donate]** | Fund sktime maintenance and development. |
 | :classical_building: **[Governance]** | How and by whom decisions are made in sktime's community.   |
 
-[contribute]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.md
+[contribute]: https://www.sktime.org/en/latest/get_involved/contributing.html
 [donate]: https://opencollective.com/sktime
 [extension templates]: https://github.com/alan-turing-institute/sktime/tree/main/extension_templates
 [developer guides]: https://www.sktime.org/en/latest/developer_guide.html
