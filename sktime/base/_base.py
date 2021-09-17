@@ -250,7 +250,7 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        instance : object of the class with default parameters
+        instance : instance of the class with default parameters
 
         Notes
         -----

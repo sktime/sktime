@@ -74,7 +74,7 @@ class _Pipeline(
         """Return the length of the Pipeline."""
         return len(self.steps)
 
-    def _get_inverse_transform(self, y):
+    def _get_inverse_transform(self, y, X=None):
         """Iterate over transformers.
 
         Inverse transform y (used for y_pred and pred_int)
@@ -93,7 +93,7 @@ class _Pipeline(
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             skip_trafo = transformer.get_tag("skip-inverse-transform", False)
             if not skip_trafo:
-                y = transformer.inverse_transform(y)
+                y = transformer.inverse_transform(y, X)
         return y
 
     @property
@@ -200,7 +200,7 @@ class ForecastingPipeline(_Pipeline):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = clone(transformer)
-                X = t.fit_transform(X)
+                X = t.fit_transform(Z=X, X=y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
@@ -237,7 +237,7 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                X = transformer.transform(X)
+                X = transformer.transform(Z=X)
 
         return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
@@ -455,8 +455,5 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             The reconstructed timeseries after the transformation has been reversed.
         """
         self.check_is_fitted()
-        zt = check_series(Z, enforce_univariate=True)
-        for _, _, transformer in self._iter_transformers(reverse=True):
-            if not transformer.get_tag("skip-inverse-transform", False):
-                zt = transformer.inverse_transform(zt, X)
-        return zt
+        Z = check_series(Z, enforce_univariate=True)
+        return self._get_inverse_transform(Z, X)

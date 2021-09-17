@@ -15,10 +15,12 @@ _check_soft_dependencies("pmdarima")
 class AutoARIMA(_PmdArimaAdapter):
     """Automatically discover the optimal order for an ARIMA model.
 
+    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
+
     The auto-ARIMA process seeks to identify the most optimal parameters
     for an ARIMA model, settling on a single fitted ARIMA model. This
     process is based on the commonly-used R function,
-    forecast::auto.arima [3].
+    forecast::auto.arima.
 
     Auto-ARIMA works by conducting differencing tests (i.e.,
     Kwiatkowski–Phillips–Schmidt–Shin, Augmented Dickey-Fuller or
@@ -132,21 +134,22 @@ class AutoARIMA(_PmdArimaAdapter):
         with_intercept is False, the trend will be set to a no- intercept
         value.
     method : str, optional (default='lbfgs')
-        The method determines which solver from scipy.optimize is used, and it
-        can be chosen from among the following strings:
+        The ``method`` determines which solver from ``scipy.optimize``
+        is used, and it can be chosen from among the following strings:
 
-        ‘newton’ for Newton-Raphson
-        ‘nm’ for Nelder-Mead
-        ‘bfgs’ for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
-        ‘lbfgs’ for limited-memory BFGS with optional box constraints
-        ‘powell’ for modified Powell’s method
-        ‘cg’ for conjugate gradient
-        ‘ncg’ for Newton-conjugate gradient
-        ‘basinhopping’ for global basin-hopping solver
-        The explicit arguments in fit are passed to the solver, with the
-        exception of the basin-hopping solver. Each solver has several
-        optional arguments that are not the same across solvers. These can be
-        passed as **fit_kwargs
+        - 'newton' for Newton-Raphson
+        - 'nm' for Nelder-Mead
+        - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+        - 'lbfgs' for limited-memory BFGS with optional box constraints
+        - 'powell' for modified Powell's method
+        - 'cg' for conjugate gradient
+        - 'ncg' for Newton-conjugate gradient
+        - 'basinhopping' for global basin-hopping solver
+
+        The explicit arguments in ``fit`` are passed to the solver,
+        with the exception of the basin-hopping solver. Each
+        solver has several optional arguments that are not the same across
+        solvers. These can be passed as **fit_kwargs
     maxiter : int, optional (default=50)
         The maximum number of function evaluations.
     offset_test_args : dict, optional (default=None)
@@ -184,22 +187,16 @@ class AutoARIMA(_PmdArimaAdapter):
         If random is True and a “random search” is going to be performed,
         n_iter is the number of ARIMA models to be fit.
     out_of_sample_size : int, optional (default=0)
-        The ARIMA class can fit only a portion of the data if specified, in
-        order to retain an “out of bag” sample score. This is the number of
-        examples from the tail of the time series to hold out and use as
-        validation examples. The model will not be fit on these samples, but
-        the observations will be added into the model’s endog and exog arrays
-        so that future forecast values originate from the end of the
-        endogenous vector.
-
-        # For instance:
-
-        # y = [0, 1, 2, 3, 4, 5, 6]
-        # out_of_sample_size = 2
-
-        # > Fit on: [0, 1, 2, 3, 4]
-        # > Score on: [5, 6]
-        # > Append [5, 6] to end of self.arima_res_.data.endog values,
+        The number of examples from the tail of the time series to hold out
+        and use as validation examples. The model will not be fit on these
+        samples, but the observations will be added into the model's ``endog``
+        and ``exog`` arrays so that future forecast values originate from the
+        end of the endogenous vector. For instance::
+            y = [0, 1, 2, 3, 4, 5, 6]
+            out_of_sample_size = 2
+            > Fit on: [0, 1, 2, 3, 4]
+            > Score on: [5, 6]
+            > Append [5, 6] to end of self.arima_res_.data.endog values
     scoring : str, optional (default='mse')
         If performing validation (i.e., if out_of_sample_size > 0), the metric
         to use for scoring the out-of-sample data. One of (‘mse’, ‘mae’)
@@ -208,9 +205,13 @@ class AutoARIMA(_PmdArimaAdapter):
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
 
+    See Also
+    --------
+    ARIMA
+
     References
     ----------
-    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
+    .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
 
     Examples
     --------
@@ -221,7 +222,7 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> forecaster.fit(y)
     AutoARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -358,6 +359,8 @@ class AutoARIMA(_PmdArimaAdapter):
 class ARIMA(_PmdArimaAdapter):
     """An ARIMA estimator.
 
+    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
+
     An ARIMA, or autoregressive integrated moving average, is a
     generalization of an autoregressive moving average (ARMA) and is fitted to
     time-series data in an effort to forecast future points. ARIMA models can
@@ -387,7 +390,7 @@ class ARIMA(_PmdArimaAdapter):
     When two out of the three terms are zeros, the model may be referred to
     based on the non-zero parameter, dropping "AR", "I" or "MA" from the
     acronym describing the model. For example, ``ARIMA(1,0,0)`` is ``AR(1)``,
-    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``. [1]_
+    ``ARIMA(0,1,0)`` is ``I(1)``, and ``ARIMA(0,0,1)`` is ``MA(1)``.
 
     See notes for more practical information on the ``ARIMA`` class.
 
@@ -417,6 +420,7 @@ class ARIMA(_PmdArimaAdapter):
     method : str, optional (default='lbfgs')
         The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
+
         - 'newton' for Newton-Raphson
         - 'nm' for Nelder-Mead
         - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
@@ -425,6 +429,7 @@ class ARIMA(_PmdArimaAdapter):
         - 'cg' for conjugate gradient
         - 'ncg' for Newton-conjugate gradient
         - 'basinhopping' for global basin-hopping solver
+
         The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
@@ -450,11 +455,12 @@ class ARIMA(_PmdArimaAdapter):
         If performing validation (i.e., if ``out_of_sample_size`` > 0), the
         metric to use for scoring the out-of-sample data:
 
-            * If a string, must be a valid metric name importable from
-                ``sklearn.metrics``.
-            * If a callable, must adhere to the function signature::
+        - If a string, must be a valid metric name importable from
+          ``sklearn.metrics``
 
-                def foo_loss(y_true, y_pred)
+        - If a callable, must adhere to the function signature::
+
+            def foo_loss(y_true, y_pred)
 
         Note that models are selected by *minimizing* loss. If using a
         maximizing metric (such as ``sklearn.metrics.r2_score``), it is the
@@ -473,16 +479,17 @@ class ARIMA(_PmdArimaAdapter):
     **sarimax_kwargs : keyword args, optional
         Optional arguments to pass to the SARIMAX constructor.
         Examples of potentially valuable kwargs:
-            - time_varying_regression : boolean
+
+        - time_varying_regression : boolean
             Whether or not coefficients on the exogenous regressors are allowed
             to vary over time.
-            - enforce_stationarity : boolean
+        - enforce_stationarity : boolean
             Whether or not to transform the AR parameters to enforce
             stationarity in the auto-regressive component of the model.
-            - enforce_invertibility : boolean
+         - enforce_invertibility : boolean
             Whether or not to transform the MA parameters to enforce
             invertibility in the moving average component of the model.
-            - simple_differencing : boolean
+        - simple_differencing : boolean
             Whether or not to use partially conditional maximum likelihood
             estimation for seasonal ARIMA models. If True, differencing is
             performed prior to estimation, which discards the first
@@ -490,30 +497,34 @@ class ARIMA(_PmdArimaAdapter):
             state-space formulation. If False, the full SARIMAX model is
             put in state-space form so that all datapoints can be used in
             estimation. Default is False.
-            - measurement_error: boolean
+         - measurement_error: boolean
             Whether or not to assume the endogenous observations endog were
             measured with error. Default is False.
-            - mle_regression : boolean
+        - mle_regression : boolean
             Whether or not to use estimate the regression coefficients for the
             exogenous variables as part of maximum likelihood estimation or
             through the Kalman filter (i.e. recursive least squares). If
             time_varying_regression is True, this must be set to False.
             Default is True.
-            - hamilton_representation : boolean
+        - hamilton_representation : boolean
             Whether or not to use the Hamilton representation of an ARMA
             process (if True) or the Harvey representation (if False).
             Default is False.
-            - concentrate_scale : boolean
+        - concentrate_scale : boolean
             Whether or not to concentrate the scale (variance of the error
             term) out of the likelihood. This reduces the number of parameters
             estimated by maximum likelihood by one, but standard errors will
             then not be available for the scale parameter.
 
+    See Also
+    --------
+    AutoARIMA
+
     References
     ----------
-    ..[1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
-    ..[2] https://www.statsmodels.org/stable/generated/
-      statsmodels.tsa.statespace.sarimax.SARIMAX.html
+    .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
+
+    .. [2] https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
 
     Examples
     --------
@@ -527,7 +538,7 @@ class ARIMA(_PmdArimaAdapter):
     >>> forecaster.fit(y)
     ARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
