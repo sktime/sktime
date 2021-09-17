@@ -875,7 +875,11 @@
       "contributions": [
         "code",
         "doc",
-        "tutorial"
+        "tutorial",
+        "example",
+        "ideas",
+        "review",
+        "test"
       ]
     },
     {
@@ -1199,6 +1203,16 @@
       "profile": "https://github.com/pul95",
       "contributions": [
         "doc"
+      ]
+    },
+     {
+      "login": "IlyasMoutawwakil",
+      "name": Ilyas Moutawwakil",
+      "avatar_url": "https://avatars.githubusercontent.com/IlyasMoutawwakil",
+      "profile": "https://github.com/IlyasMoutawwakil",
+      "contributions": [
+        "code",
+	      "doc"
       ]
     },
     {
