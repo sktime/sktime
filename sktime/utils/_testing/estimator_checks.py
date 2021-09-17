@@ -32,7 +32,6 @@ from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransforme
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
@@ -263,7 +262,11 @@ def check_constructor(Estimator):
     # Filter out required parameters with no default value and parameters
     # set for running tests
     required_params = getattr(estimator, "_required_parameters", tuple())
-    test_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
+
+    test_params = Estimator.get_test_params()
+    if isinstance(test_params, list):
+        test_params = test_params[0]
+    test_params = test_params.keys()
 
     init_params = [
         param
@@ -552,22 +555,8 @@ def _get_err_msg(estimator):
 
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
-    # if non-default parameters are required, but none have been found,
-    # raise error
-    if hasattr(Estimator, "_required_parameters"):
-        required_parameters = getattr(Estimator, "required_parameters", [])
-        if len(required_parameters) > 0:
-            raise ValueError(
-                f"Estimator: {Estimator} requires "
-                f"non-default parameters for construction, "
-                f"but none were given. Please set them in "
-                f"sktime/tests/_config.py"
-            )
-
-    # construct with parameter configuration for testing, otherwise construct with
-    # default parameters (empty param dict)
-    params = ESTIMATOR_TEST_PARAMS.get(Estimator, {})
-    return Estimator(**params)
+    # return the instance of the class with default parameters
+    return Estimator.create_test_instance()
 
 
 def _make_args(estimator, method, **kwargs):
