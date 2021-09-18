@@ -24,17 +24,21 @@ sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/series/impute.py @aiwalter
 sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
+sktime/transformations/series/feature_selection.py @aiwalter
 sktime/transformations/panel/signature_based/ @jambo6
 sktime/transformations/series/theta.py @GuzalBulatova
+sktime/transformations/series/difference.py @rnkuhns
 sktime/transformations/series/exponent.py @rnkuhns
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
+sktime/forecasting/naive.py @Flix6x
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
 sktime/forecasting/fbprophet.py @aiwalter
 sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/structural.py @juanitorduz
 sktime/forecasting/model_selection/_split @koralturkk
 sktime/forecasting/compose/_column_ensemble.py @GuzalBulatova
 sktime/forecasting/compose/_multiplexer.py @koralturkk @aiwalter

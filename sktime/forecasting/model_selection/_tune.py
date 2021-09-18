@@ -43,7 +43,9 @@ class BaseGridSearch(BaseForecaster):
         verbose=0,
         return_n_best_forecasters=1,
     ):
+
         self.forecaster = forecaster
+
         self.cv = cv
         self.strategy = strategy
         self.n_jobs = n_jobs
@@ -228,6 +230,7 @@ class BaseGridSearch(BaseForecaster):
         self : returns an instance of self.
         """
         cv = check_cv(self.cv)
+
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
@@ -335,7 +338,7 @@ class BaseGridSearch(BaseForecaster):
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
-    """Performs grid-search cross-validation to find optimal model parameters.
+    """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
@@ -450,7 +453,19 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-        self.clone_tags(forecaster, "capability:pred_int")
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            "scitype:y",
+            "univariate-only",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce-index-type",
+        ]
+
+        self.clone_tags(forecaster, tags_to_clone)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
@@ -459,7 +474,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
-    """Performs randomized-search cross-validation to find optimal model parameters.
+    """Perform randomized-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
@@ -559,7 +574,19 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.n_iter = n_iter
         self.random_state = random_state
 
-        self.clone_tags(forecaster, "capability:pred_int")
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            "scitype:y",
+            "univariate-only",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce-index-type",
+        ]
+
+        self.clone_tags(forecaster, tags_to_clone)
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions."""
