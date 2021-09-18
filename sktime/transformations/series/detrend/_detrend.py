@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["mloning", "SveaMeyer13"]
+__author__ = ["mloning", "SveaMeyer13", "aiwalter"]
 
 from sklearn.base import clone
 import pandas as pd
@@ -90,16 +90,20 @@ class Detrender(_SeriesToSeriesTransformer):
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
+        # multivariate Detrender but univariate forecaster
+        if (
+            isinstance(z, pd.DataFrame)
+            and self.forecaster.get_tag("scitype:y") in "univariate"
+        ):
+            # univariate forecaster
             self.forecaster_ = {}
             for colname in z.columns:
                 forecaster = clone(self.forecaster)
                 self.forecaster_[colname] = forecaster.fit(z[colname], X)
-        # univariate
+        # univariate Detrender or multivariate Detrender with multivariate forecaster
         else:
-            forecaster = clone(self.forecaster)
-            self.forecaster_ = forecaster.fit(z, X)
+            self.forecaster_ = clone(self.forecaster)
+            self.forecaster_.fit(z, X)
         self._is_fitted = True
         return self
 
@@ -122,8 +126,11 @@ class Detrender(_SeriesToSeriesTransformer):
         z = check_series(Z)
         fh = ForecastingHorizon(z.index, is_relative=False)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
+        # multivariate Detrender but univariate forecaster
+        if (
+            isinstance(z, pd.DataFrame)
+            and self.forecaster_.get_tag("scitype:y") == "univariate"
+        ):
             z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
@@ -138,7 +145,7 @@ class Detrender(_SeriesToSeriesTransformer):
                 z_pred = self.forecaster_[colname].predict(fh, X)
                 z[colname] = z[colname] - z_pred
             return z
-        # univariate
+        # univariate Detrender or multivariate Detrender with multivariate forecaster
         else:
             z_pred = self.forecaster_.predict(fh, X)
             return z - z_pred
@@ -162,8 +169,11 @@ class Detrender(_SeriesToSeriesTransformer):
         z = check_series(Z)
         fh = ForecastingHorizon(z.index, is_relative=False)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
+        # multivariate Detrender but univariate forecaster
+        if (
+            isinstance(z, pd.DataFrame)
+            and self.forecaster_.get_tag("scitype:y") == "univariate"
+        ):
             z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
@@ -178,7 +188,7 @@ class Detrender(_SeriesToSeriesTransformer):
                 z_pred = self.forecaster_[colname].predict(fh, X)
                 z[colname] = z[colname] + z_pred
             return z
-        # univariate
+        # univariate Detrender or multivariate Detrender with multivariate forecaster
         else:
             z_pred = self.forecaster_.predict(fh, X)
             return z + z_pred
@@ -198,8 +208,11 @@ class Detrender(_SeriesToSeriesTransformer):
         self : an instance of self
         """
         z = check_series(Z, allow_empty=True)
-        # multivariate
-        if isinstance(z, pd.DataFrame):
+        # multivariate Detrender but univariate forecaster
+        if (
+            isinstance(z, pd.DataFrame)
+            and self.forecaster_.get_tag("scitype:y") == "univariate"
+        ):
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -213,7 +226,7 @@ class Detrender(_SeriesToSeriesTransformer):
                 self.forecaster_[colname].update(
                     z[colname], X, update_params=update_params
                 )
-        # univariate
+        # univariate Detrender or multivariate Detrender with multivariate forecaster
         else:
             self.forecaster_.update(z, X, update_params=update_params)
         return self
