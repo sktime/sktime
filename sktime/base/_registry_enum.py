@@ -42,7 +42,7 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         yield self.description
 
     def __str__(self):
-        """String value of enum.
+        """Value of enum.
 
         Returns
         -------
