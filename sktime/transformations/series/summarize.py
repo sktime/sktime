@@ -222,9 +222,11 @@ class MeanTransformer(_SeriesToPrimitivesTransformer):
     )
     def transform(self, Z, X=None):
         """Transform series.
+
         Parameters
         ----------
         Z : pd.Series
+
         Returns
         -------
         float/int
