@@ -100,6 +100,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogeneous data
+
         Returns
         -------
         self :
@@ -136,6 +137,8 @@ class BaseForecaster(BaseEstimator):
         }
 
         y = check_series(y, **check_y_args, var_name="y")
+
+        self._y_mtype_last_seen = mtype(y)
         # end checking y
 
         # checking X
@@ -244,16 +247,10 @@ class BaseForecaster(BaseEstimator):
             pred_int = y_pred[1]
             y_pred = y_pred[0]
 
-        # convert to default output type, dependent on scitype
-        scitype_y = self.get_tag("scitype:y")
-        to_dict = {
-            "univariate": "pd.Series",
-            "multivariate": "pd.DataFrame",
-            "both": "pd.DataFrame",
-        }
+        # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
             y_pred,
-            to_dict[scitype_y],
+            self._y_mtype_last_seen,
             as_scitype="Series",
             store=self.converter_store_y,
         )
@@ -381,6 +378,8 @@ class BaseForecaster(BaseEstimator):
 
         # update only for non-empty data
         y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
+
+        self._y_mtype_last_seen = mtype(y)
         # end checking y
 
         # checking X
@@ -711,9 +710,11 @@ class BaseForecaster(BaseEstimator):
         -----
         Set self._cutoff to last index seen in `y`.
         """
-        if mtype(y, as_scitype="Series") in ["pd.Series", "pd.DataFrame"]:
+        y_mtype = mtype(y, as_scitype="Series")
+
+        if y_mtype in ["pd.Series", "pd.DataFrame"]:
             self._cutoff = y.index[-1]
-        elif mtype(y, as_scitype="Series") == "np.ndarray":
+        elif y_mtype == "np.ndarray":
             self._cutoff = len(y)
         else:
             raise TypeError("y does not have a supported type")

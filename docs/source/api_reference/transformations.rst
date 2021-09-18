@@ -203,6 +203,17 @@ Box-Cox
     BoxCoxTransformer
     LogTransformer
 
+Difference
+~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.difference
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    Differencer
+
 Auto-correlation
 ~~~~~~~~~~~~~~~~
 
@@ -305,3 +316,14 @@ Summary
 
     SummaryTransformer
     MeanTransformer
+
+FeatureSelection
+~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.feauture_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FeatureSelection
