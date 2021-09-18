@@ -43,6 +43,7 @@ data_to_test = [y1, y_df_uni, y_df_multi]
 @pytest.mark.parametrize("summary_arg", sum_funcs_to_test)
 @pytest.mark.parametrize("quantile_arg", quantiles_to_test)
 def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
+    """Test whether output is DataFrame of correct dimensions."""
     transformer = SummaryTransformer(
         summary_function=summary_arg, quantiles=quantile_arg
     )
@@ -65,6 +66,7 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
 
 @pytest.mark.parametrize("summary_arg", incorrect_sum_funcs_to_test)
 def test_summary_transformer_incorrect_summary_function_raises_error(summary_arg):
+    """Test if correct errors are raised for invalid summary_function input."""
     msg = rf"""`summary_function` must be str or a list or tuple made up of
           {ALLOWED_SUM_FUNCS}.
           """
@@ -75,6 +77,7 @@ def test_summary_transformer_incorrect_summary_function_raises_error(summary_arg
 
 @pytest.mark.parametrize("quantile_arg", incorrect_quantiles_to_test)
 def test_summary_transformer_incorrect_quantile_raises_error(quantile_arg):
+    """Test if correct errors are raised for invalid quantiles input."""
     msg = """`quantiles` must be int, float or a list or tuple made up of
           int and float values that are between 0 and 1.
           """
