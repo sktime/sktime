@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-""" RandOm Convolutional KErnel Transform (ROCKET)
-"""
+"""RandOm Convolutional KErnel Transform (ROCKET)."""
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst", "victordremov"]
 __all__ = ["ROCKETClassifier"]
 
 import numpy as np
@@ -12,14 +11,10 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import Rocket
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class ROCKETClassifier(BaseClassifier):
-    """
-    Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
-    base classifier.
+    """Classifier wrapped for the ROCKET transformer using RidgeClassifierCV.
 
     Parameters
     ----------
@@ -50,16 +45,14 @@ class ROCKETClassifier(BaseClassifier):
     Java version
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/shapelet_based/ROCKETClassifier.java
-
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -80,10 +73,8 @@ class ROCKETClassifier(BaseClassifier):
 
         super(ROCKETClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """
-        Build a pipeline containing the ROCKET transformer and RidgeClassifierCV
-        classifier.
+    def _fit(self, X, y):
+        """Build a pipeline containing the ROCKET transformer and RidgeClassifierCV.
 
         Parameters
         ----------
@@ -95,8 +86,6 @@ class ROCKETClassifier(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
-
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -112,18 +101,43 @@ class ROCKETClassifier(BaseClassifier):
         )
         rocket_pipeline.fit(X, y)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
-        self.check_is_fitted()
-        X = check_X(X)
+    def _predict(self, X):
+        """Find predictions for all cases in X.
+
+        Parameters
+        ----------
+        X : The training input samples. array-like or pandas data frame.
+        If a Pandas data frame is passed, a check is performed that it only
+        has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances]
+        """
         return self.classifier.predict(X)
 
-    def predict_proba(self, X):
-        self.check_is_fitted()
-        X = check_X(X)
+    def _predict_proba(self, X):
+        """Find probability estimates for each class for all cases in X.
 
+        Parameters
+        ----------
+        X : The training input samples. array-like or sparse matrix of shape
+        = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is
+            performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        output : array of shape = [n_test_instances, num_classes] of
+        probabilities
+        """
         dists = np.zeros((X.shape[0], self.n_classes))
         preds = self.classifier.predict(X)
         for i in range(0, X.shape[0]):

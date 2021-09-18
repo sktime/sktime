@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -43,7 +43,8 @@ def autocorrelation_seasonality_test(y, sp):
     if n_timepoints < 3 * sp:
         warn(
             "Did not perform seasonality test, as `y`` is too short for the "
-            "given `sp`, returned: False")
+            "given `sp`, returned: False"
+        )
         return False
 
     else:
@@ -51,7 +52,10 @@ def autocorrelation_seasonality_test(y, sp):
         coef = coefs[sp]  # coefficient to check
 
         tcrit = 1.645  # 90% confidence level
-        limits = tcrit / np.sqrt(n_timepoints) * np.sqrt(
-            np.cumsum(np.append(1, 2 * coefs[1:] ** 2)))
+        limits = (
+            tcrit
+            / np.sqrt(n_timepoints)
+            * np.sqrt(np.cumsum(np.append(1, 2 * coefs[1:] ** 2)))
+        )
         limit = limits[sp - 1]  #  zero-based indexing
         return np.abs(coef) > limit

@@ -1,24 +1,26 @@
 
 .. _performance_metric_ref:
 
-sktime.performance_metrics: Measuring time series model performance
-=======================================================
+Performance metrics
+===================
 
 The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 
 .. automodule:: sktime.performance_metrics
     :no-members:
+    :no-inherited-members:
 
 Forecasting
 -----------
 
 .. currentmodule:: sktime.performance_metrics.forecasting
 
-Tunable Classes
-***************
+Classes
+~~~~~~~
+
 .. autosummary::
-    :toctree: modules/auto_generated/
-    :template: class.rst
+    :toctree: auto_generated/
+    :template: class_with_call.rst
 
     MeanAbsoluteScaledError
     MedianAbsoluteScaledError
@@ -40,9 +42,10 @@ Tunable Classes
     RelativeLoss
 
 Functions
-*********
+~~~~~~~~~
+
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     make_forecasting_scorer
