@@ -121,58 +121,15 @@ class BaseForecaster(BaseEstimator):
 
         self._set_fh(fh)
 
-        # input checks and minor coercions on X, y
-        ###########################################
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # checking y
-        enforce_univariate = self.get_tag("scitype:y") == "univariate"
-        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
-        enforce_index_type = self.get_tag("enforce_index_type")
-
-        check_y_args = {
-            "enforce_univariate": enforce_univariate,
-            "enforce_multivariate": enforce_multivariate,
-            "enforce_index_type": enforce_index_type,
-            "allow_None": False,
-        }
-
-        y = check_series(y, **check_y_args, var_name="y")
-
-        self._y_mtype_last_seen = mtype(y)
-        # end checking y
-
-        # checking X
-        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-        if self.get_tag("X-y-must-have-same-index"):
-            check_equal_time_index(X, y)
-        # end checking X
-
+        # store pointer to original X/y
         self._X = X
         self._y = y
 
+        # update cutoff ("now") using y
         self._set_cutoff_from_y(y)
-
-        # convert y to supported inner type, if necessary
-        ##################################################
-
-        # retrieve supported mtypes for _fit
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-
-        # convert y and X to a supported internal type
-        #  it y/X type is already supported, no conversion takes place
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=self.converter_store_y,
-        )
-
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-        )
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -216,18 +173,8 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
 
-        # input check for X
-        enforce_index_type = self.get_tag("enforce_index_type")
-        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-
-        # convert X if needed
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=None,
-        )
+        # input check and conversion for X
+        X_inner, _ = self._check_X_y(X=X)
 
         # this should be here, but it breaks the ARIMA forecasters
         #  that is because check_alpha converts to list, but ARIMA forecaster
@@ -286,7 +233,7 @@ class BaseForecaster(BaseEstimator):
         """
         self.fit(y=y, X=X, fh=fh)
 
-        return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
@@ -363,58 +310,12 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
-        ###########################################
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # checking y
-        enforce_univariate = self.get_tag("scitype:y") == "univariate"
-        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
-        enforce_index_type = self.get_tag("enforce_index_type")
-
-        check_y_args = {
-            "enforce_univariate": enforce_univariate,
-            "enforce_multivariate": enforce_multivariate,
-            "enforce_index_type": enforce_index_type,
-        }
-
-        # update only for non-empty data
-        y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
-
-        self._y_mtype_last_seen = mtype(y)
-        # end checking y
-
-        # checking X
-        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-        if self.get_tag("X-y-must-have-same-index"):
-            check_equal_time_index(X, y)
-        # end checking X
-
+        # update internal X/y with the new X/y
         self._update_y_X(y, X)
 
-        # convert y to supported inner type, if necessary
-        ##################################################
-
-        # retrieve supported mtypes for _fit
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-
-        # convert y and X to a supported internal type
-        #  it y/X type is already supported, no conversion takes place
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=self.converter_store_y,
-        )
-
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-        )
-
         # checks and conversions complete, pass to inner fit
-        #####################################################
-
         self._update(y=y_inner, X=X_inner, update_params=update_params)
 
         return self
@@ -457,35 +358,17 @@ class BaseForecaster(BaseEstimator):
             )
 
         # input checks and minor coercions on X, y
-        ###########################################
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # checking y
-        enforce_univariate = self.get_tag("scitype:y") == "univariate"
-        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
-        enforce_index_type = self.get_tag("enforce_index_type")
-
-        check_y_args = {
-            "enforce_univariate": enforce_univariate,
-            "enforce_multivariate": enforce_multivariate,
-            "enforce_index_type": enforce_index_type,
-        }
-
-        # update only for non-empty data
-        y = check_series(y, allow_empty=True, **check_y_args, var_name="y")
-        # end checking y
-
-        # checking X
-        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-        if self.get_tag("X-y-must-have-same-index"):
-            check_equal_time_index(X, y)
-        # end checking X
+        # update internal X/y with the new X/y
+        self._update_y_X(y, X)
 
         cv = check_cv(cv)
 
         return self._predict_moving_cutoff(
-            y,
-            cv,
-            X,
+            y=y_inner,
+            cv=cv,
+            X=X_inner,
             update_params=update_params,
             return_pred_int=return_pred_int,
             alpha=alpha,
@@ -526,6 +409,13 @@ class BaseForecaster(BaseEstimator):
         """
         self.check_is_fitted()
         self._set_fh(fh)
+
+        # input checks and minor coercions on X, y
+        X_inner, y_inner = self._check_X_y(X=X, y=y_new)
+
+        # update internal X/y with the new X/y
+        self._update_y_X(y_new, X)
+
         return self._update_predict_single(
             y_new,
             self.fh,
@@ -592,6 +482,61 @@ class BaseForecaster(BaseEstimator):
         # set initial cutoff to the end of the training data
         self._set_cutoff_from_y(y)
 
+    def _check_X_y(self, y=None, X=None):
+        """Check and coerce X/y for fit/predict/update functions."""
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        # checking y
+        if y is not None:
+            check_y_args = {
+                "enforce_univariate": enforce_univariate,
+                "enforce_multivariate": enforce_multivariate,
+                "enforce_index_type": enforce_index_type,
+                "allow_None": False,
+            }
+
+            y = check_series(y, **check_y_args, var_name="y")
+
+            self._y_mtype_last_seen = mtype(y)
+        # end checking y
+
+        # checking X
+        if X is not None:
+            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+            if self.get_tag("X-y-must-have-same-index"):
+                check_equal_time_index(X, y)
+        # end checking X
+
+        # convert y to supported inner type, if necessary
+        ##################################################
+
+        # retrieve supported mtypes
+
+        # convert X and y to a supported internal mtype
+        #  it X/y mtype is already supported, no conversion takes place
+        #  if X/y is None, then no conversion takes place (returns None)
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self.converter_store_y,
+        )
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+        )
+
+        return X_inner, y_inner
+
     def _update_X(self, X, enforce_index_type=None):
         if X is not None:
             X = check_X(X, enforce_index_type=enforce_index_type)
@@ -599,7 +544,7 @@ class BaseForecaster(BaseEstimator):
                 self._X = X.combine_first(self._X)
 
     def _update_y_X(self, y, X=None, enforce_index_type=None):
-        """Update training data.
+        """Update internal memory of seen training data.
 
         Parameters
         ----------
@@ -608,15 +553,20 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        if len(y) > 0:
+        # update y if given
+        if isinstance(y, np.ndarray):
+            self._y = np.concatenate(self._y, y)
+        elif y is not None and len(y) > 0:
             self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
-            # update X if given
-            if X is not None:
-                self._X = X.combine_first(self._X)
+        # update X if given
+        if isinstance(X, np.ndarray):
+            self._X = np.concatenate(self._X, X)
+        elif X is not None and len(X) > 0:
+            self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
