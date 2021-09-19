@@ -308,7 +308,7 @@ Theta
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.feauture_selection
+.. currentmodule:: sktime.transformations.series.feature_selection
 
 .. autosummary::
     :toctree: auto_generated/
