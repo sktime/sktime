@@ -417,9 +417,9 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_new, X)
 
         return self._update_predict_single(
-            y_new,
-            self.fh,
-            X,
+            y_new=y_inner,
+            fh=self.fh,
+            X=X_inner,
             update_params=update_params,
             return_pred_int=return_pred_int,
             alpha=alpha,
