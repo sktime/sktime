@@ -231,9 +231,29 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-        self.fit(y=y, X=X, fh=fh)
+        # if fit is called, fitted state is re-set
+        self._is_fitted = False
 
-        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        self._set_fh(fh)
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # store pointer to original X/y
+        self._X = X
+        self._y = y
+
+        # update cutoff ("now") using y
+        self._set_cutoff_from_y(y)
+
+        # apply fit and then predict
+        self._fit(y=y_inner, X=X_inner, fh=fh)
+        self._is_fitted = True
+        # call the public predict to avoid duplicating output conversions
+        #  input conversions are skipped since we are using X_inner
+        return self.predict(
+            fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
+        )
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
@@ -417,7 +437,7 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_new, X)
 
         return self._update_predict_single(
-            y_new=y_inner,
+            y=y_inner,
             fh=self.fh,
             X=X_inner,
             update_params=update_params,
