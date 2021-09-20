@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.7.0 out now!** [Check out the release notes here.](https://github.com/alan-turing-institute/sktime/releases)
+:rocket: **Version 0.8.0 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with time series algorithms and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -178,7 +178,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 | :money_with_wings: **[Donate]** | Fund sktime maintenance and development. |
 | :classical_building: **[Governance]** | How and by whom decisions are made in sktime's community.   |
 
-[contribute]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.md
+[contribute]: https://www.sktime.org/en/latest/get_involved/contributing.html
 [donate]: https://opencollective.com/sktime
 [extension templates]: https://github.com/alan-turing-institute/sktime/tree/main/extension_templates
 [developer guides]: https://www.sktime.org/en/latest/developer_guide.html
