@@ -64,6 +64,7 @@ from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
+from sktime.forecasting.structural import UnobservedComponents
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
@@ -100,6 +101,7 @@ from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.feature_selection import FeatureSelection
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -345,11 +347,13 @@ ESTIMATOR_TEST_PARAMS = {
         "uncertainty_samples": 1000,
         "verbose": False,
     },
+    UnobservedComponents: {"level": "local level"},
     PartialAutoCorrelationTransformer: {"n_lags": 1},
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    FeatureSelection: {"method": "all"},
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
