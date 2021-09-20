@@ -7,7 +7,7 @@ __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
-
+import numpy as np
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 
@@ -75,10 +75,23 @@ class _PmdArimaAdapter(BaseForecaster):
     ):
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError("multiple `alpha` values are not yet supported")
-
+        
         # for in-sample predictions, pmdarima requires zero-based
         # integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        if start < 0:
+            raise ValueError("Can't make predictions for before train starting point")
+
+        return_pred_na = False
+        # we can't forecast for before the model's order
+        if start<self.order[0]:
+            start = self.order[0]
+            # since we might have forced start to surpass end 
+            if end<start:
+                end = self.order[0]
+            return_pred_na = True
+
         result = self._forecaster.predict_in_sample(
             start=start,
             end=end,
@@ -89,17 +102,33 @@ class _PmdArimaAdapter(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+
+        # bacause indexer will return 0 for first train point so we substract the order to make 0 the index of the order
+        if return_pred_na:
+            fh_nan = fh_idx[fh_idx<self.order[0]]
+            fh_idx = fh_idx[fh_idx>=self.order[0]] - self.order[0]
+            
+
         if return_pred_int:
             # unpack and format results
             y_pred, pred_int = result
-            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(
-                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+            if return_pred_na:
+                y_pred = pd.Series(np.concatenate([np.array([pd.NA]*len(fh_nan)), y_pred[fh_idx]]), index=fh_abs)
+                pred_int = pd.DataFrame(
+                np.concatenate([np.array([[pd.NA]*2]*len(fh_nan)), pred_int[fh_idx, :]]), index=fh_abs, columns=["lower", "upper"]
             )
+            else:
+                y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
+                pred_int = pd.DataFrame(
+                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                )
             return y_pred, pred_int
 
         else:
-            return pd.Series(result[fh_idx], index=fh_abs)
+            if return_pred_na:
+                return pd.Series(np.concatenate([np.array([pd.NA]*len(fh_nan)), result[fh_idx]]), index=fh_abs)
+            else:
+                return pd.Series(result[fh_idx], index=fh_abs)
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
