@@ -296,7 +296,6 @@ class NaiveForecaster(BaseForecaster):
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
-        "univariate-only": False,
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):

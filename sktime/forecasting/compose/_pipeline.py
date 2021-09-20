@@ -322,6 +322,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "univariate-only": False,
     }
 
     def __init__(self, steps):
