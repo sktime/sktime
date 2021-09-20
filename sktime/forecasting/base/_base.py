@@ -1012,7 +1012,8 @@ class BaseForecaster(BaseEstimator):
 
     def perform_checks(self, to_be_checked=None, fh=None, alpha=None):
         """
-        Checks different conditions that need to be met for different methods.
+        Check different conditions that need to be met for different methods.
+
         Returns alpha, if alpha values get checked.
         """
         to_be_checked = to_be_checked if to_be_checked else set()
