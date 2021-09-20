@@ -250,13 +250,12 @@ class BaseForecaster(BaseEstimator):
                 as_scitype="Series",
                 store=self.converter_store_y,
             )
-
             return y_out
 
         # keep following code for downward compatibility,
         # todo: can be deleted once refactor is completed and effective
         else:
-            if not self.get_tag("old_predict_inteval_logic"):
+            if not self.get_tag("old_predict_interval_logic"):
                 warn(
                     "return_pred_int in predict() is deprecated;"
                     "use predict_interval().",
