@@ -10,17 +10,17 @@ from sktime.base._registry_enum import BaseRegistryEnum
 class SeriesMtype(BaseRegistryEnum):
     """Enum class for series mtypes."""
 
-    PD_SERIES = (
+    pd_series = (
         "pd.Series",
         "pd.Series representation of a univariate series",
         "Series",
     )
-    PD_DATAFRAME = (
+    pd_dataframe = (
         "pd.DataFrame",
         "pd.DataFrame representation of a uni- or multivariate series",
         "Series",
     )
-    NP_NDARRAY = (
+    np_array = (
         "np.ndarray",
         "2D numpy.ndarray with rows=samples, cols=variables, index=integers",
         "Series",

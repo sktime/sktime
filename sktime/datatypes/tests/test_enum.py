@@ -56,9 +56,9 @@ def _run_test(mtype_in: Mtypes, scitype_in: Scitypes) -> None:
         # test mtype to scitype
         assert mtype_to_scitype(mtype_in) == str(scitype_in)
 
-        to_type = SeriesMtype.NP_NDARRAY
-        if scitype_in is Scitype.PANEL:
-            to_type = PanelMtype.NUMPY3D
+        to_type = SeriesMtype.np_array
+        if scitype_in is Scitype.panel:
+            to_type = PanelMtype.np_3d_array
         assert isinstance(
             convert(example, from_type=mtype_in, to_type=to_type), np.ndarray
         )
@@ -74,7 +74,7 @@ def test_panel_enums(mtype: PanelMtype) -> None:
     mtype: PanelMtype
         Panel mtype to test
     """
-    _run_test(mtype, Scitype.PANEL)
+    _run_test(mtype, Scitype.panel)
 
 
 @pytest.mark.parametrize("mtype", ENUM_SERIES_MTYPES)
@@ -86,4 +86,4 @@ def test_series_enums(mtype: SeriesMtype) -> None:
     mtype: SeriesMtype
         Series mtype to test
     """
-    _run_test(mtype, Scitype.SERIES)
+    _run_test(mtype, Scitype.series)

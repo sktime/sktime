@@ -145,7 +145,7 @@ def convert(
 # conversion based on queriable type to specified target
 def convert_to(
     obj,
-    to_type: Union[Mtypes, List[str], List[Mtypes]],
+    to_type: Union[Mtypes, List[Mtypes]],
     as_scitype: Scitypes = None,
     store=None,
 ):
@@ -154,7 +154,7 @@ def convert_to(
     Parameters
     ----------
     obj : object to convert - any type, should comply with mtype spec for as_scitype
-    to_type: str or SeriesMtype enum or PanelMtype enum
+    to_type: str or SeriesMtype enum or PanelMtype enum or List of Mtypes
         the type to convert "obj" to, a valid mtype string
     as_scitype : str or Scitype enum optional, defaults = inferred from mtype
         name of scitype the object "obj" is considered as

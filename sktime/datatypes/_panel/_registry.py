@@ -10,37 +10,37 @@ from sktime.base._registry_enum import BaseRegistryEnum
 class PanelMtype(BaseRegistryEnum):
     """Enum class for Panel mtypes."""
 
-    NESTED_UNIV = (
+    nested_univariate = (
         "nested_univ",
         "pd.DataFrame with one column per variable, pd.Series in cells",
         "Panel",
     )
-    NUMPY3D = (
+    np_3d_array = (
         "numpy3D",
         "3D np.array of format (n_instances, n_columns, n_timepoints)",
         "Panel",
     )
-    NUMPYFLAT = (
+    np_flat = (
         "numpyflat",
         "2D np.array of format (n_instances, n_columns*n_timepoints)",
         "Panel",
     )
-    PD_MULTIINDEX = (
+    pd_multi_index = (
         "pd-multiindex",
         "pd.DataFrame with multi-index (instances, timepoints)",
         "Panel",
     )
-    PD_WIDE = (
+    pd_wide_df = (
         "pd-wide",
         "pd.DataFrame in wide format, cols = (instance*timepoints)",
         "Panel",
     )
-    PD_LONG = (
+    pd_long_df = (
         "pd-long",
         "pd.DataFrame in long format, cols = (index, time_index, column)",
         "Panel",
     )
-    DF_LIST = ("df-list", "list of pd.DataFrame", "Panel")
+    list_df = ("df-list", "list of pd.DataFrame", "Panel")
 
 
 MTYPE_REGISTER_PANEL = [tuple(mtype) for mtype in PanelMtype]
