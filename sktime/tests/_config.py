@@ -191,7 +191,7 @@ ESTIMATOR_TEST_PARAMS = {
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    Detrender: {"forecaster": FORECASTER},
+    Detrender: {"forecaster": ExponentialSmoothing()},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),

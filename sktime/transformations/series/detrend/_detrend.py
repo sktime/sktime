@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["mloning", "SveaMeyer13", "aiwalter"]
+__author__ = ["mloning", "SveaMeyer13"]
 
 from sklearn.base import clone
 import pandas as pd
@@ -64,7 +64,7 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": False}
+    _tags = {"transform-returns-same-time-index": True}
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster
@@ -76,7 +76,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        Y : pd.Series
             Endogenous time series to fit a trend to.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
@@ -90,20 +90,16 @@ class Detrender(_SeriesToSeriesTransformer):
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
 
-        # multivariate Detrender but univariate forecaster
-        if (
-            isinstance(z, pd.DataFrame)
-            and self.forecaster.get_tag("scitype:y") in "univariate"
-        ):
-            # univariate forecaster
+        # multivariate
+        if isinstance(z, pd.DataFrame):
             self.forecaster_ = {}
             for colname in z.columns:
                 forecaster = clone(self.forecaster)
                 self.forecaster_[colname] = forecaster.fit(z[colname], X)
-        # univariate Detrender or multivariate Detrender with multivariate forecaster
+        # univariate
         else:
-            self.forecaster_ = clone(self.forecaster)
-            self.forecaster_.fit(z, X)
+            forecaster = clone(self.forecaster)
+            self.forecaster_ = forecaster.fit(z, X)
         self._is_fitted = True
         return self
 
@@ -112,27 +108,23 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
-            Time series to be detrended
+        y : pd.Series
+            Time series to be detrended.
         X : pd.DataFrame, optional (default=False)
             Exogenous variables.
 
         Returns
         -------
-        Zt : pd.Series, pd.DataFrame
-            De-trended series
+        y_hat : pd.Series
+            De-trended series.
         """
         self.check_is_fitted()
         z = check_series(Z)
-        z = z.copy()
-
         fh = ForecastingHorizon(z.index, is_relative=False)
 
-        # multivariate Detrender but univariate forecaster
-        if (
-            isinstance(z, pd.DataFrame)
-            and self.forecaster.get_tag("scitype:y") == "univariate"
-        ):
+        # multivariate
+        if isinstance(z, pd.DataFrame):
+            z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -146,7 +138,7 @@ class Detrender(_SeriesToSeriesTransformer):
                 z_pred = self.forecaster_[colname].predict(fh, X)
                 z[colname] = z[colname] - z_pred
             return z
-        # univariate Detrender or multivariate Detrender with multivariate forecaster
+        # univariate
         else:
             z_pred = self.forecaster_.predict(fh, X)
             return z - z_pred
@@ -156,26 +148,23 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
-            Detrended series to inverse transform (add back trend)
+        y : pd.Series, list
+            Detrended time series to revert.
         X : pd.DataFrame, optional (default=False)
             Exogenous variables.
 
         Returns
         -------
-        Z_inv : pd.Series, pd.DataFrame
-            Series with the trend
+        y_hat : pd.Series
+            Series with the trend.
         """
         self.check_is_fitted()
         z = check_series(Z)
-        z = z.copy()
         fh = ForecastingHorizon(z.index, is_relative=False)
 
-        # multivariate Detrender but univariate forecaster
-        if (
-            isinstance(z, pd.DataFrame)
-            and self.forecaster.get_tag("scitype:y") == "univariate"
-        ):
+        # multivariate
+        if isinstance(z, pd.DataFrame):
+            z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -189,7 +178,7 @@ class Detrender(_SeriesToSeriesTransformer):
                 z_pred = self.forecaster_[colname].predict(fh, X)
                 z[colname] = z[colname] + z_pred
             return z
-        # univariate Detrender or multivariate Detrender with multivariate forecaster
+        # univariate
         else:
             z_pred = self.forecaster_.predict(fh, X)
             return z + z_pred
@@ -199,8 +188,8 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
-            New time series
+        y_new : pd.Series
+            New time series.
         update_params : bool, optional (default=True)
             Update the parameters of the detrender model.
 
@@ -209,11 +198,8 @@ class Detrender(_SeriesToSeriesTransformer):
         self : an instance of self
         """
         z = check_series(Z, allow_empty=True)
-        # multivariate Detrender but univariate forecaster
-        if (
-            isinstance(z, pd.DataFrame)
-            and self.forecaster.get_tag("scitype:y") == "univariate"
-        ):
+        # multivariate
+        if isinstance(z, pd.DataFrame):
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -227,7 +213,7 @@ class Detrender(_SeriesToSeriesTransformer):
                 self.forecaster_[colname].update(
                     z[colname], X, update_params=update_params
                 )
-        # univariate Detrender or multivariate Detrender with multivariate forecaster
+        # univariate
         else:
             self.forecaster_.update(z, X, update_params=update_params)
         return self
