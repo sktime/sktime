@@ -1,12 +1,10 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 """
-pandas.datetime functions related utilities.
-
-modified the _get_freq function
+Times series functions related utilities.
 """
 
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "Yang Zhang"]
 __all__ = []
 
 import re
@@ -25,7 +23,7 @@ def _coerce_duration_to_int(duration, freq=None):
     duration : pd.DateOffset, pd.Timedelta, pd.TimedeltaIndex, pd.Index, int
         Duration type or collection of duration types
     freq : str
-        Frequency
+        Frequency of the duration, e. g. 'day', 'week', 'hour'
 
     Returns
     -------

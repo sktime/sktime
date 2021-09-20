@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for datetime functions."""
 
+__author__ = ["Yang Zhang"]
+
 import pandas as pd
 import numpy as np
 import datetime
