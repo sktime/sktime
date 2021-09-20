@@ -130,6 +130,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the forecaster capable of returning prediction intervals in predict?",
     ),
     (
+        "old_predict_interval_logic",
+        "forecaster",
+        "bool",
+        "is refactor of prediction intervals already completed for this estimator?",
+    ),
+    (
         "capability:multivariate",
         "classifier",
         "bool",

@@ -27,7 +27,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 
-__author__ = ["mloning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
@@ -73,6 +73,7 @@ class BaseForecaster(BaseEstimator):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "old_predict_interval_logic": True,  # pred_int functionality not yet refactored
     }
 
     def __init__(self):
@@ -188,7 +189,7 @@ class BaseForecaster(BaseEstimator):
         X=None,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
-        old_predict_interval_logic=True,
+        keep_old_return_type=True,
     ):
         """Forecast time series at future horizon.
 
@@ -210,8 +211,7 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals
         """
         # handle inputs
-        self.check_is_fitted()
-        self._set_fh(fh)
+        self.perform_checks(to_be_checked={"is_fitted", "fh"}, fh=fh)
 
         if return_pred_int and not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -234,7 +234,7 @@ class BaseForecaster(BaseEstimator):
             store=None,
         )
 
-        # this is how it is supposed to be after the refactor is complete and in place
+        # this is how it is supposed to be after the refactor is complete and effective
         if not return_pred_int:
             y_pred = self._predict(
                 self.fh,
@@ -259,29 +259,30 @@ class BaseForecaster(BaseEstimator):
         # keep following code for downward compatibility,
         # todo: can be deleted once refactor is completed and effective
         else:
-            # todo add deprecation waring once refactor
-            #  is also established in inheriting classes
-            # warn("return_pred_int in predict() is deprecated;
-            # use predict_interval().", DeprecationWarning)
-
-            # this should be here, but it breaks the ARIMA forecasters
-            #  that is because check_alpha converts to list, but ARIMA forecaster
-            #  doesn't do the check, and needs it as a float or it breaks
-            # todo: needs fixing in ARIMA and AutoARIMA
-            # alpha = check_alpha(alpha)
-
+            if not self.get_tag("old_predict_inteval_logic"):
+                warn(
+                    "return_pred_int in predict() is deprecated;"
+                    "use predict_interval().",
+                    DeprecationWarning,
+                )
             y_pred = self._predict(
                 self.fh,
                 X=X_inner,
                 return_pred_int=return_pred_int,
                 alpha=alpha,
             )
-            if old_predict_interval_logic:
+            if self.get_tag("old_predict_interval_logic"):
+                # returns old return type anyways
                 pred_int = y_pred[1]
                 y_pred = y_pred[0]
             else:
                 y_pred = y_pred[0]
+                # is supposed to return new return type:
                 pred_int = self.predict_interval(fh=fh, X=X, alpha=alpha)
+                if keep_old_return_type:
+                    # todo write function that converts new_return type
+                    #  into old return type
+                    pass
 
             # convert to default output type, dependent on scitype
             scitype_y = self.get_tag("scitype:y")
@@ -327,7 +328,9 @@ class BaseForecaster(BaseEstimator):
 
         return self._predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def predict_interval(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+    def predict_interval(
+        self, fh=None, X=None, alpha=DEFAULT_ALPHA, keep_old_return_type=True
+    ):
         """
         Compute/return prediction intervals for a forecast.
 
@@ -353,9 +356,25 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals with fh as row index. Column multi-index with
             first level being the variable name, second level being the alpha value.
         """
-        self.check_is_fitted()
-        alpha = check_alpha(alpha)
-        pred_int = self._predict_interval(fh=fh, X=X, alpha=alpha)
+        # todo: needs fixing in ARIMA and AutoARIMA as the alpha check breaks here
+        alpha = self.perform_checks(
+            to_be_checked={"is_fitted", "fh", "alpha"}, fh=fh, alpha=alpha
+        )
+
+        # input check for X
+        enforce_index_type = self.get_tag("enforce_index_type")
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+
+        # convert X if needed
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=None,
+        )
+
+        pred_int = self._predict_interval(fh=fh, X=X_inner, alpha=alpha)
         return pred_int
 
     def update(self, y, X=None, update_params=True):
@@ -550,8 +569,7 @@ class BaseForecaster(BaseEstimator):
         pred_ints : pd.DataFrame
             Prediction intervals
         """
-        self.check_is_fitted()
-        self._set_fh(fh)
+        self.perform_checks(to_be_checked={"is_fitted", "fh"}, fh=fh)
         return self._update_predict_single(
             y_new,
             self.fh,
@@ -832,7 +850,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
             core logic
@@ -843,18 +861,11 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        # todo deprecate these two arguments
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        #todo no longer return y_pred_int
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
         raise NotImplementedError("abstract method")
 
@@ -907,6 +918,7 @@ class BaseForecaster(BaseEstimator):
         fh,
         X=None,
         update_params=True,
+        # todo will be deprecated after refactor:
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -1003,6 +1015,21 @@ class BaseForecaster(BaseEstimator):
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+    def perform_checks(self, to_be_checked=None, fh=None, alpha=None):
+        """
+        Checks different conditions that need to be met for different methods.
+        Returns alpha, if alpha values get checked.
+        """
+        to_be_checked = to_be_checked if to_be_checked else set()
+        if "is_fitted" in to_be_checked:
+            self.check_is_fitted()
+        if "fh" in to_be_checked:
+            self._set_fh(fh)
+        if "alpha" in to_be_checked:
+            alpha = check_alpha(alpha)
+            return alpha
+        return
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
