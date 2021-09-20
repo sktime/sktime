@@ -1224,6 +1224,17 @@
                 "doc"
             ]
     }
+    {
+      "login": "BINAYKUMAR943"
+      "name":"Binay Kumar"
+      "avatar_url":"https://avatars.githubusercontent.com/u/38756834?v=4
+      "profile":"https://github.com/BINAYKUMAR943"
+      "contributions":[
+        "code",
+        "doc",
+        "test"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
