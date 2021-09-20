@@ -14,6 +14,9 @@ from sktime.datatypes._registry import (
 )
 
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._series import SeriesMtype
+from sktime.datatypes._panel import PanelMtype
+from sktime.datatypes._registry import Scitype
 
 
 __all__ = [
@@ -28,4 +31,7 @@ __all__ = [
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
     "SCITYPE_REGISTER",
+    "SeriesMtype",
+    "PanelMtype",
+    "Scitype",
 ]

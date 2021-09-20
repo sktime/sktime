@@ -32,6 +32,7 @@ mtype_to_scitype(mtype: str) - convenience function that returns scitype for an 
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+from typing import Union
 
 from sktime.datatypes._series._registry import (
     MTYPE_REGISTER_SERIES,
@@ -43,6 +44,11 @@ from sktime.datatypes._panel._registry import (
     MTYPE_LIST_PANEL,
 )
 
+from sktime.base._registry_enum import BaseRegistryEnum
+from sktime.datatypes._panel._registry import PanelMtype
+from sktime.datatypes._series._registry import SeriesMtype
+
+
 MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL
 
 
@@ -51,32 +57,38 @@ __all__ = [
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
     "SCITYPE_REGISTER",
+    "Scitype",
 ]
 
 
-SCITYPE_REGISTER = [
-    ("Series", "uni- or multivariate time series"),
-    ("Panel", "panel of uni- or multivariate time series"),
-]
+class Scitype(BaseRegistryEnum):
+    """Enum class for scitypes."""
+
+    series = ("Series", "uni- or multivariate time series")
+    panel = ("Panel", "panel of uni- or multivariate time series")
 
 
-def mtype_to_scitype(mtype: str):
+SCITYPE_REGISTER = [tuple(scitype) for scitype in Scitype]
+
+
+def mtype_to_scitype(mtype: Union[PanelMtype, SeriesMtype, str]) -> str:
     """Infer scitype belonging to mtype.
 
     Parameters
     ----------
-    mtype: str, mtype to find scitype of
-
+    mtype: str or PanelMtype enum or SeriesMtype enum
+        mtype to find scitype of
     Returns
     -------
     scitype: str, unique scitype belonging to mtype
-
     Raises
     ------
     ValueError, if there are two scitypes with that mtype
         (this should not happen in general)
     ValueError, if there is no scitype with that mtype
     """
+    if mtype is not None:
+        mtype = str(mtype)
     scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
 
     if len(scitype) > 1:
