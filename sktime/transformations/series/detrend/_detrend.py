@@ -124,14 +124,15 @@ class Detrender(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         z = check_series(Z)
+        z = z.copy()
+
         fh = ForecastingHorizon(z.index, is_relative=False)
 
         # multivariate Detrender but univariate forecaster
         if (
             isinstance(z, pd.DataFrame)
-            and self.forecaster_.get_tag("scitype:y") == "univariate"
+            and self.forecaster.get_tag("scitype:y") == "univariate"
         ):
-            z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -167,14 +168,14 @@ class Detrender(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         z = check_series(Z)
+        z = z.copy()
         fh = ForecastingHorizon(z.index, is_relative=False)
 
         # multivariate Detrender but univariate forecaster
         if (
             isinstance(z, pd.DataFrame)
-            and self.forecaster_.get_tag("scitype:y") == "univariate"
+            and self.forecaster.get_tag("scitype:y") == "univariate"
         ):
-            z = z.copy()
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
             Z_new_keys = set(z.columns)
@@ -211,7 +212,7 @@ class Detrender(_SeriesToSeriesTransformer):
         # multivariate Detrender but univariate forecaster
         if (
             isinstance(z, pd.DataFrame)
-            and self.forecaster_.get_tag("scitype:y") == "univariate"
+            and self.forecaster.get_tag("scitype:y") == "univariate"
         ):
             # check if all columns are known
             Z_fit_keys = set(self.forecaster_.keys())
