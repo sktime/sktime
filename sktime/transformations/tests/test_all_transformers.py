@@ -90,7 +90,7 @@ def check_series_to_series_transform_univariate(Estimator):
 def check_series_to_series_transform_multivariate(Estimator):
     n_columns = 3
     n_timepoints = 15
-    if Estimator.get_class_tag("univariate-only", False):
+    if Estimator.get_tag("univariate-only", False):
         _check_raises_error(Estimator, n_timepoints=n_timepoints, n_columns=n_columns)
     else:
         out = _construct_fit_transform(
