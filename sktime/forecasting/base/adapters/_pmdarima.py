@@ -66,16 +66,25 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # both in-sample and out-of-sample values
         else:
-            y_ins = self._predict_in_sample(fh_ins, **kwargs)
-            y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
-            return y_ins.append(y_oos)
+            if return_pred_int:
+                y_ins_pred, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+                y_oos_pred, y_oos_pred_int = self._predict_fixed_cutoff(
+                    fh_oos, **kwargs
+                )
+                return y_ins_pred.append(y_oos_pred), y_ins_pred_int.append(
+                    y_oos_pred_int
+                )
+            else:
+                y_ins = self._predict_in_sample(fh_ins, **kwargs)
+                y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
+                return y_ins.append(y_oos)
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError("multiple `alpha` values are not yet supported")
-        
+
         # for in-sample predictions, pmdarima requires zero-based
         # integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
@@ -85,10 +94,10 @@ class _PmdArimaAdapter(BaseForecaster):
 
         return_pred_na = False
         # we can't forecast for before the model's order
-        if start<self.order[0]:
+        if start < self.order[0]:
             start = self.order[0]
-            # since we might have forced start to surpass end 
-            if end<start:
+            # since we might have forced start to surpass end
+            if end < start:
                 end = self.order[0]
             return_pred_na = True
 
@@ -103,20 +112,27 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
 
-        # bacause indexer will return 0 for first train point so we substract the order to make 0 the index of the order
+        # bacause indexer will return 0 for first train point so
+        # we substract the order to make 0 the index of the order
         if return_pred_na:
-            fh_nan = fh_idx[fh_idx<self.order[0]]
-            fh_idx = fh_idx[fh_idx>=self.order[0]] - self.order[0]
-            
+            fh_nan = fh_idx[fh_idx < self.order[0]]
+            fh_idx = fh_idx[fh_idx >= self.order[0]] - self.order[0]
 
         if return_pred_int:
             # unpack and format results
             y_pred, pred_int = result
             if return_pred_na:
-                y_pred = pd.Series(np.concatenate([np.array([pd.NA]*len(fh_nan)), y_pred[fh_idx]]), index=fh_abs)
+                y_pred = pd.Series(
+                    np.concatenate([np.array([pd.NA] * len(fh_nan)), y_pred[fh_idx]]),
+                    index=fh_abs,
+                )
                 pred_int = pd.DataFrame(
-                np.concatenate([np.array([[pd.NA]*2]*len(fh_nan)), pred_int[fh_idx, :]]), index=fh_abs, columns=["lower", "upper"]
-            )
+                    np.concatenate(
+                        [np.array([[pd.NA] * 2] * len(fh_nan)), pred_int[fh_idx, :]]
+                    ),
+                    index=fh_abs,
+                    columns=["lower", "upper"],
+                )
             else:
                 y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
                 pred_int = pd.DataFrame(
@@ -126,7 +142,10 @@ class _PmdArimaAdapter(BaseForecaster):
 
         else:
             if return_pred_na:
-                return pd.Series(np.concatenate([np.array([pd.NA]*len(fh_nan)), result[fh_idx]]), index=fh_abs)
+                return pd.Series(
+                    np.concatenate([np.array([pd.NA] * len(fh_nan)), result[fh_idx]]),
+                    index=fh_abs,
+                )
             else:
                 return pd.Series(result[fh_idx], index=fh_abs)
 
