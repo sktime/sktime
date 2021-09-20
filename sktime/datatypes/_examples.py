@@ -27,7 +27,7 @@ from sktime.datatypes._series import example_dict_Series
 from sktime.datatypes._series import example_dict_lossy_Series
 from sktime.datatypes._panel import example_dict_Panel
 from sktime.datatypes._panel import example_dict_lossy_Panel
-from sktime.datatypes.types import Mtypes, Scitypes
+from sktime.datatypes.types import Mtype, SciType
 
 # pool example_dict-s
 example_dict = dict()
@@ -39,9 +39,7 @@ example_dict_lossy.update(example_dict_lossy_Series)
 example_dict_lossy.update(example_dict_lossy_Panel)
 
 
-def get_examples(
-    mtype: Mtypes, as_scitype: Scitypes, return_lossy: bool = False
-) -> dict:
+def get_examples(mtype: Mtype, as_scitype: SciType, return_lossy: bool = False) -> dict:
     """Retrieve a dict of examples for mtype `mtype`, scitype `as_scitype`.
 
     Parameters

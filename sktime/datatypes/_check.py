@@ -31,7 +31,7 @@ from typing import Union, List
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._registry import mtype_to_scitype
-from sktime.datatypes.types import Mtypes, Scitypes
+from sktime.datatypes.types import Mtype, SciType
 
 # pool convert_dict-s
 check_dict = dict()
@@ -49,8 +49,8 @@ def _check_scitype_valid(scitype: str = None):
 
 def check_is(
     obj,
-    mtype: Union[Mtypes, List[str], List[Mtypes]],
-    scitype: Scitypes = None,
+    mtype: Union[Mtype, List[str], List[Mtype]],
+    scitype: SciType = None,
     return_metadata=False,
     var_name="obj",
 ):
@@ -165,7 +165,7 @@ def check_is(
         return ret(False, msg, None, return_metadata)
 
 
-def check_raise(obj, mtype: Mtypes, scitype: Scitypes = None, var_name: str = "input"):
+def check_raise(obj, mtype: Mtype, scitype: SciType = None, var_name: str = "input"):
     """Check object for compliance with mtype specification, raise errors.
 
     Parameters
@@ -211,7 +211,7 @@ def check_raise(obj, mtype: Mtypes, scitype: Scitypes = None, var_name: str = "i
         raise TypeError(msg)
 
 
-def mtype(obj, as_scitype: Scitypes = None):
+def mtype(obj, as_scitype: SciType = None):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters

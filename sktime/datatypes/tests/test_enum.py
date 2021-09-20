@@ -2,7 +2,7 @@
 """File containing tests for the enum types."""
 import numpy as np
 import pytest
-from sktime.datatypes.types import Mtypes, Scitypes
+from sktime.datatypes.types import Mtype, SciType
 from sktime.datatypes import (
     check_is,
     check_raise,
@@ -20,7 +20,7 @@ ENUM_SERIES_MTYPES = [mtype for mtype in SeriesMtype]
 ENUM_PANEL_MTYPES = [mtype for mtype in PanelMtype]
 
 
-def _run_test(mtype_in: Mtypes, scitype_in: Scitypes) -> None:
+def _run_test(mtype_in: Mtype, scitype_in: SciType) -> None:
     """Run test for each mtype enum.
 
     Parameters

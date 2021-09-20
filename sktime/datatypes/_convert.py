@@ -76,7 +76,7 @@ from sktime.datatypes._panel import convert_dict_Panel
 
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._registry import mtype_to_scitype
-from sktime.datatypes.types import Mtypes, Scitypes
+from sktime.datatypes.types import Mtype, SciType
 
 
 # pool convert_dict-s and infer_mtype_dict-s
@@ -86,7 +86,7 @@ convert_dict.update(convert_dict_Panel)
 
 
 def convert(
-    obj, from_type: Mtypes, to_type: Mtypes, as_scitype: Scitypes = None, store=None
+    obj, from_type: Mtype, to_type: Mtype, as_scitype: SciType = None, store=None
 ):
     """Convert objects between different machine representations, subject to scitype.
 
@@ -145,8 +145,8 @@ def convert(
 # conversion based on queriable type to specified target
 def convert_to(
     obj,
-    to_type: Union[Mtypes, List[Mtypes]],
-    as_scitype: Scitypes = None,
+    to_type: Union[Mtype, List[Mtype]],
+    as_scitype: SciType = None,
     store=None,
 ):
     """Convert object to a different machine representation, subject to scitype.
@@ -224,7 +224,7 @@ def convert_to(
     return converted_obj
 
 
-def _conversions_defined(scitype: Scitypes):
+def _conversions_defined(scitype: SciType):
     """Return an indicator matrix which conversions are defined for scitype.
 
     Parameters

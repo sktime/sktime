@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Defines types for the datatypes module."""
-__all__ = ["Mtypes", "Scitypes"]
+__all__ = ["Mtype", "SciType"]
 
 from typing import Union
 
@@ -9,5 +9,5 @@ from sktime.datatypes._panel import PanelMtype
 from sktime.datatypes._series import SeriesMtype
 
 # Types
-Mtypes = Union[str, SeriesMtype, PanelMtype]
-Scitypes = Union[str, Scitype]
+Mtype = Union[str, SeriesMtype, PanelMtype]
+SciType = Union[str, Scitype]
