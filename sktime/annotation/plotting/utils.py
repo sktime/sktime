@@ -1,15 +1,12 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Utility class for plots with sktime."""
+"""Utility class for ploting functionality."""
 
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 
-sns.set_theme()
-sns.set_color_codes()
-
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation.forecasting import check_X
 
 __all__ = [
     "plot_time_series_with_change_points",
@@ -26,9 +23,9 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     Parameters
     ----------
     ts_name: str
-        the name of the time series
+        the name of the time series (dataset) to be annotated
     ts: array
-        the time series to be segmented
+        the time series data to be annotated
     true_cps: array
         the known change points
     font_size: int
@@ -38,7 +35,13 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     -------
     ax
     """
-    plt.figure(figsize=(20, 5))
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    ts = check_X(ts)
+
+    fig = plt.figure(figsize=(20, 5))
     segments = [0] + true_cps.tolist() + [ts.shape[0]]
 
     for idx in np.arange(0, len(segments) - 1):
@@ -56,7 +59,7 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
 
     plt.legend(loc="best")
     plt.title(ts_name, fontsize=font_size)
-    return ax
+    return fig, ax
 
 
 def plot_time_series_with_profiles(
@@ -74,9 +77,9 @@ def plot_time_series_with_profiles(
     Parameters
     ----------
     ts_name: str
-        the name of the time series
+        the name of the time series (dataset) to be annotated
     ts: array
-        the time series to be segmented
+        the time series data to be annotated
     profiles: array
         the profiles computed by the method used
     true_cps: array
@@ -92,6 +95,12 @@ def plot_time_series_with_profiles(
     -------
     ax
     """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    ts = check_X(ts)
+
     fig, ax = plt.subplots(
         len(profiles) + 1,
         1,
@@ -150,4 +159,5 @@ def plot_time_series_with_profiles(
             )
 
     ax[0].legend(prop={"size": font_size})
-    return ax
+
+    return fig, ax
