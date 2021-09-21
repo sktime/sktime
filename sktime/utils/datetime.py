@@ -1,8 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""
-Times series functions related utilities.
-"""
+"""Time format related utilities."""
 
 __author__ = ["Markus Löning", "Yang Zhang"]
 __all__ = []
@@ -23,7 +21,7 @@ def _coerce_duration_to_int(duration, freq=None):
     duration : pd.DateOffset, pd.Timedelta, pd.TimedeltaIndex, pd.Index, int
         Duration type or collection of duration types
     freq : str
-        Frequency of the duration, e. g. 'day', 'week', 'hour'
+        Frequency of the above duration type.
 
     Returns
     -------
@@ -99,7 +97,7 @@ def _shift(x, by=1):
 
 
 def _get_duration(x, y=None, coerce_to_int=False, unit=None):
-    """Compute duration of time index 'x' or 'x' and 'y'.
+    """Compute duration between the time indices.
 
     Parameters
     ----------
