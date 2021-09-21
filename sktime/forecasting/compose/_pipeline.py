@@ -439,7 +439,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             Transformed version of input series `Z`.
         """
         self.check_is_fitted()
-        zt = check_series(Z, enforce_univariate=True)
+        zt = check_series(Z)
         for _, _, transformer in self._iter_transformers():
             zt = transformer.transform(zt, X)
         return zt
@@ -460,5 +460,5 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             The reconstructed timeseries after the transformation has been reversed.
         """
         self.check_is_fitted()
-        Z = check_series(Z, enforce_univariate=True)
+        Z = check_series(Z)
         return self._get_inverse_transform(Z, X)
