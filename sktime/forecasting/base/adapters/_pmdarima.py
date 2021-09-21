@@ -93,12 +93,12 @@ class _PmdArimaAdapter(BaseForecaster):
             raise ValueError("Can't make predictions for before train starting point")
 
         return_pred_na = False
-        # we can't forecast for before the model's order
-        if start < self.order[0]:
-            start = self.order[0]
+        # we can't forecast before the model's differencing order
+        if start < self.order[1]:
+            start = self.order[1]
             # since we might have forced start to surpass end
             if end < start:
-                end = self.order[0]
+                end = self.order[1]
             return_pred_na = True
 
         result = self._forecaster.predict_in_sample(
@@ -112,11 +112,11 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
 
-        # bacause indexer will return 0 for first train point so
-        # we substract the order to make 0 the index of the order
+        # bacause indexer will return 0 for first train point we substract
+        # the differencing order to make 0 the index of the first predictable point
         if return_pred_na:
-            fh_nan = fh_idx[fh_idx < self.order[0]]
-            fh_idx = fh_idx[fh_idx >= self.order[0]] - self.order[0]
+            fh_nan = fh_idx[fh_idx < self.order[1]]
+            fh_idx = fh_idx[fh_idx >= self.order[1]] - self.order[1]
 
         if return_pred_int:
             # unpack and format results
