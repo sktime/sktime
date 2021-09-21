@@ -72,7 +72,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest]
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -121,7 +121,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        python-version: [3.6, 3.7, 3.8.8]
+        python-version: [3.6, 3.7, 3.8.10]
     steps:
     - uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v2

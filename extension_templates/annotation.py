@@ -102,6 +102,16 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         # todo: change "MySeriesAnnotator" to the name of the class
         super(MySeriesAnnotator, self).__init__(fmt=fmt, labels=labels)
 
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+
     # todo: implement this, mandatory
     def _fit(self, X, Y=None):
         """Fit to training data.
