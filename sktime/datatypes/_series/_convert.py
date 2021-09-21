@@ -83,7 +83,10 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     if isinstance(store, dict):
         store["columns"] = obj.columns[[0]]
 
-    return obj[obj.columns[0]]
+    y = obj[obj.columns[0]]
+    y.name = None
+
+    return y
 
 
 convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
