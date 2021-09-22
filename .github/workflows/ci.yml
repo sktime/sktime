@@ -119,7 +119,7 @@ jobs:
       run: python -c "import sys; print(sys.version)"
     - name: Install dependencies
       run: |
-        conda install -c conda-forge -y "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba>=0.50,<0.53" "numpy>=1.19" "pandas>=1.1.0,<1.2" "statsmodels>=0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0"
+        conda install -c conda-forge -y "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba=0.53" "numpy>=1.19" "pandas>=1.1.0,<1.2" "statsmodels>=0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0"
         pip install -r build_tools/requirements.txt
         conda list
     - name: Build wheel
