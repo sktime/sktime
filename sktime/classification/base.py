@@ -104,8 +104,10 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X, y = check_X_y(
+            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
 
         self._fit(X, y)
 
@@ -129,8 +131,10 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances] - predicted class labels
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
 
         y = self._predict(X)
@@ -152,8 +156,10 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances, n_classes] - predictive pmf
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
         return self._predict_proba(X)
 
