@@ -126,6 +126,9 @@ add_function_parentheses = False
 # the corresponding warning that this override happens.
 suppress_warnings = ["myst.mathjax"]
 
+# Link to GitHub repo for github_issues extension
+issues_github_path = "alan-turing-institute/sktime"
+
 
 def linkcode_resolve(domain, info):
     """Return URL to source code corresponding.
@@ -423,6 +426,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
 
 # -- Options for _todo extension ----------------------------------------------

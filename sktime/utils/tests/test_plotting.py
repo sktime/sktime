@@ -1,7 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Test functionality of time series plotting functions."""
+"""Test time series plotting functionality."""
+
+import re
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,9 @@ invalid_input_types = [
     pd.DataFrame({"y1": y_airline, "y2": y_airline}),
     "this_is_a_string",
 ]
+
+# can be used with pytest.mark.parametrize to check plots that accept
+# univariate series
 univariate_plots = [plot_correlations, plot_lags]
 
 
@@ -34,39 +38,51 @@ def _plot_series(series, ax=None, **kwargs):
         return plot_series(series, ax=ax, **kwargs)
 
 
+# Can be used with pytest.mark.parametrize to run a test on all plots
 all_plots = univariate_plots + [_plot_series]
 
 
 @pytest.fixture
 def valid_data_types():
     """Filter valid data types for those that work with plotting functions."""
-    valid_data_types = tuple(
-        filter(
-            lambda x: x is not np.ndarray and x is not pd.DataFrame, VALID_DATA_TYPES
-        )
-    )
+    valid_data_types = tuple(filter(lambda x: x is not np.ndarray, VALID_DATA_TYPES))
     return valid_data_types
 
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_runs_without_error(series_to_plot):
-    """Verify plot_series runs without error."""
+    """Test whether plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
     _plot_series(series_to_plot)
     plt.gcf().canvas.draw_idle()
 
+    # Test with labels specified
+    if isinstance(series_to_plot, pd.Series):
+        labels = ["Series 1"]
+    elif isinstance(series_to_plot, tuple):
+        labels = [f"Series {i+1}" for i in range(len(series_to_plot))]
+    _plot_series(series_to_plot, labels=labels)
+    plt.gcf().canvas.draw_idle()
+    plt.close()
+
 
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
-@pytest.mark.parametrize("plot_func", all_plots)
-def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
-    """Verify all plots raise input errors with invalid input."""
-    # TODO: Is it possible to dynamically create the matching str if it includes
-    #       characters that need to be escaped (like .)
-    # match = f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
-    with pytest.raises((TypeError, ValueError)):
-        plot_func(series_to_plot)
+def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
+    """Tests whether plot_series raises error for invalid input types."""
+    series_type = type(series_to_plot)
+
+    if not isinstance(series_to_plot, (pd.Series, pd.DataFrame)):
+        match = (
+            rf"input must be a one of {valid_data_types}, but found type: {series_type}"
+        )
+        with pytest.raises((TypeError), match=re.escape(match)):
+            _plot_series(series_to_plot)
+    else:
+        match = "input must be univariate, but found 2 variables."
+        with pytest.raises(ValueError, match=match):
+            _plot_series(series_to_plot)
 
 
 @pytest.mark.parametrize(
@@ -75,7 +91,7 @@ def test_plot_invalid_input_type_raises_error(series_to_plot, plot_func):
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
-    """Verify plot_series raises expected error with unequal index types."""
+    """Tests whether plot_series raises error for series with unequal index."""
     match = "Found series with inconsistent index types"
     with pytest.raises(TypeError, match=match):
         _plot_series(series_to_plot)
@@ -83,7 +99,7 @@ def test_plot_series_with_unequal_index_type_raises_error(
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
-    """Verify plot_series raises expected error for inconsistent marker length."""
+    """Tests whether plot_series raises error for inconsistent series/markers."""
     match = """There must be one marker for each time series,
                 but found inconsistent numbers of series and
                 markers."""
@@ -100,7 +116,7 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
-    """Verify plot_series raises expected error for inconsistent label length."""
+    """Tests whether plot_series raises error for inconsistent series/labels."""
     match = """There must be one label for each time series,
                 but found inconsistent numbers of series and
                 labels."""
@@ -117,7 +133,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
-    """Verify output of plot series is correct."""
+    """Tests whether plot_series returns plt.fig and plt.ax."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -148,21 +164,61 @@ def test_plot_series_output_type(series_to_plot):
     )
 
 
+def test_plot_series_uniform_treatment_of_int64_range_index_types():
+    """Verify that plot_series treats Int64 and Range indices equally."""
+    # We test that int64 and range indices are treated uniformly and do not raise an
+    # error of inconsistent index types
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    y1 = pd.Series(np.arange(10))
+    y2 = pd.Series(np.random.normal(size=10))
+    y1.index = pd.Int64Index(y1.index)
+    y2.index = pd.RangeIndex(y2.index)
+    plot_series(y1, y2)
+    plt.gcf().canvas.draw_idle()
+    plt.close()
+
+
+# Generically test whether plots only accepting univariate input run
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 def test_univariate_plots_run_without_error(series_to_plot, plot_func):
-    """Verify plots that accept univariate series run without error."""
+    """Tests whether plots that accept univariate series run without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
     plot_func(series_to_plot)
     plt.gcf().canvas.draw_idle()
+    plt.close()
 
 
+# Generically test whether plots only accepting univariate input
+# raise an error when invalid input type is found
+@pytest.mark.parametrize("series_to_plot", invalid_input_types)
+@pytest.mark.parametrize("plot_func", univariate_plots)
+def test_univariate_plots_invalid_input_type_raises_error(
+    series_to_plot, plot_func, valid_data_types
+):
+    """Tests whether plots that accept univariate series run without error."""
+    if not isinstance(series_to_plot, (pd.Series, pd.DataFrame)):
+        series_type = type(series_to_plot)
+        match = (
+            rf"input must be a one of {valid_data_types}, but found type: {series_type}"
+        )
+        with pytest.raises(TypeError, match=re.escape(match)):
+            plot_func(series_to_plot)
+    else:
+        match = "input must be univariate, but found 2 variables."
+        with pytest.raises(ValueError, match=match):
+            plot_func(series_to_plot)
+
+
+# Generically test output of plots only accepting univariate input
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 def test_univariate_plots_output_type(series_to_plot, plot_func):
-    """Verify plots that accept univariate series have the correct output types."""
+    """Tests whether plots accepting univariate series have correct output types."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -180,16 +236,32 @@ def test_univariate_plots_output_type(series_to_plot, plot_func):
     )
 
 
-def test_plot_series_uniform_treatment_of_int64_range_index_types():
-    """Verify that plot_series treats Int64 and Range indices equally."""
-    # We test that int64 and range indices are treated uniformly and do not raise an
-    # error of inconsistent index types
+# For plots that only accept univariate input, from here onwards are
+# tests specific to a given plot. E.g. to test specific arguments or functionality.
+@pytest.mark.parametrize("series_to_plot", [y_airline])
+@pytest.mark.parametrize("lags", [2, (1, 2, 3)])
+@pytest.mark.parametrize("suptitle", ["Lag Plot", None])
+def test_plot_lags_arguments(series_to_plot, lags, suptitle):
+    """Tests whether plot_lags run with different input arguments."""
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
-    y1 = pd.Series(np.arange(10))
-    y2 = pd.Series(np.random.normal(size=10))
-    y1.index = pd.Int64Index(y1.index)
-    y2.index = pd.RangeIndex(y2.index)
-    plot_series(y1, y2)
+    plot_lags(series_to_plot, lags=lags, suptitle=suptitle)
     plt.gcf().canvas.draw_idle()
+    plt.close()
+
+
+@pytest.mark.parametrize("series_to_plot", [y_airline])
+@pytest.mark.parametrize("lags", [6, 12, 24, 36])
+@pytest.mark.parametrize("suptitle", ["Correlation Plot", None])
+@pytest.mark.parametrize("series_title", ["Time Series", None])
+def test_plot_correlations_arguments(series_to_plot, lags, suptitle, series_title):
+    """Tests whether plot_lags run with different input arguments."""
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    plot_correlations(
+        series_to_plot, lags=lags, suptitle=suptitle, series_title=series_title
+    )
+    plt.gcf().canvas.draw_idle()
+    plt.close()
