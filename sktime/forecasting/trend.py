@@ -25,12 +25,12 @@ class TrendForecaster(BaseForecaster):
 
     Parameters
     ----------
-    regressor : estimator object, optional (default = None)
+    regressor : estimator object, default = None
         Define the regression model type. If not set, will default to
          sklearn.linear_model.LinearRegression
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import TrendForecaster
     >>> y = load_airline()
@@ -58,7 +58,7 @@ class TrendForecaster(BaseForecaster):
         ----------
         y : pd.Series
             Target time series with which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, default=None
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
@@ -86,11 +86,11 @@ class TrendForecaster(BaseForecaster):
         ----------
         fh : int, list or np.array
             The forecast horizon with the steps ahead to predict
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, default=None
             Exogenous variables (ignored)
-        return_pred_int : bool, optional (default=False)
+        return_pred_int : bool, default=False
             Return the prediction intervals for the forecast.
-        alpha : float or list, optional (default=0.95)
+        alpha : float or list, default=0.95
             If alpha is iterable, multiple intervals will be calculated.
 
         Returns
@@ -100,9 +100,6 @@ class TrendForecaster(BaseForecaster):
         y_pred_int : pd.DataFrame
             Prediction intervals for the forecast
         """
-        if return_pred_int or X is not None:
-            raise NotImplementedError()
-
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
         X_pred = fh.to_numpy().reshape(-1, 1)
@@ -118,12 +115,12 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     Parameters
     ----------
-    regressor : estimator object, optional (default = None)
+    regressor : estimator object, default = None
         Define the regression model type. If not set, will default to
          sklearn.linear_model.LinearRegression
-    degree : int, optional (default = 1)
+    degree : int, default = 1
         Degree of polynomial function
-    with_intercept : bool, optional (default=True)
+    with_intercept : bool, default=True
         If true, then include a feature in which all polynomial powers are
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
@@ -159,9 +156,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         ----------
         y : pd.Series
             Target time series with which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, default=None
             Exogenous variables are ignored
-        fh : int, list or np.array, optional (default=None)
+        fh : int, list or np.array, default=None
             The forecasters horizon with the steps ahead to to predict.
 
         Returns
@@ -196,11 +193,11 @@ class PolynomialTrendForecaster(BaseForecaster):
         ----------
         fh : int, list or np.array
             The forecast horizon with the steps ahead to predict
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, default=None
             Exogenous variables (ignored)
-        return_pred_int : bool, optional (default=False)
+        return_pred_int : bool, default=False
             Return the prediction intervals for the forecast.
-        alpha : float or list, optional (default=0.95)
+        alpha : float or list, default=0.95
             If alpha is iterable, multiple intervals will be calculated.
 
         Returns
@@ -210,9 +207,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         y_pred_int : pd.DataFrame
             Prediction intervals for the forecast
         """
-        if return_pred_int or X is not None:
-            raise NotImplementedError()
-
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
         X_pred = fh.to_numpy().reshape(-1, 1)

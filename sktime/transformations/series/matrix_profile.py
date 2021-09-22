@@ -15,18 +15,26 @@ _check_soft_dependencies("stumpy")
 
 import stumpy  # noqa: E402
 
-# noqa: E501
-
 
 class MatrixProfileTransformer(_SeriesToSeriesTransformer):
     """Calculate the matrix profile of a time series.
 
     Takes as input a single time series dataset and returns the matrix profile
-    for that time series dataset.
+    for that time series dataset. The matrix profile is a vector that stores the
+    z-normalized Euclidean distance between any subsequence within a
+    time series and its nearest neighbor.
+
+    For more information on the matrix profile, see `stumpy's tutorial
+    <https://stumpy.readthedocs.io/en/latest/Tutorial_The_Matrix_Profile.html>`_
 
     Parameters
     ----------
     window_length : int
+
+    Notes
+    -----
+    Provides wrapper around functionality in `stumpy.stump
+    <https://stumpy.readthedocs.io/en/latest/api.html#stumpy.stump>`_
 
     Examples
     --------
@@ -49,13 +57,14 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z: pandas.Series
-            Time series dataset(lets say of length=n)
+        Z: pd.Series
+            Time series of length n_timepoints
 
         Returns
         -------
-        Z: pandas.Series
-            Matrix Profile of time series as output with length as (n-window_length+1)
+        Z: pd.Series
+            Matrix Profile of time series as output with length as
+            (n_timepoints-window_length+1)
         """
         self.check_is_fitted()
         Z = check_series(Z, enforce_univariate=True)

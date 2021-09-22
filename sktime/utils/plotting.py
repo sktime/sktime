@@ -17,6 +17,8 @@ from sktime.utils.validation.series import check_consistent_index_type
 
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
+from sktime.datatypes import convert_to
+
 
 def plot_series(
     *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
@@ -25,7 +27,7 @@ def plot_series(
 
     Parameters
     ----------
-    series : pd.Series
+    series : pd.Series or iterable of pd.Series
         One or more time series
     labels : list, default = None
         Names of series, will be displayed in figure legend
@@ -46,6 +48,9 @@ def plot_series(
 
     for y in series:
         check_y(y)
+
+    series = list(series)
+    series = [convert_to(y, "pd.Series", "Series") for y in series]
 
     n_series = len(series)
     _ax_kwarg_is_none = True if ax is None else False
@@ -132,33 +137,37 @@ def plot_series(
 def plot_lags(series, lags=1, suptitle=None):
     """Plot one or more lagged versions of a time series.
 
-    Parameters
-    ----------
-    series : pd.Series
-        Time series for plotting lags.
-    lags : int or array-like
-        The lag or lags to plot.
+        Parameters
+        ----------
+        series : pd.Series
+            Time series for plotting lags.
+    <<<<<<< HEAD
+        lags : int or array-like
+    =======
+        lags : int or array-like, default=1
+    >>>>>>> 338bec1c0c533c5772d9f152e6b3948f2fd142d4
+            The lag or lags to plot.
 
-        - int plots the specified lag
-        - array-like  plots specified lags in the array/list
+            - int plots the specified lag
+            - array-like  plots specified lags in the array/list
 
-    suptitle : str, default=None
-        The text to use as the Figure's suptitle. If None, then the title
-        will be "Plot of series against lags {lags}"
+        suptitle : str, default=None
+            The text to use as the Figure's suptitle. If None, then the title
+            will be "Plot of series against lags {lags}"
 
-    Returns
-    -------
-    fig : matplotlib.figure.Figure
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
 
-    axes : np.ndarray
-        Array of the figure's Axe objects
+        axes : np.ndarray
+            Array of the figure's Axe objects
 
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)
-    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # plots of y(t) with y(t-1),y(t-2)..
+        Examples
+        --------
+        >>> from sktime.datasets import load_airline
+        >>> y = load_airline()
+        >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)
+        >>> fig, ax = plot_lags(y, lags=[1,2,3]) # plots of y(t) with y(t-1),y(t-2)..
     """
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
@@ -267,6 +276,7 @@ def plot_correlations(
     import matplotlib.pyplot as plt
 
     series = check_y(series)
+    series = convert_to(series, "pd.Series", "Series")
 
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))

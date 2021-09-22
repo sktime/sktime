@@ -48,9 +48,13 @@ class _ProphetAdapter(BaseForecaster):
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
 
-        # Add seasonality
+        # Add seasonality/seasonalities
         if self.add_seasonality:
-            self._forecaster.add_seasonality(**self.add_seasonality)
+            if type(self.add_seasonality) == dict:
+                self._forecaster.add_seasonality(**self.add_seasonality)
+            elif type(self.add_seasonality) == list:
+                for seasonality in self.add_seasonality:
+                    self._forecaster.add_seasonality(**seasonality)
 
         # Add country holidays
         if self.add_country_holidays:

@@ -91,6 +91,16 @@ class MyTSC(BaseClassifier):
         # todo: change "MyTSC" to the name of the class
         super(MyTSC, self).__init__()
 
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+
     # todo: implement this, mandatory
     def _fit(self, X, y):
         """Fit time series classifier to training data.
@@ -119,7 +129,7 @@ class MyTSC(BaseClassifier):
 
     # todo: implement this, mandatory
     def _predict(self, X):
-        """predicts labels for sequences in X
+        """Predict labels for sequences in X.
 
         core logic
 
