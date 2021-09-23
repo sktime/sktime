@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-
 """Vector Auto Regressor."""
-__all__ = ["VectorAutoRegression"]
-__author__ = ["thayeylolu"]
+__all__ = ["VAR"]
+__author__ = ["thayeylolu", "aiwalter"]
 
 from statsmodels.tsa.api import VAR as _VAR
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -10,7 +9,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 import pandas as pd
 
 
-class VectorAutoRegression(_StatsModelsAdapter):
+class VAR(_StatsModelsAdapter):
     """
     A VAR model is a generalisation of the univariate autoregressive.
 
@@ -34,24 +33,17 @@ class VectorAutoRegression(_StatsModelsAdapter):
     Two canonical VARMA forms: Scalar component models vis-à-vis the echelon form.
     Econometric Reviews, 31(1), 60–83, 2012.
 
-    Example
-    -------
-    >>> from sktime.forecasting.var import VectorAutoRegression as VAR
+    Examples
+    --------
+    >>> from sktime.forecasting.var import VAR
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> index = pd.date_range(start="2005", end="2006-12", freq="M")
-    >>> df = pd.DataFrame(np.random.randint(0, 100, size=(23, 2)),
-    ... columns=list("AB"),
-    ... index=pd.PeriodIndex(index))
+    >>> from sktime.datasets import load_longley
+    >>> _, y = load_longley()
     >>> train, test = temporal_train_test_split(df)
     >>> sktime_model = VAR()
-    >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
     >>> sktime_model.fit(train)
-    VectorAutoRegression(maxlags=None, method='ols', missing='none', trend='c',
-                         verbose=False)
-    >>> y_pred = sktime_model.predict(fh=fh)
+    VAR(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")
@@ -78,7 +70,7 @@ class VectorAutoRegression(_StatsModelsAdapter):
         self.verbose = verbose
         self.missing = missing
 
-        super(VectorAutoRegression, self).__init__()
+        super(VAR, self).__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.

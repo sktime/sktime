@@ -2,7 +2,7 @@
 """Tests the VAR model."""
 __author__ = ["thayeylolu"]
 #
-from sktime.forecasting.var import VectorAutoRegression as VAR
+from sktime.forecasting.var import VAR
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.base import ForecastingHorizon
 import pandas as pd
