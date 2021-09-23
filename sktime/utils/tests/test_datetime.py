@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for datetime functions."""
 
-__author__ = ["Yang Zhang"]
+__author__ = ["xiaobenbenecho"]
 
 import pandas as pd
 import numpy as np
