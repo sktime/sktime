@@ -604,7 +604,7 @@ class BaseForecaster(BaseEstimator):
         return X_inner, y_inner
 
     def _check_X(self, X=None):
-        """Shorthand for _check_X_y with one argument X."""
+        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
         return self._check_X_y(X=X)[0]
 
     def _update_X(self, X, enforce_index_type=None):
