@@ -85,7 +85,7 @@ class BaseForecaster(BaseEstimator):
         self._fh = None
         self._cutoff = None  # reference point for relative fh
 
-        self.converter_store_y = dict()  # storage dictionary for in/output conversion
+        self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
         super(BaseForecaster, self).__init__()
 
@@ -94,11 +94,11 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.array
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous data
 
         Returns
@@ -146,9 +146,9 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
+        fh : int, list, np.ndarray or ForecastingHorizon
             Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogenous time series
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
@@ -199,7 +199,7 @@ class BaseForecaster(BaseEstimator):
             y_pred,
             self._y_mtype_last_seen,
             as_scitype="Series",
-            store=self.converter_store_y,
+            store=self._converter_store_y,
         )
 
         if return_pred_int:
@@ -214,12 +214,12 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, or 2D np.array, optional (default=None)
+            Exogeneous data
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
@@ -310,9 +310,9 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.array
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, or 2D np.ndarray optional (default=None)
             Exogeneous data
         update_params : bool, optional (default=True)
             whether model parameters should be updated
@@ -353,9 +353,11 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Target time series to which to fit the forecaster.
         cv : temporal cross-validation generator, optional (default=None)
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, or 2D np.ndarray optional (default=None)
+            Exogeneous data
         update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
@@ -396,7 +398,8 @@ class BaseForecaster(BaseEstimator):
 
     def update_predict_single(
         self,
-        y_new,
+        y=None,
+        y_new=None,
         fh=None,
         X=None,
         update_params=True,
@@ -411,9 +414,14 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y_new : pd.Series
-        fh : int, list, np.array or ForecastingHorizon
-        X : pd.DataFrame
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Target time series to which to fit the forecaster.
+        y_new : alias for y for downwards compatibility, pass only one of y, y_new
+            to be deprecated in version 0.10.0
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, or 2D np.array, optional (default=None)
+            Exogeneous data
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
             If True, prediction intervals are returned in addition to point
@@ -427,14 +435,20 @@ class BaseForecaster(BaseEstimator):
         pred_ints : pd.DataFrame
             Prediction intervals
         """
+        # handle input alias, deprecate in v 0.10.1
+        if y is None:
+            y = y_new
+        if y is None:
+            raise ValueError("y must be of Series type and cannot be None")
+
         self.check_is_fitted()
         self._set_fh(fh)
 
         # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y_new)
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X/y with the new X/y
-        self._update_y_X(y_new, X)
+        self._update_y_X(y, X)
 
         return self._update_predict_single(
             y=y_inner,
@@ -503,7 +517,37 @@ class BaseForecaster(BaseEstimator):
         self._set_cutoff_from_y(y)
 
     def _check_X_y(self, y=None, X=None):
-        """Check and coerce X/y for fit/predict/update functions."""
+        """Check and coerce X/y for fit/predict/update functions.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, or 2D np.array, optional (default=None)
+            Exogeneous data
+
+        Returns
+        -------
+        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
+            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+        X_inner : Series compatible with self.get_tag("X_inner_mtype") format
+            converted/coerced version of y, mtype determined by "X_inner_mtype" tag
+
+        Raises
+        ------
+        TypeError if y is not one of the permissible Series mtypes
+        TypeError if y is not compatible with self.get_tag("scitype:y")
+            if tag value is "univariate", y should be univariate
+            if tag value is "multivariate", y must be bi- or higher-variate
+            if tag vaule is "both", y can be either
+        TypeError if self.get_tag("X-y-must-have-same-index") is True
+            and the index set of X is not a super-set of the index set of y
+
+        Writes to self
+        --------------
+        _y_mtype_last_seen : str, mtype of y
+        _converter_store_y : dict, metadata from conversion for back-conversion
+        """
         # input checks and minor coercions on X, y
         ###########################################
 
@@ -545,7 +589,7 @@ class BaseForecaster(BaseEstimator):
             y,
             to_type=y_inner_mtype,
             as_scitype="Series",  # we are dealing with series
-            store=self.converter_store_y,
+            store=self._converter_store_y,
         )
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
