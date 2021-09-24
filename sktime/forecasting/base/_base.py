@@ -174,7 +174,7 @@ class BaseForecaster(BaseEstimator):
             )
 
         # input check and conversion for X
-        X_inner, _ = self._check_X_y(X=X)
+        X_inner = self._check_X(X=X)
 
         # this should be here, but it breaks the ARIMA forecasters
         #  that is because check_alpha converts to list, but ARIMA forecaster
@@ -521,7 +521,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous data
@@ -530,14 +530,16 @@ class BaseForecaster(BaseEstimator):
         -------
         y_inner : Series compatible with self.get_tag("y_inner_mtype") format
             converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            None if y was None
         X_inner : Series compatible with self.get_tag("X_inner_mtype") format
             converted/coerced version of y, mtype determined by "X_inner_mtype" tag
+            None if X was None
 
         Raises
         ------
-        TypeError if y is not one of the permissible Series mtypes
+        TypeError if y or X is not one of the permissible Series mtypes
         TypeError if y is not compatible with self.get_tag("scitype:y")
-            if tag value is "univariate", y should be univariate
+            if tag value is "univariate", y must be univariate
             if tag value is "multivariate", y must be bi- or higher-variate
             if tag vaule is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
@@ -600,6 +602,10 @@ class BaseForecaster(BaseEstimator):
         )
 
         return X_inner, y_inner
+
+    def _check_X(self, X=None):
+        """Shorthand for _check_X_y with one argument X."""
+        return self._check_X_y(X=X)
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None:
