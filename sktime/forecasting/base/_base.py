@@ -516,7 +516,7 @@ class BaseForecaster(BaseEstimator):
         # set initial cutoff to the end of the training data
         self._set_cutoff_from_y(y)
 
-    def _check_X_y(self, y=None, X=None):
+    def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
@@ -605,7 +605,7 @@ class BaseForecaster(BaseEstimator):
 
     def _check_X(self, X=None):
         """Shorthand for _check_X_y with one argument X."""
-        return self._check_X_y(X=X)
+        return self._check_X_y(X=X)[0]
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None:
