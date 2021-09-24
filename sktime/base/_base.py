@@ -15,8 +15,8 @@ Interface specifications below.
     class name: BaseObject
 
 Hyper-parameter inspection and setter methods:
-    inspect hyper-parameters      - get_params()
-    setting hyper-parameters      - set_params(**params)
+    inspect hyper-parameters     - get_params()
+    setting hyper-parameters     - set_params(**params)
 
 Tag inspection and setter methods
     inspect tags (all)            - get_tags()
@@ -25,6 +25,10 @@ Tag inspection and setter methods
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags          - set_tag(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+
+Testing with default parameters methods
+    getting default parameters           - get_test_params()
+    get instance with default parameters - create_test_instance()
 
 ---
 
@@ -223,12 +227,15 @@ class BaseObject(_BaseEstimator):
 
     @classmethod
     def get_test_params(cls):
-        """Get default parameters of the estimator.
+        """Return testing parameter settings for the estimator.
 
         Returns
         -------
         params : dict or list of dict, default = {}
-            Default parameters related to the estimator class
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # imported inside the function to avoid circular imports
         from sktime.tests._config import ESTIMATOR_TEST_PARAMS
@@ -256,11 +263,11 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        instance : object of the class with default parameters
+        instance : instance of the class with default parameters
 
         Notes
         -----
-        get_test_params can return dict or list of dict.
+        `get_test_params` can return dict or list of dict.
         This function takes first or single dict that get_test_params returns, and
         constructs the object with that.
         """
