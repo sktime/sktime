@@ -1234,7 +1234,16 @@
         "doc",
         "test"
       ]
-    }
+    },
+    {
+      "login": "bobbys-dev",
+      "name": "bobbys",
+      "avatar_url": "https://avatars.githubusercontent.com/bobbys-dev",
+      "profile": "https://github.com/bobbys-dev",
+      "contributions": [
+        "code"
+      ]        
+    }    
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
