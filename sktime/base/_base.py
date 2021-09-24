@@ -158,7 +158,7 @@ class BaseObject(_BaseEstimator):
         tag_value = collected_tags.get(tag_name, tag_value_default)
 
         if raise_error and tag_value is None:
-            ValueError(f"Tag with name {tag_name} could not be found.")
+            raise ValueError(f"Tag with name {tag_name} could not be found.")
 
         return tag_value
 
