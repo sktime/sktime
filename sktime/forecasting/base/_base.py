@@ -578,8 +578,8 @@ class BaseForecaster(BaseEstimator):
                 check_equal_time_index(X, y)
         # end checking X
 
-        # convert y to supported inner type, if necessary
-        ##################################################
+        # convert X & y to supported inner type, if necessary
+        #####################################################
 
         # retrieve supported mtypes
 
