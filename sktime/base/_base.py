@@ -19,12 +19,15 @@ Hyper-parameter inspection and setter methods:
     setting hyper-parameters     - set_params(**params)
 
 Tag inspection and setter methods
-    inspect tags (all)            - get_tags()
-    inspect tags (one tag)        - get_tag(tag_name: str, tag_value_default=None)
-    inspect tags (class method)   - get_class_tags()
-    inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
-    setting dynamic tags          - set_tag(**tag_dict: dict)
-    set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+    inspect tags (all)             - get_tags()
+    inspect tags (one tag)         - get_tag(tag_name: str, tag_value_default=None)
+    inspect tags (class method)    - get_class_tags()
+    inspect tags (one tag, class)  - get_class_tag(tag_name:str, tag_value_default=None)
+    setting dynamic tags           - set_tag(**tag_dict: dict)
+    set/clone dynamic tags to self - clone_tags(estimator, tag_names=None)
+
+Persistence and cloning methods
+    return deep clone of self    - clone()
 
 Testing with default parameters methods
     getting default parameters           - get_test_params()
