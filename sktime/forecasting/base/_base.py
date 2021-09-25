@@ -95,26 +95,34 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Target time series to which to fit the forecaster.
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                must be pd.Series, 1D np.ndarray, or have a single column
+            if self.get_tag("scitype:y")=="multivariate":
+                must be pd.DataFrame or 2D np.ndarray with 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
+            if self.get_tag("requires-fh-in-fit"), must be passed, not optional
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous data
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
 
         Returns
         -------
-        self :
-            Reference to self.
+        self : Reference to self.
 
-        Notes
-        -----
-        Changes state by creating a fitted model that updates attributes
-        ending in "_" and sets is_fitted flag to True.
-        stores data in self._X and self._y
-        stores fh, if passed
-        updates self.cutoff to most recent time in y
-        creates fitted model (attributes ending in "_")
-        sets is_fitted flag to true
+        State change
+        ------------
+        Changes state to "fitted".
+
+        Writes to self
+        --------------
+        Sets is_fitted flag to True.
+        Writes self._y and self._X with `y` and `X`, respectively.
+        Sets cutoff and self._cutoff to last index seen in `y`.
+        Sets fitted model attributes ending in "_".
+        Stores fh to self.fh if fh is passed.
         """
         # if fit is called, fitted state is re-set
         self._is_fitted = False
@@ -150,16 +158,27 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogenous time series
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
+        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Point forecasts at fh, with same index as fh
+            y_pred has same type as y passed in fit (most recently)
         y_pred_int : pd.DataFrame - only if return_pred_int=True
+            in this case, return is 2-tuple (otherwise a single y_pred)
             Prediction intervals
+
+        Writes to self
+        --------------
+        Sets is_fitted flag to True.
+        Writes self._y and self._X with `y` and `X`, respectively.
+        Sets self.cutoff and self._cutoff to last index seen in `y`.
+        Sets fitted model attributes ending in "_".
+        Stores fh to self.fh if fh is passed.
         """
         # handle inputs
         self.check_is_fitted()
@@ -215,21 +234,42 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Target time series to which to fit the forecaster.
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                must be pd.Series, 1D np.ndarray, or have a single column
+            if self.get_tag("scitype:y")=="multivariate":
+                must be pd.DataFrame or 2D np.ndarray with 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : int, list, np.array or ForecastingHorizon (not optional)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous data
+            if self.get_tag("X-y-must-have-same-index"),
+            X.index must contain y.index and fh.index
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
+        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Point forecasts at fh, with same index as fh
+            y_pred has same type as y
         y_pred_int : pd.DataFrame - only if return_pred_int=True
+            in this case, return is 2-tuple (otherwise a single y_pred)
             Prediction intervals
+
+        State change
+        ------------
+        Changes state to "fitted".
+
+        Writes to self
+        --------------
+        Sets is_fitted flag to True.
+        Writes self._y and self._X with `y` and `X`, respectively.
+        Sets self.cutoff and self._cutoff to last index seen in `y`.
+        Sets fitted model attributes ending in "_".
+        Stores fh to self.fh.
         """
         # if fit is called, fitted state is re-set
         self._is_fitted = False
@@ -311,9 +351,15 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Target time series to which to fit the forecaster.
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                must be pd.Series, 1D np.ndarray, or have a single column
+            if self.get_tag("scitype:y")=="multivariate":
+                must be pd.DataFrame or 2D np.ndarray with 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         X : pd.DataFrame, or 2D np.ndarray optional (default=None)
             Exogeneous data
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -321,11 +367,12 @@ class BaseForecaster(BaseEstimator):
         -------
         self : reference to self
 
-        Notes
-        -----
-        Update self._y and self._X with `y` and `X`, respectively.
-        Updates  self._cutoff to last index seen in `y`. If update_params=True,
-        updates fitted model that updates attributes ending in "_".
+        Writes to self
+        --------------
+        Update self._y and self._X with `y` and `X`, by appending rows.
+        Updates self. cutoff and self._cutoff to last index seen in `y`.
+        If update_params=True,
+            updates fitted model attributes ending in "_".
         """
         self.check_is_fitted()
 
@@ -355,20 +402,36 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Target time series to which to fit the forecaster.
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                must be pd.Series, 1D np.ndarray, or have a single column
+            if self.get_tag("scitype:y")=="multivariate":
+                must be pd.DataFrame or 2D np.ndarray with 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         cv : temporal cross-validation generator, optional (default=None)
         X : pd.DataFrame, or 2D np.ndarray optional (default=None)
             Exogeneous data
+            if self.get_tag("X-y-must-have-same-index"),
+            X.index must contain y.index and fh.index
         update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
-        y_pred_int : pd.DataFrame
+        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Point forecasts at fh, with same index as fh
+            y_pred has same type as y
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            in this case, return is 2-tuple (otherwise a single y_pred)
             Prediction intervals
+
+        Writes to self
+        --------------
+        Update self._y and self._X with `y` and `X`, by appending rows.
+        Updates self. cutoff and self._cutoff to last index seen in `y`.
+        If update_params=True,
+            updates fitted model attributes ending in "_".
         """
         self.check_is_fitted()
 
@@ -414,12 +477,19 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                must be pd.Series, 1D np.ndarray, or have a single column
+            if self.get_tag("scitype:y")=="multivariate":
+                must be pd.DataFrame or 2D np.ndarray with 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         y_new : alias for y for downwards compatibility, pass only one of y, y_new
             to be deprecated in version 0.10.0
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous data
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain y.index and fh.index
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
             If True, prediction intervals are returned in addition to point
@@ -428,10 +498,18 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
+        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Point forecasts at fh, with same index as fh
+            y_pred has same type as y
         pred_ints : pd.DataFrame
             Prediction intervals
+
+        Writes to self
+        --------------
+        Update self._y and self._X with `y` and `X`, by appending rows.
+        Updates self. cutoff and self._cutoff to last index seen in `y`.
+        If update_params=True,
+            updates fitted model attributes ending in "_".
         """
         # handle input alias, deprecate in v 0.10.1
         if y is None:
@@ -463,12 +541,18 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series
-            Target time series to which to compare the forecasts.
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Target time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                must be pd.Series, 1D np.ndarray, or have a single column
+            if self.get_tag("scitype:y")=="multivariate":
+                must be pd.DataFrame or 2D np.ndarray with 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : int, list, array-like or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables.
+        X : pd.DataFrame, or 2D np.array, optional (default=None)
+            Exogeneous data
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
 
         Returns
         -------
@@ -920,11 +1004,10 @@ class BaseForecaster(BaseEstimator):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
 
-        Notes
-        -----
-        Update self._y and self._X with `y` and `X`, respectively.
-        Updates  self._cutoff to last index seen in `y`. If update_params=True,
-        updates fitted model that updates attributes ending in "_".
+        Writes to self
+        --------------
+        If update_params=True,
+            updates fitted model attributes ending in "_".
         """
         if update_params:
             # default to re-fitting if update is not implemented
