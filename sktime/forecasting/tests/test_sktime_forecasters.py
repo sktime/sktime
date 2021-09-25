@@ -55,7 +55,7 @@ def test_oh_setting(Forecaster):
     """Check cuttoff and _y."""
     # check _y and cutoff is None after construction
     f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
         y = _make_series(n_columns=n_columns)
@@ -143,7 +143,7 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
 def test_no_fh_opt(Forecaster):
     """Check if fh is optional in fit."""
     f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
         y_train = _make_series(n_columns=n_columns)
@@ -157,7 +157,7 @@ def test_no_fh_opt(Forecaster):
 def test_fh_in_fit_opt(Forecaster):
     """Check if fh is optional in fit."""
     f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
         y_train = _make_series(n_columns=n_columns)
@@ -172,7 +172,7 @@ def test_fh_in_fit_opt(Forecaster):
 def test_fh_in_predict_opt(Forecaster):
     """Check if fh is optional in predict."""
     f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
         y_train = _make_series(n_columns=n_columns)
@@ -187,7 +187,7 @@ def test_fh_in_predict_opt(Forecaster):
 def test_same_fh_in_fit_and_predict_opt(Forecaster):
     """Check if fh is the same in fit and predict."""
     f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("y:scitype"))
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
         y_train = _make_series(n_columns=n_columns)
