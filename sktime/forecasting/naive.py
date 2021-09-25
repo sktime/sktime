@@ -124,7 +124,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         elif strategy == "last":
             if sp == 1:
                 last_valid_value = last_window[
-                    (~np.isnan(last_window))[0 :: sp].cumsum().argmax()
+                    (~np.isnan(last_window))[0::sp].cumsum().argmax()
                 ]
                 return np.repeat(last_valid_value, len(fh))
 
