@@ -382,9 +382,6 @@ class BaseForecaster(BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal X/y with the new X/y
-        self._update_y_X(y_inner, X_inner)
-
         cv = check_cv(cv)
 
         return self._predict_moving_cutoff(
