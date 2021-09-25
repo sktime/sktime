@@ -618,10 +618,22 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series or pd.DataFrame
+        y : pd.Series, pd.DataFrame, or nd.nparray (1D or 2D)
             Endogenous time series
-        X : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogenous time series
+
+        Reads from self
+        ---------------
+        _y : assumed to exist, and same types as y
+        _X : assumed to exist if X is not None, and same type as X
+
+        Writes to self
+        --------------
+        _y : same type as y - new rows from y are added to current _y
+        _X : same type as X - new rows from X are added to current _X
+            this is only done if X is not None
+        cutoff : is set to latest index seen in y
         """
         # update y if given
         if isinstance(y, np.ndarray):
