@@ -702,8 +702,8 @@ class BaseForecaster(BaseEstimator):
 
         Reads from self
         ---------------
-        _y : assumed to exist, and same types as y
-        _X : assumed to exist if X is not None, and same type as X
+        _y : only if exists, then assumed same type as y and same cols
+        _X : only if exists, then assumed same type as X and same cols
             these assumptions should be guaranteed by calls
 
         Writes to self
@@ -718,7 +718,7 @@ class BaseForecaster(BaseEstimator):
         # we only need to modify _y if y is not None
         if y is not None:
             # if _y does not exist yet, initialize it with y
-            if not hasattr(self, "_y"):
+            if not hasattr(self, "_y") or self._y is None:
                 self._y = y
             # otherwise, update _y with the new rows in y
             #  if y is np.ndarray, we assume all rows are new
@@ -734,7 +734,7 @@ class BaseForecaster(BaseEstimator):
         # we only need to modify _X if X is not None
         if X is not None:
             # if _X does not exist yet, initialize it with X
-            if not hasattr(self, "_X"):
+            if not hasattr(self, "_X") or self._X is None:
                 self._X = X
             # otherwise, update _X with the new rows in X
             #  if X is np.ndarray, we assume all rows are new
