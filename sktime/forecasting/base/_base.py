@@ -125,8 +125,8 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # store pointer to original X/y
-        self._X = X
-        self._y = y
+        self._X = X_inner
+        self._y = y_inner
 
         # update cutoff ("now") using y
         self._set_cutoff_from_y(y)
@@ -240,8 +240,8 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # store pointer to original X/y
-        self._X = X
-        self._y = y
+        self._X = X_inner
+        self._y = y_inner
 
         # update cutoff ("now") using y
         self._set_cutoff_from_y(y)
@@ -333,7 +333,7 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X/y with the new X/y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
         self._update(y=y_inner, X=X_inner, update_params=update_params)
@@ -383,7 +383,7 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X/y with the new X/y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         cv = check_cv(cv)
 
@@ -448,7 +448,7 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X/y with the new X/y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         return self._update_predict_single(
             y=y_inner,
