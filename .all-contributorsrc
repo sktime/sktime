@@ -1205,6 +1205,16 @@
         "doc"
       ]
     },
+     {
+      "login": "IlyasMoutawwakil",
+      "name": Ilyas Moutawwakil",
+      "avatar_url": "https://avatars.githubusercontent.com/IlyasMoutawwakil",
+      "profile": "https://github.com/IlyasMoutawwakil",
+      "contributions": [
+        "code",
+	      "doc"
+      ]
+    },
     {
             "login": "mathco-wf",
             "name": "TheMathcompay Widget Factory Team",
@@ -1213,7 +1223,28 @@
             "contributions": [
                 "doc"
             ]
+    },
+    {
+      "login": "BINAYKUMAR943"
+      "name":"Binay Kumar"
+      "avatar_url":"https://avatars.githubusercontent.com/u/38756834?v=4
+      "profile":"https://github.com/BINAYKUMAR943"
+      "contributions":[
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "ronnie-llamado",
+      "name": "Ronnie Llamado",
+      "avatar_url": "https://avatars.githubusercontent.com/ronnie-llamado",
+      "profile": "https://github.com/ronnie-llamado",
+      "contributions": [
+	"doc"
+      ]
     }
+
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
