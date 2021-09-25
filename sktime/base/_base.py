@@ -274,6 +274,22 @@ class BaseObject(_BaseEstimator):
 
         return cls(**params)
 
+    def clone(self):
+        """Create and return deep clone of self.
+
+        Returns
+        -------
+        self_clone : deep clone of self
+            self_clone is identical to sklearn's clone(self), plus
+            it obtains a clean copy of the _tags_dynamic field
+                (which sklearn.clone does not properly deal with)
+        """
+        self_clone = clone(self)
+
+        self_clone._tags_dynamic = self._tags_dynamic.copy()
+
+        return self_clone
+
 
 class BaseEstimator(BaseObject):
     """Base class for defining estimators in sktime.
