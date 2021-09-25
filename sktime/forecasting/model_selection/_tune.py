@@ -60,7 +60,7 @@ class BaseGridSearch(BaseForecaster):
             "requires-fh-in-fit",
             "capability:pred_int",
             # "scitype:y", commented out until grid search works with multivariate
-            "univariate-only",
+            "ignores-exogeneous-X",
             "handles-missing-data",
             "y_inner_mtype",
             "X_inner_mtype",
