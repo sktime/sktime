@@ -956,7 +956,7 @@ class BaseForecaster(BaseEstimator):
         sequentially, but can be overwritten by subclasses
         to implement more efficient updating algorithms when available.
         """
-        self._update(y, X, update_params=update_params)
+        self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _compute_pred_int(self, alphas):
@@ -1027,7 +1027,7 @@ class BaseForecaster(BaseEstimator):
 
                 # we use `update_predict_single` here
                 #  this updates the forecasting horizon
-                y_pred = self.update_predict_single(
+                y_pred = self._update_predict_single(
                     y_new,
                     fh,
                     X,
