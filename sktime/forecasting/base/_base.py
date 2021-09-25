@@ -450,6 +450,9 @@ class BaseForecaster(BaseEstimator):
         # update internal X/y with the new X/y
         self._update_y_X(y_inner, X_inner)
 
+        # update cutoff ("now") using y
+        self._set_cutoff_from_y(y)
+
         return self._update_predict_single(
             y=y_inner,
             fh=self.fh,
@@ -733,12 +736,13 @@ class BaseForecaster(BaseEstimator):
         """
         y_mtype = mtype(y, as_scitype="Series")
 
-        if y_mtype in ["pd.Series", "pd.DataFrame"]:
-            self._cutoff = y.index[-1]
-        elif y_mtype == "np.ndarray":
-            self._cutoff = len(y)
-        else:
-            raise TypeError("y does not have a supported type")
+        if len(y) > 0:
+            if y_mtype in ["pd.Series", "pd.DataFrame"]:
+                self._cutoff = y.index[-1]
+            elif y_mtype == "np.ndarray":
+                self._cutoff = len(y)
+            else:
+                raise TypeError("y does not have a supported type")
 
     @contextmanager
     def _detached_cutoff(self):
