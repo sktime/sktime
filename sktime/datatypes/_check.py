@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Machine type checkers for scitypes.
 
 Exports
@@ -13,8 +14,6 @@ check_raise(obj, mtype: str, scitype:str)
 
 mtype(obj, as_scitype: str = None)
     infer the mtype of obj, considering it as as_scitype
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
