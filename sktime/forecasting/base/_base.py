@@ -564,6 +564,7 @@ class BaseForecaster(BaseEstimator):
                 "enforce_multivariate": enforce_multivariate,
                 "enforce_index_type": enforce_index_type,
                 "allow_None": False,
+                "allow_empty": True,
             }
 
             y = check_series(y, **check_y_args, var_name="y")
@@ -1012,10 +1013,9 @@ class BaseForecaster(BaseEstimator):
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
 
-                # we cannot use `update_predict_single` here, as this would
-                # re-set the forecasting horizon, instead we use
-                # the internal `_update_predict_single` method
-                y_pred = self._update_predict_single(
+                # we use `update_predict_single` here
+                #  this updates the forecasting horizon
+                y_pred = self.update_predict_single(
                     y_new,
                     fh,
                     X,
