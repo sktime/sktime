@@ -9,6 +9,14 @@ class _RegistryMetaEnum(EnumMeta):
     def __contains__(self, item):
         return any(x.value == item for x in self)
 
+    def __getitem__(self, item):
+        try:
+            return super().__getitem__(item)
+        except KeyError:
+            for val in self:
+                if str(val) == item:
+                    return val
+
 
 class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
     """Creates registry enums.
