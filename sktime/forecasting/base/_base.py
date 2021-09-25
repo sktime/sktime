@@ -333,6 +333,7 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X/y with the new X/y
+        # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
@@ -445,10 +446,8 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X/y with the new X/y
+        # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
-
-        # update cutoff ("now") using y
-        self._set_cutoff_from_y(y)
 
         return self._update_predict_single(
             y=y_inner,
