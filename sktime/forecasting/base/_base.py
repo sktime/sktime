@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for forecaster scitype.
 
@@ -22,8 +23,6 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 
@@ -65,7 +64,7 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "univariate-only": True,  # does estimator use the exogeneous X?
+        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
