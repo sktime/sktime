@@ -131,12 +131,9 @@ class BaseForecaster(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # store pointer to original X/y
-        self._X = X_inner
-        self._y = y_inner
-
-        # update cutoff ("now") using y
-        self._set_cutoff_from_y(y)
+        # set internal X/y to the new X/y
+        # this also updates cutoff from y
+        self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -278,12 +275,9 @@ class BaseForecaster(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # store pointer to original X/y
-        self._X = X_inner
-        self._y = y_inner
-
-        # update cutoff ("now") using y
-        self._set_cutoff_from_y(y)
+        # set internal X/y to the new X/y
+        # this also updates cutoff from y
+        self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
         self._fit(y=y_inner, X=X_inner, fh=fh)
@@ -522,7 +516,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal X/y with the new X/y
+        # update internal _X/_y with the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
@@ -710,28 +704,45 @@ class BaseForecaster(BaseEstimator):
         ---------------
         _y : assumed to exist, and same types as y
         _X : assumed to exist if X is not None, and same type as X
+            these assumptions should be guaranteed by calls
 
         Writes to self
         --------------
         _y : same type as y - new rows from y are added to current _y
+            if _y does not exist, stores y as _y
         _X : same type as X - new rows from X are added to current _X
+            if _X does not exist, stores X as _X
             this is only done if X is not None
         cutoff : is set to latest index seen in y
         """
-        # update y if given
-        if isinstance(y, np.ndarray):
-            self._y = np.concatenate(self._y, y)
-        elif y is not None and len(y) > 0:
-            self._y = y.combine_first(self._y)
+        # we only need to modify _y if y is not None
+        if y is not None:
+            # if _y does not exist yet, initialize it with y
+            if not hasattr(self, "_y"):
+                self._y = y
+            # otherwise, update _y with the new rows in y
+            #  if y is np.ndarray, we assume all rows are new
+            elif isinstance(y, np.ndarray):
+                self._y = np.concatenate(self._y, y)
+            #  if y is pandas, we use combine_first to update
+            elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
+                self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
-        # update X if given
-        if isinstance(X, np.ndarray):
-            self._X = np.concatenate(self._X, X)
-        elif X is not None and len(X) > 0:
-            self._X = X.combine_first(self._X)
+        # we only need to modify _X if X is not None
+        if X is not None:
+            # if _X does not exist yet, initialize it with X
+            if not hasattr(self, "_X"):
+                self._X = X
+            # otherwise, update _X with the new rows in X
+            #  if X is np.ndarray, we assume all rows are new
+            elif isinstance(X, np.ndarray):
+                self._X = np.concatenate(self._X, X)
+            #  if X is pandas, we use combine_first to update
+            elif isinstance(X, (pd.Series, pd.DataFrame)) and len(X) > 0:
+                self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
