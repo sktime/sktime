@@ -26,6 +26,7 @@ from sktime.datatypes._series import example_dict_Series
 from sktime.datatypes._series import example_dict_lossy_Series
 from sktime.datatypes._panel import example_dict_Panel
 from sktime.datatypes._panel import example_dict_lossy_Panel
+from sktime.datatypes.types import Mtype, SciType
 
 # pool example_dict-s
 example_dict = dict()
@@ -37,13 +38,15 @@ example_dict_lossy.update(example_dict_lossy_Series)
 example_dict_lossy.update(example_dict_lossy_Panel)
 
 
-def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
+def get_examples(mtype: Mtype, as_scitype: SciType, return_lossy: bool = False) -> dict:
     """Retrieve a dict of examples for mtype `mtype`, scitype `as_scitype`.
 
     Parameters
     ----------
-    mtype: str - name of the mtype for the example
-    as_scitype: str - name of scitype for the example
+    mtype: str or SeriesMtype enum or PanelMtype enum
+        name of the mtype for the example
+    as_scitype: str or SeriesMtype enum or PanelMtype enum
+        name of scitype for the example
     return_lossy: bool, optional, default=False
         whether to return second argument
 
@@ -55,6 +58,10 @@ def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
         lossy: bool - whether the example is a lossy representation
     """
     # retrieve all keys that match the query
+    if mtype is not None:
+        mtype = str(mtype)
+    if as_scitype is not None:
+        as_scitype = str(as_scitype)
     exkeys = example_dict.keys()
     keys = [k for k in exkeys if k[0] == mtype and k[1] == as_scitype]
 
