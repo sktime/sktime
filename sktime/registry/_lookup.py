@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Registry lookup methods.
 
@@ -9,8 +10,6 @@ all_estimators(estimator_types, filter_tags)
 
 all_tags(estimator_types)
     lookup and filtering of estimator tags
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 import inspect
