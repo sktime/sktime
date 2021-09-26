@@ -96,7 +96,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must be pd.Series, 1D np.ndarray, or have a single column
+                must be pd.Series, 1D np.ndarray, and have a single column
             if self.get_tag("scitype:y")=="multivariate":
                 must be pd.DataFrame or 2D np.ndarray with 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -232,7 +232,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must be pd.Series, 1D np.ndarray, or have a single column
+                must be pd.Series, 1D np.ndarray, and have a single column
             if self.get_tag("scitype:y")=="multivariate":
                 must be pd.DataFrame or 2D np.ndarray with 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -346,7 +346,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must be pd.Series, 1D np.ndarray, or have a single column
+                must be pd.Series, 1D np.ndarray, and have a single column
             if self.get_tag("scitype:y")=="multivariate":
                 must be pd.DataFrame or 2D np.ndarray with 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -397,7 +397,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must be pd.Series, 1D np.ndarray, or have a single column
+                must be pd.Series, 1D np.ndarray, and have a single column
             if self.get_tag("scitype:y")=="multivariate":
                 must be pd.DataFrame or 2D np.ndarray with 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -471,7 +471,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must be pd.Series, 1D np.ndarray, or have a single column
+                must be pd.Series, 1D np.ndarray, and have a single column
             if self.get_tag("scitype:y")=="multivariate":
                 must be pd.DataFrame or 2D np.ndarray with 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -537,7 +537,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must be pd.Series, 1D np.ndarray, or have a single column
+                must be pd.Series, 1D np.ndarray, and have a single column
             if self.get_tag("scitype:y")=="multivariate":
                 must be pd.DataFrame or 2D np.ndarray with 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
