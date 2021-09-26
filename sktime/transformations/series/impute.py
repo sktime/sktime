@@ -6,17 +6,17 @@
 __author__ = ["Martin Walter"]
 __all__ = ["Imputer"]
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.forecasting.compose import ColumnEnsembleForecaster
-
-from sklearn.utils import check_random_state
-from sktime.forecasting.base import ForecastingHorizon
-from sklearn.base import clone
 
 import numpy as np
 import pandas as pd
+
+from sklearn.base import clone
+from sklearn.utils import check_random_state
+
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
+from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.forecasting.base import ForecastingHorizon
 
 
 class Imputer(_SeriesToSeriesTransformer):
@@ -124,9 +124,7 @@ class Imputer(_SeriesToSeriesTransformer):
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
             Z = Z.fillna(method=self.method)
         elif self.method == "drift":
-            forecaster = ColumnEnsembleForecaster(
-                forecaster=PolynomialTrendForecaster(degree=1)
-            )
+            forecaster = PolynomialTrendForecaster(degree=1)
             Z = _impute_with_forecaster(forecaster, Z)
         elif self.method == "forecaster":
             forecaster = clone(self.forecaster)
