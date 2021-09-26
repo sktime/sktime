@@ -126,6 +126,9 @@ add_function_parentheses = False
 # the corresponding warning that this override happens.
 suppress_warnings = ["myst.mathjax"]
 
+# Link to GitHub repo for github_issues extension
+issues_github_path = "alan-turing-institute/sktime"
+
 
 def linkcode_resolve(domain, info):
     """Return URL to source code corresponding.
@@ -349,7 +352,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference/modules'
+            '<a href="https://www.sktime.org/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'
@@ -423,6 +426,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
 
 # -- Options for _todo extension ----------------------------------------------

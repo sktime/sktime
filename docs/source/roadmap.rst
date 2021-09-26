@@ -6,7 +6,7 @@ Roadmap
 
 Welcome to sktime's roadmap.
 
-Contributors: @mloning, @fkiraly, @sveameyer13, @lovkush-a, @bilal-196, @GuzalBulatova, @chrisholder, @satya-pattnaik, @aiwalter
+Contributors: :user:`mloning`, :user:`fkiraly`, :user:`sveameyer13`, :user:`lovkush-a`, :user:`bilal-196`, :user:`GuzalBulatova`, :user:`chrisholder`, :user:`satya-pattnaik`, :user:`aiwalter`
 
 Created during the 2021 sktime dev days, 25/06/2021.
 
