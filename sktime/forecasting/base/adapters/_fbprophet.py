@@ -20,7 +20,7 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing fbprophet and neuralprophet."""
 
     _tags = {
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

@@ -209,7 +209,7 @@ Difference
 .. currentmodule:: sktime.transformations.series.difference
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Differencer
