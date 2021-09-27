@@ -68,7 +68,7 @@ X["var_0"] = pd.Series(
     [pd.Series([1, 2, 3]), pd.Series([1, 2, 3]), pd.Series([1, 2, 3])]
 )
 
-X['var_1'] = pd.Series(
+X["var_1"] = pd.Series(
     [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
 )
 
