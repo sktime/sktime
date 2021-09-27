@@ -42,7 +42,7 @@ from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils._testing.deep_equals import deep_equals
-from sktime.utils._testing.forecasting import _get_n_columns, _make_series
+from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
@@ -317,16 +317,14 @@ def check_fit_updates_state(Estimator):
             estimator, attr
         ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
 
-    n_columns_list = _get_n_columns(estimator.get_tag("scitype:y"))
-    for n_columns in n_columns_list:
-        fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
-        estimator.fit(*fit_args)
+    fit_args = _make_args(estimator, "fit")
+    estimator.fit(*fit_args)
 
-        # Check states are updated after calling fit
-        for attr in attrs:
-            assert getattr(
-                estimator, attr
-            ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
+    # Check states are updated after calling fit
+    for attr in attrs:
+        assert getattr(
+            estimator, attr
+        ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
 
 def check_fit_returns_self(Estimator):
