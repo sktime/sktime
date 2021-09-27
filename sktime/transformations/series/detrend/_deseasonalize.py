@@ -3,21 +3,27 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformations to deseasonalize a timeseries."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "eyalshafran"]
 __all__ = [
     "Deseasonalizer",
     "ConditionalDeseasonalizer",
+    "STL"
 ]
 
 import numpy as np
+import pandas as pd
 from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa._stl import STL as _STL
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.datetime import _get_duration
 from sktime.utils.datetime import _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
+from sktime.forecasting.base._fh import _check_cutoff
+from sktime.forecasting.base._fh import  _coerce_to_period
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
@@ -315,4 +321,223 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             )
 
         self._is_fitted = True
+        return self
+
+class STL(_SeriesToSeriesTransformer):
+    """Season-Trend decomposition using LOESS.
+
+    Parameters
+    ----------
+    sp : int, default=1
+        Seasonal periodicity.
+   seasonal : int, default=7
+        Length of the seasonal smoother. Must be an odd integer, and should
+        normally be >= 7 (default).
+    trend : {int, default=None}
+        Length of the trend smoother. Must be an odd integer. If not provided
+        uses the smallest odd integer greater than
+        1.5 * period / (1 - 1.5 / seasonal), following the suggestion in
+        the original implementation.
+    low_pass : {int, default=None}
+        Length of the low-pass filter. Must be an odd integer >=3. If not
+        provided, uses the smallest odd integer > period.
+    seasonal_deg : int, default=1
+        Degree of seasonal LOESS. 0 (constant) or 1 (constant and trend).
+    trend_deg : int, default=1
+        Degree of trend LOESS. 0 (constant) or 1 (constant and trend).
+    low_pass_deg : int, default=1
+        Degree of low pass LOESS. 0 (constant) or 1 (constant and trend).
+    robust : bool, default False
+        Flag indicating whether to use a weighted version that is robust to
+        some forms of outliers.
+    seasonal_jump : int, default=1
+        Positive integer determining the linear interpolation step. If larger
+        than 1, the LOESS is used every seasonal_jump points and linear
+        interpolation is between fitted points. Higher values reduce
+        estimation time.
+    trend_jump : int, default=1
+        Positive integer determining the linear interpolation step. If larger
+        than 1, the LOESS is used every trend_jump points and values between
+        the two are linearly interpolated. Higher values reduce estimation
+        time.
+    low_pass_jump : int, default=1
+        Positive integer determining the linear interpolation step. If larger
+        than 1, the LOESS is used every low_pass_jump points and values between
+        the two are linearly interpolated. Higher values reduce estimation
+        time.
+
+    Attributes
+    ----------
+    seasonal : array of length sp
+        Seasonal components computed in seasonal decomposition.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> import numpy as np
+    >>> y = load_airline()
+    >>> transformer = STL(sp=12)
+    >>> y_hat = transformer.fit_transform(y)
+
+    >>> forecaster = TransformedTargetForecaster([
+                            ("deseasonalize", STL(sp=12, robust=True, seasonal=13, seasonal_deg=0)),
+                            ("forecast", PolynomialTrendForecaster())])
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh=np.arange(1,13))
+    """
+
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+
+    def __init__(self, sp=1, seasonal=7, trend=None, low_pass=None,
+                 seasonal_deg=1, trend_deg=1, low_pass_deg=1,
+                 robust=False, seasonal_jump=1, trend_jump=1, low_pass_jump=1):
+        self.sp = check_sp(sp)
+        self.seasonal = seasonal
+        self.trend = trend
+        self.low_pass = low_pass
+        self.seasonal_deg = seasonal_deg
+        self.trend_deg = trend_deg
+        self.low_pass_deg = low_pass_deg
+        self.robust = robust
+        self.seasonal_jump = seasonal_jump
+        self.trend_jump = trend_jump
+        self.low_pass_jump = low_pass_jump
+        self._y_index = None
+        super(STL, self).__init__()
+
+    def _set_y_index(self, y):
+        # get the index for the training data to use for seasonal index alignment
+        self._y_index = y.index
+
+    def _set_y_len(self, y):
+        self._y_len = len(y)
+    
+    def _to_relative(self, y):
+        absolute = y.index
+        cutoff = self._y_index[0]
+        _check_cutoff(cutoff, absolute)
+
+        if isinstance(absolute, pd.DatetimeIndex):
+            # We cannot use the freq from the the ForecastingHorizon itself (or its
+            # wrapped pd.DatetimeIndex) because it may be none for non-regular
+            # indices, so instead we use the freq of cutoff.
+            freq = _get_freq(cutoff)
+
+            # coerce to pd.Period for reliable arithmetics and computations of
+            # time deltas
+            absolute = _coerce_to_period(absolute, freq)
+            cutoff = _coerce_to_period(cutoff, freq)
+
+        # Compute relative values
+        relative = absolute - cutoff
+
+        # Coerce durations (time deltas) into integer values for given frequency
+        if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
+            relative = _coerce_duration_to_int(relative, freq=_get_freq(cutoff))
+
+        return relative
+
+
+    def _align_seasonal_index(self, y):
+        # align seasonal index. If index is within training data use the index to align seasonality
+        # if index is out of sample (i.e. forecasting) use following formula: k = sp - index + m*floor((index-1)/sp)
+        # see https://www.statsmodels.org/stable/examples/notebooks/generated/stl_decomposition.html for more details 
+
+
+        _idx = self._to_relative(y)
+        T = self._y_len 
+        h = _idx - T
+        m = self.sp
+        
+        return np.where(h >= 0, T-m+h%m, _idx)
+    
+    def fit(self, Z, X=None):
+        """Fit to data.
+        Parameters
+        ----------
+        Z : pd.Series
+        X : pd.DataFrame
+        Returns
+        -------
+        self : an instance of self
+        """
+        self._is_fitted = False
+        z = check_series(Z, enforce_univariate=True)
+        self._set_y_len(z)
+        self._set_y_index(z)
+        sp = check_sp(self.sp)
+        
+        # apply seasonal decomposition
+        self.stl_model = _STL(z.values,
+                        period=self.sp,
+                        seasonal=self.seasonal,
+                        trend = self.trend,
+                        low_pass = self.low_pass,
+                        seasonal_deg = self.seasonal_deg,
+                        trend_deg = self.trend_deg,
+                        low_pass_deg = self.low_pass_deg,
+                        robust = self.robust,
+                        seasonal_jump = self.seasonal_jump,
+                        trend_jump = self.trend_jump,
+                        low_pass_jump = self.low_pass_jump).fit()
+        
+        self.seasonal = self.stl_model.seasonal
+
+        self._is_fitted = True
+        return self
+
+    def _transform(self, y):
+        return y - self.seasonal
+
+    def _inverse_transform(self, y):
+        seasonal_index = self._align_seasonal_index(y)
+        return y + self.seasonal[seasonal_index]
+
+    def transform(self, Z, X=None):
+        """Transform data.
+        Returns a transformed version of y.
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        Returns
+        -------
+        yt : pd.Series
+            Transformed time series.
+        """
+        self.check_is_fitted()
+        z = check_series(Z, enforce_univariate=True)
+        return self._transform(z)
+
+    def inverse_transform(self, Z, X=None):
+        """Inverse transform data.
+        Returns a transformed version of y.
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        Returns
+        -------
+        yt : pd.Series
+            Transformed time series.
+        """
+        self.check_is_fitted()
+        z = check_series(Z, enforce_univariate=True)
+        return self._inverse_transform(z)
+
+    def update(self, Z, X=None, update_params=False):
+        """Update fitted parameters.
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, default=False
+        Returns
+        -------
+        self : an instance of self
+        """
+        self.check_is_fitted()
+        z = check_series(Z, enforce_univariate=True)
         return self
