@@ -39,17 +39,23 @@ check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for 
 
 """
 
-__author__ = ["fkiraly", "Viktor Dremov"]
+__author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
 
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "univariate-only",  # todo: rename to "scitype:handles_exogeneous"
+        "ignores-exogeneous-X",
         "forecaster",
         "bool",
-        "does forecaster use exogeneous data (X)?",
+        "does forecaster ignore exogeneous data (X)?",
+    ),
+    (
+        "univariate-only",
+        "transformer",
+        "bool",
+        "can transformer handle multivariate series? True = no",
     ),
     (
         "fit-in-transform",
@@ -161,6 +167,12 @@ ESTIMATOR_TAG_REGISTER = [
         "classifier",
         "bool",
         "contract time setting, i.e. does the estimator support limiting max fit time?",
+    ),
+    (
+        "coerce-X-to-pandas",
+        ["classifier", "transformer"],
+        "bool",
+        "should X be coerced to a nested pandas DataFrame.? yes/no",
     ),
     # (
     #     "handles-panel",
