@@ -30,7 +30,7 @@ def _get_n_columns(tag):
     elif tag == "both":
         n_columns_list = [1, 2]
     else:
-        n_columns_list = [1]
+        raise ValueError(f"Unexpected tag {tag}.")
     return n_columns_list
 
 
@@ -86,7 +86,29 @@ def make_forecasting_problem(
     n_columns=2,
     random_state=None,
 ):
-    """make_forecasting_problem."""
+    """Return test data for forecasting tests.
+
+    Parameters
+    ----------
+    n_timepoints : int, optional
+        Lenght of data, by default 50
+    all_positive : bool, optional
+        Only positive values or not, by default True
+    index_type : e.g. pd.PeriodIndex, optional
+        pandas Index type, by default None
+    make_X : bool, optional
+        Should X data also be returned, by default False
+    n_columns : int, optional
+        Number of columns of X, by default 2
+    random_state : inst, str, float, optional
+        Set seed of random state, by default None
+
+    Returns
+    -------
+    ps.Series, pd.DataFrame
+        y, if not make_X
+        y, X if make_X
+    """
     y = _make_series(
         n_timepoints=n_timepoints,
         n_columns=1,

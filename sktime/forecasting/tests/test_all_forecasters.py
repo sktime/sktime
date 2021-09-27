@@ -64,6 +64,7 @@ def test_get_fitted_params(Forecaster):
     f = _construct_instance(Forecaster)
     columns = _get_n_columns(f.get_tag("scitype:y"))
     for n_columns in columns:
+        f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=FH0)
         try:
@@ -133,6 +134,7 @@ def test_X_invalid_type_raises_error(Forecaster, X):
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         try:
             with pytest.raises(TypeError, match=r"type"):
@@ -153,6 +155,7 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -182,6 +185,7 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
     # Some estimators may not support all time index types and fh types, hence we
     # need to catch NotImplementedErrors.
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y.index[len(y) // 2]
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
@@ -208,6 +212,7 @@ def test_predict_time_index_in_sample_full(
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
@@ -268,6 +273,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
         if f.get_tag("capability:pred_int"):
@@ -287,6 +293,7 @@ def test_score(Forecaster, fh):
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
         f.fit(y_train, fh=fh)
@@ -312,6 +319,7 @@ def test_update_predict_single(Forecaster, fh, update_params):
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
         f.fit(y_train, fh=fh)
@@ -326,6 +334,7 @@ def _check_update_predict_predicted_index(
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
         y_train = _make_series(
             n_columns=n_columns, all_positive=True, index_type="datetime"
         )
