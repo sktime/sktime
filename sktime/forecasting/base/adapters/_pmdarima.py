@@ -123,10 +123,18 @@ class _PmdArimaAdapter(BaseForecaster):
             # unpack and format results
             y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"])
+            pred_int = pd.DataFrame(
+                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+            )
             if return_pred_na:
-                na_pred = pd.Series(np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs)
-                na_int = pd.DataFrame(np.full(shape=(len(fh_nan_abs),2), fill_value=pd.NA), index=fh_nan_abs, columns=["lower", "upper"])
+                na_pred = pd.Series(
+                    np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs
+                )
+                na_int = pd.DataFrame(
+                    np.full(shape=(len(fh_nan_abs), 2), fill_value=pd.NA),
+                    index=fh_nan_abs,
+                    columns=["lower", "upper"],
+                )
                 # concatenate with NA values
                 y_pred = pd.concat([na_pred, y_pred])
                 pred_int = pd.concat([na_int, pred_int])
@@ -136,7 +144,9 @@ class _PmdArimaAdapter(BaseForecaster):
             y_pred = pd.Series(result[fh_idx], index=fh_abs)
             if return_pred_na:
                 # concatenate with NA values
-                na_pred = pd.Series(np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs)
+                na_pred = pd.Series(
+                    np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs
+                )
                 y_pred = pd.concat([na_pred, y_pred])
             return y_pred
 
