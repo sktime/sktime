@@ -72,6 +72,5 @@ X["var_1"] = pd.Series(
     [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
 )
 
-
 example_dict[("nested_univ", "Panel", 0)] = X
 example_dict_lossy[("nested_univ", "Panel", 0)] = False
