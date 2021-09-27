@@ -112,42 +112,33 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
 
-        # bacause indexer will return 0 for first train point we substract
-        # the differencing order to make 0 the index of the first predictable point
         if return_pred_na:
-            fh_nan = fh_idx[fh_idx < self.order[1]]
+            # we seperate what's predictable from what's unpredictable
+            fh_nan_abs = fh_abs[fh_idx < self.order[1]]
+            fh_abs = fh_abs[fh_idx >= self.order[1]]
+            # reindex accordingly
             fh_idx = fh_idx[fh_idx >= self.order[1]] - self.order[1]
 
         if return_pred_int:
             # unpack and format results
             y_pred, pred_int = result
+            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
+            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"])
             if return_pred_na:
-                y_pred = pd.Series(
-                    np.concatenate([np.array([pd.NA] * len(fh_nan)), y_pred[fh_idx]]),
-                    index=fh_abs,
-                )
-                pred_int = pd.DataFrame(
-                    np.concatenate(
-                        [np.array([[pd.NA] * 2] * len(fh_nan)), pred_int[fh_idx, :]]
-                    ),
-                    index=fh_abs,
-                    columns=["lower", "upper"],
-                )
-            else:
-                y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-                pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
-                )
+                na_pred = pd.Series(np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs)
+                na_int = pd.DataFrame(np.full(shape=(len(fh_nan_abs),2), fill_value=pd.NA), index=fh_nan_abs, columns=["lower", "upper"])
+                # concatenate with NA values
+                y_pred = pd.concat([na_pred, y_pred])
+                pred_int = pd.concat([na_int, pred_int])
             return y_pred, pred_int
 
         else:
+            y_pred = pd.Series(result[fh_idx], index=fh_abs)
             if return_pred_na:
-                return pd.Series(
-                    np.concatenate([np.array([pd.NA] * len(fh_nan)), result[fh_idx]]),
-                    index=fh_abs,
-                )
-            else:
-                return pd.Series(result[fh_idx], index=fh_abs)
+                # concatenate with NA values
+                na_pred = pd.Series(np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs)
+                y_pred = pd.concat([na_pred, y_pred])
+            return y_pred
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
