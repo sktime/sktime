@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Tests for BaseObject universal base class.
 
@@ -9,8 +10,6 @@ tests in this module:
     test_get_tags       - tests get_tags inheritance logic
     test_get_tag        - tests get_tag logic, incl default value
     test_set_tags       - tests set_tags logic and related get_tags inheritance
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
