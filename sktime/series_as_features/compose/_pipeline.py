@@ -20,10 +20,10 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
     Parameters of the transformations may be set using its name and the
-    parameter
-    name separated by a '__'. A transformer may be replaced entirely by
+    parameter name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
     or removed by setting to 'drop' or ``None``.
+
     Parameters
     ----------
     transformer_list : list of (string, transformer) tuples
@@ -37,6 +37,8 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+    preserve_dataframe : bool
+        Save constructed dataframe.
     """
 
     _required_parameters = ["transformer_list"]
