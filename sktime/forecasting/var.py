@@ -7,6 +7,7 @@ from statsmodels.tsa.api import VAR as _VAR
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 import pandas as pd
+import numpy as np
 
 
 class VAR(_StatsModelsAdapter):
@@ -118,14 +119,35 @@ class VAR(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
+        y_pred_outsample = None
+        y_pred_insample = None
         # fh in stats
         # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
         fh_int = fh.to_relative(self.cutoff)
         n_lags = self._fitted_forecaster.k_ar
-        y_pred = self._fitted_forecaster.forecast(
-            y=self._y.values[-n_lags:], steps=fh_int[-1]
-        )
+
+        # out-sample predictions
+        if fh_int.max() > 0:
+            y_pred_outsample = self._fitted_forecaster.forecast(
+                y=self._y.values[-n_lags:], steps=fh_int[-1]
+            )
+        # in-sample prediction by means of residuals
+        if fh_int.min() <= 0:
+            y_pred_insample = self._y - self._fitted_forecaster.resid
+            y_pred_insample = y_pred_insample.values
+
+        if y_pred_insample is not None and y_pred_outsample is not None:
+            y_pred = np.concatenate([y_pred_outsample, y_pred_insample], axis=0)
+        else:
+            y_pred = (
+                y_pred_insample if y_pred_insample is not None else y_pred_outsample
+            )
+
+        index = fh.to_absolute(self.cutoff)
+        index.name = self._y.index.name
         y_pred = pd.DataFrame(
-            y_pred[fh.to_indexer(self.cutoff), :], index=fh.to_absolute(self.cutoff)
+            y_pred[fh.to_indexer(self.cutoff), :],
+            index=fh.to_absolute(self.cutoff),
+            columns=self._y.columns,
         )
         return y_pred
