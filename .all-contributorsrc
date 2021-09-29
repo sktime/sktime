@@ -148,7 +148,9 @@
         "code",
         "doc",
         "test",
-        "tutorial"
+        "tutorial",
+        "review",
+        "bug"
       ]
     },
     {
@@ -1102,6 +1104,16 @@
       ]
     },
     {
+      "login": "freddyaboulton",
+      "name": "Freddy A Boulton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41651716?v=4",
+      "profile": "https://github.com/freddyaboulton",
+      "contributions": [
+        "infra",
+        "test"
+      ]
+    },
+    {
       "login": "Riyabelle25",
       "name": "Riya Elizabeth John",
       "avatar_url": "https://avatars.githubusercontent.com/u/55790848?v=4",
@@ -1162,6 +1174,33 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "AreloTanoh",
+      "name": "Arelo Tanoh",
+      "avatar_url": "https://avatars.githubusercontent.com/AreloTanoh",
+      "profile": "https://github.com/AreloTanoh",
+      "contributions": [
+         "doc"
+      ]
+      },
+    {
+      "login": "pul95",
+      "name": "Pulkit Verma",
+      "avatar_url": "https://avatars.githubusercontent.com/pul95",
+      "profile": "https://github.com/pul95",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+            "login": "mathco-wf",
+            "name": "TheMathcompay Widget Factory Team",
+            "avatar_url": "https://avatars.githubusercontent.com/mathco-wf",
+            "profile": "https://github.com/mathco-wf",
+            "contributions": [
+                "doc"
+            ]
     }
   ],
   "projectName": "sktime",
