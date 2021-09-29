@@ -52,3 +52,8 @@ repos:
   hooks:
   - id: pydocstyle
     args: ["--config=setup.cfg"]
+
+- repo: https://github.com/asottile/reorder_python_imports
+  rev: v2.6.0
+  hooks:
+  - id: reorder-python-imports
