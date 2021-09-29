@@ -90,7 +90,7 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
-        self._forecaster = _VAR(y, X, missing=self.missing)
+        self._forecaster = _VAR(endog=y, exog=X, missing=self.missing)
         self._fitted_forecaster = self._forecaster.fit(
             trend=self.trend,
             maxlags=self.maxlags,
@@ -129,7 +129,9 @@ class VAR(_StatsModelsAdapter):
         # out-sample predictions
         if fh_int.max() > 0:
             y_pred_outsample = self._fitted_forecaster.forecast(
-                y=self._y.values[-n_lags:], steps=fh_int[-1]
+                y=self._y.values[-n_lags:],
+                steps=fh_int[-1],
+                exog_future=X.values,
             )
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
