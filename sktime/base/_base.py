@@ -152,16 +152,14 @@ class BaseObject(_BaseEstimator):
 
         Raises
         ------
-        ValueError if retrieved tag value is None and raise_error is True
-            e.g., if tag is not found and function defaults are used
-            note: if tag_value_default is not None
-                this will not be raised even if raise_error is True
+        ValueError if raise_error is True and tag_name does not exist
+            i.e., if tag_name is not in self.get_tags().keys()
         """
         collected_tags = self.get_tags()
 
         tag_value = collected_tags.get(tag_name, tag_value_default)
 
-        if raise_error and tag_value is None:
+        if raise_error and tag_name not in collected_tags.keys():
             raise ValueError(f"Tag with name {tag_name} could not be found.")
 
         return tag_value
