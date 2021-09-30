@@ -37,12 +37,10 @@ class VAR(_StatsModelsAdapter):
     Examples
     --------
     >>> from sktime.forecasting.var import VAR
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
-    >>> train, test = temporal_train_test_split(y)
     >>> forecaster = VAR()
-    >>> forecaster.fit(train)
+    >>> forecaster.fit(y)
     VAR(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
