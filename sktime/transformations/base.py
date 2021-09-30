@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
+"""Base class template for transformers."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
@@ -34,7 +34,7 @@ Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 
 
 class BaseTransformer(BaseEstimator):
-    """Transformer base class"""
+    """Transformer base class."""
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
@@ -52,8 +52,7 @@ class BaseTransformer(BaseEstimator):
         super(BaseTransformer, self).__init__()
 
     def fit(self, Z, X=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         By default, fit is empty. Fittable transformations overwrite fit method.
 
@@ -72,7 +71,7 @@ class BaseTransformer(BaseEstimator):
         return self
 
     def transform(self, Z, X=None):
-        """Transform data. Returns a transformed version of X."""
+        """Transform data. Returns a transformed version of Z."""
         raise NotImplementedError("abstract method")
 
     def fit_transform(self, Z, X=None):
@@ -110,28 +109,32 @@ class BaseTransformer(BaseEstimator):
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):
-    """Transformer base class for series to primitive(s) transforms"""
+    """Transformer base class for series to primitive(s) transforms."""
 
     def transform(self, Z: Series, X=None) -> Primitives:
+        """Transform data. Returns a transformed version of Z."""
         raise NotImplementedError("abstract method")
 
 
 class _SeriesToSeriesTransformer(BaseTransformer):
-    """Transformer base class for series to series transforms"""
+    """Transformer base class for series to series transforms."""
 
     def transform(self, Z: Series, X=None) -> Series:
+        """Transform data. Returns a transformed version of Z."""
         raise NotImplementedError("abstract method")
 
 
 class _PanelToTabularTransformer(BaseTransformer):
-    """Transformer base class for panel to tabular transforms"""
+    """Transformer base class for panel to tabular transforms."""
 
     def transform(self, X: Panel, y=None) -> Tabular:
+        """Transform data. Returns a transformed version of X."""
         raise NotImplementedError("abstract method")
 
 
 class _PanelToPanelTransformer(BaseTransformer):
-    """Transformer base class for panel to panel transforms"""
+    """Transformer base class for panel to panel transforms."""
 
     def transform(self, X: Panel, y=None) -> Panel:
+        """Transform data. Returns a transformed version of X."""
         raise NotImplementedError("abstract method")
