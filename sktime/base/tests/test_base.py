@@ -118,10 +118,10 @@ def test_get_tag():
     object_tags_keys = FIXTURE_OBJECT_TAGS.keys()
 
     for key in object_tags_keys:
-        object_tags[key] = FIXTURE_OBJECT.get_tag(key)
+        object_tags[key] = FIXTURE_OBJECT.get_tag(key, raise_error=False)
 
-    object_tag_default = FIXTURE_OBJECT.get_tag("foo", "bar")
-    object_tag_defaultNone = FIXTURE_OBJECT.get_tag("bar")
+    object_tag_default = FIXTURE_OBJECT.get_tag("foo", "bar", raise_error=False)
+    object_tag_defaultNone = FIXTURE_OBJECT.get_tag("bar", raise_error=False)
 
     msg = "Inheritance logic in BaseObject.get_tag is incorrect"
 
