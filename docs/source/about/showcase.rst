@@ -19,4 +19,3 @@ Community Showcase
    * - `Time Series Analysis with sktime on AWS SageMaker <https://datachef.co/blog/time-series-analysis-sktime-sagemaker/>`_
      - This guide explains the procedure of using sktime as a toolbox for time series analysis on the AWS SageMaker environment.
      - :user:`DataChef.co <DataChefHQ>`
-     
