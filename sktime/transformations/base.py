@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -u
+# -*- coding: utf-8 -*-
 """Base class template for transformers."""
 
 __author__ = ["mloning"]
