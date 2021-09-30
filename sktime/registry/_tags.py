@@ -94,7 +94,7 @@ ESTIMATOR_TAG_REGISTER = [
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
     (
-        "enforce-index-type",
+        "enforce_index_type",
         ["forecaster", "classifier", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
