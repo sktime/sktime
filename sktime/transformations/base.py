@@ -36,6 +36,18 @@ Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 class BaseTransformer(BaseEstimator):
     """Transformer base class"""
 
+    # default tag values - these typically make the "safest" assumption
+    _tags = {
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+        "transform-returns-same-time-index": False,
+        # does transform return have the same time index as input X
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+    }
+
     def __init__(self):
         super(BaseTransformer, self).__init__()
 
