@@ -179,7 +179,6 @@ def test_fh_in_predict_opt(Forecaster):
     for n_columns in n_columns_list:
         f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
-        y_train = _make_series(n_columns=1)
         f.fit(y_train)
         f.predict(FH0)
         np.testing.assert_array_equal(f.fh, FH0)
@@ -205,11 +204,16 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
 @pytest.mark.parametrize("Forecaster", WINDOW_FORECASTERS)
 def test_last_window(Forecaster):
     f = _construct_instance(Forecaster)
-    # passing the same fh to both fit and predict works
-    f.fit(y_train, fh=FH0)
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
-    actual, _ = f._get_last_window()
-    expected = y_train.iloc[-f.window_length_ :]
+    for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        # passing the same fh to both fit and predict works
+        f.fit(y_train, fh=FH0)
 
-    np.testing.assert_array_equal(actual, expected)
-    assert len(actual) == f.window_length_
+        actual, _ = f._get_last_window()
+        expected = y_train.iloc[-f.window_length_ :]
+
+        np.testing.assert_array_equal(actual, expected)
+        assert len(actual) == f.window_length_
