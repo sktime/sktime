@@ -121,6 +121,7 @@ class VAR(_StatsModelsAdapter):
         """
         y_pred_outsample = None
         y_pred_insample = None
+        exog_future = X.values if X is not None else None
         # fh in stats
         # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
         fh_int = fh.to_relative(self.cutoff)
@@ -131,7 +132,7 @@ class VAR(_StatsModelsAdapter):
             y_pred_outsample = self._fitted_forecaster.forecast(
                 y=self._y.values[-n_lags:],
                 steps=fh_int[-1],
-                exog_future=X.values,
+                exog_future=exog_future,
             )
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
