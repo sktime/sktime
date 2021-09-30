@@ -77,6 +77,7 @@ def make_classification_problem(
     return_numpy=False,
     random_state=None,
 ):
+    """Make Classification Problem."""
     y = _make_classification_y(
         n_instances, n_classes, return_numpy=return_numpy, random_state=random_state
     )
@@ -94,6 +95,7 @@ def make_classification_problem(
 def make_regression_problem(
     n_instances=20, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
 ):
+    """Make Regression Problem."""
     y = _make_regression_y(
         n_instances, random_state=random_state, return_numpy=return_numpy
     )
@@ -108,8 +110,13 @@ def make_regression_problem(
 
 
 def make_clustering_problem(
-    n_instances=20, series_size=20, return_numpy=True, random_state=None
+    n_instances=20,
+    series_size=20,
+    return_numpy=True,
+    random_state=None,
+    n_columns=None,
 ):
+    """Make Clustering Problem."""
     # Can only currently support univariate so converting
     # to univaritate for the time being
     X = generate_univaritate_series(n_instances, series_size, random_state)
@@ -128,6 +135,7 @@ def make_transformer_problem(
     random_state=None,
     panel=True,
 ):
+    """Make Transformer Problem."""
     if not panel:
         X = make_transformer_problem(
             n_instances=n_instances,
