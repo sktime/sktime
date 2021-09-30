@@ -85,21 +85,31 @@ class _PmdArimaAdapter(BaseForecaster):
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError("multiple `alpha` values are not yet supported")
 
-        # for in-sample predictions, pmdarima requires zero-based
-        # integer indicies
+        fh_abs = fh.to_absolute(self.cutoff).to_numpy()
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+        y_pred = pd.Series(index=fh_abs)
+        pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
+
+        # for in-sample predictions, pmdarima requires zero-based integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
         if start < 0:
-            raise ValueError("Can't make predictions for before train starting point")
+            # Can't forecasts earlier to train starting point
+            raise ValueError("Can't make predictions earlier to train starting point")
 
-        return_pred_na = False
-        # we can't forecast before the model's differencing order
-        if start < self.order[1]:
+        elif start < self.order[1]:
+            # Can't forecasts earlier to arima's differencing order
+            # But we return NaN for these supposedly forecastable points
+
             start = self.order[1]
-            # since we might have forced start to surpass end
             if end < start:
+                # since we might have forced `start` to surpass `end`
                 end = self.order[1]
-            return_pred_na = True
+
+            # get rid of unforcastable points
+            fh_abs = fh_abs[fh_idx >= self.order[1]]
+            # reindex accordingly
+            fh_idx = fh_idx[fh_idx >= self.order[1]] - self.order[1]
 
         result = self._forecaster.predict_in_sample(
             start=start,
@@ -109,45 +119,12 @@ class _PmdArimaAdapter(BaseForecaster):
             alpha=alpha,
         )
 
-        fh_abs = fh.to_absolute(self.cutoff)
-        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-
-        if return_pred_na:
-            # we seperate what's predictable from what's unpredictable
-            fh_nan_abs = fh_abs[fh_idx < self.order[1]]
-            fh_abs = fh_abs[fh_idx >= self.order[1]]
-            # reindex accordingly
-            fh_idx = fh_idx[fh_idx >= self.order[1]] - self.order[1]
-
         if return_pred_int:
-            # unpack and format results
-            y_pred, pred_int = result
-            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(
-                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
-            )
-            if return_pred_na:
-                na_pred = pd.Series(
-                    np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs
-                )
-                na_int = pd.DataFrame(
-                    np.full(shape=(len(fh_nan_abs), 2), fill_value=pd.NA),
-                    index=fh_nan_abs,
-                    columns=["lower", "upper"],
-                )
-                # concatenate with NA values
-                y_pred = pd.concat([na_pred, y_pred])
-                pred_int = pd.concat([na_int, pred_int])
+            # unpack results
+            y_pred.loc[fh_abs], pred_int.loc[fh_abs] = result[0][fh_idx], result[1][fh_idx, :]
             return y_pred, pred_int
-
         else:
-            y_pred = pd.Series(result[fh_idx], index=fh_abs)
-            if return_pred_na:
-                # concatenate with NA values
-                na_pred = pd.Series(
-                    np.full(shape=len(fh_nan_abs), fill_value=pd.NA), index=fh_nan_abs
-                )
-                y_pred = pd.concat([na_pred, y_pred])
+            y_pred.loc[fh_abs] = result[fh_idx]
             return y_pred
 
     def _predict_fixed_cutoff(
