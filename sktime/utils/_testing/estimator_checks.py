@@ -42,7 +42,7 @@ from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils._testing.deep_equals import deep_equals
-from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.forecasting import _get_n_columns, _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
@@ -316,8 +316,8 @@ def check_fit_updates_state(Estimator):
         assert not getattr(
             estimator, attr
         ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
-
-    fit_args = _make_args(estimator, "fit")
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
     estimator.fit(*fit_args)
 
     # Check states are updated after calling fit
@@ -330,7 +330,8 @@ def check_fit_updates_state(Estimator):
 def check_fit_returns_self(Estimator):
     # Check that fit returns self
     estimator = _construct_instance(Estimator)
-    fit_args = _make_args(estimator, "fit")
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
     assert (
         estimator.fit(*fit_args) is estimator
     ), f"Estimator: {estimator} does not return self when calling fit"
@@ -356,7 +357,8 @@ def check_fit_idempotent(Estimator):
     set_random_state(estimator)
 
     # Fit for the first time
-    fit_args = _make_args(estimator, "fit")
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
     estimator.fit(*fit_args)
 
     results = dict()
@@ -390,7 +392,8 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
     original_params = deepcopy(params)
 
     # Fit the model
-    fit_args = _make_args(estimator, "fit")
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
     estimator.fit(*fit_args)
 
     # Compare the state of the model parameters with the original parameters
@@ -421,10 +424,11 @@ def check_methods_do_not_change_state(Estimator):
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
     dict_before = estimator.__dict__.copy()
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            args = _make_args(estimator, method)
+            args = _make_args(estimator=estimator, method=method, n_columns=n_columns)
             getattr(estimator, method)(*args)
 
             if method == "transform" and Estimator.get_class_tag("fit-in-transform"):
@@ -449,7 +453,8 @@ def check_methods_have_no_side_effects(Estimator):
     set_random_state(estimator)
 
     # Fit for the first time
-    fit_args = _make_args(estimator, "fit")
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
     old_fit_args = deepcopy(fit_args)
     estimator.fit(*fit_args)
 
@@ -459,7 +464,9 @@ def check_methods_have_no_side_effects(Estimator):
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            new_args = _make_args(estimator, method)
+            new_args = _make_args(
+                estimator=estimator, method=method, n_columns=n_columns
+            )
             old_args = deepcopy(new_args)
             getattr(estimator, method)(*new_args)
 
@@ -472,7 +479,8 @@ def check_persistence_via_pickle(Estimator):
     # Check that we can pickle all estimators
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
-    fit_args = _make_args(estimator, "fit")
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
     estimator.fit(*fit_args)
 
     # Generate results before pickling
@@ -480,7 +488,9 @@ def check_persistence_via_pickle(Estimator):
     args = dict()
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
-            args[method] = _make_args(estimator, method)
+            args[method] = _make_args(
+                estimator=estimator, method=method, n_columns=n_columns
+            )
             results[method] = getattr(estimator, method)(*args[method])
 
     # Pickle and unpickle
@@ -505,6 +515,7 @@ def check_multiprocessing_idempotent(Estimator):
     # parallelization and can trust that it works as expected.
     estimator = _construct_instance(Estimator)
     params = estimator.get_params()
+    n_columns = _get_n_columns(estimator.get_tag("scitype:y"))[0]
 
     if "n_jobs" in params:
         results = dict()
@@ -514,13 +525,15 @@ def check_multiprocessing_idempotent(Estimator):
         estimator = _construct_instance(Estimator)
         estimator.set_params(n_jobs=1)
         set_random_state(estimator)
-        args["fit"] = _make_args(estimator, "fit")
+        args["fit"] = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
         estimator.fit(*args["fit"])
 
         # compute and store results
         for method in NON_STATE_CHANGING_METHODS:
             if hasattr(estimator, method):
-                args[method] = _make_args(estimator, method)
+                args[method] = _make_args(
+                    estimator=estimator, method=method, n_columns=n_columns
+                )
                 results[method] = getattr(estimator, method)(*args[method])
 
         # run on multiple processes, reusing the same input arguments
