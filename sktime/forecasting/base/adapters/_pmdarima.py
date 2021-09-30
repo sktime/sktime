@@ -7,7 +7,6 @@ __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
-import numpy as np
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 
@@ -87,6 +86,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+        # Initialize return objects
         y_pred = pd.Series(index=fh_abs)
         pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
 
@@ -96,16 +96,13 @@ class _PmdArimaAdapter(BaseForecaster):
         if start < 0:
             # Can't forecasts earlier to train starting point
             raise ValueError("Can't make predictions earlier to train starting point")
-
         elif start < self.order[1]:
             # Can't forecasts earlier to arima's differencing order
             # But we return NaN for these supposedly forecastable points
-
             start = self.order[1]
             if end < start:
                 # since we might have forced `start` to surpass `end`
                 end = self.order[1]
-
             # get rid of unforcastable points
             fh_abs = fh_abs[fh_idx >= self.order[1]]
             # reindex accordingly
@@ -121,7 +118,10 @@ class _PmdArimaAdapter(BaseForecaster):
 
         if return_pred_int:
             # unpack results
-            y_pred.loc[fh_abs], pred_int.loc[fh_abs] = result[0][fh_idx], result[1][fh_idx, :]
+            y_pred.loc[fh_abs], pred_int.loc[fh_abs] = (
+                result[0][fh_idx],
+                result[1][fh_idx, :],
+            )
             return y_pred, pred_int
         else:
             y_pred.loc[fh_abs] = result[fh_idx]
