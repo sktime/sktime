@@ -22,6 +22,8 @@ __all__ = [
     "test_set_tags",
 ]
 
+import pytest
+
 from copy import deepcopy
 
 from sktime.base import BaseObject
@@ -132,6 +134,17 @@ def test_get_tag():
 
     assert object_tag_default == "bar", msg
     assert object_tag_defaultNone is None, msg
+
+
+def test_get_tag_raises():
+    """Tests that get_tag method raises error for unknown tag.
+
+    Raises
+    ------
+    AssertError if get_tag does not raise error for unknown tag.
+    """
+    with pytest.raises(ValueError, match=r"Tag with name"):
+        FIXTURE_OBJECT.get_tag("bar")
 
 
 FIXTURE_TAG_SET = {"A": 42424243, "E": 3}
