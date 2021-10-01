@@ -35,6 +35,7 @@ __author__ = [
     "Sebastiaan Koel",
     "Emilia Rose",
     "Tony Bagnall",
+    "Yair Beer",
 ]
 
 DIRNAME = "data"
