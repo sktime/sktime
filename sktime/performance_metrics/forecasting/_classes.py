@@ -20,6 +20,8 @@ from sktime.performance_metrics.forecasting._functions import (
     mean_squared_error,
     median_absolute_error,
     median_squared_error,
+    geometric_mean_absolute_error,
+    geometric_mean_squared_error,
     mean_absolute_percentage_error,
     median_absolute_percentage_error,
     mean_squared_percentage_error,
@@ -30,7 +32,7 @@ from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_relative_squared_error,
 )
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
+__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -41,6 +43,8 @@ __all__ = [
     "MeanSquaredError",
     "MedianAbsoluteError",
     "MedianSquaredError",
+    "GeometricMeanAbsoluteError",
+    "GeometricMeanSquaredError",
     "MeanAbsolutePercentageError",
     "MedianAbsolutePercentageError",
     "MeanSquaredPercentageError",
@@ -1159,6 +1163,198 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
             name=name,
             multioutput=multioutput,
             square_root=square_root,
+        )
+
+
+class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
+    """Geometric mean absolute error (GMAE).
+
+    GMAE output is non-negative floating point. The best value is approximately
+    zero, rather than zero.
+
+    Like MAE and MdAE, GMAE is measured in the same units as the input data.
+    Because GMAE takes the absolute value of the forecast error rather than
+    squaring it, MAE penalizes large errors to a lesser degree than squared error
+    varients like MSE, RMSE or GMSE or RGMSE.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float
+        GMAE loss. If multioutput is 'raw_values', then GMAE is returned for each
+        output separately. If multioutput is 'uniform_average' or an ndarray
+        of weights, then the weighted average GMAE of all output errors is returned.
+
+    See Also
+    --------
+    mean_absolute_error
+    median_absolute_error
+    mean_squared_error
+    median_squared_error
+    geometric_mean_squared_error
+
+    Notes
+    -----
+    The geometric mean uses the product of values in its calculation. The presence
+    of a zero value will result in the result being zero, even if all the other
+    values of large. To partially account for this in the case where elements
+    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    values are replaced in the calculation with a small value. This results in
+    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    being close to but not exactly zero.
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import \
+    geometric_mean_absolute_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> geometric_mean_absolute_error(y_true, y_pred)
+    0.000529527232030127
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> geometric_mean_absolute_error(y_true, y_pred)
+    0.5000024031086919
+    >>> geometric_mean_absolute_error(y_true, y_pred, multioutput='raw_values')
+    array([4.80621738e-06, 1.00000000e+00])
+    >>> geometric_mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.7000014418652152
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    """
+
+    def __init__(self, multioutput="uniform_average"):
+        name = "GeometricMeanAbsoluteError"
+        fn = geometric_mean_absolute_error
+        super(GeometricMeanAbsoluteError, self).__init__(
+            fn=fn, name=name, multioutput=multioutput
+        )
+
+
+class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
+    """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
+
+    If `square_root` is False then calculates GMSE and if `square_root` is True
+    then RGMSE is calculated. Both GMSE and RGMSE return non-negative floating
+    point. The best value is approximately zero, rather than zero.
+
+    Like MSE and MdSE, GMSE is measured in squared units of the input data. RMdSE is
+    on the same scale as the input data like RMSE and RdMSE. Because GMSE and RGMSE
+    square the forecast error rather than taking the absolute value, they
+    penalize large errors more than GMAE.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+        If True, returns root geometric mean squared error (RGMSE)
+        If False, returns geometric mean squared error (GMSE)
+
+   Returns
+    -------
+    loss : float
+        GMSE or RGMSE loss. If multioutput is 'raw_values', then loss is returned
+        for each output separately. If multioutput is 'uniform_average' or an ndarray
+        of weights, then the weighted average MdSE of all output errors is returned.
+
+    See Also
+    --------
+    mean_absolute_error
+    median_absolute_error
+    mean_squared_error
+    median_squared_error
+    geometric_mean_absolute_error
+
+    Notes
+    -----
+    The geometric mean uses the product of values in its calculation. The presence
+    of a zero value will result in the result being zero, even if all the other
+    values of large. To partially account for this in the case where elements
+    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    values are replaced in the calculation with a small value. This results in
+    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    being close to but not exactly zero.
+
+    Repla
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import \
+    geometric_mean_squared_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> geometric_mean_squared_error(y_true, y_pred)
+    2.80399089461488e-07
+    >>> geometric_mean_squared_error(y_true, y_pred, square_root=True)
+    0.000529527232030127
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> geometric_mean_squared_error(y_true, y_pred)
+    0.5000000000115499
+    >>> geometric_mean_squared_error(y_true, y_pred, square_root=True)
+    0.5000024031086919
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput='raw_values')
+    array([2.30997255e-11, 1.00000000e+00])
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput='raw_values', \
+    square_root=True)
+    array([4.80621738e-06, 1.00000000e+00])
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.7000000000069299
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    square_root=True)
+    0.7000014418652152
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    """
+
+    def __init__(self, multioutput="uniform_average", square_root=False):
+        name = "GeometricMeanSquaredError"
+        fn = geometric_mean_squared_error
+        super(GeometricMeanSquaredError, self).__init__(
+            fn=fn, name=name, multioutput=multioutput, square_root=square_root
         )
 
 
