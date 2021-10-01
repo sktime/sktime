@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Theta forecaster from statsmodels."""
+
+"""Theta forecaster."""
+
 __all__ = ["ThetaForecaster"]
 __author__ = ["big-o", "mloning"]
 
@@ -20,21 +22,16 @@ class ThetaForecaster(ExponentialSmoothing):
     """Theta method for forecasting.
 
     The theta method as defined in [1]_ is equivalent to simple exponential
-    smoothing
-    (SES) with drift. This is demonstrated in [2]_.
+    smoothing (SES) with drift (as demonstrated in [2]_).
 
     The series is tested for seasonality using the test outlined in A&N. If
-    deemed
-    seasonal, the series is seasonally adjusted using a classical
-    multiplicative
-    decomposition before applying the theta method. The resulting forecasts
-    are then
-    reseasonalised.
+    deemed seasonal, the series is seasonally adjusted using a classical
+    multiplicative decomposition before applying the theta method. The
+    resulting forecasts are then reseasonalised.
 
     In cases where SES results in a constant forecast, the theta forecaster
-    will revert
-    to predicting the SES constant plus a linear trend derived from the
-    training data.
+    will revert to predicting the SES constant plus a linear trend derived
+    from the training data.
 
     Prediction intervals are computed using the underlying state space model.
 
@@ -66,21 +63,17 @@ class ThetaForecaster(ExponentialSmoothing):
 
     References
     ----------
-    .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
-    decomposition
-           approach to forecasting. International Journal of Forecasting 16,
-           521-530,
-           2000.
-           <https://www.sciencedirect.com/science/article/pii
-           /S0169207000000662>`_
+    .. [1] Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
+       decomposition approach to forecasting. International Journal of
+       Forecasting 16, 521-530, 2000.
+       https://www.sciencedirect.com/science/article/pii/S0169207000000662
 
     .. [2] `Hyndman, Rob J., and Billah, Baki. Unmasking the Theta method.
-           International J. Forecasting, 19, 287-290, 2003.
-           <https://www.sciencedirect.com/science/article/pii
-           /S0169207001001431>`_
+       International J. Forecasting, 19, 287-290, 2003.
+       https://www.sciencedirect.com/science/article/pii/S0169207001001431
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> y = load_airline()
@@ -92,7 +85,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -120,6 +113,7 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -227,8 +221,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
-    """
-    Calculate a z-score from a confidence level.
+    """Calculate a z-score from a confidence level.
 
     Parameters
     ----------

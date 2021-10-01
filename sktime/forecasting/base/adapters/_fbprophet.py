@@ -1,6 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for Facebook prophet to be used in sktime framework."""
 
 __author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["_ProphetAdapter"]
@@ -18,7 +19,7 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing fbprophet and neuralprophet."""
 
     _tags = {
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -47,9 +48,13 @@ class _ProphetAdapter(BaseForecaster):
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
 
-        # Add seasonality
+        # Add seasonality/seasonalities
         if self.add_seasonality:
-            self._forecaster.add_seasonality(**self.add_seasonality)
+            if type(self.add_seasonality) == dict:
+                self._forecaster.add_seasonality(**self.add_seasonality)
+            elif type(self.add_seasonality) == list:
+                for seasonality in self.add_seasonality:
+                    self._forecaster.add_seasonality(**seasonality)
 
         # Add country holidays
         if self.add_country_holidays:
@@ -206,6 +211,7 @@ class _suppress_stdout_stderr(object):
        This will not suppress raised exceptions, since exceptions are printed
     to stderr just before a script exits, and after the context manager has
     exited (at least, I think that is why it lets exceptions through).
+
 
     References
     ----------

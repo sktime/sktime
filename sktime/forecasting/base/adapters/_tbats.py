@@ -1,7 +1,9 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for using tbats forecasters in sktime framework."""
 
-__author__ = ["Markus Löning", "Martin Walter"]
+__author__ = ["mloning", "aiwalter"]
 __all__ = ["_TbatsAdapter"]
 
 import numpy as np
@@ -17,7 +19,7 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

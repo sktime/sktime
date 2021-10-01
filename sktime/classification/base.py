@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for time series classifier scitype.
 
@@ -21,8 +22,6 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __all__ = [
@@ -75,6 +74,7 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "coerce-X-to-numpy": True,
+        "coerce-X-to-pandas": False,
     }
 
     def __init__(self):
@@ -95,16 +95,19 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
-        sets is_fitted flag to true
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         """
-        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
-
-        X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X, y = check_X_y(
+            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
 
         self._fit(X, y)
 
@@ -127,9 +130,11 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
-
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
 
         y = self._predict(X)
@@ -150,7 +155,13 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances, n_classes] - predictive pmf
         """
-        raise NotImplementedError("abstract method")
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
+        self.check_is_fitted()
+        return self._predict_proba(X)
 
     def score(self, X, y):
         """Scores predicted labels against ground truth labels on X.
@@ -186,11 +197,13 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        self : reference to self.
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
         """
         raise NotImplementedError("abstract method")
 
@@ -219,3 +232,19 @@ class BaseClassifier(BaseEstimator):
         y = self.label_encoder.inverse_transform(predictions)
 
         return y
+
+    def _predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or single-column pd.DataFrame with pd.Series entries
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances, n_classes] - predictive pmf
+        """
+        raise NotImplementedError("abstract method")

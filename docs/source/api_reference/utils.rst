@@ -1,9 +1,13 @@
 .. _utils_ref:
 
-sktime.utils: Utility function
-==============================
+Utility functions
+=================
 
 The :mod:`sktime.utils` module contains utility functions.
+
+.. automodule:: sktime.utils
+    :no-members:
+    :no-inherited-members:
 
 Plotting
 --------
@@ -11,10 +15,11 @@ Plotting
 .. currentmodule:: sktime.utils.plotting
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     plot_series
+    plot_lags
     plot_correlations
 
 Data Processing
@@ -23,7 +28,7 @@ Data Processing
 .. currentmodule:: sktime.datatypes._panel._convert
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     are_columns_nested
