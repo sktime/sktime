@@ -71,7 +71,7 @@ class BaseForecaster(BaseEstimator):
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
 
     def __init__(self):
