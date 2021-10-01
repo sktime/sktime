@@ -271,7 +271,8 @@ class _AsymmetricErrorMixin:
             asymmetric_threshold=self.asymmetric_threshold,
             left_error_function=self.left_error_function,
             right_error_function=self.right_error_function,
-            **kwargs,
+            left_error_penalty=self.left_error_penalty,
+            right_error_penalty=self.right_error_penalty ** kwargs,
         )
 
 
@@ -379,10 +380,14 @@ class _AsymmetricForecastingErrorMetric(
         asymmetric_threshold=0,
         left_error_function="squared",
         right_error_function="absolute",
+        left_error_penalty=1.0,
+        right_error_penalty=1.0,
     ):
         self.asymmetric_threshold = asymmetric_threshold
         self.left_error_function = left_error_function
         self.right_error_function = right_error_function
+        self.left_error_penalty = left_error_penalty
+        self.right_error_penalty = right_error_penalty
         super().__init__(func=func, name=name, multioutput=multioutput)
 
 
@@ -493,6 +498,18 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     MeanSquaredScaledError
     MedianSquaredScaledError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+    for intermittent demand", Foresight, Issue 4.
+
+    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+    "The M4 Competition: 100,000 time series and 61 forecasting methods",
+    International Journal of Forecasting, Volume 3.
+
     Examples
     --------
     >>> import numpy as np
@@ -514,18 +531,6 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     >>> mase = MeanAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mase(y_true, y_pred, y_train=y_train)
     0.21935483870967742
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-
-    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-    for intermittent demand", Foresight, Issue 4.
-
-    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-    "The M4 Competition: 100,000 time series and 61 forecasting methods",
-    International Journal of Forecasting, Volume 3.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1):
@@ -588,6 +593,18 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     MeanSquaredScaledError
     MedianSquaredScaledError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+    for intermittent demand", Foresight, Issue 4.
+
+    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+    "The M4 Competition: 100,000 time series and 61 forecasting methods",
+    International Journal of Forecasting, Volume 3.
+
     Examples
     --------
     >>> import numpy as np
@@ -609,18 +626,6 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     >>> mdase = MedianAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mdase( y_true, y_pred, y_train=y_train)
     0.21935483870967742
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-
-    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-    for intermittent demand", Foresight, Issue 4.
-
-    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-    "The M4 Competition: 100,000 time series and 61 forecasting methods",
-    International Journal of Forecasting, Volume 3.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1):
@@ -688,6 +693,14 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     MedianAbsoluteScaledError
     MedianSquaredScaledError
 
+    References
+    ----------
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -709,14 +722,6 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
     0.17451891814894502
-
-    References
-    ----------
-    M5 Competition Guidelines.
-    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1, square_root=False):
@@ -790,6 +795,14 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     MedianAbsoluteScaledError
     MedianSquaredScaledError
 
+    References
+    ----------
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -811,14 +824,6 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     >>> rmdsse = MedianSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
     0.16914781383660782
-
-    References
-    ----------
-    M5 Competition Guidelines.
-    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1, square_root=False):
@@ -870,6 +875,11 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     MeanSquaredError
     MedianSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -889,11 +899,6 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     >>> mae = MeanAbsoluteError(multioutput=[0.3, 0.7])
     >>> mae(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average"):
@@ -943,6 +948,11 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     MeanSquaredError
     MedianSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -962,11 +972,6 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     >>> mdae = MedianAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdae(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average"):
@@ -1021,6 +1026,11 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     MedianAbsoluteError
     MedianSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1049,11 +1059,6 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmse(y_true, y_pred)
     0.8936491673103708
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", square_root=False):
@@ -1118,6 +1123,11 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     MedianAbsoluteError
     MeanSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1148,11 +1158,6 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     >>> rmdse = MedianSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdse(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", square_root=False):
@@ -1222,6 +1227,11 @@ class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
     the smallest value the metric can take (when `y_true` equals `y_pred`)
     being close to but not exactly zero.
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import \
@@ -1238,11 +1248,6 @@ class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
     array([4.80621738e-06, 1.00000000e+00])
     >>> geometric_mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.7000014418652152
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average"):
@@ -1315,7 +1320,10 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
     the smallest value the metric can take (when `y_true` equals `y_pred`)
     being close to but not exactly zero.
 
-    Repla
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1343,11 +1351,6 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
     >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True)
     0.7000014418652152
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", square_root=False):
@@ -1407,6 +1410,11 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     MeanSquaredPercentageError
     MedianSquaredPercentageError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1438,11 +1446,6 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7])
     >>> smape(y_true, y_pred)
     0.5668686868686869
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", symmetric=True):
@@ -1509,6 +1512,11 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     MeanSquaredPercentageError
     MedianSquaredPercentageError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1540,11 +1548,6 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7])
     >>> smdape(y_true, y_pred)
     0.5066666666666666
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", symmetric=True):
@@ -1616,6 +1619,11 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     MedianAbsolutePercentageError
     MedianSquaredPercentageError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1649,11 +1657,6 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     symmetric=False, square_root=True)
     >>> smspe(y_true, y_pred)
     0.7504665536595034
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(
@@ -1732,6 +1735,11 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1765,11 +1773,6 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     symmetric=False, square_root=True)
     >>> smdspe(y_true, y_pred)
     0.7428571428571428
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(
@@ -1824,6 +1827,11 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1845,11 +1853,6 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     >>> mrae = MeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     1.0111111111111108
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -1902,6 +1905,11 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -1923,11 +1931,6 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     >>> mdrae = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.7499999999999999
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -1981,6 +1984,11 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     MedianRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -2003,11 +2011,6 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.7810066018326863
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -2071,6 +2074,11 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     MedianRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -2093,11 +2101,6 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     >>> gmrse = GeometricMeanRelativeSquaredError(multioutput=[0.3, 0.7])
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.8713854839582426
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -2118,17 +2121,17 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
 
 
 class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
-    """Calculate asymmetric loss function.
+    """Calculate mean of asymmetric loss function.
 
     Error values that are less than the asymmetric threshold have
     `left_error_function` applied. Error values greater than or equal to
     asymmetric threshold  have `right_error_function` applied.
 
-    Many forecasting loss functions assume that over- and under-
-    predictions should receive an equal penalty. However, this may not align
-    with the actual cost faced by users' of the forecasts. Asymmetric loss
-    functions are useful when the cost of under- and over- prediction are not
-    the same.
+    Many forecasting loss functions (like those discussed in [1]_) assume that
+    over- and under- predictions should receive an equal penalty. However, this
+    may not align with the actual cost faced by users' of the forecasts.
+    Asymmetric loss functions are useful when the cost of under- and over-
+    prediction are not the same.
 
     Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
     and `right_error_function` to 'absolute` results in a greater penalty
@@ -2136,21 +2139,35 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
     for `left_error_function` set to 'absolute' and `right_error_function`
     set to 'squared`.
 
+    The left_error_penalty and right_error_penalty can be used to add differing
+    multiplicative penalties to over-predictions and under-predictions.
+
     Parameters
     ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
     asymmetric_threshold : float, default = 0.0
         The value used to threshold the asymmetric loss function. Error values
         that are less than the asymmetric threshold have `left_error_function`
         applied. Error values greater than or equal to asymmetric threshold
         have `right_error_function` applied.
-
-    left_error_function : str, {'squared', 'absolute'}
+    left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
-
-    right_error_function : str, {'squared', 'absolute'}
+    right_error_function : {'squared', 'absolute'}, default='absolute'
         Loss penalty to apply to error values greater than or equal to the
         asymmetric threshold.
-
+    left_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values less than
+        the asymetric threshold.
+    right_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values greater
+        than the asymmetric threshold.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -2158,65 +2175,51 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
+    Returns
+    -------
+    asymmetric_loss : float
+        Loss using asymmetric penalty of on errors.
+        If multioutput is 'raw_values', then asymmetric loss is returned for
+        each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average asymmetric loss of all output errors is returned.
+
+    Notes
+    -----
+    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    choosing different values for `left_error_penalty` and `right_error_penalty`
+    results in the "lin-lin" error function discussed in [2]_.
+
+    References
     ----------
-    name : str
-        The name of the loss metric
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-
-    asymmetric_threshold : numeric
-        Stores threshold to use applying asymmetric loss to errors
-
-    left_error_function : str
-        Stores loss penalty to apply to error values less than the asymmetric threshold.
-
-    right_error_function : str
-        Stores loss penalty to apply to error values greater than or equal to
-        the asymmetric threshold.
-
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
+    .. [2] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+       Thomson, South-Western: Ohio, US.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import MeanAsymmetricError
+    >>> from sktime.performance_metrics.forecasting import mean_asymmetric_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> masymmetric = MeanAsymmetricError()
-    >>> masymmetric(y_true, y_pred)
+    >>> mean_asymmetric_error(y_true, y_pred)
     0.5
-    >>> masymmetric = MeanAsymmetricError(left_error_function='absolute', \
+    >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')
-    >>> masymmetric(y_true, y_pred)
     0.4625
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> masymmetric = MeanAsymmetricError()
-    >>> masymmetric(y_true, y_pred)
+    >>> mean_asymmetric_error(y_true, y_pred)
     0.75
-    >>> masymmetric = MeanAsymmetricError(left_error_function='absolute', \
+    >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')
-    >>> masymmetric(y_true, y_pred)
     0.7083333333333334
-    >>> masymmetric = MeanAsymmetricError(multioutput='raw_values')
-    >>> masymmetric(y_true, y_pred)
+    >>> mean_asymmetric_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
-    >>> masymmetric = MeanAsymmetricError(multioutput=[0.3, 0.7])
-    >>> masymmetric(y_true, y_pred)
+    >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-
-    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
-    Thomson, South-Western: Ohio, US.
     """
 
     def __init__(
@@ -2225,6 +2228,8 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
         asymmetric_threshold=0,
         left_error_function="squared",
         right_error_function="absolute",
+        left_error_penalty=1.0,
+        right_error_penalty=1.0,
     ):
         name = "MeanAsymmetricError"
         func = mean_asymmetric_error
@@ -2235,6 +2240,8 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
             asymmetric_threshold=asymmetric_threshold,
             left_error_function=left_error_function,
             right_error_function=right_error_function,
+            left_error_penalty=left_error_penalty,
+            right_error_penalty=right_error_penalty,
         )
 
 
@@ -2291,6 +2298,11 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> import numpy as np
@@ -2317,11 +2329,6 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.927272727272727
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(
