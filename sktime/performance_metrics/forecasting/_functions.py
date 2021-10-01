@@ -22,6 +22,7 @@ from sktime.utils.validation.series import check_series
 __author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
 __all__ = [
     "relative_loss",
+    "mean_linex_error",
     "mean_asymmetric_error",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
@@ -82,6 +83,120 @@ def _weighted_geometric_mean(x, sample_weight=None, axis=None):
     )
 
 
+def mean_linex_error(
+    y_true,
+    y_pred,
+    a=1.0,
+    b=1.0,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    **kwargs,
+):
+    """Calculate mean linex error.
+
+    Output is non-negative floating point. The best value is 0.0.
+
+    Many forecasting loss functions (like those discussed in [1]_) assume that
+    over- and under- predictions should receive an equal penalty. However, this
+    may not align with the actual cost faced by users' of the forecasts.
+    Asymmetric loss functions are useful when the cost of under- and over-
+    prediction are not the same.
+
+    The linex error function accounts for this by penalizing errors on one side
+    of a threshold approximately linearly, while penalizing errors on the other
+    side approximately exponentially.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+    a : int or float
+        Controls whether over- or under- predictions receive an approximately
+        linear or exponential penalty. If `a` > 0 then negative errors
+        (over-predictions) are penalized approximately linearly and positive errors
+        (under-predictions) are penalized approximately exponentially. If `a` < 0
+        the reverse is true.
+    b : int or float
+        Multiplicative penalty to apply to calculated errors.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    asymmetric_loss : float
+        Loss using asymmetric penalty of on errors.
+        If multioutput is 'raw_values', then asymmetric loss is returned for
+        each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average asymmetric loss of all output errors is returned.
+
+    See Also
+    --------
+    mean_asymmetric_error
+
+    Notes
+    -----
+    Calculated as b * (np.exp(a * error) - a * error - 1), where a != 0 and b > 0
+    according to formula in [2]_.
+
+    References
+    ----------
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    .. [1] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+       Thomson, South-Western: Ohio, US.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import mean_linex_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mean_linex_error(y_true, y_pred)
+    0.19802627763937575
+    >>> mean_linex_error(y_true, y_pred, b=2)
+    0.3960525552787515
+    >>> mean_linex_error(y_true, y_pred, a=-1)
+    0.2391800623225643
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mean_linex_error(y_true, y_pred)
+    0.2700398392309829
+    >>> mean_linex_error(y_true, y_pred, a=-1)
+    0.49660966225813563
+    >>> mean_linex_error(y_true, y_pred, multioutput='raw_values')
+    array([0.17220024, 0.36787944])
+    >>> mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.30917568000716666
+    """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
+
+    linex_error = _linex_error(y_true, y_pred, a=a, b=b)
+    output_errors = np.average(linex_error, weights=horizon_weight, axis=0)
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
 def mean_asymmetric_error(
     y_true,
     y_pred,
@@ -95,6 +210,8 @@ def mean_asymmetric_error(
     **kwargs,
 ):
     """Calculate mean of asymmetric loss function.
+
+    Output is non-negative floating point. The best value is 0.0.
 
     Error values that are less than the asymmetric threshold have
     `left_error_function` applied. Error values greater than or equal to
@@ -156,6 +273,10 @@ def mean_asymmetric_error(
         each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average asymmetric loss of all output errors is returned.
+
+    See Also
+    --------
+    mean_linex_error
 
     Notes
     -----
@@ -2487,6 +2608,48 @@ def _asymmetric_error(
         right_error_penalty * right_func(y_true - y_pred),
     )
     return errors
+
+
+def _linex_error(y_true, y_pred, a=1.0, b=1.0):
+    """Calculate mean linex error.
+
+    Output is non-negative floating point. The best value is 0.0.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    linex_error : float
+        Array of linex errors.
+
+    References
+    ----------
+    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+    Thomson, South-Western: Ohio, US.
+    """
+    if not (isinstance(a, (int, float)) and a != 0):
+        raise ValueError("`a` must be int or float not equal to zero.")
+    if not (isinstance(b, (int, float)) and b > 0):
+        raise ValueError("`b` must be an int or float greater than zero.")
+    error = y_true - y_pred
+    a_error = a * error
+    linex_error = b * (np.exp(a_error) - a_error - 1)
+    return linex_error
 
 
 def _relative_error(y_true, y_pred, y_pred_benchmark):

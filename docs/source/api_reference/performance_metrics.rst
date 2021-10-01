@@ -41,6 +41,7 @@ Classes
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
     MeanAsymmetricError
+    MeanLinexError
     RelativeLoss
 
 Functions
@@ -70,4 +71,5 @@ Functions
     geometric_mean_relative_absolute_error
     geometric_mean_relative_squared_error
     mean_asymmetric_error
+    mean_linex_error
     relative_loss

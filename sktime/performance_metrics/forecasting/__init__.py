@@ -9,7 +9,7 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski", "Martin Walter"]
+__author__ = ["mloning", "Tomasz Chodakowski", "aiwalter", "RNKuhns"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -31,6 +31,7 @@ __all__ = [
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
     "MeanAsymmetricError",
+    "MeanLinexError",
     "RelativeLoss",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
@@ -51,6 +52,7 @@ __all__ = [
     "geometric_mean_relative_absolute_error",
     "geometric_mean_relative_squared_error",
     "mean_asymmetric_error",
+    "mean_linex_error",
     "relative_loss",
 ]
 
@@ -75,6 +77,7 @@ from sktime.performance_metrics.forecasting._classes import (
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
     MeanAsymmetricError,
+    MeanLinexError,
     RelativeLoss,
 )
 from sktime.performance_metrics.forecasting._functions import (
@@ -97,5 +100,6 @@ from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
     mean_asymmetric_error,
+    mean_linex_error,
     relative_loss,
 )
