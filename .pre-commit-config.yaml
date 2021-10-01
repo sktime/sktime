@@ -20,7 +20,6 @@ repos:
   hooks:
     - id: isort
       name: isort (python)
-      args: ["--config=setup.cfg"]
 
 - repo: https://github.com/psf/black
   rev: 21.5b1
