@@ -1255,9 +1255,9 @@ class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
 
     def __init__(self, multioutput="uniform_average"):
         name = "GeometricMeanAbsoluteError"
-        fn = geometric_mean_absolute_error
+        func = geometric_mean_absolute_error
         super(GeometricMeanAbsoluteError, self).__init__(
-            fn=fn, name=name, multioutput=multioutput
+            func=func, name=name, multioutput=multioutput
         )
 
 
@@ -1357,9 +1357,9 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
 
     def __init__(self, multioutput="uniform_average", square_root=False):
         name = "GeometricMeanSquaredError"
-        fn = geometric_mean_squared_error
+        func = geometric_mean_squared_error
         super(GeometricMeanSquaredError, self).__init__(
-            fn=fn, name=name, multioutput=multioutput, square_root=square_root
+            func=func, name=name, multioutput=multioutput, square_root=square_root
         )
 
 
