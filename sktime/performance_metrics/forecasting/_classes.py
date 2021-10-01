@@ -1234,6 +1234,7 @@ class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import GeometricMeanAbsoluteError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1323,6 +1324,7 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])

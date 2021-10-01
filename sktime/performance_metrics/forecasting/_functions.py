@@ -1299,6 +1299,7 @@ def geometric_mean_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
     geometric_mean_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -1412,6 +1413,7 @@ def geometric_mean_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
     geometric_mean_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
