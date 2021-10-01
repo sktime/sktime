@@ -52,9 +52,9 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": False,
-        "transform-returns-same-time-index": True,
-        "univariate-only": False,
+        "fit_in_transform": False,
+        "transform_returns_same_time_index": True,
+        "univariate_only": False,
     }
 
     def __init__(self, power=0.5, offset="auto"):
@@ -226,9 +226,9 @@ class SqrtTransformer(ExponentTransformer):
     """
 
     _tags = {
-        "fit-in-transform": False,
-        "transform-returns-same-time-index": True,
-        "univariate-only": False,
+        "fit_in_transform": False,
+        "transform_returns_same_time_index": True,
+        "univariate_only": False,
     }
 
     def __init__(self, offset="auto"):

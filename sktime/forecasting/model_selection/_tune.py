@@ -25,9 +25,9 @@ from sktime.utils.validation.forecasting import check_scoring
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "univariate-only": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
+        "univariate_only": True,
     }
 
     def __init__(

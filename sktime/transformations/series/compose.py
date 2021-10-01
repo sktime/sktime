@@ -64,8 +64,8 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     _required_parameters = ["transformer"]
     _tags = {
-        "univariate-only": False,
-        "fit-in-transform": True,
+        "univariate_only": False,
+        "fit_in_transform": True,
     }
 
     def __init__(self, transformer, passthrough=False):

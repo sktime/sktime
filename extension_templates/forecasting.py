@@ -69,13 +69,13 @@ class MyForecaster(BaseForecaster):
     #  delete the tags that you *didn't* change - these defaults are inherited
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "univariate-only": True,  # does estimator use the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "univariate_only": True,  # does estimator use the exogeneous X?
+        "handles_missing_data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "requires_fh_in_fit": True,  # is forecasting horizon already required in fit?
+        "X_y_must_have_same_index": True,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)

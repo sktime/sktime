@@ -18,9 +18,9 @@ class _PredictionWeightedEnsembler:
     """
 
     _tags = {
-        "univariate-only": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "univariate_only": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, n_estimators=10, loss_func=None):
@@ -101,9 +101,9 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "univariate-only": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "univariate_only": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, n_estimators=10, T=10, a=1, loss_func=None):
@@ -132,9 +132,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
     """
 
     _tags = {
-        "univariate-only": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "univariate_only": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, n_estimators=10, a=1, loss_func=None):
@@ -239,9 +239,9 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "univariate-only": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "univariate_only": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, n_estimators=10, loss_func=None):

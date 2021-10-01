@@ -170,7 +170,7 @@ class _Reducer(_BaseWindowForecaster):
 class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "requires_fh_in_fit": True,  # is the forecasting horizon required in fit?
     }
 
     def _transform(self, y, X=None):
@@ -263,7 +263,7 @@ class _DirectReducer(_Reducer):
 class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "requires_fh_in_fit": True,  # is the forecasting horizon required in fit?
     }
 
     def _transform(self, y, X=None):
@@ -347,7 +347,7 @@ class _MultioutputReducer(_Reducer):
 class _RecursiveReducer(_Reducer):
     strategy = "recursive"
     _tags = {
-        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "requires_fh_in_fit": False,  # is the forecasting horizon required in fit?
     }
 
     def _transform(self, y, X=None):
@@ -445,7 +445,7 @@ class _RecursiveReducer(_Reducer):
 class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "requires_fh_in_fit": True,  # is the forecasting horizon required in fit?
     }
 
     def _transform(self, y, X=None):

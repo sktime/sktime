@@ -92,10 +92,10 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
-        "univariate-only": True,
+        "univariate_only": True,
         "capability:pred_int": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):

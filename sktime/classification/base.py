@@ -74,7 +74,7 @@ class BaseClassifier(BaseEstimator):
     """
 
     _tags = {
-        "coerce-X-to-numpy": True,
+        "coerce_X_to_numpy": True,
     }
 
     def __init__(self):
@@ -102,7 +102,7 @@ class BaseClassifier(BaseEstimator):
         creates fitted model (attributes ending in "_")
         sets is_fitted flag to true
         """
-        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
+        coerce_to_numpy = self.get_class_tag("coerce_X_to_numpy", False)
 
         X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
 
@@ -127,7 +127,7 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        coerce_to_numpy = self.get_class_tag("coerce-X-to-numpy", False)
+        coerce_to_numpy = self.get_class_tag("coerce_X_to_numpy", False)
 
         X = check_X(X, coerce_to_numpy=coerce_to_numpy)
         self.check_is_fitted()

@@ -34,9 +34,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters", "final_regressor"]
     _tags = {
-        "univariate-only": True,
-        "requires-fh-in-fit": True,
-        "handles-missing-data": False,
+        "univariate_only": True,
+        "requires_fh_in_fit": True,
+        "handles_missing_data": False,
     }
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):

@@ -66,14 +66,14 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "univariate-only": True,  # does estimator use the exogeneous X?
+        "univariate_only": True,  # does estimator use the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "handles_missing_data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "requires_fh_in_fit": True,  # is forecasting horizon already required in fit?
+        "X_y_must_have_same_index": True,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
 
     def __init__(self):
@@ -138,7 +138,7 @@ class BaseForecaster(BaseEstimator):
 
         # checking X
         X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-        if self.get_tag("X-y-must-have-same-index"):
+        if self.get_tag("X_y_must_have_same_index"):
             check_equal_time_index(X, y)
         # end checking X
 
@@ -383,7 +383,7 @@ class BaseForecaster(BaseEstimator):
 
         # checking X
         X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-        if self.get_tag("X-y-must-have-same-index"):
+        if self.get_tag("X_y_must_have_same_index"):
             check_equal_time_index(X, y)
         # end checking X
 
@@ -723,7 +723,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = self.get_tag("requires-fh-in-fit")
+        requires_fh = self.get_tag("requires_fh_in_fit")
 
         msg = (
             f"This is because fitting of the `"

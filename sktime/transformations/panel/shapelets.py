@@ -90,7 +90,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
     the stored shapelets after a dataset has been processed
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate_only": True}
 
     def __init__(
         self,

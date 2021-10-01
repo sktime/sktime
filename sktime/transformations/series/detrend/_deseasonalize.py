@@ -41,7 +41,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {"transform_returns_same_time_index": True, "univariate_only": True}
 
     def __init__(self, sp=1, model="additive"):
         self.sp = check_sp(sp)

@@ -58,7 +58,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
-    _tags = {"requires-fh-in-fit": False}
+    _tags = {"requires_fh_in_fit": False}
 
     def __init__(self, strategy="last", window_length=None, sp=1):
         super(NaiveForecaster, self).__init__()

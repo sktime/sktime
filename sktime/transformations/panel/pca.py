@@ -29,7 +29,7 @@ class PCATransformer(_PanelToPanelTransformer):
         documentation for a detailed description of all options.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate_only": True}
 
     def __init__(self, n_components=None, **kwargs):
         self.n_components = n_components

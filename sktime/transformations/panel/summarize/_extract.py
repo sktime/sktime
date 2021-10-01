@@ -29,7 +29,7 @@ class PlateauFinder(_PanelToPanelTransformer):
         finder.
     """
 
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+    _tags = {"fit_in_transform": True, "univariate_only": True}
 
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
@@ -168,7 +168,7 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         by `np.random`.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate_only": True}
 
     def __init__(
         self,
@@ -312,7 +312,7 @@ class FittedParamExtractor(_PanelToTabularTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+    _tags = {"fit_in_transform": True, "univariate_only": True}
 
     def __init__(self, forecaster, param_names, n_jobs=None):
         self.forecaster = forecaster

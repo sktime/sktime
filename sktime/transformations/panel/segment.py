@@ -28,7 +28,7 @@ class IntervalSegmenter(_PanelToPanelTransformer):
         and the second column giving end points of intervals
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate_only": True}
 
     def __init__(self, intervals=10):
         self.intervals = intervals
@@ -324,7 +324,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
     Proposed in the ShapeDTW algorithm.
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {"univariate_only": True, "fit_in_transform": True}
 
     def __init__(self, window_length=5):
         self.window_length = window_length

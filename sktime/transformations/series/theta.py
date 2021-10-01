@@ -33,9 +33,9 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "transform-returns-same-time-index": True,
-        "univariate-only": True,
-        "fit-in-transform": True,
+        "transform_returns_same_time_index": True,
+        "univariate_only": True,
+        "fit_in_transform": True,
     }
 
     def __init__(self, theta=(0, 2)):
