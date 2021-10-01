@@ -84,29 +84,33 @@ class _PmdArimaAdapter(BaseForecaster):
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError("multiple `alpha` values are not yet supported")
 
+        if hasattr(self, "order"):
+            diff_order = self.order[1]
+        else:
+            diff_order = self._forecaster.model_.order[1]
+
+        # Initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-        # Initialize return objects
         y_pred = pd.Series(index=fh_abs)
         pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
 
         # for in-sample predictions, pmdarima requires zero-based integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-
         if start < 0:
             # Can't forecasts earlier to train starting point
             raise ValueError("Can't make predictions earlier to train starting point")
-        elif start < self.order[1]:
+        elif start < diff_order:
             # Can't forecasts earlier to arima's differencing order
             # But we return NaN for these supposedly forecastable points
-            start = self.order[1]
+            start = diff_order
             if end < start:
                 # since we might have forced `start` to surpass `end`
-                end = self.order[1]
+                end = diff_order
             # get rid of unforcastable points
-            fh_abs = fh_abs[fh_idx >= self.order[1]]
+            fh_abs = fh_abs[fh_idx >= diff_order]
             # reindex accordingly
-            fh_idx = fh_idx[fh_idx >= self.order[1]] - self.order[1]
+            fh_idx = fh_idx[fh_idx >= diff_order] - diff_order
 
         result = self._forecaster.predict_in_sample(
             start=start,
