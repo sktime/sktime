@@ -93,11 +93,15 @@ def test_aggregation_weighted(forecasters, aggfunc, weights):
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
 
+    def _weighted_gmean(a, axis=0, weights=None):
+        avg = np.exp(a)
+        return np.log(np.average(avg, axis=axis, weights=weights))
+
     predictions = pd.DataFrame(predictions)
     if aggfunc == "mean":
         func = np.average
     else:
-        func = gmean
+        func = _weighted_gmean
     expected_pred = predictions.apply(func=func, axis=0, weights=weights)
 
     pd.testing.assert_series_equal(actual_pred, expected_pred)

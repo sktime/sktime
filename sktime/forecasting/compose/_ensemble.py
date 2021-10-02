@@ -316,6 +316,11 @@ def _aggregate(y, aggfunc, weights):
     return pd.Series(y_agg, index=y.index)
 
 
+def _weighted_gmean(a, axis=0, weights=None):
+    avg = np.exp(a)
+    return np.log(np.average(avg, axis=axis, weights=weights))
+
+
 def _check_aggfunc(aggfunc, weighted=False):
     _weighted = "weighted" if weighted else "unweighted"
     valid_aggfuncs = {
@@ -323,7 +328,7 @@ def _check_aggfunc(aggfunc, weighted=False):
         "median": {"unweighted": np.median, "weighted": _weighted_median},
         "min": {"unweighted": np.min, "weighted": _weighted_min},
         "max": {"unweighted": np.max, "weighted": _weighted_max},
-        "gmean": {"unweighted": gmean, "weighted": gmean},
+        "gmean": {"unweighted": gmean, "weighted": _weighted_gmean},
     }
     if aggfunc not in valid_aggfuncs.keys():
         raise ValueError("Aggregation function %s not recognized." % aggfunc)
