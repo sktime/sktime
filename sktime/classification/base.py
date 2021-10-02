@@ -74,6 +74,7 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "coerce-X-to-numpy": True,
+        "coerce-X-to-pandas": False,
     }
 
     def __init__(self):
