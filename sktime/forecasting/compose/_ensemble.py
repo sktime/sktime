@@ -7,7 +7,7 @@ Creates univariate (optionally weighted)
 combination of the predictions from underlying forecasts.
 """
 
-__author__ = ["mloning", "GuzalBulatova", "aiwalter"]
+__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import numpy as np
@@ -20,6 +20,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils._statistics import weighted_geometric_mean
 from sktime.utils.validation.forecasting import check_regressor
 
 
@@ -316,11 +317,6 @@ def _aggregate(y, aggfunc, weights):
     return pd.Series(y_agg, index=y.index)
 
 
-def _weighted_gmean(a, axis=0, weights=None):
-    avg = np.exp(a)
-    return np.log(np.average(avg, axis=axis, weights=weights))
-
-
 def _check_aggfunc(aggfunc, weighted=False):
     _weighted = "weighted" if weighted else "unweighted"
     valid_aggfuncs = {
@@ -328,7 +324,7 @@ def _check_aggfunc(aggfunc, weighted=False):
         "median": {"unweighted": np.median, "weighted": _weighted_median},
         "min": {"unweighted": np.min, "weighted": _weighted_min},
         "max": {"unweighted": np.max, "weighted": _weighted_max},
-        "gmean": {"unweighted": gmean, "weighted": _weighted_gmean},
+        "gmean": {"unweighted": gmean, "weighted": weighted_geometric_mean},
     }
     if aggfunc not in valid_aggfuncs.keys():
         raise ValueError("Aggregation function %s not recognized." % aggfunc)

@@ -16,6 +16,7 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 
+from sktime.utils._statistics import weighted_geometric_mean
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
@@ -93,15 +94,11 @@ def test_aggregation_weighted(forecasters, aggfunc, weights):
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
 
-    def _weighted_gmean(a, axis=0, weights=None):
-        avg = np.exp(a)
-        return np.log(np.average(avg, axis=axis, weights=weights))
-
     predictions = pd.DataFrame(predictions)
     if aggfunc == "mean":
         func = np.average
     else:
-        func = _weighted_gmean
+        func = weighted_geometric_mean
     expected_pred = predictions.apply(func=func, axis=0, weights=weights)
 
     pd.testing.assert_series_equal(actual_pred, expected_pred)
