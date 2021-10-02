@@ -274,7 +274,8 @@ class _AsymmetricErrorMixin:
             left_error_function=self.left_error_function,
             right_error_function=self.right_error_function,
             left_error_penalty=self.left_error_penalty,
-            right_error_penalty=self.right_error_penalty ** kwargs,
+            right_error_penalty=self.right_error_penalty,
+            **kwargs,
         )
 
 
@@ -300,7 +301,7 @@ class _LinexErrorMixin:
             Calculated loss metric.
         """
         return self._func(
-            y_true, y_pred, a=self.a, b=self.b, multioutput=self.multioutput
+            y_true, y_pred, a=self.a, b=self.b, multioutput=self.multioutput, **kwargs
         )
 
 
@@ -1345,13 +1346,14 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
     >>> gmse = GeometricMeanSquaredError(multioutput='raw_values')
     >>> gmse(y_true, y_pred)
     array([2.30997255e-11, 1.00000000e+00])
-    >>> rgmse = GeometricMeanSquaredError( multioutput='raw_values', square_root=True)
+    >>> rgmse = GeometricMeanSquaredError(multioutput='raw_values', square_root=True)
     >>> rgmse(y_true, y_pred)
     array([4.80621738e-06, 1.00000000e+00])
     >>> gmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
-    >>> geometric_mean_squared_error(y_true, y_pred)
+    >>> gmse(y_true, y_pred)
     0.7000000000069299
-    >>> rgmse = GeometricMeanSquaredError( multioutput=[0.3, 0.7], square_root=True)
+    >>> rgmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
+    >>> rgmse(y_true, y_pred)
     0.7000014418652152
     """
 
