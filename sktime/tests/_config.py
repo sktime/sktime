@@ -110,9 +110,6 @@ EXCLUDE_ESTIMATORS = [
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
-    # temporary due to tsfresh related bug?
-    "TSfreshClassifier",
-    "TSFreshFeatureExtractor",
 ]
 
 
