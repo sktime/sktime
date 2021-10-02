@@ -29,13 +29,13 @@ __all__ = [
 ]
 
 __author__ = [
-    "Markus Löning",
-    "Sajay Ganesh",
-    "@big-o",
-    "Sebastiaan Koel",
-    "Emilia Rose",
-    "Tony Bagnall",
-    "Yair Beer",
+    "mloning",
+    "sajaysurya",
+    "big-o",
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "yairbeer",
 ]
 
 DIRNAME = "data"
