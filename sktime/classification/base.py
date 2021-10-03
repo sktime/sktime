@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for time series classifier scitype.
 
@@ -21,8 +22,6 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __all__ = [
@@ -106,12 +105,8 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
-
         X, y = check_X_y(
-            X,
-            y,
-            coerce_to_numpy=coerce_to_numpy,
-            coerce_to_pandas=coerce_to_pandas,
+            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
         )
 
         self._fit(X, y)
@@ -137,11 +132,8 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
-
         X = check_X(
-            X,
-            coerce_to_numpy=coerce_to_numpy,
-            coerce_to_pandas=coerce_to_pandas,
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
         )
         self.check_is_fitted()
 
@@ -165,11 +157,8 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
-
         X = check_X(
-            X,
-            coerce_to_numpy=coerce_to_numpy,
-            coerce_to_pandas=coerce_to_pandas,
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
         )
         self.check_is_fitted()
         return self._predict_proba(X)

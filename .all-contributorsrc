@@ -1223,7 +1223,7 @@
             "contributions": [
                 "doc"
             ]
-    }
+    },
     {
       "login": "BINAYKUMAR943"
       "name":"Binay Kumar"
@@ -1233,6 +1233,33 @@
         "code",
         "doc",
         "test"
+      ]
+    },
+    {
+      "login": "ronnie-llamado",
+      "name": "Ronnie Llamado",
+      "avatar_url": "https://avatars.githubusercontent.com/ronnie-llamado",
+      "profile": "https://github.com/ronnie-llamado",
+      "contributions": [
+	"doc"
+      ]
+    },
+    {
+      "login": "bobbys-dev",
+      "name": "bobbys",
+      "avatar_url": "https://avatars.githubusercontent.com/bobbys-dev",
+      "profile": "https://github.com/bobbys-dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yairbeer",
+      "name": "Yair Beer",
+      "avatar_url": "https://avatars.githubusercontent.com/yairbeer",
+      "profile": "https://github.com/yairbeer",
+      "contributions": [
+        "code"
       ]
     }
   ],
