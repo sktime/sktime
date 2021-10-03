@@ -7,17 +7,16 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-
-from sklearn.preprocessing import MinMaxScaler
 
 
 def test_pipeline():

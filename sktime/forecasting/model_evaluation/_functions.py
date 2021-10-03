@@ -6,18 +6,19 @@
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = ["evaluate"]
 
-import numpy as np
-import pandas as pd
 import time
 
-from sktime.utils.validation.series import check_series
+import numpy as np
+import pandas as pd
+
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
-    check_scoring,
-    check_fh,
-    check_X,
     check_cv,
+    check_fh,
+    check_scoring,
+    check_X,
 )
+from sktime.utils.validation.series import check_series
 
 
 def evaluate(
