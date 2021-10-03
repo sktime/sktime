@@ -428,13 +428,12 @@ def check_methods_do_not_change_state(Estimator):
     # fitted parameters)
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
-
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
-    dict_before = estimator.__dict__.copy()
     n_columns = _get_n_columns(
         estimator.get_tag(tag_name="scitype:y", raise_error=False)
     )[0]
+    fit_args = _make_args(estimator=estimator, method="fit", n_columns=n_columns)
+    estimator.fit(*fit_args)
+    dict_before = estimator.__dict__.copy()
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
