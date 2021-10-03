@@ -106,7 +106,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must have a single column
+                must have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -242,7 +242,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must have a single column
+                must have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -356,7 +356,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must have a single column
+                must have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -415,7 +415,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must have a single column
+                must have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -498,7 +498,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Target time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                must have a single column
+                must have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -557,7 +557,7 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to score
             if self.get_tag("scitype:y")=="univariate":
-                must have a single column
+                must have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -983,7 +983,7 @@ class BaseForecaster(BaseEstimator):
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
+                guaranteed to have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
@@ -1039,7 +1039,7 @@ class BaseForecaster(BaseEstimator):
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
+                guaranteed to have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
