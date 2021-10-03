@@ -99,7 +99,7 @@ def make_forecasting_problem(
     make_X : bool, optional
         Should X data also be returned, by default False
     n_columns : int, optional
-        Number of columns of X, by default 1
+        Number of columns of y, by default 1
     random_state : inst, str, float, optional
         Set seed of random state, by default None
 
