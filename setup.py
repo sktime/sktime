@@ -27,6 +27,9 @@ MIN_REQUIREMENTS = {
     "statsmodels": "0.12.1",
     "numba": "0.53",
 }
+MAX_REQUIREMENTS = {
+    "statsmodels": "0.12.1",
+}
 EXTRAS_REQUIRE = {
     "all_extras": [
         "cython>=0.29.0",
@@ -86,6 +89,10 @@ INSTALL_REQUIRES = [
     *[
         "{}>={}".format(package, version)
         for package, version in MIN_REQUIREMENTS.items()
+    ],
+    *[
+        "{}<={}".format(package, version)
+        for package, version in MAX_REQUIREMENTS.items()
     ],
     "wheel",
 ]
