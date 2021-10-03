@@ -20,7 +20,7 @@ class AutoAR(_StatsModelsAdapter):
     Parameters
     ----------
     maxlag : int, optional (default=None)
-        The maximum lag to consider. If None, maxlag = 10 is used.
+        The maximum lag to consider. If None, maxlag = 10 will be used.
     trend : {'n', 'c', 't', 'ct'}
         The trend to include in the model:
         * 'n' - No trend.
@@ -57,7 +57,8 @@ class AutoAR(_StatsModelsAdapter):
 
     References
     ----------
-    .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.ar_model.ar_select_order.html#statsmodels.tsa.ar_model.ar_select_order
+    .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.ar_model
+    .ar_select_order.html#statsmodels.tsa.ar_model.ar_select_order
 
     Example
     ----------
