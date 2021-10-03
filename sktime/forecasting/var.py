@@ -3,12 +3,12 @@
 __all__ = ["VAR"]
 __author__ = ["thayeylolu", "aiwalter"]
 
-from statsmodels.tsa.api import VAR as _VAR
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+from statsmodels.tsa.api import VAR as _VAR
+
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):

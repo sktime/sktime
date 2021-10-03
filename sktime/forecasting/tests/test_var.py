@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests the VAR model."""
 __author__ = ["thayeylolu"]
+import numpy as np
+import pandas as pd
+from numpy.testing import assert_allclose
+from statsmodels.tsa.api import VAR as _VAR
+
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.model_selection import temporal_train_test_split
+
 #
 from sktime.forecasting.var import VAR
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.base import ForecastingHorizon
-import pandas as pd
-
-import numpy as np
-
-from statsmodels.tsa.api import VAR as _VAR
-from numpy.testing import assert_allclose
 
 index = pd.date_range(start="2005", end="2006-12", freq="M")
 df = pd.DataFrame(
