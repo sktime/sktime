@@ -24,6 +24,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.registry import all_estimators
+
 from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series import _make_series

@@ -14,6 +14,7 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
+
 from sktime.clustering.tests._clustering_tests import generate_univaritate_series
 
 

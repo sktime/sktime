@@ -39,6 +39,7 @@ from sktime.performance_metrics.forecasting import (
 )
 from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
+
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
 from sktime.utils._testing.forecasting import _get_expected_index_for_update_predict
 from sktime.utils._testing.forecasting import _make_fh

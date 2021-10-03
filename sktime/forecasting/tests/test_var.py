@@ -6,6 +6,7 @@ from sktime.forecasting.var import VAR
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.base import ForecastingHorizon
 import pandas as pd
+
 import numpy as np
 
 from statsmodels.tsa.api import VAR as _VAR
