@@ -64,7 +64,7 @@ def test_stc_on_japanese_vowels():
     # train STC
     rotf = RotationForest(n_estimators=10)
     stc = ShapeletTransformClassifier(
-        n_shapelets=100,
+        n_shapelets_considered=100,
         random_state=0,
         estimator=rotf,
     )

@@ -19,7 +19,7 @@ from sktime.classification.shapelet_based.dev.factories.shapelet_factory import 
 )
 from sktime.classification.shapelet_based.dev.filters.random_filter import RandomFilter
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-from sktime.transformations.panel.shapelets import ContractedShapeletTransform
+from sktime.transformations.panel.shapelet_transform import ShapeletTransform
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
@@ -32,7 +32,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ----------
-    n_shapelets : int, default=10000
+    n_shapelets_considered : int, default=10000
 
     max_shapelets : int or None, default=None
 
@@ -103,10 +103,8 @@ class ShapeletTransformClassifier(BaseClassifier):
     """
 
     _tags = {
-        "coerce-X-to-numpy": False,
-        "coerce-X-to-pandas": True,
         "capability:multivariate": True,
-        "capability:unequal_length": True,
+        "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": True,
@@ -114,7 +112,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def __init__(
         self,
-        n_shapelets=10000,
+        n_shapelets_considered=50000,
         max_shapelets=None,
         max_shapelet_length=None,
         estimator=None,
@@ -124,7 +122,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-        self.n_shapelets = n_shapelets
+        self.n_shapelets_considered = n_shapelets_considered
         self.max_shapelets = max_shapelets
         self.max_shapelet_length = max_shapelet_length
         self.estimator = estimator
@@ -139,6 +137,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         self.n_instances = 0
         self.n_dims = 0
+        self.series_length = 0
         self.n_classes = 0
         self.classes_ = []
         self.transformed_data = []
@@ -154,12 +153,12 @@ class ShapeletTransformClassifier(BaseClassifier):
     def _fit(self, X, y):
         self._n_jobs = check_n_jobs(self.n_jobs)
 
-        self.n_instances, self.n_dims = X.shape
+        self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.max_shapelet_length is None:
-            self._max_shapelet_length = X.applymap(lambda x: len(x)).to_numpy().min()
+            self._max_shapelet_length = self.series_length
 
         if self.max_shapelets is None:
             self._max_shapelets = (
@@ -172,15 +171,18 @@ class ShapeletTransformClassifier(BaseClassifier):
                 shapelet_factory=ShapeletFactoryIndependent(),
                 max_shapelet_length=self._max_shapelet_length,
                 num_shapelets=self._max_shapelets,
-                num_iterations=self.n_shapelets,
+                num_iterations=self.n_shapelets_considered,
                 #    time_contract_in_mins=self.transform_contract_in_mins,
                 #    verbose=False,
                 random_state=self.random_state,
             )
             if self.n_dims > 1
-            else ContractedShapeletTransform(
-                time_contract_in_mins=self.transform_limit_in_minutes,
-                verbose=False,
+            else ShapeletTransform(
+                n_shapelets_considered=self.n_shapelets_considered,
+                max_shapelets=self._max_shapelets,
+                max_shapelet_length=self._max_shapelet_length,
+                time_limit_in_minutes=self.time_limit_in_minutes,
+                n_jobs=self.n_jobs,
                 random_state=self.random_state,
             )
         )
