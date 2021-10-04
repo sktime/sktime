@@ -20,7 +20,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores_exogeneous_X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

@@ -38,7 +38,7 @@ class BaseTransformer(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "univariate_only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y

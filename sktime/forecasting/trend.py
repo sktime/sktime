@@ -41,7 +41,7 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -137,7 +137,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores_exogeneous_X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

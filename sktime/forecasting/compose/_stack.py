@@ -64,7 +64,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "requires-fh-in-fit": True,
         "handles-missing-data": False,
     }

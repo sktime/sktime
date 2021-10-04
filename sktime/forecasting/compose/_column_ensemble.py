@@ -8,11 +8,9 @@ __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
@@ -48,7 +46,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

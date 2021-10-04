@@ -108,7 +108,7 @@ class Differencer(_SeriesToSeriesTransformer):
     _tags = {
         "fit-in-transform": False,
         "transform-returns-same-time-index": False,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(self, lags=1, drop_na=True):

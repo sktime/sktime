@@ -27,7 +27,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores_exogeneous_X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

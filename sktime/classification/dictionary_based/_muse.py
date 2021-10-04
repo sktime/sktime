@@ -9,20 +9,21 @@ __author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
+
 import numpy as np
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.multiclass import class_distribution
 
 # from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
+from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+from sktime.transformations.panel.dictionary_based import SFA
 
 
 class MUSE(BaseClassifier):
@@ -107,7 +108,7 @@ class MUSE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": False,
         "coerce-X-to-numpy": False,
-        "coerce-X-to-pandas": True,
+        "coerce_X_to_pandas": True,
     }
 
     def __init__(

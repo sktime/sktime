@@ -25,7 +25,7 @@ class BaseGridSearch(BaseForecaster):
     _tags = {
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "ignores-exogeneous-X": True,
+        "ignores_exogeneous_X": True,
     }
 
     def __init__(
@@ -57,7 +57,7 @@ class BaseGridSearch(BaseForecaster):
             "requires-fh-in-fit",
             "capability:pred_int",
             # "scitype:y", commented out until grid search works with multivariate
-            "ignores-exogeneous-X",
+            "ignores_exogeneous_X",
             "handles-missing-data",
             "y_inner_mtype",
             "X_inner_mtype",

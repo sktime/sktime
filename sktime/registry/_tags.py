@@ -45,13 +45,13 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "ignores-exogeneous-X",
+        "ignores_exogeneous_X",
         "forecaster",
         "bool",
         "does forecaster ignore exogeneous data (X)?",
     ),
     (
-        "univariate-only",
+        "univariate_only",
         "transformer",
         "bool",
         "can transformer handle multivariate series? True = no",
@@ -106,7 +106,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "symmetric",
-        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        ["transformer_pairwise_tabular", "transformer_pairwise_panel"],
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
@@ -168,7 +168,7 @@ ESTIMATOR_TAG_REGISTER = [
         "contract time setting, i.e. does the estimator support limiting max fit time?",
     ),
     (
-        "coerce-X-to-pandas",
+        "coerce_X_to_pandas",
         ["classifier", "transformer"],
         "bool",
         "should X be coerced to a nested pandas DataFrame.? yes/no",

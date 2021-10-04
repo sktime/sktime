@@ -85,7 +85,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores_exogeneous_X": True,
         "capability:pred_int": True,
         "requires_fh_in_fit": False,
         "handles_missing_data": False,

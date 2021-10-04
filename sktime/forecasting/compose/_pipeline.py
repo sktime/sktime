@@ -165,7 +165,7 @@ class ForecastingPipeline(_Pipeline):
 
     _required_parameters = ["steps"]
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -314,8 +314,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     _required_parameters = ["steps"]
     _tags = {
-        "ignores-exogeneous-X": True,
-        "univariate-only": True,
+        "ignores_exogeneous_X": True,
+        "univariate_only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

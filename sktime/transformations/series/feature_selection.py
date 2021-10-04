@@ -7,11 +7,12 @@ __author__ = ["aiwalter"]
 __all__ = ["FeatureSelection"]
 
 import math
+
 import pandas as pd
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
 from sktime.utils.validation.forecasting import check_regressor
+from sktime.utils.validation.series import check_series
 
 
 class FeatureSelection(_SeriesToSeriesTransformer):
@@ -74,7 +75,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(

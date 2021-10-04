@@ -83,7 +83,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -238,7 +238,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
