@@ -224,7 +224,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self.fit(X, Y).predict(X, Y)
+        return self.fit(X, Y).predict(X)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
