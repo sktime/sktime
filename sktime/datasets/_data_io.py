@@ -38,7 +38,7 @@ __author__ = [
     "Emiliathewolf",
     "TonyBagnall",
     "yairbeer",
-    "patrickZIB"
+    "patrickZIB",
 ]
 
 DIRNAME = "data"

@@ -4,10 +4,10 @@
 __author__ = ["Patrick Schäfer"]
 __all__ = []
 
+import numpy as np
+
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.datasets import load_gun_point_segmentation
-
-import numpy as np
 
 
 def test_clasp_sparse():
