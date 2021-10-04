@@ -69,7 +69,7 @@ class MyTSC(BaseClassifier):
     _tags = {
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -103,7 +103,7 @@ class MyTSC(BaseClassifier):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, X, y):

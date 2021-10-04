@@ -1252,6 +1252,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yairbeer",
+      "name": "Yair Beer",
+      "avatar_url": "https://avatars.githubusercontent.com/yairbeer",
+      "profile": "https://github.com/yairbeer",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
