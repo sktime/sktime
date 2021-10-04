@@ -10,6 +10,7 @@ __author__ = [
     "Luis Zugasti",
     "Lovkush Agarwal",
     "Markus Löning",
+    "Arelo Tanoh",
 ]
 
 __all__ = [
@@ -36,6 +37,7 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
+from sktime.forecasting.base import BaseForecaster
 
 
 def _concat_y_X(y, X):
@@ -890,3 +892,28 @@ def _get_forecaster(scitype, strategy):
         },
     }
     return registry[scitype][strategy]
+
+
+class MyForecastingAlgorithm(BaseForecaster):
+    def __init__(self, regressor):
+        # storing hyper-parameters
+        self.regressor = regressor
+
+    def fit(self, y, X=None, fh=None):
+        # implementation of the fitting algorithm
+        # store some fitted parameters
+        # check if X is not None (if X is present), otherwise raise an error
+        # clone regressor use `clone` from scikit-learn
+        # fit given regression algorithm
+        self.regressor.fit(X, y)
+        return self
+
+    def predict(self, fh=None, X=None):
+        # implementation of the algorithm used to make a
+        # prediction from the fitted model
+        # apply fitted parameters
+        # ensure that X is given
+        y_pred = self.regressor.predict(X)
+        # ensure that we return the right format/type of data,
+        # i.e. a pandas.Series, not a numpy.array
+        return y_pred
