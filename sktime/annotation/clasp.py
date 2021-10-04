@@ -28,7 +28,7 @@ from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
 
 
-def find_dominant_window_sizes(TS, offset=0.05):
+def find_dominant_window_sizes(X, offset=0.05):
     """
     Determine the Window-Size using dominant FFT-frequencies.
 
@@ -44,8 +44,8 @@ def find_dominant_window_sizes(TS, offset=0.05):
     trivial_match: bool
         If the candidate change point is a trivial match
     """
-    fourier = np.absolute(np.fft.fft(TS))
-    freq = np.fft.fftfreq(TS.shape[0], 1)
+    fourier = np.absolute(np.fft.fft(X))
+    freq = np.fft.fftfreq(X.shape[0], 1)
 
     coefs = []
     window_sizes = []
@@ -60,7 +60,7 @@ def find_dominant_window_sizes(TS, offset=0.05):
 
     idx = np.argsort(coefs)[::-1]
     for window_size in window_sizes[idx]:
-        if window_size not in range(20, int(TS.shape[0] * offset)):
+        if window_size not in range(20, int(X.shape[0] * offset)):
             continue
 
         return int(window_size / 2)
@@ -98,13 +98,13 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
     return False
 
 
-def _segmentation(TS, clasp, n_change_points=None, exclusion_radius=0.05):
+def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
     """
     Segments the time series by extracting change points.
 
     Parameters
     ----------
-    TS: array
+    X: array
         the time series to be segmented
     clasp:
         the transformer
@@ -122,11 +122,11 @@ def _segmentation(TS, clasp, n_change_points=None, exclusion_radius=0.05):
     queue = PriorityQueue()
 
     # compute global clasp
-    profile = clasp.transform(TS)
+    profile = clasp.transform(X)
     queue.put(
         (
             -np.max(profile),
-            [np.arange(TS.shape[0]).tolist(), np.argmax(profile), profile],
+            [np.arange(X.shape[0]).tolist(), np.argmax(profile), profile],
         )
     )
 
@@ -156,11 +156,11 @@ def _segmentation(TS, clasp, n_change_points=None, exclusion_radius=0.05):
         for ranges in [left_range, right_range]:
             # create and enqueue left local profile
             if len(ranges) > period_size:
-                profile = clasp.transform(TS[ranges])
+                profile = clasp.transform(X[ranges])
                 change_point = np.argmax(profile)
                 score = profile[change_point]
 
-                full_profile = np.zeros(len(TS))
+                full_profile = np.zeros(len(X))
                 full_profile.fill(0.5)
                 np.copyto(
                     full_profile[ranges[0] : ranges[0] + len(profile)],
@@ -172,7 +172,7 @@ def _segmentation(TS, clasp, n_change_points=None, exclusion_radius=0.05):
                 if not _is_trivial_match(
                     global_change_point,
                     change_points,
-                    TS.shape[0],
+                    X.shape[0],
                     exclusion_radius=exclusion_radius,
                 ):
                     queue.put((-score, [ranges, global_change_point, full_profile]))
@@ -184,8 +184,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     """
     ClaSP (Classification Score Profile) Segmentation.
 
-    Overview:
-    ---------
     Using ClaSP for the CPD problem is straightforward: We first compute the profile
     and then choose its global maximum as the change point. The following CPDs
     are obtained using a bespoke recursive split segmentation algorithm.
@@ -199,7 +197,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     fmt :                  str {"dense", "sparse"}, optional (default="sparse")
         Annotation output format:
         * If "sparse", a pd.Series of the found Change Points is returned
-        * If "dense", a pd.IndexSeries with the Segmenation of the TS is returned
+        * If "dense", a pd.IndexSeries with the Segmenation of X is returned
 
     Returns
     -------
@@ -225,10 +223,36 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         super(ClaSPSegmentation, self).__init__(fmt)
 
     def _fit(self, X, Y=None):
-        # nothing to do
+        """Do nothing, as there is no need to fit a model for ClaSP.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Training data to fit model to (time series).
+        Y : pd.Series, optional
+            Ground truth annotations for training if annotator is supervised.
+
+        Returns
+        -------
+        self : True
+        """
         return True
 
     def _predict(self, X):
+        """Create annotations on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate (time series).
+
+        Returns
+        -------
+        Y : pd.Series or an IntervalSeries
+            Annotations for sequence X exact format depends on annotation type.
+            fmt=sparse: only the found change point locations are returned
+            fnt=dense: an interval series is returned which contains the segmetation.
+        """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
         # Change Points
@@ -240,6 +264,18 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
             return self._get_interval_series(X, self.found_cps)
 
     def _predict_scores(self, X):
+        """Return scores in ClaSP's profile for each annotation.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate (time series).
+
+        Returns
+        -------
+        Y : pd.Series
+            Scores for sequence X exact format depends on annotation type.
+        """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
         # Scores of the Change Points
@@ -251,10 +287,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         # Thus, we return the main (first) one
         elif self.fmt == "dense":
             return pd.Series(self.profiles[0])
-
-    def fit_predict(self, X, Y=None):
-        """Get shortcut for fit and predict."""
-        return self.fit(X).predict(X)
 
     def get_fitted_params(self):
         """Get fitted parameters.

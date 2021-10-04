@@ -28,12 +28,12 @@ from sktime.transformations.panel.matrix_profile import _sliding_dot_products
 from sktime.utils.validation.series import check_series
 
 
-def _sliding_window(TS, m):
+def _sliding_window(X, m):
     """Return the sliding windows for a time series and a window size.
 
     Parameters
     ----------
-    TS: array
+    X: array
         The time series
     m: int
         The window size to generate sliding windows
@@ -43,17 +43,17 @@ def _sliding_window(TS, m):
     windows: array
         The sliding windows
     """
-    shape = TS.shape[:-1] + (TS.shape[-1] - m + 1, m)
-    strides = TS.strides + (TS.strides[-1],)
-    return np.lib.stride_tricks.as_strided(TS, shape=shape, strides=strides)
+    shape = X.shape[:-1] + (X.shape[-1] - m + 1, m)
+    strides = X.strides + (X.strides[-1],)
+    return np.lib.stride_tricks.as_strided(X, shape=shape, strides=strides)
 
 
-def _sliding_mean_std(TS, m):
+def _sliding_mean_std(X, m):
     """Return the sliding mean and std for a time series and a window size.
 
     Parameters
     ----------
-    TS: array
+    X: array
         The time series
     m: int
         The window size to generate sliding windows
@@ -63,8 +63,8 @@ def _sliding_mean_std(TS, m):
     Tuple (float, float)
         The moving mean and moving std
     """
-    s = np.insert(np.cumsum(TS), 0, 0)
-    sSq = np.insert(np.cumsum(TS ** 2), 0, 0)
+    s = np.insert(np.cumsum(X), 0, 0)
+    sSq = np.insert(np.cumsum(X ** 2), 0, 0)
     segSum = s[m:] - s[:-m]
     segSumSq = sSq[m:] - sSq[:-m]
     movmean = segSum / m
@@ -76,7 +76,7 @@ def _sliding_mean_std(TS, m):
     return [movmean, movstd]
 
 
-def _compute_distances_iterative(TS, m, k):
+def _compute_distances_iterative(X, m, k):
     """
     Compute kNN indices with dot-product.
 
@@ -85,7 +85,7 @@ def _compute_distances_iterative(TS, m, k):
 
     Parameters
     ----------
-    TS: array
+    X: array
         The time series
     m: int
         The window size to generate sliding windows
@@ -95,26 +95,26 @@ def _compute_distances_iterative(TS, m, k):
     Returns
     -------
     knns: array
-        The knns (offsets!) for each subsequence in TS
+        The knns (offsets!) for each subsequence in X
     """
-    length = len(TS) - m + 1
+    length = len(X) - m + 1
     knns = np.zeros(shape=(length, k), dtype=np.int64)
 
     dot_prev = None
-    means, stds = _sliding_mean_std(TS, m)
+    means, stds = _sliding_mean_std(X, m)
 
     for order in range(0, length):
         # first iteration O(n log n)
         if order == 0:
-            # dot_first = _sliding_dot_product(TS[:m], TS)
-            dot_first = _sliding_dot_products(TS[:m], TS, len(TS[:m]), len(TS))
+            # dot_first = _sliding_dot_product(X[:m], X)
+            dot_first = _sliding_dot_products(X[:m], X, len(X[:m]), len(X))
             dot_rolled = dot_first
         # O(1) further operations
         else:
             dot_rolled = (
                 np.roll(dot_prev, 1)
-                + TS[order + m - 1] * TS[m - 1 : length + m]
-                - TS[order - 1] * np.roll(TS[:length], 1)
+                + X[order + m - 1] * X[m - 1 : length + m]
+                - X[order - 1] * np.roll(X[:length], 1)
             )
             dot_rolled[0] = dot_first[order]
 
@@ -310,7 +310,7 @@ def _calc_profile(m, knn_mask, score, exclusion_zone):
 
 
 def clasp(
-    TS,
+    X,
     m,
     k_neighbours=3,
     score=_roc_auc_score,
@@ -321,7 +321,7 @@ def clasp(
 
     Parameters
     ----------
-    TS: array
+    X: array
         The time series
     m: int
         The window size to generate sliding windows
@@ -339,7 +339,7 @@ def clasp(
     Tuple (array, array)
         The ClaSP and the knn_mask
     """
-    knn_mask = _compute_distances_iterative(TS, m, k_neighbours).T
+    knn_mask = _compute_distances_iterative(X, m, k_neighbours).T
 
     n_timepoints = knn_mask.shape[1]
     exclusion_radius = np.int64(n_timepoints * exclusion_radius)
@@ -354,10 +354,7 @@ def clasp(
 class ClaSPTransformer(_SeriesToSeriesTransformer):
     """ClaSP (Classification Score Profile) Transformer.
 
-    Overview:
-    ---------
     Implementation of the Classification Score Profile of a time series.
-
     ClaSP hierarchically splits a TS into two parts, where each split point is
     determined by training a binary TS classifier for each possible split point and
     selecting the one with highest accuracy, i.e., the one that is best at identifying
