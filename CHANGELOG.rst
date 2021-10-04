@@ -111,7 +111,7 @@ Added
 * Added pd.DataFrame transformation for Imputer and HampelFilter (#830) @aiwalter
 * Added default params for some transformers (#834) @aiwalter
 * Added several docstring examples (#835) @aiwalter
-* Added skip_inverse_transform tag for Imputer and HampelFilter (#788) @aiwalter
+* Added skip-inverse-transform tag for Imputer and HampelFilter (#788) @aiwalter
 * Added a reference to alibi-detect (#815) @satya-pattnaik
 
 All contributors: @GuzalBulatova, @RNKuhns, @aaronreidsmith, @aiwalter, @kachayev, @ltsaprounis, @luiszugasti, @mloning, @satya-pattnaik and @yashlamba
