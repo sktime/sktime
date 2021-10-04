@@ -103,7 +103,7 @@ class SFA(_PanelToPanelTransformer):
         num_atts = 0
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate_only": True}
 
     def __init__(
         self,

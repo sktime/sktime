@@ -9,9 +9,9 @@ __all__ = ["ThetaLinesTransformer"]
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -62,9 +62,9 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "transform-returns-same-time-index": True,
-        "univariate-only": True,
-        "fit-in-transform": True,
+        "transform_returns_same_time_index": True,
+        "univariate_only": True,
+        "fit_in_transform": True,
     }
 
     def __init__(self, theta=(0, 2)):

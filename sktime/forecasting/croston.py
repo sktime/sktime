@@ -6,6 +6,7 @@
 
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
@@ -71,7 +72,7 @@ class Croston(BaseForecaster):
     """
 
     _tags = {
-        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "requires_fh_in_fit": False,  # is forecasting horizon already required in fit?
     }
 
     def __init__(self, smoothing=0.1):

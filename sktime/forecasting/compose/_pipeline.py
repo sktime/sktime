@@ -9,8 +9,7 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
@@ -279,7 +278,7 @@ class ForecastingPipeline(_Pipeline):
 #     self.check_is_fitted()
 #     Zt = check_series(Z, enforce_multivariate=True)
 #     for _, _, transformer in self._iter_transformers(reverse=True):
-#         if not _has_tag(transformer, "skip-inverse-transform"):
+#         if not _has_tag(transformer, "skip_inverse_transform"):
 #             Zt = transformer.inverse_transform(Zt)
 #     return Zt
 

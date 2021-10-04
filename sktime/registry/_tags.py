@@ -43,7 +43,6 @@ __author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
 
-
 ESTIMATOR_TAG_REGISTER = [
     (
         "ignores-exogeneous-X",
@@ -58,37 +57,37 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "fit-in-transform",
+        "fit_in_transform",
         "transformer",
         "bool",
         "does fit contain no logic and can be skipped? yes/no",
     ),
     (
-        "transform-returns-same-time-index",
+        "transform_returns_same_time_index",
         "transformer",
         "bool",
         "does transform return same time index as input?",
     ),
     (
-        "handles-missing-data",
+        "handles_missing_data",
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
     ),
     (
-        "skip-inverse-transform",
+        "skip_inverse_transform",
         "transformer",
         "bool",
         "behaviour flag: skips inverse_transform when called yes/no",
     ),
     (
-        "requires-fh-in-fit",
+        "requires_fh_in_fit",
         "forecaster",
         "bool",
         "does forecaster require fh passed already in fit? yes/no",
     ),
     (
-        "X-y-must-have-same-index",
+        "X_y_must_have_same_index",
         ["forecaster", "classifier", "regressor"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
@@ -100,7 +99,7 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "coerce-X-to-numpy",
+        "coerce_X_to_numpy",
         ["forecaster", "classifier", "regressor"],
         "bool",
         "should X be coerced to numpy type in check_X? yes/no",
@@ -175,19 +174,19 @@ ESTIMATOR_TAG_REGISTER = [
         "should X be coerced to a nested pandas DataFrame.? yes/no",
     ),
     # (
-    #     "handles-panel",
+    #     "handles_panel",
     #     "annotator",
     #     "bool",
     #     "can handle panel annotations, i.e., list X/y?",
     # ),
     # (
-    #     "annotation-type",
+    #     "annotation_type",
     #     "annotator",
     #     "str",
     #     "which annotation type? can be 'point', 'segment' or 'both'",
     # ),
     # (
-    #     "annotation-kind",
+    #     "annotation_kind",
     #     "annotator",
     #     "str",
     #     "which annotations? can be 'outlier', 'change', 'label', 'none'",

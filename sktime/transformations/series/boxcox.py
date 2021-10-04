@@ -8,16 +8,13 @@ __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
 import pandas as pd
-from scipy import optimize
-from scipy import special
-from scipy import stats
-from scipy.special import boxcox
-from scipy.special import inv_boxcox
-from scipy.stats import boxcox_llf
-from scipy.stats import distributions
-from scipy.stats import variation
-from scipy.stats.morestats import _boxcox_conf_interval
-from scipy.stats.morestats import _calc_uniform_order_statistic_medians
+from scipy import optimize, special, stats
+from scipy.special import boxcox, inv_boxcox
+from scipy.stats import boxcox_llf, distributions, variation
+from scipy.stats.morestats import (
+    _boxcox_conf_interval,
+    _calc_uniform_order_statistic_medians,
+)
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation import is_int
@@ -99,7 +96,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {"transform_returns_same_time_index": True, "univariate_only": True}
 
     def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds

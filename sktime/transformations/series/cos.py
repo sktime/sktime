@@ -30,7 +30,7 @@ class CosineTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "fit-in-transform": True}
+    _tags = {"transform_returns_same_time_index": True, "fit_in_transform": True}
 
     def transform(self, Z, X=None):
         """Transform data.

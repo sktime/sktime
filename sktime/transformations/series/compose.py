@@ -4,11 +4,11 @@
 """Meta-transformers for building composite transformers."""
 
 import pandas as pd
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
+
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
 
 __author__ = ["aiwalter", "SveaMeyer13"]
 __all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
@@ -70,8 +70,8 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     _required_parameters = ["transformer"]
     _tags = {
-        "univariate-only": False,
-        "fit-in-transform": True,
+        "univariate_only": False,
+        "fit_in_transform": True,
     }
 
     def __init__(self, transformer, passthrough=False):

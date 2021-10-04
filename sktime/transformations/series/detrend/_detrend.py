@@ -6,13 +6,13 @@
 __all__ = ["Detrender"]
 __author__ = ["mloning", "SveaMeyer13"]
 
-from sklearn.base import clone
 import pandas as pd
+from sklearn.base import clone
 
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
-from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
@@ -64,7 +64,7 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {"transform_returns_same_time_index": True}
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster

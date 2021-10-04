@@ -67,8 +67,8 @@ class MyTSC(BaseClassifier):
 
     # todo: fill out estimator tags here
     _tags = {
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "handles_missing_data": False,  # can estimator handle missing data?
+        "X_y_must_have_same_index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags

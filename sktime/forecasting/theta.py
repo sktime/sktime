@@ -87,8 +87,8 @@ class ThetaForecaster(ExponentialSmoothing):
     _tags = {
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):

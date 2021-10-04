@@ -6,13 +6,14 @@
 __author__ = ["Martin Walter"]
 __all__ = ["HampelFilter"]
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+import warnings
 
 import numpy as np
-import warnings
 import pandas as pd
+
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
 
 
 class HampelFilter(_SeriesToSeriesTransformer):
@@ -53,9 +54,9 @@ class HampelFilter(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": True,
-        "handles-missing-data": True,
-        "skip-inverse-transform": True,
+        "fit_in_transform": True,
+        "handles_missing_data": True,
+        "skip_inverse_transform": True,
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):

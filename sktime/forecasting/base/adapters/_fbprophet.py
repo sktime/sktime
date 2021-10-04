@@ -7,12 +7,12 @@ __author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["_ProphetAdapter"]
 
 import os
+from contextlib import contextmanager
 
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
-from contextlib import contextmanager
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class _ProphetAdapter(BaseForecaster):
@@ -21,8 +21,8 @@ class _ProphetAdapter(BaseForecaster):
     _tags = {
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def _fit(self, y, X=None, fh=None, **fit_params):

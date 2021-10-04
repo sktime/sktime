@@ -12,9 +12,9 @@ import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation import check_window_length
 from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_sp
 
 
 class _NaiveForecaster(_BaseWindowForecaster):

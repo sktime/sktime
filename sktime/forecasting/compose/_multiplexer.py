@@ -3,9 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
-from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
+
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 __author__ = ["kkoralturk", "aiwalter"]
 __all__ = ["MultiplexForecaster"]

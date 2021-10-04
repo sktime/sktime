@@ -25,9 +25,8 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.forecasting import _get_n_columns, make_forecasting_problem
 from sktime.utils._testing.series import _make_series
-from sktime.utils._testing.forecasting import _get_n_columns
 
 # get all forecasters
 FORECASTERS = [
@@ -89,11 +88,11 @@ def test_oh_setting(Forecaster):
 
 # divide Forecasters into groups based on when fh is required
 FORECASTERS_REQUIRED = [
-    f for f in FORECASTERS if f.get_class_tag("requires-fh-in-fit", True)
+    f for f in FORECASTERS if f.get_class_tag("requires_fh_in_fit", True)
 ]
 
 FORECASTERS_OPTIONAL = [
-    f for f in FORECASTERS if not f.get_class_tag("requires-fh-in-fit", True)
+    f for f in FORECASTERS if not f.get_class_tag("requires_fh_in_fit", True)
 ]
 
 

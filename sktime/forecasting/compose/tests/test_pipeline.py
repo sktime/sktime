@@ -55,7 +55,7 @@ def test_pipeline():
 
 
 def test_skip_inverse_transform():
-    # testing that transformers which have the "skip-inverse-transform" tag
+    # testing that transformers which have the "skip_inverse_transform" tag
     # are working in a pipeline
     y = load_airline()
     # add nan and outlier

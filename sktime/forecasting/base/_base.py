@@ -29,24 +29,23 @@ State:
 __author__ = ["Markus Löning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
-from sktime.base import BaseEstimator
-
 from contextlib import contextmanager
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_X
-from sktime.utils.validation.forecasting import check_alpha
-from sktime.utils.validation.forecasting import check_cv
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.utils.validation.series import check_series, check_equal_time_index
-
+from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype
-
+from sktime.utils.datetime import _shift
+from sktime.utils.validation.forecasting import (
+    check_alpha,
+    check_cv,
+    check_fh,
+    check_X,
+    check_y_X,
+)
+from sktime.utils.validation.series import check_equal_time_index, check_series
 
 DEFAULT_ALPHA = 0.05
 
@@ -66,7 +65,7 @@ class BaseForecaster(BaseEstimator):
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "handles_missing_data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
@@ -903,7 +902,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = self.get_tag("requires-fh-in-fit")
+        requires_fh = self.get_tag("requires_fh_in_fit")
 
         msg = (
             f"This is because fitting of the `"
