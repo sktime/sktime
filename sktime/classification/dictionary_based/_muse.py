@@ -107,7 +107,7 @@ class MUSE(BaseClassifier):
         "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": False,
-        "coerce-X-to-numpy": False,
+        "coerce_X_to_numpy": False,
         "coerce_X_to_pandas": True,
     }
 
