@@ -81,12 +81,6 @@ class ShapeletTransform(_PanelToTabularTransformer):
         if self.max_shapelet_length is None:
             self._max_shapelet_length = self.series_length
 
-        rng = check_random_state(self.random_state)
-        indicies = np.arange(self.n_instances)
-        rng.shuffle(indicies)
-        X = X[indicies]
-        y = y[indicies]
-
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         fit_time = 0
@@ -177,7 +171,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
             for s in class_shapelets
         ]
         self.shapelets = [shapelet for shapelet in self.shapelets if shapelet[0] > 0]
-        self.shapelets.sort()
+        self.shapelets.sort(reverse=True)
 
         self._sorted_indicies = []
         for s in self.shapelets:
@@ -317,12 +311,10 @@ class ShapeletTransform(_PanelToTabularTransformer):
         to_keep = [True] * len(shapelet_heap)
 
         for i in range(len(shapelet_heap)):
-            if to_keep[i] is False:
-                continue
-
             for n in range(i + 1, len(shapelet_heap)):
-                if to_keep[n] and _is_self_similar(shapelet_heap[i], shapelet_heap[n]):
-                    to_keep[n] = False
+                if _is_self_similar(shapelet_heap[i], shapelet_heap[n]):
+                    to_keep[i] = False
+                    break
 
         return to_keep
 

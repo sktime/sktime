@@ -86,7 +86,6 @@ class ShapeletTransformClassifier(BaseClassifier):
        Series Classification", Transactions on Large-Scale Data and Knowledge Centered
        Systems, 32, 2017.
 
-    TODO
     Examples
     --------
     >>> from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -94,9 +93,11 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> rotf = RotationForest(n_estimators=10)
-    >>> clf = ShapeletTransformClassifier(estimator=rotf,
-    ...     transform_limit_in_minutes=0.025)
+    >>> clf = ShapeletTransformClassifier(
+    ...     estimator=RotationForest(n_estimators=10),
+    ...     n_shapelets_considered=100,
+    ...     max_shapelets=10,
+    ... )
     >>> clf.fit(X_train, y_train)
     ShapeletTransformClassifier(...)
     >>> y_pred = clf.predict(X_test)
@@ -116,7 +117,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         max_shapelets=None,
         max_shapelet_length=None,
         estimator=None,
-        transform_limit_in_minutes=60,
+        transform_limit_in_minutes=0,
         time_limit_in_minutes=0,
         save_transformed_data=False,
         n_jobs=1,
@@ -147,6 +148,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         self._transformer = None
         self._estimator = estimator
         self._n_jobs = n_jobs
+        self._transform_limit_in_minutes = 0
+        self._classifier_limit_in_minutes = 0
 
         super(ShapeletTransformClassifier, self).__init__()
 
@@ -165,9 +168,10 @@ class ShapeletTransformClassifier(BaseClassifier):
                 10 * self.n_instances if 10 * self.n_instances < 1000 else 1000
             )
 
-        # TODO
+        # contracting 2/3 transform (with 1/5 of that taken away for final transform), 1/3 classifier
+
         self._transformer = (
-            RandomFilter(
+            RandomFilter(         # TODO
                 shapelet_factory=ShapeletFactoryIndependent(),
                 max_shapelet_length=self._max_shapelet_length,
                 num_shapelets=self._max_shapelets,
@@ -181,7 +185,7 @@ class ShapeletTransformClassifier(BaseClassifier):
                 n_shapelets_considered=self.n_shapelets_considered,
                 max_shapelets=self._max_shapelets,
                 max_shapelet_length=self._max_shapelet_length,
-                time_limit_in_minutes=self.time_limit_in_minutes,
+                time_limit_in_minutes=self._transform_limit_in_minutes,
                 n_jobs=self.n_jobs,
                 random_state=self.random_state,
             )
