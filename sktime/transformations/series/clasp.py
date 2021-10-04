@@ -14,7 +14,7 @@ As described in
 }
 """
 
-__author__ = ["Arik Ermshaus, Patrick Schäfer"]
+__author__ = ["Arik Ermshaus", "patrickzib"]
 __all__ = ["ClaSPTransformer"]
 
 import numpy as np

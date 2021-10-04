@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Simple ClaSP test."""
 
-__author__ = ["Patrick Schäfer"]
+__author__ = ["patrickzib"]
 __all__ = []
 
 import numpy as np

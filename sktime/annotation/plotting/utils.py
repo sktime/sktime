@@ -13,7 +13,7 @@ __all__ = [
     "plot_time_series_with_profiles",
 ]
 
-__author__ = "Patrick Schäfer"
+__author__ = "patrickzib"
 
 
 def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):

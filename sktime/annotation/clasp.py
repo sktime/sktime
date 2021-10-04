@@ -16,7 +16,7 @@ As described in
 
 from sktime.annotation.base import BaseSeriesAnnotator
 
-__author__ = ["Arik Ermshaus, Patrick Schäfer"]
+__author__ = ["Arik Ermshaus", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
 
 from queue import PriorityQueue
