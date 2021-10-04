@@ -915,5 +915,5 @@ class MyForecastingAlgorithm(BaseForecaster):
         # ensure that X is given
         y_pred = self.regressor.predict(X)
         # ensure that we return the right format/type of data,
-        # i.e. a pandas.Series, not a numpy.array
+        # # i.e. a pandas.Series, not a numpy.array
         return y_pred
