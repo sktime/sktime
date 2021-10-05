@@ -154,7 +154,7 @@ class HIVECOTEV1(BaseClassifier):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.stc_params is None:
-            self._stc_params = {"time_limit_in_minutes": 60}
+            self._stc_params = {"time_limit_in_minutes": 120}
         if self.tsf_params is None:
             self._tsf_params = {"n_estimators": 500}
         if self.rise_params is None:
