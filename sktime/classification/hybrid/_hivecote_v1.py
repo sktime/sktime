@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1."""
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["Matthew Middlehurst", "RavenRudi"]
 __all__ = ["HIVECOTEV1"]
 
 from datetime import datetime
@@ -19,7 +19,6 @@ from sktime.classification.interval_based import (
     RandomIntervalSpectralForest,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.utils.validation.panel import check_X_y, check_X
 
 
 class HIVECOTEV1(BaseClassifier):
@@ -30,7 +29,7 @@ class HIVECOTEV1(BaseClassifier):
 
     Parameters
     ----------
-    verbose                 : int, level of output printed to
+    verbose                 : int, level of outp"ut printed to
     the console (for information only) (default = 0)
     n_jobs                  : int, optional (default=1)
     The number of jobs to run in parallel for both `fit` and `predict`.
@@ -58,12 +57,12 @@ class HIVECOTEV1(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -109,7 +108,7 @@ class HIVECOTEV1(BaseClassifier):
 
         super(HIVECOTEV1, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit a HIVE-COTEv1.0 classifier.
 
         Parameters
@@ -122,7 +121,6 @@ class HIVECOTEV1(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
 
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -236,7 +234,7 @@ class HIVECOTEV1(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Make predictions for all cases in X.
 
         Parameters
@@ -255,7 +253,7 @@ class HIVECOTEV1(BaseClassifier):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Make class probability estimates on each case in X.
 
         Parameters
@@ -267,8 +265,6 @@ class HIVECOTEV1(BaseClassifier):
         output : numpy array of shape =
                 [n_instances, num_classes] of probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
 
         dists = np.zeros((X.shape[0], self.n_classes))
 
