@@ -1,17 +1,4 @@
 repos:
-- repo: https://github.com/psf/black
-  rev: 21.5b1
-  hooks:
-  - id: black
-    language_version: python3
-    # args: [--line-length 79]
-
-- repo: https://github.com/pycqa/flake8
-  rev: 3.9.2
-  hooks:
-  - id: flake8
-    exclude: docs/conf.py
-    additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.0.1
@@ -27,6 +14,26 @@ repos:
   - id: fix-encoding-pragma
   - id: requirements-txt-fixer
   - id: trailing-whitespace
+
+- repo: https://github.com/pycqa/isort
+  rev: 5.8.0
+  hooks:
+    - id: isort
+      name: isort (python)
+
+- repo: https://github.com/psf/black
+  rev: 21.5b1
+  hooks:
+  - id: black
+    language_version: python3
+    # args: [--line-length 79]
+
+- repo: https://github.com/pycqa/flake8
+  rev: 3.9.2
+  hooks:
+  - id: flake8
+    exclude: docs/conf.py
+    additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/mgedmin/check-manifest
   rev: "0.46"

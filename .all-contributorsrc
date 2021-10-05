@@ -1243,8 +1243,25 @@
       "contributions": [
 	"doc"
       ]
+    },
+    {
+      "login": "bobbys-dev",
+      "name": "bobbys",
+      "avatar_url": "https://avatars.githubusercontent.com/bobbys-dev",
+      "profile": "https://github.com/bobbys-dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yairbeer",
+      "name": "Yair Beer",
+      "avatar_url": "https://avatars.githubusercontent.com/yairbeer",
+      "profile": "https://github.com/yairbeer",
+      "contributions": [
+        "code"
+      ]
     }
-
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
