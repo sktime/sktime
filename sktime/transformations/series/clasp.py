@@ -3,8 +3,8 @@
 """
 ClaSP (Classification Score Profile) Transformer implementation.
 
-References
-----------
+Notes
+-----
 As described in
 @inproceedings{clasp2021,
   title={ClaSP - Time Series Segmentation},
@@ -367,8 +367,8 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
     scoring_metric:      string, default = ROC_AUC
         the scoring metric to use in ClaSP - choose from ROC_AUC or F1
 
-    References
-    ----------
+    Notes
+    -----
     As described in
     @inproceedings{clasp2021,
       title={ClaSP - Time Series Segmentation},
@@ -376,6 +376,16 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
       booktitle={CIKM},
       year={2021}
     }
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.clasp import ClaSPTransformer
+    >>> from sktime.annotation.clasp import find_dominant_window_sizes
+    >>> from sktime.datasets import load_electric_devices_segmentation
+    >>> X, true_period_size, true_cps = load_electric_devices_segmentation()
+    >>> dominant_period_size = find_dominant_window_sizes(X)
+    >>> clasp = ClaSPTransformer(window_length=dominant_period_size).fit(X)
+    >>> profile = clasp.transform(X)
     """
 
     _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases

@@ -3,8 +3,8 @@
 """
 ClaSP (Classification Score Profile) Segmentation.
 
-References
-----------
+Notes
+-----
 As described in
 @inproceedings{clasp2021,
   title={ClaSP - Time Series Segmentation},
@@ -204,8 +204,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     pd.Series():
         Found change points
 
-    References
-    ----------
+    Notes
+    -----
     As described in
     @inproceedings{clasp2021,
       title={ClaSP - Time Series Segmentation},
@@ -213,6 +213,18 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
       booktitle={CIKM},
       year={2021}
     }
+
+    Examples
+    --------
+    >>> from sktime.annotation.clasp import ClaSPSegmentation
+    >>> from sktime.annotation.clasp import find_dominant_window_sizes
+    >>> from sktime.datasets import load_gun_point_segmentation
+    >>> X, true_period_size, cps = load_gun_point_segmentation()
+    >>> dominant_period_size = find_dominant_window_sizes(X)
+    >>> clasp = ClaSPSegmentation(dominant_period_size, n_cps=1)
+    >>> found_cps = clasp.fit_predict(X)
+    >>> profiles = clasp.profiles
+    >>> scores = clasp.scores
     """
 
     _tags = {"univariate-only": True, "fit-in-predict": True}  # for unit test cases
