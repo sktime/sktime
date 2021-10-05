@@ -282,9 +282,9 @@ class ShapeletTransform(_PanelToTabularTransformer):
             )
             for class_shapelets in shapelets
             for s in class_shapelets
+            if s[0] > 0
         ]
-        self.shapelets = [s for s in self.shapelets if s[0] > 0]
-        self.shapelets.sort(reverse=True)
+        self.shapelets.sort(reverse=True, key=lambda t: (t[0], t[1], t[2]))
 
         self._sorted_indicies = []
         for s in self.shapelets:
@@ -405,17 +405,18 @@ class ShapeletTransform(_PanelToTabularTransformer):
             orderline.append((distance, cls))
             orderline.sort()
 
-            quality = _calc_early_binary_ig(
-                orderline,
-                this_cls_traversed,
-                other_cls_traversed,
-                this_cls_count - this_cls_traversed,
-                other_cls_count - other_cls_traversed,
-                worst_quality,
-            )
+            if worst_quality > 0:
+                quality = _calc_early_binary_ig(
+                    orderline,
+                    this_cls_traversed,
+                    other_cls_traversed,
+                    this_cls_count - this_cls_traversed,
+                    other_cls_count - other_cls_traversed,
+                    worst_quality,
+                )
 
-            if quality <= worst_quality:
-                return -1
+                if quality <= worst_quality:
+                    return -1
 
         quality = _calc_binary_ig(orderline, this_cls_count, other_cls_count)
 
@@ -439,10 +440,19 @@ class ShapeletTransform(_PanelToTabularTransformer):
         to_keep = [True] * len(shapelet_heap)
 
         for i in range(len(shapelet_heap)):
+            if to_keep[i] is False:
+                continue
+
             for n in range(i + 1, len(shapelet_heap)):
-                if _is_self_similar(shapelet_heap[i], shapelet_heap[n]):
-                    to_keep[i] = False
-                    break
+                if to_keep[n] and _is_self_similar(shapelet_heap[i], shapelet_heap[n]):
+                    if (shapelet_heap[i][0], shapelet_heap[i][1]) >= (
+                        shapelet_heap[n][0],
+                        shapelet_heap[n][1],
+                    ):
+                        to_keep[n] = False
+                    else:
+                        to_keep[i] = False
+                        break
 
         return to_keep
 
@@ -630,12 +640,10 @@ def _binary_entropy(c1, c2):
 @njit(fastmath=True, cache=True)
 def _is_self_similar(s1, s2):
     # not self similar if from different series or dimension
-    if s1[4] != s2[4] or s1[3] != s2[3]:
-        return False
-
-    if s1[2] >= s2[2] and s1[2] <= s2[2] + s2[1]:
-        return True
-    if s2[2] >= s1[2] and s2[2] <= s1[2] + s1[1]:
-        return True
+    if s1[4] == s2[4] and s1[3] == s2[3]:
+        if s1[2] >= s2[2] and s1[2] <= s2[2] + s2[1]:
+            return True
+        if s2[2] >= s1[2] and s2[2] <= s1[2] + s1[1]:
+            return True
 
     return False
