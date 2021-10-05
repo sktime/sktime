@@ -85,9 +85,13 @@ class HIVECOTEV1(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> rotf = RotationForest(n_estimators=3)
     >>> clf = HIVECOTEV1(
-    ...     stc_params={"estimator": rotf, "transform_limit_in_minutes": 0.025},
+    ...     stc_params={
+    ...         "estimator": RotationForest(n_estimators=10),
+    ...         "n_shapelets_considered": 500,
+    ...         "max_shapelets": 10,
+    ...         "batch_size": 30,
+    ...     },
     ...     tsf_params={"n_estimators": 3},
     ...     rise_params={"n_estimators": 3},
     ...     cboss_params={"n_parameter_samples": 10, "max_ensemble_size": 3},
@@ -150,7 +154,7 @@ class HIVECOTEV1(BaseClassifier):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.stc_params is None:
-            self._stc_params = {}
+            self._stc_params = {"time_limit_in_minutes": 60}
         if self.tsf_params is None:
             self._tsf_params = {"n_estimators": 500}
         if self.rise_params is None:

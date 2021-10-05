@@ -80,9 +80,13 @@ class HIVECOTEV2(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> rotf = RotationForest(n_estimators=3)
     >>> clf = HIVECOTEV2(
-    ...     stc_params={"estimator": rotf, "transform_limit_in_minutes": 0.025},
+    ...     stc_params={
+    ...         "estimator": RotationForest(n_estimators=10),
+    ...         "n_shapelets_considered": 500,
+    ...         "max_shapelets": 10,
+    ...         "batch_size": 30,
+    ...     },
     ...     drcif_params={"n_estimators": 10},
     ...     arsenal_params={"num_kernels": 100, "n_estimators": 5},
     ...     tde_params={
@@ -110,6 +114,7 @@ class HIVECOTEV2(BaseClassifier):
         drcif_params=None,
         arsenal_params=None,
         tde_params=None,
+        time_limit_in_minutes=0,
         verbose=0,
         n_jobs=1,
         random_state=None,
@@ -118,6 +123,8 @@ class HIVECOTEV2(BaseClassifier):
         self.drcif_params = drcif_params
         self.arsenal_params = arsenal_params
         self.tde_params = tde_params
+
+        self.time_limit_in_minutes = time_limit_in_minutes
 
         self.verbose = verbose
         self.n_jobs = n_jobs
@@ -156,6 +163,14 @@ class HIVECOTEV2(BaseClassifier):
             self._arsenal_params = {}
         if self.tde_params is None:
             self._tde_params = {}
+
+        if self.time_limit_in_minutes > 0:
+            # leave 1/3 for train estimate
+            ct = self.time_limit_in_minutes / 6
+            self._stc_params["time_limit_in_minutes"] = ct
+            self._drcif_params["time_limit_in_minutes"] = ct
+            self._arsenal_params["time_limit_in_minutes"] = ct
+            self._tde_params["time_limit_in_minutes"] = ct
 
         self._stc = ShapeletTransformClassifier(
             **self._stc_params,
