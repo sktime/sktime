@@ -13,7 +13,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.tsa._stl import STL as _STL
+from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.datetime import _get_duration
@@ -23,7 +23,7 @@ from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
 from sktime.forecasting.base._fh import _check_cutoff
-from sktime.forecasting.base._fh import  _coerce_to_period
+from sktime.forecasting.base._fh import _coerce_to_period
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
@@ -323,6 +323,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         self._is_fitted = True
         return self
 
+
 class STL(_SeriesToSeriesTransformer):
     """Season-Trend decomposition using LOESS.
 
@@ -380,10 +381,10 @@ class STL(_SeriesToSeriesTransformer):
     >>> y = load_airline()
     >>> transformer = STL(sp=12)
     >>> y_hat = transformer.fit_transform(y)
-
     >>> forecaster = TransformedTargetForecaster([
-                            ("deseasonalize", STL(sp=12, robust=True, seasonal=13, seasonal_deg=0)),
-                            ("forecast", PolynomialTrendForecaster())])
+    >>>     ("deseasonalize", STL(sp=12, seasonal=13, seasonal_deg=0)),
+    >>>     ("forecast", PolynomialTrendForecaster())]
+    >>> )
     >>> forecaster.fit(y)
     >>> y_pred = forecaster.predict(fh=np.arange(1,13))
     """
@@ -413,7 +414,7 @@ class STL(_SeriesToSeriesTransformer):
 
     def _set_y_len(self, y):
         self._y_len = len(y)
-    
+
     def _to_relative(self, y):
         absolute = y.index
         cutoff = self._y_index[0]
@@ -439,20 +440,19 @@ class STL(_SeriesToSeriesTransformer):
 
         return relative
 
-
     def _align_seasonal_index(self, y):
-        # align seasonal index. If index is within training data use the index to align seasonality
-        # if index is out of sample (i.e. forecasting) use following formula: k = sp - index + m*floor((index-1)/sp)
-        # see https://www.statsmodels.org/stable/examples/notebooks/generated/stl_decomposition.html for more details 
-
+        # align seasonal index. If index is within training data use the index
+        # to align seasonality if index is out of sample (i.e. forecasting)
+        # use following formula: k = sp - index + m*floor((index-1)/sp)
+        # for more details:
+        # https://www.statsmodels.org/stable/examples/notebooks/generated/stl_decomposition.html
 
         _idx = self._to_relative(y)
-        T = self._y_len 
+        T = self._y_len
         h = _idx - T
         m = self.sp
-        
-        return np.where(h >= 0, T-m+h%m, _idx)
-    
+        return np.where(h >= 0, T - m + h % m, _idx)
+
     def fit(self, Z, X=None):
         """Fit to data.
         Parameters
@@ -468,21 +468,23 @@ class STL(_SeriesToSeriesTransformer):
         self._set_y_len(z)
         self._set_y_index(z)
         sp = check_sp(self.sp)
-        
+
         # apply seasonal decomposition
-        self.stl_model = _STL(z.values,
-                        period=self.sp,
-                        seasonal=self.seasonal,
-                        trend = self.trend,
-                        low_pass = self.low_pass,
-                        seasonal_deg = self.seasonal_deg,
-                        trend_deg = self.trend_deg,
-                        low_pass_deg = self.low_pass_deg,
-                        robust = self.robust,
-                        seasonal_jump = self.seasonal_jump,
-                        trend_jump = self.trend_jump,
-                        low_pass_jump = self.low_pass_jump).fit()
-        
+        _seasonalizer = _STL(
+            z.values,
+            period=sp,
+            seasonal=self.seasonal,
+            trend=self.trend,
+            low_pass=self.low_pass,
+            seasonal_deg=self.seasonal_deg,
+            trend_deg=self.trend_deg,
+            low_pass_deg=self.low_pass_deg,
+            robust=self.robust,
+            seasonal_jump=self.seasonal_jump,
+            trend_jump=self.trend_jump,
+            low_pass_jump=self.low_pass_jump
+        ).fit()
+        self.stl_model = _seasonalizer
         self.seasonal = self.stl_model.seasonal
 
         self._is_fitted = True
@@ -539,5 +541,4 @@ class STL(_SeriesToSeriesTransformer):
         self : an instance of self
         """
         self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
         return self
