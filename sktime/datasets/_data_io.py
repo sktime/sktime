@@ -29,12 +29,13 @@ __all__ = [
 ]
 
 __author__ = [
-    "Markus Löning",
-    "Sajay Ganesh",
-    "@big-o",
-    "Sebastiaan Koel",
-    "Emilia Rose",
-    "Tony Bagnall",
+    "mloning",
+    "sajaysurya",
+    "big-o",
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "yairbeer",
 ]
 
 DIRNAME = "data"
@@ -175,6 +176,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         try:
             _download_and_extract(
                 url,
+                extract_path=extract_path,
             )
         except zipfile.BadZipFile as e:
             raise ValueError(
@@ -394,8 +396,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     default it loads both.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a
-        single dataframe with columns for
-        features and the target.
+        single dataframe with columns for features and the target.
 
     Returns
     -------
@@ -407,7 +408,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     Notes
     -----
     Dimensionality:     multivariate, 12
-    Series length:      29
+    Series length:      7-29
     Train cases:        270
     Test cases:         370
     Number of classes:  9
@@ -415,10 +416,8 @@ def load_japanese_vowels(split=None, return_X_y=False):
     A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
     the vowels 'a' and 'e'. A '12-degree
     linear prediction analysis' is applied to the raw recordings to
-    obtain time-series with 12 dimensions, a
-    originally a length between 7 and 29. In this dataset, instances
-    have been padded to the longest length,
-    29. The classification task is to predict the speaker. Therefore,
+    obtain time-series with 12 dimensions and series lengths between 7 and 29.
+    The classification task is to predict the speaker. Therefore,
     each instance is a transformed utterance,
     12*29 values with a single class label attached, [1...9]. The given
     training set is comprised of 30
@@ -552,7 +551,7 @@ def load_basic_motions(split=None, return_X_y=False):
 
     Notes
     -----
-    Dimensionality:     univariate
+    Dimensionality:     multivariate, 6
     Series length:      100
     Train cases:        40
     Test cases:         40
