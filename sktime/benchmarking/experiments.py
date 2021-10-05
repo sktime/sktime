@@ -24,18 +24,18 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
 from sktime.classification.dictionary_based import (
+    MUSE,
+    WEASEL,
     BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
-    WEASEL,
-    MUSE,
 )
 from sktime.classification.distance_based import (
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
     ElasticEnsemble,
+    KNeighborsTimeSeriesClassifier,
+    ProximityForest,
+    ProximityStump,
+    ProximityTree,
     ShapeDTW,
 )
 from sktime.classification.feature_based import (
@@ -46,16 +46,16 @@ from sktime.classification.feature_based import (
 )
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import (
-    RandomIntervalSpectralForest,
-    TimeSeriesForestClassifier,
     CanonicalIntervalForest,
-    SupervisedTimeSeriesForest,
     DrCIF,
+    RandomIntervalSpectralForest,
+    SupervisedTimeSeriesForest,
+    TimeSeriesForestClassifier,
 )
-from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
+from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
 from sktime.classification.shapelet_based import (
-    ShapeletTransformClassifier,
     MrSEQLClassifier,
+    ShapeletTransformClassifier,
 )
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts

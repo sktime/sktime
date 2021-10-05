@@ -11,57 +11,64 @@ from pyod.models.knn import KNN
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.base import BaseEstimator
-from sktime.classification.compose import ColumnEnsembleClassifier
-from sktime.classification.compose import ComposableTimeSeriesForestClassifier
-from sktime.classification.dictionary_based import ContractableBOSS
-from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+from sktime.classification.compose import (
+    ColumnEnsembleClassifier,
+    ComposableTimeSeriesForestClassifier,
+)
+from sktime.classification.dictionary_based import (
+    ContractableBOSS,
+    TemporalDictionaryEnsemble,
+)
 from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,
-    TSFreshClassifier,
     SignatureClassifier,
+    TSFreshClassifier,
 )
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.hybrid import HIVECOTEV2
-from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.classification.interval_based import DrCIF
-from sktime.classification.interval_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based import SupervisedTimeSeriesForest
+from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
+from sktime.classification.interval_based import (
+    CanonicalIntervalForest,
+    DrCIF,
+    RandomIntervalSpectralForest,
+    SupervisedTimeSeriesForest,
+)
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal
-from sktime.classification.kernel_based import ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
-from sktime.forecasting.compose import AutoEnsembleForecaster
-from sktime.forecasting.compose import ColumnEnsembleForecaster
-from sktime.forecasting.compose import DirRecTabularRegressionForecaster
-from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import DirectTabularRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import ForecastingPipeline
-from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
-from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import MultiplexForecaster
-from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
-from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import StackingForecaster
-from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import (
+    AutoEnsembleForecaster,
+    ColumnEnsembleForecaster,
+    DirectTabularRegressionForecaster,
+    DirectTimeSeriesRegressionForecaster,
+    DirRecTabularRegressionForecaster,
+    DirRecTimeSeriesRegressionForecaster,
+    EnsembleForecaster,
+    ForecastingPipeline,
+    MultioutputTabularRegressionForecaster,
+    MultioutputTimeSeriesRegressionForecaster,
+    MultiplexForecaster,
+    RecursiveTabularRegressionForecaster,
+    RecursiveTimeSeriesRegressionForecaster,
+    StackingForecaster,
+    TransformedTargetForecaster,
+)
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
-from sktime.forecasting.model_selection import ForecastingGridSearchCV
-from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
-from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.forecasting.model_selection import (
+    ForecastingGridSearchCV,
+    ForecastingRandomizedSearchCV,
+    SingleWindowSplitter,
+)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.structural import UnobservedComponents
@@ -69,39 +76,45 @@ from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
-    ESTIMATOR_TAG_LIST,
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
+    ESTIMATOR_TAG_LIST,
     TRANSFORMER_MIXIN_LIST,
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.compose import (
+    ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
+    SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.transformations.panel.shapelets import ContractedShapeletTransform
-from sktime.transformations.panel.shapelets import ShapeletTransform
+from sktime.transformations.panel.shapelets import (
+    ContractedShapeletTransform,
+    ShapeletTransform,
+)
 from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.transformations.panel.tsfresh import (
+    TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformations.series.acf import AutoCorrelationTransformer
-from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
+from sktime.transformations.series.acf import (
+    AutoCorrelationTransformer,
+    PartialAutoCorrelationTransformer,
+)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.compose import ColumnwiseTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
+from sktime.transformations.series.compose import (
+    ColumnwiseTransformer,
+    OptionalPassthrough,
+)
 from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.feature_selection import FeatureSelection
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
-from sktime.transformations.series.feature_selection import FeatureSelection
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""HIVE-COTE test code."""
+"""HIVE-COTE v2 test code."""
 # import numpy as np
 # from numpy import testing
 #

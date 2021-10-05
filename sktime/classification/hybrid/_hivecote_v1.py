@@ -19,8 +19,8 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.interval_based import (
-    TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
+    TimeSeriesForestClassifier,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.validation import check_n_jobs
