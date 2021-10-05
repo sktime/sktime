@@ -16,10 +16,10 @@ from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 from sklearn.utils.stats import _weighted_percentile
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import check_regressor
 
 
@@ -86,6 +86,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -241,6 +242,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
