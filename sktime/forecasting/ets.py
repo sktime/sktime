@@ -11,7 +11,7 @@ from itertools import product
 import numpy as np
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
-
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -167,6 +167,12 @@ class AutoETS(_StatsModelsAdapter):
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(
         self,
@@ -363,6 +369,49 @@ class AutoETS(_StatsModelsAdapter):
                 callback=self.callback,
                 return_params=self.return_params,
             )
+
+    def _predict(
+        self,
+        fh,
+        X=None,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+        **simulate_kwargs
+    ):
+        """
+            Make forecasts.
+            Parameters
+            ----------
+            fh : ForecastingHorizon
+                The forecasters horizon with the steps ahead to to predict.
+                Default is one-step ahead forecast,
+                i.e. np.array([1])
+            X : pd.DataFrame, optional (default=None)
+                Exogenous variables are ignored.
+            return_pred_int : bool, optional (default=False)
+            alpha : int or list, optional (default=0.95)
+            **simulate_kwargs : see statsmodels ETSResults.get_prediction
+            Returns
+            -------
+            y_pred : pd.Series
+                Returns series of predicted values.
+        """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        predict_results = self._fitted_forecaster.get_prediction(start=start, end=end)
+        y_pred = predict_results.predicted_mean
+
+        if return_pred_int:
+            predict_intervals = self._fitted_forecaster.get_prediction(
+                start=start,
+                end=end,
+                **simulate_kwargs)
+
+            pred_int = predict_intervals.pred_int(alpha)
+            pred_int.columns = ['lower', 'upper']
+            return y_pred, pred_int
+        else:
+            return y_pred
 
     def summary(self):
         """Get a summary of the fitted forecaster.
