@@ -12,9 +12,9 @@ import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation import check_window_length
 from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_sp
 
 
 class _NaiveForecaster(_BaseWindowForecaster):
@@ -176,6 +176,11 @@ class _NaiveForecaster(_BaseWindowForecaster):
                     y_pred = last_window[-1] + (fh_idx + 1) * slope
         else:
             raise ValueError(f"unknown strategy {strategy} provided to NaiveForecaster")
+
+        # check for in-sample prediction, if first time point needs to be imputed
+        if self._y.index[0] in y_pred.index:
+            # fill NaN with next row values
+            y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
 
         return y_pred
 
