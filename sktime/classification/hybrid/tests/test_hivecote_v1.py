@@ -6,7 +6,6 @@ from sktime.classification.hybrid import HIVECOTEV1
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_italy_power_demand
 
-
 # def test_hivecote_v1_on_gunpoint():
 #     # load gunpoint data
 #     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
