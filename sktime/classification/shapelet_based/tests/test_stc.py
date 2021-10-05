@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score
 
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-from sktime.datasets import load_japanese_vowels, load_unit_test, load_basic_motions
+from sktime.datasets import load_basic_motions, load_unit_test
 
 
 def test_stc_on_unit_test_data():
@@ -17,12 +17,13 @@ def test_stc_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train STC
-    rotf = RotationForest(n_estimators=10)
     stc = ShapeletTransformClassifier(
-        n_shapelets_considered=100,
+        estimator=RotationForest(n_estimators=10),
         max_shapelets=10,
+        n_shapelets_considered=500,
+        batch_size=100,
         random_state=0,
-        estimator=rotf,
+        save_transformed_data=True,
     )
     stc.fit(X_train, y_train)
 
@@ -44,7 +45,11 @@ def test_contracted_stc_on_unit_test_data():
 
     # train contracted STC
     stc = ShapeletTransformClassifier(
-        time_limit_in_minutes=0.025,
+        estimator=RotationForest(contract_max_n_estimators=10),
+        max_shapelets=10,
+        time_limit_in_minutes=0.25,
+        contract_max_n_shapelet_samples=500,
+        batch_size=100,
         random_state=0,
     )
     stc.fit(X_train, y_train)
@@ -52,7 +57,7 @@ def test_contracted_stc_on_unit_test_data():
     assert accuracy_score(y_test, stc.predict(X_test)) >= 0.75
 
 
-def test_stc_on_japanese_vowels():
+def test_stc_on_basic_motions():
     """Test of ShapeletTransformClassifier on basic motions data."""
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
@@ -60,12 +65,12 @@ def test_stc_on_japanese_vowels():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train STC
-    rotf = RotationForest(n_estimators=10)
     stc = ShapeletTransformClassifier(
-        n_shapelets_considered=100,
+        estimator=RotationForest(n_estimators=10),
         max_shapelets=10,
+        n_shapelets_considered=500,
+        batch_size=100,
         random_state=0,
-        estimator=rotf,
     )
     stc.fit(X_train.iloc[indices], y_train[indices])
 
@@ -77,44 +82,44 @@ def test_stc_on_japanese_vowels():
 stc_unit_test_probas = np.array(
     [
         [
-            0.3,
-            0.7,
+            0.0,
+            1.0,
+        ],
+        [
+            0.6,
+            0.4,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            1.0,
+            0.0,
         ],
         [
             0.8,
             0.2,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.7,
-            0.3,
         ],
     ]
 )
@@ -122,107 +127,108 @@ stc_basic_motions_probas = np.array(
     [
         [
             0.0,
+            0.1,
             0.0,
-            0.0,
-            1.0,
+            0.9,
         ],
         [
-            0.5,
-            0.5,
-            0.0,
+            0.7,
+            0.2,
+            0.1,
             0.0,
         ],
         [
-            0.0,
-            0.0,
-            0.6,
+            0.3,
+            0.1,
+            0.5,
+            0.1,
+        ],
+        [
+            0.1,
+            0.2,
             0.4,
+            0.3,
         ],
         [
-            0.2,
-            0.7,
             0.0,
+            0.1,
+            0.0,
+            0.9,
+        ],
+        [
+            0.1,
+            0.0,
+            0.0,
+            0.9,
+        ],
+        [
+            0.3,
+            0.5,
+            0.1,
             0.1,
         ],
         [
             0.0,
             0.0,
-            0.2,
             0.8,
+            0.2,
         ],
         [
-            0.0,
+            0.2,
+            0.5,
             0.1,
-            0.3,
-            0.6,
+            0.2,
         ],
         [
-            0.7,
-            0.3,
-            0.0,
-            0.0,
-        ],
-        [
-            0.0,
             0.1,
-            0.6,
-            0.3,
-        ],
-        [
-            0.3,
-            0.6,
-            0.0,
-            0.1,
-        ],
-        [
-            0.3,
-            0.7,
-            0.0,
-            0.0,
+            0.2,
+            0.2,
+            0.5,
         ],
     ]
 )
 
 
-def print_array(array):
-    print("[")
-    for sub_array in array:
-        print("[")
-        for value in sub_array:
-            print(value.astype(str), end="")
-            print(", ")
-        print("],")
-    print("]")
-
-
-if __name__ == "__main__":
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-
-    rf = RandomForestClassifier(n_estimators=10)
-    stc_u = ShapeletTransformClassifier(
-        # n_shapelets=100,
-        transform_limit_in_minutes=0.025,
-        random_state=0,
-        estimator=rf,
-    )
-
-    stc_u.fit(X_train, y_train)
-    probas = stc_u.predict_proba(X_test.iloc[indices])
-    print_array(probas)
-
-    X_train, y_train = load_japanese_vowels(split="train", return_X_y=True)
-    X_test, y_test = load_japanese_vowels(split="test", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-
-    rf = RandomForestClassifier(n_estimators=10)
-    stc_m = ShapeletTransformClassifier(
-        n_shapelets=100,
-        random_state=0,
-        estimator=rf,
-    )
-
-    stc_m.fit(X_train.iloc[indices], y_train[indices])
-    probas = stc_m.predict_proba(X_test.iloc[indices])
-    print_array(probas)
+# def print_array(array):
+#     print("[")
+#     for sub_array in array:
+#         print("[")
+#         for value in sub_array:
+#             print(value.astype(str), end="")
+#             print(", ")
+#         print("],")
+#     print("]")
+#
+#
+# if __name__ == "__main__":
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+#
+#     stc_u = ShapeletTransformClassifier(
+#         estimator=RotationForest(n_estimators=10),
+#         max_shapelets=10,
+#         n_shapelets_considered=500,
+#         batch_size=100,
+#         random_state=0,
+#     )
+#
+#     stc_u.fit(X_train, y_train)
+#     probas = stc_u.predict_proba(X_test.iloc[indices])
+#     print_array(probas)
+#
+#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+#
+#     stc_m = ShapeletTransformClassifier(
+#         estimator=RotationForest(n_estimators=10),
+#         max_shapelets=10,
+#         n_shapelets_considered=500,
+#         batch_size=100,
+#         random_state=0,
+#     )
+#
+#     stc_m.fit(X_train.iloc[indices], y_train[indices])
+#     probas = stc_m.predict_proba(X_test.iloc[indices])
+#     print_array(probas)

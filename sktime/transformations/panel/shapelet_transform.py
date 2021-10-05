@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Random binary shapelet transformation.
 
-__author__ = ["MatthewMiddlehurst", "Jason Lines", "David Guijo"]
+A transformer from the time domain into the shapelet domain. Randomly samples shapelets
+to use in the transformation, with capabilities for contracting.
+"""
+
+__author__ = ["MatthewMiddlehurst", "jasonlines", "dguijo"]
 __all__ = ["ShapeletTransform"]
 
 import heapq
@@ -11,36 +16,119 @@ import warnings
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from numba import njit, NumbaPendingDeprecationWarning
+from numba import NumbaPendingDeprecationWarning, njit
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X_y, check_X
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ShapeletTransform(_PanelToTabularTransformer):
+    """Shapelet Transform.
+
+    todo
+
+    Parameters
+    ----------
+    n_shapelet_samples : int or None, default=None
+        todo
+    max_shapelets : int or None, default=None
+        Upper bound on number of shapelets to retain from each distinct class. todo
+    min_shapelet_length : int, default=3
+        Lower bound on candidate shapelet lengths.
+    max_shapelet_length : int or None, default= None
+        Upper bound on candidate shapelet lengths. If None no max length is used.
+    remove_self_similar : boolean, default=True
+        Remove overlapping "self-similar" shapelets from the final transform.
+    time_limit_in_minutes : int, default=0
+        Time contract to limit build time in minutes, overriding n_estimators.
+        Default of 0 means n_estimators is used. todo
+    contract_max_n_shapelet_samples : int, default=500
+        Max number of estimators when time_limit_in_minutes is set. todo
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors. todo
+    batch_size : todo
+        todo
+    random_state : int or None, default=None
+        Seed for random number generation.
+
+    Attributes
+    ----------
+    n_classes : int
+        The number of classes.
+    n_instances : int
+        The number of train cases.
+    n_dims : int
+        The number of dimensions per case.
+    series_length : int
+        The length of each series.
+    classes_ : list
+        The classes labels.
+    shapelets : list
+        The stored shapelets and relating information after a dataset has been
+        processed.
+        Each item in the list is a tuple containing the following 7 items:
+        (shapelet information gain, shapelet length, start position the shapelet was
+        extracted from, shapelet dimension, index of the instance the shapelet was
+        extracted from in fit, class value of the shapelet, The z-normalised shapelet
+        array)
+
+    See Also
+    --------
+    ShapeletTransformClassifier
+
+    Notes
+    -----
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+    java/tsml/transformers/ShapeletTransform.java>`_.
+
+    References
+    ----------
+    .. [1] Jon Hills et al., "Classification of time series by shapelet transformation",
+       Data Mining and Knowledge Discovery, 28(4), 851--881, 2014.
+    .. [2] A. Bostrom and A. Bagnall, "Binary Shapelet Transform for Multiclass Time
+       Series Classification", Transactions on Large-Scale Data and Knowledge Centered
+       Systems, 32, 2017.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.shapelet_transform import ShapeletTransform
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> t = ShapeletTransform(
+    ...     n_shapelets_considered=500,
+    ...     max_shapelets=10,
+    ...     batch_size=100,
+    ... )
+    >>> t.fit(X_train, y_train)
+    ShapeletTransform(...)
+    >>> X_t = t.transform(X_train)
+    """
+
     def __init__(
         self,
-        n_shapelets_considered=50000,
-        max_shapelets=1000,
+        n_shapelet_samples=None,
+        max_shapelets=None,
         min_shapelet_length=3,
         max_shapelet_length=None,
         remove_self_similar=True,
         time_limit_in_minutes=0.0,
-        contract_max_n_shapelets_considered=np.inf,
+        contract_max_n_shapelet_samples=np.inf,
         n_jobs=1,
         batch_size=None,
         random_state=None,
     ):
-        self.n_shapelet_samples = n_shapelets_considered
+        self.n_shapelet_samples = n_shapelet_samples
         self.max_shapelets = max_shapelets
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
         self.remove_self_similar = remove_self_similar
 
         self.time_limit_in_minutes = time_limit_in_minutes
-        self.contract_max_n_shapelet_samples = contract_max_n_shapelets_considered
+        self.contract_max_n_shapelet_samples = contract_max_n_shapelet_samples
 
         self.n_jobs = n_jobs
         self.batch_size = batch_size
@@ -54,6 +142,8 @@ class ShapeletTransform(_PanelToTabularTransformer):
         self.classes_ = []
         self.shapelets = []
 
+        self._n_shapelet_samples = n_shapelet_samples
+        self._max_shapelets = max_shapelets
         self._max_shapelet_length = max_shapelet_length
         self._n_jobs = n_jobs
         self._batch_size = batch_size
@@ -64,7 +154,21 @@ class ShapeletTransform(_PanelToTabularTransformer):
         super(ShapeletTransform, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
+        """Fit the shapelet transform to a specified X and y.
+
+        Parameters
+        ----------
+        X: pandas DataFrame or np.ndarray
+            The training input samples.
+        y: array-like or list
+            The class values for X.
+
+        Returns
+        -------
+        self : ShapeletTransform
+            This estimator.
+        """
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -75,8 +179,16 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
         self.n_instances, self.n_dims, self.series_length = X.shape
 
+        if self.n_shapelet_samples is None:
+            self._n_shapelet_samples = 50000
+
+        if self.max_shapelets is None:
+            self._max_shapelets = (
+                10 * self.n_instances if 10 * self.n_instances < 1000 else 1000
+            )
+
         if self.batch_size is None:
-            self._batch_size = max(self.n_instances, self.max_shapelets)
+            self._batch_size = max(self.n_instances, self._max_shapelets)
 
         if self.max_shapelet_length is None:
             self._max_shapelet_length = self.series_length
@@ -85,8 +197,8 @@ class ShapeletTransform(_PanelToTabularTransformer):
         start_time = time.time()
         fit_time = 0
 
-        max_shapelets_per_class = self.max_shapelets / self.n_classes
-        shapelets = [[(-1.0, -1, -1, -1, -1)] for _ in range(self.n_classes)]
+        max_shapelets_per_class = self._max_shapelets / self.n_classes
+        shapelets = [[(-1.0, -1, -1, -1, -1, -1)] for _ in range(self.n_classes)]
         n_shapelets_extracted = 0
 
         # this is a few versions away currently, and heaps dont support the replacement
@@ -124,12 +236,12 @@ class ShapeletTransform(_PanelToTabularTransformer):
                 n_shapelets_extracted += self._batch_size
                 fit_time = time.time() - start_time
         else:
-            while n_shapelets_extracted < self.n_shapelet_samples:
+            while n_shapelets_extracted < self._n_shapelet_samples:
                 n_shapelets_to_extract = (
                     self._batch_size
                     if n_shapelets_extracted + self._batch_size
-                    <= self.n_shapelet_samples
-                    else self.n_shapelet_samples - n_shapelets_extracted
+                    <= self._n_shapelet_samples
+                    else self._n_shapelet_samples - n_shapelets_extracted
                 )
 
                 candidate_shapelets = Parallel(n_jobs=self._n_jobs)(
@@ -164,18 +276,19 @@ class ShapeletTransform(_PanelToTabularTransformer):
                 s[1],
                 s[2],
                 s[3],
-                self.classes_[s[4]],
-                _z_norm(X[s[3], 0, s[2] : s[2] + s[1]]),
+                s[4],
+                self.classes_[s[5]],
+                _z_norm(X[s[4], s[3], s[2] : s[2] + s[1]]),
             )
             for class_shapelets in shapelets
             for s in class_shapelets
         ]
-        self.shapelets = [shapelet for shapelet in self.shapelets if shapelet[0] > 0]
+        self.shapelets = [s for s in self.shapelets if s[0] > 0]
         self.shapelets.sort(reverse=True)
 
         self._sorted_indicies = []
         for s in self.shapelets:
-            sabs = np.abs(s[5])
+            sabs = np.abs(s[6])
             self._sorted_indicies.append(
                 sorted(range(s[1]), reverse=True, key=lambda i: sabs[i])
             )
@@ -184,16 +297,28 @@ class ShapeletTransform(_PanelToTabularTransformer):
         return self
 
     def transform(self, X, y=None):
+        """Transform X according to the extracted shapelets.
+
+        Parameters
+        ----------
+        X : pandas DataFrame or np.ndarray
+            The input data to transform.
+
+        Returns
+        -------
+        output : pandas DataFrame
+            The transformed dataframe in tabular format.
+        """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = check_X(X, coerce_to_numpy=True)
 
         output = np.zeros((len(X), len(self.shapelets)))
 
         for i, series in enumerate(X):
             for n, shapelet in enumerate(self.shapelets):
                 output[i][n] = _online_shapelet_distance(
-                    series[0],
-                    shapelet[5],
+                    series[shapelet[3]],
+                    shapelet[6],
                     self._sorted_indicies[n],
                     shapelet[2],
                     shapelet[1],
@@ -221,8 +346,9 @@ class ShapeletTransform(_PanelToTabularTransformer):
             + self.min_shapelet_length
         )
         position = rng.randint(0, self.series_length - length)
+        dim = rng.randint(0, self.n_dims)
 
-        shapelet = _z_norm(X[inst_idx, 0, position : position + length])
+        shapelet = _z_norm(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
         sorted_indicies = sorted(range(length), reverse=True, key=lambda i: sabs[i])
 
@@ -233,13 +359,14 @@ class ShapeletTransform(_PanelToTabularTransformer):
             sorted_indicies,
             position,
             length,
+            dim,
             inst_idx,
             self._class_counts[cls_idx],
             self.n_instances - self._class_counts[cls_idx],
             worst_quality,
         )
 
-        return quality, length, position, inst_idx, cls_idx
+        return quality, length, position, dim, inst_idx, cls_idx
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -250,6 +377,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         sorted_indicies,
         position,
         length,
+        dim,
         inst_idx,
         this_cls_count,
         other_cls_count,
@@ -262,7 +390,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         for i, series in enumerate(X):
             if i != inst_idx:
                 distance = _online_shapelet_distance(
-                    series[0], shapelet, sorted_indicies, position, length
+                    series[dim], shapelet, sorted_indicies, position, length
                 )
             else:
                 distance = 0
@@ -299,7 +427,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         shapelet_heap, candidate_shapelets, max_shapelets_per_class, cls_idx
     ):
         for shapelet in candidate_shapelets:
-            if shapelet[4] == cls_idx and shapelet[0] > 0:
+            if shapelet[5] == cls_idx and shapelet[0] > 0:
                 heapq.heappush(shapelet_heap, shapelet)
 
                 if len(shapelet_heap) > max_shapelets_per_class:
@@ -501,8 +629,8 @@ def _binary_entropy(c1, c2):
 
 @njit(fastmath=True, cache=True)
 def _is_self_similar(s1, s2):
-    # not self similar if from different series
-    if s1[3] != s2[3]:
+    # not self similar if from different series or dimension
+    if s1[4] != s2[4] or s1[3] != s2[3]:
         return False
 
     if s1[2] >= s2[2] and s1[2] <= s2[2] + s2[1]:
