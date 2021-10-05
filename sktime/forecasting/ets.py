@@ -204,7 +204,6 @@ class AutoETS(_StatsModelsAdapter):
         n_jobs=None,
         **kwargs
     ):
-
         # Model params
         self.error = error
         self.trend = trend
@@ -398,8 +397,7 @@ class AutoETS(_StatsModelsAdapter):
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        predict_results = self._fitted_forecaster.get_prediction(start=start, end=end)
-        y_pred = predict_results.predicted_mean
+        y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
         if return_pred_int:
             predict_intervals = self._fitted_forecaster.get_prediction(
