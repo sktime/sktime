@@ -200,34 +200,35 @@ class RotationForest(BaseEstimator):
 
         X_cls_split = [X[np.where(y == i)] for i in self.classes_]
 
-        while (
-            train_time < time_limit
-            and self._n_estimators < self.contract_max_n_estimators
-        ):
+        if time_limit > 0:
             self._n_estimators = 0
             self.estimators_ = []
             self._pcas = []
             self._groups = []
 
-            fit = Parallel(n_jobs=self._n_jobs)(
-                delayed(self._fit_estimator)(
-                    X,
-                    X_cls_split,
-                    y,
-                    i,
+            while (
+                train_time < time_limit
+                and self._n_estimators < self.contract_max_n_estimators
+            ):
+                fit = Parallel(n_jobs=self._n_jobs)(
+                    delayed(self._fit_estimator)(
+                        X,
+                        X_cls_split,
+                        y,
+                        i,
+                    )
+                    for i in range(self._n_jobs)
                 )
-                for i in range(self._n_estimators)
-            )
 
-            estimators, pcas, groups, transformed_data = zip(*fit)
+                estimators, pcas, groups, transformed_data = zip(*fit)
 
-            self.estimators_ += estimators
-            self._pcas = pcas
-            self._groups = groups
-            self.transformed_data += transformed_data
+                self.estimators_ += estimators
+                self._pcas = pcas
+                self._groups = groups
+                self.transformed_data += transformed_data
 
-            self._n_estimators += self._n_jobs
-            train_time = time.time() - start_time
+                self._n_estimators += self._n_jobs
+                train_time = time.time() - start_time
         else:
             fit = Parallel(n_jobs=self._n_jobs)(
                 delayed(self._fit_estimator)(

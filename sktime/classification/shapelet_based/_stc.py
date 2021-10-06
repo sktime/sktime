@@ -68,7 +68,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     See Also
     --------
-    RandomShapeletTransform RotationForest
+    RandomShapeletTransform
 
     Notes
     -----
@@ -112,7 +112,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def __init__(
         self,
-        n_shapelet_samples=None,
+        n_shapelet_samples=100000,
         max_shapelets=None,
         max_shapelet_length=None,
         estimator=None,

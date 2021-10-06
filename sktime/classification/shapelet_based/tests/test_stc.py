@@ -37,24 +37,24 @@ def test_stc_on_unit_test_data():
     assert accuracy_score(y_train, train_preds) >= 0.75
 
 
-def test_contracted_stc_on_unit_test_data():
-    """Test of contracted ShapeletTransformClassifier on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
-
-    # train contracted STC
-    stc = ShapeletTransformClassifier(
-        estimator=RotationForest(contract_max_n_estimators=10),
-        max_shapelets=10,
-        time_limit_in_minutes=0.25,
-        contract_max_n_shapelet_samples=500,
-        batch_size=100,
-        random_state=0,
-    )
-    stc.fit(X_train, y_train)
-
-    assert accuracy_score(y_test, stc.predict(X_test)) >= 0.75
+# def test_contracted_stc_on_unit_test_data():
+#     """Test of contracted ShapeletTransformClassifier on unit test data."""
+#     # load unit test data
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
+#
+#     # train contracted STC
+#     stc = ShapeletTransformClassifier(
+#         estimator=RotationForest(contract_max_n_estimators=10),
+#         max_shapelets=10,
+#         time_limit_in_minutes=0.25,
+#         contract_max_n_shapelet_samples=500,
+#         batch_size=100,
+#         random_state=0,
+#     )
+#     stc.fit(X_train, y_train)
+#
+#     assert accuracy_score(y_test, stc.predict(X_test)) >= 0.75
 
 
 def test_stc_on_basic_motions():
@@ -86,8 +86,8 @@ stc_unit_test_probas = np.array(
             1.0,
         ],
         [
-            0.6,
-            0.4,
+            0.5,
+            0.5,
         ],
         [
             0.0,
@@ -98,18 +98,18 @@ stc_unit_test_probas = np.array(
             0.0,
         ],
         [
-            1.0,
-            0.0,
+            0.9,
+            0.1,
+        ],
+        [
+            0.9,
+            0.1,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            1.0,
-            0.0,
-        ],
-        [
             0.0,
             1.0,
         ],
@@ -118,8 +118,8 @@ stc_unit_test_probas = np.array(
             0.0,
         ],
         [
-            0.8,
-            0.2,
+            0.7,
+            0.3,
         ],
     ]
 )
@@ -208,7 +208,7 @@ stc_basic_motions_probas = np.array(
 #     stc_u = ShapeletTransformClassifier(
 #         estimator=RotationForest(n_estimators=10),
 #         max_shapelets=10,
-#         n_shapelets_considered=500,
+#         n_shapelet_samples=500,
 #         batch_size=100,
 #         random_state=0,
 #     )
@@ -224,7 +224,7 @@ stc_basic_motions_probas = np.array(
 #     stc_m = ShapeletTransformClassifier(
 #         estimator=RotationForest(n_estimators=10),
 #         max_shapelets=10,
-#         n_shapelets_considered=500,
+#         n_shapelet_samples=500,
 #         batch_size=100,
 #         random_state=0,
 #     )
