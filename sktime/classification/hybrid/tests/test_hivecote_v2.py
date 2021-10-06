@@ -9,7 +9,7 @@ from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_hivecote_v1_on_unit_test():
+def test_hivecote_v2_on_unit_test():
     """Test of HIVECOTEV2 on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -21,7 +21,7 @@ def test_hivecote_v1_on_unit_test():
         random_state=0,
         stc_params={
             "estimator": RotationForest(n_estimators=10),
-            "n_shapelets_considered": 100,
+            "n_shapelet_samples": 100,
             "max_shapelets": 10,
             "batch_size": 100,
         },
@@ -40,7 +40,7 @@ def test_hivecote_v1_on_unit_test():
     testing.assert_array_equal(probas, hivecote_v2_unit_test_probas)
 
 
-def test_contracted_stc_on_unit_test_data():
+def test_contracted_hivecote_v2_on_unit_test_data():
     """Test of contracted HIVECOTEV2 on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -69,7 +69,7 @@ def test_contracted_stc_on_unit_test_data():
     assert accuracy_score(y_test, hc2.predict(X_test)) >= 0.75
 
 
-def test_stc_on_basic_motions():
+def test_hivecote_v2_on_basic_motions():
     """Test of HIVEVOTEV2 on basic motions data."""
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
@@ -81,9 +81,9 @@ def test_stc_on_basic_motions():
         random_state=0,
         stc_params={
             "estimator": RotationForest(n_estimators=10),
-            "n_shapelets_considered": 100,
+            "n_shapelet_samples": 100,
             "max_shapelets": 10,
-            "batch_size": 100,
+            "batch_size": 30,
         },
         drcif_params={"n_estimators": 10},
         arsenal_params={"num_kernels": 100, "n_estimators": 5},
@@ -144,18 +144,81 @@ hivecote_v2_unit_test_probas = np.array(
         ],
     ]
 )
-stc_basic_motions_probas = np.array([])
+stc_basic_motions_probas = np.array(
+    [
+        [
+            0.062217954872779646,
+            0.062217954872779646,
+            0.18665386461833894,
+            0.6889102256361018,
+        ],
+        [
+            0.7939030244839175,
+            0.14387902064330294,
+            0.0,
+            0.062217954872779646,
+        ],
+        [
+            0.016033348041286605,
+            0.0,
+            0.8439762534949593,
+            0.1399903984637542,
+        ],
+        [
+            0.007777244359097457,
+            0.5907814600277655,
+            0.3975526734335883,
+            0.0038886221795487283,
+        ],
+        [
+            0.062217954872779646,
+            0.12443590974555929,
+            0.13221315410465675,
+            0.6811329812770044,
+        ],
+        [
+            0.0,
+            0.003888622179548728,
+            0.19831973115698512,
+            0.7977916466634661,
+        ],
+        [
+            0.9261161785885742,
+            0.07388382141142583,
+            0.0,
+            0.0,
+        ],
+        [
+            0.06890685710033605,
+            0.013036587580412864,
+            0.7996644867827061,
+            0.11839206853654498,
+        ],
+        [
+            0.011665866538646184,
+            0.7612930081269212,
+            0.2231525031548839,
+            0.003888622179548728,
+        ],
+        [
+            0.07388382141142584,
+            0.7651816303064699,
+            0.09871659340932465,
+            0.06221795487277965,
+        ],
+    ]
+)
 
 
 # def print_array(array):
-#     print('[')
+#     print("[")
 #     for sub_array in array:
-#         print('[')
+#         print("[")
 #         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
+#             print(value.astype(str), end="")
+#             print(", ")
+#         print("],")
+#     print("]")
 #
 # if __name__ == "__main__":
 #     X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -166,7 +229,7 @@ stc_basic_motions_probas = np.array([])
 #         random_state=0,
 #         stc_params={
 #             "estimator": RotationForest(n_estimators=10),
-#             "n_shapelets_considered": 100,
+#             "n_shapelet_samples": 100,
 #             "max_shapelets": 10,
 #             "batch_size": 30,
 #         },
@@ -191,7 +254,7 @@ stc_basic_motions_probas = np.array([])
 #         random_state=0,
 #         stc_params={
 #             "estimator": RotationForest(n_estimators=10),
-#             "n_shapelets_considered": 100,
+#             "n_shapelet_samples": 100,
 #             "max_shapelets": 10,
 #             "batch_size": 30,
 #         },
