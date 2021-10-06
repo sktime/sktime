@@ -142,7 +142,6 @@ DIST_KERNELS_IGNORE_TESTS = [
 
 
 EXCLUDED_TESTS = {
-    "ShapeletTransformClassifier": ["check_fit_idempotent"],
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
     "HIVECOTEV2": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
@@ -263,7 +262,9 @@ ESTIMATOR_TEST_PARAMS = {
     },
     ShapeletTransformClassifier: {
         "estimator": RotationForest(n_estimators=3),
-        "transform_limit_in_mins": 0.025,
+        "max_shapelets": 5,
+        "n_shapelet_samples": 100,
+        "batch_size": 20,
     },
     ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
     ShapeletTransform: {

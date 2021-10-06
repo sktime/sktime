@@ -101,7 +101,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> t = RandomShapeletTransform(
-    ...     n_shapelets_considered=500,
+    ...     n_shapelet_samples=500,
     ...     max_shapelets=10,
     ...     batch_size=100,
     ... )
@@ -112,7 +112,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
     def __init__(
         self,
-        n_shapelet_samples=None,
+        n_shapelet_samples=100000,
         max_shapelets=None,
         min_shapelet_length=3,
         max_shapelet_length=None,
@@ -172,6 +172,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
+        # this is a few versions away currently, and heaps dont support the replacement
+        warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
+
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.classes_, self._class_counts = np.unique(y, return_counts=True)
@@ -181,8 +184,8 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         self.n_instances, self.n_dims, self.series_length = X.shape
 
-        if self.n_shapelet_samples is None:
-            self._n_shapelet_samples = 50000
+        # if self.n_shapelet_samples is None:
+        #     self._n_shapelet_samples = ??? todo find good default
 
         if self.max_shapelets is None:
             self._max_shapelets = (
@@ -202,9 +205,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         max_shapelets_per_class = self._max_shapelets / self.n_classes
         shapelets = [[(-1.0, -1, -1, -1, -1, -1)] for _ in range(self.n_classes)]
         n_shapelets_extracted = 0
-
-        # this is a few versions away currently, and heaps dont support the replacement
-        warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
         if time_limit > 0:
             while (
@@ -317,6 +317,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         """
         self.check_is_fitted()
         X = check_X(X, coerce_to_numpy=True)
+
+        # this is a few versions away currently, and heaps dont support the replacement
+        warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
         output = np.zeros((len(X), len(self.shapelets)))
 
