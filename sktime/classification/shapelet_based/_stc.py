@@ -15,7 +15,7 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-from sktime.transformations.panel.shapelet_transform import ShapeletTransform
+from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
@@ -28,7 +28,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ----------
-    n_shapelets_considered : int, default=10000
+    n_shapelet_samples : int, default=10000
 
     max_shapelets : int or None, default=None
 
@@ -68,7 +68,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     See Also
     --------
-    ShapeletTransform RotationForest
+    RandomShapeletTransform RotationForest
 
     Notes
     -----
@@ -93,7 +93,7 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ShapeletTransformClassifier(
     ...     estimator=RotationForest(n_estimators=10),
-    ...     n_shapelets_considered=500,
+    ...     n_shapelet_samples=500,
     ...     max_shapelets=10,
     ...     batch_size=100,
     ... )
@@ -112,7 +112,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def __init__(
         self,
-        n_shapelets_considered=None,
+        n_shapelet_samples=None,
         max_shapelets=None,
         max_shapelet_length=None,
         estimator=None,
@@ -124,7 +124,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         batch_size=None,
         random_state=None,
     ):
-        self.n_shapelets_considered = n_shapelets_considered
+        self.n_shapelet_samples = n_shapelet_samples
         self.max_shapelets = max_shapelets
         self.max_shapelet_length = max_shapelet_length
         self.estimator = estimator
@@ -169,8 +169,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         elif self.transform_limit_in_minutes > 0:
             self._transform_limit_in_minutes = self.transform_limit_in_minutes
 
-        self._transformer = ShapeletTransform(
-            n_shapelet_samples=self.n_shapelets_considered,
+        self._transformer = RandomShapeletTransform(
+            n_shapelet_samples=self.n_shapelet_samples,
             max_shapelets=self.max_shapelets,
             max_shapelet_length=self.max_shapelet_length,
             time_limit_in_minutes=self._transform_limit_in_minutes,
@@ -237,7 +237,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        if isinstance(self.estimator, RotationForest):
+        if isinstance(self.estimator, RotationForest) or self.estimator is None:
             return self._estimator._get_train_probs(self.transformed_data, y)
         else:
             m = getattr(self._estimator, "predict_proba", None)

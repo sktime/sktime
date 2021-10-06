@@ -4,7 +4,7 @@ import numpy as np
 from numpy import testing
 
 from sktime.datasets import load_basic_motions, load_unit_test
-from sktime.transformations.panel.shapelet_transform import ShapeletTransform
+from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 
 
 def test_st_on_unit_test():
@@ -14,7 +14,7 @@ def test_st_on_unit_test():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # fit the shapelet transform
-    st = ShapeletTransform(
+    st = RandomShapeletTransform(
         max_shapelets=10, n_shapelet_samples=500, batch_size=100, random_state=0
     )
     st.fit(X_train.iloc[indices], y_train[indices])
@@ -31,7 +31,7 @@ def test_st_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # fit the shapelet transform
-    st = ShapeletTransform(
+    st = RandomShapeletTransform(
         max_shapelets=10, n_shapelet_samples=500, batch_size=100, random_state=0
     )
     st.fit(X_train.iloc[indices], y_train[indices])

@@ -20,7 +20,7 @@ def test_stc_on_unit_test_data():
     stc = ShapeletTransformClassifier(
         estimator=RotationForest(n_estimators=10),
         max_shapelets=10,
-        n_shapelets_considered=500,
+        n_shapelet_samples=500,
         batch_size=100,
         random_state=0,
         save_transformed_data=True,
@@ -68,7 +68,7 @@ def test_stc_on_basic_motions():
     stc = ShapeletTransformClassifier(
         estimator=RotationForest(n_estimators=10),
         max_shapelets=10,
-        n_shapelets_considered=500,
+        n_shapelet_samples=500,
         batch_size=100,
         random_state=0,
     )

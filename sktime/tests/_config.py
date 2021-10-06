@@ -91,6 +91,7 @@ from sktime.transformations.panel.compose import (
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.reduce import Tabularizer
+from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.shapelets import (
     ContractedShapeletTransform,
     ShapeletTransform,
@@ -269,6 +270,11 @@ ESTIMATOR_TEST_PARAMS = {
         "min_shapelet_length": 3,
         "max_shapelet_length": 4,
     },
+    RandomShapeletTransform: {
+        "max_shapelets": 5,
+        "n_shapelet_samples": 100,
+        "batch_size": 20,
+    },
     SignatureTransformer: {
         "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
@@ -294,7 +300,7 @@ ESTIMATOR_TEST_PARAMS = {
     HIVECOTEV1: {
         "stc_params": {
             "estimator": RotationForest(n_estimators=2),
-            "transform_limit_in_mins": 0.01,
+            "transform_limit_in_minutes": 0.01,
         },
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
