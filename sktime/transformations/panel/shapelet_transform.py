@@ -6,7 +6,7 @@ to use in the transformation, with capabilities for contracting.
 """
 
 __author__ = ["MatthewMiddlehurst", "jasonlines", "dguijo"]
-__all__ = ["ShapeletTransform"]
+__all__ = ["RandomShapeletTransform"]
 
 import heapq
 import math
@@ -24,8 +24,8 @@ from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
-class ShapeletTransform(_PanelToTabularTransformer):
-    """Shapelet Transform.
+class RandomShapeletTransform(_PanelToTabularTransformer):
+    """Random Shapelet Transform.
 
     todo
 
@@ -95,16 +95,18 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.shapelet_transform import ShapeletTransform
+    >>> from sktime.transformations.panel.shapelet_transform import (
+    ...     RandomShapeletTransform
+    ... )
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> t = ShapeletTransform(
+    >>> t = RandomShapeletTransform(
     ...     n_shapelets_considered=500,
     ...     max_shapelets=10,
     ...     batch_size=100,
     ... )
     >>> t.fit(X_train, y_train)
-    ShapeletTransform(...)
+    RandomShapeletTransform(...)
     >>> X_t = t.transform(X_train)
     """
 
@@ -151,7 +153,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         self._class_dictionary = {}
         self._sorted_indicies = []
 
-        super(ShapeletTransform, self).__init__()
+        super(RandomShapeletTransform, self).__init__()
 
     def fit(self, X, y):
         """Fit the shapelet transform to a specified X and y.
@@ -165,7 +167,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
         Returns
         -------
-        self : ShapeletTransform
+        self : RandomShapeletTransform
             This estimator.
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
@@ -221,7 +223,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
                 )
 
                 for i, heap in enumerate(shapelets):
-                    ShapeletTransform._merge_shapelets(
+                    RandomShapeletTransform._merge_shapelets(
                         heap,
                         candidate_shapelets,
                         max_shapelets_per_class,
@@ -230,7 +232,9 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
                 if self.remove_self_similar:
                     for i, heap in enumerate(shapelets):
-                        to_keep = ShapeletTransform._remove_self_similar_shapelets(heap)
+                        to_keep = (
+                            RandomShapeletTransform._remove_self_similar_shapelets(heap)
+                        )
                         shapelets[i] = [n for (n, b) in zip(heap, to_keep) if b]
 
                 n_shapelets_extracted += self._batch_size
@@ -256,7 +260,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
                 )
 
                 for i, heap in enumerate(shapelets):
-                    ShapeletTransform._merge_shapelets(
+                    RandomShapeletTransform._merge_shapelets(
                         heap,
                         candidate_shapelets,
                         max_shapelets_per_class,
@@ -265,7 +269,9 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
                 if self.remove_self_similar:
                     for i, heap in enumerate(shapelets):
-                        to_keep = ShapeletTransform._remove_self_similar_shapelets(heap)
+                        to_keep = (
+                            RandomShapeletTransform._remove_self_similar_shapelets(heap)
+                        )
                         shapelets[i] = [n for (n, b) in zip(heap, to_keep) if b]
 
                 n_shapelets_extracted += n_shapelets_to_extract
@@ -352,7 +358,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         sabs = np.abs(shapelet)
         sorted_indicies = sorted(range(length), reverse=True, key=lambda i: sabs[i])
 
-        quality = ShapeletTransform._find_shapelet_quality(
+        quality = RandomShapeletTransform._find_shapelet_quality(
             X,
             y,
             shapelet,
