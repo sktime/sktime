@@ -30,7 +30,7 @@ def _get_n_columns(tag):
     elif tag == "both":
         n_columns_list = [1, 2]
     else:
-        raise ValueError(f"Unexpected tag {tag}.")
+        raise ValueError(f"Unexpected tag {tag} in _get_n_columns.")
     return n_columns_list
 
 
