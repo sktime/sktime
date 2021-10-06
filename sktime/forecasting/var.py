@@ -53,6 +53,7 @@ class VAR(_StatsModelsAdapter):
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "univariate-only": False,
+        "ignores-exogeneous-X": False,
     }
 
     def __init__(

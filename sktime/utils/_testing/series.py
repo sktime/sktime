@@ -11,14 +11,16 @@ from sklearn.utils import check_random_state
 
 def _make_series(
     n_timepoints=50,
-    n_columns=1,
+    n_columns=None,
     all_positive=True,
     index_type=None,
     return_numpy=False,
     random_state=None,
     add_nan=False,
 ):
-    """Helper function to generate univariate or multivariate time series"""
+    """Generate univariate or multivariate time series."""
+    if n_columns is None:
+        n_columns = 1
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
     if add_nan:
@@ -41,8 +43,7 @@ def _make_series(
 
 
 def _make_index(n_timepoints, index_type=None):
-    """Helper function to make indices for unit testing"""
-
+    """Make indices for unit testing."""
     if index_type == "period":
         start = "2000-01"
         freq = "M"
