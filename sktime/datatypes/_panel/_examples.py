@@ -24,6 +24,7 @@ overall, conversions from non-lossy representations to any other ones
 
 import pandas as pd
 import numpy as np
+from sktime.datatypes._panel._registry import PanelMtype
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -36,8 +37,8 @@ X = np.array(
     dtype=np.int64,
 )
 
-example_dict[("numpy3D", "Panel", 0)] = X
-example_dict_lossy[("numpy3D", "Panel", 0)] = False
+example_dict[(str(PanelMtype.np_3d_array), str(PanelMtype), 0)] = X
+example_dict_lossy[(str(PanelMtype.np_3d_array), str(PanelMtype), 0)] = False
 
 cols = [f"var_{i}" for i in range(2)]
 Xlist = [
@@ -46,8 +47,8 @@ Xlist = [
     pd.DataFrame([[1, 42], [2, 5], [3, 6]], columns=cols),
 ]
 
-example_dict[("df-list", "Panel", 0)] = Xlist
-example_dict_lossy[("df-list", "Panel", 0)] = False
+example_dict[(str(PanelMtype.list_pd_dataframe), str(PanelMtype), 0)] = Xlist
+example_dict_lossy[(str(PanelMtype.list_pd_dataframe), str(PanelMtype), 0)] = False
 
 cols = ["instances", "timepoints"] + [f"var_{i}" for i in range(2)]
 
@@ -59,8 +60,10 @@ Xlist = [
 X = pd.concat(Xlist)
 X = X.set_index(["instances", "timepoints"])
 
-example_dict[("pd-multiindex", "Panel", 0)] = X
-example_dict_lossy[("pd-multiindex", "Panel", 0)] = False
+example_dict[(str(PanelMtype.pd_multi_index_dataframe), str(PanelMtype), 0)] = X
+example_dict_lossy[
+    (str(PanelMtype.pd_multi_index_dataframe), str(PanelMtype), 0)
+] = False
 
 cols = [f"var_{i}" for i in range(2)]
 X = pd.DataFrame(columns=cols, index=[0, 1, 2])
@@ -71,5 +74,7 @@ X.iloc[1][1] = pd.Series([4, 55, 6])
 X.iloc[2][0] = pd.Series([1, 2, 3])
 X.iloc[2][1] = pd.Series([42, 5, 6])
 
-example_dict[("nested_univ", "Panel", 0)] = X
-example_dict_lossy[("nested_univ", "Panel", 0)] = False
+example_dict[(str(PanelMtype.pd_univariate_nested_dataframe), str(PanelMtype), 0)] = X
+example_dict_lossy[
+    (str(PanelMtype.pd_univariate_nested_dataframe), str(PanelMtype), 0)
+] = False

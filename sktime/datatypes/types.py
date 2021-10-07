@@ -4,10 +4,10 @@ __all__ = ["Mtype", "SciType"]
 
 from typing import Union
 
-from sktime.datatypes._registry import Scitype
 from sktime.datatypes._panel import PanelMtype
 from sktime.datatypes._series import SeriesMtype
+from sktime.datatypes._datatypes import Datatypes
 
 # Types
 Mtype = Union[str, SeriesMtype, PanelMtype]
-SciType = Union[str, Scitype]
+SciType = Datatypes

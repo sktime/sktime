@@ -7,7 +7,7 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, PanelMtype
 
 from sktime.datatypes._panel._check import is_nested_dataframe
 
@@ -27,7 +27,7 @@ def convert_identity(obj, store=None):
 
 # assign identity function to type conversion to self
 for tp in MTYPE_LIST_PANEL:
-    convert_dict[(tp, tp, "Panel")] = convert_identity
+    convert_dict[(tp, tp, str(PanelMtype))] = convert_identity
 
 
 def _cell_is_series_or_array(cell):
@@ -146,7 +146,9 @@ def from_3d_numpy_to_2d_array_adp(obj, store=None):
     return from_3d_numpy_to_2d_array(obj)
 
 
-convert_dict[("numpy3D", "numpyflat", "Panel")] = from_3d_numpy_to_2d_array_adp
+convert_dict[
+    ("numpy3D", str(PanelMtype.np_flat), str(PanelMtype))
+] = from_3d_numpy_to_2d_array_adp
 
 
 def from_nested_to_2d_array(X, return_numpy=False):
@@ -244,9 +246,21 @@ def from_nested_to_2d_np_array(obj, store=None):
     return from_nested_to_2d_array(X=obj, return_numpy=True)
 
 
-convert_dict[("nested_univ", "pd-wide", "Panel")] = from_nested_to_pdwide
+convert_dict[
+    (
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype.pd_wide_dataframe),
+        str(PanelMtype),
+    )
+] = from_nested_to_pdwide
 
-convert_dict[("nested_univ", "numpyflat", "Panel")] = from_nested_to_2d_np_array
+convert_dict[
+    (
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype.np_flat),
+        str(PanelMtype),
+    )
+] = from_nested_to_2d_np_array
 
 
 def from_2d_array_to_nested(
@@ -309,7 +323,13 @@ def from_pd_wide_to_nested(obj, store=None):
     return from_2d_array_to_nested(X=obj)
 
 
-convert_dict[("pd-wide", "nested_univ", "Panel")] = from_pd_wide_to_nested
+convert_dict[
+    (
+        str(PanelMtype.pd_wide_dataframe),
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype),
+    )
+] = from_pd_wide_to_nested
 
 
 def convert_from_dictionary(ts_dict):
@@ -468,7 +488,13 @@ def from_nested_to_long_adp(obj, store=None):
     )
 
 
-convert_dict[("nested_univ", "pd-long", "Panel")] = from_nested_to_long_adp
+convert_dict[
+    (
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype.pd_long_dataframe),
+        str(PanelMtype),
+    )
+] = from_nested_to_long_adp
 
 
 def from_long_to_nested(
@@ -575,7 +601,13 @@ def from_long_to_nested_adp(obj, store=None):
     return from_long_to_nested(X_long=obj)
 
 
-convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
+convert_dict[
+    (
+        str(PanelMtype.pd_long_dataframe),
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype),
+    )
+] = from_nested_to_long_adp
 
 
 def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
@@ -634,7 +666,13 @@ def from_multi_index_to_3d_numpy_adp(obj, store=None):
     )
 
 
-convert_dict[("pd-multiindex", "numpy3D", "Panel")] = from_multi_index_to_3d_numpy_adp
+convert_dict[
+    (
+        str(PanelMtype.pd_multi_index_dataframe),
+        str(PanelMtype.np_3d_array),
+        str(PanelMtype),
+    )
+] = from_multi_index_to_3d_numpy_adp
 
 
 def from_3d_numpy_to_multi_index(
@@ -705,7 +743,13 @@ def from_3d_numpy_to_multi_index_adp(obj, store=None):
     return from_3d_numpy_to_multi_index(X=obj)
 
 
-convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_index_adp
+convert_dict[
+    (
+        str(PanelMtype.np_3d_array),
+        str(PanelMtype.pd_multi_index_dataframe),
+        str(PanelMtype),
+    )
+] = from_3d_numpy_to_multi_index_adp
 
 
 def from_multi_index_to_nested(
@@ -773,7 +817,13 @@ def from_multi_index_to_nested_adp(obj, store=None):
     )
 
 
-convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
+convert_dict[
+    (
+        str(PanelMtype.pd_multi_index_dataframe),
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype),
+    )
+] = from_multi_index_to_nested_adp
 
 
 def from_nested_to_multi_index(X, instance_index=None, time_index=None):
@@ -870,7 +920,13 @@ def from_nested_to_multi_index_adp(obj, store=None):
     )
 
 
-convert_dict[("nested_univ", "pd-multiindex", "Panel")] = from_nested_to_multi_index_adp
+convert_dict[
+    (
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype.pd_multi_index_dataframe),
+        str(PanelMtype),
+    )
+] = from_nested_to_multi_index_adp
 
 
 def _convert_series_cell_to_numpy(cell):
@@ -935,7 +991,13 @@ def from_nested_to_3d_numpy_adp(obj, store=None):
     return from_nested_to_3d_numpy(X=obj)
 
 
-convert_dict[("nested_univ", "numpy3D", "Panel")] = from_nested_to_3d_numpy_adp
+convert_dict[
+    (
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype.np_3d_array),
+        str(PanelMtype),
+    )
+] = from_nested_to_3d_numpy_adp
 
 
 def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
@@ -990,7 +1052,13 @@ def from_3d_numpy_to_nested_adp(obj, store=None):
     return from_3d_numpy_to_nested(X=obj)
 
 
-convert_dict[("numpy3D", "nested_univ", "Panel")] = from_3d_numpy_to_nested_adp
+convert_dict[
+    (
+        str(PanelMtype.np_3d_array),
+        str(PanelMtype.pd_univariate_nested_dataframe),
+        str(PanelMtype),
+    )
+] = from_3d_numpy_to_nested_adp
 
 
 def from_dflist_to_multiindex(obj, store=None):
@@ -1002,7 +1070,13 @@ def from_dflist_to_multiindex(obj, store=None):
     return mi
 
 
-convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
+convert_dict[
+    (
+        str(PanelMtype.list_pd_dataframe),
+        str(PanelMtype.pd_multi_index_dataframe),
+        str(PanelMtype),
+    )
+] = from_dflist_to_multiindex
 
 
 def from_multiindex_to_dflist(obj, store=None):
@@ -1015,7 +1089,13 @@ def from_multiindex_to_dflist(obj, store=None):
     return Xlist
 
 
-convert_dict[("pd-multiindex", "df-list", "Panel")] = from_multiindex_to_dflist
+convert_dict[
+    (
+        str(PanelMtype.pd_multi_index_dataframe),
+        str(PanelMtype.list_pd_dataframe),
+        str(PanelMtype),
+    )
+] = from_multiindex_to_dflist
 
 
 def from_dflist_to_numpy3D(obj, store=None):
@@ -1035,7 +1115,9 @@ def from_dflist_to_numpy3D(obj, store=None):
     return nparr
 
 
-convert_dict[("df-list", "numpy3D", "Panel")] = from_dflist_to_numpy3D
+convert_dict[
+    (str(PanelMtype.list_pd_dataframe), str(PanelMtype.np_3d_array), str(PanelMtype))
+] = from_dflist_to_numpy3D
 
 
 def from_numpy3D_to_dflist(obj, store=None):
@@ -1049,4 +1131,6 @@ def from_numpy3D_to_dflist(obj, store=None):
     return Xlist
 
 
-convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
+convert_dict[
+    ("numpy3D", str(PanelMtype.list_pd_dataframe), str(PanelMtype))
+] = from_numpy3D_to_dflist

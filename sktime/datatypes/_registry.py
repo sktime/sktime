@@ -44,7 +44,6 @@ from sktime.datatypes._panel._registry import (
     MTYPE_LIST_PANEL,
 )
 
-from sktime.base._registry_enum import BaseRegistryEnum
 from sktime.datatypes._panel._registry import PanelMtype
 from sktime.datatypes._series._registry import SeriesMtype
 
@@ -57,18 +56,13 @@ __all__ = [
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
     "SCITYPE_REGISTER",
-    "Scitype",
 ]
 
 
-class Scitype(BaseRegistryEnum):
-    """Enum class for scitypes."""
-
-    series = ("Series", "uni- or multivariate time series")
-    panel = ("Panel", "panel of uni- or multivariate time series")
-
-
-SCITYPE_REGISTER = [tuple(scitype) for scitype in Scitype]
+SCITYPE_REGISTER = [
+    ("Series", "uni- or multivariate time series"),
+    ("Panel", "panel of uni- or multivariate time series"),
+]
 
 
 def mtype_to_scitype(mtype: Union[PanelMtype, SeriesMtype, str]) -> str:

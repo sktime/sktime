@@ -13,11 +13,15 @@ from sktime.datatypes import (
     mtype_to_scitype,
     SeriesMtype,
     PanelMtype,
-    Scitype,
+    Datatypes,
 )
+from sktime.datatypes._registry import SCITYPE_REGISTER
 
 ENUM_SERIES_MTYPES = [mtype for mtype in SeriesMtype]
 ENUM_PANEL_MTYPES = [mtype for mtype in PanelMtype]
+SCITYPES = [scitype[0] for scitype in SCITYPE_REGISTER]
+PANEL_MTYPES = [str(mtype) for mtype in PanelMtype]
+SERIES_MTYPES = [str(mtype) for mtype in SeriesMtype]
 
 
 def _run_test(mtype_in: Mtype, scitype_in: SciType) -> None:
@@ -57,7 +61,7 @@ def _run_test(mtype_in: Mtype, scitype_in: SciType) -> None:
         assert mtype_to_scitype(mtype_in) == str(scitype_in)
 
         to_type = SeriesMtype.np_array
-        if scitype_in is Scitype.panel:
+        if scitype_in is Datatypes.Panel:
             to_type = PanelMtype.np_3d_array
         assert isinstance(
             convert(example, from_type=mtype_in, to_type=to_type), np.ndarray
@@ -74,7 +78,7 @@ def test_panel_enums(mtype: PanelMtype) -> None:
     mtype: PanelMtype
         Panel mtype to test
     """
-    _run_test(mtype, Scitype.panel)
+    _run_test(mtype, Datatypes.Panel)
 
 
 @pytest.mark.parametrize("mtype", ENUM_SERIES_MTYPES)
@@ -86,4 +90,21 @@ def test_series_enums(mtype: SeriesMtype) -> None:
     mtype: SeriesMtype
         Series mtype to test
     """
-    _run_test(mtype, Scitype.series)
+    _run_test(mtype, Datatypes.Series)
+
+
+def test_datatypes_object() -> None:
+    """Test list methods"""
+    list_mtypes = Datatypes.list_mtypes()
+    list_scitypes = Datatypes.list_scitypes()
+    assert isinstance(list_mtypes, dict)
+    assert isinstance(list_scitypes, list)
+
+    for key in list_mtypes:
+        assert key in SCITYPES
+        curr = list_mtypes[key]
+        for val in curr:
+            if key == "Panel":
+                assert val in PANEL_MTYPES
+            elif key == "Series":
+                assert val in SERIES_MTYPES

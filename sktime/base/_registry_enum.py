@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 __all__ = ["BaseRegistryEnum"]
 
-from typing import Any
+from typing import TypeVar
 from enum import Enum, EnumMeta
 
 
 class _RegistryMetaEnum(EnumMeta):
     def __contains__(self, item):
-        return any(x.value == item for x in self)
+        return any(x.name == item for x in self)
 
     def __getitem__(self, item):
         try:
@@ -17,24 +17,29 @@ class _RegistryMetaEnum(EnumMeta):
                 if str(val) == item:
                     return val
 
+    def __str__(self):
+        enum_val = list(self)[0]
+        return enum_val.instance
+
+
+T = TypeVar("T")
+
 
 class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
     """Creates registry enums.
 
     Parameters
     ----------
-    value: str
-        String value of the enum
     description: str
         String description of what the enum represents
-    instance: Any
-        Instance of the enum
+    type: T
+        type of the enum
     """
 
-    def __init__(self, value: str, description: str, instance: Any = None):
-        self._value_: str = value
+    def __init__(self, description: str, instance: str, type: T = None):
         self.description: str = description
-        self.instance = instance
+        self.instance: str = instance
+        self.type: T = type
 
     def __iter__(self):
         """Iterate over an enum values.
@@ -44,7 +49,7 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         Generator
             Yields values of enum in value, instance, description order.
         """
-        yield self.value
+        yield self.name
         if self.instance is not None:
             yield self.instance
         yield self.description
@@ -57,4 +62,4 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         str
             String version of enum
         """
-        return self.value
+        return self.name

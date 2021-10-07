@@ -7,11 +7,11 @@ import pytest
 
 from sktime.datatypes._convert import convert, _conversions_defined
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes import SCITYPE_REGISTER, Scitype, PanelMtype, SeriesMtype
+from sktime.datatypes import SCITYPE_REGISTER, PanelMtype, SeriesMtype
 
 from sktime.utils._testing.deep_equals import deep_equals
 
-SCITYPES = [sci[0] for sci in SCITYPE_REGISTER] + [scitype for scitype in Scitype]
+SCITYPES = [scitype[0] for scitype in SCITYPE_REGISTER]
 
 ENUM_SERIES_MTYPES = [mtype for mtype in SeriesMtype]
 ENUM_PANEL_MTYPES = [mtype for mtype in PanelMtype]

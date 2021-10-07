@@ -33,7 +33,7 @@ __all__ = ["convert_dict"]
 
 import numpy as np
 import pandas as pd
-
+from sktime.datatypes._series._registry import SeriesMtype
 
 ##############################################################
 # methods to convert one machine type to another machine type
@@ -43,17 +43,19 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-
     return obj
 
 
 # assign identity function to type conversion to self
-for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
+for tp in [
+    str(SeriesMtype.pd_series),
+    str(SeriesMtype.pd_dataframe),
+    str(SeriesMtype.np_array),
+]:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
 def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
-
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
@@ -69,11 +71,12 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Series
+convert_dict[
+    (str(SeriesMtype.pd_series), str(SeriesMtype.pd_dataframe), str(SeriesMtype))
+] = convert_UvS_to_MvS_as_Series
 
 
 def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
-
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
 
@@ -89,11 +92,12 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     return y
 
 
-convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
+convert_dict[
+    (str(SeriesMtype.pd_dataframe), str(SeriesMtype.pd_series), str(SeriesMtype))
+] = convert_MvS_to_UvS_as_Series
 
 
 def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
-
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
 
@@ -103,22 +107,24 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
     return obj.to_numpy()
 
 
-convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
+convert_dict[
+    (str(SeriesMtype.pd_dataframe), str(SeriesMtype.np_array), str(SeriesMtype))
+] = convert_MvS_to_np_as_Series
 
 
 def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
-
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
     return pd.DataFrame(obj).to_numpy()
 
 
-convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
+convert_dict[
+    (str(SeriesMtype.pd_series), str(SeriesMtype.np_array), str(SeriesMtype))
+] = convert_UvS_to_np_as_Series
 
 
 def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
-
     if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
         raise TypeError("input must be a np.ndarray of dim 2")
 
@@ -134,15 +140,18 @@ def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
+convert_dict[
+    (str(SeriesMtype.np_array), str(SeriesMtype.pd_dataframe), str(SeriesMtype))
+] = convert_np_to_MvS_as_Series
 
 
 def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
-
     if not isinstance(obj, np.ndarray) and len(obj.shape) < 3:
         raise TypeError("input must be a np.ndarray of dim 1 or 2")
 
     return pd.Series(obj)
 
 
-convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
+convert_dict[
+    (str(SeriesMtype.np_array), str(SeriesMtype.pd_series), str(SeriesMtype))
+] = convert_np_to_UvS_as_Series

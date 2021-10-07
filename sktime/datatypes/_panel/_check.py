@@ -41,6 +41,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._series._check import check_pdDataFrame_Series
+from sktime.datatypes._panel._registry import PanelMtype
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
@@ -86,7 +87,7 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("df-list", "Panel")] = check_dflist_Panel
+check_dict[(str(PanelMtype.list_pd_dataframe), str(PanelMtype))] = check_dflist_Panel
 
 
 def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
@@ -115,7 +116,7 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy3D", "Panel")] = check_numpy3D_Panel
+check_dict[(str(PanelMtype.np_3d_array), str(PanelMtype))] = check_numpy3D_Panel
 
 
 def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
@@ -178,7 +179,9 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_Panel
+check_dict[
+    (str(PanelMtype.pd_multi_index_dataframe), str(PanelMtype))
+] = check_pdmultiindex_Panel
 
 
 def _cell_is_series_or_array(cell):
@@ -250,4 +253,6 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("nested_univ", "Panel")] = is_nested_dataframe
+check_dict[
+    (str(PanelMtype.pd_univariate_nested_dataframe), str(PanelMtype))
+] = is_nested_dataframe

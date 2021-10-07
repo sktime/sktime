@@ -39,6 +39,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._series._registry import SeriesMtype
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
@@ -96,7 +97,7 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd.DataFrame", "Series")] = check_pdDataFrame_Series
+check_dict[(str(SeriesMtype.pd_dataframe), str(SeriesMtype))] = check_pdDataFrame_Series
 
 
 def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
@@ -146,7 +147,7 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd.Series", "Series")] = check_pdSeries_Series
+check_dict[(str(SeriesMtype.pd_series), str(SeriesMtype))] = check_pdSeries_Series
 
 
 def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
@@ -176,7 +177,7 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("np.ndarray", "Series")] = check_numpy_Series
+check_dict[(str(SeriesMtype.np_array), str(SeriesMtype))] = check_numpy_Series
 
 
 def _index_equally_spaced(index):
