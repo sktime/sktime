@@ -147,6 +147,7 @@ class RotationForest(BaseEstimator):
         self._pcas = []
         self._groups = []
         self._n_jobs = n_jobs
+        self._n_atts = 0
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
@@ -192,6 +193,8 @@ class RotationForest(BaseEstimator):
         X = np.nan_to_num(X, False, 0, 0, 0)
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
         X = X[:, self._useful_atts]
+
+        self._n_atts = X.shape[1]
 
         # normalise attributes
         self._min = X.min(axis=0)
@@ -449,13 +452,13 @@ class RotationForest(BaseEstimator):
         return [results, oob]
 
     def _generate_groups(self, rng):
-        permutation = rng.permutation((np.arange(0, self.n_atts)))
+        permutation = rng.permutation((np.arange(0, self._n_atts)))
 
         # select the size of each group.
         group_size_count = np.zeros(self.max_group - self.min_group + 1)
         n_attributes = 0
         n_groups = 0
-        while n_attributes < self.n_atts:
+        while n_attributes < self._n_atts:
             n = rng.randint(group_size_count.shape[0])
             group_size_count[n] += 1
             n_attributes += self.min_group + n

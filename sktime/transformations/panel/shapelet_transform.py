@@ -278,7 +278,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         self.shapelets = [
             (
-                s[0],
+                round(s[0], 6),
                 s[1],
                 s[2],
                 s[3],
