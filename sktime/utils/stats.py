@@ -16,16 +16,18 @@ __all__ = [
 ]
 
 
-def _weighted_geometric_mean(x, weights=None, axis=None):
+def _weighted_geometric_mean(y, weights=None, axis=None):
     """Calculate weighted version of geometric mean.
 
     Parameters
     ----------
-    array : np.ndarray
+    y : np.ndarray
         Values to take the weighted geometric mean of.
     weights: np.ndarray
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)` if axis=0 or `(array.shape[1], ) if axis=1.
+    axis : int
+        The axis of `y` to apply the weights to.
 
     Returns
     -------
@@ -34,22 +36,39 @@ def _weighted_geometric_mean(x, weights=None, axis=None):
     """
     if weights.ndim == 1:
         if axis == 0:
-            check_consistent_length(x, weights)
+            check_consistent_length(y, weights)
         elif axis == 1:
-            if x.shape[1] != len(weights):
+            if y.shape[1] != len(weights):
                 raise ValueError(
-                    f"Input features ({x.shape[1]}) do not match "
+                    f"Input features ({y.shape[1]}) do not match "
                     f"number of `weights` ({len(weights)})."
                 )
         weight_sums = np.sum(weights)
     else:
-        if x.shape != weights.shape:
+        if y.shape != weights.shape:
             raise ValueError("Input data and weights have inconsistent shapes.")
         weight_sums = np.sum(weights, axis=axis)
-    return np.exp(np.sum(weights * np.log(x), axis=axis) / weight_sums)
+    return np.exp(np.sum(weights * np.log(y), axis=axis) / weight_sums)
 
 
 def _weighted_median(y, axis=1, weights=None):
+    """Calculate weighted median.
+
+    Parameters
+    ----------
+    y : np.ndarray, pd.Series or pd.DataFrame
+        Values to take the weighted median of.
+    weights: np.ndarray
+        Weights for each value in `array`. Must be same shape as `array` or
+        of shape `(array.shape[0],)` if axis=0 or `(array.shape[1], ) if axis=1.
+    axis : int
+        The axis of `y` to apply the weights to.
+
+    Returns
+    -------
+    w_median : float
+        Weighted median
+    """
     w_median = np.apply_along_axis(
         func1d=_weighted_percentile,
         axis=axis,
@@ -61,6 +80,23 @@ def _weighted_median(y, axis=1, weights=None):
 
 
 def _weighted_min(y, axis=1, weights=None):
+    """Calculate weighted minimum.
+
+    Parameters
+    ----------
+    y : np.ndarray, pd.Series or pd.DataFrame
+        Values to take the weighted minimum of.
+    weights: np.ndarray
+        Weights for each value in `array`. Must be same shape as `array` or
+        of shape `(array.shape[0],)` if axis=0 or `(array.shape[1], ) if axis=1.
+    axis : int
+        The axis of `y` to apply the weights to.
+
+    Returns
+    -------
+    w_min : float
+        Weighted minimum
+    """
     w_min = np.apply_along_axis(
         func1d=_weighted_percentile,
         axis=axis,
@@ -72,6 +108,23 @@ def _weighted_min(y, axis=1, weights=None):
 
 
 def _weighted_max(y, axis=1, weights=None):
+    """Calculate weighted maximum.
+
+    Parameters
+    ----------
+    y : np.ndarray, pd.Series or pd.DataFrame
+        Values to take the weighted maximum of.
+    weights: np.ndarray
+        Weights for each value in `array`. Must be same shape as `array` or
+        of shape `(array.shape[0],)` if axis=0 or `(array.shape[1], ) if axis=1.
+    axis : int
+        The axis of `y` to apply the weights to.
+
+    Returns
+    -------
+    w_max : float
+        Weighted maximum
+    """
     w_max = np.apply_along_axis(
         func1d=_weighted_percentile,
         axis=axis,
