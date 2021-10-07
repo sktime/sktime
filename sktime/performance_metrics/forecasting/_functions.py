@@ -10,12 +10,12 @@ the lower the better.
 
 import numpy as np
 from scipy.stats import gmean
-from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils.validation import check_consistent_length
-from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
+from sklearn.metrics._regression import _check_reg_targets
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import check_consistent_length
 
 from sktime.utils.validation.series import check_series
 
@@ -1359,11 +1359,11 @@ def geometric_mean_squared_error(
     Parameters
     ----------
     y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
+                where fh is the forecasting horizon
         Ground truth (correct) target values.
 
     y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
+                where fh is the forecasting horizon
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
@@ -1381,7 +1381,7 @@ def geometric_mean_squared_error(
         If True, returns root geometric mean squared error (RGMSE)
         If False, returns geometric mean squared error (GMSE)
 
-   Returns
+    Returns
     -------
     loss : float
         GMSE or RGMSE loss. If multioutput is 'raw_values', then loss is returned
