@@ -67,12 +67,13 @@ example_dict_lossy[
 
 cols = [f"var_{i}" for i in range(2)]
 X = pd.DataFrame(columns=cols, index=[0, 1, 2])
-X.iloc[0][0] = pd.Series([1, 2, 3])
-X.iloc[0][1] = pd.Series([4, 5, 6])
-X.iloc[1][0] = pd.Series([1, 2, 3])
-X.iloc[1][1] = pd.Series([4, 55, 6])
-X.iloc[2][0] = pd.Series([1, 2, 3])
-X.iloc[2][1] = pd.Series([42, 5, 6])
+X["var_0"] = pd.Series(
+    [pd.Series([1, 2, 3]), pd.Series([1, 2, 3]), pd.Series([1, 2, 3])]
+)
+
+X["var_1"] = pd.Series(
+    [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
+)
 
 example_dict[(str(PanelMtype.pd_univariate_nested_dataframe), str(PanelMtype), 0)] = X
 example_dict_lossy[

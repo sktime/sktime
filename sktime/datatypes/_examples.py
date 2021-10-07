@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Example fixtures for mtypes/scitypes.
 
 Exports
@@ -11,8 +12,6 @@ examples[i] are assumed "content-wise the same" for the same as_scitype, i
 
 the representation is considered "lossy" if the representation is incomplete
     e.g., metadata such as column names are missing
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 

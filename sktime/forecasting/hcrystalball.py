@@ -107,7 +107,7 @@ class HCrystalBallForecaster(BaseForecaster):
     """
 
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
