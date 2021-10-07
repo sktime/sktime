@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 __all__ = ["BaseRegistryEnum"]
 
-from typing import TypeVar
 from enum import Enum, EnumMeta
+from typing import TypeVar
 
 
 class _RegistryMetaEnum(EnumMeta):
@@ -36,10 +36,10 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         type of the enum
     """
 
-    def __init__(self, description: str, instance: str, type: T = None):
+    def __init__(self, description: str, instance: str, type_of: T = None):
         self.description: str = description
         self.instance: str = instance
-        self.type: T = type
+        self.type_of: T = type_of
 
     def __iter__(self):
         """Iterate over an enum values.

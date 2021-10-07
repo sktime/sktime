@@ -2,6 +2,8 @@
 
 __all__ = ["MTYPE_REGISTER_PANEL", "MTYPE_LIST_PANEL", "PanelMtype"]
 
+from typing import List
+
 import numpy as np
 import pandas as pd
 
@@ -41,7 +43,7 @@ class PanelMtype(BaseRegistryEnum):
         "Panel",
         pd.DataFrame,
     )
-    list_pd_dataframe = ("list of pd.DataFrame", "Panel", list[pd.DataFrame])
+    list_pd_dataframe = ("list of pd.DataFrame", "Panel", List)
 
 
 MTYPE_REGISTER_PANEL = [tuple(mtype) for mtype in PanelMtype]
