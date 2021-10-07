@@ -7,7 +7,7 @@ Creates univariate (optionally weighted)
 combination of the predictions from underlying forecasts.
 """
 
-__author__ = ["mloning", "GuzalBulatova", "aiwalter"]
+__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import numpy as np
@@ -15,15 +15,15 @@ import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.stats import (
+    _weighted_geometric_mean,
     _weighted_max,
     _weighted_median,
     _weighted_min,
-    _weighted_geometric_mean,
 )
 from sktime.utils.validation.forecasting import check_regressor
 
