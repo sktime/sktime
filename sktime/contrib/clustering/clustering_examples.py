@@ -2,10 +2,7 @@
 """Clustering usage tests and examples"""
 import numpy as np
 
-from sktime.clustering import (
-    TimeSeriesKMeans,
-    TimeSeriesKMedoids,
-)
+from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.datasets import load_arrow_head
 
 

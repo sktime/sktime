@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.datasets import load_gunpoint
 

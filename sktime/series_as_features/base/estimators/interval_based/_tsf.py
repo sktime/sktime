@@ -19,8 +19,7 @@ __all__ = [
 import math
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 

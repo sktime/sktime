@@ -9,8 +9,7 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 

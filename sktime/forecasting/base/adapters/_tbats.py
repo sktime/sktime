@@ -9,8 +9,8 @@ __all__ = ["_TbatsAdapter"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
 

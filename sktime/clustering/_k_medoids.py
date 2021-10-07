@@ -4,18 +4,18 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesKMedoids"]
 
+from sktime.clustering.base import BaseClusterer
 from sktime.clustering.base._typing import (
+    InitAlgo,
     MetricParameter,
     NumpyArray,
     NumpyOrDF,
-    InitAlgo,
     NumpyRandomState,
 )
+from sktime.clustering.partitioning._cluster_approximations import Medoids
 from sktime.clustering.partitioning._lloyds_partitioning import (
     TimeSeriesLloydsPartitioning,
 )
-from sktime.clustering.partitioning._cluster_approximations import Medoids
-from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):

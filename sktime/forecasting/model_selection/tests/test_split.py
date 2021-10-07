@@ -11,17 +11,21 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import CutoffSplitter
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
-from sktime.forecasting.model_selection import SingleWindowSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests._config import TEST_FHS
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests._config import TEST_YS
-from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
+from sktime.forecasting.model_selection import (
+    CutoffSplitter,
+    ExpandingWindowSplitter,
+    SingleWindowSplitter,
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
+from sktime.forecasting.tests._config import (
+    TEST_FHS,
+    TEST_OOS_FHS,
+    TEST_STEP_LENGTHS,
+    TEST_WINDOW_LENGTHS,
+    TEST_YS,
+    VALID_INDEX_FH_COMBINATIONS,
+)
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation import is_int

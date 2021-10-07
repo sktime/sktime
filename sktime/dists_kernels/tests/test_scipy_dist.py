@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.dists_kernels.scipy_dist import ScipyDist
+from sktime.utils._testing.panel import make_transformer_problem
 
 X1 = make_transformer_problem(
     n_instances=5,

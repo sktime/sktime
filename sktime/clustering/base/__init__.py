@@ -7,8 +7,8 @@ __all__ = [
 ]
 
 from sktime.clustering.base.base import (
-    BaseClusterer,
-    BaseClusterCenterInitializer,
-    BaseClusterAverage,
     BaseApproximate,
+    BaseClusterAverage,
+    BaseClusterCenterInitializer,
+    BaseClusterer,
 )

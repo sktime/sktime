@@ -14,13 +14,16 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import (
+    GridSearchCV,
+    LeaveOneOut,
+    RandomizedSearchCV,
+    StratifiedShuffleSplit,
+    cross_val_predict,
+)
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import class_distribution
+
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
@@ -33,8 +36,7 @@ from sktime.distances.elastic_cython import msm_distance as msm_c
 from sktime.distances.elastic_cython import wddtw_distance as wddtw_c
 from sktime.distances.elastic_cython import wdtw_distance as wdtw_c
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ElasticEnsemble(BaseClassifier):

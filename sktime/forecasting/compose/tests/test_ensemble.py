@@ -5,17 +5,17 @@
 
 __author__ = ["GuzalBulatova"]
 
+import sys
+
 import numpy as np
 import pandas as pd
 import pytest
-import sys
-
 from scipy.stats import gmean
+
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 

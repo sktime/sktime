@@ -4,9 +4,10 @@
 __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["MeanAveraging", "BarycenterAveraging"]
 
+from functools import reduce
+
 import numpy as np
 
-from functools import reduce
 from sktime.clustering.base import BaseClusterAverage
 from sktime.clustering.base._typing import NumpyArray
 

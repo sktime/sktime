@@ -27,8 +27,7 @@ __all__ = [
 ]
 
 import numpy as np
-from sklearn.base import RegressorMixin
-from sklearn.base import clone
+from sklearn.base import RegressorMixin, clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA

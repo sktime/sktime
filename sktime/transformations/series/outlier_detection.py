@@ -6,13 +6,14 @@
 __author__ = ["Martin Walter"]
 __all__ = ["HampelFilter"]
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+import warnings
 
 import numpy as np
-import warnings
 import pandas as pd
+
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
 
 
 class HampelFilter(_SeriesToSeriesTransformer):

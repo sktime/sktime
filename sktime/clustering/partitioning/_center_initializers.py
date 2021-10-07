@@ -9,9 +9,9 @@ from sklearn.utils import check_random_state
 
 from sktime.clustering.base import BaseClusterCenterInitializer
 from sktime.clustering.base._typing import (
+    CenterCalculatorFunc,
     NumpyArray,
     NumpyRandomState,
-    CenterCalculatorFunc,
 )
 
 

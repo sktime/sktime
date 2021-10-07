@@ -8,20 +8,18 @@ __author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 
-from numba import int64, prange, jit
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
+from numba import int64, jit, prange
 from sklearn.base import clone
+from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sklearn.ensemble._base import _partition_estimators
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 def _transform(X, interval, lag):

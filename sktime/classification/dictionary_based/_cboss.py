@@ -14,8 +14,9 @@ import time
 
 import numpy as np
 from joblib import Parallel, delayed
-from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
+from sklearn.utils.multiclass import class_distribution
+
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import IndividualBOSS
 

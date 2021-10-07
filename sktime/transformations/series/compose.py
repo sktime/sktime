@@ -4,11 +4,11 @@
 """Meta-transformers for building composite transformers."""
 
 import pandas as pd
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
+
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
 
 __author__ = ["aiwalter", "SveaMeyer13"]
 __all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]

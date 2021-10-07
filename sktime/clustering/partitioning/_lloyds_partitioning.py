@@ -5,22 +5,26 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["TimeSeriesLloydsPartitioning"]
 
 from typing import List
-import numpy as np
 
-from sklearn.metrics.pairwise import (
-    pairwise_distances_argmin_min,
-)
+import numpy as np
+from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from sklearn.utils import check_random_state
+
+from sktime.clustering.base import BaseClusterer
 from sktime.clustering.base._typing import (
-    MetricParameter,
-    MetricFunctionDict,
     InitAlgo,
     InitAlgoDict,
+    MetricFunctionDict,
+    MetricParameter,
     NumpyRandomState,
 )
-from sktime.clustering.base import (
-    BaseClusterer,
+from sktime.clustering.base.base import BaseClusterCenterInitializer
+from sktime.clustering.base.clustering_utils import compute_pairwise_distances
+from sktime.clustering.partitioning._center_initializers import (
+    ForgyCenterInitializer,
+    RandomCenterInitializer,
 )
+from sktime.distances.elastic import euclidean_distance
 from sktime.distances.elastic_cython import (
     ddtw_distance,
     dtw_distance,
@@ -31,13 +35,6 @@ from sktime.distances.elastic_cython import (
     wddtw_distance,
     wdtw_distance,
 )
-from sktime.clustering.base.base import BaseClusterCenterInitializer
-from sktime.clustering.partitioning._center_initializers import (
-    ForgyCenterInitializer,
-    RandomCenterInitializer,
-)
-from sktime.clustering.base.clustering_utils import compute_pairwise_distances
-from sktime.distances.elastic import euclidean_distance
 
 
 class TimeSeriesLloydsPartitioning(BaseClusterer):

@@ -6,10 +6,12 @@ __all__ = []
 
 import pytest
 
-from sktime.tests._config import EXCLUDE_ESTIMATORS
-from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPE_LOOKUP
-from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.registry import all_estimators
+from sktime.tests._config import (
+    EXCLUDE_ESTIMATORS,
+    VALID_ESTIMATOR_BASE_TYPE_LOOKUP,
+    VALID_ESTIMATOR_TYPES,
+)
 
 
 @pytest.mark.parametrize("return_names", [True, False])

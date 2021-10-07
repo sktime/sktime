@@ -10,7 +10,9 @@ __all__ = [
     "FittedParamExtractor",
 ]
 
-from ._extract import DerivativeSlopeTransformer
-from ._extract import FittedParamExtractor
-from ._extract import PlateauFinder
-from ._extract import RandomIntervalFeatureExtractor
+from ._extract import (
+    DerivativeSlopeTransformer,
+    FittedParamExtractor,
+    PlateauFinder,
+    RandomIntervalFeatureExtractor,
+)

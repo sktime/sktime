@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import FeatureUnion
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-)
+from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils._testing.panel import make_classification_problem
 

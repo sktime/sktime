@@ -1,20 +1,16 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pytest
-from sktime.series_as_features.compose import FeatureUnion
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-)
+from sktime.series_as_features.compose import FeatureUnion
+from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.slope_and_trend import _slope
 

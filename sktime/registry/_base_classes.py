@@ -67,13 +67,13 @@ from sktime.dists_kernels._base import (
 )
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.base import BaseTransformer
-
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-
+from sktime.transformations.base import (
+    BaseTransformer,
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
 
 BASE_CLASS_REGISTER = [
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),

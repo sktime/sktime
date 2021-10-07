@@ -2,7 +2,7 @@
 import numpy as np
 from numpy import testing
 
-from sktime.datasets import load_gunpoint, load_basic_motions
+from sktime.datasets import load_basic_motions, load_gunpoint
 from sktime.transformations.panel.catch22 import Catch22
 
 

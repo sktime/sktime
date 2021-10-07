@@ -8,29 +8,31 @@ __all__ = ["test_gscv", "test_rscv"]
 import numpy as np
 import pytest
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import ForecastingGridSearchCV
-from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
-from sktime.forecasting.model_selection import SingleWindowSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.model_selection import (
+    ForecastingGridSearchCV,
+    ForecastingRandomizedSearchCV,
+    SingleWindowSplitter,
+    SlidingWindowSplitter,
+)
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests._config import TEST_N_ITERS
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_RANDOM_SEEDS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import (
+    TEST_N_ITERS,
+    TEST_OOS_FHS,
+    TEST_RANDOM_SEEDS,
+    TEST_WINDOW_LENGTHS,
+)
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredError,
 )
 from sktime.transformations.series.detrend import Detrender
-
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 

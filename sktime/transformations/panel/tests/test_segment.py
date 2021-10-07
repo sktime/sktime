@@ -3,9 +3,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.transformations.panel.segment import _rand_intervals_fixed_n
-from sktime.transformations.panel.segment import _rand_intervals_rand_n
+from sktime.transformations.panel.segment import (
+    RandomIntervalSegmenter,
+    _rand_intervals_fixed_n,
+    _rand_intervals_rand_n,
+)
 from sktime.utils._testing.panel import _make_nested_from_array
 
 N_ITER = 10

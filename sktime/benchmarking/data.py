@@ -5,8 +5,8 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 import os
 
 import pandas as pd
-from sktime.benchmarking.base import HDDBaseDataset
-from sktime.benchmarking.base import BaseDataset
+
+from sktime.benchmarking.base import BaseDataset, HDDBaseDataset
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
 

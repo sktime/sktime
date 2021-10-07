@@ -6,7 +6,7 @@ from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.feature_based._tsfresh_classifier import TSFreshClassifier
-from sktime.datasets import load_gunpoint, load_basic_motions, load_italy_power_demand
+from sktime.datasets import load_basic_motions, load_gunpoint, load_italy_power_demand
 
 
 def test_tsfresh_classifier_on_gunpoint():

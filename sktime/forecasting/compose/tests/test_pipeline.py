@@ -13,8 +13,7 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.series.detrend import Deseasonalizer
-from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.detrend import Deseasonalizer, Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 

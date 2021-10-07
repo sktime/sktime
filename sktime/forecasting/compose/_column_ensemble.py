@@ -8,11 +8,9 @@ __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 

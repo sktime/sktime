@@ -7,9 +7,8 @@ import os
 import numpy as np
 import pandas as pd
 from joblib import load
-from sktime.benchmarking.base import BaseResults
-from sktime.benchmarking.base import HDDBaseResults
-from sktime.benchmarking.base import _PredictionsWrapper
+
+from sktime.benchmarking.base import BaseResults, HDDBaseResults, _PredictionsWrapper
 
 
 class RAMResults(BaseResults):

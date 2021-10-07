@@ -24,12 +24,13 @@ __all__ = [
     "mtype",
 ]
 
+from typing import List, Union
+
 import numpy as np
 
-from typing import Union, List
 from sktime.datatypes._panel import check_dict_Panel
-from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes._series import check_dict_Series
 
 # pool convert_dict-s
 check_dict = dict()

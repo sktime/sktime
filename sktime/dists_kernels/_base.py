@@ -37,7 +37,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-
 from sktime.utils.validation.series import check_series
 
 

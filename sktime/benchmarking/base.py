@@ -3,13 +3,11 @@ __author__ = ["Markus Löning", "Viktor Kazakov"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from warnings import warn
 
 import numpy as np
-from joblib import dump
-from joblib import load
+from joblib import dump, load
 
 
 class BaseDataset:

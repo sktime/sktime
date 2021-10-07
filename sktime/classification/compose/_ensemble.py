@@ -5,26 +5,26 @@ Configurable time series ensembles
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
-from warnings import warn
-import numpy as np
 import numbers
-from joblib import Parallel
-from joblib import delayed
+from warnings import warn
 
+import numpy as np
+from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble._forest import _generate_unsampled_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
-from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X, check_X_y
+
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):

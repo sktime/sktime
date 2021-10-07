@@ -11,8 +11,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.datetime import _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)

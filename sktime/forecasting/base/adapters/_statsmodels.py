@@ -7,11 +7,12 @@ __author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
+
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class _StatsModelsAdapter(BaseForecaster):

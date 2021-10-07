@@ -5,10 +5,12 @@ _checks.py
 Contains a reusable decorator function to handle the sklearn signature checks.
 """
 import functools
+
 import numpy as np
 import pandas as pd
-from sktime.utils.validation.panel import check_X, check_X_y
+
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 def _handle_sktime_signatures(check_fitted=False, force_numpy=False):

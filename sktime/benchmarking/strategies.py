@@ -7,14 +7,11 @@ __all__ = ["TSCStrategy", "TSRStrategy"]
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 
 import pandas as pd
-from joblib import dump
-from joblib import load
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import _pprint
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
+from joblib import dump, load
+from sklearn.base import ClassifierMixin, RegressorMixin, _pprint
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
+
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._sktime import BaseForecaster

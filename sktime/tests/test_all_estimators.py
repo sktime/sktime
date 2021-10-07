@@ -7,9 +7,8 @@ __all__ = ["test_estimator"]
 
 import pytest
 
-from sktime.tests._config import EXCLUDE_ESTIMATORS
-from sktime.tests._config import EXCLUDED_TESTS
 from sktime.registry import all_estimators
+from sktime.tests._config import EXCLUDE_ESTIMATORS, EXCLUDED_TESTS
 from sktime.utils._testing.estimator_checks import check_estimator
 
 ALL_ESTIMATORS = all_estimators(

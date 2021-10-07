@@ -7,8 +7,8 @@ __all__ = []
 
 import pytest
 
-from sktime.utils._testing.series import _make_series
 from sktime.transformations.series.exponent import ExponentTransformer, SqrtTransformer
+from sktime.utils._testing.series import _make_series
 
 power_transformers = [ExponentTransformer, SqrtTransformer]
 

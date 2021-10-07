@@ -4,8 +4,9 @@
 __author__ = ["Markus Löning"]
 __all__ = []
 
-import pytest
 import pandas as pd
+import pytest
+
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 

@@ -5,10 +5,12 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
+from sktime.datatypes._panel._convert import (
+    _concat_nested_arrays,
+    _get_column_names,
+    _get_time_index,
+)
 from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.datatypes._panel._convert import _concat_nested_arrays
-from sktime.datatypes._panel._convert import _get_column_names
-from sktime.datatypes._panel._convert import _get_time_index
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.panel import check_X
 

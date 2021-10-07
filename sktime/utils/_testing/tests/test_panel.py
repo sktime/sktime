@@ -8,12 +8,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.series_as_features.tests._config import N_CLASSES
-from sktime.series_as_features.tests._config import N_COLUMNS
-from sktime.series_as_features.tests._config import N_INSTANCES
-from sktime.series_as_features.tests._config import N_TIMEPOINTS
-from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils._testing.panel import make_regression_problem
+from sktime.series_as_features.tests._config import (
+    N_CLASSES,
+    N_COLUMNS,
+    N_INSTANCES,
+    N_TIMEPOINTS,
+)
+from sktime.utils._testing.panel import (
+    make_classification_problem,
+    make_regression_problem,
+)
 
 
 def _check_X_y_pandas(X, y, n_instances, n_columns, n_timepoints):

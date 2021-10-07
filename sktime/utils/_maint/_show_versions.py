@@ -10,9 +10,9 @@ adapted from :func:`sklearn.show_versions`
 __author__ = ["Markus Löning"]
 __all__ = ["show_versions"]
 
+import importlib
 import platform
 import sys
-import importlib
 
 
 def _get_sys_info():

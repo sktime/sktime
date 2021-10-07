@@ -8,9 +8,9 @@ __all__ = []
 from warnings import warn
 
 import numpy as np
-from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_y
 from statsmodels.tsa.stattools import acf
+
+from sktime.utils.validation.forecasting import check_sp, check_y
 
 
 def autocorrelation_seasonality_test(y, sp):

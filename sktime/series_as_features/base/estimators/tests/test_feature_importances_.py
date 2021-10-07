@@ -2,15 +2,12 @@
 import numpy as np
 import pytest
 from sklearn.base import clone
-from sklearn.pipeline import FeatureUnion
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.compose._ensemble import ComposableTimeSeriesForestClassifier
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-)
+from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import IntervalSegmenter
 from sktime.transformations.panel.summarize._extract import (
     RandomIntervalFeatureExtractor,

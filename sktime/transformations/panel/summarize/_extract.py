@@ -4,12 +4,13 @@
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.base import clone
 
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+)
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils.validation.panel import check_X
 

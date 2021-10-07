@@ -7,11 +7,12 @@ __all__ = []
 
 import numpy as np
 import pytest
+from statsmodels.tsa.seasonal import seasonal_decompose
+
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_SPS
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 MODELS = ["additive", "multiplicative"]
 

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from sktime.benchmarking.results import RAMResults
-from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import PairwiseMetric
-from sklearn.metrics import accuracy_score
-from sktime.series_as_features.model_selection import PresplitFilesCV
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
+
+from sktime.benchmarking.evaluation import Evaluator
+from sktime.benchmarking.metrics import PairwiseMetric
+from sktime.benchmarking.results import RAMResults
+from sktime.series_as_features.model_selection import PresplitFilesCV
 
 
 def dummy_results():

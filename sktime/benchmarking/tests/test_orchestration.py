@@ -5,31 +5,24 @@ import os
 
 import numpy as np
 import pytest
+from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, make_scorer
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.pipeline import Pipeline
 
 # get data path for testing dataset loading from hard drive
 import sktime
-from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import make_scorer
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import Pipeline
-from sktime.benchmarking.data import RAMDataset
-from sktime.benchmarking.data import UEADataset
+from sktime.benchmarking.data import RAMDataset, UEADataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import AggregateMetric
-from sktime.benchmarking.metrics import PairwiseMetric
+from sktime.benchmarking.metrics import AggregateMetric, PairwiseMetric
 from sktime.benchmarking.orchestration import Orchestrator
-from sktime.benchmarking.results import HDDResults
-from sktime.benchmarking.results import RAMResults
+from sktime.benchmarking.results import HDDResults, RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.datasets import load_arrow_head
-from sktime.datasets import load_gunpoint
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datasets import load_arrow_head, load_gunpoint
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformations.panel.reduce import Tabularizer
 

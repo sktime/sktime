@@ -8,10 +8,12 @@ __all__ = ["Tabularizer"]
 import pandas as pd
 from sklearn.utils.validation import check_array
 
+from sktime.datatypes._panel._convert import (
+    from_2d_array_to_nested,
+    from_3d_numpy_to_2d_array,
+    from_nested_to_2d_array,
+)
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
-from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 

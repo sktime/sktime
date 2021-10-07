@@ -16,7 +16,7 @@ import scipy.stats
 from numba import njit
 from numba.typed import List
 from sklearn.base import BaseEstimator
-from sklearn.utils import check_X_y, check_random_state
+from sklearn.utils import check_random_state, check_X_y
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.slope_and_trend import _slope

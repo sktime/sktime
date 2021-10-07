@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 __author__ = ["Hongyi Yang"]
 
-from numpy.testing import assert_array_equal
-from sktime.forecasting.ets import AutoETS
-from sktime.datasets import load_airline
-import pandas as pd
 import numpy as np
+import pandas as pd
+from numpy.testing import assert_array_equal
 
+from sktime.datasets import load_airline
+from sktime.forecasting.ets import AutoETS
 
 # test results against R implementation on airline dataset
 y = load_airline()

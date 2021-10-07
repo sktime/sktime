@@ -13,14 +13,16 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
+
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
+    SlidingWindowSplitter,
+)
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests._config import TEST_FHS
-from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
+from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,

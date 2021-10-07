@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.datasets import load_gunpoint
-from sktime.datasets import load_italy_power_demand
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 classifier = ComposableTimeSeriesForestClassifier(n_estimators=2)
 

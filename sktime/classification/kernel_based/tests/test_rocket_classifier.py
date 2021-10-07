@@ -4,7 +4,7 @@ import numpy as np
 from numpy import testing
 
 from sktime.classification.kernel_based import ROCKETClassifier
-from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
+from sktime.datasets import load_basic_motions, load_gunpoint, load_italy_power_demand
 
 
 def test_rocket_on_gunpoint():

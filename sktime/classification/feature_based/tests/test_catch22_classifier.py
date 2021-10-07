@@ -5,7 +5,7 @@ from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.datasets import load_gunpoint, load_basic_motions, load_italy_power_demand
+from sktime.datasets import load_basic_motions, load_gunpoint, load_italy_power_demand
 
 
 def test_catch22_classifier_on_gunpoint():

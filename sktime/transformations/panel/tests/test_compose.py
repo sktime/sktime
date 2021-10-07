@@ -3,19 +3,17 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
-from sktime.datasets import load_basic_motions
-from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.compose import ColumnTransformer
+from sktime.datasets import load_basic_motions, load_gunpoint
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.panel.compose import (
+    ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
+    SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.panel import _make_nested_from_array
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():

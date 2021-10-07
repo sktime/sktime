@@ -5,10 +5,11 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["compute_pairwise_distances"]
 
 from typing import Callable
-import numpy as np
 
-from sktime.clustering.base._typing import NumpyArray, MetricFunction
+import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
+
+from sktime.clustering.base._typing import MetricFunction, NumpyArray
 
 
 def compute_pairwise_distances(

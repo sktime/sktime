@@ -49,7 +49,6 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
-
 from copy import deepcopy
 
 from sklearn import clone

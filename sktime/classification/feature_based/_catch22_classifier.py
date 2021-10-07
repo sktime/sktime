@@ -14,7 +14,7 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
-from sktime.utils.validation.panel import check_X_y, check_X
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class Catch22Classifier(BaseClassifier):

@@ -4,12 +4,10 @@ __all__ = ["MiniRocket"]
 
 import numpy as np
 import pandas as pd
+from numba import njit, prange, vectorize
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
-from numba import njit
-from numba import prange
-from numba import vectorize
 
 
 class MiniRocket(_PanelToTabularTransformer):

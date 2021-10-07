@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import math
+
 import numpy as np
 import pandas as pd
-import math
-from sktime.transformations.base import _PanelToPanelTransformer
+
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
 __author__ = "Vincent Nicholson"

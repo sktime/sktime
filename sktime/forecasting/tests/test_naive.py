@@ -11,9 +11,7 @@ import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_SPS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_SPS, TEST_WINDOW_LENGTHS
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 

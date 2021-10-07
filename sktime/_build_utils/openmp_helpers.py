@@ -14,8 +14,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-from distutils.errors import CompileError
-from distutils.errors import LinkError
+from distutils.errors import CompileError, LinkError
 from distutils.sysconfig import customize_compiler
 
 from numpy.distutils.ccompiler import new_compiler

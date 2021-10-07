@@ -6,10 +6,11 @@
 __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from statsmodels.tsa.statespace.structural import (
     UnobservedComponents as _UnobservedComponents,
 )
+
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class UnobservedComponents(_StatsModelsAdapter):

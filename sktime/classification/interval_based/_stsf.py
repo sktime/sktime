@@ -7,9 +7,8 @@ __all__ = ["SupervisedTimeSeriesForest"]
 import math
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
-from scipy import stats, signal
+from joblib import Parallel, delayed
+from scipy import signal, stats
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.preprocessing import StandardScaler
@@ -19,8 +18,7 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):

@@ -9,10 +9,8 @@ __all__ = ["_BaseWindowForecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.model_selection import CutoffSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.model_selection import CutoffSplitter, SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_cv
 

@@ -4,10 +4,10 @@ __author__ = ["juanitorduz"]
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.structural import UnobservedComponents, _UnobservedComponents
-from sktime.datasets import load_airline
 from pandas.testing import assert_series_equal
 
+from sktime.datasets import load_airline
+from sktime.forecasting.structural import UnobservedComponents, _UnobservedComponents
 
 # Parameters to generate sample data depending of the model type.
 structure_params = {

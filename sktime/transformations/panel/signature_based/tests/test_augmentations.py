@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+
 from sktime.transformations.panel.signature_based._augmentations import (
     _AddTime,
     _BasePoint,
-    _LeadLag,
     _CumulativeSum,
     _InvisibilityReset,
+    _LeadLag,
     _make_augmentation_pipeline,
 )
 

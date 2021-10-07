@@ -5,6 +5,7 @@ __author__ = ["Christopher Holder", "Tony Bagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import pandas as pd
+
 from sktime.clustering.base._typing import NumpyOrDF
 from sktime.clustering.base.base import BaseClusterer
 from sktime.clustering.partitioning._lloyds_partitioning import (
@@ -37,8 +38,8 @@ def plot_cluster_algorithm(model: BaseClusterer, predict_series: NumpyOrDF, k: i
         Number of centers
     """
     _check_soft_dependencies("matplotlib")
-    import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
 
     if isinstance(predict_series, pd.DataFrame):
         predict_series = from_nested_to_2d_array(predict_series, return_numpy=True)

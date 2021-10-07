@@ -43,7 +43,6 @@ __author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
 
-
 ESTIMATOR_TAG_REGISTER = [
     (
         "ignores-exogeneous-X",

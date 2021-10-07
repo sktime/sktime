@@ -26,8 +26,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 

@@ -24,9 +24,7 @@ State:
 __author__ = ["satya-pattnaik ", "fkiraly"]
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation.annotation import check_fmt
-from sktime.utils.validation.annotation import check_labels
-
+from sktime.utils.validation.annotation import check_fmt, check_labels
 from sktime.utils.validation.series import check_series
 
 

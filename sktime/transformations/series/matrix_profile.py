@@ -7,9 +7,10 @@ __author__ = ["Markus Löning"]
 __all__ = ["MatrixProfileTransformer"]
 
 import pandas as pd
+
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation.series import check_series
 
 _check_soft_dependencies("stumpy")
 

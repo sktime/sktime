@@ -4,8 +4,7 @@ import pytest
 from scipy.stats import linregress
 
 from sktime.utils._testing.forecasting import _generate_polynomial_series
-from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.slope_and_trend import _slope
+from sktime.utils.slope_and_trend import _fit_trend, _slope
 
 
 @pytest.mark.parametrize("trend_order", [0, 3])

@@ -5,16 +5,15 @@ __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Lö
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators.interval_based._tsf import (
     BaseTimeSeriesForest,
+    _transform,
 )
-from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
 from sktime.utils.validation.panel import check_X
 
 

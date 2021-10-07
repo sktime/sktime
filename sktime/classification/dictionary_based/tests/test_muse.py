@@ -2,6 +2,7 @@
 """Test the MUSE multivariate classifier."""
 
 import numpy as np
+
 from sktime.classification.dictionary_based import MUSE
 from sktime.datasets import load_basic_motions
 

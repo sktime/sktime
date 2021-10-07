@@ -19,8 +19,8 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
-    _cif_feature,
     ContinuousIntervalTree,
+    _cif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation import check_n_jobs

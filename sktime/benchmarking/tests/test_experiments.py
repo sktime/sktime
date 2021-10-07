@@ -3,8 +3,10 @@
 
 import os.path
 
-from sktime.benchmarking.experiments import run_classification_experiment
-from sktime.benchmarking.experiments import run_clustering_experiment
+from sktime.benchmarking.experiments import (
+    run_classification_experiment,
+    run_clustering_experiment,
+)
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.clustering import TimeSeriesKMeans
 from sktime.datasets import load_unit_test

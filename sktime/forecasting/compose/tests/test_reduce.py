@@ -7,33 +7,35 @@ __author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "Ayushmaan Se
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.base import BaseEstimator
-from sklearn.base import RegressorMixin
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sktime.datasets import load_airline
 
+from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import DirectTabularRegressionForecaster
-from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
-from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
-from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose import (
+    DirectTabularRegressionForecaster,
+    DirectTimeSeriesRegressionForecaster,
+    DirRecTabularRegressionForecaster,
+    DirRecTimeSeriesRegressionForecaster,
+    MultioutputTabularRegressionForecaster,
+    MultioutputTimeSeriesRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+    RecursiveTimeSeriesRegressionForecaster,
+    make_reduction,
+)
 from sktime.forecasting.compose._reduce import _sliding_window_transform
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.model_selection import (
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
 from sktime.forecasting.model_selection.tests.test_split import _get_windows
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS
+from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.forecasting.compose import DirRecTabularRegressionForecaster
-from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
-from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 

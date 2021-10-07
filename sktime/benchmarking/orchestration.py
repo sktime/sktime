@@ -2,11 +2,12 @@
 __all__ = ["Orchestrator"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
-from sklearn.base import clone
-from sktime.benchmarking.tasks import TSCTask
-from sktime.benchmarking.tasks import TSRTask
-import pandas as pd
 import logging
+
+import pandas as pd
+from sklearn.base import clone
+
+from sktime.benchmarking.tasks import TSCTask, TSRTask
 
 log = logging.getLogger()
 console = logging.StreamHandler()

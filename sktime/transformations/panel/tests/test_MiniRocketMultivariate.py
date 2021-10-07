@@ -2,6 +2,7 @@
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
+
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.rocket import MiniRocketMultivariate
 

@@ -23,11 +23,12 @@ from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.utils.validation import check_window_length
-from sktime.utils.validation.forecasting import check_cutoffs
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_step_length
-from sktime.utils.validation.series import check_equal_time_index
-from sktime.utils.validation.series import check_time_index
+from sktime.utils.validation.forecasting import (
+    check_cutoffs,
+    check_fh,
+    check_step_length,
+)
+from sktime.utils.validation.series import check_equal_time_index, check_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10

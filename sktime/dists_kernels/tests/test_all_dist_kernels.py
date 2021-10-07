@@ -3,8 +3,8 @@ import numpy as np
 import pytest
 
 from sktime.registry import all_estimators
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
+from sktime.utils._testing.panel import make_transformer_problem
 
 PAIRWISE_TRANSFORMERS = all_estimators(
     estimator_types="transformer-pairwise", return_names=False

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from sktime.clustering.tests._clustering_tests import generate_univaritate_series
+from sktime.clustering._k_means import TimeSeriesKMeans
+from sktime.clustering._k_medoids import TimeSeriesKMedoids
 from sktime.clustering.partitioning._center_initializers import (
     ForgyCenterInitializer,
     RandomCenterInitializer,
 )
-from sktime.clustering._k_medoids import TimeSeriesKMedoids
-from sktime.clustering._k_means import TimeSeriesKMeans
+from sktime.clustering.tests._clustering_tests import generate_univaritate_series
 
 
 def test_forgy_cluster_center_initializer():

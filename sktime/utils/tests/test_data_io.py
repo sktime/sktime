@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
 import tempfile
-import pytest
+
 import numpy as np
 import pandas as pd
-from sktime.utils.data_io import TsFileParseException
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
-from sktime.utils.data_io import load_from_long_to_dataframe
-from sktime.utils.data_io import LongFormatDataParseException
-from sktime.utils.data_io import generate_example_long_table
+import pytest
+
+from sktime.utils.data_io import (
+    LongFormatDataParseException,
+    TsFileParseException,
+    generate_example_long_table,
+    load_from_long_to_dataframe,
+    load_from_tsfile_to_dataframe,
+)
 
 
 def test_load_from_tsfile_to_dataframe():

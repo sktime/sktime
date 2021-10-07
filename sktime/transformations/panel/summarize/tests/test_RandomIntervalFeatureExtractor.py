@@ -6,15 +6,13 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-)
+from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils._testing.panel import (
+    _make_nested_from_array,
+    make_classification_problem,
 )
-from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils._testing.panel import _make_nested_from_array
 from sktime.utils.slope_and_trend import _slope
 
 

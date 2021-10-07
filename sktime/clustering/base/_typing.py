@@ -21,16 +21,18 @@ __all__ = [
     "CenterCalculatorFunc",
 ]
 
+from typing import Callable, List, Mapping, Tuple, Union
+
 import pandas as pd
-from typing import Callable, List, Tuple, Union, Mapping
+
 from sktime.clustering.base.base import (
-    NumpyArray,
-    DataFrame,
-    NumpyOrDF,
-    BaseClusterCenterInitializer,
     BaseClusterAverage,
-    NumpyRandomState,
+    BaseClusterCenterInitializer,
     CenterCalculatorFunc,
+    DataFrame,
+    NumpyArray,
+    NumpyOrDF,
+    NumpyRandomState,
 )
 
 # General Purpose

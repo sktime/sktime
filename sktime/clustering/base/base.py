@@ -13,11 +13,13 @@ __all__ = [
     "CenterCalculatorFunc",
 ]
 
-import pandas as pd
+from typing import Callable, Union
+
 import numpy as np
+import pandas as pd
+
 from sktime.base import BaseEstimator
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from typing import Union, Callable
 
 DataFrame = pd.DataFrame
 NumpyArray = np.ndarray

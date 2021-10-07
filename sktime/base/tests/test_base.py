@@ -22,9 +22,9 @@ __all__ = [
     "test_set_tags",
 ]
 
-import pytest
-
 from copy import deepcopy
+
+import pytest
 
 from sktime.base import BaseObject
 

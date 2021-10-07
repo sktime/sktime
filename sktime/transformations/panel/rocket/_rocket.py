@@ -6,12 +6,10 @@ import multiprocessing
 
 import numpy as np
 import pandas as pd
+from numba import get_num_threads, njit, prange, set_num_threads
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
-
-from numba import njit, get_num_threads, set_num_threads
-from numba import prange
 
 
 class Rocket(_PanelToTabularTransformer):

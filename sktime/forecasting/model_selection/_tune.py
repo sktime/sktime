@@ -7,12 +7,9 @@ __author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection import check_cv
+from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 

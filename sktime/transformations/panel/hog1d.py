@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import math
+import numbers
+
 import numpy as np
 import pandas as pd
-import numbers
-import math
+
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
 from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.utils.validation.panel import check_X
 
 """
 The HOG1D Transformer proposed by:

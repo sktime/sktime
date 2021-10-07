@@ -19,13 +19,11 @@ __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_equal_time_index
-from sktime.utils.validation.series import check_series
+from sktime.utils.validation.series import check_equal_time_index, check_series
 
 
 def check_y_X(

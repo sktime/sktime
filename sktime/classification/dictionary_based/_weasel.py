@@ -8,7 +8,9 @@ __author__ = ["Patrick Schäfer", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
+
 import numpy as np
+from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
@@ -17,12 +19,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from joblib import Parallel, delayed
-
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 # from sklearn.feature_selection import chi2
 # from numba.typed import Dict

@@ -6,19 +6,20 @@
 __author__ = ["magittan"]
 
 import numpy as np
-from sktime.datasets import load_airline
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
-    NormalHedgeEnsemble,
-    NNLSEnsemble,
-)
-from sktime.forecasting.online_learning._online_ensemble import (
-    OnlineEnsembleForecaster,
-)
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.naive import NaiveForecaster
 from sklearn.metrics import mean_squared_error
+
+from sktime.datasets import load_airline
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.model_selection import (
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.online_learning._online_ensemble import OnlineEnsembleForecaster
+from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
+    NNLSEnsemble,
+    NormalHedgeEnsemble,
+)
 
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 

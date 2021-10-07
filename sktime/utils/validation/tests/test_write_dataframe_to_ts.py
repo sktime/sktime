@@ -11,8 +11,10 @@ import pytest
 from pandas._testing import assert_frame_equal
 
 import sktime
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
-from sktime.utils.data_io import write_dataframe_to_tsfile
+from sktime.utils.data_io import (
+    load_from_tsfile_to_dataframe,
+    write_dataframe_to_tsfile,
+)
 
 
 @pytest.mark.parametrize("dataset", ["ItalyPowerDemand", "BasicMotions"])

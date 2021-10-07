@@ -11,8 +11,8 @@ window types.
 Code based on window code written by Patrick Kidger.
 """
 import collections as co
-import numpy as np
 
+import numpy as np
 
 _Pair = co.namedtuple("Pair", ("start", "end"))
 
