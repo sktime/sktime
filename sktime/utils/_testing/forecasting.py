@@ -30,12 +30,12 @@ def _get_n_columns(tag):
     elif tag == "both":
         n_columns_list = [1, 2]
     else:
-        raise ValueError(f"Unexpected tag {tag}.")
+        raise ValueError(f"Unexpected tag {tag} in _get_n_columns.")
     return n_columns_list
 
 
 def _get_expected_index_for_update_predict(y, fh, step_length):
-    """Compute expected time index from `update_predict`."""
+    """Compute expected time index from update_predict()."""
     # time points at which to make predictions
     fh = check_fh(fh)
     index = y.index
@@ -83,7 +83,7 @@ def make_forecasting_problem(
     all_positive=True,
     index_type=None,
     make_X=False,
-    n_columns=2,
+    n_columns=1,
     random_state=None,
 ):
     """Return test data for forecasting tests.
@@ -99,7 +99,7 @@ def make_forecasting_problem(
     make_X : bool, optional
         Should X data also be returned, by default False
     n_columns : int, optional
-        Number of columns of X, by default 2
+        Number of columns of y, by default 1
     random_state : inst, str, float, optional
         Set seed of random state, by default None
 
@@ -111,7 +111,7 @@ def make_forecasting_problem(
     """
     y = _make_series(
         n_timepoints=n_timepoints,
-        n_columns=1,
+        n_columns=n_columns,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
@@ -122,7 +122,7 @@ def make_forecasting_problem(
 
     X = _make_series(
         n_timepoints=n_timepoints,
-        n_columns=n_columns,
+        n_columns=2,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
