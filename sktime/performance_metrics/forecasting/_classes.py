@@ -482,9 +482,9 @@ def make_forecasting_scorer(
         Metric class that can be used as forecasting scorer.
     """
     if greater_is_better:
-        return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
-    else:
         return _BaseForecastingScoreMetric(func, name=name, multioutput=multioutput)
+    else:
+        return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
 
 
 class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
