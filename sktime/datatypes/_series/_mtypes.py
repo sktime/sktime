@@ -29,6 +29,7 @@ __all__ = ["infer_mtype_dict"]
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._series._registry import SeriesMtype
 
 #########################################################
 # methods to infer the machine type subject to a scitype
@@ -42,9 +43,9 @@ def infer_mtype_Series(obj):
     obj_type = type(obj)
 
     infer_dict = {
-        pd.Series: "pd.Series",
-        pd.DataFrame: "pd.DataFrame",
-        np.ndarray: "np.ndarray",
+        pd.Series: str(SeriesMtype.pd_series),
+        pd.DataFrame: str(SeriesMtype.pd_dataframe),
+        np.ndarray: str(SeriesMtype.np_array),
     }
 
     if obj_type not in infer_dict.keys():

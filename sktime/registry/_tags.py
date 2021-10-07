@@ -43,6 +43,7 @@ __author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
 
+from sktime.datatypes import Datatypes
 
 ESTIMATOR_TAG_REGISTER = [
     (
@@ -120,13 +121,27 @@ ESTIMATOR_TAG_REGISTER = [
     (
         "y_inner_mtype",
         "forecaster",
-        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        (
+            "list",
+            [
+                Datatypes.Series.pd_series,
+                Datatypes.Series.pd_dataframe,
+                Datatypes.Series.np_array,
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (
         "X_inner_mtype",
         "forecaster",
-        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        (
+            "list",
+            [
+                Datatypes.Series.pd_series,
+                Datatypes.Series.pd_dataframe,
+                Datatypes.Series.np_array,
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (

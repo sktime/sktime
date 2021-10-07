@@ -10,11 +10,12 @@ from warnings import warn
 
 import numpy as np
 
+from sktime.datatypes import Datatypes
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation import check_window_length
 from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_sp
 
 
 class _NaiveForecaster(_BaseWindowForecaster):
@@ -293,7 +294,7 @@ class NaiveForecaster(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "y_inner_mtype": [Datatypes.Series.pd_dataframe, Datatypes.Series.pd_series],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed

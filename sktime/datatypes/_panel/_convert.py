@@ -7,9 +7,8 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, PanelMtype
-
 from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, PanelMtype
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -147,7 +146,7 @@ def from_3d_numpy_to_2d_array_adp(obj, store=None):
 
 
 convert_dict[
-    ("numpy3D", str(PanelMtype.np_flat), str(PanelMtype))
+    (str(PanelMtype.np_3d_array), str(PanelMtype.np_flat), str(PanelMtype))
 ] = from_3d_numpy_to_2d_array_adp
 
 
@@ -1132,5 +1131,5 @@ def from_numpy3D_to_dflist(obj, store=None):
 
 
 convert_dict[
-    ("numpy3D", str(PanelMtype.list_pd_dataframe), str(PanelMtype))
+    (str(PanelMtype.np_3d_array), str(PanelMtype.list_pd_dataframe), str(PanelMtype))
 ] = from_numpy3D_to_dflist
