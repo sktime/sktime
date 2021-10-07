@@ -7,7 +7,7 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
 
-__author__ = ["Kutay Koralturk", "Martin Walter"]
+__author__ = ["kkoralturk", "aiwalter"]
 __all__ = ["MultiplexForecaster"]
 
 
@@ -79,7 +79,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

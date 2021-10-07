@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for time series classifier scitype.
 
@@ -21,8 +22,6 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __all__ = [
@@ -75,6 +74,7 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "coerce-X-to-numpy": True,
+        "coerce-X-to-pandas": False,
     }
 
     def __init__(self):
@@ -104,8 +104,10 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X, y = check_X_y(X, y, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X, y = check_X_y(
+            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
 
         self._fit(X, y)
 
@@ -129,8 +131,10 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances] - predicted class labels
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
 
         y = self._predict(X)
@@ -152,8 +156,10 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances, n_classes] - predictive pmf
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-
-        X = check_X(X, coerce_to_numpy=coerce_to_numpy)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        X = check_X(
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+        )
         self.check_is_fitted()
         return self._predict_proba(X)
 
