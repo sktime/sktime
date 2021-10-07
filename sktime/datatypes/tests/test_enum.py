@@ -2,20 +2,21 @@
 """File containing tests for the enum types."""
 import numpy as np
 import pytest
-from sktime.datatypes.types import Mtype, SciType
+
 from sktime.datatypes import (
+    Datatypes,
+    PanelMtype,
+    SeriesMtype,
     check_is,
     check_raise,
     convert,
     convert_to,
-    mtype,
     get_examples,
+    mtype,
     mtype_to_scitype,
-    SeriesMtype,
-    PanelMtype,
-    Datatypes,
 )
 from sktime.datatypes._registry import SCITYPE_REGISTER
+from sktime.datatypes.types import Mtype, SciType
 
 ENUM_SERIES_MTYPES = [mtype for mtype in SeriesMtype]
 ENUM_PANEL_MTYPES = [mtype for mtype in PanelMtype]
@@ -94,7 +95,7 @@ def test_series_enums(mtype: SeriesMtype) -> None:
 
 
 def test_datatypes_object() -> None:
-    """Test list methods"""
+    """Test list method."""
     list_mtypes = Datatypes.list_mtypes()
     list_scitypes = Datatypes.list_scitypes()
     assert isinstance(list_mtypes, dict)

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 __all__ = ["Datatypes"]
 
-from sktime.datatypes._series import SeriesMtype
 from sktime.datatypes._panel import PanelMtype
+from sktime.datatypes._series import SeriesMtype
 
 
 class Datatypes:
     """Mtype class containing valid types.
 
     Attributes
-    -----------
+    ----------
     Series: Enum
         Attribute containing the valid Series mtypes.
     Panel: Enum
@@ -21,7 +21,7 @@ class Datatypes:
 
     @staticmethod
     def list_scitypes() -> list:
-        """Method to get all valid scitypes.
+        """Get list of valid scitypes.
 
         Returns
         -------
