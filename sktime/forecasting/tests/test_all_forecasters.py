@@ -341,9 +341,7 @@ def _check_update_predict_predicted_index(
 
     for n_columns in n_columns_list:
         f = _construct_instance(Forecaster)
-        y_train = _make_series(
-            n_columns=n_columns, all_positive=True, index_type="datetime"
-        )
+        y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
         y_train, y_test = temporal_train_test_split(y)
         cv = SlidingWindowSplitter(
             fh,
