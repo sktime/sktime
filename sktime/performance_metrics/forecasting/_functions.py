@@ -16,7 +16,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
-from sktime.utils._statistics import weighted_geometric_mean
+from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
 
 __author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
@@ -1886,9 +1886,9 @@ def geometric_mean_relative_absolute_error(
         )
     else:
         check_consistent_length(y_true, horizon_weight)
-        output_errors = weighted_geometric_mean(
+        output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
-            sample_weight=horizon_weight,
+            weights=horizon_weight,
             axis=0,
         )
 
@@ -2012,9 +2012,9 @@ def geometric_mean_relative_squared_error(
         )
     else:
         check_consistent_length(y_true, horizon_weight)
-        output_errors = weighted_geometric_mean(
+        output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
-            sample_weight=horizon_weight,
+            weights=horizon_weight,
             axis=0,
         )
 
