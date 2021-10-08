@@ -1179,7 +1179,6 @@ class ProximityTree(BaseClassifier):
         setup_distance_measure=setup_all_distance_measure_getter,
         get_gain=gini_gain,
         max_depth=np.math.inf,
-        is_leaf=pure,
         verbosity=0,
         n_jobs=1,
         n_stump_evaluations=5,
@@ -1314,7 +1313,6 @@ class ProximityForest(BaseClassifier):
         get_gain=gini_gain,
         verbosity=0,
         max_depth=np.math.inf,
-        is_leaf=pure,
         n_jobs=1,
         n_stump_evaluations=5,
         find_stump=None,
@@ -1332,7 +1330,6 @@ class ProximityForest(BaseClassifier):
         measures based upon the dataset given
         :param get_gain: method to find the gain of a data split
         :param max_depth: maximum depth of the tree
-        :param is_leaf: function to decide when to mark a node as a leaf node
         :param verbosity: number reflecting the verbosity of logging
         :param n_jobs: number of parallel threads to use while building
         :param find_stump: method to find the best split of data / stump at
