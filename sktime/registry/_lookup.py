@@ -14,21 +14,19 @@ all_tags(estimator_types)
 
 import inspect
 import pkgutil
-import pandas as pd
-
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 
+import pandas as pd
+
 from sktime.base import BaseEstimator
-
-from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
-
 from sktime.registry._base_classes import (
-    TRANSFORMER_MIXIN_LIST,
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
+    TRANSFORMER_MIXIN_LIST,
 )
+from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
 
 VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
 VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
