@@ -27,30 +27,52 @@ from sktime.utils.validation.panel import check_X, check_X_y
 class RandomShapeletTransform(_PanelToTabularTransformer):
     """Random Shapelet Transform.
 
-    todo
+    Implementation of the binary shapelet transform along the lines of [1]_[2]_, with
+    randomly extracted shapelets.
+
+    Overview: Input "n" series with "d" dimensions of length "m". Continuously extract
+    candidate shapelets and filter them in batches.
+        For each candidate shapelet
+            - Extract a shapelet from an instance with random length, position and
+              dimension
+            - Using its distance to train cases, calculate the shapelets information
+              gain
+            - Abandon evaluating the shapelet if it is impossible to obtain a higher
+              information gain than the current worst
+        For each shapelet batch
+            - Add each candidate to its classes shapelet heap, removing the lowest
+              information gain shapelet if the max number of shapelets has been met
+            - Remove self-similar shapelets from the heap
+    Using the final set of filtered shapelets, transform the data into a vector of
+    of distances from a series to each shapelet.
 
     Parameters
     ----------
-    n_shapelet_samples : int or None, default=None
-        todo
+    n_shapelet_samples : int, default=100000
+        The number of candidate shapelets to be considered for the final transform.
+        Filtered down to <= max_shapelets, keeping the shapelets with the most
+        information gain.
     max_shapelets : int or None, default=None
-        Upper bound on number of shapelets to retain from each distinct class. todo
+        Max number of shapelets to keep for the final transform. Each class value will
+        have its own max, set to n_classes / max_shapelets. If None uses the min between
+        10 * n_instances and 1000
     min_shapelet_length : int, default=3
         Lower bound on candidate shapelet lengths.
     max_shapelet_length : int or None, default= None
         Upper bound on candidate shapelet lengths. If None no max length is used.
     remove_self_similar : boolean, default=True
-        Remove overlapping "self-similar" shapelets from the final transform.
+        Remove overlapping "self-similar" shapelets when merging candidate shapelets.
     time_limit_in_minutes : int, default=0
-        Time contract to limit build time in minutes, overriding n_estimators.
-        Default of 0 means n_estimators is used. todo
-    contract_max_n_shapelet_samples : int, default=500
-        Max number of estimators when time_limit_in_minutes is set. todo
+        Time contract to limit build time in minutes, overriding n_shapelet_samples.
+        Default of 0 means n_shapelet_samples is used.
+    contract_max_n_shapelet_samples : int, default=np.inf
+        Max number of shapelets to extract when time_limit_in_minutes is set.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``-1`` means using all processors. todo
-    batch_size : todo
-        todo
+        The number of jobs to run in parallel for both `fit` and `transform`.
+        ``-1`` means using all processors.
+    batch_size : int or None, default=None
+        Number of shapelet candidates processed before being merged into the set of best
+        shapelets. If none the max of n_instances and max_shapelets is used.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -188,9 +210,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         #     self._n_shapelet_samples = ??? todo find good default
 
         if self.max_shapelets is None:
-            self._max_shapelets = (
-                10 * self.n_instances if 10 * self.n_instances < 1000 else 1000
-            )
+            self._max_shapelets = min(10 * self.n_instances, 1000)
 
         if self.batch_size is None:
             self._batch_size = max(self.n_instances, self._max_shapelets)
