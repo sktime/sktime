@@ -24,9 +24,12 @@ from sklearn.utils.estimator_checks import (
     _assert_array_equal,
     _get_args,
     _make_args,
+)
+from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
+
 from sktime.base import BaseEstimator
 from sktime.exceptions import NotFittedError
 from sktime.registry import all_estimators
