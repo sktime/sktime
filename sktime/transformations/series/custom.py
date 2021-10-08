@@ -6,8 +6,6 @@
 __author__ = ["Bouke Postma"]
 __all__ = ["FunctionTransformer"]
 
-import warnings
-
 import numpy as np
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
@@ -93,13 +91,12 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
         """Check that func and inverse_func are the inverse."""
         X = np.random.random(size=5)
         X_round_trip = self.inverse_func(self.func(X))
-        if not (np.abs(X_round_trip - X) < 10 ** -9).all():
-            warnings.warn(
+        if not np.allclose(X_round_trip, X):
+            raise UserWarning(
                 "The provided functions are not strictly"
                 " inverse of each other. If you are sure you"
                 " want to proceed regardless, set"
-                " 'check_inverse=False'.",
-                UserWarning,
+                " 'check_inverse=False'."
             )
 
     def fit(self, Z, X=None):
