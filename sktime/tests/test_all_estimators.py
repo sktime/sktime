@@ -36,6 +36,7 @@ from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransforme
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
+from sktime.registry import all_estimators
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
