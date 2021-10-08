@@ -6,7 +6,6 @@ __all__ = ["check_estimator"]
 
 from inspect import getfullargspec, getmembers, isfunction
 
-from sktime.tests import test_all_estimators
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("pytest")
@@ -34,6 +33,8 @@ def check_estimator(estimator, silent=False):
         entries are (name of test function, whether test passed)
         only if silent=True
     """
+    from sktime.tests import test_all_estimators
+
     # get all functions in the module test_allestimators that start with "test"
     all_funcs = getmembers(test_all_estimators, isfunction)
     test_funcs = [x for x in all_funcs if x[0].startswith("test")]
