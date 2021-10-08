@@ -26,26 +26,30 @@ import pandas as pd
 import pytest
 
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests._config import TEST_ALPHAS
-from sktime.forecasting.tests._config import TEST_FHS
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
-from sktime.performance_metrics.forecasting import (
-    mean_absolute_percentage_error,
+from sktime.forecasting.model_selection import (
+    SlidingWindowSplitter,
+    temporal_train_test_split,
 )
+from sktime.forecasting.tests._config import (
+    TEST_ALPHAS,
+    TEST_FHS,
+    TEST_OOS_FHS,
+    TEST_STEP_LENGTHS,
+    TEST_WINDOW_LENGTHS,
+    VALID_INDEX_FH_COMBINATIONS,
+)
+from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
-from sktime.utils._testing.forecasting import _get_expected_index_for_update_predict
-from sktime.utils._testing.forecasting import _make_fh
-from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.forecasting import (
+    _assert_correct_pred_time_index,
+    _get_expected_index_for_update_predict,
+    _get_n_columns,
+    _make_fh,
+    make_forecasting_problem,
+)
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils._testing.forecasting import _get_n_columns
 
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
@@ -335,9 +339,7 @@ def _check_update_predict_predicted_index(
 
     for n_columns in n_columns_list:
         f = _construct_instance(Forecaster)
-        y_train = _make_series(
-            n_columns=n_columns, all_positive=True, index_type="datetime"
-        )
+        y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
         y_train, y_test = temporal_train_test_split(y)
         cv = SlidingWindowSplitter(
             fh,

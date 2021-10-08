@@ -292,6 +292,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         ]
         self.shapelets.sort(reverse=True, key=lambda t: (t[0], t[1], t[2]))
 
+        to_keep = RandomShapeletTransform._remove_identical_shapelets(self.shapelets)
+        self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
+
         self._sorted_indicies = []
         for s in self.shapelets:
             sabs = np.abs(s[6])
@@ -324,14 +327,18 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         output = np.zeros((len(X), len(self.shapelets)))
 
         for i, series in enumerate(X):
-            for n, shapelet in enumerate(self.shapelets):
-                output[i][n] = _online_shapelet_distance(
+            dists = Parallel(n_jobs=self._n_jobs)(
+                delayed(_online_shapelet_distance)(
                     series[shapelet[3]],
                     shapelet[6],
                     self._sorted_indicies[n],
                     shapelet[2],
                     shapelet[1],
                 )
+                for n, shapelet in enumerate(self.shapelets)
+            )
+
+            output[i] = dists
 
         return pd.DataFrame(output)
 
@@ -462,6 +469,22 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                     else:
                         to_keep[i] = False
                         break
+
+        return to_keep
+
+    @staticmethod
+    @njit(fastmath=True, cache=True)
+    def _remove_identical_shapelets(shapelets):
+        to_keep = [True] * len(shapelets)
+
+        for i in range(len(shapelets)):
+            for n in range(i + 1, len(shapelets)):
+                if (
+                    to_keep[n]
+                    and shapelets[i][1] == shapelets[n][1]
+                    and np.array_equal(shapelets[i][6], shapelets[n][6])
+                ):
+                    to_keep[n] = False
 
         return to_keep
 
