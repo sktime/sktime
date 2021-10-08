@@ -23,30 +23,47 @@ from sktime.utils.validation.panel import check_X_y
 class ShapeletTransformClassifier(BaseClassifier):
     """Shapelet Transform Classifier.
 
-    TODO
-    Basic implementation along the lines of [1,2]
+    Implementation of the binary shapelet transform classifier along the lines
+    of [1]_[2]_. Transforms the data using the configurable shapelet transform and then
+    builds a rotation forest classifier.
+    As some implementations and applications contract the classifier solely, contracting
+    is available for the transform only and both classifier and transform.
 
     Parameters
     ----------
-    n_shapelet_samples : int, default=10000
-
+    n_shapelet_samples : int, default=100000
+        The number of candidate shapelets to be considered for the final transform.
+        Filtered down to <= max_shapelets, keeping the shapelets with the most
+        information gain.
     max_shapelets : int or None, default=None
-
+        Max number of shapelets to keep for the final transform. Each class value will
+        have its own max, set to n_classes / max_shapelets. If None uses the min between
+        10 * n_instances and 1000
     max_shapelet_length : int or None, default=None
-
+        Lower bound on candidate shapelet lengths for the transform.
     estimator : BaseEstimator or None, default=None
-
-    transform_limit_in_minutes : int, default=60
+        Base estimator for the ensemble, can be supplied a sklearn BaseEstimator. If
+        None a default RotationForest classifier is used.
+    transform_limit_in_minutes : int, default=0
         Time contract to limit transform time in minutes for the shapelet transform,
         overriding n_shapelets. A value of 0 means n_shapelets is used.
     time_limit_in_minutes : int, default=0
-        Time contract to limit build time in minutes, overriding n_estimators.
-        Default of 0 means n_estimators is used.
+        Time contract to limit build time in minutes, overriding n_shapelet_samples and
+        transform_limit_in_minutes. The estimator will only be contracted if a
+        time_limit_in_minutes parameter is present. Default of 0 means n_estimators or
+        transform_limit_in_minutes is used.
+    contract_max_n_shapelet_samples : int, default=np.inf
+        Max number of shapelets to extract when contracting the transform with
+        transform_limit_in_minutes or time_limit_in_minutes.
     save_transformed_data : bool, default=False
         Save the data transformed in fit for use in _get_train_probs.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    batch_size : int or None, default=None
+        Number of shapelet candidates processed before being merged into the set of best
+        shapelets in the transform. If none the max of n_instances and max_shapelets is
+        used.
     random_state : int or None, default=None
         Seed for random number generation.
 
