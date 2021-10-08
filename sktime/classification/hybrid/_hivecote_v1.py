@@ -111,6 +111,7 @@ class HIVECOTEV1(BaseClassifier):
     def _fit(self, X, y):
         """Fit a HIVE-COTEv1.0 classifier.
 
+
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_instances, 1]
