@@ -43,6 +43,7 @@ from sktime.utils._testing.estimator_checks import (
     _get_args,
     _make_args,
 )
+
 ALL_ESTIMATORS = all_estimators(
     return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
 )
