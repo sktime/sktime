@@ -6,10 +6,6 @@ __all__ = ["check_estimator"]
 
 from inspect import getfullargspec, getmembers, isfunction
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pytest")
-
 
 def check_estimator(estimator, silent=False):
     """Run tests on estimator, manually.
