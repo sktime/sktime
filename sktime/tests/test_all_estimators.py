@@ -20,12 +20,6 @@ import pytest
 from sklearn import clone
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
-    _assert_array_almost_equal,
-    _assert_array_equal,
-    _get_args,
-    _make_args,
-)
-from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
@@ -43,7 +37,12 @@ from sktime.tests._config import (
     VALID_TRANSFORMER_TYPES,
 )
 from sktime.utils._testing.deep_equals import deep_equals
-
+from sktime.utils._testing.estimator_checks import (
+    _assert_array_almost_equal,
+    _assert_array_equal,
+    _get_args,
+    _make_args,
+)
 ALL_ESTIMATORS = all_estimators(
     return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
 )
