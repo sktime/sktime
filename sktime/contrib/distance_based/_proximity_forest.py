@@ -14,12 +14,14 @@ __author__ = ["George Oastler", "Morad A. Azaz"]
 __all__ = ["ProximityForest", "_CachedTransformer", "ProximityStump", "ProximityTree"]
 
 from logging import exception
+
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
+
 from sktime.classification.distance_based._proximity_forest_utils import (
     arg_min as _arg_min,
 )
