@@ -10,8 +10,8 @@ __all__ = [
     "check_equal_time_index",
     "check_consistent_index_type",
 ]
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
