@@ -290,7 +290,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
             for s in class_shapelets
             if s[0] > 0
         ]
-        self.shapelets.sort(reverse=True, key=lambda t: (t[0], t[1], t[2]))
+        self.shapelets.sort(reverse=True, key=lambda s: (s[0], s[1], s[2], s[3], s[4]))
 
         to_keep = RandomShapeletTransform._remove_identical_shapelets(self.shapelets)
         self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
@@ -436,7 +436,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         quality = _calc_binary_ig(orderline, this_cls_count, other_cls_count)
 
-        return quality
+        return round(quality, 12)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
@@ -445,6 +445,12 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     ):
         for shapelet in candidate_shapelets:
             if shapelet[5] == cls_idx and shapelet[0] > 0:
+                if (
+                    len(shapelet_heap) == max_shapelets_per_class
+                    and shapelet[0] < shapelet_heap[0][0]
+                ):
+                    continue
+
                 heapq.heappush(shapelet_heap, shapelet)
 
                 if len(shapelet_heap) > max_shapelets_per_class:
