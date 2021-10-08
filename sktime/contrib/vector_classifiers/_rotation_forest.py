@@ -406,7 +406,9 @@ class RotationForest(BaseEstimator):
             while True:
                 # ignore err state on PCA because we account if it fails.
                 with np.errstate(divide="ignore", invalid="ignore"):
-                    pca = PCA().fit(X_t)
+                    # differences between os occasionally. seems to happen when there
+                    # are low amounts of cases in the fit
+                    pca = PCA(random_state=rs).fit(X_t)
 
                 if not np.isnan(pca.explained_variance_ratio_).all():
                     break
