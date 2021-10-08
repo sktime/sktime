@@ -63,7 +63,7 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.transformations.series.custom import FunctionTransformer
+    >>> from sktime.transformations.series.func_transform import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, np.expm1)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.fit_transform(X)
