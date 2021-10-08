@@ -6,33 +6,57 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly"]
 
-from inspect import signature
+import numbers
+import pickle
+import types
+from copy import deepcopy
+from inspect import isclass, signature
 
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from sklearn import clone
+from sklearn.utils._testing import set_random_state
+from sklearn.utils.estimator_checks import (
+    check_get_params_invariance as _check_get_params_invariance,
+)
+from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 from sklearn.utils.validation import check_random_state
 
+from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
+from sktime.clustering.base.base import BaseClusterer
+from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.tests._config import VALID_ESTIMATOR_TYPES
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils._testing.forecasting import _make_series
-from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils._testing.panel import _make_panel_X
-from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils._testing.panel import make_regression_problem
-from sktime.utils._testing.panel import make_clustering_problem
-from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.clustering.base.base import BaseClusterer
-
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.tests._config import (
+    NON_STATE_CHANGING_METHODS,
+    VALID_ESTIMATOR_BASE_TYPES,
+    VALID_ESTIMATOR_TAGS,
+    VALID_ESTIMATOR_TYPES,
+    VALID_TRANSFORMER_TYPES,
+)
+from sktime.transformations.base import (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
 from sktime.utils._testing.annotation import make_annotation_problem
+from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils._testing.forecasting import (
+    _get_n_columns,
+    _make_series,
+    make_forecasting_problem,
+)
+from sktime.utils._testing.panel import (
+    _make_panel_X,
+    make_classification_problem,
+    make_clustering_problem,
+    make_regression_problem,
+)
 
 
 def _get_err_msg(estimator):
@@ -70,7 +94,15 @@ def _make_fit_args(estimator, **kwargs):
         if isinstance(estimator, _SeriesToSeriesTransformer):
             y = _make_series(**kwargs)
         else:
-            y = make_forecasting_problem(**kwargs)
+            # create matching n_columns input, if n_columns not passed
+            # e.g., to give bivariate y to strictly multivariate forecaster
+            if "n_columns" not in kwargs.keys():
+                n_columns = _get_n_columns(
+                    estimator.get_tag(tag_name="scitype:y", raise_error=False)
+                )[0]
+                y = make_forecasting_problem(n_columns=n_columns, **kwargs)
+            else:
+                y = make_forecasting_problem(**kwargs)
         fh = 1
         X = None
         return y, X, fh
