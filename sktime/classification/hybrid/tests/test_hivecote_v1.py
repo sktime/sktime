@@ -20,9 +20,9 @@ def test_hivecote_v1_on_unit_test():
         random_state=0,
         stc_params={
             "estimator": RotationForest(n_estimators=5),
-            "n_shapelet_samples": 100,
+            "n_shapelet_samples": 200,
             "max_shapelets": 20,
-            "batch_size": 30,
+            "batch_size": 50,
         },
         tsf_params={"n_estimators": 10},
         rise_params={"n_estimators": 10},
@@ -38,40 +38,40 @@ def test_hivecote_v1_on_unit_test():
 hivecote_v1_unit_test_probas = np.array(
     [
         [
-            0.3522528187125138,
-            0.6477471812874862,
+            0.24284662085140493,
+            0.757153379148595,
         ],
         [
             0.7394520984193731,
             0.26054790158062685,
         ],
         [
-            0.23628562621939045,
-            0.7637143737806096,
+            0.12687942835828162,
+            0.8731205716417183,
         ],
         [
             0.797944642793013,
             0.20205535720698695,
         ],
         [
-            0.6305180216652599,
-            0.36948197833474017,
+            0.7399242195263688,
+            0.2600757804736313,
         ],
         [
             0.9726484505347228,
             0.027351549465277212,
         ],
         [
-            0.736757747326386,
-            0.26324225267361395,
+            0.7914608462569405,
+            0.20853915374305954,
         ],
         [
-            0.13589070320833677,
-            0.8641092967916633,
+            0.08118760427778235,
+            0.9188123957222177,
         ],
         [
-            0.6701981703166822,
-            0.32980182968331784,
+            0.6154950713861278,
+            0.3845049286138723,
         ],
         [
             0.861186895466627,
@@ -100,9 +100,9 @@ hivecote_v1_unit_test_probas = np.array(
 #         random_state=0,
 #         stc_params={
 #             "estimator": RotationForest(n_estimators=5),
-#             "n_shapelet_samples": 100,
+#             "n_shapelet_samples": 200,
 #             "max_shapelets": 20,
-#             "batch_size": 30,
+#             "batch_size": 50,
 #         },
 #         tsf_params={"n_estimators": 10},
 #         rise_params={"n_estimators": 10},
