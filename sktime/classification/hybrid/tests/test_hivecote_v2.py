@@ -21,7 +21,7 @@ def test_hivecote_v2_on_unit_test():
         stc_params={
             "estimator": RotationForest(n_estimators=5),
             "n_shapelet_samples": 100,
-            "max_shapelets": 10,
+            "max_shapelets": 20,
             "batch_size": 30,
         },
         drcif_params={"n_estimators": 10},
@@ -52,7 +52,7 @@ def test_hivecote_v2_on_unit_test():
 #         stc_params={
 #             "estimator": RotationForest(contract_max_n_estimators=10),
 #             "contract_max_n_shapelet_samples": 100,
-#             "max_shapelets": 10,
+#             "max_shapelets": 20,
 #             "batch_size": 30,
 #         },
 #         drcif_params={"contract_max_n_estimators": 10},
@@ -73,7 +73,7 @@ def test_hivecote_v2_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train HIVE-COTE v2
     hc2 = HIVECOTEV2(
@@ -81,7 +81,7 @@ def test_hivecote_v2_on_basic_motions():
         stc_params={
             "estimator": RotationForest(n_estimators=5),
             "n_shapelet_samples": 100,
-            "max_shapelets": 10,
+            "max_shapelets": 20,
             "batch_size": 30,
         },
         drcif_params={"n_estimators": 10},
@@ -102,108 +102,108 @@ def test_hivecote_v2_on_basic_motions():
 hivecote_v2_unit_test_probas = np.array(
     [
         [
-            0.14367820338807205,
-            0.8563217966119279,
+            0.26472960379372157,
+            0.7352703962062784,
         ],
         [
-            0.8955021437498036,
-            0.10449785625019643,
+            0.9079104072552392,
+            0.09208959274476083,
         ],
         [
-            0.03918034713787564,
-            0.9608196528621243,
+            0.1726400110489607,
+            0.8273599889510392,
         ],
         [
-            0.9133207479454599,
-            0.08667925205453997,
+            0.9689208428220419,
+            0.03107915717795815,
         ],
         [
-            0.8114216412721086,
-            0.18857835872789155,
+            0.7410094106134945,
+            0.25899058938650565,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            0.7722412941342328,
-            0.22775870586576716,
+            0.7755374128232866,
+            0.2244625871767135,
         ],
         [
-            0.07836069427575128,
-            0.9216393057242487,
+            0.13811200883916858,
+            0.8618879911608315,
         ],
         [
-            0.7685129514621234,
-            0.23148704853787663,
+            0.8175594247692761,
+            0.18244057523072388,
         ],
         [
-            0.8897823355478597,
-            0.11021766445214023,
+            0.9481774238722471,
+            0.051822576127752755,
         ],
     ]
 )
 stc_basic_motions_probas = np.array(
     [
         [
-            0.008279263436621997,
             0.0,
-            0.04042609099913083,
-            0.9512946455642473,
-        ],
-        [
-            0.9096744918362913,
-            0.03311705374648798,
             0.0,
-            0.05720845441722073,
+            0.03732718894009217,
+            0.9626728110599079,
         ],
         [
-            0.16622810510460256,
-            0.04042609099913083,
-            0.727858086042424,
-            0.06548771785384273,
-        ],
-        [
-            0.16170436399652333,
-            0.7978695450043458,
-            0.04042609099913083,
+            0.9533410138248848,
+            0.046658986175115214,
+            0.0,
             0.0,
         ],
         [
+            0.05713993544930875,
             0.0,
-            0.09785838196119748,
-            0.04042609099913083,
-            0.8617155270396717,
+            0.886869281140553,
+            0.055990783410138245,
         ],
         [
-            0.04892919098059874,
-            0.04892919098059874,
-            0.056984617872374826,
-            0.8451570001664277,
+            0.05599078341013825,
+            0.5592140336841426,
+            0.3567997912006501,
+            0.027995391705069126,
         ],
         [
-            0.926456855254381,
-            0.008279263436621996,
             0.0,
-            0.06526388130899681,
-        ],
-        [
-            0.12366963195601641,
-            0.16419956120112308,
-            0.7038515434062385,
-            0.008279263436621996,
-        ],
-        [
-            0.18654215430638932,
-            0.7968993188203666,
-            0.008279263436621996,
-            0.008279263436621996,
-        ],
-        [
-            0.05698461787237482,
-            0.9264568552543812,
             0.0,
-            0.01655852687324399,
+            0.055990783410138245,
+            0.9440092165898617,
+        ],
+        [
+            0.0,
+            0.00933179723502304,
+            0.06532258064516129,
+            0.9253456221198156,
+        ],
+        [
+            0.9720046082949308,
+            0.027995391705069123,
+            0.0,
+            0.0,
+        ],
+        [
+            0.016051824124423963,
+            0.03128480637096774,
+            0.8178584400557337,
+            0.13480492944887468,
+        ],
+        [
+            0.06532258064516129,
+            0.8377572994566552,
+            0.08758832266316038,
+            0.00933179723502304,
+        ],
+        [
+            0.06532258064516129,
+            0.8470890966916783,
+            0.08758832266316038,
+            0.0,
         ],
     ]
 )
@@ -229,7 +229,7 @@ stc_basic_motions_probas = np.array(
 #         stc_params={
 #             "estimator": RotationForest(n_estimators=5),
 #             "n_shapelet_samples": 100,
-#             "max_shapelets": 10,
+#             "max_shapelets": 20,
 #             "batch_size": 30,
 #         },
 #         drcif_params={"n_estimators": 10},
@@ -239,6 +239,7 @@ stc_basic_motions_probas = np.array(
 #             "max_ensemble_size": 5,
 #             "randomly_selected_params": 5,
 #         },
+#         verbose=1
 #     )
 #
 #     hc2_u.fit(X_train.iloc[indices], y_train[indices])
@@ -247,14 +248,14 @@ stc_basic_motions_probas = np.array(
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
+#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
 #     hc2_m = HIVECOTEV2(
 #         random_state=0,
 #         stc_params={
 #             "estimator": RotationForest(n_estimators=5),
 #             "n_shapelet_samples": 100,
-#             "max_shapelets": 10,
+#             "max_shapelets": 20,
 #             "batch_size": 30,
 #         },
 #         drcif_params={"n_estimators": 10},
@@ -267,5 +268,5 @@ stc_basic_motions_probas = np.array(
 #     )
 #
 #     hc2_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = hc2_m.predict_proba(X_test.iloc[indices[:10]])
+#     probas = hc2_m.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
