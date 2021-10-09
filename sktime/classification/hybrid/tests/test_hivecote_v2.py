@@ -20,7 +20,7 @@ def test_hivecote_v2_on_unit_test():
         random_state=0,
         stc_params={
             "estimator": RotationForest(n_estimators=5),
-            "n_shapelet_samples": 200,
+            "n_shapelet_samples": 250,
             "max_shapelets": 20,
             "batch_size": 50,
         },
