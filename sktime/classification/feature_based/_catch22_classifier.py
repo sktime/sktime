@@ -146,7 +146,6 @@ class Catch22Classifier(BaseClassifier):
         preds : np.ndarray of shape (n, 1)
             Predicted class.
         """
-
         X_t = self._transformer.transform(X)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         return self._estimator.predict(X_t)
@@ -163,7 +162,6 @@ class Catch22Classifier(BaseClassifier):
         predicted_probs : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
-
         X_t = self._transformer.transform(X)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
 
