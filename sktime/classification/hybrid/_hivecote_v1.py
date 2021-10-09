@@ -89,7 +89,7 @@ class HIVECOTEV1(BaseClassifier):
     >>> clf = HIVECOTEV1(
     ...     stc_params={
     ...         "estimator": RotationForest(n_estimators=5),
-    ...         "n_shapelets_considered": 100,
+    ...         "n_shapelet_samples": 100,
     ...         "max_shapelets": 10,
     ...         "batch_size": 30,
     ...     },
