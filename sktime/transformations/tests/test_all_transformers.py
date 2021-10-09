@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Tests for transformers."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Unit tests common to all transformers."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
@@ -96,7 +97,8 @@ def check_series_to_series_transform_multivariate(Estimator):
             Estimator, n_timepoints=n_timepoints, n_columns=n_columns
         )
         assert isinstance(out, (pd.DataFrame, np.ndarray))
-        assert out.shape == (n_timepoints, n_columns)
+        if Estimator.get_class_tag("transform-returns-same-time-index"):
+            assert out.shape == (n_timepoints, n_columns)
 
 
 def check_panel_to_tabular_transform_univariate(Estimator):
@@ -142,15 +144,16 @@ def check_panel_to_panel_transform_multivariate(Estimator):
 
 
 def check_transform_returns_same_time_index(Estimator):
-    assert issubclass(Estimator, _SeriesToSeriesTransformer)
-    estimator = _construct_instance(Estimator)
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
-    for method in ["transform", "inverse_transform"]:
-        if hasattr(estimator, method):
-            X = _make_args(estimator, method)[0]
-            Xt = estimator.transform(X)
-            np.testing.assert_array_equal(X.index, Xt.index)
+    if Estimator.get_class_tag("transform-returns-same-time-index"):
+        assert issubclass(Estimator, _SeriesToSeriesTransformer)
+        estimator = _construct_instance(Estimator)
+        fit_args = _make_args(estimator, "fit")
+        estimator.fit(*fit_args)
+        for method in ["transform", "inverse_transform"]:
+            if hasattr(estimator, method):
+                X = _make_args(estimator, method)[0]
+                Xt = estimator.transform(X)
+                np.testing.assert_array_equal(X.index, Xt.index)
 
 
 def check_transform_inverse_transform_equivalent(Estimator):
@@ -158,7 +161,10 @@ def check_transform_inverse_transform_equivalent(Estimator):
     X = _make_args(estimator, "fit")[0]
     Xt = estimator.fit_transform(X)
     Xit = estimator.inverse_transform(Xt)
-    _assert_array_almost_equal(X, Xit)
+    if Estimator.get_class_tag("transform-returns-same-time-index"):
+        _assert_array_almost_equal(X, Xit)
+    else:
+        _assert_array_almost_equal(X.loc[Xit.index], Xit)
 
 
 def check_transformer_type(Estimator):
