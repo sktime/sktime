@@ -33,7 +33,7 @@ class HIVECOTEV2(BaseClassifier):
     ----------
     stc_params : dict or None, default=None
         Parameters for the ShapeletTransformClassifier module. If None, uses the
-        default parameters.
+        default parameters with a 2 hour transform contract.
     drcif_params : dict or None, default=None
         Parameters for the DrCIF module. If None, uses the default parameters with
         n_estimators set to 500.
@@ -71,7 +71,7 @@ class HIVECOTEV2(BaseClassifier):
     ----------
     .. [1] Middlehurst, Matthew, James Large, Michael Flynn, Jason Lines, Aaron Bostrom,
        and Anthony Bagnall. "HIVE-COTE 2.0: a new meta ensemble for time series
-       classification." arXiv preprint arXiv:2104.07551 (2021).
+       classification." Machine Learning (2021).
 
     Examples
     --------
@@ -82,8 +82,8 @@ class HIVECOTEV2(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = HIVECOTEV2(
     ...     stc_params={
-    ...         "estimator": RotationForest(n_estimators=10),
-    ...         "n_shapelets_considered": 500,
+    ...         "estimator": RotationForest(n_estimators=5),
+    ...         "n_shapelets_considered": 100,
     ...         "max_shapelets": 10,
     ...         "batch_size": 30,
     ...     },

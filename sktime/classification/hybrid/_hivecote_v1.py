@@ -30,13 +30,13 @@ class HIVECOTEV1(BaseClassifier):
     """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
-    representations using the CAWPE structure as described in [1].
+    representations using the CAWPE structure as described in [1]_.
 
     Parameters
     ----------
     stc_params : dict or None, default=None
         Parameters for the ShapeletTransformClassifier module. If None, uses the
-        default parameters.
+        default parameters with a 2 hour transform contract.
     tsf_params : dict or None, default=None
         Parameters for the TimeSeriesForestClassifier module. If None, uses the default
         parameters with n_estimators set to 500.
@@ -63,7 +63,8 @@ class HIVECOTEV1(BaseClassifier):
 
     See Also
     --------
-    HIVECOTEV2
+    HIVECOTEV2, ShapeletTransformClassifier, TimeSeriesForestClassifier,
+    RandomIntervalSpectralForest, ContractableBOSS
 
     Notes
     -----
@@ -87,14 +88,14 @@ class HIVECOTEV1(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = HIVECOTEV1(
     ...     stc_params={
-    ...         "estimator": RotationForest(n_estimators=10),
-    ...         "n_shapelets_considered": 500,
+    ...         "estimator": RotationForest(n_estimators=5),
+    ...         "n_shapelets_considered": 100,
     ...         "max_shapelets": 10,
     ...         "batch_size": 30,
     ...     },
-    ...     tsf_params={"n_estimators": 3},
-    ...     rise_params={"n_estimators": 3},
-    ...     cboss_params={"n_parameter_samples": 10, "max_ensemble_size": 3},
+    ...     tsf_params={"n_estimators": 10},
+    ...     rise_params={"n_estimators": 10},
+    ...     cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
     ... )
     >>> clf.fit(X_train, y_train)
     HIVECOTEV1(...)
@@ -154,7 +155,7 @@ class HIVECOTEV1(BaseClassifier):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         if self.stc_params is None:
-            self._stc_params = {"time_limit_in_minutes": 120}
+            self._stc_params = {"transform_limit_in_minutes": 120}
         if self.tsf_params is None:
             self._tsf_params = {"n_estimators": 500}
         if self.rise_params is None:

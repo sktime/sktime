@@ -263,7 +263,7 @@ ESTIMATOR_TEST_PARAMS = {
     ShapeletTransformClassifier: {
         "estimator": RotationForest(n_estimators=3),
         "max_shapelets": 5,
-        "n_shapelet_samples": 100,
+        "n_shapelet_samples": 50,
         "batch_size": 20,
     },
     ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
@@ -274,7 +274,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,
-        "n_shapelet_samples": 100,
+        "n_shapelet_samples": 50,
         "batch_size": 20,
     },
     SignatureTransformer: {
@@ -302,7 +302,9 @@ ESTIMATOR_TEST_PARAMS = {
     HIVECOTEV1: {
         "stc_params": {
             "estimator": RotationForest(n_estimators=2),
-            "transform_limit_in_minutes": 0.01,
+            "max_shapelets": 5,
+            "n_shapelet_samples": 20,
+            "batch_size": 10,
         },
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
@@ -311,7 +313,9 @@ ESTIMATOR_TEST_PARAMS = {
     HIVECOTEV2: {
         "stc_params": {
             "estimator": RotationForest(n_estimators=2),
-            "transform_limit_in_mins": 0.01,
+            "max_shapelets": 5,
+            "n_shapelet_samples": 20,
+            "batch_size": 10,
         },
         "drcif_params": {"n_estimators": 2},
         "arsenal_params": {"num_kernels": 20, "n_estimators": 2},
