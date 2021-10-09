@@ -111,7 +111,6 @@ class HIVECOTEV1(BaseClassifier):
     def _fit(self, X, y):
         """Fit a HIVE-COTEv1.0 classifier.
 
-
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_instances, 1]
@@ -122,7 +121,6 @@ class HIVECOTEV1(BaseClassifier):
         -------
         self : object
         """
-
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
@@ -266,7 +264,6 @@ class HIVECOTEV1(BaseClassifier):
         output : numpy array of shape =
                 [n_instances, num_classes] of probabilities
         """
-
         dists = np.zeros((X.shape[0], self.n_classes))
 
         dists = np.add(
