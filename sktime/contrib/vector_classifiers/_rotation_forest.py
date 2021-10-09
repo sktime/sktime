@@ -402,8 +402,7 @@ class RotationForest(BaseEstimator):
             )
             X_t = X_t[sample_ind]
 
-            # try to fit the PCA if it fails, remake it, and add 10 random data
-            # instances.
+            # try to fit the PCA if it fails, remake it, and add 10 random data instances.
             while True:
                 # ignore err state on PCA because we account if it fails.
                 with np.errstate(divide="ignore", invalid="ignore"):
@@ -419,8 +418,7 @@ class RotationForest(BaseEstimator):
 
             pcas.append(pca)
 
-        # merge all the pca_transformed data into one instance and build a classifier
-        # on it.
+        # merge all the pca_transformed data into one instance and build a classifier on it.
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
