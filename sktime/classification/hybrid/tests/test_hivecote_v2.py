@@ -73,7 +73,7 @@ def test_hivecote_v2_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+    indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
 
     # train HIVE-COTE v2
     hc2 = HIVECOTEV2(
@@ -146,64 +146,64 @@ hivecote_v2_unit_test_probas = np.array(
 stc_basic_motions_probas = np.array(
     [
         [
+            0.008279263436621996,
             0.0,
             0.0,
-            0.03732718894009217,
-            0.9626728110599079,
+            0.991720736563378,
         ],
         [
-            0.9533410138248848,
-            0.046658986175115214,
+            0.8692484008371605,
+            0.07354314474561881,
             0.0,
-            0.0,
+            0.05720845441722073,
         ],
         [
-            0.05713993544930875,
+            0.16622810510460254,
             0.0,
-            0.886869281140553,
-            0.055990783410138245,
+            0.7278580860424239,
+            0.10591380885297355,
         ],
         [
-            0.05599078341013825,
-            0.5592140336841426,
-            0.3567997912006501,
-            0.027995391705069126,
+            0.1212782729973925,
+            0.8382956360034767,
+            0.0,
+            0.04042609099913083,
         ],
         [
+            0.04042609099913083,
+            0.09785838196119748,
             0.0,
-            0.0,
-            0.055990783410138245,
-            0.9440092165898617,
+            0.8617155270396717,
         ],
         [
-            0.0,
-            0.00933179723502304,
-            0.06532258064516129,
-            0.9253456221198156,
+            0.04892919098059874,
+            0.04892919098059874,
+            0.056984617872374826,
+            0.8451570001664277,
         ],
         [
-            0.9720046082949308,
-            0.027995391705069123,
+            0.9668829462535119,
+            0.008279263436621996,
             0.0,
-            0.0,
+            0.024837790309865986,
         ],
         [
-            0.016051824124423963,
-            0.03128480637096774,
-            0.8178584400557337,
-            0.13480492944887468,
+            0.08324354095688558,
+            0.20462565220025392,
+            0.7038515434062385,
+            0.008279263436621996,
         ],
         [
-            0.06532258064516129,
-            0.8377572994566552,
-            0.08758832266316038,
-            0.00933179723502304,
+            0.1461160633072585,
+            0.7968993188203667,
+            0.008279263436621997,
+            0.04870535443575283,
         ],
         [
-            0.06532258064516129,
-            0.8470890966916783,
-            0.08758832266316038,
-            0.0,
+            0.05698461787237482,
+            0.8860307642552503,
+            0.04042609099913083,
+            0.01655852687324399,
         ],
     ]
 )
@@ -239,7 +239,6 @@ stc_basic_motions_probas = np.array(
 #             "max_ensemble_size": 5,
 #             "randomly_selected_params": 5,
 #         },
-#         verbose=1
 #     )
 #
 #     hc2_u.fit(X_train.iloc[indices], y_train[indices])
@@ -248,7 +247,7 @@ stc_basic_motions_probas = np.array(
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+#     indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
 #
 #     hc2_m = HIVECOTEV2(
 #         random_state=0,
@@ -268,5 +267,5 @@ stc_basic_motions_probas = np.array(
 #     )
 #
 #     hc2_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = hc2_m.predict_proba(X_test.iloc[indices])
+#     probas = hc2_m.predict_proba(X_test.iloc[indices[:10]])
 #     print_array(probas)

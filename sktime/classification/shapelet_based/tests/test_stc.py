@@ -62,7 +62,7 @@ def test_stc_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+    indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
 
     # train STC
     stc = ShapeletTransformClassifier(
@@ -75,7 +75,7 @@ def test_stc_on_basic_motions():
     stc.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = stc.predict_proba(X_test.iloc[indices])
+    probas = stc.predict_proba(X_test.iloc[indices[:10]])
     testing.assert_array_equal(probas, stc_basic_motions_probas)
 
 
@@ -132,22 +132,28 @@ stc_basic_motions_probas = np.array(
             1.0,
         ],
         [
-            0.7,
+            0.6,
+            0.1,
+            0.0,
             0.3,
-            0.0,
-            0.0,
         ],
         [
             0.0,
             0.0,
-            0.8,
-            0.2,
+            1.0,
+            0.0,
         ],
         [
-            0.2,
+            0.4,
             0.5,
-            0.3,
             0.0,
+            0.1,
+        ],
+        [
+            0.2,
+            0.0,
+            0.1,
+            0.7,
         ],
         [
             0.0,
@@ -156,33 +162,27 @@ stc_basic_motions_probas = np.array(
             1.0,
         ],
         [
+            0.9,
             0.0,
             0.0,
+            0.1,
+        ],
+        [
+            0.0,
+            0.0,
+            0.9,
+            0.1,
+        ],
+        [
+            0.1,
+            0.5,
+            0.0,
+            0.4,
+        ],
+        [
             0.1,
             0.9,
-        ],
-        [
-            0.6,
-            0.2,
             0.0,
-            0.2,
-        ],
-        [
-            0.0,
-            0.0,
-            0.8,
-            0.2,
-        ],
-        [
-            0.1,
-            0.6,
-            0.2,
-            0.1,
-        ],
-        [
-            0.3,
-            0.5,
-            0.2,
             0.0,
         ],
     ]
@@ -219,7 +219,7 @@ stc_basic_motions_probas = np.array(
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+#     indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
 #
 #     stc_m = ShapeletTransformClassifier(
 #         estimator=RotationForest(n_estimators=10),
@@ -230,5 +230,5 @@ stc_basic_motions_probas = np.array(
 #     )
 #
 #     stc_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = stc_m.predict_proba(X_test.iloc[indices])
+#     probas = stc_m.predict_proba(X_test.iloc[indices[:10]])
 #     print_array(probas)
