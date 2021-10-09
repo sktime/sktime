@@ -88,10 +88,10 @@ class HIVECOTEV1(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = HIVECOTEV1(
     ...     stc_params={
-    ...         "estimator": RotationForest(n_estimators=5),
-    ...         "n_shapelet_samples": 100,
-    ...         "max_shapelets": 10,
-    ...         "batch_size": 30,
+    ...         "estimator": RotationForest(n_estimators=3),
+    ...         "n_shapelet_samples": 500,
+    ...         "max_shapelets": 20,
+    ...         "batch_size": 100,
     ...     },
     ...     tsf_params={"n_estimators": 10},
     ...     rise_params={"n_estimators": 10},

@@ -19,10 +19,10 @@ def test_hivecote_v1_on_unit_test():
     hc1 = HIVECOTEV1(
         random_state=0,
         stc_params={
-            "estimator": RotationForest(n_estimators=5),
-            "n_shapelet_samples": 250,
+            "estimator": RotationForest(n_estimators=3),
+            "n_shapelet_samples": 500,
             "max_shapelets": 20,
-            "batch_size": 50,
+            "batch_size": 100,
         },
         tsf_params={"n_estimators": 10},
         rise_params={"n_estimators": 10},
@@ -38,20 +38,20 @@ def test_hivecote_v1_on_unit_test():
 hivecote_v1_unit_test_probas = np.array(
     [
         [
-            0.3522528187125138,
-            0.6477471812874862,
+            0.24284662085140493,
+            0.757153379148595,
         ],
         [
-            0.6300459005582643,
-            0.3699540994417357,
+            0.6847489994888187,
+            0.3152510005111813,
         ],
         [
-            0.18158252728883603,
-            0.8184174727111639,
+            0.12687942835828162,
+            0.8731205716417183,
         ],
         [
-            0.7432415438624587,
-            0.25675845613754134,
+            0.797944642793013,
+            0.20205535720698695,
         ],
         [
             0.7399242195263688,
@@ -62,12 +62,12 @@ hivecote_v1_unit_test_probas = np.array(
             0.027351549465277212,
         ],
         [
-            0.736757747326386,
-            0.26324225267361395,
+            0.7914608462569405,
+            0.20853915374305954,
         ],
         [
-            0.13589070320833677,
-            0.8641092967916633,
+            0.08118760427778235,
+            0.9188123957222177,
         ],
         [
             0.7249012692472365,
@@ -100,9 +100,9 @@ hivecote_v1_unit_test_probas = np.array(
 #         random_state=0,
 #         stc_params={
 #             "estimator": RotationForest(n_estimators=5),
-#             "n_shapelet_samples": 250,
+#             "n_shapelet_samples": 500,
 #             "max_shapelets": 20,
-#             "batch_size": 50,
+#             "batch_size": 100,
 #         },
 #         tsf_params={"n_estimators": 10},
 #         rise_params={"n_estimators": 10},
