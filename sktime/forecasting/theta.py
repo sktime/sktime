@@ -15,8 +15,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_alpha
+from sktime.utils.validation.forecasting import check_alpha, check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -281,5 +280,4 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     alpha = 1 - level
     if two_tailed:
         alpha /= 2
-
     return -norm.ppf(alpha)
