@@ -219,7 +219,8 @@ class BaseForecaster(BaseEstimator):
             if not self.get_tag("old_predict_interval_logic"):
                 warn(
                     "return_pred_int in predict() is deprecated;"
-                    "please use predict_interval() instead to generate prediction intervals.",
+                    "please use predict_interval() instead to generate "
+                    "prediction intervals.",
                     DeprecationWarning,
                 )
             y_pred = self._predict(
