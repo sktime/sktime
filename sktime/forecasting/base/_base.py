@@ -29,24 +29,23 @@ State:
 __author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
-from sktime.base import BaseEstimator
-
 from contextlib import contextmanager
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_X
-from sktime.utils.validation.forecasting import check_alpha
-from sktime.utils.validation.forecasting import check_cv
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.utils.validation.series import check_series, check_equal_time_index
-
+from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype
-
+from sktime.utils.datetime import _shift
+from sktime.utils.validation.forecasting import (
+    check_alpha,
+    check_cv,
+    check_fh,
+    check_X,
+    check_y_X,
+)
+from sktime.utils.validation.series import check_equal_time_index, check_series
 
 DEFAULT_ALPHA = 0.05
 
@@ -249,8 +248,6 @@ class BaseForecaster(BaseEstimator):
                 as_scitype="Series",
                 store=self.converter_store_y,
             )
-
-
             return (y_out, pred_int)
 
     def fit_predict(
@@ -562,7 +559,6 @@ class BaseForecaster(BaseEstimator):
         pred_ints : pd.DataFrame
             Prediction intervals
         """
-
         self.perform_checks(to_be_checked={"is_fitted", "fh"}, fh=fh)
 
         # handle input alias, deprecate in v 0.10.1
@@ -580,7 +576,6 @@ class BaseForecaster(BaseEstimator):
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
-
 
         return self._update_predict_single(
             y=y_inner,
