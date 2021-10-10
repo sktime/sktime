@@ -25,7 +25,6 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-
 __author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
@@ -71,7 +70,6 @@ class BaseForecaster(BaseEstimator):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "old_predict_interval_logic": True,  # pred_int functionality not yet refactored
     }
 
     def __init__(self):
@@ -184,7 +182,9 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals
         """
         # handle inputs
-        self.perform_checks(to_be_checked={"is_fitted", "fh"}, fh=fh)
+
+        self.check_is_fitted()
+        self._set_fh(fh)
 
         if return_pred_int and not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -217,31 +217,23 @@ class BaseForecaster(BaseEstimator):
         # keep following code for downward compatibility,
         # todo: can be deleted once refactor is completed and effective
         else:
-            if not self.get_tag("old_predict_interval_logic"):
-                warn(
-                    "return_pred_int in predict() is deprecated;"
-                    "please use predict_interval() instead to generate "
-                    "prediction intervals.",
-                    DeprecationWarning,
-                )
+
+            warn(
+                "return_pred_int in predict() will be deprecated;"
+                "please use predict_interval() instead to generate "
+                "prediction intervals.",
+                DeprecationWarning,
+            )
             y_pred = self._predict(
                 self.fh,
                 X=X_inner,
                 return_pred_int=return_pred_int,
                 alpha=alpha,
             )
-            if self.get_tag("old_predict_interval_logic"):
-                # returns old return type anyways
-                pred_int = y_pred[1]
-                y_pred = y_pred[0]
-            else:
-                y_pred = y_pred[0]
-                # is supposed to return new return type:
-                pred_int = self.predict_interval(fh=fh, X=X, alpha=alpha)
-                if keep_old_return_type:
-                    # todo write function that converts new_return type
-                    #  into old return type
-                    pass
+
+            # returns old return type anyways
+            pred_int = y_pred[1]
+            y_pred = y_pred[0]
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -317,8 +309,58 @@ class BaseForecaster(BaseEstimator):
             fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
         )
 
+    def predict_quantiles(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction quantiles for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple quantiles will be calculated.
+
+        public method including checks & utility
+        dispatches to core logic in _predict_quantiles
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Prediction quantiles with fh as row index. Column multi-index with
+            first level being the variable name, second level being the alpha value.
+        """
+        self.check_is_fitted()
+        self._set_fh(fh)
+        alpha = check_alpha(alpha)
+        # input check for X
+        enforce_index_type = self.get_tag("enforce_index_type")
+        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+
+        # convert X if needed
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=None,
+        )
+
+        quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+        return quantiles
+
     def predict_interval(
-        self, fh=None, X=None, alpha=DEFAULT_ALPHA, keep_old_return_type=True
+        self,
+        fh=None,
+        X=None,
+        coverage=0.95,
+        alpha=DEFAULT_ALPHA,
+        keep_old_return_type=True,
     ):
         """
         Compute/return prediction intervals for a forecast.
@@ -336,8 +378,12 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
+
+        todo: alpha and keep_old_return_type to be deprecated in version 0.11.0
         alpha : float or list, optional (default=0.95)
             A significance level or list of significance levels.
+        keep_old_return_type : works through old prediction_interval logic and
+            returns everything the old way
 
         Returns
         -------
@@ -345,26 +391,35 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals with fh as row index. Column multi-index with
             first level being the variable name, second level being the alpha value.
         """
-        # todo: needs fixing in ARIMA and AutoARIMA as the alpha check breaks here
-        alpha = self.perform_checks(
-            to_be_checked={"is_fitted", "fh", "alpha"}, fh=fh, alpha=alpha
-        )
+        if not keep_old_return_type:
+            coverage = check_alpha(coverage)
+            alphas = []
+            for c in coverage:
+                alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
+            alphas.sort()
+            pred_int = self.predict_quantiles(fh=None, X=None, alpha=alphas)
+            return pred_int
 
-        # input check for X
-        enforce_index_type = self.get_tag("enforce_index_type")
-        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+        # todo: everything below to be deprecated in version 0.10.0
+        else:
+            self.check_is_fitted()
+            self._set_fh(fh)
+            alpha = check_alpha(alpha)
+            # input check for X
+            enforce_index_type = self.get_tag("enforce_index_type")
+            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
 
-        # convert X if needed
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=None,
-        )
+            # convert X if needed
+            X_inner_mtype = self.get_tag("X_inner_mtype")
+            X_inner = convert_to(
+                X,
+                to_type=X_inner_mtype,
+                as_scitype="Series",  # we are dealing with series
+                store=None,
+            )
 
-        pred_int = self._predict_interval(fh=fh, X=X_inner, alpha=alpha)
-        return pred_int
+            pred_int = self._predict_interval(fh=fh, X=X_inner, alpha=alpha)
+            return pred_int
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -562,7 +617,8 @@ class BaseForecaster(BaseEstimator):
         pred_ints : pd.DataFrame
             Prediction intervals
         """
-        self.perform_checks(to_be_checked={"is_fitted", "fh"}, fh=fh)
+        self.check_is_fitted()
+        self._set_fh(fh)
 
         # handle input alias, deprecate in v 0.10.1
         if y is None:
@@ -1129,6 +1185,31 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def _predict_quantiles(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction quantiles for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple quantiles will be calculated.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list, optional (default=0.95)
+            A quantile or list of quantile.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Prediction quantiles with fh as row index. Column multi-index with
+            first level being the variable name, second level being the alpha value.
+        """
+        raise NotImplementedError("abstract method")
+
     def _compute_pred_err(self, alphas):
         """Temporary loopthrough for _compute_pred_err."""
         raise NotImplementedError("abstract method")
@@ -1185,22 +1266,6 @@ class BaseForecaster(BaseEstimator):
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
-    def perform_checks(self, to_be_checked=None, fh=None, alpha=None):
-        """
-        Check different conditions that need to be met for different methods.
-
-        Returns alpha, if alpha values get checked.
-        """
-        to_be_checked = to_be_checked if to_be_checked else set()
-        if "is_fitted" in to_be_checked:
-            self.check_is_fitted()
-        if "fh" in to_be_checked:
-            self._set_fh(fh)
-        if "alpha" in to_be_checked:
-            alpha = check_alpha(alpha)
-            return alpha
-        return
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
