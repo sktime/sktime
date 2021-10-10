@@ -9,8 +9,8 @@ __all__ = ["_TbatsAdapter"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
 
@@ -150,7 +150,6 @@ class _TbatsAdapter(BaseForecaster):
         fitted_params = {}
         for name in self._get_fitted_param_names():
             fitted_params[name] = getattr(self._forecaster, name, None)
-
         return fitted_params
 
     def _get_fitted_param_names(self):

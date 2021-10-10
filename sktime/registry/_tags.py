@@ -43,7 +43,6 @@ __author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
 
-
 ESTIMATOR_TAG_REGISTER = [
     (
         "ignores-exogeneous-X",
@@ -201,7 +200,6 @@ ESTIMATOR_TAG_REGISTER = [
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
-
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
 
 
