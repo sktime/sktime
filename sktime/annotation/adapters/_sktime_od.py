@@ -60,7 +60,17 @@ class SktimeODAnnotator(BaseSeriesAnnotator):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X_t)
 
+        if not self._check_estimator_has_intervals():
+            raise NotImplementedError("Forecaster cannot produce prediction intervals")
+
         return self
+
+    def _check_estimator_has_intervals(self):
+        tags = self.estimator_.get_tags()
+        if tags["capability:pred_int"]:
+            return True
+        else:
+            return False
 
     def _predict(self, X):
         """Create annotations on test/deployment data.
