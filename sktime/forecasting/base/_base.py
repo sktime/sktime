@@ -70,7 +70,7 @@ class BaseForecaster(BaseEstimator):
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "old_predict_interval_logic": True,  # pred_int functionality not yet refactored
     }
 
@@ -209,8 +209,9 @@ class BaseForecaster(BaseEstimator):
                 y_pred,
                 self._y_mtype_last_seen,
                 as_scitype="Series",
-                store=self.converter_store_y,
+                store=self._converter_store_y,
             )
+
             return y_out
 
         # keep following code for downward compatibility,
@@ -247,8 +248,9 @@ class BaseForecaster(BaseEstimator):
                 y_pred,
                 self._y_mtype_last_seen,
                 as_scitype="Series",
-                store=self.converter_store_y,
+                store=self._converter_store_y,
             )
+
             return (y_out, pred_int)
 
     def fit_predict(
