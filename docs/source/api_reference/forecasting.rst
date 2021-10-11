@@ -127,6 +127,17 @@ Prophet
 
     Prophet
 
+Unobserved Components
+--------------------
+
+.. currentmodule:: sktime.forecasting.structural
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    UnobservedComponents
+
 Composition
 -----------
 
