@@ -68,7 +68,7 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.fit_transform(X)
     array([[0.        , 0.69314718],
-       [1.09861229, 1.38629436]])
+           [1.09861229, 1.38629436]])
     """
 
     def __init__(
