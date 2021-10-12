@@ -6,7 +6,6 @@
 __author__ = ["mloning", "RNKuhns"]
 __all__ = ["SummaryTransformer", "MeanTransformer"]
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
@@ -197,7 +196,7 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
         return summary_value
 
 
-class MeanTransformer(_SeriesToPrimitivesTransformer):
+class MeanTransformer(SummaryTransformer):
     """Calculate mean value of a time series.
 
     See Also
@@ -217,20 +216,8 @@ class MeanTransformer(_SeriesToPrimitivesTransformer):
     @deprecated(
         """Please use `SummaryTransformer` from
         `sktime.transformation.series.summarize` instead.
-        Will be removed in release 0.9.
+        MeanTransformer will be removed in release 0.10.
         """
     )
-    def transform(self, Z, X=None):
-        """Transform series.
-
-        Parameters
-        ----------
-        Z : pd.Series
-
-        Returns
-        -------
-        float/int
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        return np.mean(Z, axis=0)
+    def __init__(self):
+        super().__init__(summary_function="mean", quantiles=None)
