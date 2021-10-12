@@ -65,7 +65,7 @@ class BaseGridSearch(BaseForecaster):
             "y_inner_mtype",
             "X_inner_mtype",
             "X-y-must-have-same-index",
-            "enforce-index-type",
+            "enforce_index_type",
         ]
 
         self.clone_tags(forecaster, tags_to_clone)
