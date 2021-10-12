@@ -99,7 +99,12 @@ class CalendarDummies(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"fit-in-transform": True}
+    _tags = {
+        "fit-in-transform": True,
+        "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
+        "skip-inverse-transform": True,
+        "univariate-only": False,
+    }
 
     def __init__(self, base_frequency=None, complexity=1, manual_selection=None):
 
@@ -120,7 +125,9 @@ class CalendarDummies(_SeriesToSeriesTransformer):
                 "Invalid complexity specified,"
                 + "must be in 0,1 or 2 (0 lowest number of variables)"
             )
+
         self.manual_selection = manual_selection
+
         if (self.manual_selection is not None) and (
             not all(
                 elem in base_seasons["dummy"].unique() for elem in self.manual_selection
@@ -152,7 +159,12 @@ class CalendarDummies(_SeriesToSeriesTransformer):
         Z = Z.copy()
 
         x_df = pd.DataFrame(index=Z.index)
-        x_df["date_sequence"] = Z.index.to_timestamp().astype("datetime64[ns]")
+        if isinstance(x_df.index, pd.PeriodIndex):
+            x_df["date_sequence"] = Z.index.to_timestamp().astype("datetime64[ns]")
+        elif isinstance(x_df.index, pd.DatetimeIndex):
+            x_df["date_sequence"] = Z.index
+        elif not isinstance(x_df.index, pd.DatetimeIndex):
+            raise ValueError("Index type not supported")
 
         if self.manual_selection is None:
             if self.base_frequency is not None:
@@ -169,8 +181,8 @@ class CalendarDummies(_SeriesToSeriesTransformer):
                     elem in supported["dummy"] for elem in self.manual_selection
                 ):
                     warnings.warn(
-                        "Selected dummy variable derive"
-                        + "at lower level than base frequency."
+                        "Level of selected dummy variable "
+                        + " lower level than base frequency."
                     )
                 calendar_dummies = supported.loc[
                     supported["dummy"].isin(self.manual_selection), "dummy_func"
