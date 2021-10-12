@@ -9,17 +9,21 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.tests._config import VALID_TRANSFORMER_TYPES
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.registry import all_estimators
-from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.estimator_checks import _make_args
 from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.registry import all_estimators
+from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.transformations.base import (
+    BaseTransformer,
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
+from sktime.utils._testing.estimator_checks import (
+    _assert_array_almost_equal,
+    _construct_instance,
+    _make_args,
+)
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
 
