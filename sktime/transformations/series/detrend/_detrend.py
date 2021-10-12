@@ -64,7 +64,7 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {"transform_returns_same_time_index": True}
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster

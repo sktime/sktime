@@ -443,7 +443,7 @@ def test_methods_do_not_change_state(estimator_instance):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if method == "transform" and estimator.get_class_tag("fit-in-transform"):
+            if method == "transform" and estimator.get_class_tag("fit_in_transform"):
                 # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.

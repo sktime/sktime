@@ -73,12 +73,12 @@ class MyForecaster(BaseForecaster):
     #  tags are inherited from parent class if they are not set
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "ignores_exogeneous_X": True,  # does estimator ignore the exogeneous X?
+        "handles_missing_data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "requires_fh_in_fit": True,  # is forecasting horizon already required in fit?
+        "X_y_must_have_same_index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
@@ -111,9 +111,9 @@ class MyForecaster(BaseForecaster):
         #
         # example 1: conditional setting of a tag
         # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
+        #   self.set_tags(handles_missing_data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles_missing_data"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):

@@ -91,7 +91,7 @@ class _Pipeline(
         for _, _, transformer in self._iter_transformers(reverse=True):
             # skip sktime transformers where inverse transform
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
-            skip_trafo = transformer.get_tag("skip-inverse-transform", False)
+            skip_trafo = transformer.get_tag("skip_inverse_transform", False)
             if not skip_trafo:
                 y = transformer.inverse_transform(y, X)
         return y
@@ -166,9 +166,9 @@ class ForecastingPipeline(_Pipeline):
 
     _required_parameters = ["steps"]
     _tags = {
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, steps):
@@ -279,7 +279,7 @@ class ForecastingPipeline(_Pipeline):
 #     self.check_is_fitted()
 #     Zt = check_series(Z, enforce_multivariate=True)
 #     for _, _, transformer in self._iter_transformers(reverse=True):
-#         if not _has_tag(transformer, "skip-inverse-transform"):
+#         if not _has_tag(transformer, "skip_inverse_transform"):
 #             Zt = transformer.inverse_transform(Zt)
 #     return Zt
 
@@ -315,10 +315,10 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     _required_parameters = ["steps"]
     _tags = {
-        "ignores-exogeneous-X": True,
-        "univariate-only": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": True,
+        "univariate_only": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, steps):

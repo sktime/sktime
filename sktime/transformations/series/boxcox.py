@@ -99,7 +99,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {"transform_returns_same_time_index": True, "univariate_only": True}
 
     def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds
@@ -203,7 +203,7 @@ class LogTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {"transform_returns_same_time_index": True}
 
     def transform(self, Z, X=None):
         """Transform data.

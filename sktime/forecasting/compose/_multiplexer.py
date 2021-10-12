@@ -79,9 +79,9 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(

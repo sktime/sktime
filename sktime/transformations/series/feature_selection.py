@@ -71,10 +71,10 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": False,
-        "transform-returns-same-time-index": True,
-        "skip-inverse-transform": True,
-        "univariate-only": False,
+        "fit_in_transform": False,
+        "transform_returns_same_time_index": True,
+        "skip_inverse_transform": True,
+        "univariate_only": False,
     }
 
     def __init__(

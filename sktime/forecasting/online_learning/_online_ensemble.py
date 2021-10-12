@@ -27,9 +27,9 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):

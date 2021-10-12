@@ -38,14 +38,14 @@ class BaseTransformer(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "univariate_only": False,  # can the transformer handle multivariate X?
+        "handles_missing_data": False,  # can estimator handle missing data?
+        "X_y_must_have_same_index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
+        "fit_in_transform": True,  # is fit empty and can be skipped? Yes = True
+        "transform_returns_same_time_index": False,
         # does transform return have the same time index as input X
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "skip_inverse_transform": False,  # is inverse-transform skipped when called?
     }
 
     def __init__(self):

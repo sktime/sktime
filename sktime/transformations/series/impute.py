@@ -63,10 +63,10 @@ class Imputer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": True,
-        "handles-missing-data": True,
-        "skip-inverse-transform": True,
-        "univariate-only": False,
+        "fit_in_transform": True,
+        "handles_missing_data": True,
+        "skip_inverse_transform": True,
+        "univariate_only": False,
     }
 
     def __init__(

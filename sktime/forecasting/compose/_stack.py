@@ -64,9 +64,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": True,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": False,
+        "requires_fh_in_fit": True,
+        "handles_missing_data": False,
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):

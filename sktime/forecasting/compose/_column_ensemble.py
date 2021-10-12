@@ -48,26 +48,26 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "y_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
 
-        # set requires-fh-in-fit depending on forecasters
+        # set requires_fh_in_fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
-            self.clone_tags(forecasters, "requires-fh-in-fit")
+            self.clone_tags(forecasters, "requires_fh_in_fit")
         else:
             forecaster_requires_fh_in_fit = (
-                forecaster.get_tag("requires-fh-in-fit")
+                forecaster.get_tag("requires_fh_in_fit")
                 for _, forecaster, _ in self.forecasters
             )
             at_least_one_requires_fh = any(forecaster_requires_fh_in_fit)
-            self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh})
+            self.set_tags(tag_dict={"requires_fh_in_fit": at_least_one_requires_fh})
 
     @property
     def _forecasters(self):

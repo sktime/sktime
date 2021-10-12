@@ -90,9 +90,9 @@ class MyTrafoPw(BasePairwiseTransformer):
         #
         # example 1: conditional setting of a tag
         # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
+        #   self.set_tags(handles_missing_data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles_missing_data"])
 
     # todo: implement this, mandatory
     def _transform(self, X, X2=None):

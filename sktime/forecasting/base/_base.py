@@ -64,13 +64,13 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "ignores_exogeneous_X": True,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "handles_missing_data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "requires_fh_in_fit": True,  # is forecasting horizon already required in fit?
+        "X_y_must_have_same_index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
 
@@ -112,10 +112,10 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-            if self.get_tag("requires-fh-in-fit"), must be passed, not optional
+            if self.get_tag("requires_fh_in_fit"), must be passed, not optional
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to fit to
-            if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            if self.get_tag("X_y_must_have_same_index"), X.index must contain y.index
 
         Returns
         -------
@@ -162,7 +162,7 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogeneous time series to predict from
-            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+            if self.get_tag("X_y_must_have_same_index"), X.index must contain fh.index
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
@@ -250,7 +250,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to fit to and to predict from
-            if self.get_tag("X-y-must-have-same-index"),
+            if self.get_tag("X_y_must_have_same_index"),
             X.index must contain y.index and fh.index
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
@@ -362,7 +362,7 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("scitype:y")=="both": no restrictions apply
         X : pd.DataFrame, or 2D np.ndarray optional (default=None)
             Exogeneous time series to fit to
-            if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            if self.get_tag("X_y_must_have_same_index"), X.index must contain y.index
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -422,7 +422,7 @@ class BaseForecaster(BaseEstimator):
         cv : temporal cross-validation generator, optional (default=None)
         X : pd.DataFrame, or 2D np.ndarray optional (default=None)
             Exogeneous time series to fit to and predict from
-            if self.get_tag("X-y-must-have-same-index"),
+            if self.get_tag("X_y_must_have_same_index"),
             X.index must contain y.index and fh.index
         update_params : bool, optional (default=True)
         return_pred_int : bool, optional (default=False)
@@ -508,7 +508,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to fit to and to predict from
-            if self.get_tag("X-y-must-have-same-index"),
+            if self.get_tag("X_y_must_have_same_index"),
                 X.index must contain y.index and fh.index
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
@@ -565,7 +565,7 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to score
-            if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            if self.get_tag("X_y_must_have_same_index"), X.index must contain y.index
 
         Returns
         -------
@@ -641,7 +641,7 @@ class BaseForecaster(BaseEstimator):
             if tag value is "univariate", y must be univariate
             if tag value is "multivariate", y must be bi- or higher-variate
             if tag vaule is "both", y can be either
-        TypeError if self.get_tag("X-y-must-have-same-index") is True
+        TypeError if self.get_tag("X_y_must_have_same_index") is True
             and the index set of X is not a super-set of the index set of y
 
         Writes to self
@@ -674,7 +674,7 @@ class BaseForecaster(BaseEstimator):
         # checking X
         if X is not None:
             X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-            if self.get_tag("X-y-must-have-same-index"):
+            if self.get_tag("X_y_must_have_same_index"):
                 check_equal_time_index(X, y)
         # end checking X
 
@@ -903,7 +903,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
         """
-        requires_fh = self.get_tag("requires-fh-in-fit")
+        requires_fh = self.get_tag("requires_fh_in_fit")
 
         msg = (
             f"This is because fitting of the `"

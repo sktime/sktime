@@ -65,7 +65,7 @@ class _BaseForecastingErrorMetric(BaseMetric):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     greater_is_better = False
@@ -314,7 +314,7 @@ class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
     _tags = {
         "requires-y-train": True,
         "requires-y-pred-benchmark": False,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(self, func, name=None, multioutput="uniform_average", sp=1):
@@ -388,7 +388,7 @@ class _RelativeLossForecastingErrorMetric(
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(
@@ -1659,7 +1659,7 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(self, multioutput="uniform_average"):
@@ -1737,7 +1737,7 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(self, multioutput="uniform_average"):
@@ -1817,7 +1817,7 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(self, multioutput="uniform_average"):
@@ -1907,7 +1907,7 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "univariate_only": False,
     }
 
     def __init__(self, multioutput="uniform_average", square_root=False):

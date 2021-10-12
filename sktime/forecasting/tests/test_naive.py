@@ -241,7 +241,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     forecast_data = model.predict(fh)
 
     # Make sure that the model (object) reports that it handles missing data
-    assert model.get_tag("handles-missing-data")
+    assert model.get_tag("handles_missing_data")
 
     if sp < window_length:
         # We expect a perfect forecast given our perfectly cyclic data

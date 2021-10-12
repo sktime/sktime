@@ -21,8 +21,8 @@ class _NaiveForecaster(_BaseWindowForecaster):
     """Univariate NaiveForecaster."""
 
     _tags = {
-        "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
+        "requires_fh_in_fit": False,
+        "handles_missing_data": True,  # todo: switch to True if GH1367 is fixed
         "scitype:y": "univariate",
     }
 
@@ -35,7 +35,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         # Override tag for handling missing data
         # todo: remove if GH1367 is fixed
         if self.strategy in ("last", "mean"):
-            self.set_tags(**{"handles-missing-data": True})
+            self.set_tags(**{"handles_missing_data": True})
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -295,8 +295,8 @@ class NaiveForecaster(BaseForecaster):
     _tags = {
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "scitype:y": "both",
-        "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
+        "requires_fh_in_fit": False,
+        "handles_missing_data": True,  # todo: switch to True if GH1367 is fixed
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):

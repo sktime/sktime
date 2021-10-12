@@ -26,9 +26,9 @@ from sktime.utils.validation.forecasting import check_scoring
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "ignores-exogeneous-X": True,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
+        "ignores_exogeneous_X": True,
     }
 
     def __init__(
@@ -57,14 +57,14 @@ class BaseGridSearch(BaseForecaster):
         super(BaseGridSearch, self).__init__()
 
         tags_to_clone = [
-            "requires-fh-in-fit",
+            "requires_fh_in_fit",
             "capability:pred_int",
             # "scitype:y", commented out until grid search works with multivariate
-            "ignores-exogeneous-X",
-            "handles-missing-data",
+            "ignores_exogeneous_X",
+            "handles_missing_data",
             "y_inner_mtype",
             "X_inner_mtype",
-            "X-y-must-have-same-index",
+            "X_y_must_have_same_index",
             "enforce_index_type",
         ]
 

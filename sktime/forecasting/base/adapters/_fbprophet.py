@@ -19,10 +19,10 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing fbprophet and neuralprophet."""
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores_exogeneous_X": False,
         "capability:pred_int": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def _fit(self, y, X=None, fh=None, **fit_params):

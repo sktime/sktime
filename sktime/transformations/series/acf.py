@@ -70,7 +70,7 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {"univariate_only": True, "fit_in_transform": True}
 
     def __init__(
         self,
@@ -170,7 +170,7 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {"univariate_only": True, "fit_in_transform": True}
 
     def __init__(
         self,

@@ -51,9 +51,9 @@ class VAR(_StatsModelsAdapter):
     _tags = {
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": False,
-        "univariate-only": False,
-        "ignores-exogeneous-X": False,
+        "requires_fh_in_fit": False,
+        "univariate_only": False,
+        "ignores_exogeneous_X": False,
     }
 
     def __init__(

@@ -83,9 +83,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(
@@ -238,9 +238,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "ignores_exogeneous_X": False,
+        "requires_fh_in_fit": False,
+        "handles_missing_data": False,
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):

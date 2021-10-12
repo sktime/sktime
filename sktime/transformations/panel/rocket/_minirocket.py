@@ -37,7 +37,7 @@ class MiniRocket(_PanelToTabularTransformer):
     random_state             : int, random seed (optional, default None)
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate_only": True}
 
     def __init__(
         self, num_features=10_000, max_dilations_per_kernel=32, random_state=None

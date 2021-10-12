@@ -46,7 +46,7 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
+    _tags = {"univariate_only": True, "fit_in_transform": True}  # for unit test cases
 
     def __init__(self, window_length=3):
         self.window_length = window_length
