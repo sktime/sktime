@@ -82,7 +82,7 @@ jobs:
         export PATH="/usr/local/opt/ccache/libexec:$PATH"
         python setup.py sdist bdist_wheel
     - name: Install from wheel
-      run: pip install --pre --no-index --no-deps --find-links dist/ sktime
+      run: pip install --pre --no-index --no-deps --find-links dist/*.whl sktime
     - name: Run tests
       run: |
         mkdir -p testdir/
