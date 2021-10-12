@@ -45,7 +45,7 @@ from sktime.classification.feature_based import (
     SignatureClassifier,
     TSFreshClassifier,
 )
-from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
@@ -662,7 +662,7 @@ def set_classifier(cls, resample_id=None):
     elif name == "hc1" or name == "hivecotev1":
         return HIVECOTEV1(random_state=resample_id)
     elif name == "hc2" or name == "hivecotev2":
-        return HIVECOTEV1(random_state=resample_id)
+        return HIVECOTEV2(random_state=resample_id)
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
         return RandomIntervalSpectralForest(random_state=resample_id, n_estimators=500)
