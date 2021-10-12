@@ -29,11 +29,13 @@ def _get_n_columns(tag):
         n_columns_list = [2]
     elif tag == "both":
         n_columns_list = [1, 2]
+    else:
+        raise ValueError(f"Unexpected tag {tag} in _get_n_columns.")
     return n_columns_list
 
 
 def _get_expected_index_for_update_predict(y, fh, step_length):
-    """Helper function to compute expected time index from `update_predict`"""
+    """Compute expected time index from update_predict()."""
     # time points at which to make predictions
     fh = check_fh(fh)
     index = y.index
@@ -69,8 +71,7 @@ def _get_expected_index_for_update_predict(y, fh, step_length):
 
 
 def _generate_polynomial_series(n, order, coefs=None):
-    """Helper function to generate polynomial series of given order and
-    coefficients"""
+    """Generate polynomial series of given order and coefficients."""
     if coefs is None:
         coefs = np.ones((order + 1, 1))
     x = np.vander(np.arange(n), N=order + 1).dot(coefs)
@@ -82,12 +83,35 @@ def make_forecasting_problem(
     all_positive=True,
     index_type=None,
     make_X=False,
-    n_columns=2,
+    n_columns=1,
     random_state=None,
 ):
+    """Return test data for forecasting tests.
+
+    Parameters
+    ----------
+    n_timepoints : int, optional
+        Lenght of data, by default 50
+    all_positive : bool, optional
+        Only positive values or not, by default True
+    index_type : e.g. pd.PeriodIndex, optional
+        pandas Index type, by default None
+    make_X : bool, optional
+        Should X data also be returned, by default False
+    n_columns : int, optional
+        Number of columns of y, by default 1
+    random_state : inst, str, float, optional
+        Set seed of random state, by default None
+
+    Returns
+    -------
+    ps.Series, pd.DataFrame
+        y, if not make_X
+        y, X if make_X
+    """
     y = _make_series(
         n_timepoints=n_timepoints,
-        n_columns=1,
+        n_columns=n_columns,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
@@ -98,7 +122,7 @@ def make_forecasting_problem(
 
     X = _make_series(
         n_timepoints=n_timepoints,
-        n_columns=n_columns,
+        n_columns=2,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
@@ -115,7 +139,7 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
 
 
 def _make_fh(cutoff, steps, fh_type, is_relative):
-    """Helper function to construct forecasting horizons for testing"""
+    """Construct forecasting horizons for testing."""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
 
     fh_class = INDEX_TYPE_LOOKUP[fh_type]

@@ -24,18 +24,18 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
 from sktime.classification.dictionary_based import (
+    MUSE,
+    WEASEL,
     BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
-    WEASEL,
-    MUSE,
 )
 from sktime.classification.distance_based import (
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
     ElasticEnsemble,
+    KNeighborsTimeSeriesClassifier,
+    ProximityForest,
+    ProximityStump,
+    ProximityTree,
     ShapeDTW,
 )
 from sktime.classification.feature_based import (
@@ -46,16 +46,16 @@ from sktime.classification.feature_based import (
 )
 from sktime.classification.hybrid import HIVECOTEV1
 from sktime.classification.interval_based import (
-    RandomIntervalSpectralForest,
-    TimeSeriesForestClassifier,
     CanonicalIntervalForest,
-    SupervisedTimeSeriesForest,
     DrCIF,
+    RandomIntervalSpectralForest,
+    SupervisedTimeSeriesForest,
+    TimeSeriesForestClassifier,
 )
-from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
+from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
 from sktime.classification.shapelet_based import (
-    ShapeletTransformClassifier,
     MrSEQLClassifier,
+    ShapeletTransformClassifier,
 )
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
@@ -512,11 +512,11 @@ def load_and_run_classification_experiment(
         classifier = set_classifier(cls_name, resample_id)
     run_classification_experiment(
         trainX,
-        classifier,
-        results_path,
         trainY,
         testX,
         testY,
+        classifier,
+        results_path,
         cls_name=cls_name,
         dataset=dataset,
         resample_id=resample_id,
@@ -616,7 +616,7 @@ def set_classifier(cls, resample_id=None):
         return Arsenal(random_state=resample_id)
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(random_state=resample_id, n_estimators=500)
+        return ShapeletTransformClassifier(random_state=resample_id)
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     else:

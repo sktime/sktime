@@ -16,3 +16,6 @@ Community Showcase
    * - `Why start using sktime for forecasting? <https://medium.com/@jlenczuk/why-start-using-sktime-for-forecasting-8d6881c0a518>`_
      - Overview of sktime’s features that distinguish it from other forecasting frameworks
      - :user:`Joanna Lenczuk <joanlenczuk>`
+   * - `Time Series Analysis with sktime on AWS SageMaker <https://datachef.co/blog/time-series-analysis-sktime-sagemaker/>`_
+     - This guide explains the procedure of using sktime as a toolbox for time series analysis on the AWS SageMaker environment.
+     - :user:`DataChef.co <DataChefHQ>`
