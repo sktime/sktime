@@ -7,7 +7,6 @@ __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
-
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 
@@ -16,7 +15,7 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -66,9 +65,18 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # both in-sample and out-of-sample values
         else:
-            y_ins = self._predict_in_sample(fh_ins, **kwargs)
-            y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
-            return y_ins.append(y_oos)
+            if return_pred_int:
+                y_ins_pred, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+                y_oos_pred, y_oos_pred_int = self._predict_fixed_cutoff(
+                    fh_oos, **kwargs
+                )
+                return y_ins_pred.append(y_oos_pred), y_ins_pred_int.append(
+                    y_oos_pred_int
+                )
+            else:
+                y_ins = self._predict_in_sample(fh_ins, **kwargs)
+                y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
+                return y_ins.append(y_oos)
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -76,9 +84,34 @@ class _PmdArimaAdapter(BaseForecaster):
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError("multiple `alpha` values are not yet supported")
 
-        # for in-sample predictions, pmdarima requires zero-based
-        # integer indicies
+        if hasattr(self, "order"):
+            diff_order = self.order[1]
+        else:
+            diff_order = self._forecaster.model_.order[1]
+
+        # Initialize return objects
+        fh_abs = fh.to_absolute(self.cutoff).to_numpy()
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+        y_pred = pd.Series(index=fh_abs)
+        pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
+
+        # for in-sample predictions, pmdarima requires zero-based integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        if start < 0:
+            # Can't forecasts earlier to train starting point
+            raise ValueError("Can't make predictions earlier to train starting point")
+        elif start < diff_order:
+            # Can't forecasts earlier to arima's differencing order
+            # But we return NaN for these supposedly forecastable points
+            start = diff_order
+            if end < start:
+                # since we might have forced `start` to surpass `end`
+                end = diff_order
+            # get rid of unforcastable points
+            fh_abs = fh_abs[fh_idx >= diff_order]
+            # reindex accordingly
+            fh_idx = fh_idx[fh_idx >= diff_order] - diff_order
+
         result = self._forecaster.predict_in_sample(
             start=start,
             end=end,
@@ -87,19 +120,16 @@ class _PmdArimaAdapter(BaseForecaster):
             alpha=alpha,
         )
 
-        fh_abs = fh.to_absolute(self.cutoff)
-        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         if return_pred_int:
-            # unpack and format results
-            y_pred, pred_int = result
-            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(
-                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+            # unpack results
+            y_pred.loc[fh_abs], pred_int.loc[fh_abs] = (
+                result[0][fh_idx],
+                result[1][fh_idx, :],
             )
             return y_pred, pred_int
-
         else:
-            return pd.Series(result[fh_idx], index=fh_abs)
+            y_pred.loc[fh_abs] = result[fh_idx]
+            return y_pred
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
