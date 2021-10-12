@@ -2,10 +2,10 @@
 """WEASEL+MUSE classifier.
 
 multivariate dictionary based classifier based on SFA transform, dictionaries
-and linear regression.
+and logistic regression.
 """
 
-__author__ = "Patrick Schäfer"
+__author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
@@ -23,8 +23,6 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class MUSE(BaseClassifier):
@@ -102,12 +100,14 @@ class MUSE(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
+        "capability:contractable": False,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
     }
 
     def __init__(
@@ -152,7 +152,7 @@ class MUSE(BaseClassifier):
 
         super(MUSE, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).
 
         Parameters
@@ -165,7 +165,6 @@ class MUSE(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, coerce_to_pandas=True)
         y = np.asarray(y)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
@@ -275,10 +274,9 @@ class MUSE(BaseClassifier):
         )
 
         self.clf.fit(all_words, y)
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n instances in X.
 
         Parameters
@@ -292,7 +290,7 @@ class MUSE(BaseClassifier):
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -307,9 +305,6 @@ class MUSE(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
-
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
 
