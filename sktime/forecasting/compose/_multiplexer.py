@@ -83,7 +83,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     _tags = {
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
     }
 
