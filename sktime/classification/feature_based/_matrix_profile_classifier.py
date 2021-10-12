@@ -105,16 +105,16 @@ class MatrixProfileClassifier(BaseClassifier):
         )
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
+        if m is not None:
             self._estimator.n_jobs = self.n_jobs
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
 
-    def predict(self, X):
+    def _predict(self, X):
         return self._estimator.predict(self._transformer.transform(X))
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))

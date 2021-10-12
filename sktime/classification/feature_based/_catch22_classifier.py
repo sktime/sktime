@@ -4,7 +4,7 @@
 Pipeline classifier using the Catch22 transformer and an estimator.
 """
 
-__author__ = ["MatthewMiddlehurst"]
+__author__ = ["MatthewMiddlehurst", "RavenRudi"]
 __all__ = ["Catch22Classifier"]
 
 import numpy as np
@@ -112,7 +112,7 @@ class Catch22Classifier(BaseClassifier):
         )
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
+        if m is not None:
             self._estimator.n_jobs = self.n_jobs
 
         X_t = self._transformer.fit_transform(X, y)
