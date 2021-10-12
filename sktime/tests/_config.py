@@ -143,8 +143,6 @@ DIST_KERNELS_IGNORE_TESTS = [
 
 EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["check_fit_idempotent"],
-    "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
-    "HIVECOTEV2": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
 }
