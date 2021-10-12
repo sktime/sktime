@@ -29,7 +29,7 @@ class HIVECOTEV1(BaseClassifier):
 
     Parameters
     ----------
-    verbose                 : int, level of outp"ut printed to
+    verbose                 : int, level of output printed to
     the console (for information only) (default = 0)
     n_jobs                  : int, optional (default=1)
     The number of jobs to run in parallel for both `fit` and `predict`.
@@ -76,7 +76,7 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {"n_estimators": 500}
+            stc_params = {}
         if tsf_params is None:
             tsf_params = {"n_estimators": 500}
         if rise_params is None:
