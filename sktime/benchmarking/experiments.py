@@ -419,7 +419,7 @@ def run_classification_experiment(
     if train_file:
         start = time.time_ns()
         if classifier_train_probs:  # Normally Can only do this if test has been built
-            train_probs = classifier._get_train_probs(X_train)
+            train_probs = classifier._get_train_probs(X_train, y_train)
         else:
             cv_size = 10
             _, counts = np.unique(y_train, return_counts=True)
