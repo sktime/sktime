@@ -8,6 +8,7 @@ Base class template for time series classifier scitype.
 Scitype defining methods:
     fitting         - fit(self, X, y)
     predicting      - predict(self, X)
+                    - predict_proba(self, X)
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -26,50 +27,20 @@ State:
 
 __all__ = [
     "BaseClassifier",
-    "classifier_list",
 ]
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly","TonyBagnall"]
 
 import numpy as np
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation.panel import check_X, check_X_y
 
-"""
-Main list of classifiers extending this class. For clarity, some utility classifiers,
-such as Proximity Stump, are not listed.
-"""
-classifier_list = [
-    # in classification/distance_based
-    "ProximityForest",
-    # "KNeighborsTimeSeriesClassifier",
-    # "ElasticEnsemble",
-    # "ShapeDTW",
-    # in classification/dictionary_based
-    "BOSS",
-    "ContractableBOSS",
-    "TemporalDictionaryEnsemble",
-    "WEASEL",
-    "MUSE",
-    # in classification/interval_based
-    "RandomIntervalSpectralForest",
-    "TimeSeriesForest",
-    "CanonicalIntervalForest",
-    # in classification/shapelet_based
-    "ShapeletTransformClassifier",
-    "ROCKET",
-    "MrSEQLClassifier",
-]
-
 
 class BaseClassifier(BaseEstimator):
     """Base time series classifier template class.
 
-    The base classifier specifies the methods and method
-    signatures that all forecasters have to implement.
-
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    The base classifier specifies the methods and method signatures that all
+    classifiers have to implement.
     """
 
     _tags = {
@@ -94,8 +65,7 @@ class BaseClassifier(BaseEstimator):
         ----------
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
         y : array-like, shape =  [n_instances] - the class labels.
 
         Returns
@@ -132,7 +102,7 @@ class BaseClassifier(BaseEstimator):
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
                 or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
 
         Returns
         -------
@@ -160,11 +130,12 @@ class BaseClassifier(BaseEstimator):
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
                 or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - predictive pmf
+        y : array-like, shape =  [n_instances, n_classes] - estimated class
+        probabilities
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
@@ -185,7 +156,7 @@ class BaseClassifier(BaseEstimator):
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
                 or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
         y : array-like, shape =  [n_instances] - predicted class labels
 
         Returns
@@ -199,14 +170,14 @@ class BaseClassifier(BaseEstimator):
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
-        core logic
+       Abstract method
 
         Parameters
         ----------
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
                 or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
         y : array-like, shape = [n_instances] - the class labels
 
         Returns
@@ -224,14 +195,14 @@ class BaseClassifier(BaseEstimator):
     def _predict(self, X):
         """Predicts labels for sequences in X.
 
-        core logic
+        Default behaviour: make predictions from predict_proba
 
         Parameters
         ----------
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
                 or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
 
         Returns
         -------
