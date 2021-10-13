@@ -84,7 +84,10 @@ class BaseClassifier(BaseEstimator):
             "capability:multivariate", tag_value_default=False
         )
         X, y = check_X_y(
-            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
+            X,
+            y,
+            coerce_to_numpy=coerce_to_numpy,
+            coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=enforce_univariate
         )
 
@@ -118,7 +121,7 @@ class BaseClassifier(BaseEstimator):
             X,
             coerce_to_numpy=coerce_to_numpy,
             coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=enforce_univariate
+            enforce_univariate=enforce_univariate,
         )
         self.check_is_fitted()
 
@@ -150,7 +153,7 @@ class BaseClassifier(BaseEstimator):
             X,
             coerce_to_numpy=coerce_to_numpy,
             coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=enforce_univariate
+            enforce_univariate=enforce_univariate,
         )
         self.check_is_fitted()
         return self._predict_proba(X)
