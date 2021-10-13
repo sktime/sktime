@@ -108,13 +108,13 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
-
-
-        enforce_univariate = self.get_tag("coerce-X-to-pandas", False)
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
+        enforce_univariate = self.get_tag("capability:multivariate",
+                                          tag_value_default=False)
         X, y = check_X_y(
-            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+            X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
+            enforce_univariate=enforce_univariate
         )
 
         self._fit(X, y)
