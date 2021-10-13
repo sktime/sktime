@@ -109,35 +109,8 @@ class CalendarDummies(_SeriesToSeriesTransformer):
     def __init__(self, base_frequency=None, complexity=1, manual_selection=None):
 
         self.base_frequency = base_frequency
-
-        if (self.base_frequency is not None) & (
-            self.base_frequency not in base_seasons["child"].unique()
-        ):
-            raise ValueError(
-                "Invalid base_frequency specified, must be in: "
-                + ", ".join(base_seasons["child"].unique())
-            )
-
         self.complexity = complexity
-
-        if self.complexity not in [0, 1, 2]:
-            raise ValueError(
-                "Invalid complexity specified,"
-                + "must be in 0,1 or 2 (0 lowest number of variables)"
-            )
-
         self.manual_selection = manual_selection
-
-        if (self.manual_selection is not None) and (
-            not all(
-                elem in base_seasons["dummy"].unique() for elem in self.manual_selection
-            )
-        ):
-            raise ValueError(
-                "Invalid manual_selection specified, must be in: "
-                + ", ".join(base_seasons["dummy"].unique())
-            )
-
         super(CalendarDummies, self).__init__()
 
     def transform(self, Z, X=None):
@@ -155,6 +128,31 @@ class CalendarDummies(_SeriesToSeriesTransformer):
             Transformed time series(es).
         """
         self.check_is_fitted()
+
+        if (self.manual_selection is not None) and (
+            not all(
+                elem in base_seasons["dummy"].unique() for elem in self.manual_selection
+            )
+        ):
+            raise ValueError(
+                "Invalid manual_selection specified, must be in: "
+                + ", ".join(base_seasons["dummy"].unique())
+            )
+
+        if self.complexity not in [0, 1, 2]:
+            raise ValueError(
+                "Invalid complexity specified,"
+                + "must be in 0,1 or 2 (0 lowest number of variables)"
+            )
+
+        if (self.base_frequency is not None) & (
+            self.base_frequency not in base_seasons["child"].unique()
+        ):
+            raise ValueError(
+                "Invalid base_frequency specified, must be in: "
+                + ", ".join(base_seasons["child"].unique())
+            )
+
         Z = check_series(Z)
         Z = Z.copy()
 
