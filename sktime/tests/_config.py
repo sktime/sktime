@@ -208,11 +208,10 @@ ESTIMATOR_TEST_PARAMS = {
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
     Detrender: {"forecaster": ExponentialSmoothing()},
     VAR: {"maxlags": 3},
-    # multivariate
     ForecastingGridSearchCV: {
-        "forecaster": VAR(),
+        "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
-        "param_grid": {"maxlags": [3, 4]},
+        "param_grid": {"window_length": [2, 5]},
         "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     ForecastingRandomizedSearchCV: {
