@@ -28,7 +28,7 @@ State:
 __all__ = [
     "BaseClassifier",
 ]
-__author__ = ["mloning", "fkiraly","TonyBagnall"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall"]
 
 import numpy as np
 
@@ -80,8 +80,9 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag("capability:multivariate",
-                                          tag_value_default=False)
+        enforce_univariate = self.get_tag(
+            "capability:multivariate", tag_value_default=False
+        )
         X, y = check_X_y(
             X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=enforce_univariate
@@ -110,10 +111,13 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag("capability:multivariate",
-                                          tag_value_default=False)
+        enforce_univariate = self.get_tag(
+            "capability:multivariate", tag_value_default=False
+        )
         X = check_X(
-            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
+            X,
+            coerce_to_numpy=coerce_to_numpy,
+            coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=enforce_univariate
         )
         self.check_is_fitted()
@@ -139,10 +143,13 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag("capability:multivariate",
-                                          tag_value_default=False)
+        enforce_univariate = self.get_tag(
+            "capability:multivariate", tag_value_default=False
+        )
         X = check_X(
-            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
+            X,
+            coerce_to_numpy=coerce_to_numpy,
+            coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=enforce_univariate
         )
         self.check_is_fitted()
@@ -170,7 +177,7 @@ class BaseClassifier(BaseEstimator):
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
-       Abstract method
+        Abstract method
 
         Parameters
         ----------
