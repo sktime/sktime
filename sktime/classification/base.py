@@ -75,6 +75,11 @@ class BaseClassifier(BaseEstimator):
     _tags = {
         "coerce-X-to-numpy": True,
         "coerce-X-to-pandas": False,
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(self):
@@ -105,6 +110,9 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+
+
+        enforce_univariate = self.get_tag("coerce-X-to-pandas", False)
         X, y = check_X_y(
             X, y, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
         )
