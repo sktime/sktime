@@ -88,7 +88,7 @@ class BaseClassifier(BaseEstimator):
             y,
             coerce_to_numpy=coerce_to_numpy,
             coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=enforce_univariate
+            enforce_univariate=enforce_univariate,
         )
 
         self._fit(X, y)
