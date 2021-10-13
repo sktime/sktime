@@ -50,9 +50,11 @@ __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
 from copy import deepcopy
+
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
+
 from sktime.exceptions import NotFittedError
 
 
