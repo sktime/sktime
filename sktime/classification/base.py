@@ -138,10 +138,13 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
+        enforce_univariate = self.get_tag("capability:multivariate",
+                                          tag_value_default=False)
         X = check_X(
-            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
+            enforce_univariate=enforce_univariate
         )
         self.check_is_fitted()
 
@@ -163,10 +166,13 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances, n_classes] - predictive pmf
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", False)
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
+        enforce_univariate = self.get_tag("capability:multivariate",
+                                          tag_value_default=False)
         X = check_X(
-            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas
+            X, coerce_to_numpy=coerce_to_numpy, coerce_to_pandas=coerce_to_pandas,
+            enforce_univariate=enforce_univariate
         )
         self.check_is_fitted()
         return self._predict_proba(X)
