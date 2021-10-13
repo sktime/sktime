@@ -74,6 +74,7 @@ from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.var import VAR
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -211,6 +212,7 @@ ESTIMATOR_TEST_PARAMS = {
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
     Detrender: {"forecaster": FORECASTER},
+    VAR: {},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
