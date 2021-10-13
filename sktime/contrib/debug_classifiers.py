@@ -7,7 +7,7 @@ from sktime.datasets import load_unit_test
 if __name__ == "__main__":
     trainX, trainY = load_unit_test(split="train", return_X_y=True)
     testX, testY = load_unit_test(split="test", return_X_y=True)
-    classifier = "BOSS"
+    classifier = "WEASEL"
     clf = set_classifier(classifier)
     clf.fit(trainX, trainY)
     y_pred = clf.predict(testX)

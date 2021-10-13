@@ -21,8 +21,6 @@ from joblib import Parallel, delayed
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 # from sklearn.feature_selection import chi2
 # from numba.typed import Dict
@@ -112,13 +110,12 @@ class WEASEL(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -164,7 +161,7 @@ class WEASEL(BaseClassifier):
 
         super(WEASEL, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
 
         Parameters
@@ -177,7 +174,6 @@ class WEASEL(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
@@ -288,7 +284,7 @@ class WEASEL(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n instances in X.
 
         Parameters
@@ -300,12 +296,10 @@ class WEASEL(BaseClassifier):
         array of shape [n, 1]
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -317,14 +311,11 @@ class WEASEL(BaseClassifier):
         array of shape [n, self.n_classes]
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         bag_all_words = [dict() for _ in range(len(X))]
         for transformer in self.SFA_transformers:
