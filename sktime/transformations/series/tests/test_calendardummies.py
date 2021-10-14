@@ -19,9 +19,7 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
 # Load multivariate dataset longley and apply calendar extraction
 
-pipe = CalendarDummies(
-    base_frequency="week", complexity=2, manual_selection=["week_of_year"]
-)
+pipe = CalendarDummies(base_frequency="week", complexity=2)
 
 pipe.fit(Z=X_train)
 
