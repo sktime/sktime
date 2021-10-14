@@ -78,17 +78,15 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag(
-            "capability:multivariate", tag_value_default=False
-        )
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
+        allow_multivariate = self.get_tag("capability:multivariate")
         X, y = check_X_y(
             X,
             y,
             coerce_to_numpy=coerce_to_numpy,
             coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=enforce_univariate,
+            enforce_univariate=not allow_multivariate,
         )
 
         self._fit(X, y)
@@ -112,16 +110,14 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag(
-            "capability:multivariate", tag_value_default=False
-        )
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
+        allow_multivariate = self.get_tag("capability:multivariate")
         X = check_X(
             X,
             coerce_to_numpy=coerce_to_numpy,
             coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=enforce_univariate,
+            enforce_univariate=not allow_multivariate,
         )
         self.check_is_fitted()
 
@@ -144,16 +140,14 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances, n_classes] - estimated class
         probabilities
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag(
-            "capability:multivariate", tag_value_default=False
-        )
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
+        allow_multivariate = self.get_tag("capability:multivariate")
         X = check_X(
             X,
             coerce_to_numpy=coerce_to_numpy,
             coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=enforce_univariate,
+            enforce_univariate=not allow_multivariate,
         )
         self.check_is_fitted()
         return self._predict_proba(X)
