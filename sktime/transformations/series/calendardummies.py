@@ -19,13 +19,13 @@ base_seasons = [
     ["year", "quarter", 365.25 / 4, "quarter", 1],
     ["year", "month", 12, "month", 0],
     ["year", "week", 365.25 / 7, "week_of_year", 1],
-    ["year", "day", 365.25, "day_of_year", 1],
+    ["year", "day", 365.25, "day", 1],
     ["quarter", "month", 12 / 4, "month_of_quarter", 2],
     ["quarter", "week", 365.25 / (4 * 7), "week_of_quarter", 2],
     ["quarter", "day", 365.25 / 4, "day_of_quarter", 2],
     ["month", "week", 365.25 / (12 * 7), "week_of_month", 2],
     ["month", "day", 30, "day", 0],
-    ["week", "day", 7, "day_of_week", 0],
+    ["week", "day", 7, "weekday", 0],
     ["day", "hour", 24, "hour", 0],
     ["hour", "minute", 60, "minute", 0],
     ["minute", "second", 60, "second", 0],
@@ -106,7 +106,7 @@ class CalendarDummies(_SeriesToSeriesTransformer):
         "univariate-only": False,
     }
 
-    def __init__(self, base_frequency="day", complexity=1, manual_selection=None):
+    def __init__(self, base_frequency=None, complexity=1, manual_selection=None):
 
         self.base_frequency = base_frequency
         self.complexity = complexity
@@ -128,15 +128,6 @@ class CalendarDummies(_SeriesToSeriesTransformer):
             Transformed time series(es).
         """
         self.check_is_fitted()
-
-        if self.base_frequency is None:
-            raise ValueError("Base Frequency of time series" + "must be provided")
-
-        if self.base_frequency not in base_seasons["child"].unique():
-            raise ValueError(
-                "Invalid manual_selection specified, must be in: "
-                + ", ".join(base_seasons["child"].unique())
-            )
 
         if (self.manual_selection is not None) and (
             not all(
