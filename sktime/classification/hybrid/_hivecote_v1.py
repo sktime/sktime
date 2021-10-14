@@ -56,10 +56,20 @@ class HIVECOTEV1(BaseClassifier):
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         The number of classes.
     classes_ : list
-        The classes labels.
+        The unique class labels.
+    n_jobs_ : int
+        The number of threads used.
+    stc_weight_ : float
+        The weight for STC probabilities.
+    tsf_weight_ : float
+        The weight for TSF probabilities.
+    rise_weight_ : float
+        The weight for RISE probabilities.
+    cboss_weight_ : float
+        The weight for cBOSS probabilities.
 
     See Also
     --------
@@ -129,31 +139,51 @@ class HIVECOTEV1(BaseClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.n_classes = 0
+        self.n_classes_ = 0
         self.classes_ = []
+        self.n_jobs_ = n_jobs
+        self.stc_weight_ = 0
+        self.tsf_weight_ = 0
+        self.rise_weight_ = 0
+        self.cboss_weight_ = 0
 
         self._stc_params = stc_params
         self._tsf_params = tsf_params
         self._rise_params = rise_params
         self._cboss_params = cboss_params
-        self._n_jobs = n_jobs
         self._stc = None
         self._tsf = None
         self._rise = None
         self._cboss = None
-        self._stc_weight = 0
-        self._tsf_weight = 0
-        self._rise_weight = 0
-        self._cboss_weight = 0
 
         super(HIVECOTEV1, self).__init__()
 
     def _fit(self, X, y):
-        self._n_jobs = check_n_jobs(self.n_jobs)
+        """Fit HIVE-COTE 1.0 to training data.
 
-        self.n_classes = np.unique(y).shape[0]
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
+        self.n_jobs_ = check_n_jobs(self.n_jobs)
+
+        self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
+        # Default values from HC1 paper
         if self.stc_params is None:
             self._stc_params = {"transform_limit_in_minutes": 120}
         if self.tsf_params is None:
@@ -163,44 +193,49 @@ class HIVECOTEV1(BaseClassifier):
         if self.cboss_params is None:
             self._cboss_params = {}
 
+        # Cross-validation size for TSF and RISE
         cv_size = 10
         _, counts = np.unique(y, return_counts=True)
         min_class = np.min(counts)
         if min_class < cv_size:
             cv_size = min_class
 
+        # Build STC
         self._stc = ShapeletTransformClassifier(
             **self._stc_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self._n_jobs,
+            n_jobs=self.n_jobs_,
         )
         self._stc.fit(X, y)
 
         if self.verbose > 0:
             print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
+        # Find STC weight using train set estimate
         train_probs = self._stc._get_train_probs(X, y)
         train_preds = self._stc.classes_[np.argmax(train_probs, axis=1)]
-        self._stc_weight = accuracy_score(y, train_preds) ** 4
+        self.stc_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
             print(  # noqa
                 "STC train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("STC weight = " + str(self._stc_weight))  # noqa
+            print("STC weight = " + str(self.stc_weight_))  # noqa
 
+        # Build TSF
         self._tsf = TimeSeriesForestClassifier(
             **self._tsf_params,
             random_state=self.random_state,
-            n_jobs=self._n_jobs,
+            n_jobs=self.n_jobs_,
         )
         self._tsf.fit(X, y)
 
         if self.verbose > 0:
             print("TSF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
+        # Find TSF weight using train set estimate found through CV
         train_preds = cross_val_predict(
             TimeSeriesForestClassifier(
                 **self._tsf_params, random_state=self.random_state
@@ -208,27 +243,29 @@ class HIVECOTEV1(BaseClassifier):
             X=X,
             y=y,
             cv=cv_size,
-            n_jobs=self._n_jobs,
+            n_jobs=self.n_jobs_,
         )
-        self._tsf_weight = accuracy_score(y, train_preds) ** 4
+        self.tsf_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
             print(  # noqa
                 "TSF train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("TSF weight = " + str(self._tsf_weight))  # noqa
+            print("TSF weight = " + str(self.tsf_weight_))  # noqa
 
+        # Build RISE
         self._rise = RandomIntervalSpectralForest(
             **self._rise_params,
             random_state=self.random_state,
-            n_jobs=self._n_jobs,
+            n_jobs=self.n_jobs_,
         )
         self._rise.fit(X, y)
 
         if self.verbose > 0:
             print("RISE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
+        # Find RISE weight using train set estimate found through CV
         train_preds = cross_val_predict(
             RandomIntervalSpectralForest(
                 **self._rise_params,
@@ -237,33 +274,48 @@ class HIVECOTEV1(BaseClassifier):
             X=X,
             y=y,
             cv=cv_size,
-            n_jobs=self._n_jobs,
+            n_jobs=self.n_jobs_,
         )
-        self._rise_weight = accuracy_score(y, train_preds) ** 4
+        self.rise_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
             print(  # noqa
                 "RISE train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("RISE weight = " + str(self._rise_weight))  # noqa
+            print("RISE weight = " + str(self.rise_weight_))  # noqa
 
+        # Build cBOSS
         self._cboss = ContractableBOSS(
-            **self._cboss_params, random_state=self.random_state, n_jobs=self._n_jobs
+            **self._cboss_params, random_state=self.random_state, n_jobs=self.n_jobs_
         )
         self._cboss.fit(X, y)
+
+        # Find cBOSS weight using train set estimate
         train_probs = self._cboss._get_train_probs(X, y)
         train_preds = self._cboss.classes_[np.argmax(train_probs, axis=1)]
-        self._cboss_weight = accuracy_score(y, train_preds) ** 4
+        self.cboss_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
             print(  # noqa
                 "cBOSS (estimate included)",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("cBOSS weight = " + str(self._cboss_weight))  # noqa
+            print("cBOSS weight = " + str(self.cboss_weight_))  # noqa
 
     def _predict(self, X):
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -273,24 +325,40 @@ class HIVECOTEV1(BaseClassifier):
         )
 
     def _predict_proba(self, X):
-        dists = np.zeros((X.shape[0], self.n_classes))
+        """Predicts labels probabilities for sequences in X.
 
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
+        dists = np.zeros((X.shape[0], self.n_classes_))
+
+        # Call predict proba on each classifier, multiply the probabilities by the
+        # classifiers weight then add them to the current HC1 probabilities
         dists = np.add(
             dists,
-            self._stc.predict_proba(X) * (np.ones(self.n_classes) * self._stc_weight),
+            self._stc.predict_proba(X) * (np.ones(self.n_classes_) * self.stc_weight_),
         )
         dists = np.add(
             dists,
-            self._tsf.predict_proba(X) * (np.ones(self.n_classes) * self._tsf_weight),
+            self._tsf.predict_proba(X) * (np.ones(self.n_classes_) * self.tsf_weight_),
         )
         dists = np.add(
             dists,
-            self._rise.predict_proba(X) * (np.ones(self.n_classes) * self._rise_weight),
+            self._rise.predict_proba(X)
+            * (np.ones(self.n_classes_) * self.rise_weight_),
         )
         dists = np.add(
             dists,
             self._cboss.predict_proba(X)
-            * (np.ones(self.n_classes) * self._cboss_weight),
+            * (np.ones(self.n_classes_) * self.cboss_weight_),
         )
 
+        # Make each instances probability array sum to 1 and return
         return dists / dists.sum(axis=1, keepdims=True)
