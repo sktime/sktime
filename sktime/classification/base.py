@@ -78,11 +78,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag(
-            "capability:multivariate", tag_value_default=False
-        )
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
+        enforce_univariate = self.get_tag("capability:multivariate")
         X, y = check_X_y(
             X,
             y,
@@ -112,11 +110,9 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag(
-            "capability:multivariate", tag_value_default=False
-        )
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
+        enforce_univariate = self.get_tag("capability:multivariate")
         X = check_X(
             X,
             coerce_to_numpy=coerce_to_numpy,
@@ -144,11 +140,9 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances, n_classes] - estimated class
         probabilities
         """
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy", tag_value_default=False)
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas", tag_value_default=False)
-        enforce_univariate = self.get_tag(
-            "capability:multivariate", tag_value_default=False
-        )
+        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
+        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
+        enforce_univariate = self.get_tag("capability:multivariate")
         X = check_X(
             X,
             coerce_to_numpy=coerce_to_numpy,
