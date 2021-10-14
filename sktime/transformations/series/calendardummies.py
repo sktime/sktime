@@ -106,7 +106,7 @@ class CalendarDummies(_SeriesToSeriesTransformer):
         "univariate-only": False,
     }
 
-    def __init__(self, base_frequency=None, complexity=1, manual_selection=None):
+    def __init__(self, base_frequency="day", complexity=1, manual_selection=None):
 
         self.base_frequency = base_frequency
         self.complexity = complexity
@@ -128,6 +128,15 @@ class CalendarDummies(_SeriesToSeriesTransformer):
             Transformed time series(es).
         """
         self.check_is_fitted()
+
+        if self.base_frequency is None:
+            raise ValueError("Base Frequency of time series" + "must be provided")
+
+        if self.base_frequency not in base_seasons["child"].unique():
+            raise ValueError(
+                "Invalid manual_selection specified, must be in: "
+                + ", ".join(base_seasons["child"].unique())
+            )
 
         if (self.manual_selection is not None) and (
             not all(
