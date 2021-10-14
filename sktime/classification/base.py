@@ -80,7 +80,7 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
-        enforce_univariate = self.get_tag("capability:multivariate")
+        allow_multivariate = self.get_tag("capability:multivariate")
         X, y = check_X_y(
             X,
             y,
@@ -112,7 +112,7 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
-        enforce_univariate = self.get_tag("capability:multivariate")
+        allow_multivariate = self.get_tag("capability:multivariate")
         X = check_X(
             X,
             coerce_to_numpy=coerce_to_numpy,
@@ -142,7 +142,7 @@ class BaseClassifier(BaseEstimator):
         """
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
-        enforce_univariate = self.get_tag("capability:multivariate")
+        allow_multivariate = self.get_tag("capability:multivariate")
         X = check_X(
             X,
             coerce_to_numpy=coerce_to_numpy,
