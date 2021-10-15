@@ -84,8 +84,9 @@ class NetworkPipelineForecaster(BaseForecaster):
 
     _required_parameters = ["steps"]
     _tags = {
-        "requires-fh-in-fit": True
-        # "scitype:y": "pd.DataFrame"
+        "requires-fh-in-fit": True,
+        "scitype:y": "both",
+        "X_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(self, steps, *args):
