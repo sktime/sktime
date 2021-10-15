@@ -11,6 +11,11 @@ If you would like to sponsor sktime, please visit our `page <https://opencollect
 
 We would like to thank the following sponsors.
 
+Industry sponsorship
+--------------------
+
+* Mercedes-Benz AG/Daimler AG donated 2500 EUR to support the maintenance and development of sktime in 2021, as part of their `FOSS program <https://opensource.mercedes-benz.com>`_.
+
 Research grants
 ---------------
 
@@ -57,6 +62,6 @@ their servers.
 Internships
 -----------
 
-`Google Summer of Code <https://summerofcode.withgoogle.com>`_, `Major League Hacking <https://mlh.io>`_ and `Outreachy <https://www.outreachy.org>`_ have all sponsored sktime internships.
+`Google Summer of Code <https://summerofcode.withgoogle.com>`_ as part of `INCF <https://www.incf.org>`_, `Major League Hacking <https://mlh.io>`_ and `Outreachy <https://www.outreachy.org>`_ have all sponsored sktime internships.
 
 The `Wellcome Trust <https://wellcome.org>`_ sponsored one sktime internship as part of Outreachy.
