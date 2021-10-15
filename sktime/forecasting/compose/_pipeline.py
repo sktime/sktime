@@ -335,9 +335,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         super(TransformedTargetForecaster, self).__init__()
         _, forecaster = self.steps[-1]
         self.clone_tags(forecaster)
-        # get tag from a transformer (to do: this needs to iterate over all transformers
-        # to check if any is univariate-only)
-        self.clone_tags(estimator=self.steps_[0][1], tag_names="univariate-only")
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
