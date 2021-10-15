@@ -306,9 +306,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde.fit(X_subsample, y_subsample)
             tde._subsample = subsample
 
-            if self.save_train_predictions:
-                tde._train_predictions = np.zeros(subsample_size)
-
             tde._accuracy = self._individual_train_acc(
                 tde,
                 y_subsample,
@@ -424,9 +421,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary.get(pred)
-                    ] += self.weights[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += self.weights[
+                        i
+                    ]
                     divisors[subsample[n]] += self.weights[i]
         elif train_estimate_method.lower() == "oob":
             indices = range(n_instances)
@@ -435,7 +432,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 preds = clf.predict(X[oob])
 
                 for n, pred in enumerate(preds):
-                    results[oob[n]][self._class_dictionary.get(pred)] += self.weights[i]
+                    results[oob[n]][self._class_dictionary[pred]] += self.weights[i]
                     divisors[oob[n]] += self.weights[i]
         else:
             raise ValueError(
@@ -470,7 +467,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     correct += 1
 
                 if self.save_train_predictions:
-                    tde._train_predictions[i] = c[i]
+                    tde._train_predictions.append(c[i])
 
         else:
             for i in range(train_size):
@@ -483,7 +480,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     correct += 1
 
                 if self.save_train_predictions:
-                    tde._train_predictions[i] = c
+                    tde._train_predictions.append(c)
 
         return correct / train_size
 

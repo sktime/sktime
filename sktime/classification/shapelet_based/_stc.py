@@ -109,9 +109,9 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ShapeletTransformClassifier(
-    ...     estimator=RotationForest(n_estimators=10),
+    ...     estimator=RotationForest(n_estimators=3),
     ...     n_shapelet_samples=500,
-    ...     max_shapelets=10,
+    ...     max_shapelets=20,
     ...     batch_size=100,
     ... )
     >>> clf.fit(X_train, y_train)
@@ -206,11 +206,11 @@ class ShapeletTransformClassifier(BaseClassifier):
             self._estimator.save_transformed_data = self.save_transformed_data
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
+        if m is not None:
             self._estimator.n_jobs = self._n_jobs
 
         m = getattr(self._estimator, "time_limit_in_minutes", None)
-        if callable(m) and self.time_limit_in_minutes > 0:
+        if m is not None and self.time_limit_in_minutes > 0:
             self._estimator.time_limit_in_minutes = self._classifier_limit_in_minutes
 
         X_t = self._transformer.fit_transform(X, y).to_numpy()
