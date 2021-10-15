@@ -7,7 +7,7 @@ import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.datetimefeatures import DateTimeFeatures
+from sktime.transformations.series.date import DateTimeFeatures
 
 # Load multivariate dataset longley and apply calendar extraction
 # Test that comprehensive feature_scope works for weeks

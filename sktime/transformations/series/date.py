@@ -86,7 +86,7 @@ base_seasons = base_seasons.replace(
 
 
 class DateTimeFeatures(_SeriesToSeriesTransformer):
-    """Calendar Dummy Value Extraction for use in e.g. tree based models.
+    """DateTime Feature  Extraction for use in e.g. tree based models.
 
     Parameters
     ----------
@@ -94,9 +94,10 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         Restricts selection of items to those with frequeny higher than
         the base frequency.
         E.g. if monthly data is provided, it does not make sense to derive
-        weekly dummies
+        weekly dummies.
         Currently has to be provided by the user due to the abundance of different
-         frequencies supported by Pandas (e.g. every 4 days frequency)
+        frequencies supported by Pandas (e.g. every 4 days frequency).
+        Only supports the following frequencies:
         * Y - year
         * Q - quarter
         * M - month
@@ -122,10 +123,10 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series.DateTimeFeatures import DateTimeFeatures
+    >>> from sktime.transformations.series.date import DateTimeFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = DateTimeFeatures(base_frequency="month")
+    >>> transformer = DateTimeFeatures(base_frequency="M")
     >>> y_hat = transformer.fit_transform(y)
     """
 
