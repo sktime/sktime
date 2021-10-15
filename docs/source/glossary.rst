@@ -97,7 +97,7 @@ sktime.
         They capture common software design decisions within a given application domain and distill them into reusable design templates.
         This reduces the design decision they must take, allowing them to focus on application specifics.
         Not only can practitioners write software faster as a result, but applications will have a similar structure.
-        Frameworks often additionally offer reusable functionality like :term:`toolboxes`.
+        Frameworks often offer additional functionality like :term:`toolboxes`.
         Compare with :term:`toolbox` and :term:`application`.
 
     Toolbox

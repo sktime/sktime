@@ -22,13 +22,13 @@ We have experimental support for time series clustering and time series annotati
 Features:
 
 * API for machine learning with time series, for the purpose of specifying, fitting, applying and validating machine learning models
-* Key use cases: notebook style analytics; use as a library component
+* Key use cases: notebook style analytics, use as a library component
 
 Technical specification:
 
 * In-memory computation of a single machine, no distributed computing
 * Medium-sized data in pandas and NumPy
-* Modular, principled object-oriented API
+* Modular, principled and object-oriented API
 * making use of interactive Python interpreter, no command-line interface or graphical user interface
 
 Contents
