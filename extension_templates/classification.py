@@ -18,11 +18,13 @@ How to use this implementation template to implement a new estimator:
 - once complete: use as a local library, or contribute to sktime via PR
 
 Mandatory implements:
-    fitting         - _fit(self, X, y)
-    predicting      - _predict(self, X)
+    fitting                 - _fit(self, X, y)
+    predicting classes      - _predict(self, X)
 
 Optional implements:
-    fitted parameter inspection - get_fitted_params()
+    data conversion and capabilities tags - _tags
+    fitted parameter inspection           - get_fitted_params()
+    predicting class probabilities        - _predict_proba(self, X)
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -41,7 +43,7 @@ from sktime.classification.base import BaseClassifier
 # todo: add any necessary imports here
 
 
-class MyTSC(BaseClassifier):
+class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 
     todo: describe your custom time series classifier here
@@ -65,14 +67,16 @@ class MyTSC(BaseClassifier):
     and so on
     """
 
-    # todo: fill out estimator tags here
+    # optional todo: override base class estimator default tags here
     _tags = {
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
+        "coerce-X-to-numpy": True,
+        "coerce-X-to-pandas": False,
     }
-    # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
@@ -92,8 +96,8 @@ class MyTSC(BaseClassifier):
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
 
-        # todo: change "MyTSC" to the name of the class
-        super(MyTSC, self).__init__()
+        # todo: change "MyTimeSeriesClassifier" to the name of the class
+        super(MyTimeSeriesClassifier, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
