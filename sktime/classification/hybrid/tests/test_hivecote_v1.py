@@ -3,8 +3,8 @@
 import numpy as np
 
 from sktime.classification.hybrid import HIVECOTEV1
+from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_italy_power_demand
-
 
 # def test_hivecote_v1_on_gunpoint():
 #     # load gunpoint data
@@ -35,9 +35,10 @@ def test_hivecote_v1_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train HIVE-COTE v1
+    rotf = RotationForest(n_estimators=10)
     hc1 = HIVECOTEV1(
         random_state=0,
-        stc_params={"n_estimators": 10, "transform_contract_in_mins": 0.1},
+        stc_params={"estimator": rotf, "transform_limit_in_minutes": 0.1},
         tsf_params={"n_estimators": 10},
         rise_params={"n_estimators": 10},
         cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},

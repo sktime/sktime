@@ -15,11 +15,11 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.interval_based import (
-    TimeSeriesForestClassifier,
     RandomIntervalSpectralForest,
+    TimeSeriesForestClassifier,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.utils.validation.panel import check_X_y, check_X
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class HIVECOTEV1(BaseClassifier):
@@ -77,7 +77,7 @@ class HIVECOTEV1(BaseClassifier):
         random_state=None,
     ):
         if stc_params is None:
-            stc_params = {"n_estimators": 500}
+            stc_params = {}
         if tsf_params is None:
             tsf_params = {"n_estimators": 500}
         if rise_params is None:
