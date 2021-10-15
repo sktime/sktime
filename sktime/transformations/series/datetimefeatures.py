@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
 __author__ = ["Daniel Bartling"]
-__all__ = ["CalendarDummies"]
+__all__ = ["DateTimeFeatures"]
 
 import warnings
 
@@ -14,24 +14,23 @@ from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 base_seasons = [
-    ["parent", "child", "period", "dummy_func", "complexity"],
-    ["year", "year", None, "year", 0],
-    ["year", "quarter", 365.25 / 4, "quarter", 1],
-    ["year", "month", 12, "month", 0],
-    ["year", "week", 365.25 / 7, "week_of_year", 1],
-    ["year", "day", 365.25, "day", 1],
-    ["quarter", "month", 12 / 4, "month_of_quarter", 2],
-    ["quarter", "week", 365.25 / (4 * 7), "week_of_quarter", 2],
-    ["quarter", "day", 365.25 / 4, "day_of_quarter", 2],
-    ["month", "week", 365.25 / (12 * 7), "week_of_month", 2],
-    ["month", "day", 30, "day", 0],
-    ["week", "day", 7, "weekday", 0],
-    ["day", "hour", 24, "hour", 0],
-    ["hour", "minute", 60, "minute", 0],
-    ["minute", "second", 60, "second", 0],
-    ["second", "millisecond", 1000, "millisecond", 0],
+    ["child", "parent", "period", "dummy_func", "feature_scope"],
+    ["year", "year", None, "year", "minimal"],
+    ["quarter", "year", 365.25 / 4, "quarter", "efficient"],
+    ["month", "year", 12, "month", "minimal"],
+    ["week", "year", 365.25 / 7, "week_of_year", "efficient"],
+    ["day", "year", 365.25, "day", "efficient"],
+    ["month", "quarter", 12 / 4, "month_of_quarter", "comprehensive"],
+    ["week", "quarter", 365.25 / (4 * 7), "week_of_quarter", "comprehensive"],
+    ["day", "quarter", 365.25 / 4, "day_of_quarter", "comprehensive"],
+    ["week", "month", 365.25 / (12 * 7), "week_of_month", "comprehensive"],
+    ["day", "month", 30, "day", "efficient"],
+    ["day", "week", 7, "weekday", "minimal"],
+    ["hour", "day", 24, "hour", "minimal"],
+    ["minute", "hour", 60, "minute", "minimal"],
+    ["second", "minute", 60, "second", "minimal"],
+    ["millisecond", "second", 1000, "millisecond", "minimal"],
 ]
-
 
 date_order = [
     "year",
@@ -49,13 +48,44 @@ base_seasons = pd.DataFrame(base_seasons[1:], columns=base_seasons[0])
 
 base_seasons["fourier"] = base_seasons["child"] + "_in_" + base_seasons["parent"]
 base_seasons["dummy"] = base_seasons["child"] + "_of_" + base_seasons["parent"]
+
 base_seasons["child"] = (
     base_seasons["child"].astype("category").cat.reorder_categories(date_order)
 )
+
+flist = ["minimal", "efficient", "comprehensive"]
+
+base_seasons["feature_scope"] = (
+    base_seasons["feature_scope"].astype("category").cat.reorder_categories(flist)
+)
+
+base_seasons["feature_scope"] = pd.Categorical(
+    base_seasons["feature_scope"], ordered=True
+)
+
 base_seasons["rank"] = base_seasons["child"].cat.codes
 
+col = base_seasons["child"]
+base_seasons.insert(0, "frequency", col)
 
-class CalendarDummies(_SeriesToSeriesTransformer):
+base_seasons = base_seasons.replace(
+    {
+        "frequency": {
+            "year": "Y",
+            "quarter": "Q",
+            "month": "M",
+            "week": "W",
+            "day": "D",
+            "hour": "H",
+            "minute": "T",
+            "second": "S",
+            "millisecond": "L",
+        }
+    }
+)
+
+
+class DateTimeFeatures(_SeriesToSeriesTransformer):
     """Calendar Dummy Value Extraction for use in e.g. tree based models.
 
     Parameters
@@ -67,22 +97,22 @@ class CalendarDummies(_SeriesToSeriesTransformer):
         weekly dummies
         Currently has to be provided by the user due to the abundance of different
          frequencies supported by Pandas (e.g. every 4 days frequency)
-        * year
-        * quarter
-        * month
-        * week
-        * day
-        * hour
-        * minute
-        * second
-        * millisecond
-        complexity: 0,1,2, optional (default =1)
+        * Y - year
+        * Q - quarter
+        * M - month
+        * W - week
+        * D - day
+        * H - hour
+        * T - minute
+        * S - second
+        * L - millisecond
+        feature_scope: "minimal", "efficient" or "comprehensive"  - default "minimal"
         Specify how many calendar features you want to be returned.
         E.g., rarely used features like week of quarter will only be returned
-        with complexity = 2.
+        with feature_scope =  "comprehensive" .
     manual_selection:
         Manual selection of dummys. Notation is child of parent for precise notation.
-        Will ignore specified complexity, but will still check with warning against
+        Will ignore specified feature_scope, but will still check with warning against
         a specified base_frequency
         Examples:
         * day_of_year
@@ -92,10 +122,10 @@ class CalendarDummies(_SeriesToSeriesTransformer):
 
     Example
     -------
-    >>> from sktime.transformations.series.calendardummies import CalendarDummies
+    >>> from sktime.transformations.series.DateTimeFeatures import DateTimeFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = CalendarDummies(base_frequency="month")
+    >>> transformer = DateTimeFeatures(base_frequency="month")
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -106,12 +136,14 @@ class CalendarDummies(_SeriesToSeriesTransformer):
         "univariate-only": False,
     }
 
-    def __init__(self, base_frequency=None, complexity=1, manual_selection=None):
+    def __init__(
+        self, base_frequency=None, feature_scope="minimal", manual_selection=None
+    ):
 
         self.base_frequency = base_frequency
-        self.complexity = complexity
+        self.feature_scope = feature_scope
         self.manual_selection = manual_selection
-        super(CalendarDummies, self).__init__()
+        super(DateTimeFeatures, self).__init__()
 
     def transform(self, Z, X=None):
         """Transform data.
@@ -139,18 +171,19 @@ class CalendarDummies(_SeriesToSeriesTransformer):
                 + ", ".join(base_seasons["dummy"].unique())
             )
 
-        if self.complexity not in [0, 1, 2]:
+        if self.feature_scope not in ["minimal", "efficient", "comprehensive"]:
             raise ValueError(
-                "Invalid complexity specified,"
-                + "must be in 0,1 or 2 (0 lowest number of variables)"
+                "Invalid feature_scope specified,"
+                + "must be in minimal,efficient,comprehensive"
+                + "(minimal lowest number of variables)"
             )
 
         if (self.base_frequency is not None) & (
-            self.base_frequency not in base_seasons["child"].unique()
+            self.base_frequency not in base_seasons["frequency"].unique()
         ):
             raise ValueError(
                 "Invalid base_frequency specified, must be in: "
-                + ", ".join(base_seasons["child"].unique())
+                + ", ".join(base_seasons["frequency"].unique())
             )
 
         Z = check_series(Z)
@@ -167,10 +200,12 @@ class CalendarDummies(_SeriesToSeriesTransformer):
         if self.manual_selection is None:
             if self.base_frequency is not None:
                 supported = _get_supported_calendar(self.base_frequency)
-                supported = supported[supported["complexity"] <= self.complexity]
+                supported = supported[supported["feature_scope"] <= self.feature_scope]
                 calendar_dummies = supported["dummy_func"].to_list()
             else:
-                supported = base_seasons[base_seasons["complexity"] <= self.complexity]
+                supported = base_seasons[
+                    base_seasons["feature_scope"] <= self.feature_scope
+                ]
                 calendar_dummies = supported["dummy_func"].to_list()
         else:
             if self.base_frequency is not None:
@@ -254,7 +289,7 @@ def _calendar_dummies(x, funcs):
 
 
 def _get_supported_calendar(base_frequency, base_seasons=base_seasons):
-    rank = base_seasons.loc[base_seasons["child"] == base_frequency, "rank"].max()
+    rank = base_seasons.loc[base_seasons["frequency"] == base_frequency, "rank"].max()
     matches = base_seasons.loc[base_seasons["rank"] <= rank]
     if matches.shape[0] == 0:
         raise ValueError("Seasonality or Frequency not supported")
