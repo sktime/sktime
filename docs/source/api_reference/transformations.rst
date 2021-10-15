@@ -271,6 +271,17 @@ Missing value imputation
 
     Imputer
 
+Datetime Feature Generation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.datetimefeatures
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DateTimeFeatures
+
 Outlier detection
 ~~~~~~~~~~~~~~~~~
 
