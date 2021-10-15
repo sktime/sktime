@@ -7,5 +7,5 @@
 that are useful for evaluationg timeseries properties.
 
 :mod:`sktime.statistical_tests.post_hoc` contains statistical tests
-that can be used compare the performance of sktime estimators.
+that can be used to compare the performance of sktime estimators.
 """
