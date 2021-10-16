@@ -15,10 +15,10 @@ from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
-from sktime.classification.distance_based._proximity_forest_utils import max as _max
 from sktime.classification.distance_based._proximity_forest_utils import (
     arg_min as _arg_min,
 )
+from sktime.classification.distance_based._proximity_forest_utils import max as _max
 from sktime.classification.distance_based._proximity_forest_utils import (
     max_instance_length,
     negative_dataframe_indices,
