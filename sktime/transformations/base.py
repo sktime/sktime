@@ -6,6 +6,12 @@ Base class template for transformers.
 
 Covers all types of transformers.
 Type and behaviour of transformer is determined by the following tags:
+    "scitype:transform-input" tag with values "Primitives" or "Series"
+        this determines expected type of input of transform
+        if "Primitives", expected inputs X are pd.DataFrame
+        if "Series", expected inputs X are Series or Panel
+        Note: placeholder tag for upwards compatibility
+            currently only "Series" is supported
     "scitype:transform-output" tag with values "Primitives", or "Series"
         this determines type of output of transform
         if "Primitives", output is pd.DataFrame with as many rows as X has instances
