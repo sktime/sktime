@@ -7,7 +7,7 @@ __author__ = ["mloning", "eyalshafran"]
 __all__ = [
     "Deseasonalizer",
     "ConditionalDeseasonalizer",
-    "STL"
+    "STLTransformer"
 ]
 
 import numpy as np
@@ -27,7 +27,7 @@ from sktime.forecasting.base._fh import _coerce_to_period
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
-    """Remove seasonal components from a time serie.
+    """Remove seasonal components from a time series.
 
     Fit computes :term:`seasonal components <Seasonality>` and
     stores them in `seasonal_`.
@@ -324,8 +324,8 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         return self
 
 
-class STL(_SeriesToSeriesTransformer):
-    """Season-Trend decomposition using LOESS.
+class STLTransformer(_SeriesToSeriesTransformer):
+    """Remove seasonal components from a time-series using STL.
 
     Parameters
     ----------
@@ -377,16 +377,15 @@ class STL(_SeriesToSeriesTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> import numpy as np
     >>> y = load_airline()
-    >>> transformer = STL(sp=12)
+    >>> transformer = STLTransformer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
     >>> forecaster = TransformedTargetForecaster([
-    >>>     ("deseasonalize", STL(sp=12, seasonal=13, seasonal_deg=0)),
+    >>>     ("deseasonalize", STLTransformer(sp=12, seasonal=13, seasonal_deg=0)),
     >>>     ("forecast", PolynomialTrendForecaster())]
     >>> )
     >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(fh=np.arange(1,13))
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
@@ -406,7 +405,7 @@ class STL(_SeriesToSeriesTransformer):
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
         self._y_index = None
-        super(STL, self).__init__()
+        super(STLTransformer, self).__init__()
 
     def _set_y_index(self, y):
         # get the index for the training data to use for seasonal index alignment
@@ -455,10 +454,12 @@ class STL(_SeriesToSeriesTransformer):
 
     def fit(self, Z, X=None):
         """Fit to data.
+
         Parameters
         ----------
         Z : pd.Series
         X : pd.DataFrame
+
         Returns
         -------
         self : an instance of self
@@ -499,11 +500,14 @@ class STL(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of y.
+
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
+
         Returns
         -------
         yt : pd.Series
@@ -515,11 +519,14 @@ class STL(_SeriesToSeriesTransformer):
 
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
+
         Returns a transformed version of y.
+
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
+
         Returns
         -------
         yt : pd.Series
@@ -531,11 +538,13 @@ class STL(_SeriesToSeriesTransformer):
 
     def update(self, Z, X=None, update_params=False):
         """Update fitted parameters.
+
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
         update_params : bool, default=False
+
         Returns
         -------
         self : an instance of self
