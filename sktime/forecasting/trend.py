@@ -29,8 +29,8 @@ class TrendForecaster(BaseForecaster):
         Define the regression model type. If not set, will default to
          sklearn.linear_model.LinearRegression
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import TrendForecaster
     >>> y = load_airline()
@@ -41,7 +41,7 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -137,7 +137,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

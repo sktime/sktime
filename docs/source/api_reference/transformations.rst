@@ -203,6 +203,17 @@ Box-Cox
     BoxCoxTransformer
     LogTransformer
 
+Difference
+~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.difference
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Differencer
+
 Auto-correlation
 ~~~~~~~~~~~~~~~~
 
@@ -293,3 +304,14 @@ Theta
     :template: class.rst
 
     ThetaLinesTransformer
+
+FeatureSelection
+~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.feature_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FeatureSelection

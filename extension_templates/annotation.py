@@ -30,6 +30,10 @@ State:
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
 
+Testing:
+    get default parameters for test instance(s) - get_test_params()
+    create a test instance of estimator class   - create_test_instance()
+
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
@@ -110,7 +114,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, X, Y=None):
@@ -179,3 +183,31 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
 
         # implement here
         # IMPORTANT: avoid side effects to X, fh
+
+    # todo: return default parameters, so that a test instance can be created
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params

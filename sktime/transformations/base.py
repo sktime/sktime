@@ -95,7 +95,7 @@ class BaseTransformer(BaseEstimator):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
@@ -248,7 +248,8 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     type of return     |
+            |          | `transform`  |                        |
+            |   `X`    |  `-output`   |     type of return     |
             |----------|--------------|------------------------|
             | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
             | `Panel`  | `Primitives` | `pd.DataFrame`         |
@@ -493,7 +494,8 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     type of return     |
+            |          | `transform`  |                        |
+            |   `X`    |  `-output`   |     type of return     |
             |----------|--------------|------------------------|
             | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
             | `Panel`  | `Primitives` | `pd.DataFrame`         |

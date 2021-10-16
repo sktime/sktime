@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implements forecaster for applying different univariates by column."""
 
 __author__ = ["GuzalBulatova", "mloning"]
 __all__ = ["ColumnEnsembleForecaster"]
@@ -47,7 +48,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

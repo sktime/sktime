@@ -18,7 +18,7 @@ def _make_series(
     random_state=None,
     add_nan=False,
 ):
-    """Helper function to generate univariate or multivariate time series"""
+    """Generate univariate or multivariate time series."""
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
     if add_nan:
@@ -41,8 +41,7 @@ def _make_series(
 
 
 def _make_index(n_timepoints, index_type=None):
-    """Helper function to make indices for unit testing"""
-
+    """Make indices for unit testing."""
     if index_type == "period":
         start = "2000-01"
         freq = "M"
