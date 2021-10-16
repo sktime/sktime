@@ -165,6 +165,8 @@ class BaseTransformer(BaseEstimator):
             X = convert_Series_to_Panel(X)
             X_mtype = mtype(X)
             X_scitype = mtype_to_scitype(X_mtype)
+            # this should have converted X to panel, ensure that's the case
+            assert X_scitype == "Panel"
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
