@@ -32,15 +32,8 @@ mtype_to_scitype(mtype: str) - convenience function that returns scitype for an 
 ---
 """
 
-from sktime.datatypes._series._registry import (
-    MTYPE_REGISTER_SERIES,
-    MTYPE_LIST_SERIES,
-)
-
-from sktime.datatypes._panel._registry import (
-    MTYPE_REGISTER_PANEL,
-    MTYPE_LIST_PANEL,
-)
+from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
+from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
 
 MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL
 

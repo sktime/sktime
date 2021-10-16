@@ -7,9 +7,8 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
-
 from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type

@@ -45,21 +45,18 @@ __all__ = [
 ]
 
 import warnings
-
 from typing import Union
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import convert_to, mtype, mtype_to_scitype, check_is
+from sktime.datatypes import check_is, convert_to, mtype, mtype_to_scitype
 from sktime.datatypes._series_as_panel import (
-    convert_Series_to_Panel,
     convert_Panel_to_Series,
+    convert_Series_to_Panel,
 )
-
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, np.float, float, str]

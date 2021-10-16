@@ -34,7 +34,6 @@ __all__ = ["convert_dict"]
 import numpy as np
 import pandas as pd
 
-
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
