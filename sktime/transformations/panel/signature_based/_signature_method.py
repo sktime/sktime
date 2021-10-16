@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-
 from sklearn.pipeline import Pipeline
+
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.panel.signature_based._compute import (
-    _WindowSignatureTransform,
-)
 from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
+)
+from sktime.transformations.panel.signature_based._compute import (
+    _WindowSignatureTransform,
 )
 
 

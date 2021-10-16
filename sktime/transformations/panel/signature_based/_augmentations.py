@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.pipeline import Pipeline
+
 from sktime.transformations.base import _SeriesToSeriesTransformer
 
 
