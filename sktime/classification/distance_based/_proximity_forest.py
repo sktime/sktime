@@ -14,17 +14,9 @@ from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
-from sktime.distances.elastic_cython import (
-    dtw_distance,
-    erp_distance,
-    lcss_distance,
-    msm_distance,
-    twe_distance,
-    wdtw_distance,
-)
+from sktime.classification.distance_based._proximity_forest_utils import max as _max
 from sktime.classification.distance_based._proximity_forest_utils import (
-    max as _max,
-    arg_min as _arg_min,
+    arg_min as _arg_min
 )
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._proximity_forest_utils import (
@@ -33,9 +25,17 @@ from sktime.classification.distance_based._proximity_forest_utils import (
     positive_dataframe_indices,
 )
 from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.distances.elastic_cython import (
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wdtw_distance,
+)
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X, check_X_y
 
 # todo unit tests / sort out current unit tests
