@@ -325,13 +325,13 @@ class BaseTransformer(BaseEstimator):
             if self.get_tag("fit-in-transform"):
                 Xt = [clone(self).transform(Xi) for Xi in X]
             else:
-                fitted_trafos = self.transformers_
-                if len(fitted_trafos) != len(X):
+                transformers = self.transformers_
+                if len(transformers) != len(X):
                     raise RuntimeError(
                         "found different number of instances in transform than in fit"
                     )
                 else:
-                    Xt = [fitted_trafos[i].transform(X[i]) for i in range(len(X))]
+                    Xt = [transformers[i].transform(X[i]) for i in range(len(X))]
             # now we have a list of transformed instances
 
             # if the output is Series, Xt is a Panel and we convert back
