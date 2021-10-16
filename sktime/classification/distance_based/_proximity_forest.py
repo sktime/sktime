@@ -120,9 +120,14 @@ class _CachedTransformer(_PanelToPanelTransformer):
 def _derivative_distance(distance_measure, transformer):
     """Take derivative before conducting distance measure.
 
-    :param distance_measure: the distance measure to use
-    :param transformer: the transformer to use
-    :returns: a distance measure function with built in transformation
+    Parameters
+    ----------
+    distance_measure: the distance measure to use
+    transformer: the transformer to use
+
+    Return
+    ------
+    a distance measure function with built in transformation
     """
 
     def distance(instance_a, instance_b, **params):
