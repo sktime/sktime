@@ -71,7 +71,17 @@ if __name__ == "__main__":
         classifier = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
-        tf = str(sys.argv[6]) == "True"
+
+        if len(sys.argv) > 6:
+            tf = sys.argv[6].lower() == "true"
+        else:
+            tf = False
+
+        if len(sys.argv) > 7:
+            predefined_resample = sys.argv[7].lower() == "true"
+        else:
+            predefined_resample = False
+
         load_and_run_classification_experiment(
             problem_path=data_dir,
             results_path=results_dir,
@@ -79,6 +89,7 @@ if __name__ == "__main__":
             dataset=dataset,
             resample_id=resample,
             build_train=tf,
+            predefined_resample=predefined_resample,
         )
     else:  # Local run
         print(" Local Run")
@@ -88,6 +99,8 @@ if __name__ == "__main__":
         dataset = "UnitTest"
         resample = 0
         tf = False
+        predefined_resample = False
+
         load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
@@ -96,4 +109,5 @@ if __name__ == "__main__":
             dataset=dataset,
             resample_id=resample,
             build_train=tf,
+            predefined_resample=predefined_resample,
         )
