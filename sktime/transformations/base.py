@@ -199,7 +199,7 @@ class BaseTransformer(BaseEstimator):
             raise ValueError(msg)
 
         # checking X
-        enforce_univariate = self.get_tag("univariate_only")
+        enforce_univariate = self.get_tag("univariate-only")
         if enforce_univariate and not metadata["is_univariate"]:
             raise ValueError("X must be univariate but is not")
 
@@ -358,7 +358,7 @@ class BaseTransformer(BaseEstimator):
             ValueError(msg)
 
         # checking X
-        enforce_univariate = self.get_tag("univariate_only")
+        enforce_univariate = self.get_tag("univariate-only")
         if enforce_univariate and not metadata["is_univariate"]:
             ValueError("X must be univariate but is not")
 
