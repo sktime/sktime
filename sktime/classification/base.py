@@ -55,6 +55,7 @@ class BaseClassifier(BaseEstimator):
 
     def __init__(self):
         self._is_fitted = False
+        self.n_classes_ = 0
 
         super(BaseClassifier, self).__init__()
 
@@ -88,7 +89,7 @@ class BaseClassifier(BaseEstimator):
             coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=not allow_multivariate,
         )
-
+        self.n_classes_ = np.unique(y).shape[0]
         self._fit(X, y)
 
         # this should happen last
@@ -194,12 +195,13 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError("abstract method")
+        raise NotImplementedError("_fit is a protected abstract method, it must be "
+                                  "implemented.")
 
     def _predict(self, X):
         """Predicts labels for sequences in X.
 
-        Default behaviour: make predictions from predict_proba
+        Abstract class, must be implemented.
 
         Parameters
         ----------
@@ -212,28 +214,32 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        distributions = self.predict_proba(X)
-        predictions = []
-        for instance_index in range(0, X.shape[0]):
-            distribution = distributions[instance_index]
-            prediction = np.argmax(distribution)
-            predictions.append(prediction)
-        y = self.label_encoder.inverse_transform(predictions)
 
-        return y
+        raise NotImplementedError("_predict is a protected abstract method, it must be "
+                                  "implemented.")
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
 
         Parameters
         ----------
         X : 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
                 or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - predictive pmf
+        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
+        of class membership.
         """
-        raise NotImplementedError("abstract method")
+        dists = np.zeros((X.shape[0], self.n_classes_))
+        preds = self._predict(X)
+        for i in range(0,len(preds)):
+            dists[preds[i]] = 1
+
+        return dists
