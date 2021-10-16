@@ -103,7 +103,6 @@ class BaseTransformer(BaseEstimator):
     }
 
     def __init__(self):
-
         self._is_fitted = False
         super(BaseTransformer, self).__init__()
 
