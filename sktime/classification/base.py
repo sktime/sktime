@@ -215,7 +215,6 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-
         raise NotImplementedError(
             "_predict is a protected abstract method, it must be implemented."
         )
