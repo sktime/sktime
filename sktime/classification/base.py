@@ -195,8 +195,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError("_fit is a protected abstract method, it must be "
-                                  "implemented.")
+        raise NotImplementedError(
+            "_fit is a protected abstract method, it must be implemented."
+        )
 
     def _predict(self, X):
         """Predicts labels for sequences in X.
@@ -215,8 +216,9 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances] - predicted class labels
         """
 
-        raise NotImplementedError("_predict is a protected abstract method, it must be "
-                                  "implemented.")
+        raise NotImplementedError(
+            "_predict is a protected abstract method, it must be implemented."
+        )
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
@@ -239,7 +241,7 @@ class BaseClassifier(BaseEstimator):
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
-        for i in range(0,len(preds)):
+        for i in range(0, len(preds)):
             dists[preds[i]] = 1
 
         return dists
