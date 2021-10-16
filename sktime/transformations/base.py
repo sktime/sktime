@@ -119,7 +119,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, optional (default=None)
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.9.0
+            alias Z will be deprecated in version 0.10.0
 
         Returns
         -------
@@ -242,7 +242,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, optional (default=None)
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.9.0
+            alias Z will be deprecated in version 0.10.0
 
         Returns
         -------
@@ -429,7 +429,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, optional (default=None)
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.9.0
+            alias Z will be deprecated in version 0.10.0
 
         Returns
         -------
@@ -528,7 +528,8 @@ def _handle_alias(X, Z):
         return X
     elif X is None:
         warnings.warn(
-            "argument Z will be deprecated in transformers, sktime version 0.9.0"
+            "argument Z will be deprecated in transformers, sktime version 0.10.0",
+            category=DeprecationWarning,
         )
         return Z
     else:
