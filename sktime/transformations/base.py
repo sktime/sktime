@@ -117,7 +117,12 @@ class BaseTransformer(BaseEstimator):
         Parameters
         ----------
         X : Series or Panel, any supported mtype
-            Data to fit transform to
+            Data to fit transform to, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, optional (default=None)
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
@@ -242,7 +247,12 @@ class BaseTransformer(BaseEstimator):
         Parameters
         ----------
         X : Series or Panel, any supported mtype
-            Data to be transformed
+            Data to be transformed, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, optional (default=None)
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
@@ -429,7 +439,12 @@ class BaseTransformer(BaseEstimator):
         Parameters
         ----------
         X : Series or Panel, any supported mtype
-            Data to be transformed
+            Data to be transformed, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, optional (default=None)
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
