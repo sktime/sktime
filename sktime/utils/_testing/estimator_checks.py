@@ -6,7 +6,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly"]
 
-from inspect import BoundArguments, signature
+from inspect import signature
 
 import numpy as np
 import pandas as pd
