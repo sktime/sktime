@@ -138,13 +138,13 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:multivariate",
         "classifier",
         "bool",
-        "can classifier classify time series with 2 or more variables?",
+        "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
         "classifier",
         "bool",
-        "can classifier handle unequal length time series?",
+        "can the classifier handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
@@ -166,6 +166,12 @@ ESTIMATOR_TAG_REGISTER = [
         "classifier",
         "bool",
         "contract time setting, i.e. does the estimator support limiting max fit time?",
+    ),
+    (
+        "capability:multithreading",
+        "classifier",
+        "bool",
+        "can the classifier set n_jobs to use multiple threads?",
     ),
     (
         "coerce-X-to-pandas",

@@ -33,6 +33,7 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall"]
 import numpy as np
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
@@ -51,12 +52,14 @@ class BaseClassifier(BaseEstimator):
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
+        "capability:multithreading": False,
     }
 
     def __init__(self):
-        self._is_fitted = False
+        self.classes_ = []
         self.n_classes_ = 0
-
+        self._class_dictionary = {}
+        self._threads_to_use = 1
         super(BaseClassifier, self).__init__()
 
     def fit(self, X, y):
@@ -89,7 +92,21 @@ class BaseClassifier(BaseEstimator):
             coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=not allow_multivariate,
         )
-        self.n_classes_ = np.unique(y).shape[0]
+
+        multithread = self.get_tag("capability:multithreading")
+        if multithread:
+            try:
+                self._threads_to_use = check_n_jobs(self.n_jobs)
+            except NameError:
+                raise AttributeError(
+                    "self.n_jobs must be set if capability:multithreading is True"
+                )
+
+        self.classes_ = np.unique(y)
+        self.n_classes_ = self.classes_.shape[0]
+        for index, classVal in enumerate(self.classes_):
+            self._class_dictionary[classVal] = index
+
         self._fit(X, y)
 
         # this should happen last
@@ -111,6 +128,8 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
+        self.check_is_fitted()
+
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
         allow_multivariate = self.get_tag("capability:multivariate")
@@ -120,11 +139,8 @@ class BaseClassifier(BaseEstimator):
             coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=not allow_multivariate,
         )
-        self.check_is_fitted()
 
-        y = self._predict(X)
-
-        return y
+        return self._predict(X)
 
     def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
@@ -141,6 +157,8 @@ class BaseClassifier(BaseEstimator):
         y : array-like, shape =  [n_instances, n_classes] - estimated class
         probabilities
         """
+        self.check_is_fitted()
+
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
         allow_multivariate = self.get_tag("capability:multivariate")
@@ -150,7 +168,7 @@ class BaseClassifier(BaseEstimator):
             coerce_to_pandas=coerce_to_pandas,
             enforce_univariate=not allow_multivariate,
         )
-        self.check_is_fitted()
+
         return self._predict_proba(X)
 
     def score(self, X, y):
@@ -240,7 +258,7 @@ class BaseClassifier(BaseEstimator):
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
-        for i in range(0, len(preds)):
-            dists[preds[i]] = 1
+        for i in range(0, X.shape[0]):
+            dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
