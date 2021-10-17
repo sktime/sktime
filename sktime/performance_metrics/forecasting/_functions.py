@@ -17,6 +17,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
+from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
 
 __author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
@@ -59,28 +60,6 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
         )
         raise ValueError(msg)
     return kwarg_
-
-
-def _weighted_geometric_mean(x, sample_weight=None, axis=None):
-    """Calculate weighted version of geometric mean.
-
-    Parameters
-    ----------
-    array : np.ndarray
-        Values to take the weighted geometric mean of.
-    sample_weight: np.ndarray
-        Weights for each value in `array`. Must be same shape as `array` or
-        of shape `(array.shape[0],)`.
-
-    Returns
-    -------
-    geometric_mean : float
-        Weighted geometric mean
-    """
-    check_consistent_length(x, sample_weight)
-    return np.exp(
-        np.sum(sample_weight * np.log(x), axis=axis) / np.sum(sample_weight, axis=axis)
-    )
 
 
 def mean_linex_error(
@@ -2278,7 +2257,7 @@ def geometric_mean_relative_absolute_error(
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
-            sample_weight=horizon_weight,
+            weights=horizon_weight,
             axis=0,
         )
 
@@ -2404,7 +2383,7 @@ def geometric_mean_relative_squared_error(
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
-            sample_weight=horizon_weight,
+            weights=horizon_weight,
             axis=0,
         )
 
