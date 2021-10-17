@@ -172,7 +172,7 @@ class AlignerDTW(BaseAligner):
 
         Returns
         -------
-        distmat: an (n x n) np.array of floats, where n is length of X passed to fit
+        distmat: a (2 x 2) np.array of floats
             [i,j]-th entry is alignment distance between X[i] and X[j] passed to fit
         """
         # since dtw does only pairwise alignments, this is always
@@ -316,7 +316,7 @@ class AlignerDTWfromDist(BaseAligner):
 
         Returns
         -------
-        distmat: an (n x n) np.array of floats, where n is length of X passed to fit
+        distmat: a (2 x 2) np.array of floats
             [i,j]-th entry is alignment distance between X[i] and X[j] passed to fit
         """
         # since dtw does only pairwise alignments, this is always
