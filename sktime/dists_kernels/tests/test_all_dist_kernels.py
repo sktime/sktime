@@ -54,14 +54,10 @@ VALID_INPUTS_TABULAR = [(X1_tab, X2_tab), (X1_tab_df, X2_tab_df)]
 
 
 @pytest.mark.parametrize("x,y", VALID_INPUTS_TABULAR)
-@pytest.mark.parametrize("pairwise_transformers", PAIRWISE_TRANSFORMERS)
-def test_pairwise_transformers_tabular(pairwise_transformers):
+@pytest.mark.parametrize("pairwise_transformer", PAIRWISE_TRANSFORMERS)
+def test_pairwise_transformers_tabular(x, y, pairwise_transformer):
     """Main test function for pairwise transformers on tabular data."""
-    # Test numpy tabular
-    _general_pairwise_transformer_tests(X1_tab, X2_tab, pairwise_transformers)
-
-    # Test dataframe tabular
-    _general_pairwise_transformer_tests(X1_tab_df, X2_tab_df, pairwise_transformers)
+    _general_pairwise_transformer_tests(x, y, pairwise_transformer)
 
 
 X1_num_pan = make_transformer_problem(
