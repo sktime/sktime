@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Extension template for forecasters.
+Extension template for transformers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
