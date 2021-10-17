@@ -6,11 +6,11 @@ Exposes basic interface, excluding multivariate case.
 
 __author__ = ["fkiraly"]
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.alignment._base import BaseAligner
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("dtw")
 
@@ -329,5 +329,7 @@ class AlignerDTWfromDist(BaseAligner):
     @classmethod
     def get_test_params(cls):
         """Test parameters for AlignerDTWdist."""
+        # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist
+
         return {"dist_trafo": ScipyDist()}

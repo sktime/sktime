@@ -27,10 +27,8 @@ State:
 __author__ = ["fkiraly"]
 
 
+from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reindex_iloc
 from sktime.base import BaseEstimator
-
-from sktime.alignment.utils.utils_align import convert_align_to_align_loc
-from sktime.alignment.utils.utils_align import reindex_iloc
 
 
 class BaseAligner(BaseEstimator):
