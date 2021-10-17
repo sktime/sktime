@@ -74,3 +74,11 @@ class DistFromAligner(BasePairwiseTransformerPanel):
                     distmat[i, j] = aligner.fit([X[i], X2[j]]).get_distance()
 
         return distmat
+
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for DistFromAligner."""
+        # importing inside to avoid circular dependencies
+        from sktime.alignment import AlignerDTW
+
+        return {"aligner": AlignerDTW()}
