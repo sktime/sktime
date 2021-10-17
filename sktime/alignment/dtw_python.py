@@ -27,24 +27,26 @@ class AlignerDTW(BaseAligner):
 
     Parameters
     ----------
-    dist_method: string, pointwise (local) distance function to use
-        one of the functions in `scipy.spatial.distance.cdist`
-        default = 'euclidean'
-    step_pattern: a stepPattern object describing the local warping steps
+    dist_method : str, optional, default = "euclidean"
+        distance function to use, a distance on real n-space
+            one of the functions in `scipy.spatial.distance.cdist`
+    step_pattern : str, optional, or dtw_python stepPattern object, optional
+        step pattern to use in time warping
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
                 and dozens of other more non-standard step patterns;
                 list can be displayed by calling help(stepPattern) in dtw
-    window_type: string, the chosen windowing function
+    window_type : string, the chosen windowing function
         "none", "itakura", "sakoechiba", or "slantedband"
             "none" (default) - no windowing
             "sakoechiba" - a band around main diagonal
             "slantedband" - a band around slanted diagonal
             "itakura" - Itakura parallelogram
-    open_begin, open_end: boolean; whether to perform open-ended alignments
-        open_begin = whether alignment open ended at start (low index)
-        open_end = whether alignment open ended at end (high index)
-    variable_to_align: string; which variable to use for univariate alignment
-        default: first variable in X[0] as passed to fit
+    open_begin, open_end : boolean, optional, default=False
+        whether to perform open-ended alignments
+            open_begin = whether alignment open ended at start (low index)
+            open_end = whether alignment open ended at end (high index)
+    variable_to_align : string, default = first variable in X[0] as passed to fit
+        which variable to use for univariate alignment
     """
 
     _tags = {
@@ -195,19 +197,23 @@ class AlignerDTWfromDist(BaseAligner):
 
     Parameters
     ----------
-    step_pattern: a stepPattern object describing the local warping steps
+    step_pattern : str, optional, default = "symmetric2",
+            or dtw_python stepPattern object, optional
+        step pattern to use in time warping
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
                 and dozens of other more non-standard step patterns;
                 list can be displayed by calling help(stepPattern) in dtw
-    window_type: string, the chosen windowing function
+    window_type: str  optional, default = "none"
+        the chosen windowing function
         "none", "itakura", "sakoechiba", or "slantedband"
             "none" (default) - no windowing
             "sakoechiba" - a band around main diagonal
             "slantedband" - a band around slanted diagonal
             "itakura" - Itakura parallelogram
-    open_begin, open_end: boolean; whether to perform open-ended alignments
-        open_begin = whether alignment open ended at start (low index)
-        open_end = whether alignment open ended at end (high index)
+    open_begin, open_end: boolean, optional, default=False
+        whether to perform open-ended alignments
+            open_begin = whether alignment open ended at start (low index)
+            open_end = whether alignment open ended at end (high index)
     """
 
     _tags = {
