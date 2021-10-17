@@ -24,11 +24,11 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import (
+    BaseTransformer,
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
-    BaseTransformer,
 )
 from sktime.utils._testing.annotation import make_annotation_problem
 from sktime.utils._testing.forecasting import (

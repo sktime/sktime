@@ -68,7 +68,7 @@ def check_align(align_df, name="align_df", index="iloc"):
     cols = align_df.columns
     n = len(cols)
 
-    correctcols = set(["ind"+str(i) for i in range(n)])
+    correctcols = set([f"ind{i}" for i in range(n)])
 
     if not set(cols) == set(correctcols):
         msg = f"{name} index columns must be named 'ind0', 'ind1', ... 'ind{n}'"
