@@ -20,7 +20,7 @@ class AlignerDTW(BaseAligner):
 
     Behaviour: computes the full alignment between X[0] and X[1]
         assumes pairwise alignment (only two series) and univariate
-        if multivariate sequences are passed:
+        if multivariate series are passed:
             alignment is computed on univariate series with variable_to_align;
             if this is not set, defaults to the first variable of X is used
         raises an error if variable_to_align is not present in X[0] or X[1]
@@ -63,7 +63,7 @@ class AlignerDTW(BaseAligner):
         variable_to_align=None,
     ):
         """Construct instance."""
-        super(AlignerDTWdist, self).__init__()
+        super(AlignerDTW, self).__init__()
 
         self.dist_method = dist_method
         self.step_pattern = step_pattern
@@ -186,7 +186,7 @@ class AlignerDTW(BaseAligner):
         return distmat
 
 
-class AlignerDTWdist(BaseAligner):
+class AlignerDTWfromDist(BaseAligner):
     """Aligner interface for dtw-python using pairwise transformer.
 
         uses transformer for computation of distance matrix passed to alignment
@@ -228,7 +228,7 @@ class AlignerDTWdist(BaseAligner):
         open_end=False,
     ):
         """Construct instance."""
-        super(AlignerDTWdist, self).__init__()
+        super(AlignerDTWfromDist, self).__init__()
 
         self.dist_trafo = dist_trafo
         self.step_pattern = step_pattern

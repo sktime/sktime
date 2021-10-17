@@ -4,11 +4,11 @@
 __author__ = ["fkiraly"]
 
 from sktime.alignment._base import BaseAligner
-from sktime.alignment.dtw_python import AlignerDTWdist, AlignerDTW
+from sktime.alignment.dtw_python import AlignerDTWfromDist, AlignerDTW
 
 
 __all__ = [
     "BaseAligner",
     "AlignerDTW",
-    "AlignerDTWdist",
+    "AlignerDTWfromDist",
 ]
