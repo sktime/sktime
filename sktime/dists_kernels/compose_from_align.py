@@ -79,6 +79,6 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     def get_test_params(cls):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
-        from sktime.alignment import AlignerDTW
+        from sktime.alignment.dtw_python import AlignerDTW
 
         return {"aligner": AlignerDTW()}
