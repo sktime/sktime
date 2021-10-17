@@ -19,7 +19,7 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing fbprophet and neuralprophet."""
 
     _tags = {
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -48,9 +48,13 @@ class _ProphetAdapter(BaseForecaster):
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
 
-        # Add seasonality
+        # Add seasonality/seasonalities
         if self.add_seasonality:
-            self._forecaster.add_seasonality(**self.add_seasonality)
+            if type(self.add_seasonality) == dict:
+                self._forecaster.add_seasonality(**self.add_seasonality)
+            elif type(self.add_seasonality) == list:
+                for seasonality in self.add_seasonality:
+                    self._forecaster.add_seasonality(**seasonality)
 
         # Add country holidays
         if self.add_country_holidays:

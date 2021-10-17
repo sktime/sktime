@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Machine type converters for scitypes.
 
 Exports
@@ -55,8 +56,6 @@ Returns
 -------
 str - the type to convert "obj" to, a valid mtype string
     or None, if obj is None
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
