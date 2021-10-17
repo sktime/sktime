@@ -224,15 +224,14 @@ class BaseAligner(BaseEstimator):
                 "fit needs to store X to self._X when using default get_aligned"
             )
 
-        X_orig = self._X
-        X_aligned_list = deepcopy(X_orig)
-
+        X = self._X
         align = self.get_alignment()
 
-        for i, Xi_orig in enumerate(X_aligned_list):
+        X_aligned_list = []
 
+        for i, Xi in enumerate(X):
             indi = "ind" + str(i)
-            X_aligned_list[i] = reindex_iloc(Xi_orig, align[indi])
+            X_aligned_list += [reindex_iloc(Xi, align[indi], copy=True)]
 
         return X_aligned_list
 
