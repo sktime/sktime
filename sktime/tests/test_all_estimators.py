@@ -40,6 +40,7 @@ from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
     _get_args,
+    _list_required_methods,
     _make_args,
 )
 
@@ -193,19 +194,13 @@ def test_has_common_interface(estimator_class):
     # Check class for type of attribute
     assert isinstance(estimator.is_fitted, property)
 
-    # Check for attributes
-    common_attrs = [
-        "fit",
-        "check_is_fitted",
-        "is_fitted",  # read-only property
-        "set_params",
-        "get_params",
-    ]
-    for attr in common_attrs:
+    required_methods = _list_required_methods(estimator_class)
+
+    for attr in required_methods:
         assert hasattr(
             estimator, attr
         ), f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
-    assert hasattr(estimator, "predict") or hasattr(estimator, "transform")
+
     if hasattr(estimator, "inverse_transform"):
         assert hasattr(estimator, "transform")
     if hasattr(estimator, "predict_proba"):
