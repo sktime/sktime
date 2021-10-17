@@ -39,7 +39,6 @@ from sktime.datatypes._alignment._registry import (
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
 from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
 
-
 MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL + MTYPE_REGISTER_ALIGNMENT
 
 
