@@ -115,13 +115,13 @@ class AlignerDTW(BaseAligner):
                 f"X[1] does not have variable {var_to_align} used for alignment"
             )
 
-        XAvec = XA[var_to_align].values
-        XBvec = XB[var_to_align].values
+        XA_np = XA[var_to_align].values
+        XB_np = XB[var_to_align].values
 
         # pass to the interfaced dtw function and store to self
         alignment = dtw(
-            XAvec,
-            XBvec,
+            XA_np,
+            XB_np,
             dist_method=dist_method,
             step_pattern=step_pattern,
             window_type=window_type,
