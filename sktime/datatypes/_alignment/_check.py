@@ -47,10 +47,8 @@ def check_align(align_df, name="align_df", index="iloc"):
     ----------
     align_df : any object
         check passes if it follows alignment format, as follows:
-        pandas.DataFrame with columns
-            ind_align: float, integer, or index, alignment coordinate
-            multiple columns indexed by string 'ind'+str(i) for integer i:
-                index of X[i] mapped to alignment coordinate for alignment
+        pandas.DataFrame with column names 'ind'+str(i) for integers i, as follows
+            all integers i between 0 and some natural number n must be present
     name : string, optional, default="align_df"
         variable name that is printed in ValueError-s
     index : string, optional, one of "iloc" (default), "loc", "either"
