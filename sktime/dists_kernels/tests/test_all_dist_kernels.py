@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Tests for pairwise transformer."""
-
 import numpy as np
 import pytest
 
 from sktime.registry import all_estimators
 from sktime.utils._testing.panel import make_transformer_problem
+from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 
 PAIRWISE_TRANSFORMERS = all_estimators(
     estimator_types="transformer-pairwise", return_names=False
@@ -53,7 +52,6 @@ X2_tab_df = make_transformer_problem(
 
 @pytest.mark.parametrize("pairwise_transformers", PAIRWISE_TRANSFORMERS)
 def test_pairwise_transformers_tabular(pairwise_transformers):
-    """Main test function for pairwise transformers on tabular data."""
     # Test numpy tabular
     _general_pairwise_transformer_tests(X1_tab, X2_tab, pairwise_transformers)
 
@@ -79,49 +77,56 @@ X1_num_df = np.array(X1_list_df)
 X2_num_df = np.array(X2_list_df)
 
 
-@pytest.mark.parametrize("pairwise_transformer", PAIRWISE_TRANSFORMERS_PANEL)
-def test_pairwise_transformers_panel(pairwise_transformer):
-    """Main test function for pairwise transformers on panel data."""
+@pytest.mark.parametrize("pairwise_transformers", PAIRWISE_TRANSFORMERS_PANEL)
+def test_pairwise_transformers_panel(pairwise_transformers):
+    test_params = ESTIMATOR_TEST_PARAMS[pairwise_transformers]
+
     # Test numpy panel (3d numpy)
     _general_pairwise_transformer_tests(
-        X1_num_pan, X2_num_pan, pairwise_transformer
+        X1_num_pan, X2_num_pan, pairwise_transformers, test_params
     )
 
     # Test list of dataframes
     _general_pairwise_transformer_tests(
-        X1_list_df, X2_list_df, pairwise_transformer
+        X1_list_df, X2_list_df, pairwise_transformers, test_params
     )
 
     # Test numpy of dataframes
     _general_pairwise_transformer_tests(
-        X1_num_df, X2_num_df, pairwise_transformer
+        X1_num_df, X2_num_df, pairwise_transformers, test_params
     )
 
 
-def _general_pairwise_transformer_tests(x, y, pairwise_transformer):
+def _general_pairwise_transformer_tests(x, y, pairwise_transformers, kwargs=None):
+    def create_transformer():
+        if kwargs is not None:
+            return pairwise_transformers(**kwargs)
+        else:
+            return pairwise_transformers()
+
     # test return matrix
-    transformer = pairwise_transformer.create_test_instance()
+    transformer = create_transformer()
     transformation = transformer.transform(x, y)
 
     assert transformer.X_equals_X2 is False, (
-        f"X_equals_X2 is set to wrong value for {pairwise_transformer} "
+        f"X_equals_X2 is set to wrong value for {pairwise_transformers} "
         f"when both X1 and X2 passed"
     )
     assert isinstance(
         transformation, np.ndarray
-    ), f"Shape of matrix returned is wrong for {pairwise_transformer}"
+    ), f"Shape of matrix returned is wrong for {pairwise_transformers}"
     assert (
         transformation.shape == EXPECTED_SHAPE
-    ), f"Shape of matrix returned is wrong for {pairwise_transformer}"
+    ), f"Shape of matrix returned is wrong for {pairwise_transformers}"
     assert transformer.X_equals_X2 is False, (
         f"X_equals_X2 is set to wrong value for {transformer} " f"when only X passed"
     )
 
-    transformer = pairwise_transformer.create_test_instance()
+    transformer = create_transformer()
     transformation = transformer.transform(x)
     _x_equals_x2_test(transformation, x, transformer)
 
-    transformer = pairwise_transformer.create_test_instance()
+    transformer = create_transformer()
     transformation = transformer.transform(x, x)
     _x_equals_x2_test(transformation, x, transformer)
 
