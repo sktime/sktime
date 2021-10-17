@@ -221,7 +221,7 @@ class AlignerDTWdist(BaseAligner):
 
     def __init__(
         self,
-        dist_trafo=None,
+        dist_trafo,
         step_pattern="symmetric2",
         window_type="none",
         open_begin=False,
@@ -230,11 +230,7 @@ class AlignerDTWdist(BaseAligner):
         """Construct instance."""
         super(AlignerDTWdist, self).__init__()
 
-        if dist_trafo is None:
-            raise ValueError("No component dist_trafo provided")
-        else:
-            self.dist_trafo = dist_trafo
-
+        self.dist_trafo = dist_trafo
         self.step_pattern = step_pattern
         self.window_type = window_type
         self.open_begin = open_begin
@@ -335,3 +331,9 @@ class AlignerDTWdist(BaseAligner):
         distmat[1, 0] = self.alignment.distance
 
         return distmat
+
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for AlignerDTWdist."""
+        from sktime.dists_kernels import ScipyDist
+        return {"dist_trafo": ScipyDist()}
