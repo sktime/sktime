@@ -310,4 +310,4 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
-        pass
+        return self
