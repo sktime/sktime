@@ -50,7 +50,10 @@ X2_tab_df = make_transformer_problem(
     panel=False,
 )
 
+VALID_INPUTS_TABULAR = [(X1_tab, X2_tab), (X1_tab_df, X2_tab_df)]
 
+
+@pytest.mark.parametrize("x,y", VALID_INPUTS_TABULAR)
 @pytest.mark.parametrize("pairwise_transformers", PAIRWISE_TRANSFORMERS)
 def test_pairwise_transformers_tabular(pairwise_transformers):
     """Main test function for pairwise transformers on tabular data."""
@@ -78,24 +81,16 @@ X2_list_df = make_transformer_problem(
 X1_num_df = np.array(X1_list_df)
 X2_num_df = np.array(X2_list_df)
 
+VALID_INPUTS_PANEL = [
+    (X1_num_pan, X2_num_pan), (X1_list_df, X2_list_df), (X1_list_df, X2_list_df)
+]
 
+
+@pytest.mark.parametrize("x,y", VALID_INPUTS_PANEL)
 @pytest.mark.parametrize("pairwise_transformer", PAIRWISE_TRANSFORMERS_PANEL)
-def test_pairwise_transformers_panel(pairwise_transformer):
+def test_pairwise_transformers_panel(x, y, pairwise_transformer):
     """Main test function for pairwise transformers on panel data."""
-    # Test numpy panel (3d numpy)
-    _general_pairwise_transformer_tests(
-        X1_num_pan, X2_num_pan, pairwise_transformer
-    )
-
-    # Test list of dataframes
-    _general_pairwise_transformer_tests(
-        X1_list_df, X2_list_df, pairwise_transformer
-    )
-
-    # Test numpy of dataframes
-    _general_pairwise_transformer_tests(
-        X1_num_df, X2_num_df, pairwise_transformer
-    )
+    _general_pairwise_transformer_tests(x, y, pairwise_transformer)
 
 
 def _general_pairwise_transformer_tests(x, y, pairwise_transformer):
