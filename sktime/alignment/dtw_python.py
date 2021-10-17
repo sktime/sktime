@@ -77,15 +77,13 @@ class AlignerDTW(BaseAligner):
 
             core logic
 
+        Writes to self:
+            alignment : computed alignment from dtw package (nested struct)
+
         Parameters
         ----------
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
-
-        Writes to self
-        --------------
-        alignment - computed alignment from dtw package
-        X - reference to input X
         """
         # soft dependency import of dtw
         from dtw import dtw
@@ -240,15 +238,13 @@ class AlignerDTWfromDist(BaseAligner):
 
             core logic
 
+        Writes to self:
+            alignment : computed alignment from dtw package (nested struct)
+
         Parameters
         ----------
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
-
-        Writes to self
-        --------------
-        alignment - computed alignment from dtw package
-        X - reference to input X
         """
         # soft dependency import of dtw
         from dtw import dtw
