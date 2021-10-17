@@ -781,7 +781,7 @@ def load_from_arff_to_dataframe(
 
     # Parse the file
     # print(full_file_path_and_name)
-    with open(full_file_path_and_name, "r") as f:
+    with open(full_file_path_and_name, "r", encoding="utf-8") as f:
         for line in f:
 
             if line.strip():
