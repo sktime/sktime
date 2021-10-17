@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Abstract base class for unsupervised sequence aligners.
 
 This covers both pairwise and multiple sequence aligners.
@@ -9,6 +10,7 @@ Scitype defining methods:
     fitting              - fit(self, X, Z=None)
     get alignment (iloc) - get_alignment()
     get alignment (loc)  - get_alignment_loc()
+    get aligned series   - get_aligned()
     get distance (float) - get_distance()
     get distance matrix  - get_distance_matrix()
 
@@ -20,14 +22,10 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
 
-
-from copy import deepcopy
 
 from sktime.base import BaseEstimator
 
@@ -64,8 +62,10 @@ class BaseAligner(BaseEstimator):
 
         Parameters
         ----------
-        X: list of pd.DataFrame (sequence) of length n - panel of series to align
-        Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
+        X : list of pd.DataFrame (Series) of length n
+            collection of series to align
+        Z : pd.DataFrame with n rows, optional
+            metadata, i-th row of Z corresponds to i-th element of X
         """
         self._fit(X=X, Z=Z)
 
@@ -86,8 +86,10 @@ class BaseAligner(BaseEstimator):
 
         Parameters
         ----------
-        X: list of pd.DataFrame (sequence) of length n - panel of series to align
-        Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
+        X : list of pd.DataFrame (Series) of length n
+            collection of series to align
+        Z : pd.DataFrame with n rows, optional
+            metadata, i-th row of Z corresponds to i-th element of X
         """
         raise NotImplementedError
 
