@@ -331,7 +331,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
     ----------
     sp : int, default=1
         Seasonal periodicity.
-   seasonal : int, default=7
+    seasonal : int, default=7
         Length of the seasonal smoother. Must be an odd integer, and should
         normally be >= 7 (default).
     trend : {int, default=None}
