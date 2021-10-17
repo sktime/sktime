@@ -54,18 +54,23 @@ class BaseAligner(BaseEstimator):
     def fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
 
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets self._is_fitted flag to True.
+            Stores `X` and `Z` to self._X and self._Z, respectively.
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
-
-        State change
-        ---------------
-        creates fitted model (attributes ending in "_")
-        sets is_fitted flag to true
-        should write X to self if using default implementation of get_alignment_loc
         """
         self._fit(X=X, Z=Z)
+
+        self._X = X
+        self._Z = Z
 
         self._is_fitted = True
 
@@ -76,14 +81,13 @@ class BaseAligner(BaseEstimator):
 
             core logic
 
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
-
-        Writes to self
-        --------------
-        creates fitted model (attributes ending in "_")
         """
         raise NotImplementedError
 
@@ -92,6 +96,32 @@ class BaseAligner(BaseEstimator):
 
         Behaviour: returns an alignment for sequences in X passed to fit
             model should be in fitted state, fitted model parameters read from self
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self._is_fitted
+
+        Returns
+        -------
+        pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
+            cols contain iloc index of X[i] mapped to alignment coordinate for alignment
+        """
+        self.check_is_fitted()
+        return self._get_alignment()
+
+    def _get_alignment(self):
+        """Return alignment for sequences/series passed in fit (iloc indices).
+
+            core logic
+
+        Behaviour: returns an alignment for sequences in X passed to fit
+            model should be in fitted state, fitted model parameters read from self
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
 
         Returns
         -------
@@ -106,17 +136,44 @@ class BaseAligner(BaseEstimator):
         Behaviour: returns an alignment for sequences in X passed to fit
             model should be in fitted state, fitted model parameters read from self
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self._is_fitted
+
         Returns
         -------
         pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
             cols contain loc index of X[i] mapped to alignment coordinate for alignment
         """
-        if not hasattr(self, "X"):
-            raise NotImplementedError(
-                "fit needs to store X to self when using default get_aligned"
+        self.check_is_fitted()
+        return self._get_alignment_loc()
+
+    def _get_alignment_loc(self):
+        """Return alignment for sequences/series passed in fit (loc indices).
+
+            core logic
+
+        Behaviour: returns an alignment for sequences in X passed to fit
+            model should be in fitted state, fitted model parameters read from self
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+
+        Returns
+        -------
+        pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
+            cols contain loc index of X[i] mapped to alignment coordinate for alignment
+        """
+        if not hasattr(self, "_X"):
+            # defensive error - fit should store X to self._X
+            raise RuntimeError(
+                "fit needs to store X to self._X when using default get_alignment_loc"
             )
 
-        X = self.X
+        X = self._X
 
         align = self.get_alignment()
 
@@ -128,18 +185,46 @@ class BaseAligner(BaseEstimator):
         Behaviour: returns aligned version of unaligned sequences in X passed to fit
             model should be in fitted state, fitted model parameters read from self
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self._is_fitted
+
         Returns
         -------
         X_aligned_list: list of pd.DataFrame in sequence format
             of length n, indices corresponding to indices of X passed to fit
             i-th element is re-indexed, aligned version of X[i]
         """
-        if not hasattr(self, "X"):
-            raise NotImplementedError(
-                "fit needs to store X to self when using default get_aligned"
+        self.check_is_fitted()
+        return self._get_aligned()
+
+    def _get_aligned(self):
+        """Return aligned version of sequences passed to fit.
+
+            core logic
+
+        Behaviour: returns aligned version of unaligned sequences in X passed to fit
+            model should be in fitted state, fitted model parameters read from self
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+
+        Returns
+        -------
+        X_aligned_list: list of pd.DataFrame in sequence format
+            of length n, indices corresponding to indices of X passed to fit
+            i-th element is re-indexed, aligned version of X[i]
+        """
+        if not hasattr(self, "_X"):
+            # defensive error - fit should store X to self._X
+            raise RuntimeError(
+                "fit needs to store X to self._X when using default get_aligned"
             )
 
-        X_orig = self.X
+        X_orig = self._X
         X_aligned_list = deepcopy(X_orig)
 
         align = self.get_alignment()
@@ -157,6 +242,30 @@ class BaseAligner(BaseEstimator):
         Behaviour: returns overall distance corresponding to alignment
             not all aligners will return or implement this (optional)
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self._is_fitted
+
+        Returns
+        -------
+        distance: float - overall distance between all elements of X passed to fit
+        """
+        self.check_is_fitted()
+        return self._get_distance()
+
+    def _get_distance(self):
+        """Return overall distance of alignment.
+
+            core logic
+
+        Behaviour: returns overall distance corresponding to alignment
+            not all aligners will return or implement this (optional)
+        Accesses in self:
+            Fitted model attributes ending in "_".
+
         Returns
         -------
         distance: float - overall distance between all elements of X passed to fit
@@ -168,6 +277,32 @@ class BaseAligner(BaseEstimator):
 
         Behaviour: returns pairwise distance matrix of alignment distances
             not all aligners will return or implement this (optional)
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self._is_fitted
+
+        Returns
+        -------
+        distmat: an (n x n) np.array of floats, where n is length of X passed to fit
+            [i,j]-th entry is alignment distance between X[i] and X[j] passed to fit
+        """
+        self.check_is_fitted()
+        return self._get_distance_matrix()
+
+    def _get_distance_matrix(self):
+        """Return distance matrix of alignment.
+
+            core logic
+
+        Behaviour: returns pairwise distance matrix of alignment distances
+            not all aligners will return or implement this (optional)
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
 
         Returns
         -------

@@ -136,7 +136,7 @@ class AlignerDTW(BaseAligner):
 
         return self
 
-    def get_alignment(self):
+    def _get_alignment(self):
         """Return alignment for sequences/series passed in fit (iloc indices).
 
         Behaviour: returns an alignment for sequences in X passed to fit
@@ -155,7 +155,7 @@ class AlignerDTW(BaseAligner):
 
         return aligndf
 
-    def get_distance(self):
+    def _get_distance(self):
         """Return overall distance of alignment.
 
         Behaviour: returns overall distance corresponding to alignment
@@ -167,7 +167,7 @@ class AlignerDTW(BaseAligner):
         """
         return self.alignment.distance
 
-    def get_distance_matrix(self):
+    def _get_distance_matrix(self):
         """Return distance matrix of alignment.
 
         Behaviour: returns pairwise distance matrix of alignment distances
@@ -287,7 +287,7 @@ class AlignerDTWdist(BaseAligner):
 
         return self
 
-    def get_alignment(self):
+    def _get_alignment(self):
         """Return alignment for sequences/series passed in fit (iloc indices).
 
         Behaviour: returns an alignment for sequences in X passed to fit
@@ -306,7 +306,7 @@ class AlignerDTWdist(BaseAligner):
 
         return aligndf
 
-    def get_distance(self):
+    def _get_distance(self):
         """Return overall distance of alignment.
 
         Behaviour: returns overall distance corresponding to alignment
@@ -318,7 +318,7 @@ class AlignerDTWdist(BaseAligner):
         """
         return self.alignment.distance
 
-    def get_distance_matrix(self):
+    def _get_distance_matrix(self):
         """Return distance matrix of alignment.
 
         Behaviour: returns pairwise distance matrix of alignment distances
