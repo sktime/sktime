@@ -53,7 +53,18 @@ class BaseGridSearch(BaseForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
-        self.clone_tags(forecaster)
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            "scitype:y",
+            "ignores-exogeneous-X",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+        ]
+        self.clone_tags(forecaster, tags_to_clone)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
