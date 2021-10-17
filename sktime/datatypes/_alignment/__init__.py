@@ -3,7 +3,8 @@
 
 from sktime.datatypes._alignment._check import check_dict as check_dict_Alignment
 from sktime.datatypes._alignment._registry import (
-    MTYPE_LIST_ALIGNMENT, MTYPE_REGISTER_ALIGNMENT,
+    MTYPE_LIST_ALIGNMENT,
+    MTYPE_REGISTER_ALIGNMENT,
 )
 
 __all__ = [

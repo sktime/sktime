@@ -22,13 +22,13 @@ from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.base import BaseTransformer
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
+    BaseTransformer,
 )
 from sktime.utils._testing.annotation import make_annotation_problem
 from sktime.utils._testing.forecasting import (
@@ -97,7 +97,7 @@ def _list_required_methods(estimator):
             "get_alignment_loc",
             "get_aligned",
             "get_distance",
-            "get_distance_matrix"
+            "get_distance_matrix",
         ]
 
     return required_methods
@@ -159,7 +159,7 @@ def _make_fit_args(estimator, **kwargs):
         return None, None
     elif isinstance(estimator, BaseAligner):
         X = [_make_series(n_columns=2, **kwargs), _make_series(n_columns=2, **kwargs)]
-        return (X, )
+        return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
 

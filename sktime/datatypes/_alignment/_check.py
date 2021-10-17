@@ -37,7 +37,6 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-
 check_dict = dict()
 
 
@@ -69,7 +68,7 @@ def check_align(align_df, name="align_df", index="iloc"):
     cols = align_df.columns
     n = len(cols)
 
-    correctcols = set(['ind'+str(i) for i in range(n)])
+    correctcols = set(["ind"+str(i) for i in range(n)])
 
     if not set(cols) == set(correctcols):
         msg = f"{name} index columns must be named 'ind0', 'ind1', ... 'ind{n}'"
@@ -78,10 +77,27 @@ def check_align(align_df, name="align_df", index="iloc"):
     if index == "iloc":
         # checks whether df columns are of integer (numpy or pandas nullable) type
         dtypearr = np.array([str(x) for x in align_df[cols].dtypes])
-        allowedtypes = np.array(["int", "int8", "int16", "int32", "int64",
-                                 "uint8", "uint16", "uint32", "uint64",
-                                 "Int8", "Int16", "Int32", "Int64",
-                                 "UInt8", "UInt16", "UInt32", "UInt64"])
+        allowedtypes = np.array(
+            [
+                "int",
+                "int8",
+                "int16",
+                "int32",
+                "int64",
+                "uint8",
+                "uint16",
+                "uint32",
+                "uint64",
+                "Int8",
+                "Int16",
+                "Int32",
+                "Int64",
+                "UInt8",
+                "UInt16",
+                "UInt32",
+                "UInt64",
+            ]
+        )
         if not np.all(np.isin(dtypearr, allowedtypes)):
             msg = f"columns of {name} must have dtype intX, uintX, IntX, or UIntX"
             return False, msg

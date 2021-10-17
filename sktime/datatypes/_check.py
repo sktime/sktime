@@ -26,7 +26,7 @@ __all__ = [
 
 import numpy as np
 
-from typing import Union, List
+from typing import List, Union
 from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
