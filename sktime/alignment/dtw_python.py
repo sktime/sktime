@@ -94,13 +94,13 @@ class AlignerDTW(BaseAligner):
         window_type = self.window_type
         open_begin = self.open_begin
         open_end = self.open_end
+        var_to_align = self.variable_to_align
 
         # shorthands for 1st and 2nd series
         XA = X[0]
         XB = X[1]
 
         # retrieve column to align from data frames, convert to np.array
-        var_to_align = self.variable_to_align
         if var_to_align is None:
             var_to_align = XA.columns.values[0]
 
@@ -175,7 +175,7 @@ class AlignerDTW(BaseAligner):
         distmat: a (2 x 2) np.array of floats
             [i,j]-th entry is alignment distance between X[i] and X[j] passed to fit
         """
-        # since dtw does only pairwise alignments, this is always
+        # since dtw does only pairwise alignments, this is always a 2x2 matrix
         distmat = np.zeros((2, 2), dtype="float")
         distmat[0, 1] = self.alignment_.distance
         distmat[1, 0] = self.alignment_.distance

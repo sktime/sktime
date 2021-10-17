@@ -52,6 +52,9 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         """
         aligner = self.aligner
 
+        # find out whether we know that the resulting matrix is symmetric
+        #   since aligner distances are always symmetric,
+        #   we know it's the case for sure if X equals X2
         if X2 is None:
             X = X2
             symm = True
@@ -66,7 +69,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         for i in range(n):
             for j in range(m):
                 if symm and j < i:
-                    distmat[i, j] = aligner.fit([X[i], X2[j]]).get_distance()
+                    distmat[i, j] = distmat[j, i]
                 else:
                     distmat[i, j] = aligner.fit([X[i], X2[j]]).get_distance()
 
