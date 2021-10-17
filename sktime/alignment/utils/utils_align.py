@@ -30,10 +30,10 @@ def reindex_iloc(df, inds, copy=True):
     -------
     >>> X = pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14])
     >>> reindex_iloc(X, [1, 2, 6])
-        a
-    1	2.0
-    2	3.0
-    6	NaN
+         a
+    1  2.0
+    2  3.0
+    6  NaN
     """
     df_ret = df.reset_index(drop=True).reindex(inds, copy=copy)
 
