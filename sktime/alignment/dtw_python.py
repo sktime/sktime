@@ -22,7 +22,7 @@ class AlignerDTW(BaseAligner):
         assumes pairwise alignment (only two series) and univariate
         if multivariate series are passed:
             alignment is computed on univariate series with variable_to_align;
-            if this is not set, defaults to the first variable of X is used
+            if this is not set, defaults to the first variable of X[0]
         raises an error if variable_to_align is not present in X[0] or X[1]
 
     Parameters
@@ -44,7 +44,7 @@ class AlignerDTW(BaseAligner):
         open_begin = whether alignment open ended at start (low index)
         open_end = whether alignment open ended at end (high index)
     variable_to_align: string; which variable to use for univariate alignment
-        default: first variable in X as passed to fit
+        default: first variable in X[0] as passed to fit
     """
 
     _tags = {
@@ -97,31 +97,31 @@ class AlignerDTW(BaseAligner):
         open_begin = self.open_begin
         open_end = self.open_end
 
-        # shorthands for 1st and 2nd sequence
-        X1 = X[0]
-        X2 = X[1]
+        # shorthands for 1st and 2nd series
+        XA = X[0]
+        XB = X[1]
 
         # retrieve column to align from data frames, convert to np.array
         var_to_align = self.variable_to_align
         if var_to_align is None:
-            var_to_align = X1.columns.values[0]
+            var_to_align = XA.columns.values[0]
 
-        if var_to_align not in X1.columns.values:
+        if var_to_align not in XA.columns.values:
             raise ValueError(
                 f"X[0] does not have variable {var_to_align} used for alignment"
             )
-        if var_to_align not in X2.columns.values:
+        if var_to_align not in XB.columns.values:
             raise ValueError(
                 f"X[1] does not have variable {var_to_align} used for alignment"
             )
 
-        X1vec = X1[var_to_align].values
-        X2vec = X2[var_to_align].values
+        XAvec = XA[var_to_align].values
+        XBvec = XB[var_to_align].values
 
         # pass to the interfaced dtw function and store to self
         alignment = dtw(
-            X1vec,
-            X2vec,
+            XAvec,
+            XBvec,
             dist_method=dist_method,
             step_pattern=step_pattern,
             window_type=window_type,
@@ -130,9 +130,8 @@ class AlignerDTW(BaseAligner):
             keep_internals=True,
         )
 
-        self.alignment = alignment
-        self.X = X
-        self.variable_to_align = var_to_align  # changed only if was None
+        self.alignment_ = alignment
+        self.variable_to_align_ = var_to_align  # changed only if was None
 
         return self
 
@@ -148,7 +147,7 @@ class AlignerDTW(BaseAligner):
             cols contain iloc index of X[i] mapped to alignment coordinate for alignment
         """
         # retrieve alignment
-        alignment = self.alignment
+        alignment = self.alignment_
 
         # convert to required data frame format and return
         aligndf = pd.DataFrame({"ind0": alignment.index1, "ind1": alignment.index2})
@@ -165,7 +164,7 @@ class AlignerDTW(BaseAligner):
         -------
         distance: float - overall distance between all elements of X passed to fit
         """
-        return self.alignment.distance
+        return self.alignment_.distance
 
     def _get_distance_matrix(self):
         """Return distance matrix of alignment.
@@ -180,8 +179,8 @@ class AlignerDTW(BaseAligner):
         """
         # since dtw does only pairwise alignments, this is always
         distmat = np.zeros((2, 2), dtype="float")
-        distmat[0, 1] = self.alignment.distance
-        distmat[1, 0] = self.alignment.distance
+        distmat[0, 1] = self.alignment_.distance
+        distmat[1, 0] = self.alignment_.distance
 
         return distmat
 
@@ -262,11 +261,11 @@ class AlignerDTWfromDist(BaseAligner):
         open_end = self.open_end
 
         # shorthands for 1st and 2nd sequence
-        X1 = X[0]
-        X2 = X[1]
+        XA = X[0]
+        XB = X[1]
 
         # compute distance matrix using cdist
-        distmat = dist_trafo(X1, X2)
+        distmat = dist_trafo(XA, XB)
 
         # pass to the interfaced dtw function and store to self
         alignment = dtw(
@@ -278,8 +277,7 @@ class AlignerDTWfromDist(BaseAligner):
             keep_internals=True,
         )
 
-        self.alignment = alignment
-        self.X = X
+        self.alignment_ = alignment
 
         return self
 
@@ -295,7 +293,7 @@ class AlignerDTWfromDist(BaseAligner):
             cols contain iloc index of X[i] mapped to alignment coordinate for alignment
         """
         # retrieve alignment
-        alignment = self.alignment
+        alignment = self.alignment_
 
         # convert to required data frame format and return
         aligndf = pd.DataFrame({"ind0": alignment.index1, "ind1": alignment.index2})
@@ -312,7 +310,7 @@ class AlignerDTWfromDist(BaseAligner):
         -------
         distance: float - overall distance between all elements of X passed to fit
         """
-        return self.alignment.distance
+        return self.alignment_.distance
 
     def _get_distance_matrix(self):
         """Return distance matrix of alignment.
@@ -327,8 +325,8 @@ class AlignerDTWfromDist(BaseAligner):
         """
         # since dtw does only pairwise alignments, this is always
         distmat = np.zeros((2, 2), dtype="float")
-        distmat[0, 1] = self.alignment.distance
-        distmat[1, 0] = self.alignment.distance
+        distmat[0, 1] = self.alignment_.distance
+        distmat[1, 0] = self.alignment_.distance
 
         return distmat
 
