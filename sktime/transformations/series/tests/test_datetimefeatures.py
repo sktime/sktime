@@ -17,7 +17,7 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
 # Load multivariate dataset longley and apply calendar extraction
 
-pipe = DateTimeFeatures(base_frequency="W", feature_scope="comprehensive")
+pipe = DateTimeFeatures(freq="W", feature_scope="comprehensive")
 
 pipe.fit(Z=X_train)
 
@@ -26,7 +26,7 @@ pipe.fit(Z=X_train)
 test_complex_hi = pipe.transform(Z=X_train).columns.to_list()
 
 
-pipe = DateTimeFeatures(base_frequency="W", feature_scope="minimal")
+pipe = DateTimeFeatures(freq="W", feature_scope="minimal")
 
 pipe.fit(Z=X_train)
 
@@ -34,7 +34,7 @@ pipe.fit(Z=X_train)
 
 test_complex_low = pipe.transform(Z=X_train).columns.to_list()
 
-pipe = DateTimeFeatures(base_frequency="M", feature_scope="comprehensive")
+pipe = DateTimeFeatures(freq="M", feature_scope="comprehensive")
 
 pipe.fit(Z=X_train)
 
@@ -43,9 +43,9 @@ pipe.fit(Z=X_train)
 test_diff_basefreq = pipe.transform(Z=X_train).columns.to_list()
 
 pipe = DateTimeFeatures(
-    base_frequency="M",
+    freq="M",
     feature_scope="comprehensive",
-    manual_selection=["year_of_year", "second_of_minute"],
+    manual_selection=["year", "second_of_minute"],
 )
 
 pipe.fit(Z=X_train)
@@ -55,7 +55,7 @@ pipe.fit(Z=X_train)
 
 test_manoverride_withbf = pipe.transform(Z=X_train).columns.to_list()
 
-pipe = DateTimeFeatures(manual_selection=["year_of_year", "second_of_minute"])
+pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
 
 pipe.fit(Z=X_train)
 
@@ -69,7 +69,7 @@ y = load_airline()
 
 y_train, y_test = temporal_train_test_split(y)
 
-pipe = DateTimeFeatures(manual_selection=["year_of_year", "second_of_minute"])
+pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
 
 pipe.fit(Z=y_train)
 
@@ -80,7 +80,7 @@ test_diffdataset = pipe.transform(Z=y_train).columns.to_list()
 y.index = y.index.to_timestamp().astype("datetime64[ns]")
 y_train, y_test = temporal_train_test_split(y)
 
-pipe = DateTimeFeatures(manual_selection=["year_of_year", "second_of_minute"])
+pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
 pipe.fit(Z=y_train)
 
 test_diffdateformat = pipe.transform(Z=y_train).columns.to_list()

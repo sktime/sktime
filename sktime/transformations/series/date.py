@@ -48,6 +48,7 @@ base_seasons = pd.DataFrame(base_seasons[1:], columns=base_seasons[0])
 
 base_seasons["fourier"] = base_seasons["child"] + "_in_" + base_seasons["parent"]
 base_seasons["dummy"] = base_seasons["child"] + "_of_" + base_seasons["parent"]
+base_seasons.loc[base_seasons["dummy"] == "year_of_year", "dummy"] = "year"
 
 base_seasons["child"] = (
     base_seasons["child"].astype("category").cat.reorder_categories(date_order)
@@ -88,14 +89,16 @@ base_seasons = base_seasons.replace(
 class DateTimeFeatures(_SeriesToSeriesTransformer):
     """DateTime Feature  Extraction for use in e.g. tree based models.
 
+    DateTimeFeatures uses date index column and generates date features
+    identifying e.g. year, week of the year, day of the week etc.
+
     Parameters
     ----------
-    base_frequency : str, optional (default=None)
+    freq : str, optional (default="day")
         Restricts selection of items to those with frequeny higher than
-        the base frequency.
-        E.g. if monthly data is provided, it does not make sense to derive
-        weekly dummies.
-        Currently has to be provided by the user due to the abundance of different
+        the base frequency. E.g. if monthly data is provided, it does not make
+        sense to derive weekly dummies.
+        Has to be provided by the user due to the abundance of different
         frequencies supported by Pandas (e.g. every 4 days frequency).
         Only supports the following frequencies:
         * Y - year
@@ -107,26 +110,30 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         * T - minute
         * S - second
         * L - millisecond
-        feature_scope: "minimal", "efficient" or "comprehensive"  - default "minimal"
+    feature_scope: str, optional (default="minimal")
         Specify how many calendar features you want to be returned.
         E.g., rarely used features like week of quarter will only be returned
-        with feature_scope =  "comprehensive" .
-    manual_selection:
+        with feature_scope =  "comprehensive".
+        * "minimal"
+        * "efficient"
+        * "comprehensive"
+    manual_selection: str, optional (default=None)
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
-        a specified base_frequency
-        Examples:
+        a specified freq.
+        Examples for Possible values:
+        * None
         * day_of_year
         * day_of_month
         * day_of_quarter
-        Features year_of_year as dummy (there is no supported hierarchy above year)
+        * year (special case with no higher frequency).
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.date import DateTimeFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = DateTimeFeatures(base_frequency="M")
+    >>> transformer = DateTimeFeatures(freq="M")
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -137,11 +144,9 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         "univariate-only": False,
     }
 
-    def __init__(
-        self, base_frequency=None, feature_scope="minimal", manual_selection=None
-    ):
+    def __init__(self, freq=None, feature_scope="minimal", manual_selection=None):
 
-        self.base_frequency = base_frequency
+        self.freq = freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         super(DateTimeFeatures, self).__init__()
@@ -179,11 +184,11 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
                 + "(minimal lowest number of variables)"
             )
 
-        if (self.base_frequency is not None) & (
-            self.base_frequency not in base_seasons["frequency"].unique()
+        if (self.freq is not None) & (
+            self.freq not in base_seasons["frequency"].unique()
         ):
             raise ValueError(
-                "Invalid base_frequency specified, must be in: "
+                "Invalid freq specified, must be in: "
                 + ", ".join(base_seasons["frequency"].unique())
             )
 
@@ -199,8 +204,8 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
             raise ValueError("Index type not supported")
 
         if self.manual_selection is None:
-            if self.base_frequency is not None:
-                supported = _get_supported_calendar(self.base_frequency)
+            if self.freq is not None:
+                supported = _get_supported_calendar(self.freq)
                 supported = supported[supported["feature_scope"] <= self.feature_scope]
                 calendar_dummies = supported["dummy_func"].to_list()
             else:
@@ -209,8 +214,8 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
                 ]
                 calendar_dummies = supported["dummy_func"].to_list()
         else:
-            if self.base_frequency is not None:
-                supported = _get_supported_calendar(self.base_frequency)
+            if self.freq is not None:
+                supported = _get_supported_calendar(self.freq)
                 if not all(
                     elem in supported["dummy"] for elem in self.manual_selection
                 ):
@@ -289,8 +294,8 @@ def _calendar_dummies(x, funcs):
         return x[funcs]
 
 
-def _get_supported_calendar(base_frequency, base_seasons=base_seasons):
-    rank = base_seasons.loc[base_seasons["frequency"] == base_frequency, "rank"].max()
+def _get_supported_calendar(freq, base_seasons=base_seasons):
+    rank = base_seasons.loc[base_seasons["frequency"] == freq, "rank"].max()
     matches = base_seasons.loc[base_seasons["rank"] <= rank]
     if matches.shape[0] == 0:
         raise ValueError("Seasonality or Frequency not supported")
