@@ -370,46 +370,43 @@ class AutoETS(_StatsModelsAdapter):
             )
 
     def _predict(
-        self,
-        fh,
-        X=None,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-        **simulate_kwargs
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, **simulate_kwargs
     ):
-        """
-            Make forecasts.
-            Parameters
-            ----------
-            fh : ForecastingHorizon
-                The forecasters horizon with the steps ahead to to predict.
-                Default is one-step ahead forecast,
-                i.e. np.array([1])
-            X : pd.DataFrame, optional (default=None)
-                Exogenous variables are ignored.
-            return_pred_int : bool, optional (default=False)
-            alpha : int or list, optional (default=0.95)
-            **simulate_kwargs : see statsmodels ETSResults.get_prediction
-            Returns
-            -------
-            y_pred : pd.Series
-                Returns series of predicted values.
+        """Make forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
+            i.e. np.array([1])
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        return_pred_int : bool, optional (default=False)
+        alpha : int or list, optional (default=0.95)
+        **simulate_kwargs : see statsmodels ETSResults.get_prediction
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Returns series of predicted values.
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
         if return_pred_int:
             predict_intervals = self._fitted_forecaster.get_prediction(
-                start=start,
-                end=end,
-                **simulate_kwargs)
+                start=start, end=end, **simulate_kwargs)
 
             pred_int = predict_intervals.pred_int(alpha)
             pred_int.columns = ['lower', 'upper']
-            return y_pred, pred_int
+            return y_pred.loc[valid_indices], pred_int.loc[valid_indices]
         else:
-            return y_pred
+            return y_pred.loc[valid_indices]
 
     def summary(self):
         """Get a summary of the fitted forecaster.
