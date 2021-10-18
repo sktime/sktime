@@ -321,6 +321,23 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 class STLTransformer(_SeriesToSeriesTransformer):
     """Remove seasonal components from a time-series using STL.
 
+    The STLTransformer is designed to work in a pipeline to create an STL Forecaster.
+
+    For example:
+    stlforecaster = TransformedTargetForecaster([
+        ("deseasonalize", STLTransformer(sp=12),
+        ("forecast", PolynomialTrendForecaster(degree=1))]
+    )
+    stlforecaster.fit(y)
+
+    The STLTransformer works by first fitting STL to the input time-series. The seasonal
+    component is removed from the input time-series which is passed on to a forecaster
+    (in the above example PolynomialTrendForecaster).
+    The forecaster will be fitted to the seasonally adjusted data.
+    When predicting, a forecast will be generated without considering the seasonality.
+    The seasonallity is then added by using the last year of the seasonal component
+    found by the STLTransformer.
+
     Parameters
     ----------
     sp : int, default=1
@@ -363,7 +380,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     Attributes
     ----------
-    seasonal : array of length sp
+    seasonal_ : array of length sp
         Seasonal components computed in seasonal decomposition.
 
     Examples
@@ -374,12 +391,6 @@ class STLTransformer(_SeriesToSeriesTransformer):
     >>> y = load_airline()
     >>> transformer = STLTransformer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
-    >>> forecaster = TransformedTargetForecaster([
-    >>>     ("deseasonalize", STLTransformer(sp=12, seasonal=13, seasonal_deg=0)),
-    >>>     ("forecast", PolynomialTrendForecaster())]
-    >>> )
-    >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
@@ -492,20 +503,20 @@ class STLTransformer(_SeriesToSeriesTransformer):
                 low_pass_jump=self.low_pass_jump
             ).fit()
             self.stl_model = _seasonalizer
-            self.seasonal = self.stl_model.seasonal
+            self.seasonal_ = self.stl_model.seasonal
         else:
             self.stl_model = None
-            self.seasonal = np.zeros_like(z.values)
+            self.seasonal_ = np.zeros_like(z.values)
 
         self._is_fitted = True
         return self
 
     def _transform(self, y):
-        return y - self.seasonal
+        return y - self.seasonal_
 
     def _inverse_transform(self, y):
         seasonal_index = self._align_seasonal_index(y)
-        return y + self.seasonal[seasonal_index]
+        return y + self.seasonal_[seasonal_index]
 
     def transform(self, Z, X=None):
         """Transform data.
