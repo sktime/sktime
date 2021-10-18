@@ -80,7 +80,7 @@ X2_num_df = np.array(X2_list_df)
 VALID_INPUTS_PANEL = [
     (X1_num_pan, X2_num_pan),
     (X1_list_df, X2_list_df),
-    (X1_list_df, X2_list_df),
+    (X1_num_df, X2_num_df),
 ]
 
 
