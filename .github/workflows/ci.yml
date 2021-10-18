@@ -123,8 +123,8 @@ jobs:
         conda list
     - name: Build wheel
       run: |
-        python setup.py build_ext --compiler=msvc
-        python setup.py bdist_wheel bdist_wininst
+        SKTIME_NO_OPENMP=1 python setup.py build_ext --compiler=msvc
+        SKTIME_NO_OPENMP=1 python setup.py bdist_wheel bdist_wininst
         ls dist
     - name: Install from wheel
       run: pip install --pre --no-index --no-deps --find-links dist/ sktime
