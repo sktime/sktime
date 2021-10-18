@@ -4,26 +4,20 @@
 """Implements transformations to deseasonalize a timeseries."""
 
 __author__ = ["mloning", "eyalshafran"]
-__all__ = [
-    "Deseasonalizer",
-    "ConditionalDeseasonalizer",
-    "STLTransformer"
-]
+__all__ = ["Deseasonalizer", "ConditionalDeseasonalizer", "STLTransformer"]
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.seasonal import seasonal_decompose
+
 from statsmodels.tsa.seasonal import STL as _STL
+from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.datetime import _get_duration
-from sktime.utils.datetime import _get_freq
-from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.datetime import _get_duration, _get_freq, _coerce_duration_to_int
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
-from sktime.forecasting.base._fh import _check_cutoff
-from sktime.forecasting.base._fh import _coerce_to_period
+from sktime.forecasting.base._fh import _check_cutoff, _coerce_to_period
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
@@ -390,9 +384,20 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
-    def __init__(self, sp=1, seasonal=7, trend=None, low_pass=None,
-                 seasonal_deg=1, trend_deg=1, low_pass_deg=1,
-                 robust=False, seasonal_jump=1, trend_jump=1, low_pass_jump=1):
+    def __init__(
+        self,
+        sp=1,
+        seasonal=7,
+        trend=None,
+        low_pass=None,
+        seasonal_deg=1,
+        trend_deg=1,
+        low_pass_deg=1,
+        robust=False,
+        seasonal_jump=1,
+        trend_jump=1,
+        low_pass_jump=1,
+    ):
         self.sp = check_sp(sp)
         self.seasonal = seasonal
         self.trend = trend
@@ -470,23 +475,27 @@ class STLTransformer(_SeriesToSeriesTransformer):
         self._set_y_index(z)
         sp = check_sp(self.sp)
 
-        # apply seasonal decomposition
-        _seasonalizer = _STL(
-            z.values,
-            period=sp,
-            seasonal=self.seasonal,
-            trend=self.trend,
-            low_pass=self.low_pass,
-            seasonal_deg=self.seasonal_deg,
-            trend_deg=self.trend_deg,
-            low_pass_deg=self.low_pass_deg,
-            robust=self.robust,
-            seasonal_jump=self.seasonal_jump,
-            trend_jump=self.trend_jump,
-            low_pass_jump=self.low_pass_jump
-        ).fit()
-        self.stl_model = _seasonalizer
-        self.seasonal = self.stl_model.seasonal
+        if sp > 1:
+            # apply seasonal decomposition
+            _seasonalizer = _STL(
+                z.values,
+                period=sp,
+                seasonal=self.seasonal,
+                trend=self.trend,
+                low_pass=self.low_pass,
+                seasonal_deg=self.seasonal_deg,
+                trend_deg=self.trend_deg,
+                low_pass_deg=self.low_pass_deg,
+                robust=self.robust,
+                seasonal_jump=self.seasonal_jump,
+                trend_jump=self.trend_jump,
+                low_pass_jump=self.low_pass_jump
+            ).fit()
+            self.stl_model = _seasonalizer
+            self.seasonal = self.stl_model.seasonal
+        else:
+            self.stl_model = None
+            self.seasonal = np.zeros_like(z.values)
 
         self._is_fitted = True
         return self
