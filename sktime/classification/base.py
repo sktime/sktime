@@ -57,7 +57,7 @@ class BaseClassifier(BaseEstimator):
         self._threads_to_use = 1
         super(BaseClassifier, self).__init__()
 
-    def fit(self, X, y):
+    def fit(self, X, y) -> BaseClassifier:
         """Fit time series classifier to training data.
 
         Parameters
@@ -112,7 +112,7 @@ class BaseClassifier(BaseEstimator):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X) -> np.array:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -142,7 +142,7 @@ class BaseClassifier(BaseEstimator):
 
         return self._predict(X)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X) -> np.array:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -194,7 +194,7 @@ class BaseClassifier(BaseEstimator):
 
         return accuracy_score(y, self.predict(X), normalize=True)
 
-    def _fit(self, X, y):
+    def _fit(self, X, y) -> BaseClassifier:
         """Fit time series classifier to training data.
 
         Abstract method, must be implemented.
@@ -221,7 +221,7 @@ class BaseClassifier(BaseEstimator):
             "_fit is a protected abstract method, it must be implemented."
         )
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.array:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
@@ -241,7 +241,7 @@ class BaseClassifier(BaseEstimator):
             "_predict is a protected abstract method, it must be implemented."
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.array:
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
