@@ -11,8 +11,10 @@ from itertools import product
 import numpy as np
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
+from sktime.utils.validation.forecasting import check_alpha
 
 
 class AutoETS(_StatsModelsAdapter):
@@ -369,6 +371,45 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
+    def compute_pred_int(self, valid_indices, alpha, **simulate_kwargs):
+        """Compute/return prediction intervals for AutoETS.
+
+        Must be run *after* the forecaster has been fitted.
+        If alpha is iterable, multiple intervals will be calculated.
+
+        Parameters
+        ----------
+        valid_indices : pd.PeriodIndex
+            indices to compute the prediction intervals for
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+        simulate_kwargs : see statsmodels ETSResults.get_prediction
+
+        Returns
+        -------
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
+        """
+        self.check_is_fitted()
+        alphas = check_alpha(alpha)
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, **simulate_kwargs)
+
+        pred_ints = []
+        for alpha_iter in alphas:
+            pred_int = prediction_results.pred_int(alpha_iter)
+            pred_int.columns = ['lower', 'upper']
+            pred_ints.append(pred_int.loc[valid_indices])
+
+        if isinstance(alpha, float):
+            pred_ints = pred_ints[0]
+
+        return pred_ints
+
     def _predict(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, **simulate_kwargs
     ):
@@ -396,15 +437,14 @@ class AutoETS(_StatsModelsAdapter):
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
         if return_pred_int:
-            predict_intervals = self._fitted_forecaster.get_prediction(
-                start=start, end=end, **simulate_kwargs)
+            pred_int = self.compute_pred_int(
+                valid_indices, alpha=alpha, **simulate_kwargs)
 
-            pred_int = predict_intervals.pred_int(alpha)
-            pred_int.columns = ['lower', 'upper']
-            return y_pred.loc[valid_indices], pred_int.loc[valid_indices]
+            return y_pred.loc[valid_indices], pred_int
         else:
             return y_pred.loc[valid_indices]
 
