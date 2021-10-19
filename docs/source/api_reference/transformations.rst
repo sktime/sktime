@@ -209,7 +209,7 @@ Difference
 .. currentmodule:: sktime.transformations.series.difference
 
 .. autosummary::
-    :toctree: auto_generated/
+    :toctree: modules/auto_generated/
     :template: class.rst
 
     Differencer
@@ -308,7 +308,7 @@ Theta
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.feature_selection
+.. currentmodule:: sktime.transformations.series.feauture_selection
 
 .. autosummary::
     :toctree: auto_generated/

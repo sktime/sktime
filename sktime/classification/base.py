@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for time series classifier scitype.
 
@@ -22,6 +21,8 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __all__ = [
@@ -74,7 +75,6 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
     }
 
     def __init__(self):

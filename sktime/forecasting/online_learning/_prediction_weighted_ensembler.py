@@ -23,7 +23,7 @@ class _PredictionWeightedEnsembler:
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -108,7 +108,7 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -141,7 +141,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -253,7 +253,7 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

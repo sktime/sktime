@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Tests for BaseObject universal base class.
 
@@ -10,6 +9,8 @@ tests in this module:
     test_get_tags       - tests get_tags inheritance logic
     test_get_tag        - tests get_tag logic, incl default value
     test_set_tags       - tests set_tags logic and related get_tags inheritance
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
@@ -21,8 +22,6 @@ __all__ = [
     "test_get_tag",
     "test_set_tags",
 ]
-
-import pytest
 
 from copy import deepcopy
 
@@ -120,10 +119,10 @@ def test_get_tag():
     object_tags_keys = FIXTURE_OBJECT_TAGS.keys()
 
     for key in object_tags_keys:
-        object_tags[key] = FIXTURE_OBJECT.get_tag(key, raise_error=False)
+        object_tags[key] = FIXTURE_OBJECT.get_tag(key)
 
-    object_tag_default = FIXTURE_OBJECT.get_tag("foo", "bar", raise_error=False)
-    object_tag_defaultNone = FIXTURE_OBJECT.get_tag("bar", raise_error=False)
+    object_tag_default = FIXTURE_OBJECT.get_tag("foo", "bar")
+    object_tag_defaultNone = FIXTURE_OBJECT.get_tag("bar")
 
     msg = "Inheritance logic in BaseObject.get_tag is incorrect"
 
@@ -134,17 +133,6 @@ def test_get_tag():
 
     assert object_tag_default == "bar", msg
     assert object_tag_defaultNone is None, msg
-
-
-def test_get_tag_raises():
-    """Tests that get_tag method raises error for unknown tag.
-
-    Raises
-    ------
-    AssertError if get_tag does not raise error for unknown tag.
-    """
-    with pytest.raises(ValueError, match=r"Tag with name"):
-        FIXTURE_OBJECT.get_tag("bar")
 
 
 FIXTURE_TAG_SET = {"A": 42424243, "E": 3}

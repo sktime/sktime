@@ -6,17 +6,15 @@
 __author__ = ["Martin Walter"]
 __all__ = ["Imputer"]
 
-
-import numpy as np
-import pandas as pd
-
-from sklearn.base import clone
-from sklearn.utils import check_random_state
-
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sklearn.utils import check_random_state
 from sktime.forecasting.base import ForecastingHorizon
+from sklearn.base import clone
+
+import numpy as np
+import pandas as pd
 
 
 class Imputer(_SeriesToSeriesTransformer):
@@ -66,7 +64,6 @@ class Imputer(_SeriesToSeriesTransformer):
         "fit-in-transform": True,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
-        "univariate-only": False,
     }
 
     def __init__(

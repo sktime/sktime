@@ -6,13 +6,11 @@
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
-from itertools import product
-
-import numpy as np
-from joblib import Parallel, delayed
-from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
-
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
+from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+from itertools import product
+from joblib import delayed, Parallel
+import numpy as np
 
 
 class AutoETS(_StatsModelsAdapter):

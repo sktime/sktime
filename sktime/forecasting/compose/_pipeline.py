@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
-__author__ = ["mloning", "aiwalter"]
+__author__ = ["Markus Löning", "Martin Walter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 
 from sklearn.base import clone
@@ -166,7 +166,7 @@ class ForecastingPipeline(_Pipeline):
 
     _required_parameters = ["steps"]
     _tags = {
-        "ignores-exogeneous-X": False,
+        "univariate-only": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -315,7 +315,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     _required_parameters = ["steps"]
     _tags = {
-        "ignores-exogeneous-X": True,
         "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

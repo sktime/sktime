@@ -4,7 +4,7 @@
 Pipeline classifier using the Catch22 transformer and an estimator.
 """
 
-__author__ = ["Matthew Middlehurst", "RavenRudi"]
+__author__ = ["Matthew Middlehurst"]
 __all__ = ["Catch22Classifier"]
 
 import numpy as np
@@ -14,6 +14,7 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
+from sktime.utils.validation.panel import check_X_y, check_X
 
 
 class Catch22Classifier(BaseClassifier):
@@ -73,12 +74,12 @@ class Catch22Classifier(BaseClassifier):
     """
 
     # Capability tags
-    _tags = {
-        "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -100,7 +101,7 @@ class Catch22Classifier(BaseClassifier):
         self.classes_ = []
         super(Catch22Classifier, self).__init__()
 
-    def _fit(self, X, y):
+    def fit(self, X, y):
         """Fit an estimator using transformed data from the Catch22 transformer.
 
         Parameters
@@ -113,6 +114,7 @@ class Catch22Classifier(BaseClassifier):
         -------
         self : object
         """
+        X, y = check_X_y(X, y)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.n_classes = np.unique(y).shape[0]
 
@@ -125,16 +127,17 @@ class Catch22Classifier(BaseClassifier):
         )
 
         m = getattr(self._estimator, "n_jobs", None)
-        if m is not None:
+        if callable(m):
             self._estimator.n_jobs = self.n_jobs
 
         X_t = self._transformer.fit_transform(X, y)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         self._estimator.fit(X_t, y)
 
+        self._is_fitted = True
         return self
 
-    def _predict(self, X):
+    def predict(self, X):
         """Predict class values of n_instances in X.
 
         Parameters
@@ -146,11 +149,14 @@ class Catch22Classifier(BaseClassifier):
         preds : np.ndarray of shape (n, 1)
             Predicted class.
         """
+        self.check_is_fitted()
+        X = check_X(X)
+
         X_t = self._transformer.transform(X)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         return self._estimator.predict(X_t)
 
-    def _predict_proba(self, X):
+    def predict_proba(self, X):
         """Predict class probabilities for n_instances in X.
 
         Parameters
@@ -162,6 +168,9 @@ class Catch22Classifier(BaseClassifier):
         predicted_probs : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
+        self.check_is_fitted()
+        X = check_X(X)
+
         X_t = self._transformer.transform(X)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
 

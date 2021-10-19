@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Registry of mtypes and scitypes.
 
 Note for extenders: new mtypes for an existing scitypes
@@ -30,6 +29,8 @@ each tuple corresponds to an mtype, elements as follows:
 mtype_to_scitype(mtype: str) - convenience function that returns scitype for an mtype
 
 ---
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 from sktime.datatypes._series._registry import (

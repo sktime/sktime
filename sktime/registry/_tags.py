@@ -39,23 +39,17 @@ check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for 
 
 """
 
-__author__ = ["fkiraly", "victordremov"]
+__author__ = ["fkiraly", "Viktor Dremov"]
 
 import pandas as pd
 
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "ignores-exogeneous-X",
+        "univariate-only",  # todo: rename to "scitype:handles_exogeneous"
         "forecaster",
         "bool",
-        "does forecaster ignore exogeneous data (X)?",
-    ),
-    (
-        "univariate-only",
-        "transformer",
-        "bool",
-        "can transformer handle multivariate series? True = no",
+        "does forecaster use exogeneous data (X)?",
     ),
     (
         "fit-in-transform",
@@ -94,7 +88,7 @@ ESTIMATOR_TAG_REGISTER = [
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
     (
-        "enforce_index_type",
+        "enforce-index-type",
         ["forecaster", "classifier", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",

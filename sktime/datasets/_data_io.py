@@ -29,13 +29,12 @@ __all__ = [
 ]
 
 __author__ = [
-    "mloning",
-    "sajaysurya",
-    "big-o",
-    "SebasKoel",
-    "Emiliathewolf",
-    "TonyBagnall",
-    "yairbeer",
+    "Markus Löning",
+    "Sajay Ganesh",
+    "@big-o",
+    "Sebastiaan Koel",
+    "Emilia Rose",
+    "Tony Bagnall",
 ]
 
 DIRNAME = "data"
@@ -176,7 +175,6 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         try:
             _download_and_extract(
                 url,
-                extract_path=extract_path,
             )
         except zipfile.BadZipFile as e:
             raise ValueError(

@@ -98,11 +98,9 @@ def _repr(self):
 
 def _check_y(y):
     """Check input to `split` function."""
-    if isinstance(y, (pd.Series, pd.DataFrame)):
-        y_index = y.index
-    if isinstance(y, np.ndarray):
-        y_index = pd.Index(y)
-    return check_time_index(y_index)
+    if isinstance(y, pd.Series):
+        y = y.index
+    return check_time_index(y)
 
 
 def _check_fh(fh):

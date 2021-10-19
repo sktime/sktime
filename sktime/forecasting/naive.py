@@ -114,17 +114,14 @@ class _NaiveForecaster(_BaseWindowForecaster):
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
 
-        strategy = self.strategy
-        sp = self.sp
-
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
-        elif strategy == "last":
-            if sp == 1:
+        elif self.strategy == "last":
+            if self.sp == 1:
                 last_valid_value = last_window[
-                    (~np.isnan(last_window))[0::sp].cumsum().argmax()
+                    (~np.isnan(last_window))[0 :: self.sp].cumsum().argmax()
                 ]
                 return np.repeat(last_valid_value, len(fh))
 
@@ -141,8 +138,10 @@ class _NaiveForecaster(_BaseWindowForecaster):
                 # tile prediction according to seasonal periodicity
                 y_pred = self._tile_seasonal_prediction(y_pred, fh)
 
-        elif strategy == "mean":
-            if sp == 1:
+                return y_pred
+
+        elif self.strategy == "mean":
+            if self.sp == 1:
                 return np.repeat(np.nanmean(last_window), len(fh))
 
             else:
@@ -155,11 +154,14 @@ class _NaiveForecaster(_BaseWindowForecaster):
                 # tile prediction according to seasonal periodicity
                 y_pred = self._tile_seasonal_prediction(y_pred, fh)
 
-        elif strategy == "drift":
+                return y_pred
+
+        # if self.strategy == "drift":
+        else:
             if self.window_length_ != 1:
                 if np.any(np.isnan(last_window[[0, -1]])):
                     raise ValueError(
-                        f"For {strategy},"
+                        f"For {self.strategy},"
                         f"first and last elements in the last "
                         f"window must not be a missing value."
                     )
@@ -174,10 +176,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
 
                     # linear extrapolation
                     y_pred = last_window[-1] + (fh_idx + 1) * slope
-        else:
-            raise ValueError(f"unknown strategy {strategy} provided to NaiveForecaster")
-
-        return y_pred
+                    return y_pred
 
     def _reshape_last_window_for_sp(self, last_window):
         """Reshape the 1D last window into a 2D last window, prepended with NaN values.
@@ -341,21 +340,3 @@ class NaiveForecaster(BaseForecaster):
         return self._forecaster.predict(
             fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha
         )
-
-    def _update(self, y, X=None, update_params=True):
-        """Update cutoff value and, optionally, fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame, or np.array
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogeneous data
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-        return self._forecaster.update(y=y, X=X, update_params=update_params)

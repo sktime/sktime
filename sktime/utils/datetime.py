@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""Time format related utilities."""
 
-__author__ = ["mloning", "xiaobenbenecho"]
+__author__ = ["Markus Löning"]
 __all__ = []
 
 import re
@@ -14,14 +13,15 @@ from sktime.utils.validation.series import check_time_index
 
 
 def _coerce_duration_to_int(duration, freq=None):
-    """Coerce durations into integer representations for a given unit of duration.
+    """Coerce durations into integer representations for a given unit of
+    duration
 
     Parameters
     ----------
     duration : pd.DateOffset, pd.Timedelta, pd.TimedeltaIndex, pd.Index, int
         Duration type or collection of duration types
     freq : str
-        Frequency of the above duration type.
+        Frequency
 
     Returns
     -------
@@ -61,20 +61,15 @@ def _coerce_duration_to_int(duration, freq=None):
 
 
 def _get_freq(x):
-    """Get unit for conversion of time deltas to integer."""
+    """Get unit for conversion of time deltas to integers"""
     if hasattr(x, "freqstr"):
-        if x.freqstr is None:
-            return None
-        elif "-" in x.freqstr:
-            return x.freqstr.split("-")[0]
-        else:
-            return x.freqstr
+        return x.freqstr
     else:
         return None
 
 
 def _shift(x, by=1):
-    """Shift time point `x` by a step (`by`) given frequency of `x`.
+    """Shift time point `x` by a step (`by`) given frequency of `x`
 
     Parameters
     ----------
@@ -97,7 +92,8 @@ def _shift(x, by=1):
 
 
 def _get_duration(x, y=None, coerce_to_int=False, unit=None):
-    """Compute duration between the time indices.
+    """Compute duration of time index `x` or durations between time
+    points `x` and `y` if `y` is given
 
     Parameters
     ----------

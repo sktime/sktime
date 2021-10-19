@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class templates for distances or kernels between time series, and for tabular data.
 
@@ -29,6 +28,8 @@ Scitype defining methods:
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]

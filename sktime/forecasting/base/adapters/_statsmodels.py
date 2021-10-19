@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
 
-__author__ = ["mloning"]
+__author__ = ["Markus Löning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
@@ -19,7 +19,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
-        "ignores-exogeneous-X": True,
+        "univariate-only": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
