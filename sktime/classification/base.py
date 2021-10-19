@@ -231,7 +231,7 @@ class BaseClassifier(BaseEstimator):
     def _predict(self, X):
         """Predicts labels for sequences in X.
 
-        Abstract class, must be implemented.
+        Abstract method, must be implemented.
 
         Parameters
         ----------
