@@ -167,30 +167,9 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
 
-        if (self.manual_selection is not None) and (
-            not all(
-                elem in base_seasons["dummy"].unique() for elem in self.manual_selection
-            )
-        ):
-            raise ValueError(
-                "Invalid manual_selection specified, must be in: "
-                + ", ".join(base_seasons["dummy"].unique())
-            )
-
-        if self.feature_scope not in ["minimal", "efficient", "comprehensive"]:
-            raise ValueError(
-                "Invalid feature_scope specified,"
-                + "must be in minimal,efficient,comprehensive"
-                + "(minimal lowest number of variables)"
-            )
-
-        if (self.freq is not None) & (
-            self.freq not in base_seasons["frequency"].unique()
-        ):
-            raise ValueError(
-                "Invalid freq specified, must be in: "
-                + ", ".join(base_seasons["frequency"].unique())
-            )
+        _check_freq(self.freq, base_seasons)
+        _check_feature_scope(self.feature_scope)
+        _check_manual_selection(self.manual_selection, base_seasons)
 
         Z = check_series(Z)
         Z = Z.copy()
@@ -237,6 +216,33 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         Z = pd.concat([Z, df], axis=1)
 
         return Z
+
+
+def _check_manual_selection(manual_selection, base_seasons):
+    if (manual_selection is not None) and (
+        not all(elem in base_seasons["dummy"].unique() for elem in manual_selection)
+    ):
+        raise ValueError(
+            "Invalid manual_selection specified, must be in: "
+            + ", ".join(base_seasons["dummy"].unique())
+        )
+
+
+def _check_feature_scope(feature_scope):
+    if feature_scope not in ["minimal", "efficient", "comprehensive"]:
+        raise ValueError(
+            "Invalid feature_scope specified,"
+            + "must be in minimal,efficient,comprehensive"
+            + "(minimal lowest number of variables)"
+        )
+
+
+def _check_freq(freq, base_seasons):
+    if (freq is not None) & (freq not in base_seasons["frequency"].unique()):
+        raise ValueError(
+            "Invalid freq specified, must be in: "
+            + ", ".join(base_seasons["frequency"].unique())
+        )
 
 
 def _calendar_dummies(x, funcs):
