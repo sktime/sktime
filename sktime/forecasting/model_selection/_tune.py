@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import pandas as pd
@@ -28,7 +28,7 @@ class BaseGridSearch(BaseForecaster):
     _tags = {
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(
@@ -55,6 +55,20 @@ class BaseGridSearch(BaseForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
+
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            # "scitype:y", commented out until grid search works with multivariate
+            "ignores-exogeneous-X",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+        ]
+
+        self.clone_tags(forecaster, tags_to_clone)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
@@ -453,8 +467,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-        self.clone_tags(forecaster, ["requires-fh-in-fit", "capability:pred_int"])
-
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
@@ -561,8 +573,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-
-        self.clone_tags(forecaster, ["requires-fh-in-fit", "capability:pred_int"])
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions."""
