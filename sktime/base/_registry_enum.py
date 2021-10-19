@@ -42,7 +42,7 @@ class BaseRegistryEnum(Enum, metaclass=_RegistryMetaEnum):
         self.type_of: T = type_of
 
     def __iter__(self):
-        """Iterate over an enum values.
+        """Iterate over enum values.
 
         Returns
         -------
