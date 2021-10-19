@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Base class template for time series classifier scitype.
+Abstract base class for time series classifiers.
 
     class name: BaseClassifier
 
-Scitype defining methods:
+Defining methods:
     fitting         - fit(self, X, y)
     predicting      - predict(self, X)
                     - predict_proba(self, X)
-
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -28,7 +23,7 @@ State:
 __all__ = [
     "BaseClassifier",
 ]
-__author__ = ["mloning", "fkiraly", "TonyBagnall"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import numpy as np
 
@@ -38,7 +33,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class BaseClassifier(BaseEstimator):
-    """Base time series classifier template class.
+    """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
     classifiers have to implement.
@@ -67,10 +62,13 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-        y : array-like, shape =  [n_instances] - the class labels.
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
+        y : 1D np.array of shape =  [n_instances] - the class labels.
 
         Returns
         -------
@@ -119,14 +117,16 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
 
         Returns
         -------
-        y : array-like, shape =  [n_instances] - predicted class labels
+        y : 1D np.array of shape =  [n_instances] - predicted class labels
         """
         self.check_is_fitted()
 
@@ -147,14 +147,16 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - estimated class
+        y : 2D array of shape =  [n_instances, n_classes] - estimated class
         probabilities
         """
         self.check_is_fitted()
@@ -171,16 +173,18 @@ class BaseClassifier(BaseEstimator):
 
         return self._predict_proba(X)
 
-    def score(self, X, y):
+    def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-        y : array-like, shape =  [n_instances] - predicted class labels
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
+        y : array-like, shape =  [n_instances] - actual class labels
 
         Returns
         -------
@@ -193,7 +197,7 @@ class BaseClassifier(BaseEstimator):
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
-        Abstract method
+        Abstract method, must be implemented.
 
         Parameters
         ----------
@@ -220,7 +224,7 @@ class BaseClassifier(BaseEstimator):
     def _predict(self, X):
         """Predicts labels for sequences in X.
 
-        Abstract class, must be implemented.
+        Abstract method, must be implemented.
 
         Parameters
         ----------
