@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Random Interval Classifier.
 
-Pipeline classifier using the Catch22 transformer and an estimator.
+Pipeline classifier using summary statistics extracted from random intervals and an
+estimator.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -9,24 +10,24 @@ __all__ = ["RandomIntervalClassifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.catch22 import Catch22
+from sktime.transformations.panel.random_intervals import RandomIntervals
 
 
 class RandomIntervalClassifier(BaseClassifier):
-    """Canonical Time-series Characteristics (catch22) classifier.
+    """Random interval classifier.
 
-    This classifier simply transforms the input data using the Catch22 [1]
+    This classifier simply transforms the input data using the RandomIntervals
     transformer and builds a provided estimator using the transformed data.
 
     Parameters
     ----------
-    outlier_norm : bool, default=False
-        Normalise each series during the two outlier catch22 features, which can take a
-        while to process for large values
+    n_intervals=100,
+
+    transformers=None,
+
     estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
@@ -45,49 +46,39 @@ class RandomIntervalClassifier(BaseClassifier):
 
     See Also
     --------
-    Catch22
-
-    Notes
-    -----
-    Authors `catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
-
-    For the Java version, see `tsml <https://github.com/uea-machine-learning/tsml/blob
-    /master/src/main/java/tsml/classifiers/hybrids/Catch22Classifier.java>`_.
-
-    References
-    ----------
-    .. [1] Lubba, Carl H., et al. "catch22: Canonical time-series characteristics."
-        Data Mining and Knowledge Discovery 33.6 (2019): 1821-1852.
-        https://link.springer.com/article/10.1007/s10618-019-00647-x
+    RandomIntervals
 
     Examples
     --------
-    >>> from sktime.classification.feature_based import Catch22Classifier
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> clf = Catch22Classifier()
+    >>> from sktime.classification.feature_based import RandomIntervalClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = RandomIntervalClassifier(
+    ...     n_intervals=5,
+    ...     estimator=RandomForestClassifier(n_estimators=10),
+    ... )
     >>> clf.fit(X_train, y_train)
-    Catch22Classifier(...)
+    RandomIntervalClassifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
+        "capability:multithreading": True,
     }
 
     def __init__(
         self,
-        outlier_norm=False,
+        n_intervals=None,
+        interval_transformers=None,
         estimator=None,
         n_jobs=1,
         random_state=None,
     ):
-        self.outlier_norm = outlier_norm
+        self.n_intervals = n_intervals
+        self.interval_transformers = interval_transformers
         self.estimator = estimator
 
         self.n_jobs = n_jobs
@@ -95,15 +86,17 @@ class RandomIntervalClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes_ = 0
-        self.classes_ = []
+
         super(RandomIntervalClassifier, self).__init__()
 
     def _fit(self, X, y):
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.n_classes_ = np.unique(y).shape[0]
+        self._transformer = RandomIntervals(
+            n_intervals=self.n_intervals,
+            transformers=self.interval_transformers,
+            random_state=self.random_state,
+            n_jobs=self._threads_to_use,
+        )
 
-        self._transformer = Catch22(outlier_norm=self.outlier_norm)
         self._estimator = _clone_estimator(
             RandomForestClassifier(n_estimators=200)
             if self.estimator is None
@@ -112,28 +105,24 @@ class RandomIntervalClassifier(BaseClassifier):
         )
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
-            self._estimator.n_jobs = self.n_jobs
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         self._estimator.fit(X_t, y)
 
+        return self
+
     def _predict(self, X):
-        X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
-        return self._estimator.predict(X_t)
+        return self._estimator.predict(self._transformer.transform(X))
 
-    def predict_proba(self, X):
-        X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
-
+    def _predict_proba(self, X):
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(X_t)
+            return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(X_t)
+            preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
+                dists[i, self._class_dictionary[preds[i]]] = 1
             return dists

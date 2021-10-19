@@ -30,7 +30,8 @@ class MatrixProfileClassifier(BaseClassifier):
         1-nearest neighbour classifier.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``-1`` means using all processors.
+        ``-1`` means using all processors. Currently available for the classifier
+        portion only.
     random_state : int or None, default=None
         Seed for random, integer.
 
