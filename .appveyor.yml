@@ -62,8 +62,8 @@ install:
   - cmd: conda config --set always_yes true
   - cmd: conda update -h
   - cmd: conda clean --all
-  - cmd: conda update --quiet anaconda
-  - cmd: conda create --name testenv python=%PYTHON_VERSION% conda
+  - cmd: conda update --quiet -c anaconda conda
+  - cmd: conda create --name testenv python=%PYTHON_VERSION%
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
