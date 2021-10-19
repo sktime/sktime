@@ -26,6 +26,7 @@ State:
 """
 
 __author__ = ["mloning", "big-o", "fkiraly"]
+
 __all__ = ["BaseForecaster"]
 
 from contextlib import contextmanager
