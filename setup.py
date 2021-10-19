@@ -190,7 +190,7 @@ try:
             """Build extensions."""
             from sktime._build_utils.openmp_helpers import get_openmp_flag
 
-            if not os.getenv("SKTIME_NO_OPENMP"):
+            if False:
                 openmp_flag = get_openmp_flag(self.compiler)
 
                 for e in self.extensions:
