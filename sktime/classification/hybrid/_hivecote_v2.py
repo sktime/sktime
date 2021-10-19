@@ -1,50 +1,46 @@
 # -*- coding: utf-8 -*-
-"""Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
+"""Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V2.
 
-Hybrid ensemble of classifiers from 4 separate time series classification
+Upgraded hybrid ensemble of classifiers from 4 separate time series classification
 representations, using the weighted probabilistic CAWPE as an ensemble controller.
 """
 
 __author__ = "Matthew Middlehurst"
-__all__ = ["HIVECOTEV1"]
+__all__ = ["HIVECOTEV2"]
 
 from datetime import datetime
 
 import numpy as np
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import cross_val_predict
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.classification.dictionary_based import ContractableBOSS
-from sktime.classification.interval_based import (
-    RandomIntervalSpectralForest,
-    TimeSeriesForestClassifier,
-)
+from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+from sktime.classification.interval_based._drcif import DrCIF
+from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.validation import check_n_jobs
 
 
-class HIVECOTEV1(BaseClassifier):
-    """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
+class HIVECOTEV2(BaseClassifier):
+    """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V2.
 
-    An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
-    representations using the CAWPE structure as described in [1]_.
+    An ensemble of the STC, DrCIF, Arsenal and TDE classifiers from different feature
+    representations using the CAWPE structure as described in [1].
 
     Parameters
     ----------
     stc_params : dict or None, default=None
         Parameters for the ShapeletTransformClassifier module. If None, uses the
         default parameters with a 2 hour transform contract.
-    tsf_params : dict or None, default=None
-        Parameters for the TimeSeriesForestClassifier module. If None, uses the default
-        parameters with n_estimators set to 500.
-    rise_params : dict or None, default=None
-        Parameters for the RandomIntervalSpectralForest module. If None, uses the
-        default parameters with n_estimators set to 500.
-    cboss_params : dict or None, default=None
-        Parameters for the ContractableBOSS module. If None, uses the default
+    drcif_params : dict or None, default=None
+        Parameters for the DrCIF module. If None, uses the default parameters with
+        n_estimators set to 500.
+    arsenal_params : dict or None, default=None
+        Parameters for the Arsenal module. If None, uses the default parameters.
+    tde_params : dict or None, default=None
+        Parameters for the TemporalDictionaryEnsemble module. If None, uses the default
         parameters.
     verbose : int, default=0
         Level of output printed to the console (for information only).
@@ -64,17 +60,16 @@ class HIVECOTEV1(BaseClassifier):
         The number of threads used.
     stc_weight_ : float
         The weight for STC probabilities.
-    tsf_weight_ : float
-        The weight for TSF probabilities.
-    rise_weight_ : float
-        The weight for RISE probabilities.
-    cboss_weight_ : float
-        The weight for cBOSS probabilities.
+    drcif_weight_ : float
+        The weight for DrCIF probabilities.
+    arsenal_weight_ : float
+        The weight for Arsenal probabilities.
+    tde_weight_ : float
+        The weight for TDE probabilities.
 
     See Also
     --------
-    HIVECOTEV2, ShapeletTransformClassifier, TimeSeriesForestClassifier,
-    RandomIntervalSpectralForest, ContractableBOSS
+    HIVECOTEV1, ShapeletTransformClassifier, DrCIF, Arsenal, TemporalDictionaryEnsemble
 
     Notes
     -----
@@ -84,56 +79,62 @@ class HIVECOTEV1(BaseClassifier):
 
     References
     ----------
-    .. [1] Anthony Bagnall, Michael Flynn, James Large, Jason Lines and
-       Matthew Middlehurst. "On the usage and performance of the Hierarchical Vote
-       Collective of Transformation-based Ensembles version 1.0 (hive-cote v1.0)"
-       International Workshop on Advanced Analytics and Learning on Temporal Data 2020
+    .. [1] Middlehurst, Matthew, James Large, Michael Flynn, Jason Lines, Aaron Bostrom,
+       and Anthony Bagnall. "HIVE-COTE 2.0: a new meta ensemble for time series
+       classification." Machine Learning (2021).
 
     Examples
     --------
-    >>> from sktime.classification.hybrid import HIVECOTEV1
+    >>> from sktime.classification.hybrid import HIVECOTEV2
     >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = HIVECOTEV1(
+    >>> clf = HIVECOTEV2(
     ...     stc_params={
     ...         "estimator": RotationForest(n_estimators=3),
     ...         "n_shapelet_samples": 500,
     ...         "max_shapelets": 20,
     ...         "batch_size": 100,
     ...     },
-    ...     tsf_params={"n_estimators": 10},
-    ...     rise_params={"n_estimators": 10},
-    ...     cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
+    ...     drcif_params={"n_estimators": 10},
+    ...     arsenal_params={"num_kernels": 100, "n_estimators": 5},
+    ...     tde_params={
+    ...         "n_parameter_samples": 25,
+    ...         "max_ensemble_size": 5,
+    ...         "randomly_selected_params": 10,
+    ...     },
     ... )
     >>> clf.fit(X_train, y_train)
-    HIVECOTEV1(...)
+    HIVECOTEV2(...)
     >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
-        "capability:multivariate": False,
+        "capability:multivariate": True,
         "capability:unequal_length": False,
         "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
+        "capability:train_estimate": True,
+        "capability:contractable": True,
     }
 
     def __init__(
         self,
         stc_params=None,
-        tsf_params=None,
-        rise_params=None,
-        cboss_params=None,
+        drcif_params=None,
+        arsenal_params=None,
+        tde_params=None,
+        time_limit_in_minutes=0,
         verbose=0,
         n_jobs=1,
         random_state=None,
     ):
         self.stc_params = stc_params
-        self.tsf_params = tsf_params
-        self.rise_params = rise_params
-        self.cboss_params = cboss_params
+        self.drcif_params = drcif_params
+        self.arsenal_params = arsenal_params
+        self.tde_params = tde_params
+
+        self.time_limit_in_minutes = time_limit_in_minutes
 
         self.verbose = verbose
         self.n_jobs = n_jobs
@@ -143,23 +144,23 @@ class HIVECOTEV1(BaseClassifier):
         self.classes_ = []
         self.n_jobs_ = n_jobs
         self.stc_weight_ = 0
-        self.tsf_weight_ = 0
-        self.rise_weight_ = 0
-        self.cboss_weight_ = 0
+        self.drcif_weight_ = 0
+        self.arsenal_weight_ = 0
+        self.tde_weight_ = 0
 
         self._stc_params = stc_params
-        self._tsf_params = tsf_params
-        self._rise_params = rise_params
-        self._cboss_params = cboss_params
+        self._drcif_params = drcif_params
+        self._arsenal_params = arsenal_params
+        self._tde_params = tde_params
         self._stc = None
-        self._tsf = None
-        self._rise = None
-        self._cboss = None
+        self._drcif = None
+        self._arsenal = None
+        self._tde = None
 
-        super(HIVECOTEV1, self).__init__()
+        super(HIVECOTEV2, self).__init__()
 
     def _fit(self, X, y):
-        """Fit HIVE-COTE 1.0 to training data.
+        """Fit HIVE-COTE 2.0 to training data.
 
         Parameters
         ----------
@@ -183,22 +184,24 @@ class HIVECOTEV1(BaseClassifier):
         self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        # Default values from HC1 paper
+        # Default values from HC2 paper
         if self.stc_params is None:
             self._stc_params = {"transform_limit_in_minutes": 120}
-        if self.tsf_params is None:
-            self._tsf_params = {"n_estimators": 500}
-        if self.rise_params is None:
-            self._rise_params = {"n_estimators": 500}
-        if self.cboss_params is None:
-            self._cboss_params = {}
+        if self.drcif_params is None:
+            self._drcif_params = {"n_estimators": 500}
+        if self.arsenal_params is None:
+            self._arsenal_params = {}
+        if self.tde_params is None:
+            self._tde_params = {}
 
-        # Cross-validation size for TSF and RISE
-        cv_size = 10
-        _, counts = np.unique(y, return_counts=True)
-        min_class = np.min(counts)
-        if min_class < cv_size:
-            cv_size = min_class
+        # If we are contracting split the contract time between each algorithm
+        if self.time_limit_in_minutes > 0:
+            # Leave 1/3 for train estimates
+            ct = self.time_limit_in_minutes / 6
+            self._stc_params["time_limit_in_minutes"] = ct
+            self._drcif_params["time_limit_in_minutes"] = ct
+            self._arsenal_params["time_limit_in_minutes"] = ct
+            self._tde_params["time_limit_in_minutes"] = ct
 
         # Build STC
         self._stc = ShapeletTransformClassifier(
@@ -224,84 +227,77 @@ class HIVECOTEV1(BaseClassifier):
             )
             print("STC weight = " + str(self.stc_weight_))  # noqa
 
-        # Build TSF
-        self._tsf = TimeSeriesForestClassifier(
-            **self._tsf_params,
+        # Build DrCIF
+        self._drcif = DrCIF(
+            **self._drcif_params,
+            save_transformed_data=True,
             random_state=self.random_state,
             n_jobs=self.n_jobs_,
         )
-        self._tsf.fit(X, y)
+        self._drcif.fit(X, y)
 
         if self.verbose > 0:
-            print("TSF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+            print("DrCIF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
-        # Find TSF weight using train set estimate found through CV
-        train_preds = cross_val_predict(
-            TimeSeriesForestClassifier(
-                **self._tsf_params, random_state=self.random_state
-            ),
-            X=X,
-            y=y,
-            cv=cv_size,
-            n_jobs=self.n_jobs_,
-        )
-        self.tsf_weight_ = accuracy_score(y, train_preds) ** 4
+        # Find DrCIF weight using train set estimate
+        train_probs = self._drcif._get_train_probs(X, y)
+        train_preds = self._drcif.classes_[np.argmax(train_probs, axis=1)]
+        self.drcif_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
             print(  # noqa
-                "TSF train estimate ",
+                "DrCIF train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("TSF weight = " + str(self.tsf_weight_))  # noqa
+            print("DrCIF weight = " + str(self.drcif_weight_))  # noqa
 
-        # Build RISE
-        self._rise = RandomIntervalSpectralForest(
-            **self._rise_params,
+        # Build Arsenal
+        self._arsenal = Arsenal(
+            **self._arsenal_params,
+            save_transformed_data=True,
             random_state=self.random_state,
             n_jobs=self.n_jobs_,
         )
-        self._rise.fit(X, y)
+        self._arsenal.fit(X, y)
 
         if self.verbose > 0:
-            print("RISE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+            print("Arsenal ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
-        # Find RISE weight using train set estimate found through CV
-        train_preds = cross_val_predict(
-            RandomIntervalSpectralForest(
-                **self._rise_params,
-                random_state=self.random_state,
-            ),
-            X=X,
-            y=y,
-            cv=cv_size,
+        # Find Arsenal weight using train set estimate
+        train_probs = self._arsenal._get_train_probs(X, y)
+        train_preds = self._arsenal.classes_[np.argmax(train_probs, axis=1)]
+        self.arsenal_weight_ = accuracy_score(y, train_preds) ** 4
+
+        if self.verbose > 0:
+            print(  # noqa
+                "Arsenal train estimate ",
+                datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+            )
+            print("Arsenal weight = " + str(self.arsenal_weight_))  # noqa
+
+        # Build TDE
+        self._tde = TemporalDictionaryEnsemble(
+            **self._tde_params,
+            save_train_predictions=True,
+            random_state=self.random_state,
             n_jobs=self.n_jobs_,
         )
-        self.rise_weight_ = accuracy_score(y, train_preds) ** 4
+        self._tde.fit(X, y)
+
+        if self.verbose > 0:
+            print("TDE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+
+        # Find TDE weight using train set estimate
+        train_probs = self._tde._get_train_probs(X, y, train_estimate_method="oob")
+        train_preds = self._tde.classes_[np.argmax(train_probs, axis=1)]
+        self.tde_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
             print(  # noqa
-                "RISE train estimate ",
+                "TDE train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("RISE weight = " + str(self.rise_weight_))  # noqa
-
-        # Build cBOSS
-        self._cboss = ContractableBOSS(
-            **self._cboss_params, random_state=self.random_state, n_jobs=self.n_jobs_
-        )
-        self._cboss.fit(X, y)
-
-        # Find cBOSS weight using train set estimate
-        train_probs = self._cboss._get_train_probs(X, y)
-        train_preds = self._cboss.classes_[np.argmax(train_probs, axis=1)]
-        self.cboss_weight_ = accuracy_score(y, train_preds) ** 4
-
-        if self.verbose > 0:
-            print(  # noqa
-                "cBOSS (estimate included)",
-                datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            )
-            print("cBOSS weight = " + str(self.cboss_weight_))  # noqa
+            print("TDE weight = " + str(self.tde_weight_))  # noqa
 
     def _predict(self, X):
         """Predicts labels for sequences in X.
@@ -340,24 +336,24 @@ class HIVECOTEV1(BaseClassifier):
         dists = np.zeros((X.shape[0], self.n_classes_))
 
         # Call predict proba on each classifier, multiply the probabilities by the
-        # classifiers weight then add them to the current HC1 probabilities
+        # classifiers weight then add them to the current HC2 probabilities
         dists = np.add(
             dists,
             self._stc.predict_proba(X) * (np.ones(self.n_classes_) * self.stc_weight_),
         )
         dists = np.add(
             dists,
-            self._tsf.predict_proba(X) * (np.ones(self.n_classes_) * self.tsf_weight_),
+            self._drcif.predict_proba(X)
+            * (np.ones(self.n_classes_) * self.drcif_weight_),
         )
         dists = np.add(
             dists,
-            self._rise.predict_proba(X)
-            * (np.ones(self.n_classes_) * self.rise_weight_),
+            self._arsenal.predict_proba(X)
+            * (np.ones(self.n_classes_) * self.arsenal_weight_),
         )
         dists = np.add(
             dists,
-            self._cboss.predict_proba(X)
-            * (np.ones(self.n_classes_) * self.cboss_weight_),
+            self._tde.predict_proba(X) * (np.ones(self.n_classes_) * self.tde_weight_),
         )
 
         # Make each instances probability array sum to 1 and return
