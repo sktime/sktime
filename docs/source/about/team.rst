@@ -21,6 +21,8 @@ Community Council
      - :user:`fkiraly`
    * - Markus Löning
      - :user:`mloning`
+   * - Martin Walter
+     - :user:`aiwalter`
 
 Code of Conduct Committee
 -------------------------
@@ -53,6 +55,8 @@ Core Developers
      - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - George Oastler
@@ -69,6 +73,8 @@ Core Developers
      - :user:`mattewmiddlehurst`
    * - Ryan Kuhns
      - :user:`rnkuhns`
+   * - Svea Marie Meyer
+     - :user:`SveaMeyer13`
 
 Former Core Developers (inactive)
 ---------------------------------
