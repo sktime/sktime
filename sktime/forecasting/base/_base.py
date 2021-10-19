@@ -1199,10 +1199,6 @@ class BaseForecaster(BaseEstimator):
             "an issue on sktime."
         )
 
-    # def _compute_pred_err(self, alphas):
-    #    """Temporary loopthrough for _compute_pred_err."""
-    #   raise NotImplementedError("abstract method")
-
     def _predict_moving_cutoff(
         self,
         y,
