@@ -202,7 +202,7 @@ class BaseClassifier(BaseEstimator):
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
-        Abstract method
+        Abstract method, must be implemented.
 
         Parameters
         ----------
