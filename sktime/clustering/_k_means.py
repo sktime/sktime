@@ -8,11 +8,11 @@ from sktime.clustering.base import BaseClusterer
 from sktime.clustering.base._typing import (
     AveragingAlgo,
     AveragingAlgoDict,
+    InitAlgo,
     MetricParameter,
     NumpyArray,
     NumpyOrDF,
     NumpyRandomState,
-    InitAlgo,
 )
 from sktime.clustering.partitioning._averaging_metrics import (
     BarycenterAveraging,
