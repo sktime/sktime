@@ -67,10 +67,13 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-        y : array-like, shape =  [n_instances] - the class labels.
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
+        y : 1D np.array of shape =  [n_instances] - the class labels.
 
         Returns
         -------
@@ -119,14 +122,16 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
 
         Returns
         -------
-        y : array-like, shape =  [n_instances] - predicted class labels
+        y : 1D np.array of shape =  [n_instances] - predicted class labels
         """
         self.check_is_fitted()
 
@@ -147,14 +152,18 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        Parameters
+        ----------
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - estimated class
+        y : 2D array of shape =  [n_instances, n_classes] - estimated class
         probabilities
         """
         self.check_is_fitted()
@@ -171,16 +180,18 @@ class BaseClassifier(BaseEstimator):
 
         return self._predict_proba(X)
 
-    def score(self, X, y):
+    def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-        y : array-like, shape =  [n_instances] - predicted class labels
+        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
+        series_length]
+            or 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
+            number of dimensions, equal or unequal length series)
+        y : array-like, shape =  [n_instances] - actual class labels
 
         Returns
         -------
