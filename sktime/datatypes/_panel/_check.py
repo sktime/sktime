@@ -40,8 +40,8 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._series._check import check_pdDataFrame_Series
 from sktime.datatypes._panel._registry import PanelMtype
+from sktime.datatypes._series._check import check_pdDataFrame_Series
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)

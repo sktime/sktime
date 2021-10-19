@@ -33,6 +33,7 @@ __all__ = ["convert_dict"]
 
 import numpy as np
 import pandas as pd
+
 from sktime.datatypes._series._registry import SeriesMtype
 
 ##############################################################

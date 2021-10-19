@@ -22,8 +22,9 @@ overall, conversions from non-lossy representations to any other ones
     should yield the element exactly, identidally (given same index)
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from sktime.datatypes._panel._registry import PanelMtype
 
 example_dict = dict()

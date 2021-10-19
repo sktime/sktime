@@ -65,18 +65,16 @@ __all__ = [
     "convert_to",
 ]
 
+from typing import List, Union
+
 import numpy as np
 import pandas as pd
-from typing import Union, List
-
-from sktime.datatypes._series import convert_dict_Series
-
-from sktime.datatypes._panel import convert_dict_Panel
 
 from sktime.datatypes._check import mtype as infer_mtype
+from sktime.datatypes._panel import convert_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes.types import Mtype, SciType
-
 
 # pool convert_dict-s and infer_mtype_dict-s
 convert_dict = dict()
