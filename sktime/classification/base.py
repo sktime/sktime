@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Base class template for time series classifier.
+Abstract base class for time series classifiers.
 
     class name: BaseClassifier
 
@@ -33,7 +33,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class BaseClassifier(BaseEstimator):
-    """Base time series classifier template class.
+    """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
     classifiers have to implement.
