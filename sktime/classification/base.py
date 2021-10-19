@@ -85,11 +85,6 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-#        blah = self.get_tag("not-here")
-#        print(" blah = ", blah)
-        blah = self.get_tag("not-here", raise_error=False)
-        print(" blah = ", blah)
-
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
         allow_multivariate = self.get_tag("capability:multivariate")
@@ -155,8 +150,6 @@ class BaseClassifier(BaseEstimator):
     def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
-        Parameters
-        ----------
         Parameters
         ----------
         X : 2D np.array (univariate, equal length series) of shape = [n_instances,

@@ -141,8 +141,7 @@ class BaseObject(_BaseEstimator):
         tag_value_default : any type, optional; default=None
             Default/fallback value if tag is not found
         raise_error : bool
-            whether a ValueError is raised when the tag is not found and
-            tag_value_default is None
+            whether a ValueError is raised when the tag is not found
 
         Returns
         -------
