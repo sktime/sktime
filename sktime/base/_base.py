@@ -147,14 +147,13 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`, or raises a ValueError if `tag_value_default` is None.
+            Value of the `tag_name` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns `tag_value_default`.
 
         Raises
         ------
-        ValueError if raise_error is True, tag_name does not exist and
-        `tag_value_default` is None.
-            i.e., if tag_name is not in self.get_tags().keys()
+        ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
+        ).keys()
         """
         collected_tags = self.get_tags()
 
