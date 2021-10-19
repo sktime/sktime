@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Base class template for time series classifier scitype.
+Base class template for time series classifier.
 
     class name: BaseClassifier
 
-Scitype defining methods:
+Defining methods:
     fitting         - fit(self, X, y)
     predicting      - predict(self, X)
                     - predict_proba(self, X)
-
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -28,7 +23,7 @@ State:
 __all__ = [
     "BaseClassifier",
 ]
-__author__ = ["mloning", "fkiraly", "TonyBagnall"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import numpy as np
 

@@ -26,7 +26,7 @@ State:
 """
 
 
-__author__ = ["Markus Löning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
