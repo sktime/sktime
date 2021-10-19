@@ -152,8 +152,6 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        Parameters
-        ----------
         X : 2D np.array (univariate, equal length series) of shape = [n_instances,
         series_length]
             or 3D np.array (any number of dimensions, equal length series) of shape =
