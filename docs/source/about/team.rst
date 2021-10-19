@@ -21,6 +21,8 @@ Community Council
      - :user:`fkiraly`
    * - Markus Löning
      - :user:`mloning`
+   * - Martin Walter
+     - :user:`aiwalter`
 
 Code of Conduct Committee
 -------------------------
