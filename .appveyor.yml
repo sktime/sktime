@@ -60,8 +60,6 @@ install:
   # Set up conda environment
   - cmd: SET PATH=%MINICONDA_VERSION%;%MINICONDA_VERSION%\Scripts;%PATH%
   - cmd: conda config --set always_yes true
-  - cmd: conda update -h
-  - cmd: conda clean --all
   - cmd: conda update --quiet -c anaconda conda
   - cmd: conda create --name testenv python=%PYTHON_VERSION%
 
