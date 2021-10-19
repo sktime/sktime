@@ -186,6 +186,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._set_fh(fh)
 
+        # todo deprecate NotImplementedError in v 10.0.1
         if return_pred_int and not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not have the capability to return "
@@ -215,25 +216,37 @@ class BaseForecaster(BaseEstimator):
             return y_out
 
         # keep following code for downward compatibility,
-        # todo: can be deleted once refactor is completed and effective
+        # todo: can be deleted once refactor is completed and effective,
+        # todo: deprecate in v 10
         else:
-
             warn(
                 "return_pred_int in predict() will be deprecated;"
                 "please use predict_interval() instead to generate "
                 "prediction intervals.",
                 DeprecationWarning,
             )
-            y_pred = self._predict(
-                self.fh,
-                X=X_inner,
-                return_pred_int=return_pred_int,
-                alpha=alpha,
-            )
 
-            # returns old return type anyways
-            pred_int = y_pred[1]
-            y_pred = y_pred[0]
+            if "predict_interval" not in type(self).__dict__.keys():
+                # this means the method is not refactored
+                y_pred = self._predict(
+                    self.fh,
+                    X=X_inner,
+                    return_pred_int=return_pred_int,
+                    alpha=alpha,
+                )
+
+                # returns old return type anyways
+                pred_int = y_pred[1]
+                y_pred = y_pred[0]
+
+            else:
+                # it's already refactored
+                # opposite definition previously vs. now
+                coverage = [1 - a for a in alpha]
+                pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
+
+                if keep_old_return_type:
+                    pred_int = _temp_new_to_old_transformer(pred_int, alpha)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -338,19 +351,8 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         self._set_fh(fh)
         alpha = check_alpha(alpha)
-        # input check for X
-        enforce_index_type = self.get_tag("enforce_index_type")
-        X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-
-        # convert X if needed
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=None,
-        )
-
+        # input check and conversion for X
+        X_inner = self._check_X(X=X)
         quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
         return quantiles
 
@@ -359,8 +361,6 @@ class BaseForecaster(BaseEstimator):
         fh=None,
         X=None,
         coverage=0.95,
-        alpha=DEFAULT_ALPHA,
-        keep_old_return_type=True,
     ):
         """
         Compute/return prediction intervals for a forecast.
@@ -369,8 +369,6 @@ class BaseForecaster(BaseEstimator):
 
         If alpha is iterable, multiple intervals will be calculated.
 
-        public method including checks & utility
-        dispatches to core logic in _predict_interval
 
         Parameters
         ----------
@@ -378,12 +376,8 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
+        coverage : float or list, optional (default=0.95)
 
-        todo: alpha and keep_old_return_type to be deprecated in version 0.11.0
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
-        keep_old_return_type : works through old prediction_interval logic and
-            returns everything the old way
 
         Returns
         -------
@@ -391,35 +385,19 @@ class BaseForecaster(BaseEstimator):
             Prediction intervals with fh as row index. Column multi-index with
             first level being the variable name, second level being the alpha value.
         """
-        if not keep_old_return_type:
-            coverage = check_alpha(coverage)
-            alphas = []
-            for c in coverage:
-                alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
-            alphas.sort()
-            pred_int = self.predict_quantiles(fh=None, X=None, alpha=alphas)
-            return pred_int
+        # input check for X
 
-        # todo: everything below to be deprecated in version 0.10.0
-        else:
-            self.check_is_fitted()
-            self._set_fh(fh)
-            alpha = check_alpha(alpha)
-            # input check for X
-            enforce_index_type = self.get_tag("enforce_index_type")
-            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+        self._set_fh(fh)
+        X_inner = self._check_X(X=X)
+        self.check_is_fitted()
 
-            # convert X if needed
-            X_inner_mtype = self.get_tag("X_inner_mtype")
-            X_inner = convert_to(
-                X,
-                to_type=X_inner_mtype,
-                as_scitype="Series",  # we are dealing with series
-                store=None,
-            )
-
-            pred_int = self._predict_interval(fh=fh, X=X_inner, alpha=alpha)
-            return pred_int
+        coverage = check_alpha(coverage)
+        alphas = []
+        for c in coverage:
+            alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
+        alphas.sort()
+        pred_int = self._predict_quantiles(fh=None, X=X_inner, alpha=alphas)
+        return pred_int
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -617,6 +595,7 @@ class BaseForecaster(BaseEstimator):
         pred_ints : pd.DataFrame
             Prediction intervals
         """
+        # todo deprecate return_pred_int in v 0.10.1
         self.check_is_fitted()
         self._set_fh(fh)
 
@@ -1145,7 +1124,7 @@ class BaseForecaster(BaseEstimator):
         fh,
         X=None,
         update_params=True,
-        # todo will be deprecated after refactor:
+        # todo deprecate return_pred_int in v 10.0.1
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -1175,7 +1154,7 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, optional (default=None)
            Exogenous time series
         alpha : float or list, optional (default=0.95)
-           A significance level or list of significance levels.
+           Probability mass covered by interval or list of coverages.
 
         Returns
         -------
@@ -1183,7 +1162,12 @@ class BaseForecaster(BaseEstimator):
            Prediction intervals with fh as row index. Column multi-index with
            first level being the variable name, second level being the alpha value.
         """
-        raise NotImplementedError("abstract method")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not have the capability to return "
+            "prediction intervals. If you "
+            "think this estimator should have the capability, please open "
+            "an issue on sktime."
+        )
 
     def _predict_quantiles(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
         """
@@ -1208,11 +1192,16 @@ class BaseForecaster(BaseEstimator):
             Prediction quantiles with fh as row index. Column multi-index with
             first level being the variable name, second level being the alpha value.
         """
-        raise NotImplementedError("abstract method")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not have the capability to return "
+            "prediction quantiles. If you "
+            "think this estimator should have the capability, please open "
+            "an issue on sktime."
+        )
 
-    def _compute_pred_err(self, alphas):
-        """Temporary loopthrough for _compute_pred_err."""
-        raise NotImplementedError("abstract method")
+    # def _compute_pred_err(self, alphas):
+    #    """Temporary loopthrough for _compute_pred_err."""
+    #   raise NotImplementedError("abstract method")
 
     def _predict_moving_cutoff(
         self,
@@ -1316,3 +1305,22 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
     return y_pred
+
+
+def _temp_new_to_old_transformer(pred_int_new_format, alpha, name="quantiles"):
+    pred_int_old_format = [
+        pd.DataFrame(
+            {
+                "lower": pred_int_new_format[name, a / 2],
+                "upper": pred_int_new_format[name, 1 - (a / 2)],
+            }
+        )
+        for a in alpha
+    ]
+
+    # for a single alpha, return single pd.DataFrame
+    if isinstance(alpha, float):
+        return pred_int_old_format[0]
+
+    # otherwise return list of pd.DataFrames
+    return pred_int_old_format
