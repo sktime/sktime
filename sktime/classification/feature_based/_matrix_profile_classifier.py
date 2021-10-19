@@ -65,11 +65,7 @@ class MatrixProfileClassifier(BaseClassifier):
     """
 
     _tags = {
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -87,15 +83,10 @@ class MatrixProfileClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes_ = 0
-        self.classes_ = []
 
         super(MatrixProfileClassifier, self).__init__()
 
     def _fit(self, X, y):
-        self.classes_ = np.unique(y)
-        self.n_classes_ = self.classes_.shape[0]
-
         self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(
             KNeighborsClassifier(n_neighbors=1)
@@ -106,10 +97,12 @@ class MatrixProfileClassifier(BaseClassifier):
 
         m = getattr(self._estimator, "n_jobs", None)
         if m is not None:
-            self._estimator.n_jobs = self.n_jobs
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
+
+        return self
 
     def _predict(self, X):
         return self._estimator.predict(self._transformer.transform(X))
@@ -122,5 +115,5 @@ class MatrixProfileClassifier(BaseClassifier):
             dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
+                dists[i, self._class_dictionary[preds[i]]] = 1
             return dists

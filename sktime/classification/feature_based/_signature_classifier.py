@@ -7,7 +7,6 @@ and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
     [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
 """
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
@@ -42,7 +41,7 @@ class SignatureClassifier(BaseClassifier):
 
     Parameters
     ----------
-    classifier : sklearn estimator, default=RandomForestClassifier
+    estimator : sklearn estimator, default=RandomForestClassifier
         This should be any sklearn-type estimator. Defaults to RandomForestClassifier.
     augmentation_list: list of tuple of strings, default=("basepoint", "addtime")
         List of augmentations to be applied before the signature transform is applied.
@@ -73,6 +72,10 @@ class SignatureClassifier(BaseClassifier):
     pipeline: sklearn.Pipeline
         The classifier appended to the `signature_method` pipeline to make a
         classification pipeline.
+    n_classes_ : int
+        Number of classes. Extracted from the data.
+    classes_ : ndarray of shape (n_classes)
+        Holds the label for each class.
 
     References
     ----------
@@ -87,26 +90,24 @@ class SignatureClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.feature_based import SignatureClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = SignatureClassifier()
+    >>> clf = SignatureClassifier(estimator=RandomForestClassifier(n_estimators=10))
     >>> clf.fit(X_train, y_train)
     SignatureClassifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
+        "coerce-X-to-numpy": False,
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
     }
 
     def __init__(
         self,
-        classifier=None,
+        estimator=None,
         augmentation_list=("basepoint", "addtime"),
         window_name="dyadic",
         window_depth=3,
@@ -118,7 +119,7 @@ class SignatureClassifier(BaseClassifier):
         random_state=None,
     ):
         super(SignatureClassifier, self).__init__()
-        self.classifier = classifier
+        self.estimator = estimator
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -128,7 +129,6 @@ class SignatureClassifier(BaseClassifier):
         self.sig_tfm = sig_tfm
         self.depth = depth
         self.random_state = random_state
-        np.random.seed(random_state)
 
         self.signature_method = SignatureTransformer(
             augmentation_list,
@@ -141,15 +141,14 @@ class SignatureClassifier(BaseClassifier):
             depth,
         ).signature_method
         self.pipeline = None
-        self.classes_ = []
 
     def _setup_classification_pipeline(self):
         """Set up the full signature method pipeline."""
         # Use rf if no classifier is set
-        if self.classifier is None:
+        if self.estimator is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
         else:
-            classifier = self.classifier
+            classifier = self.estimator
 
         # Main classification pipeline
         self.pipeline = Pipeline(
@@ -158,7 +157,7 @@ class SignatureClassifier(BaseClassifier):
 
     # Handle the sktime fit checks and convert to a tensor
     @_handle_sktime_signatures(check_fitted=False)
-    def fit(self, data, labels):
+    def _fit(self, X, y):
         """Fit an estimator using transformed data from the SignatureTransformer.
 
         Parameters
@@ -171,18 +170,17 @@ class SignatureClassifier(BaseClassifier):
         -------
         self : object
         """
-        self.classes_ = np.unique(labels)
         # Join the classifier onto the signature method pipeline
         self._setup_classification_pipeline()
 
         # Fit the pre-initialised classification pipeline
-        self.pipeline.fit(data, labels)
-        self._is_fitted = True
+        self.pipeline.fit(X, y)
+
         return self
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
-    def predict(self, data):
+    def _predict(self, X):
         """Predict class values of n_instances in X.
 
         Parameters
@@ -194,11 +192,11 @@ class SignatureClassifier(BaseClassifier):
         preds : np.ndarray of shape (n, 1)
             Predicted class.
         """
-        return self.pipeline.predict(data)
+        return self.pipeline.predict(X)
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
-    def predict_proba(self, data):
+    def _predict_proba(self, X):
         """Predict class probabilities for n_instances in X.
 
         Parameters
@@ -210,4 +208,4 @@ class SignatureClassifier(BaseClassifier):
         predicted_probs : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
-        return self.pipeline.predict_proba(data)
+        return self.pipeline.predict_proba(X)

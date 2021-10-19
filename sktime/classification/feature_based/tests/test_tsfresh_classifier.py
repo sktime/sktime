@@ -16,9 +16,10 @@ def test_tsfresh_classifier_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train TSFresh classifier
-    rf = RandomForestClassifier(n_estimators=10)
     tsfc = TSFreshClassifier(
-        random_state=0, default_fc_parameters="minimal", estimator=rf
+        random_state=0,
+        default_fc_parameters="minimal",
+        estimator=RandomForestClassifier(n_estimators=10),
     )
     tsfc.fit(X_train, y_train)
 
@@ -35,9 +36,10 @@ def test_tsfresh_classifier_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train TSFresh classifier
-    rf = RandomForestClassifier(n_estimators=10)
     tsfc = TSFreshClassifier(
-        random_state=0, default_fc_parameters="minimal", estimator=rf
+        random_state=0,
+        default_fc_parameters="minimal",
+        estimator=RandomForestClassifier(n_estimators=10),
     )
     tsfc.fit(X_train.iloc[indices], y_train[indices])
 
@@ -171,11 +173,10 @@ tsfresh_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     rf = RandomForestClassifier(n_estimators=10)
 #     tsfc_u = TSFreshClassifier(
 #         random_state=0,
 #         default_fc_parameters="minimal",
-#         estimator=rf,
+#         estimator=RandomForestClassifier(n_estimators=10),
 #     )
 #
 #     tsfc_u.fit(X_train, y_train)
@@ -186,11 +187,10 @@ tsfresh_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
-#     rf = RandomForestClassifier(n_estimators=10)
 #     tsfc_m = TSFreshClassifier(
 #         random_state=0,
 #         default_fc_parameters="minimal",
-#         estimator=rf,
+#         estimator=RandomForestClassifier(n_estimators=10),
 #     )
 #
 #     tsfc_m.fit(X_train.iloc[indices], y_train[indices])

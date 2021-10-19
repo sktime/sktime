@@ -16,8 +16,9 @@ def test_catch22_classifier_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train catch22 classifier
-    rf = RandomForestClassifier(n_estimators=10)
-    c22c = Catch22Classifier(random_state=0, estimator=rf)
+    c22c = Catch22Classifier(
+        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+    )
     c22c.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -33,8 +34,9 @@ def test_catch22_classifier_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train catch22 classifier
-    rf = RandomForestClassifier(n_estimators=10)
-    c22c = Catch22Classifier(random_state=0, estimator=rf)
+    c22c = Catch22Classifier(
+        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+    )
     c22c.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -168,8 +170,10 @@ catch22_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     rf = RandomForestClassifier(n_estimators=10)
-#     c22c_u = Catch22Classifier(random_state=0, estimator=rf)
+#     c22c_u = Catch22Classifier(
+#        random_state=0,
+#        estimator=RandomForestClassifier(n_estimators=10),
+#     )
 #
 #     c22c_u.fit(X_train, y_train)
 #     probas = c22c_u.predict_proba(X_test.iloc[indices])
@@ -179,9 +183,11 @@ catch22_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
-#     rf = RandomForestClassifier(n_estimators=10)
-#     c22c_m = Catch22Classifier(random_state=0, estimator=rf)
+#    c22c_m = Catch22Classifier(
+#        random_state=0,
+#        estimator=RandomForestClassifier(n_estimators=10)
+#    )
 #
-#     c22c_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = c22c_m.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
+#    c22c_m.fit(X_train.iloc[indices], y_train[indices])
+#    probas = c22c_m.predict_proba(X_test.iloc[indices])
+#    print_array(probas)

@@ -8,16 +8,17 @@ from sktime.classification.feature_based import SignatureClassifier
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_signatures_on_gunpoint():
-    """Test of SignatureClassifier on gun point."""
+def test_signatures_on_unit_test_data():
+    """Test of SignatureClassifier on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train signature classifier
-    rf = RandomForestClassifier(n_estimators=10)
-    sigc = SignatureClassifier(random_state=0, classifier=rf)
+    sigc = SignatureClassifier(
+        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+    )
     sigc.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -33,8 +34,9 @@ def test_signature_classifier_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train signature classifier
-    rf = RandomForestClassifier(n_estimators=10)
-    sigc = SignatureClassifier(random_state=0, classifier=rf)
+    sigc = SignatureClassifier(
+        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+    )
     sigc.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -168,8 +170,10 @@ signature_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_unit_test(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     rf = RandomForestClassifier(n_estimators=10)
-#     sigc_u = SignatureClassifier(random_state=0, classifier=rf)
+#     sigc_u = SignatureClassifier(
+#         random_state=0,
+#         estimator=RandomForestClassifier(n_estimators=10),
+#     )
 #
 #     sigc_u.fit(X_train, y_train)
 #     probas = sigc_u.predict_proba(X_test.iloc[indices])
@@ -179,8 +183,10 @@ signature_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
-#     rf = RandomForestClassifier(n_estimators=10)
-#     sigc_m = SignatureClassifier(random_state=0, classifier=rf)
+#     sigc_m = SignatureClassifier(
+#         random_state=0,
+#         estimator=RandomForestClassifier(n_estimators=10),
+#     )
 #
 #     sigc_m.fit(X_train.iloc[indices], y_train[indices])
 #     probas = sigc_m.predict_proba(X_test.iloc[indices])

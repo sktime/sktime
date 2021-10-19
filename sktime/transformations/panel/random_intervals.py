@@ -45,17 +45,22 @@ class RandomIntervals(_PanelToTabularTransformer):
         super(RandomIntervals, self).__init__()
 
     def fit(self, X, y=None):
-        """fits the random interval transform.
+        """Fit the random interval transform.
 
         Parameters
         ----------
         X : pandas DataFrame or 3d numpy array, input time series
         y : array_like, target values (optional, ignored)
         """
+        X = check_X(X, coerce_to_numpy=True)
+
         _, n_dims, series_length = X.shape
 
-        # if self._transformers is None:
-        #     self._transformers = SummaryTransformer()
+        # if self.transformers is None:
+        #     self._transformers = SummaryTransformer(
+        #         summary_function=("mean", "std", "min", "max"),
+        #         quantiles=(0.25, 0.5, 0.75),
+        #     )
 
         if not isinstance(self._transformers, list):
             self._transformers = [self._transformers]
@@ -67,7 +72,7 @@ class RandomIntervals(_PanelToTabularTransformer):
             )
 
             m = getattr(self._transformers[i], "n_jobs", None)
-            if callable(m):
+            if m is not None:
                 self._transformers[i].n_jobs = self.n_jobs
 
         rng = check_random_state(self.random_state)
@@ -96,7 +101,7 @@ class RandomIntervals(_PanelToTabularTransformer):
         return self
 
     def transform(self, X, y=None):
-        """transforms data into random interval features.
+        """Transform data into random interval features.
 
         Parameters
         ----------

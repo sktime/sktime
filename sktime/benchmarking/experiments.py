@@ -650,7 +650,7 @@ def set_classifier(cls, resample_id=None, train_file=False):
     elif name == "signature":
         return SignatureClassifier(
             random_state=resample_id,
-            classifier=RandomForestClassifier(n_estimators=500),
+            estimator=RandomForestClassifier(n_estimators=500),
         )
     elif name == "tsfresh":
         return TSFreshClassifier(

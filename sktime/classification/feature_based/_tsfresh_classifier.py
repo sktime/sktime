@@ -9,7 +9,6 @@ __all__ = ["TSFreshClassifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
@@ -67,10 +66,14 @@ class TSFreshClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.feature_based import TSFreshClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TSFreshClassifier()
+    >>> clf = TSFreshClassifier(
+    ...     default_fc_parameters="minimal",
+    ...     estimator=RandomForestClassifier(n_estimators=10),
+    ... )
     >>> clf.fit(X_train, y_train)
     TSFreshClassifier(...)
     >>> y_pred = clf.predict(X_test)
@@ -78,10 +81,7 @@ class TSFreshClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -105,25 +105,20 @@ class TSFreshClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes_ = 0
-        self.classes_ = []
 
         super(TSFreshClassifier, self).__init__()
 
     def _fit(self, X, y):
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.n_classes_ = np.unique(y).shape[0]
-
         self._transformer = (
             TSFreshRelevantFeatureExtractor(
                 default_fc_parameters=self.default_fc_parameters,
-                n_jobs=self.n_jobs,
+                n_jobs=self._threads_to_use,
                 chunksize=self.chunksize,
             )
             if self.relevant_feature_extractor
             else TSFreshFeatureExtractor(
                 default_fc_parameters=self.default_fc_parameters,
-                n_jobs=self.n_jobs,
+                n_jobs=self._threads_to_use,
                 chunksize=self.chunksize,
             )
         )
@@ -141,7 +136,7 @@ class TSFreshClassifier(BaseClassifier):
 
         m = getattr(self._estimator, "n_jobs", None)
         if m is not None:
-            self._estimator.n_jobs = self.n_jobs
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
@@ -159,5 +154,5 @@ class TSFreshClassifier(BaseClassifier):
             dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
+                dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
