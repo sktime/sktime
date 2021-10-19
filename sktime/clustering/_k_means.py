@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time Series K-Means Clusterer."""
 
-__author__ = ["Christopher Holder", "Tony Bagnall"]
+__author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["TimeSeriesKMeans"]
 
 from sktime.clustering.base._typing import (

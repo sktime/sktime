@@ -57,7 +57,7 @@ class BaseClassifier(BaseEstimator):
         self._threads_to_use = 1
         super(BaseClassifier, self).__init__()
 
-    def fit(self, X, y) -> BaseClassifier:
+    def fit(self, X, y):
         """Fit time series classifier to training data.
 
         Parameters
@@ -194,7 +194,7 @@ class BaseClassifier(BaseEstimator):
 
         return accuracy_score(y, self.predict(X), normalize=True)
 
-    def _fit(self, X, y) -> BaseClassifier:
+    def _fit(self, X, y):
         """Fit time series classifier to training data.
 
         Abstract method, must be implemented.
