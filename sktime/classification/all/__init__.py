@@ -53,7 +53,9 @@ from sktime.classification.interval_based import (
 )
 from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.datasets import load_arrow_head
-from sktime.datasets import load_basic_motions
-from sktime.datasets import load_gunpoint
-from sktime.datasets import load_osuleaf
+from sktime.datasets import (
+    load_arrow_head,
+    load_basic_motions,
+    load_gunpoint,
+    load_osuleaf,
+)
