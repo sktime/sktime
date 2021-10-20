@@ -13,11 +13,15 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
+    "check_regressor",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
+
+from sklearn.base import clone, is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_equal_time_index
@@ -358,3 +362,33 @@ def check_scoring(scoring, allow_y_pred_benchmark=False):
         raise TypeError("`scoring` must be a callable object")
 
     return scoring
+
+
+def check_regressor(regressor=None, random_state=None):
+    """Check if a regressor is given and if it is valid, otherwise set default regressor.
+
+    Parameters
+    ----------
+    regressor : sklearn-like regressor, optional, default=None.
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor.
+
+    Returns
+    -------
+    regressor
+
+    Raises
+    ------
+    ValueError
+        Raise error if given regressor is not a valid sklearn-like regressor.
+    """
+    if regressor is None:
+        regressor = GradientBoostingRegressor(max_depth=5, random_state=random_state)
+    else:
+        if not is_regressor(regressor):
+            raise ValueError(
+                f"`regressor` should be a sklearn-like regressor, "
+                f"but found: {regressor}"
+            )
+        regressor = clone(regressor)
+    return regressor
