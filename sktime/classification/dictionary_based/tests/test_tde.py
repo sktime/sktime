@@ -21,6 +21,7 @@ def test_tde_on_unit_test_data():
         max_ensemble_size=5,
         randomly_selected_params=5,
         random_state=0,
+        save_train_predictions=True,
     )
     tde.fit(X_train, y_train)
 

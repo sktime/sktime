@@ -1,45 +1,37 @@
 # -*- coding: utf-8 -*-
+"""cBOSS test code."""
 import numpy as np
 from numpy import testing
+from sklearn.metrics import accuracy_score
 
 from sktime.classification.dictionary_based import ContractableBOSS
-from sktime.datasets import load_gunpoint, load_italy_power_demand
+from sktime.datasets import load_unit_test
 
 
-def test_cboss_on_gunpoint():
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
+def test_cboss_on_unit_test():
+    """Test of cBOSS on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train cBOSS
     cboss = ContractableBOSS(
-        n_parameter_samples=50, max_ensemble_size=10, random_state=0
+        n_parameter_samples=25, max_ensemble_size=5, random_state=0
     )
     cboss.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
     probas = cboss.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, cboss_gunpoint_probas)
+    testing.assert_array_equal(probas, cboss_unit_test_probas)
+
+    # test train estimate
+    train_probas = cboss._get_train_probs(X_train, y_train)
+    train_preds = cboss.classes_[np.argmax(train_probas, axis=1)]
+    assert accuracy_score(y_train, train_preds) >= 0.75
 
 
-def test_cboss_on_power_demand():
-    # load power demand data
-    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(100)
-
-    # train cBOSS
-    cboss = ContractableBOSS(
-        n_parameter_samples=50, max_ensemble_size=10, random_state=0
-    )
-    cboss.fit(X_train, y_train)
-
-    score = cboss.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.9
-
-
-cboss_gunpoint_probas = np.array(
+cboss_unit_test_probas = np.array(
     [
         [
             0.0,

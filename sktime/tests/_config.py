@@ -20,6 +20,7 @@ from sktime.classification.compose import (
     ComposableTimeSeriesForestClassifier,
 )
 from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
@@ -332,10 +333,11 @@ ESTIMATOR_TEST_PARAMS = {
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     SFA: {"return_pandas_data_series": True},
-    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 5},
+    BOSSEnsemble: {"max_ensemble_size": 3},
+    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
     TemporalDictionaryEnsemble: {
         "n_parameter_samples": 10,
-        "max_ensemble_size": 5,
+        "max_ensemble_size": 3,
         "randomly_selected_params": 5,
     },
     TSFC: {"n_estimators": 3},
