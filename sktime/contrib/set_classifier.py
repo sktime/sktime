@@ -2,6 +2,7 @@
 """Set classifier function."""
 
 from sklearn.ensemble import RandomForestClassifier
+
 from sktime.classification.dictionary_based import (
     MUSE,
     WEASEL,
