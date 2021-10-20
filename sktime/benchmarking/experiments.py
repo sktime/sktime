@@ -55,7 +55,6 @@ from sktime.classification.interval_based import (
 )
 from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
 from sktime.classification.shapelet_based import (
-    MrSEQLClassifier,
     ShapeletTransformClassifier,
 )
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
@@ -690,7 +689,5 @@ def set_classifier(cls, resample_id=None, train_file=False):
         return ShapeletTransformClassifier(
             random_state=resample_id, save_transformed_data=train_file
         )
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     else:
         raise Exception("UNKNOWN CLASSIFIER")
