@@ -181,6 +181,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         of class membership.
         """
 
+        # implement here
+        # IMPORTANT: avoid side effects to X
+
     # todo: consider implementing this, optional
     # if not implementing, delete the method
     def get_fitted_params(self):
