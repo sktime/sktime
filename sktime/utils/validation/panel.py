@@ -16,7 +16,7 @@ from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.datatypes._panel._check import is_nested_dataframe
 
-VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
+VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame, 2d or 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
 
 
@@ -203,3 +203,51 @@ def _enforce_min_instances(x, min_instances=1):
             f"Found array with: {n_instances} instance(s) "
             f"but a minimum of: {min_instances} is required."
         )
+
+
+def check_classifier_input(
+        X,
+        y,
+        enforce_min_instances=1,
+        enforce_min_columns=1,
+):
+    """Check wether input X and y are valid formats with minium data.
+
+    Parameters
+    ----------
+    X : pd.DataFrame or np.array
+    y : pd.Series or np.array
+    enforce_min_instances : int, optional (default=1)
+        Enforce minimum number of instances.
+    enforce_min_columns : int, optional (default=1)
+        Enforce minimum number of columns (or time-series variables).
+
+    Raises
+    ------
+    ValueError
+        If y or X is invalid input data type, or not enough data
+    """
+    if not isinstance(y, np.array):
+        raise ValueError(
+            f"y must be a np.array, "
+            f"but found type: {type(y)}"
+        )
+    if not isinstance(X, pd.pandas):
+        if not isinstance(X,np.array):
+            raise ValueError(
+                f"x must be either a pd.Series or a np.ndarray, "
+                f"but found type: {type(x)}"
+            )
+        else:
+            n_cases,  n_dims = X.shape
+            if not (n_dims is 2 or n_dims is 3):
+                raise ValueError(
+                    f"x is an np.array but it must be 2 or 3 dimensional"
+                    f"but found to be: {n_dims}"
+                )
+        if n_cases != y.shape[0]:
+            raise ValueError(
+                f"unequal number of cases in X and y"
+                f"X has : {n_dims}, y has {y.shape[0]}"
+            )
+
