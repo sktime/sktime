@@ -112,7 +112,7 @@ class BaseClassifier(BaseEstimator):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X) -> np.array:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -142,7 +142,7 @@ class BaseClassifier(BaseEstimator):
 
         return self._predict(X)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X) -> np.array:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -221,7 +221,7 @@ class BaseClassifier(BaseEstimator):
             "_fit is a protected abstract method, it must be implemented."
         )
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.array:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
@@ -241,7 +241,7 @@ class BaseClassifier(BaseEstimator):
             "_predict is a protected abstract method, it must be implemented."
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
