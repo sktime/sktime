@@ -241,7 +241,7 @@ class BaseClassifier(BaseEstimator):
             "_predict is a protected abstract method, it must be implemented."
         )
 
-    def _predict_proba(self, X) -> np.array:
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability

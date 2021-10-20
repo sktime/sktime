@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 """
 Extension template for time series classifiers.
 
@@ -67,15 +68,16 @@ class MyTimeSeriesClassifier(BaseClassifier):
     and so on
     """
 
-    # optional todo: override base class estimator default tags here
+    # optional todo: override base class estimator default tags here if necessary
     _tags = {
+        "coerce-X-to-numpy": True,
+        "coerce-X-to-pandas": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
+        "capability:multithreading": False,
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -136,7 +138,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # IMPORTANT: avoid side effects to X, y
 
     # todo: implement this, mandatory
-    def _predict(self, X):
+    def _predict(self, X) -> np.array:
         """Predict labels for sequences in X.
 
         core logic
@@ -155,6 +157,29 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         # implement here
         # IMPORTANT: avoid side effects to X
+
+    # todo: consider implementing this, optional
+    # if you do not implement it, then the default _predict_proba will be  called.
+    # the default simply calls predict and sets probas to 0 or 1.
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
+        of class membership.
+        """
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
