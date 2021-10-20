@@ -1,21 +1,48 @@
 # -*- coding: utf-8 -*-
-from sktime.annotation.base._base import BaseSeriesAnnotator
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn import clone
-from sktime.forecasting.base import ForecastingHorizon
+
+from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["satya-pattnaik", "mloning"]
 
 
-class SktimeODAnnotator(BaseSeriesAnnotator):
-    """An Outlier Detector which detects those time points as outliers for which the values
-    fall outside of the Uncertainty Intervals of forecasts generated from
-    a Sktime Forecaster.
-    The Sktime Forecaster is passed as an argument.
+def check_estimator(estimator):
+    """
+    Check validity of estimator for `QuantileOutlierDetector`.
 
-    This method is inspired from :
-    https://docs.seldon.io/projects/alibi-detect/en/latest/methods/prophet.html
+    Check if the `estimator` object passed as the argument is a valid Sktime
+    Forecaster and if the `estimator` generates a prediction/confidence interval.
+
+    Parameters
+    ----------
+    estimator : Sktime Forecaster
+    Raises
+    -------
+    ValueError: if estimator is not a valid forecaster and
+    does not generates a prediction/confidence interval
+    """
+    if not isinstance(estimator, BaseForecaster):
+        raise ValueError("estimator must be a forecaster")
+    if not estimator.get_tag("capability:pred_int", tag_value_default=False):
+        raise ValueError(
+            f"{estimator.__class__.__name__} does not support prediction quantiles."
+        )
+
+
+class QuantileOutlierDetector(BaseSeriesAnnotator):
+    r"""An Outlier Detector based on Confidence/Prediction Intervals.
+
+    This method is inspired from : [1]
+
+    An Outlier Detector which detects those time points as outliers for
+    which the values fall outside of the Uncertainty Intervals of forecasts
+    generated from a Sktime Forecaster.
+
+    [1]https://docs.seldon.io/projects/alibi-detect/en/latest/methods/prophet.html
+
     Parameters
     ----------
     estimator : a Sktime Forecaster object
@@ -35,7 +62,7 @@ class SktimeODAnnotator(BaseSeriesAnnotator):
     def __init__(self, estimator, fmt="dense", labels="indicator", alpha=0.05):
         self.estimator = estimator  # Sktime forecaster
         self.alpha = alpha
-        super(SktimeODAnnotator, self).__init__(fmt=fmt, labels=labels)
+        super(QuantileOutlierDetector, self).__init__(fmt=fmt, labels=labels)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -58,19 +85,9 @@ class SktimeODAnnotator(BaseSeriesAnnotator):
         """
         X_t = X.copy()
         self.estimator_ = clone(self.estimator)
+        check_estimator(self.estimator_)
         self.estimator_.fit(X_t)
-
-        if not self._check_estimator_has_intervals():
-            raise NotImplementedError("Forecaster cannot produce prediction intervals")
-
         return self
-
-    def _check_estimator_has_intervals(self):
-        tags = self.estimator_.get_tags()
-        if tags["capability:pred_int"]:
-            return True
-        else:
-            return False
 
     def _predict(self, X):
         """Create annotations on test/deployment data.

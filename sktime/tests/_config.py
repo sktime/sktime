@@ -13,7 +13,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
-from sktime.annotation.adapters import PyODAnnotator
+from sktime.annotation.adapters import PyODAnnotator, QuantileOutlierDetector
 from sktime.base import BaseEstimator
 from sktime.classification.compose import (
     ColumnEnsembleClassifier,
@@ -175,6 +175,7 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
 FORECASTER = ExponentialSmoothing()
+QUANTILE_OD_FORECASTER = Prophet()
 FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
 STEPS_y = [
     ("transformer", Detrender(ThetaForecaster())),
@@ -379,6 +380,7 @@ ESTIMATOR_TEST_PARAMS = {
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
+    QuantileOutlierDetector: {"estimator": QUANTILE_OD_FORECASTER},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
