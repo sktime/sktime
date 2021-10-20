@@ -54,9 +54,7 @@ from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
 )
 from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
-from sktime.classification.shapelet_based import (
-    ShapeletTransformClassifier,
-)
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.data_io import write_results_to_uea_format
