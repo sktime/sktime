@@ -5,7 +5,7 @@ dictionary based BOSS classifiers based on SFA transform. Contains a single
 BOSS and a BOSS ensemble.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = "MatthewMiddlehurst"
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "boss_distance"]
 
 import sys
@@ -14,11 +14,9 @@ from itertools import compress
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -134,9 +132,6 @@ class BOSSEnsemble(BaseClassifier):
         self.random_state = random_state
 
         self.classifiers = []
-        self.n_classes = 0
-        self.classes_ = []
-        self.class_dictionary = {}
         self.n_estimators = 0
         self.series_length = 0
         self.n_instances = 0
@@ -147,7 +142,7 @@ class BOSSEnsemble(BaseClassifier):
         self.alphabet_size = 4
         super(BOSSEnsemble, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit a boss ensemble on cases (X,y), where y is the target variable.
 
         Build an ensemble of BOSS classifiers from the training set (X,
@@ -164,13 +159,7 @@ class BOSSEnsemble(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
-
         self.n_instances, _, self.series_length = X.shape
-        self.n_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
 
         self.classifiers = []
 
@@ -255,10 +244,9 @@ class BOSSEnsemble(BaseClassifier):
 
         self.n_estimators = len(self.classifiers)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n instances in X.
 
         Parameters
@@ -290,16 +278,13 @@ class BOSSEnsemble(BaseClassifier):
         dists : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-
-        sums = np.zeros((X.shape[0], self.n_classes))
+        sums = np.zeros((X.shape[0], self.n_classes_))
 
         for clf in self.classifiers:
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
-                sums[i, self.class_dictionary[preds[i]]] += 1
-        dists = sums / (np.ones(self.n_classes) * self.n_estimators)
+                sums[i, self._class_dictionary[preds[i]]] += 1
+        dists = sums / (np.ones(self.n_classes_) * self.n_estimators)
 
         return dists
 
@@ -486,16 +471,13 @@ class IndividualBOSS(BaseClassifier):
             n_jobs=n_jobs,
         )
         self.transformed_data = []
+        self.class_vals = []
         self.accuracy = 0
         self.subsample = []
 
-        self.class_vals = []
-        self.num_classes = 0
-        self.classes_ = []
-        self.class_dictionary = {}
         super(IndividualBOSS, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit a single boss classifier on n_instances cases (X,y).
 
         Parameters
@@ -508,21 +490,13 @@ class IndividualBOSS(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
-
         sfa = self.transformer.fit_transform(X)
         self.transformed_data = sfa[0]
-
         self.class_vals = y
-        self.num_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of all instances in X.
 
         Parameters
@@ -533,9 +507,6 @@ class IndividualBOSS(BaseClassifier):
         -------
         array of shape [n, 1]
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-
         test_bags = self.transformer.transform(X)
         test_bags = test_bags[0]
 
@@ -547,25 +518,6 @@ class IndividualBOSS(BaseClassifier):
         )
 
         return np.array(classes)
-
-    def predict_proba(self, X):
-        """Predict class probabilities for all instances in X.
-
-        Parameters
-        ----------
-        X : pd.DataFrame of shape [n, 1]
-
-        Returns
-        -------
-        dists : array of shape [n, self.n_classes]
-        """
-        preds = self.predict(X)
-        dists = np.zeros((X.shape[0], self.num_classes))
-
-        for i in range(0, X.shape[0]):
-            dists[i, self.class_dictionary.get(preds[i])] += 1
-
-        return dists
 
     def _test_nn(self, test_bag):
         rng = check_random_state(self.random_state)
@@ -607,16 +559,18 @@ class IndividualBOSS(BaseClassifier):
             self.alphabet_size,
             save_words=self.save_words,
             random_state=self.random_state,
+            n_jobs=self.n_jobs,
         )
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
         new_boss.transformed_data = sfa[0]
 
         new_boss.class_vals = self.class_vals
-        new_boss.num_classes = self.num_classes
+        new_boss.n_classes_ = self.n_classes_
         new_boss.classes_ = self.classes_
-        new_boss.class_dictionary = self.class_dictionary
+        new_boss._class_dictionary = self._class_dictionary
 
+        new_boss._threads_to_use = self._threads_to_use
         new_boss._is_fitted = True
         return new_boss
 
@@ -627,11 +581,6 @@ class IndividualBOSS(BaseClassifier):
     def _set_word_len(self, word_len):
         self.word_length = word_len
         self.transformer.word_length = word_len
-
-
-# @njit()
-# def _dist(val_a, val_b):
-#     return (val_a - val_b) * (val_a - val_b)
 
 
 def boss_distance(first, second, best_dist=sys.float_info.max):
