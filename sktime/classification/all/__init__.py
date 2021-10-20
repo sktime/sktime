@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning","TonyBagnall"]
 __all__ = [
     "ShapeletTransformClassifier",
     "ROCKETClassifier",
@@ -44,7 +44,6 @@ from sktime.classification.distance_based import ProximityTree
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.interval_based import TimeSeriesForestClassifier
-from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.datasets import load_arrow_head
