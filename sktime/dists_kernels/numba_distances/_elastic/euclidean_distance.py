@@ -4,7 +4,7 @@ from numba import njit
 from typing import Callable
 
 from sktime.dists_kernels.numba_distances._utils import to_distance_timeseries
-from sktime.dists_kernels.numba_distances.squared_distance import (
+from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
     _numba_squared_distance,
 )
 

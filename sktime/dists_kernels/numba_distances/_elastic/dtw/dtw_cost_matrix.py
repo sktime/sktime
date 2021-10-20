@@ -1,93 +1,63 @@
 # -*- coding: utf-8 -*-
 __author__ = ["Chris Holder"]
 
-from typing import Union, Callable
+from typing import Union, Callable, Tuple
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba_distances.dtw.lower_bounding import LowerBounding
-from sktime.dists_kernels.numba_distances.squared_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+    LowerBounding,
+)
+from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
     _numba_squared_distance,
 )
-from sktime.dists_kernels.numba_distances.pairwise import _numba_pairwise
+from sktime.dists_kernels.numba_distances.pairwise import _numba_pairwise_distance
+from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
+    _resolve_bounding_matrix,
+    _numba_check_params,
+    _cost_matrix,
+)
 
 
-def _resolve_bounding_matrix(
+@njit()
+def _numba_dtw_cost_matrix_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
-    bounding_matrix: np.ndarray = None,
-):
-    """Method used to resolve the bounding matrix parameters."""
-    if bounding_matrix is None:
-        if isinstance(lower_bounding, int):
-            lower_bounding = LowerBounding(lower_bounding)
-        else:
-            lower_bounding = lower_bounding
-
-        return lower_bounding.create_bounding_matrix(
-            x, y, sakoe_chiba_window_radius=window, itakura_max_slope=itakura_max_slope
-        )
-    else:
-        return bounding_matrix
-
-
-@njit(cache=True)
-def _cost_matrix(
-    x: np.ndarray,
-    y: np.ndarray,
+    distance: Callable[[np.ndarray, np.ndarray], float],
     bounding_matrix: np.ndarray,
-    pre_computed_distances: np.ndarray,
-):
-    """
-    Method used to calculate the cost matrix to derive distance from
+    symmetric: bool,
+) -> Tuple[float, np.ndarray]:
+    """Method to calculate the dtw cost matrix and distance.
+
     Parameters
     ----------
     x: np.ndarray
-        first time series
+        First time series
     y: np.ndarray
-        second time series
+        Second time series
+    distance: Callable[[np.ndarray, np.ndarray], float]
     bounding_matrix: np.ndarray
-        matrix bounding the warping path
-    pre_computed_distances: np.ndarray
-        pre-computed distances
+        Numpy matrix containing the bounding matrix with valid cells being finite
+        values
+    symmetric: bool, defaults = False
+        Boolean that is true when the arrays are equal and false when they are not
+
+    Returns
+    -------
+    float
+        Distance between the two time series
+    np.ndarray
+        Cost matrix that is [n, m] size where n is the len(x) and m is len(y)
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
-    cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
-    cost_matrix[0, 0] = 0.0
-
-    for i in range(x_size):
-        for j in range(y_size):
-            if np.isfinite(bounding_matrix[i, j]):
-                cost_matrix[i + 1, j + 1] = pre_computed_distances[i, j] + min(
-                    cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
-                )
-
-    return cost_matrix[1:, 1:]
-
-
-@njit()
-def _numba_check_params(x, y):
-    if x.ndim <= 2:
-        return np.reshape(x, x.shape + (1,)), np.reshape(y, y.shape + (1,))
-    else:
-        return x, y
-
-
-@njit()
-def _numba_dtw_distance(x, y, distance, bounding_matrix, symmetric: bool):
     _x, _y = _numba_check_params(x, y)
 
-    pre_computed_distances = _numba_pairwise(_x, _y, symmetric, distance)
+    pre_computed_distances = _numba_pairwise_distance(_x, _y, symmetric, distance)
 
     cost_matrix = _cost_matrix(_x, _y, bounding_matrix, pre_computed_distances)
-    return np.sqrt(cost_matrix[-1, -1])
+    return np.sqrt(cost_matrix[-1, -1]), cost_matrix
 
 
-def numba_dtw_distance_factory(
+def numba_dtw_cost_matrix_distance_factory(
     x: np.ndarray,
     y: np.ndarray,
     symmetric: bool = False,
@@ -96,8 +66,8 @@ def numba_dtw_distance_factory(
     itakura_max_slope: float = 2.0,
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
-) -> Callable[[np.ndarray, np.ndarray], float]:
-    """
+) -> Callable[[np.ndarray, np.ndarray], Tuple[float, np.ndarray]]:
+    """Method to create the cost matrix distance numba function.
 
     Parameters
     ----------
@@ -128,6 +98,8 @@ def numba_dtw_distance_factory(
 
     Returns
     -------
+    Callable[[np.ndarray, np.ndarray], Tuple[float, np.ndarray]]
+        Callable to get the distance and cost matrix.
 
     """
     bounding_matrix = _resolve_bounding_matrix(
@@ -135,13 +107,15 @@ def numba_dtw_distance_factory(
     )
 
     @njit()
-    def numba_dtw(_x: np.ndarray, _y: np.ndarray) -> float:
-        return _numba_dtw_distance(_y, _x, distance, bounding_matrix, symmetric)
+    def numba_dtw(_x: np.ndarray, _y: np.ndarray) -> Tuple[float, np.ndarray]:
+        return _numba_dtw_cost_matrix_distance(
+            _y, _x, distance, bounding_matrix, symmetric
+        )
 
     return numba_dtw
 
 
-def dtw_distance(
+def dtw_cost_matrix_alignment(
     x: np.ndarray,
     y: np.ndarray,
     lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
@@ -149,8 +123,8 @@ def dtw_distance(
     itakura_max_slope: float = 2.0,
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
-):
-    """
+) -> Tuple[float, np.ndarray]:
+    """Method to calculate dtw cost matrix
 
     Parameters
     ----------
@@ -180,9 +154,12 @@ def dtw_distance(
     Returns
     -------
 
+
     """
     bounding_matrix = _resolve_bounding_matrix(
         x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
     )
 
-    return _numba_dtw_distance(x, y, distance, bounding_matrix, np.array_equal(x, y))
+    return _numba_dtw_cost_matrix_distance(
+        x, y, distance, bounding_matrix, np.array_equal(x, y)
+    )
