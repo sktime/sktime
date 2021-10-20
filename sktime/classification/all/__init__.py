@@ -4,7 +4,6 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "ShapeletTransformClassifier",
-    "MrSEQLClassifier",
     "ROCKETClassifier",
     "BOSSEnsemble",
     "IndividualBOSS",
