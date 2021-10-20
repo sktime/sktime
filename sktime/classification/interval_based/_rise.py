@@ -8,13 +8,12 @@ __author__ = ["TonyBagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 
-from numba import int64, prange, jit
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from numba import int64, prange, jit
+from joblib import Parallel, delayed
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_random_state
 
