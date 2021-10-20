@@ -3,7 +3,7 @@ import numpy as np
 from numba import njit, prange
 from typing import Callable
 
-from sktime.dists_kernels.numba_distances._utils import to_distance_timeseries
+from sktime.dists_kernels._utils import to_numba_timeseries
 
 
 def squared_distance(x: np.ndarray, y: np.ndarray) -> float:
@@ -20,8 +20,8 @@ def squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     distance: float
         squared distance between the two series
     """
-    _x = to_distance_timeseries(x)
-    _y = to_distance_timeseries(y)
+    _x = to_numba_timeseries(x)
+    _y = to_numba_timeseries(y)
     return _numba_squared_distance(_x, _y)
 
 

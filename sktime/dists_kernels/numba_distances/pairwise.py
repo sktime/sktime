@@ -1,57 +1,9 @@
 # -*- coding: utf-8 -*-
-from typing import Callable, Tuple, Any
+from typing import Callable, Any
 import numpy as np
 from numba import njit, prange
 
-
-def _check_pairwise_timeseries(
-    x: np.ndarray, y: np.ndarray = None
-) -> Tuple[np.ndarray, np.ndarray, bool]:
-    """Method used to check the params of x and y.
-
-    Parameters
-    ----------
-    x: np.ndarray or pd.Dataframe or List
-        First matrix of multiple time series
-    y: np.ndarray or pd.Dataframe or List, defaults = None
-        Second matrix of multiple time series.
-
-    Returns
-    -------
-    validated_x: np.ndarray
-        First validated time series
-    validated_y: np.ndarray
-        Second validated time series
-    symmetric: bool
-        Boolean marking if the pairwise will be symmetric (if the two timeseries are
-        equal)
-    """
-    if y.size is None:
-        y = np.copy(x)
-        symmetric = True
-    else:
-        symmetric = np.array_equal(x, y)
-
-    if x.ndim <= 2:
-        validated_x = np.reshape(x, x.shape + (1,))
-        validated_y = np.reshape(y, y.shape + (1,))
-    else:
-        validated_x = x
-        validated_y = y
-    return validated_x, validated_y, symmetric
-
-
-def _validate_pairwise_params(
-    x: np.ndarray,
-    y: np.ndarray = None,
-    factory: Callable = None,
-) -> Tuple[np.ndarray, np.ndarray, bool]:
-
-    if factory is None:
-        raise ValueError("You must specify a numba_distance_factory")
-
-    validated_x, validated_y, symmetric = _check_pairwise_timeseries(x, y)
-    return validated_x, validated_y, symmetric
+from sktime.dists_kernels._utils import validate_pairwise_params
 
 
 @njit(parallel=True)
@@ -96,31 +48,11 @@ def _numba_pairwise_distance(
     return pairwise_matrix
 
 
-def pairwise_aligners(
-    x: np.ndarray,
-    y: np.ndarray = None,
-    aligner_distance_factory: Callable[
-        [Any], Callable[[np.ndarray, np.ndarray], Tuple[np.ndarray, float]]
-    ] = None,
-    **kwargs: dict
-) -> Tuple[np.ndarray, float]:
-    validated_x, validated_y, symmetric = _validate_pairwise_params(
-        x, y, aligner_distance_factory
-    )
-
-    kwargs["symmetric"] = symmetric
-    distance: Callable[[np.ndarray, np.ndarray], float] = aligner_distance_factory(
-        x, y, **kwargs
-    )
-
-    return _numba_pairwise_distance(validated_x, validated_y, symmetric, distance)
-
-
 def pairwise_distance(
     x: np.ndarray,
     y: np.ndarray = None,
     numba_distance_factory: Callable[
-        [Any], Callable[[np.ndarray, np.ndarray], float]
+        [np.ndarray, np.ndarray, Any], Callable[[np.ndarray, np.ndarray], float]
     ] = None,
     **kwargs: dict
 ) -> np.ndarray:
@@ -143,7 +75,7 @@ def pairwise_distance(
     np.ndarray
         Matrix containing the pairwise distance between each point
     """
-    validated_x, validated_y, symmetric = _validate_pairwise_params(
+    validated_x, validated_y, symmetric = validate_pairwise_params(
         x, y, numba_distance_factory
     )
     kwargs["symmetric"] = symmetric

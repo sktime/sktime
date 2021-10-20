@@ -12,6 +12,7 @@ from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
     _numba_squared_distance,
 )
 from sktime.dists_kernels.numba_distances.pairwise import _numba_pairwise_distance
+from sktime.dists_kernels._utils import to_numba_timeseries
 
 
 def _resolve_bounding_matrix(
@@ -183,8 +184,10 @@ def dtw_distance(
     -------
 
     """
+    _x = to_numba_timeseries(x)
+    _y = to_numba_timeseries(y)
     bounding_matrix = _resolve_bounding_matrix(
-        x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
+        _x, _y, lower_bounding, window, itakura_max_slope, bounding_matrix
     )
 
-    return _numba_dtw_distance(x, y, distance, bounding_matrix, np.array_equal(x, y))
+    return _numba_dtw_distance(_x, _y, distance, bounding_matrix, np.array_equal(x, y))

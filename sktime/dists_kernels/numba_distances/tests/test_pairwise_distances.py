@@ -3,8 +3,8 @@ import numpy as np
 import pytest
 from typing import Callable
 
-from sktime.dists_kernels.numba_distances._registry import NUMBA_DISTANCES
-from sktime.dists_kernels.numba_distances.tests.utils import create_test_distance_numpy
+from sktime.dists_kernels.numba_distances._elastic._registry import NUMBA_DISTANCES
+from sktime.dists_kernels.tests._utils import create_test_distance_numpy
 from sktime.dists_kernels.numba_distances.pairwise import pairwise_distance
 
 distances = [dist[2] for dist in NUMBA_DISTANCES]
