@@ -10,7 +10,7 @@ __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import int64, prange, jit
+from numba import int64, jit, prange
 from sklearn.base import clone
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import ForestClassifier
