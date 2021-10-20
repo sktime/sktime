@@ -7,12 +7,6 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
-from sktime.classification.feature_based import (
-    Catch22Classifier,
-    MatrixProfileClassifier,
-    SignatureClassifier,
-    TSFreshClassifier,
-)
 from sktime.classification.distance_based import (
     ElasticEnsemble,
     KNeighborsTimeSeriesClassifier,
@@ -20,6 +14,12 @@ from sktime.classification.distance_based import (
     ProximityStump,
     ProximityTree,
     ShapeDTW,
+)
+from sktime.classification.feature_based import (
+    Catch22Classifier,
+    MatrixProfileClassifier,
+    SignatureClassifier,
+    TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
