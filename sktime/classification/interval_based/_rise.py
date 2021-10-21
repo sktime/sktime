@@ -4,20 +4,24 @@
 Implementation of Deng's Time Series Forest, with minor changes.
 """
 
-__author__ = ["TonyBagnall", "Yi-Xuan Xu"]
+__author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 
+from numba import int64, prange, jit
 import numpy as np
-from joblib import Parallel, delayed
-from numba import int64, jit, prange
+from joblib import Parallel
+from joblib import delayed
 from sklearn.base import clone
-from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
+from sklearn.ensemble._base import _partition_estimators
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 def _transform(X, interval, lag):
@@ -156,7 +160,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     Attributes
     ----------
-    n_classes_ : int
+    n_classes : int
         The number of classes, extracted from the data.
     n_estimators : array of shape = [n_estimators] of DecisionTree classifiers
     intervals : array of shape = [n_estimators][2]
@@ -172,6 +176,18 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/frequency_based/RISE.java
     """
+
+    # Capability tags
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
+    }
+
+    # TO DO: handle missing values, unequal length series and multivariate
+    # problems
 
     def __init__(
         self,
@@ -206,7 +222,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             "RandomIntervalSpectralForest is currently not supported."
         )
 
-    def _fit(self, X, y):
+    def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         using random intervals and spectral features.
@@ -225,7 +241,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
+
         n_instances, self.series_length = X.shape
         self.min_interval_, self.max_interval_ = self.min_interval, self.max_interval
         if self.max_interval_ not in range(1, self.series_length):
@@ -236,6 +254,15 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         rng = check_random_state(self.random_state)
 
         self.estimators_ = []
+        self.n_classes = np.unique(y).shape[0]
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        # self.intervals = _produce_intervals(
+        #     self.n_estimators,
+        #     self.min_interval,
+        #     self.max_interval,
+        #     self.series_length,
+        #     rng
+        # )
         self.intervals = np.empty((self.n_estimators, 2), dtype=int)
         self.intervals[:] = [
             _select_interval(
@@ -280,7 +307,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self._is_fitted = True
         return self
 
-    def _predict(self, X):
+    def predict(self, X):
         """Find predictions for all cases in X.
 
         Built on top of `predict_proba`.
@@ -300,7 +327,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         proba = self.predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def _predict_proba(self, X):
+    def predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -325,7 +352,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         """
         # Check data
         self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
+
         n_instances, n_columns = X.shape
         if n_columns != self.series_length:
             raise TypeError(
@@ -411,6 +440,48 @@ def acf(x, max_lag):
     return y
 
 
+#        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
+#        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
+#            y[lag-1]=0
+
+# @jit(parallel=True, cache=True, nopython=True)
+# def _acf(x, max_lag):
+#     y = np.empty(max_lag)
+#     length = len(x)
+#     n = length - np.arange(1, max_lag + 1)
+#     # _x = np.array([x[:-1], x[:0:-1]])
+#     # from_end_to_lag = slice(-1, -max_lag - 1, -1)
+#     # cs = np.cumsum(_x, axis=1)[:, from_end_to_lag]
+#     # cm = cs / n
+#     # css = np.cumsum(_x * _x, axis=1)[:, from_end_to_lag]
+#     # cv = css - cs
+#
+#     a, b = x[:-1], x[:0:-1]
+#     from_end_to_lag = slice(-1, -max_lag - 1, -1)
+#     cs1 = np.cumsum(a)[from_end_to_lag] / n
+#     cs2 = np.cumsum(b)[from_end_to_lag] / n
+#     css1 = np.cumsum(a * a)[from_end_to_lag] / n
+#     css2 = np.cumsum(b * b)[from_end_to_lag] / n
+#     cv1 = css1 - cs1 * cs1
+#     cv2 = css2 - cs2 * cs2
+#     covar = cv1 * cv2
+#
+#     for lag in prange(1, max_lag + 1):
+#         idx = lag - 1
+#         m1, m2, l = cs1[idx], cs2[idx], n[idx]
+#         y[idx] = np.sum((x[:-lag] - m1) * (x[lag:] - m2)) / l
+#     # both_zero = (cv1 <= 1e-9) & (cv2 <= 1e-9)
+#     # one_zero = (cv1 <= 1e-9) ^ (cv2 <= 1e-9)
+#     cv1_is_zero, cv2_is_zero = cv1 <= 1e-9, cv2 <= 1e-9
+#     non_zero = ~cv1_is_zero & ~cv2_is_zero
+#     y[cv1_is_zero & cv2_is_zero] = 1  # Both zero variance,
+#     # so must be 100% correlated
+#     y[cv1_is_zero ^ cv2_is_zero] = 0  # One zero variance
+#     # the other not
+#     y[non_zero] /= np.sqrt(covar[non_zero])
+#
+#     return y
+
 # @jit(parallel=True, cache=True, nopython=True)
 def matrix_acf(x, num_cases, max_lag):
     """Autocorrelation function transform.
@@ -434,6 +505,12 @@ def matrix_acf(x, num_cases, max_lag):
     y = np.empty(shape=(num_cases, max_lag))
     length = x.shape[1]
     for lag in prange(1, max_lag + 1):
+        # Could just do it ourselves ... TO TEST
+        #            s1=np.sum(x[:-lag])/x.shape()[0]
+        #            ss1=s1*s1
+        #            s2=np.sum(x[lag:])
+        #            ss2=s2*s2
+        #
         lag_length = length - lag
         x1, x2 = x[:, :-lag], x[:, lag:]
         s1 = np.sum(x1, axis=1)
@@ -448,12 +525,17 @@ def matrix_acf(x, num_cases, max_lag):
         v12 = s12 - s1 * m2
         v1_is_zero, v2_is_zero = v1 <= 1e-9, v2 <= 1e-9
         non_zero = ~v1_is_zero & ~v2_is_zero
+        # y[:, lag - 1] = np.sum((x1 - m1[:, None]) *
+        # (x2 - m2[:, None]), axis=1)
         y[v1_is_zero & v2_is_zero, lag - 1] = 1  # Both zero variance,
         # so must be 100% correlated
         y[v1_is_zero ^ v2_is_zero, lag - 1] = 0  # One zero variance
         # the other not
         var = (v1 * v2)[non_zero]
         y[non_zero, lag - 1] = v12[non_zero] / np.sqrt(var)
+    #     # y[lag - 1] = np.corrcoef(x[:, lag:], x[:, -lag])[0][1]
+    #     # if np.isnan(y[lag - 1]) or np.isinf(y[lag - 1]):
+    #     #     y[lag - 1] = 0
     return y
 
 
