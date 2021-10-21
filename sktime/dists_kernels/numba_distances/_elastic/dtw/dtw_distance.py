@@ -11,7 +11,9 @@ from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
 from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
     _numba_squared_distance,
 )
-from sktime.dists_kernels.numba_distances.pairwise import _numba_pairwise_distance
+from sktime.dists_kernels.numba_distances.pairwise_distances import (
+    _numba_pairwise_distance,
+)
 from sktime.dists_kernels._utils import to_numba_timeseries
 
 
@@ -49,9 +51,9 @@ def _cost_matrix(
     Parameters
     ----------
     x: np.ndarray
-        first time series
+        first timeseries
     y: np.ndarray
-        second time series
+        second timeseries
     bounding_matrix: np.ndarray
         matrix bounding the warping path
     pre_computed_distances: np.ndarray
@@ -105,9 +107,9 @@ def numba_dtw_distance_factory(
     Parameters
     ----------
     x: np.ndarray
-        First time series
+        First timeseries
     y: np.ndarray
-        Second time series
+        Second timeseries
     symmetric: bool, defaults = False
         Boolean that is true when the arrays are equal and false when they are not
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
@@ -152,15 +154,15 @@ def dtw_distance(
     itakura_max_slope: float = 2.0,
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
-):
-    """
+) -> float:
+    """Method to calculate dtw distance between timeseries.
 
     Parameters
     ----------
     x: np.ndarray
-        First time series
+        First timeseries
     y: np.ndarray
-        Second time series
+        Second timeseries
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         lower bounding technique to use. Potential bounding techniques and their int
         value are given below:
@@ -182,7 +184,8 @@ def dtw_distance(
 
     Returns
     -------
-
+    float
+        dtw distance between the two timeseries
     """
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)

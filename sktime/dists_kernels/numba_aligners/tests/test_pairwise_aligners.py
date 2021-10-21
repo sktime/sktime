@@ -5,7 +5,7 @@ from typing import Callable
 
 from sktime.dists_kernels.numba_aligners._registry import NUMBA_ALIGNERS
 from sktime.dists_kernels.tests._utils import create_test_distance_numpy
-from sktime.dists_kernels.numba_aligners.pairwise import pairwise_aligners
+from sktime.dists_kernels.numba_aligners.pairwise_aligners import pairwise_aligners
 
 pairwises = [dist[2] for dist in NUMBA_ALIGNERS]
 

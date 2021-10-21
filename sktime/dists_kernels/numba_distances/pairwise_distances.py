@@ -14,22 +14,23 @@ def _numba_pairwise_distance(
     distance: Callable[[np.ndarray, np.ndarray], float],
 ) -> np.ndarray:
     """
-    Method that takes a distance function and computes the pairwise distance
-    Parameters
-    ----------
-    x: np.ndarray
-        First 3d numpy array containing multiple timeseries
-    y: np.ndarray
-        Second 3d numpy array containing multiple timeseries
-    symmetric: bool
-        Boolean when true means the two matrices are the same
-    distance: Callable[[np.ndarray, np.ndarray], float]
-        Callable that is a distance function to measure the distance between two
-        time series. NOTE: This must be a numba compatible function (i.e. @njit)
-    Returns
-    -------
+     Method that takes a distance function and computes the pairwise distance
+     Parameters
+     ----------
+     x: np.ndarray
+         First 3d numpy array containing multiple timeseries
+     y: np.ndarray
+         Second 3d numpy array containing multiple timeseries
+     symmetric: bool
+         Boolean when true means the two matrices are the same
+     distance: Callable[[np.ndarray, np.ndarray], float]
+         Callable that is a distance function to measure the distance between two
+         time series. NOTE: This must be a numba compatible function (i.e. @njit)
+     Returns
+     -------
     np.ndarray
-        Matrix containing the pairwise distance between the two matrices
+         [n, m] where n is the size of x, m is the size of y; matrix that contains the
+         pairwise distances between each element.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]
@@ -57,8 +58,9 @@ def pairwise_distance(
     **kwargs: dict
 ) -> np.ndarray:
     """
-    Method to compute a pairwise distance on a matrix (i.e. distance between each
-    ts in the matrix)
+    Method to compute a pairwise distance between two timeseries or two timeseries
+    panels.
+
     Parameters
     ----------
     x: np.ndarray or pd.Dataframe or List
@@ -66,21 +68,22 @@ def pairwise_distance(
     y: np.ndarray or pd.Dataframe or List, defaults = None
         Second matrix of multiple time series.
     numba_distance_factory: Callable, defaults = None
-        Factory to create a numba callable using kwargs
+        Factory to create a numba callable that takes (x, y, **kwargs) using kwargs
     **kwargs: dict
         kwargs for the pairwise function. See arguments for distance you're using
         for valid kwargs
     Returns
     -------
     np.ndarray
-        Matrix containing the pairwise distance between each point
+        [n, m] where n is the size of x, m is the size of y; matrix that contains the
+        pairwise distances between each element.
     """
     validated_x, validated_y, symmetric = validate_pairwise_params(
         x, y, numba_distance_factory
     )
     kwargs["symmetric"] = symmetric
-    distance: Callable[[np.ndarray, np.ndarray], float] = numba_distance_factory(
+    distance_func: Callable[[np.ndarray, np.ndarray], float] = numba_distance_factory(
         x, y, **kwargs
     )
 
-    return _numba_pairwise_distance(validated_x, validated_y, symmetric, distance)
+    return _numba_pairwise_distance(validated_x, validated_y, symmetric, distance_func)

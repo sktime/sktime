@@ -11,7 +11,9 @@ from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
 from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
     _numba_squared_distance,
 )
-from sktime.dists_kernels.numba_distances.pairwise import _numba_pairwise_distance
+from sktime.dists_kernels.numba_distances.pairwise_distances import (
+    _numba_pairwise_distance,
+)
 from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
     _resolve_bounding_matrix,
     _numba_check_params,
@@ -124,14 +126,14 @@ def dtw_cost_matrix_alignment(
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
 ) -> Tuple[float, np.ndarray]:
-    """Method to calculate dtw cost matrix
+    """Method to calculate dtw cost matrix of two timeseries.
 
     Parameters
     ----------
     x: np.ndarray
-        First time series
+        First timeseries
     y: np.ndarray
-        Second time series
+        Second timeseries
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         lower bounding technique to use. Potential bounding techniques and their int
         value are given below:
