@@ -51,7 +51,7 @@ def _numba_alignment_pairwise(
                 pairwise_matrix_dist[i, j] = pairwise_matrix_dist[j, i]
                 pairwise_cost_matrix[i, j] = pairwise_cost_matrix[j, i, :]
             else:
-                pairwise_matrix_dist[i, j], pairwise_cost_matrix[i, j] = dist_func(
+                pairwise_cost_matrix[i, j], pairwise_matrix_dist[i, j] = dist_func(
                     curr_x, y[j]
                 )
     return pairwise_cost_matrix, pairwise_matrix_dist
@@ -98,4 +98,6 @@ def pairwise_alignment(
         x, y, **kwargs
     )
 
-    return numba_aligner_factory(validated_x, validated_y, symmetric, alignment_func)
+    return _numba_alignment_pairwise(
+        validated_x, validated_y, symmetric, alignment_func
+    )
