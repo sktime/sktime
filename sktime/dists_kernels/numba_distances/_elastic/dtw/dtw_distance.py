@@ -122,8 +122,6 @@ def numba_dtw_distance_factory(
         Size of the bounding window
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura
-    defaults = squared_distance
-        Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
         Distance function to use within dtw. Defaults to squared distance.
