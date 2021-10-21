@@ -142,8 +142,6 @@ class DrCIF(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": True,
     }
