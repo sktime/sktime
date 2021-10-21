@@ -16,8 +16,10 @@ def test_boss_on_unit_test():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train BOSS
-    boss = BOSSEnsemble(max_ensemble_size=5, random_state=0)
-    boss.fit(X_train.iloc[indices], y_train[indices])
+    boss = BOSSEnsemble(
+        max_ensemble_size=5, random_state=0, save_train_predictions=True
+    )
+    boss.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = boss.predict_proba(X_test.iloc[indices])
@@ -38,7 +40,7 @@ def test_individual_boss_on_unit_test():
 
     # train IndividualBOSS
     indiv_boss = IndividualBOSS(random_state=0)
-    indiv_boss.fit(X_train.iloc[indices], y_train[indices])
+    indiv_boss.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = indiv_boss.predict_proba(X_test.iloc[indices])
@@ -48,32 +50,16 @@ def test_individual_boss_on_unit_test():
 boss_unit_test_probas = np.array(
     [
         [
-            0.0,
-            1.0,
+            0.4,
+            0.6,
         ],
         [
-            0.16,
-            0.84,
+            0.4,
+            0.6,
         ],
         [
-            1.0,
-            0.0,
-        ],
-        [
-            0.92,
-            0.08,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.96,
-            0.04,
-        ],
-        [
-            0.0,
-            1.0,
+            0.2,
+            0.8,
         ],
         [
             1.0,
@@ -84,8 +70,24 @@ boss_unit_test_probas = np.array(
             0.0,
         ],
         [
-            0.0,
+            0.8,
+            0.2,
+        ],
+        [
+            0.8,
+            0.2,
+        ],
+        [
+            0.2,
+            0.8,
+        ],
+        [
             1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
         ],
     ]
 )
@@ -96,22 +98,6 @@ individual_boss_unit_test_probas = np.array(
             1.0,
         ],
         [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
             1.0,
             0.0,
         ],
@@ -128,8 +114,24 @@ individual_boss_unit_test_probas = np.array(
             0.0,
         ],
         [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
             0.0,
             1.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
         ],
     ]
 )
@@ -147,17 +149,17 @@ individual_boss_unit_test_probas = np.array(
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     boss = BOSSEnsemble(random_state=0)
+#     boss = BOSSEnsemble(max_ensemble_size=5, random_state=0)
 #     indiv_boss = IndividualBOSS(random_state=0)
 #
-#     boss.fit(X_train.iloc[indices], y_train[indices])
+#     boss.fit(X_train, y_train)
 #     probas = boss.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
 #
-#     indiv_boss.fit(X_train.iloc[indices], y_train[indices])
+#     indiv_boss.fit(X_train, y_train)
 #     probas = indiv_boss.predict_proba(X_test.iloc[indices])
 #     print_array(probas)

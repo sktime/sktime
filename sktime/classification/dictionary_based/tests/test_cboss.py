@@ -17,9 +17,12 @@ def test_cboss_on_unit_test():
 
     # train cBOSS
     cboss = ContractableBOSS(
-        n_parameter_samples=25, max_ensemble_size=5, random_state=0
+        n_parameter_samples=25,
+        max_ensemble_size=5,
+        random_state=0,
+        save_train_predictions=True,
     )
-    cboss.fit(X_train.iloc[indices], y_train[indices])
+    cboss.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = cboss.predict_proba(X_test.iloc[indices])
@@ -34,44 +37,44 @@ def test_cboss_on_unit_test():
 cboss_unit_test_probas = np.array(
     [
         [
-            0.0,
-            1.0,
+            0.12929747869474983,
+            0.8707025213052502,
+        ],
+        [
+            0.5646487393473748,
+            0.43535126065262497,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.6608256880733945,
-            0.33917431192660547,
+            1.0,
+            0.0,
         ],
         [
-            0.4999999999999999,
-            0.4999999999999999,
+            0.5044553362476266,
+            0.4955446637523732,
+        ],
+        [
+            0.8707025213052502,
+            0.12929747869474983,
+        ],
+        [
+            0.7477723318761866,
+            0.2522276681238133,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.2797247706422018,
-            0.7202752293577981,
+            0.5646487393473748,
+            0.43535126065262497,
         ],
         [
-            0.0,
             1.0,
-        ],
-        [
-            0.3898623853211009,
-            0.6101376146788989,
-        ],
-        [
-            0.2797247706422018,
-            0.7202752293577981,
-        ],
-        [
             0.0,
-            1.0,
         ],
     ]
 )
@@ -89,14 +92,14 @@ cboss_unit_test_probas = np.array(
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
 #     cboss = ContractableBOSS(
-#         n_parameter_samples=50, max_ensemble_size=10, random_state=0
+#         n_parameter_samples=25, max_ensemble_size=5, random_state=0
 #     )
 #
-#     cboss.fit(X_train.iloc[indices], y_train[indices])
+#     cboss.fit(X_train, y_train)
 #     probas = cboss.predict_proba(X_test.iloc[indices])
 #     print_array(probas)

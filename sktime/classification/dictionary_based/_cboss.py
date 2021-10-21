@@ -18,6 +18,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import IndividualBOSS
+from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
@@ -61,6 +62,9 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
+    save_train_predictions : bool, default=False
+        Save the ensemble member train predictions in fit for use in _get_train_probs
+        leave-one-out cross-validation.
     n_jobs : int, default = 1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -133,6 +137,7 @@ class ContractableBOSS(BaseClassifier):
         min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
+        save_train_predictions=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -143,6 +148,7 @@ class ContractableBOSS(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
+        self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -160,7 +166,7 @@ class ContractableBOSS(BaseClassifier):
         super(ContractableBOSS, self).__init__()
 
     def _fit(self, X, y):
-        """Fit a c-boss ensemble on cases (X,y), where y is the target variable.
+        """Fit a cBOSS ensemble on cases (X,y), where y is the target variable.
 
         Build an ensemble of BOSS classifiers from the training set (X,
         y), through randomising over the para space to make a fixed size
@@ -243,6 +249,7 @@ class ContractableBOSS(BaseClassifier):
                 *parameters,
                 alphabet_size=self._alphabet_size,
                 save_words=False,
+                n_jobs=self._threads_to_use,
                 random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
@@ -346,35 +353,43 @@ class ContractableBOSS(BaseClassifier):
         return possible_parameters
 
     def _get_train_probs(self, X, y=None):
-        num_inst = X.shape[0]
-        results = np.zeros((num_inst, self.n_classes_))
-        for i in range(num_inst):
-            divisor = 0
-            sums = np.zeros(self.n_classes_)
+        self.check_is_fitted()
+        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
-            clf_idx = []
-            for n, clf in enumerate(self.estimators_):
-                idx = np.where(clf._subsample == i)
-                if len(idx[0]) > 0:
-                    clf_idx.append([n, idx[0][0]])
+        n_instances, _, series_length = X.shape
 
-            preds = Parallel(n_jobs=self.n_jobs)(
-                delayed(self.estimators_[cls[0]]._train_predict)(
-                    cls[1],
+        if n_instances != self.n_instances_ or series_length != self.series_length_:
+            raise ValueError(
+                "n_instances, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
+
+        results = np.zeros((n_instances, self.n_classes_))
+        divisors = np.zeros(n_instances)
+
+        for i, clf in enumerate(self.estimators_):
+            subsample = clf._subsample
+            preds = (
+                clf._train_predictions
+                if self.save_train_predictions
+                else Parallel(n_jobs=self._threads_to_use)(
+                    delayed(clf._train_predict)(
+                        i,
+                    )
+                    for i in range(len(subsample))
                 )
-                for cls in clf_idx
             )
 
             for n, pred in enumerate(preds):
-                sums[self._class_dictionary.get(pred, -1)] += self.weights_[
-                    clf_idx[n][0]
-                ]
-                divisor += self.weights_[clf_idx[n][0]]
+                results[subsample[n]][self._class_dictionary[pred]] += self.weights_[i]
+                divisors[subsample[n]] += self.weights_[i]
 
+        for i in range(n_instances):
             results[i] = (
                 np.ones(self.n_classes_) * (1 / self.n_classes_)
-                if divisor == 0
-                else sums / (np.ones(self.n_classes_) * divisor)
+                if divisors[i] == 0
+                else results[i] / (np.ones(self.n_classes_) * divisors[i])
             )
 
         return results
@@ -383,8 +398,8 @@ class ContractableBOSS(BaseClassifier):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
-        if self.n_jobs > 1:
-            c = Parallel(n_jobs=self.n_jobs)(
+        if self._threads_to_use > 1:
+            c = Parallel(n_jobs=self._threads_to_use)(
                 delayed(boss._train_predict)(
                     i,
                 )
@@ -396,6 +411,9 @@ class ContractableBOSS(BaseClassifier):
                     return -1
                 elif c[i] == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    boss._train_predictions.append(c[i])
         else:
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
@@ -405,5 +423,8 @@ class ContractableBOSS(BaseClassifier):
 
                 if c == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    boss._train_predictions.append(c)
 
         return correct / train_size

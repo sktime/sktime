@@ -17,6 +17,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
+from sktime.utils.validation.panel import check_X_y
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -55,6 +56,9 @@ class BOSSEnsemble(BaseClassifier):
         Maximum window length as a proportion of the series length.
     min_window : int, default=10
         Minimum window size.
+    save_train_predictions : bool, default=False
+        Save the ensemble member train predictions in fit for use in _get_train_probs
+        leave-one-out cross-validation.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -116,6 +120,7 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
+        save_train_predictions=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -124,6 +129,7 @@ class BOSSEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.min_window = min_window
 
+        self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -193,6 +199,7 @@ class BOSSEnsemble(BaseClassifier):
                     normalise,
                     self._alphabet_size,
                     save_words=True,
+                    n_jobs=self._threads_to_use,
                     random_state=self.random_state,
                 )
                 boss.fit(X, y)
@@ -312,26 +319,44 @@ class BOSSEnsemble(BaseClassifier):
 
         return min_acc, min_acc_idx
 
-    def _get_train_probs(self, X):
-        num_inst = X.shape[0]
-        results = np.zeros((num_inst, self.n_classes_))
-        divisor = np.ones(self.n_classes_) * self.n_estimators_
-        for i in range(num_inst):
-            sums = np.zeros(self.n_classes_)
+    def _get_train_probs(self, X, y=None):
+        self.check_is_fitted()
+        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
-            preds = Parallel(n_jobs=self._threads_to_use)(
-                delayed(clf._train_predict)(
-                    i,
-                )
-                for clf in self.estimators_
+        n_instances, _, series_length = X.shape
+
+        if n_instances != self.n_instances_ or series_length != self.series_length_:
+            raise ValueError(
+                "n_instances, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
             )
 
-            for c in preds:
-                sums[self._class_dictionary.get(c, -1)] += 1
+        results = np.zeros((n_instances, self.n_classes_))
+        divisors = np.zeros(n_instances)
 
-            dists = sums / divisor
-            for n in range(self.n_classes_):
-                results[i][n] = dists[n]
+        for i, clf in enumerate(self.estimators_):
+            preds = (
+                clf._train_predictions
+                if self.save_train_predictions
+                else Parallel(n_jobs=self._threads_to_use)(
+                    delayed(clf._train_predict)(
+                        i,
+                    )
+                    for i in range(n_instances)
+                )
+            )
+
+            for n, pred in enumerate(preds):
+                results[n][self._class_dictionary[pred]] += 1
+                divisors[n] += 1
+
+        for i in range(n_instances):
+            results[i] = (
+                np.ones(self.n_classes_) * (1 / self.n_classes_)
+                if divisors[i] == 0
+                else results[i] / (np.ones(self.n_classes_) * divisors[i])
+            )
 
         return results
 
@@ -352,6 +377,9 @@ class BOSSEnsemble(BaseClassifier):
                     return -1
                 elif c[i] == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    boss._train_predictions.append(c[i])
         else:
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
@@ -361,6 +389,9 @@ class BOSSEnsemble(BaseClassifier):
 
                 if c == y[i]:
                     correct += 1
+
+                if self.save_train_predictions:
+                    boss._train_predictions.append(c)
 
         return correct / train_size
 
@@ -439,6 +470,10 @@ class IndividualBOSS(BaseClassifier):
     >>> y_pred = clf.predict(X_test)
     """
 
+    _tags = {
+        "capability:multithreading": True,
+    }
+
     def __init__(
         self,
         window_size=10,
@@ -463,6 +498,7 @@ class IndividualBOSS(BaseClassifier):
         self._class_vals = []
         self._accuracy = 0
         self._subsample = []
+        self._train_predictions = []
 
         super(IndividualBOSS, self).__init__()
 
