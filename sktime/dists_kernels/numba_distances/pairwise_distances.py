@@ -49,67 +49,12 @@ def _numba_pairwise_distance(
     return pairwise_matrix
 
 
-#
-# def pairwise_distance(
-#     x: np.ndarray,
-#     y: np.ndarray = None,
-#     param_validator: Callable[
-#         [np.ndarray, np.ndarray, dict],
-#         Tuple[np.ndarray, np.ndarray, dict]
-#     ] = None,
-#     numba_distance_factory: Callable[
-#         [np.ndarray, np.ndarray, Any], Callable[[np.ndarray, np.ndarray], float]
-#     ] = None,
-#     **kwargs: dict
-# ) -> np.ndarray:
-#     """
-#     Method to compute a pairwise distance between two timeseries or two timeseries
-#     panels.
-#
-#     Parameters
-#     ----------
-#     x: np.ndarray or pd.Dataframe or List
-#         First matrix of multiple time series
-#     y: np.ndarray or pd.Dataframe or List, defaults = None
-#         Second matrix of multiple time series.
-#     param_validator: Callable[
-#         [np.ndarray, np.ndarray, dict],
-#         Tuple[np.ndarray, np.ndarray, dict]
-#     ], defaults = None
-#         Method used to validate and return the validated parameters
-#     numba_distance_factory: Callable, defaults = None
-#         Factory to create a numba callable that takes (x, y, **kwargs) using kwargs
-#     **kwargs: dict
-#         kwargs for the pairwise function. See arguments for distance you're using
-#         for valid kwargs
-#     Returns
-#     -------
-#     np.ndarray
-#         [n, m] where n is the size of x, m is the size of y; matrix that contains the
-#         pairwise distances between each element.
-#     """
-#     validated_x, validated_y, symmetric = validate_pairwise_params(
-#         x, y, numba_distance_factory
-#     )
-#     kwargs["symmetric"] = symmetric
-#
-#     if param_validator is not None:
-#         _x, _y, _kwargs = param_validator()
-#     else:
-#         _x = x
-#         _y = y
-#         _kwargs = kwargs
-#
-#     distance_func: Callable[[np.ndarray, np.ndarray], float] = numba_distance_factory(
-#         _x, _y, **kwargs
-#     )
-#
-#     return _numba_pairwise_distance(x, y, symmetric, distance_func)
-
-
 def pairwise_distance(
     x: np.ndarray,
     y: np.ndarray = None,
+    param_validator: Callable[
+        [np.ndarray, np.ndarray, dict], Tuple[np.ndarray, np.ndarray, dict]
+    ] = None,
     numba_distance_factory: Callable[
         [np.ndarray, np.ndarray, Any], Callable[[np.ndarray, np.ndarray], float]
     ] = None,
@@ -124,23 +69,33 @@ def pairwise_distance(
         First matrix of multiple time series
     y: np.ndarray or pd.Dataframe or List, defaults = None
         Second matrix of multiple time series.
+    param_validator: Callable[
+        [np.ndarray, np.ndarray, dict],
+        Tuple[np.ndarray, np.ndarray, dict]
+    ], defaults = None
+        Method used to validate and return the validated parameters
     numba_distance_factory: Callable, defaults = None
         Factory to create a numba callable that takes (x, y, **kwargs) using kwargs
     **kwargs: dict
         kwargs for the pairwise function. See arguments for distance you're using
         for valid kwargs
+
     Returns
     -------
     np.ndarray
         [n, m] where n is the size of x, m is the size of y; matrix that contains the
         pairwise distances between each element.
     """
+    if param_validator is not None:
+        x, y, kwargs = param_validator(x, y, **kwargs)
+
     validated_x, validated_y, symmetric = validate_pairwise_params(
         x, y, numba_distance_factory
     )
     kwargs_dict = {"symmetric": symmetric, **kwargs}
+
     distance_func: Callable[[np.ndarray, np.ndarray], float] = numba_distance_factory(
-        x, y, **kwargs_dict
+        validated_x, validated_y, **kwargs_dict
     )
 
     return _numba_pairwise_distance(validated_x, validated_y, symmetric, distance_func)

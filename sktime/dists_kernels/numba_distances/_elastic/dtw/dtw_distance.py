@@ -15,6 +15,7 @@ from sktime.dists_kernels.numba_distances.pairwise_distances import (
     _numba_pairwise_distance,
 )
 from sktime.dists_kernels._utils import to_numba_timeseries
+from sktime.dists_kernels.numba_distances.pairwise_distances import pairwise_distance
 
 
 def _resolve_bounding_matrix(
@@ -192,3 +193,21 @@ def dtw_distance(
     )
 
     return _numba_dtw_distance(_x, _y, distance, bounding_matrix, np.array_equal(x, y))
+
+
+def pairwise_dtw_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Dtw pairwise distance between two timeseries.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        First timeseries
+    y: np.ndarray
+        Second timeseries
+
+    Returns
+    -------
+    np.ndarray
+        Pairwise distance using dtw distance
+    """
+    return pairwise_distance(x, y, numba_distance_factory=numba_dtw_distance_factory)
