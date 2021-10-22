@@ -13,9 +13,9 @@ from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
 )
 from sktime.dists_kernels.numba_distances.pairwise_distances import (
     _numba_pairwise_distance,
+    pairwise_distance,
 )
 from sktime.dists_kernels._utils import to_numba_timeseries
-from sktime.dists_kernels.numba_distances.pairwise_distances import pairwise_distance
 
 
 def _resolve_bounding_matrix(
@@ -76,7 +76,7 @@ def _cost_matrix(
 
 
 @njit()
-def _numba_check_params(x, y):
+def _dtw_format_params(x, y):
     if x.ndim <= 2:
         return np.reshape(x, x.shape + (1,)), np.reshape(y, y.shape + (1,))
     else:
@@ -85,7 +85,7 @@ def _numba_check_params(x, y):
 
 @njit()
 def _numba_dtw_distance(x, y, distance, bounding_matrix, symmetric: bool):
-    _x, _y = _numba_check_params(x, y)
+    _x, _y = _dtw_format_params(x, y)
 
     pre_computed_distances = _numba_pairwise_distance(_x, _y, symmetric, distance)
 

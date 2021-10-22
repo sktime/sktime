@@ -14,7 +14,7 @@ from sktime.dists_kernels.numba_distances.pairwise_distances import (
 )
 from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
     _resolve_bounding_matrix,
-    _numba_check_params,
+    _dtw_format_params,
     _cost_matrix,
 )
 
@@ -95,7 +95,7 @@ def _numba_dtw_path(
     float
         Distance between the two time series
     """
-    _x, _y = _numba_check_params(x, y)
+    _x, _y = _dtw_format_params(x, y)
 
     pre_computed_distances = _numba_pairwise_distance(_x, _y, symmetric, distance)
 

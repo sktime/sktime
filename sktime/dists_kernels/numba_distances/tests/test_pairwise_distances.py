@@ -30,6 +30,8 @@ def test_series_pairwise_distances(pairwise: Callable):
     pairwise: Callable
         Distance function to run test on
     """
+    if pairwise is None:
+        return
     x_univariate = create_test_distance_numpy(1, 1, 10)
     y_univariate = create_test_distance_numpy(1, 1, 10, random_state=2)
     univariate_pairwise_result = pairwise(x_univariate, y_univariate)
@@ -51,6 +53,8 @@ def test_panel_pairwise_distances(pairwise: Callable):
     pairwise: Callable
         Distance function to run test on
     """
+    if pairwise is None:
+        return
     x_univariate = create_test_distance_numpy(10, 1, 10)
     y_univariate = create_test_distance_numpy(10, 1, 10, random_state=2)
     univariate_pairwise_result = pairwise(x_univariate, y_univariate)

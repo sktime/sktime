@@ -58,7 +58,7 @@ def pairwise_distance(
     numba_distance_factory: Callable[
         [np.ndarray, np.ndarray, Any], Callable[[np.ndarray, np.ndarray], float]
     ] = None,
-    **kwargs: dict
+    **kwargs: Any
 ) -> np.ndarray:
     """
     Method to compute a pairwise distance between two timeseries or two timeseries
@@ -76,7 +76,7 @@ def pairwise_distance(
         Method used to validate and return the validated parameters
     numba_distance_factory: Callable, defaults = None
         Factory to create a numba callable that takes (x, y, **kwargs) using kwargs
-    **kwargs: dict
+    **kwargs: Any
         kwargs for the pairwise function. See arguments for distance you're using
         for valid kwargs
 
