@@ -3,11 +3,10 @@
 """
 
 #todo: this classifier is to be depreciated and replaced with a version based on numba.
-import pandas as pd
 import numpy as np
+
 import warnings;
 
-from libcpp cimport bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
