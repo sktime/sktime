@@ -16,7 +16,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X, check_X_y
 
-
 __author__ = ["Thach Le Nguyen"]
 
 ######################### SAX and SFA #########################
