@@ -101,7 +101,8 @@ def ddtw_distance(
 def _pairwise_ddtw_param_validator(
     x: np.ndarray, y: np.ndarray, **kwargs: dict
 ) -> Tuple[np.ndarray, np.ndarray, dict]:
-    """Method to validate and change x and y timeseries to be used for ddtw
+    """Method to validate and change x and y timeseries to be used for ddtw and
+    wddtw.
 
     Parameters
     ----------

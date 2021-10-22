@@ -19,6 +19,10 @@ from sktime.dists_kernels.numba_distances._elastic.dtw.wdtw_distance import (
     wdtw_distance,
     pairwise_wdtw_distance,
 )
+from sktime.dists_kernels.numba_distances._elastic.dtw.wddtw_distance import (
+    wddtw_distance,
+    pairwise_wddtw_distance,
+)
 
 
 NUMBA_DISTANCES = [
@@ -27,4 +31,5 @@ NUMBA_DISTANCES = [
     ("dtw distance", dtw_distance, pairwise_dtw_distance),
     ("ddtw distance", ddtw_distance, pairwise_ddtw_distance),
     ("wdtw distance", wdtw_distance, pairwise_wdtw_distance),
+    ("wddtw distance", wddtw_distance, pairwise_wddtw_distance),
 ]
