@@ -9,6 +9,7 @@ __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
     "test_predict_time_index",
+    "test_predict_quantiles",
     "test_update_predict_predicted_index",
     "test_update_predict_predicted_index_update_params",
     "test_y_multivariate_raises_error",
@@ -316,6 +317,21 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             with pytest.raises(NotImplementedError, match="prediction intervals"):
                 f.predict(return_pred_int=True, alpha=alpha)
 
+def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, y_pred: pd.Series, fh):
+    # make iterable
+    if isinstance(pred_quantiles, pd.DataFrame):
+        pred_quantiles = [pred_quantiles]
+
+    for pred_int in pred_quantiles:
+
+        # check time index
+        _assert_correct_pred_time_index(pred_quantiles.index, y_train.index[-1], fh)
+
+        # check values
+        assert np.all(pred_int.iloc[:, 0] < y_pred)
+        assert np.all(pred_int.iloc[:,-1:] > y_pred)
+
+
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
@@ -327,11 +343,14 @@ def test_predict_quantiles(Forecaster, fh, alpha):
         f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-        if not f._has_predict_quantiles_been_refactored():
+
+        y_pred = f.predict()
+        if "_predict_quantiles" not in type(f).__dict__.keys():
             with pytest.raises(NotImplementedError):
                 f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
         else:
-            f.predict_quantiles(fh=fh, alpha=alpha)
+            quantiles = f.predict_quantiles(fh=fh, alpha=alpha)
+            _check_predict_quantiles(quantiles, y_train, y_pred)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
