@@ -10,6 +10,7 @@ from sktime.transformations.panel.dictionary_based import SFA
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 import numpy as np
+import warnings;
 
 from libcpp.vector cimport vector
 from libcpp cimport bool
@@ -61,6 +62,8 @@ class AdaptedSFA:
     '''
 
     def __init__(self, int N, int w, int a):
+        warnings.warn("AdaptedSFA to be depreciated from 0.8.2",
+                      DeprecationWarning)
         self.sfa = SFA(w, a, N, norm=True, remove_repeat_words=True)
 
     def fit(self, train_x):
@@ -121,6 +124,8 @@ class SEQLCLF:
     '''
 
     def __init__(self):
+        warnings.warn("SEQLCLF to be depreciated from 0.8.2",
+                      DeprecationWarning)
 
         self.features = []
         self.coefficients = []
@@ -236,6 +241,9 @@ class MrSEQLClassifier(BaseClassifier):
     }
 
     def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
+        warnings.warn("Cython version of MrSEQLClassifier to be depreciated from "
+                      "0.8.2, to be replaced with a numba version in due course",
+                      DeprecationWarning)
 
 
         if 'sax' in symrep or 'sfa' in symrep:
