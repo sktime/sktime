@@ -12,6 +12,7 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 
 from sklearn.linear_model import LogisticRegression
+
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X, check_X_y
