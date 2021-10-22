@@ -2,10 +2,10 @@
 """MrSEQL Classifier.
 """
 
+import warnings
+
 #todo: this classifier is to be depreciated and replaced with a version based on numba.
 import numpy as np
-
-import warnings;
 
 from libcpp.string cimport string
 from libcpp.vector cimport vector
