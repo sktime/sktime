@@ -3,18 +3,19 @@
 """
 
 #todo: this classifier is to be depreciated and replaced with a version based on numba.
-
-from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
-from sklearn.linear_model import LogisticRegression
 import pandas as pd
 import numpy as np
 import warnings;
 
-from libcpp.vector cimport vector
 from libcpp cimport bool
 from libcpp.string cimport string
+from libcpp.vector cimport vector
+
+from sklearn.linear_model import LogisticRegression
+from sktime.classification.base import BaseClassifier
+from sktime.transformations.panel.dictionary_based import SFA
+from sktime.utils.validation.panel import check_X, check_X_y
+
 
 __author__ = ["Thach Le Nguyen"]
 
