@@ -20,6 +20,8 @@ from sktime.classification.compose import (
     ComposableTimeSeriesForestClassifier,
 )
 from sktime.classification.dictionary_based import (
+    MUSE,
+    WEASEL,
     BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
@@ -335,6 +337,8 @@ ESTIMATOR_TEST_PARAMS = {
     SFA: {"return_pandas_data_series": True},
     BOSSEnsemble: {"max_ensemble_size": 3},
     ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
+    WEASEL: {"window_inc": 4},
+    MUSE: {"window_inc": 4, "use_first_order_differences": False},
     TemporalDictionaryEnsemble: {
         "n_parameter_samples": 10,
         "max_ensemble_size": 3,

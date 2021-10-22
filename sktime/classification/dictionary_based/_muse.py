@@ -94,7 +94,7 @@ class MUSE(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MUSE()
+    >>> clf = MUSE(window_inc=4, use_first_order_differences=False)
     >>> clf.fit(X_train, y_train)
     MUSE(...)
     >>> y_pred = clf.predict(X_test)
