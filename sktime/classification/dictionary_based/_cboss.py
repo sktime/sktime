@@ -205,9 +205,8 @@ class ContractableBOSS(BaseClassifier):
             raise ValueError(
                 f"Error in ContractableBOSS, min_window ="
                 f"{self.min_window} is bigger"
-                f" than max_window ={max_window},"
-                f" series length is {self.series_length_}"
-                f" try set min_window to be smaller than series length in "
+                f" than max_window ={max_window}."
+                f" Try set min_window to be smaller than series length in "
                 f"the constructor, but the classifier may not work at "
                 f"all with very short series"
             )

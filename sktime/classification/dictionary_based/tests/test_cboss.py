@@ -8,7 +8,7 @@ from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.datasets import load_unit_test
 
 
-def test_cboss_on_unit_test():
+def test_cboss_on_unit_test_data():
     """Test of cBOSS on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
