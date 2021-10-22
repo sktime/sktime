@@ -1,4 +1,8 @@
-STUFF = "Hi"
+# -*- coding: utf-8 -*-
+"""MrSEQL Classifier.
+"""
+
+#todo: this classifier is to be depreciated and replaced with a version based on numba.
 
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
@@ -232,6 +236,7 @@ class MrSEQLClassifier(BaseClassifier):
     }
 
     def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
+
 
         if 'sax' in symrep or 'sfa' in symrep:
             self.symrep = symrep
