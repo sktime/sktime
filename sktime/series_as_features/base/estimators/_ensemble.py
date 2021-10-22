@@ -164,7 +164,7 @@ class BaseTimeSeriesForest(BaseForest):
 
         # Remap output
         self.n_columns = X.shape[1]
-        self.n_features_ = X.shape[1] if X.ndim == 2 else 1
+        self.n_features = X.shape[1] if X.ndim == 2 else 1
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
