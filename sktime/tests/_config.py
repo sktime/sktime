@@ -29,7 +29,7 @@ from sktime.classification.feature_based import (
     SignatureClassifier,
     TSFreshClassifier,
 )
-from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
@@ -145,7 +145,6 @@ DIST_KERNELS_IGNORE_TESTS = [
 
 EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["check_fit_idempotent"],
-    "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
 }
@@ -264,7 +263,7 @@ ESTIMATOR_TEST_PARAMS = {
     ShapeletTransformClassifier: {
         "estimator": RotationForest(n_estimators=3),
         "max_shapelets": 5,
-        "n_shapelet_samples": 100,
+        "n_shapelet_samples": 50,
         "batch_size": 20,
     },
     ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
@@ -275,7 +274,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,
-        "n_shapelet_samples": 100,
+        "n_shapelet_samples": 50,
         "batch_size": 20,
     },
     SignatureTransformer: {
@@ -303,11 +302,28 @@ ESTIMATOR_TEST_PARAMS = {
     HIVECOTEV1: {
         "stc_params": {
             "estimator": RotationForest(n_estimators=2),
-            "transform_limit_in_minutes": 0.01,
+            "max_shapelets": 5,
+            "n_shapelet_samples": 20,
+            "batch_size": 10,
         },
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
         "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},
+    },
+    HIVECOTEV2: {
+        "stc_params": {
+            "estimator": RotationForest(n_estimators=2),
+            "max_shapelets": 5,
+            "n_shapelet_samples": 20,
+            "batch_size": 10,
+        },
+        "drcif_params": {"n_estimators": 2},
+        "arsenal_params": {"num_kernels": 20, "n_estimators": 2},
+        "tde_params": {
+            "n_parameter_samples": 4,
+            "max_ensemble_size": 2,
+            "randomly_selected_params": 2,
+        },
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
