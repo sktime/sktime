@@ -8,7 +8,7 @@ import numpy as np
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
-from deprecated import deprecated
+from deprecated.sphinx import deprecated
 from sklearn.linear_model import LogisticRegression
 
 from sktime.classification.base import BaseClassifier
