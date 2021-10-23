@@ -3,16 +3,17 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
 
-__author__ = ["Markus Löning", "Martin Walter"]
+__author__ = ["mloning", "aiwalter"]
 __all__ = ["_ProphetAdapter"]
 
 import os
+from contextlib import contextmanager
 
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
-from contextlib import contextmanager
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.utils.validation.forecasting import check_y_X
 
 
 class _ProphetAdapter(BaseForecaster):
@@ -43,7 +44,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._instantiate_model()
         self._check_changepoints()
-        self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
+        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
