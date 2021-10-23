@@ -154,3 +154,14 @@ class VAR(_StatsModelsAdapter):
             columns=self._y.columns,
         )
         return y_pred
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {"maxlags": 3}
+        return params
