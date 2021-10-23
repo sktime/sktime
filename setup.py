@@ -26,6 +26,7 @@ MIN_REQUIREMENTS = {
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
     "numba": "0.53",
+    "deprecated": "1.2.13",
 }
 MAX_REQUIREMENTS = {
     "statsmodels": "0.12.1",
