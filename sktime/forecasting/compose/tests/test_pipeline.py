@@ -1,32 +1,34 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for forecasting pipelines."""
 
 __author__ = ["Markus Löning"]
 __all__ = []
 
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.series.detrend import Deseasonalizer
-from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 
 
 def test_pipeline():
+    """Test results of TransformedTargetForecaster."""
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
     forecaster = TransformedTargetForecaster(
         [
-            ("t1", Deseasonalizer(sp=12, model="multiplicative")),
-            ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
+            ("t1", ExponentTransformer()),
+            ("t2", TabularToSeriesAdaptor(MinMaxScaler())),
             ("forecaster", NaiveForecaster()),
         ]
     )
@@ -37,9 +39,9 @@ def test_pipeline():
     def compute_expected_y_pred(y_train, fh):
         # fitting
         yt = y_train.copy()
-        t1 = Deseasonalizer(sp=12, model="multiplicative")
+        t1 = ExponentTransformer()
         yt = t1.fit_transform(yt)
-        t2 = Detrender(PolynomialTrendForecaster(degree=1))
+        t2 = TabularToSeriesAdaptor(MinMaxScaler())
         yt = t2.fit_transform(yt)
         forecaster = NaiveForecaster()
         forecaster.fit(yt, fh=fh)
