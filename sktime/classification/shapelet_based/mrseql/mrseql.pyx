@@ -2,9 +2,7 @@
 """MrSEQL Classifier.
 """
 
-import warnings
-
-#todo: this classifier is to be depreciated and replaced with a version based on numba.
+#todo 0.8.2: this classifier is to be depreciated and replaced with a version based on numba.
 import numpy as np
 
 from libcpp.string cimport string
@@ -14,6 +12,7 @@ from sklearn.linear_model import LogisticRegression
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
+from sktime.utils import deprecated
 from sktime.utils.validation.panel import check_X, check_X_y
 
 __author__ = ["Thach Le Nguyen"]
@@ -56,14 +55,13 @@ cdef class PySAX:
         return self.thisptr.map_weighted_patterns(ts, sequences, weights)
 
 
+@deprecated("AdaptedSFA to be depreciated from 0.8.2")
 class AdaptedSFA:
     '''
     SFA adaptation for Mr-SEQL. This code uses a different alphabet for each Fourier coefficient in the output of SFA.
     '''
 
     def __init__(self, int N, int w, int a):
-        warnings.warn("AdaptedSFA to be depreciated from 0.8.2",
-                      DeprecationWarning)
         self.sfa = SFA(w, a, N, norm=True, remove_repeat_words=True)
 
     def fit(self, train_x):
@@ -118,15 +116,14 @@ cdef class PySEQL:
         self.thisptr.learn(sequences, labels)
         return self.thisptr.get_sequence_features(False), self.thisptr.get_coefficients(False)
 
+
+@deprecated("SEQLCLF to be depreciated from 0.8.2")
 class SEQLCLF:
     '''
     SEQL with multiple symbolic representations of time series.
     '''
 
     def __init__(self):
-        warnings.warn("SEQLCLF to be depreciated from 0.8.2",
-                      DeprecationWarning)
-
         self.features = []
         self.coefficients = []
 
@@ -204,6 +201,12 @@ class SEQLCLF:
 
 ######################### Mr-SEQL (main class) #########################
 
+@deprecated(
+    """
+    Cython version of MrSEQLClassifier to be depreciated from
+    0.8.2, to be replaced with a numba version in due course
+    """
+)
 class MrSEQLClassifier(BaseClassifier):
     ''' Time Series Classification with multiple symbolic representations and SEQL (Mr-SEQL)
 
@@ -241,11 +244,6 @@ class MrSEQLClassifier(BaseClassifier):
     }
 
     def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
-        warnings.warn("Cython version of MrSEQLClassifier to be depreciated from "
-                      "0.8.2, to be replaced with a numba version in due course",
-                      DeprecationWarning)
-
-
         if 'sax' in symrep or 'sfa' in symrep:
             self.symrep = symrep
         else:
