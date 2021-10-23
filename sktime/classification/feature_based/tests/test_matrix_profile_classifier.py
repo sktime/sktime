@@ -20,7 +20,9 @@ def test_matrix_profile_classifier_on_unit_test_data():
 
     # assert probabilities are the same
     probas = mpc.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, matrix_profile_classifier_unit_test_probas)
+    testing.assert_array_almost_equal(
+        probas, matrix_profile_classifier_unit_test_probas, decimal=2
+    )
 
 
 matrix_profile_classifier_unit_test_probas = np.array(

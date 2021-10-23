@@ -23,7 +23,9 @@ def test_signatures_on_unit_test_data():
 
     # assert probabilities are the same
     probas = sigc.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, signature_classifier_unit_test_probas)
+    testing.assert_array_almost_equal(
+        probas, signature_classifier_unit_test_probas, decimal=2
+    )
 
 
 def test_signature_classifier_on_basic_motions():
@@ -41,7 +43,9 @@ def test_signature_classifier_on_basic_motions():
 
     # assert probabilities are the same
     probas = sigc.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, signature_classifier_basic_motions_probas)
+    testing.assert_array_almost_equal(
+        probas, signature_classifier_basic_motions_probas, decimal=2
+    )
 
 
 signature_classifier_unit_test_probas = np.array(
