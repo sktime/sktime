@@ -2,13 +2,14 @@
 """MrSEQL Classifier.
 """
 
-#todo 0.8.2: this classifier is to be depreciated and replaced with a version based on numba.
+# TODO remove in v0.10.0
+# the functionality in this file is depreciated and to be replaced with a version based on numba.
 import numpy as np
 
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
-from deprecated import deprecated
+from deprecated.sphinx import deprecated
 from sklearn.linear_model import LogisticRegression
 
 from sktime.classification.base import BaseClassifier
@@ -55,7 +56,7 @@ cdef class PySAX:
         return self.thisptr.map_weighted_patterns(ts, sequences, weights)
 
 
-@deprecated(version="0.8.2", reason="AdaptedSFA to be depreciated from 0.8.2")
+@deprecated(version="0.8.1", reason="AdaptedSFA will be removed in v0.10.0", category=FutureWarning)
 class AdaptedSFA:
     '''
     SFA adaptation for Mr-SEQL. This code uses a different alphabet for each Fourier coefficient in the output of SFA.
@@ -116,8 +117,8 @@ cdef class PySEQL:
         self.thisptr.learn(sequences, labels)
         return self.thisptr.get_sequence_features(False), self.thisptr.get_coefficients(False)
 
-
-@deprecated(version="0.8.2", reason="SEQLCLF to be depreciated from 0.8.2")
+# TODO: remove in v0.10.0
+@deprecated(version="0.8.1", reason="SEQLCLF will be removed in v0.10.0", category=FutureWarning)
 class SEQLCLF:
     '''
     SEQL with multiple symbolic representations of time series.
@@ -201,12 +202,9 @@ class SEQLCLF:
 
 ######################### Mr-SEQL (main class) #########################
 
-@deprecated(version="0.8.2", reason=
-    """
-    Cython version of MrSEQLClassifier to be depreciated from
-    0.8.2, to be replaced with a numba version in due course
-    """
-)
+# TODO: remove in v0.10.0
+@deprecated(version="0.8.1", reason="MrSEQLClassifier will be removed in v0.10.0. It will be replaced with "
+                   "an implementation based on Numba.", category=FutureWarning)
 class MrSEQLClassifier(BaseClassifier):
     ''' Time Series Classification with multiple symbolic representations and SEQL (Mr-SEQL)
 
