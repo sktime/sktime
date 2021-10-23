@@ -27,7 +27,7 @@ def test_tde_on_unit_test_data():
 
     # assert probabilities are the same
     probas = tde.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, tde_unit_test_probas)
+    testing.assert_array_almost_equal(probas, tde_unit_test_probas, decimal=2)
 
     # test loocv train estimate
     train_probas = tde._get_train_probs(X_train, y_train)
@@ -78,7 +78,7 @@ def test_tde_on_basic_motions():
 
     # assert probabilities are the same
     probas = tde.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, tde_basic_motions_probas)
+    testing.assert_array_almost_equal(probas, tde_basic_motions_probas, decimal=2)
 
 
 tde_unit_test_probas = np.array(

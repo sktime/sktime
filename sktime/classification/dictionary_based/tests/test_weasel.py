@@ -20,7 +20,7 @@ def test_weasel_on_unit_test_data():
 
     # assert probabilities are the same
     probas = weasel.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, weasel_unit_test_probas)
+    testing.assert_array_almost_equal(probas, weasel_unit_test_probas, decimal=2)
 
 
 weasel_unit_test_probas = np.array(

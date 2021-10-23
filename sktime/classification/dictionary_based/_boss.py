@@ -318,7 +318,7 @@ class BOSSEnsemble(BaseClassifier):
 
         return min_acc, min_acc_idx
 
-    def _get_train_probs(self, X, y=None):
+    def _get_train_probs(self, X, y):
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 

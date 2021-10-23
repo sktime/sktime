@@ -23,7 +23,7 @@ def test_boss_on_unit_test_data():
 
     # assert probabilities are the same
     probas = boss.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, boss_unit_test_probas)
+    testing.assert_array_almost_equal(probas, boss_unit_test_probas, decimal=2)
 
     # test train estimate
     train_probas = boss._get_train_probs(X_train, y_train)
@@ -44,7 +44,9 @@ def test_individual_boss_on_unit_test():
 
     # assert probabilities are the same
     probas = indiv_boss.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, individual_boss_unit_test_probas)
+    testing.assert_array_almost_equal(
+        probas, individual_boss_unit_test_probas, decimal=2
+    )
 
 
 boss_unit_test_probas = np.array(

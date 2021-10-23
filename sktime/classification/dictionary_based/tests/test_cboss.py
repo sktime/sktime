@@ -26,7 +26,7 @@ def test_cboss_on_unit_test_data():
 
     # assert probabilities are the same
     probas = cboss.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, cboss_unit_test_probas)
+    testing.assert_array_almost_equal(probas, cboss_unit_test_probas, decimal=2)
 
     # test train estimate
     train_probas = cboss._get_train_probs(X_train, y_train)

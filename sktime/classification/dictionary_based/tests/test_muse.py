@@ -21,7 +21,7 @@ def test_muse_on_unit_test_data():
 
     # assert probabilities are the same
     probas = muse.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, muse_unit_test_probas)
+    testing.assert_array_almost_equal(probas, muse_unit_test_probas, decimal=2)
 
 
 def test_muse_on_basic_motions():
@@ -37,7 +37,7 @@ def test_muse_on_basic_motions():
 
     # assert probabilities are the same
     probas = muse.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, muse_basic_motions_probas)
+    testing.assert_array_almost_equal(probas, muse_basic_motions_probas, decimal=2)
 
 
 muse_unit_test_probas = np.array(
