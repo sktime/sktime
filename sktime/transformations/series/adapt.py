@@ -60,7 +60,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["transformer"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": False}
 
     def __init__(self, transformer):
         self.transformer = transformer
