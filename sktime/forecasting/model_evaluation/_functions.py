@@ -6,13 +6,19 @@
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = ["evaluate"]
 
+import time
+
 import numpy as np
 import pandas as pd
-import time
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.utils.validation.forecasting import check_cv
+
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import check_scoring, check_fh
+from sktime.utils.validation.forecasting import (
+    check_cv,
+    check_fh,
+    check_scoring,
+    check_X,
+)
+from sktime.utils.validation.series import check_series
 
 
 def evaluate(
@@ -74,7 +80,12 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
-    y, X = check_y_X(y, X)
+    y = check_series(
+        y,
+        enforce_univariate=forecaster.get_tag("scitype:y") == "univariate",
+        enforce_multivariate=forecaster.get_tag("scitype:y") == "multivariate",
+    )
+    X = check_X(X)
     fit_params = {} if fit_params is None else fit_params
 
     # Define score name.

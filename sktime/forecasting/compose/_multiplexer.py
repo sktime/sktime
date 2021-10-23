@@ -3,9 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
-from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
+
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 __author__ = ["kkoralturk", "aiwalter"]
 __all__ = ["MultiplexForecaster"]
@@ -17,7 +18,8 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     MultiplexForecaster facilitates a framework for performing
     model selection process over different model classes.
     It should be used in conjunction with ForecastingGridSearchCV
-    to get full utilization.
+    to get full utilization. It can be used with univariate and
+    multivariate forecasters.
 
     Single use of MultiplexForecaster with forecasters
     and selected_forecaster parameter specified,
@@ -79,9 +81,10 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "both",
+        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
     }
 
     def __init__(
@@ -133,7 +136,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
@@ -184,7 +187,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
         X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=True)
 
