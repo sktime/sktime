@@ -125,7 +125,12 @@ class BaseTransformer(BaseEstimator):
     def fit(self, X, y=None, Z=None):
         """Fit transformer to X, optionally to y.
 
-        By default, fit is empty. Fittable transformations overwrite fit method.
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets is_fitted flag to True.
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
@@ -171,10 +176,10 @@ class BaseTransformer(BaseEstimator):
         # retrieve mtypes/scitypes of all objects
         #########################################
 
-        X_mtype = mtype(X)
-        X_scitype = mtype_to_scitype(X_mtype)
-        y_mtype = mtype(y)
-        y_scitype = mtype_to_scitype(y_mtype)
+        X_input_mtype = mtype(X)
+        X_input_scitype = mtype_to_scitype(X_input_mtype)
+        y_input_mtype = mtype(y)
+        y_input_scitype = mtype_to_scitype(y_input_mtype)
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
         if not isinstance(X_inner_mtype, list):
@@ -199,15 +204,11 @@ class BaseTransformer(BaseEstimator):
         # 1. nothing to do - simply don't enter any of the ifs below
 
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        if X_scitype == "Series" and "Series" not in X_inner_scitypes:
+        if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
             X = convert_Series_to_Panel(X)
-            X_mtype = mtype(X)
-            X_scitype = mtype_to_scitype(X_mtype)
-            # this should have converted X to panel, ensure that's the case
-            assert X_scitype == "Panel", "attempted conversion to Panel unsuccessful"
 
         # 3. internal only has Series but X is Panel: loop over instances
-        elif X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+        elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None:
                 raise ValueError(
                     "no default behaviour if _fit does not support Panel, "
@@ -221,6 +222,11 @@ class BaseTransformer(BaseEstimator):
             self._is_fitted = True
             return self
 
+        X_mtype = mtype(X)
+        X_scitype = mtype_to_scitype(X_mtype)
+
+        assert X_scitype in X_inner_scitypes, "conversion of X to X_inner unsuccessful"
+
         # convert X/y to supported inner type, if necessary
         ###################################################
 
@@ -230,7 +236,7 @@ class BaseTransformer(BaseEstimator):
         ]
 
         y_inner_mtype = [
-            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
+            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
         ]
 
         # convert X and y to a supported internal type
@@ -243,7 +249,7 @@ class BaseTransformer(BaseEstimator):
         y_inner = convert_to(
             y,
             to_type=y_inner_mtype,
-            as_scitype=y_scitype,
+            as_scitype=y_input_scitype,
         )
 
         # uncomment this once Z is completely gone
@@ -256,6 +262,13 @@ class BaseTransformer(BaseEstimator):
 
     def transform(self, X, y=None, Z=None):
         """Transform X and return a transformed version.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self._is_fitted
 
         Parameters
         ----------
@@ -425,7 +438,7 @@ class BaseTransformer(BaseEstimator):
         # carry out the transformation
         ###################################################
 
-        # uncomment this once Z is completely gone
+        # todo: uncomment this once Z is completely gone
         # Xt = self._transform(X=X_inner, y=y_inner)
         # less robust workaround until then
         Xt = self._transform(X_inner, y_inner)
@@ -460,6 +473,13 @@ class BaseTransformer(BaseEstimator):
 
         Fits transformer to X and y with optional parameters fit_params
         and returns a transformed version of X.
+
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets is_fitted flag to True.
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
