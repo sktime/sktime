@@ -6,25 +6,22 @@ Nearest neighbour classifier that extracts shapee features.
 
 import numpy as np
 import pandas as pd
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 # Tuning
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
-
-# Transforms
-from sktime.transformations.panel.segment import SlidingWindowSegmenter
-from sktime.transformations.panel.dictionary_based._paa import PAA
-from sktime.transformations.panel.dwt import DWTTransformer
-from sktime.transformations.panel.slope import SlopeTransformer
-from sktime.transformations.panel.summarize._extract import (
-    DerivativeSlopeTransformer,
-)
-from sktime.transformations.panel.hog1d import HOG1DTransformer
+from sklearn.model_selection import GridSearchCV, KFold
 
 # Classifiers
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.panel.hog1d import HOG1DTransformer
+
+# Transforms
+from sktime.transformations.panel.segment import SlidingWindowSegmenter
+from sktime.transformations.panel.slope import SlopeTransformer
+from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer
 
 __author__ = ["Vincent Nicholson"]
 
