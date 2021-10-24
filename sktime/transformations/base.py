@@ -397,7 +397,7 @@ class BaseTransformer(BaseEstimator):
 
             # if the output is Series, Xt is a Panel and we convert back
             if output_scitype == "Series":
-                Xt = convert_to(X, to_type=X_input_mtype, as_scitype="Panel")
+                Xt = convert_to(Xt, to_type=X_input_mtype, as_scitype="Panel")
             # if the output is Primitives, we have a list of one-row dataframes
             # we concatenate those and overwrite the index with that of X
             elif output_scitype == "Primitives":
