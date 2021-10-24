@@ -98,7 +98,6 @@ class SignatureTransformer(_PanelToTabularTransformer):
     def _fit(self, X, y=None):
         X = np.transpose(X, [0, 2, 1])
         self.signature_method.fit(X, y)
-        self.signature_method.fit(X)
         return self
 
     def _transform(self, X, y=None):
