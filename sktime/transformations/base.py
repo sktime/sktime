@@ -252,7 +252,7 @@ class BaseTransformer(BaseEstimator):
             as_scitype=y_input_scitype,
         )
 
-        # uncomment this once Z is completely gone
+        # todo: uncomment this once Z is completely gone
         # self._fit(X=X_inner, y=y_inner)
         # less robust workaround until then
         self._fit(X_inner, y_inner)
@@ -398,6 +398,7 @@ class BaseTransformer(BaseEstimator):
             # if the output is Series, Xt is a Panel and we convert back
             if output_scitype == "Series":
                 Xt = convert_to(Xt, to_type=X_input_mtype, as_scitype="Panel")
+
             # if the output is Primitives, we have a list of one-row dataframes
             # we concatenate those and overwrite the index with that of X
             elif output_scitype == "Primitives":
@@ -464,6 +465,7 @@ class BaseTransformer(BaseEstimator):
                 as_scitype="Series",
             )
         else:
+            # output_scitype is "Panel" and no need for conversion
             pass
 
         return Xt
