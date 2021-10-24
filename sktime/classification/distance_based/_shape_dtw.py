@@ -279,7 +279,7 @@ class ShapeDTW(BaseClassifier):
         # Classify the test data
         return self.knn.predict_proba(X)
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X.
 
         Parameters
@@ -290,8 +290,6 @@ class ShapeDTW(BaseClassifier):
         -------
         output : numpy array of shape = [n_instances]
         """
-        X = check_X(X, enforce_univariate=False)
-
         # Transform the test data in the same way as the training data.
         X = self._preprocess(X)
 
