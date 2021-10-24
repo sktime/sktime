@@ -259,7 +259,7 @@ class ShapeDTW(BaseClassifier):
 
         return X
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Perform predictions on the testing data X.
 
         This function returns the probabilities for each class.
@@ -273,8 +273,6 @@ class ShapeDTW(BaseClassifier):
         output : numpy array of shape =
                 [n_instances, num_classes] of probabilities
         """
-        X = check_X(X, enforce_univariate=False)
-
         # Transform the test data in the same way as the training data.
         X = self._preprocess(X)
 
