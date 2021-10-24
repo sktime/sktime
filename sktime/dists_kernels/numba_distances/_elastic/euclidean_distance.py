@@ -52,7 +52,6 @@ def pairwise_euclidean_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def numba_euclidean_distance_factory(
     x: np.ndarray, y: np.ndarray, **kwargs: dict
 ) -> Callable[[np.ndarray, np.ndarray], float]:
-
     return _numba_euclidean_distance
 
 
