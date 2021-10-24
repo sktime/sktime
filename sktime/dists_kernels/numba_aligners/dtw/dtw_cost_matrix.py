@@ -5,7 +5,7 @@ from typing import Union, Callable, Tuple
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
 from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
@@ -14,7 +14,7 @@ from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
 from sktime.dists_kernels.numba_distances.pairwise_distances import (
     _numba_pairwise_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.dtw_distance import (
     _resolve_bounding_matrix,
     _dtw_format_params,
     _cost_matrix,
@@ -29,7 +29,7 @@ def _numba_dtw_cost_matrix_distance(
     bounding_matrix: np.ndarray,
     symmetric: bool,
 ) -> Tuple[np.ndarray, float]:
-    """Method to calculate the dtw cost matrix and distance.
+    """Method to calculate the dtw_based cost matrix and distance.
 
     Parameters
     ----------
@@ -94,7 +94,7 @@ def numba_dtw_cost_matrix_distance_factory(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -128,7 +128,7 @@ def dtw_cost_matrix_alignment(
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
 ) -> Tuple[np.ndarray, float]:
-    """Method to calculate dtw cost matrix of two timeseries.
+    """Method to calculate dtw_based cost matrix of two timeseries.
 
     Parameters
     ----------
@@ -150,7 +150,7 @@ def dtw_cost_matrix_alignment(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.

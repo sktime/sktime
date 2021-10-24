@@ -54,7 +54,7 @@ class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
         init_algorithm: InitAlgo = "forgy",
         max_iter: int = 300,
         verbose: bool = False,
-        metric: MetricParameter = "dtw",
+        metric: MetricParameter = "dtw_based",
         random_state: NumpyRandomState = None,
     ):
         super(TimeSeriesKMedoids, self).__init__(

@@ -51,7 +51,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
 
     averaging_algorithm: Averaging_Algo, default = "mean"
         The method used to create the average from a cluster.
-        str options are "dba" dtw barycenter averaging and
+        str options are "dba" dtw_based barycenter averaging and
         "means" for mean average.
 
     averaging_algorithm_iterations: int, default = 10
@@ -73,7 +73,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         init_algorithm: InitAlgo = "forgy",
         max_iter: int = 300,
         verbose: bool = False,
-        metric: MetricParameter = "dtw",
+        metric: MetricParameter = "dtw_based",
         averaging_algorithm: AveragingAlgo = "mean",
         averaging_algorithm_iterations: int = 10,
         random_state: NumpyRandomState = None,
@@ -168,7 +168,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         averaging_algorithm = self.averaging_algorithm
         if isinstance(averaging_algorithm, str):
             if metric_str is not None and averaging_algorithm == "auto":
-                if metric_str == "dtw":
+                if metric_str == "dtw_based":
                     averaging_algorithm = "dba"
                 else:
                     averaging_algorithm = "mean"

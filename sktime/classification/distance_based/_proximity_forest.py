@@ -329,7 +329,7 @@ def get_one_exemplar_per_class(X, y, random_state):
 
 
 def dtw_distance_measure_getter(X):
-    """Generate the dtw distance measure.
+    """Generate the dtw_based distance measure.
 
     :param X: dataset to derive parameter ranges from
     :returns: distance measure and parameter range dictionary
@@ -543,7 +543,7 @@ def euclidean_distance_measure_getter(X):
 def setup_wddtw_distance_measure_getter(transformer):
     """Generate the wddtw distance measure.
 
-    Bakes the derivative transformer into the dtw distance measure
+    Bakes the derivative transformer into the dtw_based distance measure
     :param transformer: the transformer to use
     :returns: a getter to produce the distance measure
     """
@@ -562,7 +562,7 @@ def setup_wddtw_distance_measure_getter(transformer):
 def setup_ddtw_distance_measure_getter(transformer):
     """Generate the ddtw distance measure.
 
-    Bakes the derivative transformer into the dtw distance measure
+    Bakes the derivative transformer into the dtw_based distance measure
     :param transformer: the transformer to use
     :returns: a getter to produce the distance measure
     """

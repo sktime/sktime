@@ -13,7 +13,7 @@ series classification data and distance measures.
 todo: add a utility method to set keyword args for distance measure parameters.
 (e.g.  handle the parameter name(s) that are passed as metric_params automatically,
 depending on what distance measure is used in the classifier (e.g. know that it is w
-for dtw, c for msm, etc.). Also allow long-format specification for
+for dtw_based, c for msm, etc.). Also allow long-format specification for
 non-standard/user-defined measures e.g. set_distance_params(measure_type=None,
 param_values_to_set=None,
 param_names=None)
@@ -90,8 +90,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                       or a callable function
     algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
     ‘kd_tree’, ‘brute’}: default = 'brute'
-    distance          : distance measure for time series: {'dtw','ddtw',
-    'wdtw','lcss','erp','msm','twe'}: default ='dtw'
+    distance          : distance measure for time series: {'dtw_based','ddtw',
+    'wdtw','lcss','erp','msm','twe'}: default ='dtw_based'
     distance_params   : dictionary for metric parameters: default = None
 
     Examples
@@ -119,7 +119,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
-        distance="dtw",
+        distance="dtw_based",
         distance_params=None,
         **kwargs
     ):
@@ -129,7 +129,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         if distance == "euclidean":  # Euclidean will default to the base class distance
             distance = euclidean_distance
-        elif distance == "dtw":
+        elif distance == "dtw_based":
             distance = dtw_distance
         elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
@@ -168,7 +168,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             if type(distance) is str:
                 raise ValueError(
                     "Unrecognised distance measure: " + distance + ". Allowed values "
-                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "are names from [euclidean,dtw_based,ddtw,wdtw,wddtw,lcss,erp,"
+                    "msm] or "
                     "please pass a callable distance measure into the constuctor"
                 )
 

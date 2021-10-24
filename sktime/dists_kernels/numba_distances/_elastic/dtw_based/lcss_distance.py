@@ -3,10 +3,10 @@ import numpy as np
 from numba import njit
 from typing import Union, Callable
 
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.dtw_distance import (
     _dtw_format_params,
     _resolve_bounding_matrix,
 )
@@ -75,7 +75,7 @@ def _numba_lcss_distance(
     symmetric: bool,
     epsilon: float,
 ) -> float:
-    """Method that a numba compiled distance for lcss.
+    """Method that is a numba compiled version of lcss distance.
 
     Parameters
     ----------
@@ -115,7 +115,7 @@ def numba_lcss_distance_factory(
     x: np.ndarray,
     y: np.ndarray,
     symmetric: bool = False,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.SAKOE_CHIBA,
     delta: int = 3,
     itakura_max_slope: float = 2.0,
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_euclidean_distance,
@@ -146,7 +146,7 @@ def numba_lcss_distance_factory(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -205,7 +205,7 @@ def lcss_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -232,7 +232,7 @@ def lcss_distance(
 def pairwise_lcss_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.SAKOE_CHIBA,
     delta: int = 3,
     itakura_max_slope: float = 2.0,
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_euclidean_distance,
@@ -261,7 +261,7 @@ def pairwise_lcss_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.

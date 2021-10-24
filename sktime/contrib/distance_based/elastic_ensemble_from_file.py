@@ -43,7 +43,7 @@ class ElasticEnsemblePostProcess:
         self.resample_id = resample_id
         if distance_measures == "all":
             self.distance_measures = [
-                "dtw",
+                "dtw_based",
                 "ddtw",
                 "wdtw",
                 "wddtw",

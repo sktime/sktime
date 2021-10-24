@@ -4,18 +4,18 @@ __author__ = ["Chris Holder"]
 from typing import Union, Callable
 import numpy as np
 
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
 from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
     _numba_squared_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw.wdtw_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.wdtw_distance import (
     wdtw_distance,
     numba_wdtw_distance_factory,
 )
 from sktime.dists_kernels.numba_distances.pairwise_distances import pairwise_distance
-from sktime.dists_kernels.numba_distances._elastic.dtw.ddtw_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.ddtw_distance import (
     _pairwise_ddtw_param_validator,
     _diff_timeseries,
 )
@@ -53,7 +53,7 @@ def wddtw_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -115,7 +115,7 @@ def pairwise_wddtw_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.

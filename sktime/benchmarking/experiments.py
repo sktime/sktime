@@ -565,8 +565,8 @@ def set_classifier(cls, resample_id=None):
         return ProximityStump(random_state=resample_id)
     elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
         return KNeighborsTimeSeriesClassifier(distance="dtwcv")
-    elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(distance="dtw")
+    elif name == "dtw_based" or name == "1nn-dtw_based":
+        return KNeighborsTimeSeriesClassifier(distance="dtw_based")
     elif name == "msm" or name == "1nn-msm":
         return KNeighborsTimeSeriesClassifier(distance="msm")
     elif name == "ee" or name == "elasticensemble":

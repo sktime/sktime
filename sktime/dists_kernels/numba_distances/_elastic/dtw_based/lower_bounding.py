@@ -18,7 +18,7 @@ def _plot_values_on_matrix(bounding_matrix: np.ndarray, values: np.ndarray):
 
 class LowerBounding(Enum):
     """
-    Enum for dtw lower bounding implementations
+    Enum for dtw_based lower bounding implementations
 
     Parameters
     ----------
@@ -210,8 +210,8 @@ class LowerBounding(Enum):
     @staticmethod
     def _check_line_steps(line: Union[List, np.ndarray]):
         """
-        Method that ensures that the line steps are within one of each other or dtw
-        wont work
+        Method that ensures that the line steps are within one of each other or
+        dtw_based wont work
 
         Parameters
         ----------

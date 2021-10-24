@@ -7,7 +7,7 @@ from sktime.datasets import load_unit_test
 
 distance_functions = [
     "euclidean",
-    "dtw",
+    "dtw_based",
     "wdtw",
     "msm",
     "erp",
@@ -26,7 +26,7 @@ distance_functions = [
 
 expected_correct = {
     "euclidean": 19,
-    "dtw": 21,
+    "dtw_based": 21,
     "wdtw": 21,
     "msm": 20,
     "erp": 19,

@@ -3,10 +3,10 @@ import numpy as np
 from numba import njit
 from typing import Union, Callable
 
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.dtw_distance import (
     _dtw_format_params,
     _resolve_bounding_matrix,
 )
@@ -208,7 +208,7 @@ def wdtw_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -266,7 +266,7 @@ def pairwise_wdtw_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.

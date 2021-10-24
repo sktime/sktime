@@ -2,7 +2,7 @@
 import numpy as np
 
 from sktime.dists_kernels.tests._utils import create_test_distance_numpy
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
 

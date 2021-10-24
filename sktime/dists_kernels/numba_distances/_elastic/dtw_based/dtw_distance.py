@@ -5,7 +5,7 @@ from typing import Union, Callable
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
 from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
@@ -84,7 +84,13 @@ def _dtw_format_params(x, y):
 
 
 @njit()
-def _numba_dtw_distance(x, y, distance, bounding_matrix, symmetric: bool):
+def _numba_dtw_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    distance: Callable[[np.ndarray, np.ndarray], float],
+    bounding_matrix: np.ndarray,
+    symmetric: bool,
+):
     _x, _y = _dtw_format_params(x, y)
 
     pre_computed_distances = _numba_pairwise_distance(_x, _y, symmetric, distance)
@@ -125,7 +131,7 @@ def numba_dtw_distance_factory(
         Gradient of the slope for itakura
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -154,7 +160,7 @@ def dtw_distance(
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
 ) -> float:
-    """Method to calculate dtw distance between timeseries.
+    """Method to calculate dtw_based distance between timeseries.
 
     Parameters
     ----------
@@ -176,7 +182,7 @@ def dtw_distance(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
@@ -184,7 +190,7 @@ def dtw_distance(
     Returns
     -------
     float
-        dtw distance between the two timeseries
+        dtw_based distance between the two timeseries
     """
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
@@ -208,6 +214,6 @@ def pairwise_dtw_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns
     -------
     np.ndarray
-        Pairwise distance using dtw distance
+        Pairwise distance using dtw_based distance
     """
     return pairwise_distance(x, y, numba_distance_factory=numba_dtw_distance_factory)

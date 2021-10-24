@@ -29,12 +29,12 @@ def test_k_means():
     )
     assert np.array_equal(np.array([3, 1, 0, 2, 0, 1, 1, 1, 1, 0]), clusters)
 
-    # Bug with dtw as metric that is only works if the array is type double
+    # Bug with dtw_based as metric that is only works if the array is type double
     clusters, _ = run_clustering_experiment(
         TimeSeriesKMeans(
             n_clusters=5,
             max_iter=50,
-            metric="dtw",
+            metric="dtw_based",
             averaging_algorithm="mean",
             random_state=rng,
         ),

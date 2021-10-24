@@ -50,7 +50,7 @@ def test_random_cluster_center_initializer():
         np.array([[520, 521, 692], [491, 581, 409], [695, 492, 403]]), centers
     )
 
-    k_means_dtw = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw")
+    k_means_dtw = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw_based")
 
     random_centers_mean = RandomCenterInitializer(
         X, n_clusters, k_means_dtw.calculate_new_centers, rng

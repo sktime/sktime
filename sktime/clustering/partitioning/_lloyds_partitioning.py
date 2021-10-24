@@ -67,7 +67,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
 
     _metric_dict: MetricFunctionDict = {
         "euclidean": euclidean_distance,
-        "dtw": dtw_distance,
+        "dtw_based": dtw_distance,
         "ddtw": ddtw_distance,
         "wdtw": wdtw_distance,
         "wddtw": wddtw_distance,
@@ -89,7 +89,7 @@ class TimeSeriesLloydsPartitioning(BaseClusterer):
         init_algorithm: InitAlgo = "forgy",
         max_iter: int = 300,
         verbose: bool = False,
-        metric: MetricParameter = "dtw",
+        metric: MetricParameter = "dtw_based",
         random_state: NumpyRandomState = None,
     ):
         super(TimeSeriesLloydsPartitioning, self).__init__()

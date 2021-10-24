@@ -41,7 +41,7 @@ class MeanAveraging(BaseClusterAverage):
 
 class BarycenterAveraging(BaseClusterAverage):
     """DTW Barycenter averaging algorithm to average a time series
-    taking adavtange of dtw allignment
+    taking adavtange of dtw_based allignment
 
     Parameters
     ----------
@@ -69,8 +69,8 @@ class BarycenterAveraging(BaseClusterAverage):
     TODO: This is basically copied from
     https://github.com/fpetitjean/DBA/blob/master/DBA.py
     This need massive optimisations and likely needs to be done in
-    cython. This is basically doing its own implementation of dtw
-    because it needs the cost matrix from the dtw calculation
+    cython. This is basically doing its own implementation of dtw_based
+    because it needs the cost matrix from the dtw_based calculation
     and the current sktime one doesnt return that so need to figure
     that out
     """

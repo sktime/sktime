@@ -3,7 +3,7 @@ from typing import Union, Callable, Tuple
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba_distances._elastic.dtw.lower_bounding import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.lower_bounding import (
     LowerBounding,
 )
 from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
@@ -12,7 +12,7 @@ from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
 from sktime.dists_kernels.numba_distances.pairwise_distances import (
     _numba_pairwise_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
+from sktime.dists_kernels.numba_distances._elastic.dtw_based.dtw_distance import (
     _resolve_bounding_matrix,
     _dtw_format_params,
     _cost_matrix,
@@ -21,7 +21,7 @@ from sktime.dists_kernels.numba_distances._elastic.dtw.dtw_distance import (
 
 @njit()
 def _cost_matrix_to_path(cost_matrix: np.ndarray) -> np.ndarray:
-    """Method to turn a cost matrix into a dtw path.
+    """Method to turn a cost matrix into a dtw_based path.
 
     Parameters
     ----------
@@ -72,7 +72,7 @@ def _numba_dtw_path(
     bounding_matrix: np.ndarray,
     symmetric: bool,
 ) -> Tuple[np.ndarray, float]:
-    """Method to calculate the dtw path and distance.
+    """Method to calculate the dtw_based path and distance.
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ def _numba_dtw_path(
 #         distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
 #         bounding_matrix: np.ndarray = None,
 # ) -> Tuple[Callable[[np.ndarray, np.ndarray], Tuple[np.ndarray, float]], int, int]:
-#     """Method to create the dtw path alignment numba function.
+#     """Method to create the dtw_based path alignment numba function.
 #
 #     Parameters
 #     ----------
@@ -140,7 +140,7 @@ def _numba_dtw_path(
 #         Distance function to use
 #     distance: Callable[[np.ndarray, np.ndarray], float],
 #         defaults = squared_distance
-#         Distance function to use within dtw. Defaults to squared distance.
+#         Distance function to use within dtw_based. Defaults to squared distance.
 #     bounding_matrix: np.ndarray, defaults = none
 #         Custom bounding matrix where inside bounding marked by finite values and
 #         outside marked with infinite values.
@@ -148,7 +148,7 @@ def _numba_dtw_path(
 #     Returns
 #     -------
 #     Callable[[np.ndarray, np.ndarray], Tuple[float, np.ndarray]]
-#         Callable to get the dtw path and distance
+#         Callable to get the dtw_based path and distance
 #     int
 #         length of x + length of y.
 #     int
@@ -181,7 +181,7 @@ def dtw_path_alignment(
     distance: Callable[[np.ndarray, np.ndarray], float] = _numba_squared_distance,
     bounding_matrix: np.ndarray = None,
 ) -> Tuple[np.ndarray, float]:
-    """Method to calculate dtw cost matrix of two timeseries.
+    """Method to calculate dtw_based cost matrix of two timeseries.
 
     Parameters
     ----------
@@ -203,7 +203,7 @@ def dtw_path_alignment(
         Distance function to use
     distance: Callable[[np.ndarray, np.ndarray], float],
         defaults = squared_distance
-        Distance function to use within dtw. Defaults to squared distance.
+        Distance function to use within dtw_based. Defaults to squared distance.
     bounding_matrix: np.ndarray, defaults = none
         Custom bounding matrix where inside bounding marked by finite values and
         outside marked with infinite values.
