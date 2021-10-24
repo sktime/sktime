@@ -40,7 +40,12 @@ def convert_Series_to_Panel(obj, store=None):
         return [obj]
 
     if isinstance(obj, np.ndarray):
-        obj = np.expand_dims(obj, 2)
+        if len(obj.shape) == 2:
+            obj = np.expand_dims(obj, 2)
+        elif len(obj.shape) == 1:
+            obj = np.expand_dims(obj, (1, 2))
+        else:
+            raise ValueError("if obj is np.ndarray, must be of dim 1 or 2")
 
     return obj
 
@@ -72,7 +77,7 @@ def convert_Panel_to_Series(obj, store=None):
     if isinstance(obj, np.ndarray):
         shape = obj.shape
         if not len(shape == 3) or not shape[2] == 1:
-            raise ValueError
+            raise ValueError("if obj is np.ndarray, must be of dim 3, with shape[2]=1")
         obj = np.reshape(obj, (obj.shape[0], obj.shape[1]))
 
     return obj
