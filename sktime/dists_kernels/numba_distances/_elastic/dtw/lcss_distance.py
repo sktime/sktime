@@ -279,7 +279,7 @@ def pairwise_lcss_distance(
         y,
         numba_distance_factory=numba_lcss_distance_factory,
         lower_bounding=lower_bounding,
-        window=delta,
+        delta=delta,
         itakura_max_slope=itakura_max_slope,
         distance=distance,
         bounding_matrix=bounding_matrix,
