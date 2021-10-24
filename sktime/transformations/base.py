@@ -111,10 +111,10 @@ class BaseTransformer(BaseEstimator):
         "np.ndarray",
         "nested_univ",
         "numpy3D",
-        "numpyflat",
+        # "numpyflat",
         "pd-multiindex",
-        "pd-wide",
-        "pd-long",
+        # "pd-wide",
+        # "pd-long",
         "df-list",
     ]
 
