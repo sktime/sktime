@@ -283,10 +283,10 @@ class BaseTransformer(BaseEstimator):
         # retrieve mtypes/scitypes of all objects
         #########################################
 
-        X_mtype = mtype(X)
-        X_scitype = mtype_to_scitype(X_mtype)
-        y_mtype = mtype(y)
-        y_scitype = mtype_to_scitype(y_mtype)
+        X_input_mtype = mtype(X)
+        X_input_scitype = mtype_to_scitype(X_input_mtype)
+        y_input_mtype = mtype(y)
+        y_input_scitype = mtype_to_scitype(y_input_mtype)
 
         output_scitype = self.get_tag("scitype:transform-output")
 
@@ -311,23 +311,22 @@ class BaseTransformer(BaseEstimator):
         #     and this does not support y (unclear what should happen here)
 
         # 1. nothing to do - simply don't enter any of the ifs below
+        #   the "ifs" for case 2 and 3 below are skipped under the condition
+        #       X_input_scitype in X_inner_scitypes
+        #   case 2 has an "else" which remembers that it wasn't entered
 
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        if X_scitype == "Series" and "Series" not in X_inner_scitypes:
-            X_orig_mtype = X_mtype
-            X_orig_scitype = X_scitype
+        if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
+            # convert the Series X to a one-element Panel
             X = convert_Series_to_Panel(X)
-            X_mtype = mtype(X)
-            X_scitype = mtype_to_scitype(X_mtype)
-            # remember that we did this
+            # remember that we converted the Series to a one-element Panel
             X_was_Series = True
         else:
+            # remember that we didn't convert a Series to a one-element Panel
             X_was_Series = False
-            X_orig_mtype = X_mtype
-            X_orig_scitype = X_scitype
 
         # 3. internal only has Series but X is Panel: loop over instances
-        if X_orig_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+        if X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None:
                 ValueError(
                     "no default behaviour if _fit does not support Panel, "
@@ -374,13 +373,18 @@ class BaseTransformer(BaseEstimator):
         # convert X/y to supported inner type, if necessary
         ###################################################
 
+        # variables for the scitype of the current X (possibly converted)
+        #     y wasn't converted so we can use y_input_scitype
+        X_mtype = mtype(X)
+        X_scitype = mtype_to_scitype(X_mtype)
+
         # subset to the mtypes that are of the same scitype as X/y
         X_inner_mtype = [
             mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
         ]
 
         y_inner_mtype = [
-            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
+            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
         ]
 
         # convert X and y to a supported internal type
@@ -393,7 +397,7 @@ class BaseTransformer(BaseEstimator):
         y_inner = convert_to(
             y,
             to_type=y_inner_mtype,
-            as_scitype=y_scitype,
+            as_scitype=y_input_scitype,
         )
 
         # carry out the transformation
@@ -414,8 +418,8 @@ class BaseTransformer(BaseEstimator):
         if output_scitype == "Series":
             Xt = convert_to(
                 Xt,
-                to_type=X_orig_mtype,
-                as_scitype=X_orig_scitype,
+                to_type=X_input_mtype,
+                as_scitype=X_input_scitype,
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
