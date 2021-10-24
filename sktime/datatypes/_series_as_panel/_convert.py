@@ -20,7 +20,7 @@ import pandas as pd
 def convert_Series_to_Panel(obj, store=None):
     """Convert series to a single-series panel.
 
-    Assumes input is conformant with three scitypes.
+    Assumes input is conformant with one of the three Series mtypes.
     This method does not perform full mtype checks, use mtype or check_is for checks.
 
     Parameters
@@ -48,7 +48,7 @@ def convert_Series_to_Panel(obj, store=None):
 def convert_Panel_to_Series(obj, store=None):
     """Convert single-series panel to a series.
 
-    Assumes input is one of three main panel scitypes.
+    Assumes input is conformant with one of three main panel mtypes.
     This method does not perform full mtype checks, use mtype or check_is for checks.
 
     Parameters
