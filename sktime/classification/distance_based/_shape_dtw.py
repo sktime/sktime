@@ -138,7 +138,7 @@ class ShapeDTW(BaseClassifier):
         self.metric_params = metric_params
         super(ShapeDTW, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Train the classifier.
 
         Parameters
@@ -158,8 +158,6 @@ class ShapeDTW(BaseClassifier):
                 + type(self.shape_descriptor_function).__name__
                 + "' instead."
             )
-
-        X, y = check_X_y(X, y, enforce_univariate=False)
 
         if self.metric_params is None:
             self.metric_params = {}
