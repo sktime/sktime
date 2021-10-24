@@ -344,7 +344,11 @@ class BaseTransformer(BaseEstimator):
         #   case 2 has an "else" which remembers that it wasn't entered
 
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        if X_input_scitype == "Series" and "Series" not in X_inner_scitypes and "Panel" in X_inner_scitypes:
+        if (
+            X_input_scitype == "Series"
+            and "Series" not in X_inner_scitypes
+            and "Panel" in X_inner_scitypes
+        ):
             # convert the Series X to a one-element Panel
             X = convert_Series_to_Panel(X)
             # remember that we converted the Series to a one-element Panel
@@ -354,7 +358,11 @@ class BaseTransformer(BaseEstimator):
             X_was_Series = False
 
         # 3. internal only has Series but X is Panel: loop over instances
-        if X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes and "Series" in X_inner_scitypes:
+        if (
+            X_input_scitype == "Panel"
+            and "Panel" not in X_inner_scitypes
+            and "Series" in X_inner_scitypes
+        ):
             if y is not None:
                 ValueError(
                     "no default behaviour if _fit does not support Panel, "
