@@ -104,6 +104,20 @@ class BaseTransformer(BaseEstimator):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
     }
 
+    # allowed mtypes for transformers - Series and Panel
+    ALLOWED_INPUT_MTYPES = [
+        "pd.Series",
+        "pd.DataFrame",
+        "np.ndarray",
+        "nested_univ",
+        "numpy3D",
+        "numpyflat",
+        "pd-multiindex",
+        "pd-wide",
+        "pd-long",
+        "df-list",
+    ]
+
     def __init__(self):
         self._is_fitted = False
         super(BaseTransformer, self).__init__()
@@ -139,6 +153,20 @@ class BaseTransformer(BaseEstimator):
         if self.get_tag("fit-in-transform"):
             self._is_fitted = True
             return self
+
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        valid, msg, metadata = check_is(
+            X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
+        )
+        if not valid:
+            raise ValueError(msg)
+
+        # checking X
+        enforce_univariate = self.get_tag("univariate-only")
+        if enforce_univariate and not metadata["is_univariate"]:
+            raise ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
@@ -192,20 +220,6 @@ class BaseTransformer(BaseEstimator):
             # also set is_fitted flag to True since we leave function here
             self._is_fitted = True
             return self
-
-        # input checks and minor coercions on X, y
-        ###########################################
-
-        valid, msg, metadata = check_is(
-            X, mtype=X_mtype, return_metadata=True, var_name="X"
-        )
-        if not valid:
-            raise ValueError(msg)
-
-        # checking X
-        enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not metadata["is_univariate"]:
-            raise ValueError("X must be univariate but is not")
 
         # convert X/y to supported inner type, if necessary
         ###################################################
@@ -280,6 +294,20 @@ class BaseTransformer(BaseEstimator):
         else:
             self.check_is_fitted()
 
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        valid, msg, metadata = check_is(
+            X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
+        )
+        if not valid:
+            ValueError(msg)
+
+        # checking X
+        enforce_univariate = self.get_tag("univariate-only")
+        if enforce_univariate and not metadata["is_univariate"]:
+            ValueError("X must be univariate but is not")
+
         # retrieve mtypes/scitypes of all objects
         #########################################
 
@@ -348,27 +376,13 @@ class BaseTransformer(BaseEstimator):
 
             # if the output is Series, Xt is a Panel and we convert back
             if output_scitype == "Series":
-                Xt = convert_to(X, to_type=X_mtype, as_scitype="Panel")
+                Xt = convert_to(X, to_type=X_input_mtype, as_scitype="Panel")
             # if the output is Primitives, we have a list of one-row dataframes
             # we concatenate those and overwrite the index with that of X
             elif output_scitype == "Primitives":
                 Xt = pd.concat(Xt)
                 Xt.index = X.index
             return Xt
-
-        # input checks and minor coercions on X, y
-        ###########################################
-
-        valid, msg, metadata = check_is(
-            X, mtype=X_mtype, return_metadata=True, var_name="X"
-        )
-        if not valid:
-            ValueError(msg)
-
-        # checking X
-        enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not metadata["is_univariate"]:
-            ValueError("X must be univariate but is not")
 
         # convert X/y to supported inner type, if necessary
         ###################################################
