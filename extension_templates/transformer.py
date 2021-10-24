@@ -71,8 +71,8 @@ class MyTransformer(BaseTransformer):
 
     # todo: fill out estimator tags here
     #  tags are inherited from parent class if they are not set
-    # todo: define the transformer type by setting the tags
-    #  the "transformer type" is determined by the tags
+    # todo: define the transformer scitype by setting the tags
+    #  the "transformer scitype" is determined by the tags
     #  these define the input and output types of transform(X, y=None)
     #   scitype:transform-input - the expected input scitype of X
     #   scitype:transform-output - the output scitype that transform produces
