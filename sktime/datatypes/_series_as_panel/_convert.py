@@ -1,8 +1,30 @@
 # -*- coding: utf-8 -*-
 """Machine type converters for Series to Panel.
 
-Exports conversion and mtype dictionary for Series scitype:
+Exports conversion dictionary for conversions between Series and Panel:
 
+convert_dict: dict indexed by triples of str
+  1st element = convert from - str
+  2nd element = convert to - str
+  3rd element = considered as this scitype - str
+elements are conversion functions of machine type (1st) -> 2nd
+
+Function signature of all elements
+convert_dict[(from_type, to_type, as_scitype)]
+
+Parameters
+----------
+obj : from_type - object to convert
+store : dictionary - reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_obj : to_type - object obj converted to to_type
+
+Raises
+------
+ValueError and TypeError, if requested conversion is not possible
+                            (depending on conversion logic)
 """
 
 __author__ = ["fkiraly"]
