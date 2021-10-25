@@ -56,4 +56,5 @@ def test_panel_distances(distance: Callable):
     x_multivariate = create_test_distance_numpy(10, 10, 10)
     y_multivariate = create_test_distance_numpy(10, 10, 10, random_state=2)
     multivariate_result = distance(x_multivariate, y_multivariate)
+
     validate_result(multivariate_result)

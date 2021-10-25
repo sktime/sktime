@@ -108,7 +108,7 @@ def _numba_lcss_distance(
     cost_matrix = _sequence_cost_matrix(
         _x, _y, bounding_matrix, pre_computed_distances, epsilon
     )
-    return float(cost_matrix[-1, -1] / (min(_x.shape[0], _y.shape[0])))
+    return float(cost_matrix[-1, -1] / min(_x.shape[0], _y.shape[0]))
 
 
 def numba_lcss_distance_factory(
