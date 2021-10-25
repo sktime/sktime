@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """ shapelet transformation.
+
 Transformer from the time domain into the shapelet domain. Standard full
 transform, a contracted version and a randoms sampler.
 """
@@ -1018,6 +1019,7 @@ class ContractedShapeletTransform(ShapeletTransform):
 
 class _RandomEnumerationShapeletTransform(ShapeletTransform):
     """Empty class."""
+
     pass
     # to follow
 
@@ -1056,6 +1058,7 @@ class Shapelet:
 
 class ShapeletPQ:
     """Shapelet PQ."""
+
     def __init__(self):
         self._queue = []
         self._index = 0
