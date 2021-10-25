@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-""" shapelet transformations
-transformer from the time domain into the shapelet domain. Standard full
-transform, a contracted version and
-a randoms sampler
+""" shapelet transformation.
+
+Transformer from the time domain into the shapelet domain. Standard full
+transform, a contracted version and a randoms sampler.
 """
 __author__ = ["Jason Lines", "David Guijo"]
 __all__ = [
@@ -89,7 +89,6 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     Attributes
     ----------
-
     predefined_ig_rejection_level       : float, minimum information gain
     required to keep a shapelet (default = 0.05)
     self.shapelets                      : list of Shapelet objects,
@@ -120,7 +119,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         super(ShapeletTransform, self).__init__()
 
     def fit(self, X, y=None):
-        """A method to fit the shapelet transform to a specified X and y
+        """Fit the shapelet transform to a specified X and y.
 
         Parameters
         ----------
@@ -637,11 +636,11 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def remove_self_similar_shapelets(shapelet_list):
-        """Remove self-similar shapelets from an input list. Note: this
-        method assumes
-        that shapelets are pre-sorted in descending order of quality (i.e.
-        if two candidates
-        are self-similar, the one with the later index will be removed)
+        """Remove self-similar shapelets from an input list.
+
+        Note: this method assumes that shapelets are pre-sorted in descending order
+        of quality (i.e. if two candidates are self-similar, the one with the later
+        index will be removed)
 
         Parameters
         ----------
@@ -651,13 +650,11 @@ class ShapeletTransform(_PanelToTabularTransformer):
         -------
         shapelet_list: list of Shapelet objects
         """
-
         # IMPORTANT: it is assumed that shapelets are already in descending
         # order of quality. This is preferable in the fit method as removing
         # self-similar
         # shapelets may be False so the sort needs to happen there in those
         # cases, and avoids a second redundant sort here if it is set to True
-
         def is_self_similar(shapelet_one, shapelet_two):
             # not self similar if from different series
             if shapelet_one.series_id != shapelet_two.series_id:
@@ -688,7 +685,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     # transform a set of data into distances to each extracted shapelet
     def transform(self, X, y=None):
-        """Transforms X according to the extracted shapelets (self.shapelets)
+        """Transform X according to the extracted shapelets (self.shapelets).
 
         Parameters
         ----------
@@ -743,7 +740,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         return pd.DataFrame(output)
 
     def get_shapelets(self):
-        """An accessor method to return the extracted shapelets
+        """Accessor method to return the extracted shapelets.
 
         Returns
         -------
@@ -753,6 +750,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def binary_entropy(num_this_class, num_other_class):
+        """Binary entropy."""
         ent = 0
         if num_this_class != 0:
             ent -= (
@@ -771,6 +769,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
     # could cythonise
     @staticmethod
     def calc_binary_ig(orderline, total_num_this_class, total_num_other_class):
+        """Binary information gain."""
         # def entropy(ent_class_counts, all_class_count):
 
         initial_ent = ShapeletTransform.binary_entropy(
@@ -819,6 +818,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         num_to_add_this_class,
         num_to_add_other_class,
     ):
+        """Early binary IG."""
         # def entropy(ent_class_counts, all_class_count):
 
         initial_ent = ShapeletTransform.binary_entropy(
@@ -934,6 +934,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def euclidean_distance_early_abandon(u, v, min_dist):
+        """Euclidean distance with early abandon."""
         sum_dist = 0
         for i in range(0, len(u[0])):
             for j in range(0, len(u)):
