@@ -17,6 +17,8 @@ import heapq
 import os
 import time
 import warnings
+
+from deprecated.sphinx import deprecated
 from itertools import zip_longest
 from operator import itemgetter
 
@@ -49,7 +51,9 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #
 # TO-DO: add CI tests, comments, documentation, etc.
 
-
+@deprecated(version="0.8.1", reason="ShapeletTransform will move to contrib in V0.10,"
+                                    "it has been replaced by shapelet_transform.py"
+                                    "", category=FutureWarning)
 class ShapeletTransform(_PanelToTabularTransformer):
     """Shapelet Transform.
 

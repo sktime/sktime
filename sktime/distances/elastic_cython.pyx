@@ -15,8 +15,7 @@ np.import_array()
 
 from libc.float cimport DBL_MAX
 from libc.math cimport exp, fabs, sqrt
-
-from deprecated.sphinx import deprecated
+#from deprecated.sphinx import deprecated
 
 
 cdef inline double min_c(double a, double b): return a if a <= b else b
@@ -43,9 +42,9 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
 # the w argument corresponds to the length of the warping window in percentage of
 # the smallest length of the time series min(x,y) - if negative then no warping window
 # this function assumes that x is shorter than y
-@deprecated(version="0.8.1", reason="dtw_distance will be removed in v0.10.0, "
-                                    "replaced with a numba version",
-            category=FutureWarning)
+#@deprecated(version="0.8.1", reason="dtw_distance will be removed in v0.10.0, "
+#                                    "replaced with a numba version",
+#            category=FutureWarning)
 def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
     # make sure x is shorter than y
     # if not permute
@@ -98,9 +97,9 @@ def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , do
     return D[lx,ly]
 
 
-@deprecated(version="0.8.1", reason="wdtw_distance will be removed in v0.10.0, "
-                                    "repaced with a numba version",
-            category=FutureWarning)
+#@deprecated(version="0.8.1", reason="wdtw_distance will be removed in v0.10.0, "
+#                                    "repaced with a numba version",
+#            category=FutureWarning)
 def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0.05):
 
     # make sure x is shorter than y
