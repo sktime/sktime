@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+__author__ = ["chrisholder"]
+__all__ = ["euclidean_distance", "pairwise_euclidean_distance"]
+
+
 from typing import Callable
 
 import numpy as np
@@ -11,7 +15,7 @@ from sktime.dists_kernels.numba_distances._elastic.squared_distance import (
 from sktime.dists_kernels.numba_distances.pairwise_distances import pairwise_distance
 
 
-def numba_euclidean_distance_factory(
+def _numba_euclidean_distance_factory(
     x: np.ndarray, y: np.ndarray, symmetric: bool, **kwargs: dict
 ) -> Callable[[np.ndarray, np.ndarray], float]:
     """Create a numba compiled distance based on parameters.
@@ -104,5 +108,5 @@ def pairwise_euclidean_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         len(y).
     """
     return pairwise_distance(
-        x, y, numba_distance_factory=numba_euclidean_distance_factory
+        x, y, numba_distance_factory=_numba_euclidean_distance_factory
     )
