@@ -110,15 +110,6 @@ class ShapeDTW(BaseClassifier):
 
     """
 
-    # Capability tags
-    _tags = {
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
-    }
-
     def __init__(
         self,
         n_neighbours=1,
