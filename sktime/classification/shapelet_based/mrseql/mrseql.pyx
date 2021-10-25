@@ -3,7 +3,8 @@
 """
 
 # TODO remove in v0.10.0
-# the functionality in this file is depreciated and to be replaced with a version based on numba.
+# the functionality in this file is depreciated and to be replaced with a version
+# based on numba.
 import numpy as np
 
 from libcpp.string cimport string
