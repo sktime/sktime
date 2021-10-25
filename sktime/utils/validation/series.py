@@ -10,11 +10,8 @@ __all__ = [
     "check_equal_time_index",
     "check_consistent_index_type",
 ]
-import pandas as pd
 import numpy as np
-from typing import Union, List
-
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
+import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
@@ -59,6 +56,7 @@ def check_series(
     allow_numpy=True,
     allow_None=True,
     enforce_index_type=None,
+    allow_index_names=False,
     var_name="input",
 ):
     """Validate input data to be a valid mtype for Series.
@@ -79,6 +77,8 @@ def check_series(
         whether no error is raised if Z is None
     enforce_index_type : type, default = None
         type of time index
+    allow_index_names : bool, default = False
+        If False, names of Z.index will be set to None
     var_name : str, default = "input" - variable name printed in error messages
 
     Returns
@@ -141,6 +141,9 @@ def check_series(
             enforce_index_type=enforce_index_type,
             var_name=var_name,
         )
+
+    if not allow_index_names and not isinstance(Z, np.ndarray):
+        Z.index.names = [None for name in Z.index.names]
 
     return Z
 
@@ -274,38 +277,3 @@ def check_consistent_index_type(a, b):
         # types inherit from each other, hence we check for type equality
         if not type(a) is type(b):  # noqa
             raise TypeError(msg)
-
-
-def to_numpy_time_series(x: Union[pd.Series, np.ndarray, List]) -> np.ndarray:
-    """
-    Method used to take a number of different time series
-    and format them to a numpy time series
-    Both univariate and multivariate series are supported
-    Nan values are converted to 0
-    Parameters
-    ----------
-    x: pd.series, numpy, list
-        Input time series to convert
-    Returns
-    -------
-    np.ndarray
-        Numpy version of the input
-    """
-    if isinstance(x, np.ndarray):
-        X_copy = np.array(x, copy=True)
-        if np.isnan(X_copy).any():
-            X_copy = np.nan_to_num(X_copy)
-        if X_copy.ndim <= 1:
-            X_copy = X_copy.reshape((-1, 1))
-        if X_copy.dtype != float:
-            X_copy = X_copy.astype(float)
-        return X_copy
-    elif isinstance(x, pd.Series) or isinstance(x, pd.DataFrame):
-        return to_numpy_time_series(from_nested_to_2d_array(x, return_numpy=True))
-    elif isinstance(x, list):
-        return to_numpy_time_series(np.array(x))
-    else:
-        raise TypeError(
-            "The series passed is the incorrect type. It must be"
-            " a pd.Series, np.ndarray or a list"
-        )
