@@ -31,15 +31,15 @@ from sktime.dists_kernels.numba_distances._elastic.dtw_based.lcss_distance impor
     lcss_distance,
     pairwise_lcss_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw_based.edr_distance import (
+from sktime.dists_kernels.numba_distances._elastic.edr_distance import (
     edr_distance,
     pairwise_edr_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw_based.erp_distance import (
+from sktime.dists_kernels.numba_distances._elastic.erp_distance import (
     erp_distance,
     pairwise_erp_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.dtw_based.msm_distance import (
+from sktime.dists_kernels.numba_distances._elastic.msm_distance import (
     msm_distance,
     pairwise_msm_distance,
 )
