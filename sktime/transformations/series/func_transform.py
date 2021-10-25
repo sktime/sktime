@@ -71,6 +71,11 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
            [1.09861229, 1.38629436]])
     """
 
+    _tags = {
+        "handles-missing-data": True,
+        "fit-in-transform": False,
+    }
+
     def __init__(
         self,
         func=None,
@@ -87,11 +92,10 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
         self.inv_kw_args = inv_kw_args
         super(FunctionTransformer, self).__init__()
 
-    def _check_inverse_transform(self):
-        """Check that func and inverse_func are the inverse."""
-        X = np.random.random(size=5)
-        X_round_trip = self.inverse_func(self.func(X))
-        if not np.allclose(X_round_trip, X):
+    def _check_inverse_transform(self, Z):
+        """Check that func and inverse_func are each other's inverse."""
+        Z_round_trip = self.inverse_func(self.func(Z))
+        if not np.allclose(Z_round_trip, Z, equal_nan=True):
             raise UserWarning(
                 "The provided functions are not strictly"
                 " inverse of each other. If you are sure you"
@@ -104,8 +108,8 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to fit.
+        Z : pd.Series / pd.DataFrame
+            Series / DataFrame to fit.
         X : pd.DataFrame, optional (default=None)
             Exogenous data used in transformation.
 
@@ -114,7 +118,7 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
         self
         """
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
-            self._check_inverse_transform()
+            self._check_inverse_transform(Z)
 
         self._is_fitted = True
         return self
@@ -125,18 +129,18 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series / pd.DataFrame
-            Series to transform.
+            Series / DataFrame to transform.
         X : pd.DataFrame, optional (default=None)
             Exogenous data used in transformation.
 
         Returns
         -------
         Zt : pd.Series / pd.DataFrame
-            Transformed series.
+            Transformed data.
         """
         self.check_is_fitted()
         Z = check_series(Z)
-        return self._transform(Z, func=self.func, kw_args=self.kw_args)
+        return self._apply_function(Z, func=self.func, kw_args=self.kw_args)
 
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
@@ -144,7 +148,7 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         Z : pd.Series / pd.DataFrame
-            Series to transform.
+            Series / DataFrame to transform.
         X : pd.DataFrame, optional (default=None)
             Exogenous data used in transformation.
 
@@ -155,9 +159,9 @@ class FunctionTransformer(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         Z = check_series(Z)
-        return self._transform(Z, func=self.inverse_func, kw_args=self.inv_kw_args)
+        return self._apply_function(Z, func=self.inverse_func, kw_args=self.inv_kw_args)
 
-    def _transform(self, Z, func=None, kw_args=None):
+    def _apply_function(self, Z, func=None, kw_args=None):
         if func is None:
             func = _identity
         return func(Z, **(kw_args if kw_args else {}))
