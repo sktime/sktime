@@ -30,12 +30,17 @@ def _diff_timeseries(x: np.ndarray):
     np.ndarray:
         First timeseries with difference between each point calculated
     """
-    if x.shape[1] <= 1 and len(x.shape) < 3:
+    x_shape = x.shape
+    if len(x_shape) <= 1:
+        _x = np.diff(x)
+        x_shape_temp = (x_shape[0] - 1, 1)
+        _x = np.reshape(_x, x_shape_temp)
+    elif x_shape[1] <= 1 and len(x_shape) < 3:
         _x = x.flatten()
         _x = np.diff(_x)
-        x_shape = (x.shape[0] - 1, 1)
-        _x = np.reshape(_x, x_shape)
-    elif len(x.shape) >= 3:
+        x_shape_temp = (x_shape[0] - 1, 1)
+        _x = np.reshape(_x, x_shape_temp)
+    elif len(x_shape) >= 3:
         temp = []
         for val in x:
             temp.append(_diff_timeseries(val))

@@ -38,6 +38,11 @@ def test_series_distances(distance: Callable):
     multivariate_result = distance(x_multivariate, y_multivariate)
     validate_result(multivariate_result)
 
+    single_ts_y = x_multivariate[0]
+    single_ts_x = y_multivariate[0]
+    single_result = distance(single_ts_x, single_ts_y)
+    validate_result(single_result)
+
 
 @pytest.mark.parametrize("distance", distances)
 def test_panel_distances(distance: Callable):
@@ -56,5 +61,9 @@ def test_panel_distances(distance: Callable):
     x_multivariate = create_test_distance_numpy(10, 10, 10)
     y_multivariate = create_test_distance_numpy(10, 10, 10, random_state=2)
     multivariate_result = distance(x_multivariate, y_multivariate)
-
     validate_result(multivariate_result)
+
+    single_ts_y = x_multivariate[0]
+    single_ts_x = y_multivariate[0]
+    single_result = distance(single_ts_x, single_ts_y)
+    validate_result(single_result)

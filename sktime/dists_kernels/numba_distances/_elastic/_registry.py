@@ -39,10 +39,11 @@ from sktime.dists_kernels.numba_distances._elastic.erp_distance import (
     erp_distance,
     pairwise_erp_distance,
 )
-from sktime.dists_kernels.numba_distances._elastic.msm_distance import (
-    msm_distance,
-    pairwise_msm_distance,
-)
+
+# from sktime.dists_kernels.numba_distances._elastic.msm_distance import (
+#     msm_distance,
+#     pairwise_msm_distance,
+# )
 
 NUMBA_DISTANCES = [
     ("squared distance", squared_distance, pairwise_squared_distance),
@@ -55,5 +56,5 @@ NUMBA_DISTANCES = [
     ("lcss distance", lcss_distance, pairwise_lcss_distance),
     ("edr distance", edr_distance, pairwise_edr_distance),
     ("erp distance", erp_distance, pairwise_erp_distance),
-    ("msm distance", msm_distance, pairwise_msm_distance),
+    # ("msm distance", msm_distance, pairwise_msm_distance), Not ready yet
 ]
