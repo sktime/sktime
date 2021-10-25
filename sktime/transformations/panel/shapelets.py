@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """ shapelet transformation.
-
 Transformer from the time domain into the shapelet domain. Standard full
 transform, a contracted version and a randoms sampler.
 """
@@ -884,7 +883,8 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def zscore(a, axis=0, ddof=0):
-        """A static method to return the normalised version of series.
+        """Static method to return the normalised version of series.
+
         This mirrors the scipy implementation
         with a small difference - rather than allowing /0, the function
         returns output = np.zeroes(len(input)).
@@ -948,6 +948,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
 class ContractedShapeletTransform(ShapeletTransform):
     """Contracted Shapelet Transform.
+
     @incollection{bostrom2017binary,
       title={Binary shapelet transform for multiclass time series
       classification},
@@ -1016,12 +1017,13 @@ class ContractedShapeletTransform(ShapeletTransform):
 
 
 class _RandomEnumerationShapeletTransform(ShapeletTransform):
+    """Empty class."""
     pass
     # to follow
 
 
 class Shapelet:
-    """A simple class to model a Shapelet with associated information
+    """A simple class to model a Shapelet with associated information.
 
     Parameters
     ----------
@@ -1034,7 +1036,7 @@ class Shapelet:
     info_gain: flaot
         The calculated information gain of this shapelet
     data: array-like
-        The (z-normalised) data of this shapelet
+        The (z-normalised) data of this shapelet.
     """
 
     def __init__(self, series_id, start_pos, length, info_gain, data):
@@ -1045,6 +1047,7 @@ class Shapelet:
         self.data = data
 
     def __str__(self):
+        """String method."""
         return (
             "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3},"
             " ".format(self.series_id, self.start_pos, self.length, self.info_gain)
@@ -1052,29 +1055,35 @@ class Shapelet:
 
 
 class ShapeletPQ:
+    """Shapelet PQ."""
     def __init__(self):
         self._queue = []
         self._index = 0
 
     def push(self, shapelet):
+        """Push."""
         heapq.heappush(self._queue, (shapelet.info_gain, self._index, shapelet))
         self._index += 1
 
     def pop(self):
+        """Pop."""
         return heapq.heappop(self._queue)[-1]
 
     def peek(self):
+        """Peek."""
         return self._queue[0]
 
     def get_size(self):
+        """Get size."""
         return len(self._queue)
 
     def get_array(self):
+        """Get array."""
         return self._queue
 
 
 def write_transformed_data_to_arff(transform, labels, file_name):
-    """A simple function to save the transform obtained in arff format
+    """Save the transform obtained in arff format.
 
     Parameters
     ----------
@@ -1108,7 +1117,7 @@ def write_transformed_data_to_arff(transform, labels, file_name):
 
 
 def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
-    """A simple function to save the shapelets obtained in csv format
+    """Save the shapelets obtained in csv format.
 
     Parameters
     ----------
