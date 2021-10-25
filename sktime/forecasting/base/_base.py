@@ -26,10 +26,8 @@ State:
 """
 
 
-__author__ = ["Markus Löning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "@big-o", "fkiraly"]
 __all__ = ["BaseForecaster"]
-
-from sktime.base import BaseEstimator
 
 from contextlib import contextmanager
 from warnings import warn
@@ -37,16 +35,11 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_X
-from sktime.utils.validation.forecasting import check_alpha
-from sktime.utils.validation.forecasting import check_cv
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.utils.validation.series import check_series, check_equal_time_index
-
+from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype
-
+from sktime.utils.datetime import _shift
+from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
+from sktime.utils.validation.series import check_equal_time_index, check_series
 
 DEFAULT_ALPHA = 0.05
 
@@ -596,24 +589,6 @@ class BaseForecaster(BaseEstimator):
         fitted_params : dict
         """
         raise NotImplementedError("abstract method")
-
-    def _set_y_X(self, y, X=None, enforce_index_type=None):
-        """Set training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Endogenous time series
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        """
-        # set initial training data
-        self._y, self._X = check_y_X(
-            y, X, allow_empty=False, enforce_index_type=enforce_index_type
-        )
-
-        # set initial cutoff to the end of the training data
-        self._set_cutoff_from_y(y)
 
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
