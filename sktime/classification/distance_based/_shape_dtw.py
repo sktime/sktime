@@ -484,5 +484,3 @@ class ShapeDTW(BaseClassifier):
                 colToAdd.append(pd.Series(inst))
             df[col] = colToAdd
         return df
-
-    
