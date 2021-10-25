@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" shapelet transformation.
+"""Shapelet transformation.
 
 Transformer from the time domain into the shapelet domain. Standard full
 transform, a contracted version and a randoms sampler.
@@ -884,7 +884,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def zscore(a, axis=0, ddof=0):
-        """Static method to return the normalised version of series.
+        """Return the normalised version of series.
 
         This mirrors the scipy implementation
         with a small difference - rather than allowing /0, the function
@@ -983,7 +983,6 @@ class ContractedShapeletTransform(ShapeletTransform):
 
     Attributes
     ----------
-
     predefined_ig_rejection_level       : float, minimum information gain
     required to keep a shapelet (default = 0.05)
     self.shapelets                      : list of Shapelet objects,
@@ -1049,7 +1048,7 @@ class Shapelet:
         self.data = data
 
     def __str__(self):
-        """String method."""
+        """Print."""
         return (
             "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3},"
             " ".format(self.series_id, self.start_pos, self.length, self.info_gain)
