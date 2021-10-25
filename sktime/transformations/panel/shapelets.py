@@ -18,18 +18,17 @@ import os
 import time
 import warnings
 
-from deprecated.sphinx import deprecated
 from itertools import zip_longest
 from operator import itemgetter
 
 import numpy as np
 import pandas as pd
+from deprecated.sphinx import deprecated
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -50,6 +49,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # calculations
 #
 # TO-DO: add CI tests, comments, documentation, etc.
+
 
 @deprecated(
     version="0.8.1",
