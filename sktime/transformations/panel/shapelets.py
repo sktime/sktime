@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Shapelet transformation.
 
+# TODO move to contrib in v0.10.0
 Transformer from the time domain into the shapelet domain. Standard full
 transform, a contracted version and a randoms sampler.
 """
