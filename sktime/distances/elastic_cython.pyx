@@ -14,9 +14,10 @@ cimport numpy as np
 np.import_array()
 
 from libc.float cimport DBL_MAX
-from libc.math cimport exp, sqrt, fabs
+from libc.math cimport exp, fabs, sqrt
 
 from deprecated.sphinx import deprecated
+
 
 cdef inline double min_c(double a, double b): return a if a <= b else b
 cdef inline int max_c_int(int a, int b): return a if a >= b else b
