@@ -4,6 +4,10 @@
 Deprecation
 ===========
 
+.. note::
+
+    For planned changes and upcoming releases, see our :ref:`roadmap`.
+
 Description
 ===========
 
@@ -21,10 +25,6 @@ Our current deprecation process is as follows:
 * We add a to-do comments to the lines of code that can be removed, with the version number when the code can be removed. For example, :code:`TODO: remove in v0.10.0`.
 
 * We remove all deprecated functionality as part of the release process, searching for the to-do comments.
-
-.. note::
-
-    For planned changes and upcoming releases, see our :ref:`roadmap`.
 
 We use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package for depreciation helper functions.
 
