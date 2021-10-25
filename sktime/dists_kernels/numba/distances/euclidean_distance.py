@@ -50,7 +50,7 @@ def numba_euclidean_distance_factory(
     return _numba_euclidean_distance
 
 
-@njit()
+@njit(cache=True)
 def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Numba compiled Euclidean distance.
 
