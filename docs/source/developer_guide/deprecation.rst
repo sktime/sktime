@@ -55,7 +55,7 @@ Methods
 
     from deprecated.sphinx import deprecated
 
-    class MyClass(object):
+    class MyClass:
 
         @deprecated(version="0.8.0", reason="my_old_method will be removed in v0.10.0", category=FutureWarning)
         def my_old_method(self, x, y):
