@@ -8,6 +8,7 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
@@ -26,6 +27,7 @@ __all__ = [
     "load_uschange",
     "load_UCR_UEA_dataset",
     "load_PBS_dataset",
+    "load_macroeconomic",
 ]
 
 __author__ = [
@@ -36,6 +38,7 @@ __author__ = [
     "Emiliathewolf",
     "TonyBagnall",
     "yairbeer",
+    "aiwalter",
 ]
 
 DIRNAME = "data"
@@ -836,4 +839,44 @@ def load_PBS_dataset():
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of scripts"
+    return y
+
+
+def load_macroeconomic():
+    """
+    Load the US Macroeconomic Data [1].
+
+    Returns
+    -------
+    y : pd.DataFrame
+     Time series
+
+    Notes
+    -----
+    US Macroeconomic Data for 1959Q1 - 2009Q3.
+
+    Dimensionality:     multivariate, 14
+    Series length:      203
+    Frequency:          Quarterly
+    Number of cases:    1
+
+    This data is kindly wrapped via `statsmodels.datasets.macrodata`.
+
+    References
+    ----------
+    ..[1] Wrapped via statsmodels:
+          https://www.statsmodels.org/dev/datasets/generated/macrodata.html
+    ..[2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
+          Bank of St. Louis; http://research.stlouisfed.org/fred2/;
+          accessed December 15, 2009.
+    ..[3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
+          http://www.bls.gov/data/; accessed December 15, 2009.
+    """
+    y = sm.datasets.macrodata.load_pandas().data
+    y["year"] = y["year"].astype(int).astype(str)
+    y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)
+    y["time"] = y["year"] + "-" + y["quarter"]
+    y.index = pd.PeriodIndex(data=y["time"], freq="Q", name="Period")
+    y = y.drop(columns=["year", "quarter", "time"])
+    y.name = "US Macroeconomic Data"
     return y
