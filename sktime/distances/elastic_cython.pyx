@@ -8,7 +8,6 @@
 STUFF = "Hi"  # https://stackoverflow.com/questions/8024805/cython-compiled-c-extension-importerror-dynamic-module-does-not-define-init-fu
 
 import numpy as np
-import warnings
 
 cimport numpy as np
 
