@@ -20,6 +20,54 @@ from sktime.dists_kernels.numba.distances.squared_distance import (
 )
 
 
+def euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
+    r"""Compute the Euclidean distance between two timeseries.
+
+    Euclidean distance is supported for 1D, 2D and 3D arrays.
+
+    .. math::
+        euclidean(x, y) = \sqrt{(x - y^2)}
+
+    Parameters
+    ----------
+    x: np.ndarray (1D, 2D or 3D)
+        First timeseries.
+    y: np.ndarray (1D, 2D or 3D)
+        Second timeseries.
+
+    Returns
+    -------
+    distance: float
+        Euclidean distance between the two timeseries.
+    """
+    _x = to_numba_timeseries(x)
+    _y = to_numba_timeseries(y)
+    return _numba_euclidean_distance(_x, _y)
+
+
+def pairwise_euclidean_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    r"""Compute the Euclidean pairwise distance between two timeseries.
+
+    Pairwise euclidean distance is supported for 1D, 2D and 3D arrays.
+
+    Parameters
+    ----------
+    x: np.ndarray (1D, 2D or 3D)
+        First timeseries.
+    y: np.ndarray (1D, 2D or 3D)
+        Second timeseries.
+
+    Returns
+    -------
+    np.ndarray (2D of size mxn where m is len(x) and m is len(y)
+        Pairwise euclidean distance matrix of size nxm where n is len(x) and m is
+        len(y).
+    """
+    return pairwise_distance(
+        x, y, numba_distance_factory=numba_euclidean_distance_factory
+    )
+
+
 def numba_euclidean_distance_factory(
     x: np.ndarray, y: np.ndarray, symmetric: bool, **kwargs: dict
 ) -> Callable[[np.ndarray, np.ndarray], float]:
@@ -67,51 +115,3 @@ def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
         Euclidean distance between the two timeseries.
     """
     return np.sqrt(_numba_squared_distance(x, y))
-
-
-def euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
-    r"""Compute the Euclidean distance between two timeseries.
-
-    Euclidean distance is supported for 1D, 2D and 3D arrays.
-
-    .. math::
-        euclidean(x, y) = \sqrt{(x - y^2)}
-
-    Parameters
-    ----------
-    x: np.ndarray (1D, 2D or 3D)
-        First timeseries.
-    y: np.ndarray (1D, 2D or 3D)
-        Second timeseries.
-
-    Returns
-    -------
-    distance: float
-        Euclidean distance between the two timeseries.
-    """
-    _x = to_numba_timeseries(x)
-    _y = to_numba_timeseries(y)
-    return _numba_euclidean_distance(_x, _y)
-
-
-def pairwise_euclidean_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    r"""Compute the Euclidean pairwise distance between two timeseries.
-
-    Pairwise euclidean distance is supported for 1D, 2D and 3D arrays.
-
-    Parameters
-    ----------
-    x: np.ndarray (1D, 2D or 3D)
-        First timeseries.
-    y: np.ndarray (1D, 2D or 3D)
-        Second timeseries.
-
-    Returns
-    -------
-    np.ndarray (2D of size mxn where m is len(x) and m is len(y)
-        Pairwise euclidean distance matrix of size nxm where n is len(x) and m is
-        len(y).
-    """
-    return pairwise_distance(
-        x, y, numba_distance_factory=numba_euclidean_distance_factory
-    )
