@@ -17,23 +17,27 @@ __author__ = "patrickzib"
 
 
 def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
-    """
-    Plot the time series with the known change points.
+    """Plot the time series with the known change points.
 
     Parameters
     ----------
     ts_name: str
         the name of the time series (dataset) to be annotated
-    ts: array
-        the time series data to be annotated
-    true_cps: array
+    ts: array-like, shape = [n]
+        the univariate time series of length n to be annotated
+    true_cps: array-like, dtype=int
         the known change points
+        these are highlighted in the time series as vertical lines
     font_size: int
         for plotting
 
     Returns
     -------
-    ax
+    fig : matplotlib.figure.Figure
+
+    axes : np.ndarray
+        Array of the figure's Axe objects
+
     """
     # Checks availability of plotting libraries
     _check_soft_dependencies("matplotlib")
@@ -71,29 +75,36 @@ def plot_time_series_with_profiles(
     score_name="ClaSP Score",
     font_size=16,
 ):
-    """
-    Plot the TS with the known and found change points and profiles from segmentation.
+    """Plot the TS with the known and found change points and profiles from segmentation.
 
     Parameters
     ----------
     ts_name: str
         the name of the time series (dataset) to be annotated
-    ts: array
-        the time series data to be annotated
-    profiles: array
-        the profiles computed by the method used
-    true_cps: array
-        the known change points
-    found_cps: array
+    ts: array-like, shape=[n]
+        the univariate time series of length n to be annotated.
+        the time series is plotted as the first subplot.
+    profiles: array-like, shape=[n-m+1, n_cpts], dtype=float
+        the n_cpts profiles computed by the method used
+        the profiles are plotted as subsequent subplots to the time series.
+    true_cps: array-like, dtype=int
+        the known change points.
+        these are highlighted in the time series subplot as vertical lines
+    found_cps: array-like, shape=[n_cpts], dtype=int
         the found change points
+        these are highlighted in the profiles subplot as vertical lines
     score_name: str
-        name of the method used
+        name of the scoring method used, i.e. 'ClaSP'
     font_size: int
         for plotting
 
     Returns
     -------
-    ax
+    fig : matplotlib.figure.Figure
+        Figure with 1 + len(profiles) subplots, one for the time series
+        and others for each profile
+    axes : np.ndarray
+        Array of the figure's Axe objects
     """
     # Checks availability of plotting libraries
     _check_soft_dependencies("matplotlib", "seaborn")

@@ -33,15 +33,15 @@ def _sliding_window(X, m):
 
     Parameters
     ----------
-    X: array
-        The time series
+    X: array-like, shape = [n]
+        A single univariate time series of length n
     m: int
         The window size to generate sliding windows
 
     Returns
     -------
-    windows: array
-        The sliding windows
+    windows: array of shape [n-m+1, m]
+        The sliding windows of length over the time series of length n
     """
     shape = X.shape[:-1] + (X.shape[-1] - m + 1, m)
     strides = X.strides + (X.strides[-1],)
@@ -53,8 +53,8 @@ def _sliding_mean_std(X, m):
 
     Parameters
     ----------
-    X: array
-        The time series
+    X: array-like, shape [n]
+        A single univariate time series of length n
     m: int
         The window size to generate sliding windows
 
@@ -77,16 +77,15 @@ def _sliding_mean_std(X, m):
 
 
 def _compute_distances_iterative(X, m, k):
-    """
-    Compute kNN indices with dot-product.
+    """Compute kNN indices with dot-product.
 
     No-loops implementation for a time series, given
     a window size and k neighbours.
 
     Parameters
     ----------
-    X: array
-        The time series
+    X: array-like, shape [n]
+        A single univariate time series of length n
     m: int
         The window size to generate sliding windows
     k: int
@@ -94,7 +93,7 @@ def _compute_distances_iterative(X, m, k):
 
     Returns
     -------
-    knns: array
+    knns: array-like, shape = [n-m+1, k], dtype=int
         The knns (offsets!) for each subsequence in X
     """
     length = len(X) - m + 1
@@ -144,8 +143,8 @@ def _calc_knn_labels(knn_mask, split_idx, m):
 
     Parameters
     ----------
-    knn_mask: array
-        The knn indices
+    knn_mask: array-like, shape = [k, n-m+1], dtype=int
+        The knn indices for each subsequence
     split_idx: int
         The split index to use
     m: int
@@ -153,7 +152,7 @@ def _calc_knn_labels(knn_mask, split_idx, m):
 
     Returns
     -------
-    Tuple (array, array):
+    Tuple (array-like of shape=[n-m+1], array-like of shape=[n-m+1]):
         True labels and predicted labels
     """
     k_neighbours, n_timepoints = knn_mask.shape
@@ -191,10 +190,10 @@ def _binary_f1_score(y_true, y_pred):
 
     Parameters
     ----------
-    y_true: array
-        True labels for each subsequence
-    y_pred: array
-        Predicted labels for each subsequence
+    y_true: array-like, shape=[n-m+1], dtype = int
+        True integer labels for each subsequence
+    y_pred: array-like, shape=[n-m+1], dtype = int
+        Predicted integer labels for each subsequence
 
     Returns
     -------
@@ -223,10 +222,10 @@ def _roc_auc_score(y_score, y_true):
 
     Parameters
     ----------
-    y_true: array
-        True labels for each subsequence
-    y_pred: array
-        Predicted labels for each subsequence
+    y_true: array-like, shape=[n-m+1], dtype = int
+        True integer labels for each subsequence
+    y_pred: array-like, shape=[n-m+1], dtype = int
+        Predicted integer labels for each subsequence
 
     Returns
     -------
@@ -287,7 +286,7 @@ def _calc_profile(m, knn_mask, score, exclusion_zone):
     ----------
     m: int
         The window size to generate sliding windows
-    knn_mask: array
+    knn_mask: array-like, shape = [k, n-m+1], dtype=int
         The knn indices
     score: function
         Scoring method used
@@ -296,7 +295,7 @@ def _calc_profile(m, knn_mask, score, exclusion_zone):
 
     Returns
     -------
-    profile: array
+    profile: array-like, shape=[n-m+1], dtype = float
         The ClaSP
     """
     n_timepoints = knn_mask.shape[1]
@@ -321,8 +320,8 @@ def clasp(
 
     Parameters
     ----------
-    X: array
-        The time series
+    X: array-like, shape = [n]
+        A single univariate time series of length n
     m: int
         The window size to generate sliding windows
     k_neighbours: int
@@ -336,7 +335,7 @@ def clasp(
 
     Returns
     -------
-    Tuple (array, array)
+    Tuple (array-like of shape [n], array-like of shape [k_neighbours, n])
         The ClaSP and the knn_mask
     """
     knn_mask = _compute_distances_iterative(X, m, k_neighbours).T
@@ -397,8 +396,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         super(ClaSPTransformer, self).__init__()
 
     def transform(self, X, y=None):
-        """
-        Compute ClaSP.
+        """Compute ClaSP.
 
         Takes as input a single time series dataset and returns the
         Classification Score profile for that single time series.
@@ -406,7 +404,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         Parameters
         ----------
         X: pandas.Series
-           A single pandas series or a numpy array
+           A single pandas series or a 1d numpy array
 
         Returns
         -------

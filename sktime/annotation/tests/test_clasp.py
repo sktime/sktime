@@ -11,7 +11,10 @@ from sktime.datasets import load_gun_point_segmentation
 
 
 def test_clasp_sparse():
-    """Test ClaSP."""
+    """Test ClaSP sparse segmentation.
+
+    Check if the predicted change points match.
+    """
     # load the test dataset
     ts, period_size, cps = load_gun_point_segmentation()
 
@@ -26,7 +29,10 @@ def test_clasp_sparse():
 
 
 def test_clasp_dense():
-    """Test ClaSP."""
+    """Tests ClaSP dense segmentation.
+
+    Check if the predicted segmentation matches.
+    """
     # load the test dataset
     ts, period_size, cps = load_gun_point_segmentation()
 

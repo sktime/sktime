@@ -29,14 +29,13 @@ from sktime.utils.validation.series import check_series
 
 
 def find_dominant_window_sizes(X, offset=0.05):
-    """
-    Determine the Window-Size using dominant FFT-frequencies.
+    """Determine the Window-Size using dominant FFT-frequencies.
 
     Parameters
     ----------
-    TS: array
-        the time series to determine the periodicity
-    offset: float
+    X : array-like, shape=[n]
+        a single univariate time series of length n
+    offset : float
         Exclusion Radius
 
     Returns
@@ -67,24 +66,24 @@ def find_dominant_window_sizes(X, offset=0.05):
 
 
 def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0.05):
-    """
-    Check if a candidate change point is in close proximity to other change points.
+    """Check if a candidate change point is in close proximity to other change points.
 
     Parameters
     ----------
-    candidate: int
-        Candidate change point
-    change_points: array
-        Change points chosen so far
-    n_timepoints: int
+    candidate : int
+        A single candidate change point. Will me chosen if non-trivial match based
+        on exclusion_radius.
+    change_points : list, dtype=int
+        List of change points chosen so far
+    n_timepoints : int
         Total length
-    exclusion_radius: int
-        Exclusion Radius for change points
+    exclusion_radius : int
+        Exclusion Radius for change points to be non-trivial matches
 
     Returns
     -------
     trivial_match: bool
-        If the candidate change point is a trivial match
+        If the 'candidate' change point is a trivial match to the ones in change_points
     """
     change_points = [0] + change_points + [n_timepoints]
     exclusion_radius = np.int64(n_timepoints * exclusion_radius)
@@ -99,13 +98,12 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
 
 
 def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
-    """
-    Segments the time series by extracting change points.
+    """Segments the time series by extracting change points.
 
     Parameters
     ----------
-    X: array
-        the time series to be segmented
+    X: array-like, shape=[n]
+        the univariate time series of length n to be segmented
     clasp:
         the transformer
     n_change_points: int
@@ -115,7 +113,7 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
 
     Returns
     -------
-    Tuple (array, array, array):
+    Tuple (array-like, array-like, array-like):
         (predicted_change_points, clasp_profiles, scores)
     """
     period_size = clasp.window_length
@@ -181,8 +179,7 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
 
 
 class ClaSPSegmentation(BaseSeriesAnnotator):
-    """
-    ClaSP (Classification Score Profile) Segmentation.
+    """ClaSP (Classification Score Profile) Segmentation.
 
     Using ClaSP for the CPD problem is straightforward: We first compute the profile
     and then choose its global maximum as the change point. The following CPDs
@@ -198,11 +195,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Annotation output format:
         * If "sparse", a pd.Series of the found Change Points is returned
         * If "dense", a pd.IndexSeries with the Segmenation of X is returned
-
-    Returns
-    -------
-    pd.Series():
-        Found change points
 
     Notes
     -----
@@ -328,10 +320,9 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        X:             array
-            The time series to be segmented
-        found_cps:     array
-            Array of change points found
+        X :         array-like, shape = [n]
+           Univariate time-series data to be segmented.
+        found_cps : array-like, shape = [n_cps] The found change points found
 
         Returns
         -------
