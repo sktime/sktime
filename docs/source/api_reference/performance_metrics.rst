@@ -30,6 +30,8 @@ Classes
     MeanSquaredError
     MedianAbsoluteError
     MedianSquaredError
+    GeometricMeanAbsoluteError
+    GeometricMeanSquaredError
     MeanAbsolutePercentageError
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
@@ -39,6 +41,7 @@ Classes
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
     MeanAsymmetricError
+    MeanLinexError
     RelativeLoss
 
 Functions
@@ -57,6 +60,8 @@ Functions
     mean_squared_error
     median_absolute_error
     median_squared_error
+    geometric_mean_absolute_error
+    geometric_mean_squared_error
     mean_absolute_percentage_error
     median_absolute_percentage_error
     mean_squared_percentage_error
@@ -66,4 +71,5 @@ Functions
     geometric_mean_relative_absolute_error
     geometric_mean_relative_squared_error
     mean_asymmetric_error
+    mean_linex_error
     relative_loss
