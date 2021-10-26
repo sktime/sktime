@@ -8,11 +8,9 @@ __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
@@ -37,8 +35,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
     >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
-    >>> forecasters = [("trend", PolynomialTrendForecaster(), 0),\
-                        ("ses", ExponentialSmoothing(trend='add'), 1)]
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster(), 0),
+    ...     ("ses", ExponentialSmoothing(trend='add'), 1),
+    ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ColumnEnsembleForecaster(...)

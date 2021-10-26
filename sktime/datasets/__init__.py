@@ -20,6 +20,7 @@ __all__ = [
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
     "load_acsf1",
+    "load_macroeconomic",
 ]
 
 from sktime.datasets._data_io import (
@@ -34,6 +35,7 @@ from sktime.datasets._data_io import (
     load_japanese_vowels,
     load_longley,
     load_lynx,
+    load_macroeconomic,
     load_osuleaf,
     load_PBS_dataset,
     load_shampoo_sales,
