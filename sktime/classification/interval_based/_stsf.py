@@ -19,8 +19,6 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
@@ -67,12 +65,12 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -102,7 +100,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         Uses supervised intervals and summary features
@@ -121,12 +119,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(
-            X,
-            y,
-            enforce_univariate=True,
-            coerce_to_numpy=True,
-        )
+
         X = X.squeeze(1)
         self.n_instances, _ = X.shape
 
@@ -164,10 +157,9 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         self.estimators_, self.intervals_ = zip(*fit)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -186,11 +178,11 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self.predict_proba(X)
+                for prob in self._predict_proba(X)
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -208,8 +200,6 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         output : nd.array of shape = (n_instances, n_classes)
             Predicted probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         _, X_p = signal.periodogram(X)

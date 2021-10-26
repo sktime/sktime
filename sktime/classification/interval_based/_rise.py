@@ -13,15 +13,12 @@ import numpy as np
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sklearn.ensemble._base import _partition_estimators
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 def _transform(X, interval, lag):
@@ -128,7 +125,7 @@ def _produce_intervals(
     return intervals
 
 
-class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
+class RandomIntervalSpectralForest(BaseClassifier):
     """Random Interval Spectral Forest (RISE).
 
     Input: n series length m
@@ -178,12 +175,12 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     # TO DO: handle missing values, unequal length series and multivariate
@@ -196,18 +193,17 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         min_interval=16,
         acf_lag=100,
         acf_min_values=4,
+        base_estimator=None,
         n_jobs=None,
         random_state=None,
     ):
-        super(RandomIntervalSpectralForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(random_state=random_state),
-            n_estimators=n_estimators,
-        )
+        super(RandomIntervalSpectralForest, self).__init__()
         self.n_estimators = n_estimators
         self.max_interval = max_interval
         self.min_interval = min_interval
         self.acf_lag = acf_lag
         self.acf_min_values = acf_min_values
+        self.base_estimator = DecisionTreeClassifier()
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -222,7 +218,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             "RandomIntervalSpectralForest is currently not supported."
         )
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         using random intervals and spectral features.
@@ -241,7 +237,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         n_instances, self.series_length = X.shape
@@ -304,10 +299,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             self.lags[i] = lag
             self.estimators_.append(tree)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X.
 
         Built on top of `predict_proba`.
@@ -324,10 +318,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         y : array of shape = [n_instances]
             The predicted classes.
         """
-        proba = self.predict_proba(X)
+        proba = self._predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -350,9 +344,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_instances, n_classes]
             The class probabilities of all cases.
         """
-        # Check data
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         n_instances, n_columns = X.shape
