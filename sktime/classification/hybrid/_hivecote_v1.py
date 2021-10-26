@@ -5,7 +5,7 @@ Hybrid ensemble of classifiers from 4 separate time series classification
 representations, using the weighted probabilistic CAWPE as an ensemble controller.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["Matthew Middlehurst"]
 __all__ = ["HIVECOTEV1"]
 
 from datetime import datetime
@@ -14,7 +14,6 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
@@ -23,7 +22,6 @@ from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.utils.validation import check_n_jobs
 
 
 class HIVECOTEV1(BaseClassifier):
@@ -60,8 +58,6 @@ class HIVECOTEV1(BaseClassifier):
         The number of classes.
     classes_ : list
         The unique class labels.
-    n_jobs_ : int
-        The number of threads used.
     stc_weight_ : float
         The weight for STC probabilities.
     tsf_weight_ : float
@@ -113,11 +109,7 @@ class HIVECOTEV1(BaseClassifier):
     """
 
     _tags = {
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -139,9 +131,6 @@ class HIVECOTEV1(BaseClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.n_classes_ = 0
-        self.classes_ = []
-        self.n_jobs_ = n_jobs
         self.stc_weight_ = 0
         self.tsf_weight_ = 0
         self.rise_weight_ = 0
@@ -178,11 +167,6 @@ class HIVECOTEV1(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self.n_jobs_ = check_n_jobs(self.n_jobs)
-
-        self.n_classes_ = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-
         # Default values from HC1 paper
         if self.stc_params is None:
             self._stc_params = {"transform_limit_in_minutes": 120}
@@ -205,7 +189,7 @@ class HIVECOTEV1(BaseClassifier):
             **self._stc_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._stc.fit(X, y)
 
@@ -228,7 +212,7 @@ class HIVECOTEV1(BaseClassifier):
         self._tsf = TimeSeriesForestClassifier(
             **self._tsf_params,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._tsf.fit(X, y)
 
@@ -243,7 +227,7 @@ class HIVECOTEV1(BaseClassifier):
             X=X,
             y=y,
             cv=cv_size,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self.tsf_weight_ = accuracy_score(y, train_preds) ** 4
 
@@ -258,7 +242,7 @@ class HIVECOTEV1(BaseClassifier):
         self._rise = RandomIntervalSpectralForest(
             **self._rise_params,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._rise.fit(X, y)
 
@@ -274,7 +258,7 @@ class HIVECOTEV1(BaseClassifier):
             X=X,
             y=y,
             cv=cv_size,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self.rise_weight_ = accuracy_score(y, train_preds) ** 4
 
@@ -287,7 +271,9 @@ class HIVECOTEV1(BaseClassifier):
 
         # Build cBOSS
         self._cboss = ContractableBOSS(
-            **self._cboss_params, random_state=self.random_state, n_jobs=self.n_jobs_
+            **self._cboss_params,
+            random_state=self.random_state,
+            n_jobs=self._threads_to_use,
         )
         self._cboss.fit(X, y)
 
@@ -302,6 +288,8 @@ class HIVECOTEV1(BaseClassifier):
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
             print("cBOSS weight = " + str(self.cboss_weight_))  # noqa
+
+        return self
 
     def _predict(self, X):
         """Predicts labels for sequences in X.

@@ -8,7 +8,7 @@ from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_hivecote_v2_on_unit_test():
+def test_hivecote_v2_on_unit_test_data():
     """Test of HIVECOTEV2 on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -36,7 +36,7 @@ def test_hivecote_v2_on_unit_test():
 
     # assert probabilities are the same
     probas = hc2.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, hivecote_v2_unit_test_probas)
+    testing.assert_array_almost_equal(probas, hivecote_v2_unit_test_probas, decimal=2)
 
 
 # def test_contracted_hivecote_v2_on_unit_test_data():
@@ -73,7 +73,7 @@ def test_hivecote_v2_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train HIVE-COTE v2
     hc2 = HIVECOTEV2(
@@ -95,8 +95,10 @@ def test_hivecote_v2_on_basic_motions():
     hc2.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = hc2.predict_proba(X_test.iloc[indices[:10]])
-    testing.assert_array_equal(probas, stc_basic_motions_probas)
+    probas = hc2.predict_proba(X_test.iloc[indices])
+    testing.assert_array_almost_equal(
+        probas, hivecote_v2_basic_motions_probas, decimal=2
+    )
 
 
 hivecote_v2_unit_test_probas = np.array(
@@ -143,67 +145,67 @@ hivecote_v2_unit_test_probas = np.array(
         ],
     ]
 )
-stc_basic_motions_probas = np.array(
+hivecote_v2_basic_motions_probas = np.array(
     [
         [
-            0.008897771212582005,
             0.0,
             0.0,
-            0.9911022287874179,
+            0.0,
+            1.0,
         ],
         [
-            0.8554183024420393,
-            0.03559108485032802,
-            0.0,
-            0.10899061270763263,
-        ],
-        [
-            0.17864628413433553,
-            0.0,
-            0.7509736953290359,
-            0.0703800205366286,
-        ],
-        [
-            0.09501672676717207,
-            0.9049832732328279,
+            0.6762275731822475,
+            0.3237724268177526,
             0.0,
             0.0,
         ],
         [
+            0.023652594879603396,
             0.0,
-            0.10516895622292918,
+            0.9534012294830029,
+            0.02294617563739377,
+        ],
+        [
+            0.15901794145420212,
+            0.46836481201924157,
+            0.36688070261720795,
+            0.005736543909348443,
+        ],
+        [
             0.0,
-            0.8948310437770708,
-        ],
-        [
-            0.05258447811146459,
-            0.05258447811146459,
-            0.01779554242516401,
-            0.8770355013519068,
-        ],
-        [
-            0.9644089151496719,
-            0.008897771212582005,
             0.0,
-            0.026693313637746012,
+            0.011473087818696884,
+            0.9885269121813031,
         ],
         [
-            0.0894623039874875,
-            0.17646619653523835,
-            0.7251737282646921,
-            0.008897771212582005,
-        ],
-        [
-            0.07420167702133204,
-            0.8604944171699178,
-            0.008897771212582005,
-            0.056406134596168035,
-        ],
-        [
-            0.01779554242516401,
-            0.964408915149672,
             0.0,
-            0.01779554242516401,
+            0.005736543909348442,
+            0.017209631728045325,
+            0.9770538243626062,
+        ],
+        [
+            0.8352455146364495,
+            0.017209631728045325,
+            0.0,
+            0.14754485363550518,
+        ],
+        [
+            0.009867551940509913,
+            0.019231736494334274,
+            0.8880319589011166,
+            0.08286875266403909,
+        ],
+        [
+            0.1647544853635505,
+            0.775665724217453,
+            0.05384324650964817,
+            0.005736543909348442,
+        ],
+        [
+            0.3122993389990557,
+            0.6338574144912961,
+            0.05384324650964817,
+            0.0,
         ],
     ]
 )
@@ -247,7 +249,7 @@ stc_basic_motions_probas = np.array(
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
+#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
 #     hc2_m = HIVECOTEV2(
 #         random_state=0,
@@ -267,5 +269,5 @@ stc_basic_motions_probas = np.array(
 #     )
 #
 #     hc2_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = hc2_m.predict_proba(X_test.iloc[indices[:10]])
+#     probas = hc2_m.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
