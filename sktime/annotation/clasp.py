@@ -102,13 +102,13 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
 
     Parameters
     ----------
-    X: array-like, shape=[n]
+    X : array-like, shape=[n]
         the univariate time series of length n to be segmented
-    clasp:
+    clasp :
         the transformer
-    n_change_points: int
+    n_change_points : int
         the number of change points to find
-    exclusion_radius:
+    exclusion_radius :
         the exclusion zone
 
     Returns
@@ -187,9 +187,9 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     Parameters
     ----------
-    period_length:         int, default = 10
+    period_length :         int, default = 10
         size of window for sliding, based on the period length of the data
-    n_cps:                 int, default = 1
+    n_cps :                 int, default = 1
         the number of change points to search
     fmt :                  str {"dense", "sparse"}, optional (default="sparse")
         Annotation output format:
@@ -254,8 +254,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         -------
         Y : pd.Series or an IntervalSeries
             Annotations for sequence X exact format depends on annotation type.
-            fmt=sparse: only the found change point locations are returned
-            fnt=dense: an interval series is returned which contains the segmetation.
+            fmt=sparse : only the found change point locations are returned
+            fnt=dense : an interval series is returned which contains the segmetation.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 

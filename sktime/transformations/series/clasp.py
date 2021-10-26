@@ -33,14 +33,14 @@ def _sliding_window(X, m):
 
     Parameters
     ----------
-    X: array-like, shape = [n]
+    X : array-like, shape = [n]
         A single univariate time series of length n
-    m: int
+    m : int
         The window size to generate sliding windows
 
     Returns
     -------
-    windows: array of shape [n-m+1, m]
+    windows : array of shape [n-m+1, m]
         The sliding windows of length over the time series of length n
     """
     shape = X.shape[:-1] + (X.shape[-1] - m + 1, m)
@@ -53,9 +53,9 @@ def _sliding_mean_std(X, m):
 
     Parameters
     ----------
-    X: array-like, shape [n]
+    X : array-like, shape [n]
         A single univariate time series of length n
-    m: int
+    m : int
         The window size to generate sliding windows
 
     Returns
@@ -84,16 +84,16 @@ def _compute_distances_iterative(X, m, k):
 
     Parameters
     ----------
-    X: array-like, shape [n]
+    X : array-like, shape [n]
         A single univariate time series of length n
-    m: int
+    m : int
         The window size to generate sliding windows
-    k: int
+    k : int
         The number of nearest neighbors
 
     Returns
     -------
-    knns: array-like, shape = [n-m+1, k], dtype=int
+    knns : array-like, shape = [n-m+1, k], dtype=int
         The knns (offsets!) for each subsequence in X
     """
     length = len(X) - m + 1
@@ -143,11 +143,11 @@ def _calc_knn_labels(knn_mask, split_idx, m):
 
     Parameters
     ----------
-    knn_mask: array-like, shape = [k, n-m+1], dtype=int
+    knn_mask : array-like, shape = [k, n-m+1], dtype=int
         The knn indices for each subsequence
-    split_idx: int
+    split_idx : int
         The split index to use
-    m: int
+    m : int
         The window size to generate sliding windows
 
     Returns
@@ -190,14 +190,14 @@ def _binary_f1_score(y_true, y_pred):
 
     Parameters
     ----------
-    y_true: array-like, shape=[n-m+1], dtype = int
+    y_true : array-like, shape=[n-m+1], dtype = int
         True integer labels for each subsequence
-    y_pred: array-like, shape=[n-m+1], dtype = int
+    y_pred : array-like, shape=[n-m+1], dtype = int
         Predicted integer labels for each subsequence
 
     Returns
     -------
-    F1: float
+    F1 : float
         F1-score
     """
     f1_scores = np.zeros(shape=2, dtype=np.float64)
@@ -222,14 +222,14 @@ def _roc_auc_score(y_score, y_true):
 
     Parameters
     ----------
-    y_true: array-like, shape=[n-m+1], dtype = int
+    y_true : array-like, shape=[n-m+1], dtype = int
         True integer labels for each subsequence
-    y_pred: array-like, shape=[n-m+1], dtype = int
+    y_pred : array-like, shape=[n-m+1], dtype = int
         Predicted integer labels for each subsequence
 
     Returns
     -------
-    F1: float
+    F1 : float
         ROC-AUC-score
     """
     # make y_true a boolean vector
@@ -284,18 +284,18 @@ def _calc_profile(m, knn_mask, score, exclusion_zone):
 
     Parameters
     ----------
-    m: int
+    m : int
         The window size to generate sliding windows
-    knn_mask: array-like, shape = [k, n-m+1], dtype=int
+    knn_mask : array-like, shape = [k, n-m+1], dtype=int
         The knn indices
-    score: function
+    score : function
         Scoring method used
-    exclusion_zone: int
+    exclusion_zone : int
         Exclusion zone
 
     Returns
     -------
-    profile: array-like, shape=[n-m+1], dtype = float
+    profile : array-like, shape=[n-m+1], dtype = float
         The ClaSP
     """
     n_timepoints = knn_mask.shape[1]
@@ -320,17 +320,17 @@ def clasp(
 
     Parameters
     ----------
-    X: array-like, shape = [n]
+    X : array-like, shape = [n]
         A single univariate time series of length n
-    m: int
+    m : int
         The window size to generate sliding windows
-    k_neighbours: int
+    k_neighbours : int
         The number of knn to use
-    score: function
+    score : function
         Scoring method used
     interpolate:
         Interpolate the profile
-    exclusion_radius: int
+    exclusion_radius : int
         Blind spot of the profile to the corners
 
     Returns
@@ -361,9 +361,9 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    window_length:       int, default = 10
+    window_length :       int, default = 10
         size of window for sliding.
-    scoring_metric:      string, default = ROC_AUC
+    scoring_metric :      string, default = ROC_AUC
         the scoring metric to use in ClaSP - choose from ROC_AUC or F1
 
     Notes
@@ -403,12 +403,12 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        X: pandas.Series
+        X : pandas.Series
            A single pandas series or a 1d numpy array
 
         Returns
         -------
-        Xt: pandas.Series
+        Xt : pandas.Series
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
@@ -428,7 +428,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        scoring_metric: string
+        scoring_metric : string
             Choose from "ROC_AUC" or "F1"
         """
         valid_scores = ("ROC_AUC", "F1")
