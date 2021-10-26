@@ -11,13 +11,10 @@ __all__ = [
 from typing import Callable
 
 import numpy as np
-from numba import njit
+from numba import njit, prange
 
 from sktime.dists_kernels._utils import to_numba_timeseries
 from sktime.dists_kernels.numba.distances.pairwise_distances import pairwise_distance
-from sktime.dists_kernels.numba.distances.squared_distance import (
-    _numba_squared_distance,
-)
 
 
 def euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
@@ -25,8 +22,10 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
 
     Euclidean distance is supported for 1D, 2D and 3D arrays.
 
+    The euclidean distance between two timeseries is defined as:
+
     .. math::
-        euclidean(x, y) = \sqrt{(x - y^2)}
+        ed(x, y) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
 
     Parameters
     ----------
@@ -71,7 +70,7 @@ def pairwise_euclidean_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def numba_euclidean_distance_factory(
     x: np.ndarray, y: np.ndarray, symmetric: bool, **kwargs: dict
 ) -> Callable[[np.ndarray, np.ndarray], float]:
-    """Create a numba compiled distance based on parameters.
+    """Create a numba compiled Euclidean distance callable based on parameters.
 
     While in this example parameters aren't used and the already defined numba method
     is returned, in more complex examples to compile them the parameters are needed.
@@ -93,12 +92,12 @@ def numba_euclidean_distance_factory(
     Returns
     -------
     Callable[[np.ndarray, np.ndarray], float]
-        Numba compiled Euclidean distance method.
+        Numba compiled Euclidean distance callable.
     """
     return _numba_euclidean_distance
 
 
-@njit()
+@njit(cache=True, parallel=True)
 def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Numba compiled Euclidean distance.
 
@@ -114,4 +113,9 @@ def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     distance: float
         Euclidean distance between the two timeseries.
     """
-    return np.sqrt(_numba_squared_distance(x, y))
+    distance = 0.0
+    for i in prange(x.shape[0]):
+        curr = x[i] - y[i]
+        distance += np.sum(np.sqrt(curr * curr))
+
+    return distance
