@@ -20,13 +20,12 @@ def validate_result(pairwise_result: np.ndarray, x: np.ndarray, y: np.ndarray) -
     Parameters
     ----------
     pairwise_result: np.ndarray (2D array)
-        [n, m] matrix with pairwise results
+        [n, m] matrix with pairwise results where n is len(x) and m is len(y).
     x: np.ndarray
         First timeseries used to generate pairwise.
     y: np.ndarray
-        Second timeseries used to generate pairwise
+        Second timeseries used to generate pairwise.
     """
-    # Expect a numpy array of size nxm where n is len(x) and m is len(m)
     assert isinstance(pairwise_result, np.ndarray)
     assert pairwise_result.ndim == 2
     assert pairwise_result.shape[0] is len(x)
