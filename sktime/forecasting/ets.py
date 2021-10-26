@@ -397,12 +397,13 @@ class AutoETS(_StatsModelsAdapter):
 
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, **simulate_kwargs)
+            start=start, end=end, **simulate_kwargs
+        )
 
         pred_ints = []
         for alpha_iter in alphas:
             pred_int = prediction_results.pred_int(alpha_iter)
-            pred_int.columns = ['lower', 'upper']
+            pred_int.columns = ["lower", "upper"]
             pred_ints.append(pred_int.loc[valid_indices])
 
         if isinstance(alpha, float):
@@ -442,7 +443,8 @@ class AutoETS(_StatsModelsAdapter):
 
         if return_pred_int:
             pred_int = self.compute_pred_int(
-                valid_indices, alpha=alpha, **simulate_kwargs)
+                valid_indices, alpha=alpha, **simulate_kwargs
+            )
 
             return y_pred.loc[valid_indices], pred_int
         else:
