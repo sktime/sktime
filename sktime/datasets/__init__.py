@@ -17,6 +17,8 @@ __all__ = [
     "load_uschange",
     "load_PBS_dataset",
     "load_japanese_vowels",
+    "load_gun_point_segmentation",
+    "load_electric_devices_segmentation",
     "load_acsf1",
     "load_macroeconomic",
 ]
@@ -26,6 +28,8 @@ from sktime.datasets._data_io import (
     load_airline,
     load_arrow_head,
     load_basic_motions,
+    load_electric_devices_segmentation,
+    load_gun_point_segmentation,
     load_gunpoint,
     load_italy_power_demand,
     load_japanese_vowels,
