@@ -14,7 +14,7 @@ import numpy as np
 from numba import njit
 
 from sktime.dists_kernels._utils import to_numba_timeseries
-from sktime.dists_kernels.numba._pairwise_distances import pairwise_distance
+from sktime.dists_kernels.numba.distances.pairwise_distances import pairwise_distance
 from sktime.dists_kernels.numba.distances.squared_distance import (
     _numba_squared_distance,
 )
@@ -50,7 +50,7 @@ def numba_euclidean_distance_factory(
     return _numba_euclidean_distance
 
 
-@njit(cache=True)
+@njit()
 def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Numba compiled Euclidean distance.
 
