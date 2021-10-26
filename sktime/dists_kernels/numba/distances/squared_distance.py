@@ -14,7 +14,7 @@ import numpy as np
 from numba import njit, prange
 
 from sktime.dists_kernels._utils import to_numba_timeseries
-from sktime.dists_kernels.numba.distances.pairwise_distances import pairwise_distance
+from sktime.dists_kernels.numba.distances.pairwise_distance import pairwise_distance
 
 
 def squared_distance(x: np.ndarray, y: np.ndarray) -> float:
