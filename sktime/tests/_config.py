@@ -14,6 +14,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
+from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.classification.compose import (
     ColumnEnsembleClassifier,
@@ -73,7 +74,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.forecasting.tbats import TBATS
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -108,6 +108,7 @@ from sktime.transformations.series.acf import (
 )
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.transformations.series.compose import (
     ColumnwiseTransformer,
     OptionalPassthrough,
@@ -174,13 +175,9 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
-FORECASTER = ExponentialSmoothing()
-FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
-STEPS_y = [
-    ("transformer", Detrender(ThetaForecaster())),
-    ("forecaster", NaiveForecaster()),
-]
-STEPS_X = [
+FORECASTER = NaiveForecaster()
+FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
+STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
@@ -204,12 +201,12 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS_y},
-    ForecastingPipeline: {"steps": STEPS_X},
+    TransformedTargetForecaster: {"steps": STEPS},
+    ForecastingPipeline: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    Detrender: {"forecaster": FORECASTER},
+    Detrender: {"forecaster": ExponentialSmoothing()},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
@@ -229,7 +226,7 @@ ESTIMATOR_TEST_PARAMS = {
         ]
     },
     FittedParamExtractor: {
-        "forecaster": FORECASTER,
+        "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
     },
     SeriesToPrimitivesRowTransformer: {
@@ -374,11 +371,13 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
     FeatureSelection: {"method": "all"},
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
+    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
+    ClaSPTransformer: {"window_length": 5},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

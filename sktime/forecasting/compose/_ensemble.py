@@ -99,6 +99,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -254,6 +255,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
