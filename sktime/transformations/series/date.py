@@ -13,84 +13,95 @@ import pandas as pd
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
-base_seasons = [
-    ["child", "parent", "period", "dummy_func", "feature_scope"],
-    ["year", "year", None, "year", "minimal"],
-    ["quarter", "year", 365.25 / 4, "quarter", "efficient"],
-    ["month", "year", 12, "month", "minimal"],
-    ["week", "year", 365.25 / 7, "week_of_year", "efficient"],
-    ["day", "year", 365.25, "day", "efficient"],
-    ["month", "quarter", 12 / 4, "month_of_quarter", "comprehensive"],
-    ["week", "quarter", 365.25 / (4 * 7), "week_of_quarter", "comprehensive"],
-    ["day", "quarter", 365.25 / 4, "day_of_quarter", "comprehensive"],
-    ["week", "month", 365.25 / (12 * 7), "week_of_month", "comprehensive"],
-    ["day", "month", 30, "day", "efficient"],
-    ["day", "week", 7, "weekday", "minimal"],
-    ["hour", "day", 24, "hour", "minimal"],
-    ["minute", "hour", 60, "minute", "minimal"],
-    ["second", "minute", 60, "second", "minimal"],
-    ["millisecond", "second", 1000, "millisecond", "minimal"],
-]
 
-date_order = [
-    "year",
-    "quarter",
-    "month",
-    "week",
-    "day",
-    "hour",
-    "minute",
-    "second",
-    "millisecond",
-]
+def _prep_dummies(DUMMIES):
+    """Use to prepare dummy data.
 
-base_seasons = pd.DataFrame(base_seasons[1:], columns=base_seasons[0])
+    Includes defining function call names and ranking
+    of date information based on frequency (e.g. year
+    has a lower frequency than week).
+    """
+    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 
-base_seasons["fourier"] = base_seasons["child"] + "_in_" + base_seasons["parent"]
-base_seasons["dummy"] = base_seasons["child"] + "_of_" + base_seasons["parent"]
-base_seasons.loc[base_seasons["dummy"] == "year_of_year", "dummy"] = "year"
+    date_order = [
+        "year",
+        "quarter",
+        "month",
+        "week",
+        "day",
+        "hour",
+        "minute",
+        "second",
+        "millisecond",
+    ]
 
-base_seasons["child"] = (
-    base_seasons["child"].astype("category").cat.reorder_categories(date_order)
-)
+    DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
+    DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
+    DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
 
-flist = ["minimal", "efficient", "comprehensive"]
+    DUMMIES["child"] = (
+        DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
+    )
 
-base_seasons["feature_scope"] = (
-    base_seasons["feature_scope"].astype("category").cat.reorder_categories(flist)
-)
+    flist = ["minimal", "efficient", "comprehensive"]
 
-base_seasons["feature_scope"] = pd.Categorical(
-    base_seasons["feature_scope"], ordered=True
-)
+    DUMMIES["feature_scope"] = (
+        DUMMIES["feature_scope"].astype("category").cat.reorder_categories(flist)
+    )
 
-base_seasons["rank"] = base_seasons["child"].cat.codes
+    DUMMIES["feature_scope"] = pd.Categorical(DUMMIES["feature_scope"], ordered=True)
 
-col = base_seasons["child"]
-base_seasons.insert(0, "ts_frequency", col)
+    DUMMIES["rank"] = DUMMIES["child"].cat.codes
 
-base_seasons = base_seasons.replace(
-    {
-        "ts_frequency": {
-            "year": "Y",
-            "quarter": "Q",
-            "month": "M",
-            "week": "W",
-            "day": "D",
-            "hour": "H",
-            "minute": "T",
-            "second": "S",
-            "millisecond": "L",
+    col = DUMMIES["child"]
+    DUMMIES.insert(0, "ts_frequency", col)
+
+    DUMMIES = DUMMIES.replace(
+        {
+            "ts_frequency": {
+                "year": "Y",
+                "quarter": "Q",
+                "month": "M",
+                "week": "W",
+                "day": "D",
+                "hour": "H",
+                "minute": "T",
+                "second": "S",
+                "millisecond": "L",
+            }
         }
-    }
-)
+    )
+
+    return DUMMIES
+
+
+_RAW_DUMMIES = [
+    ["child", "parent", "dummy_func", "feature_scope"],
+    ["year", "year", "year", "minimal"],
+    ["quarter", "year", "quarter", "efficient"],
+    ["month", "year", "month", "minimal"],
+    ["week", "year", "week_of_year", "efficient"],
+    ["day", "year", "day", "efficient"],
+    ["month", "quarter", "month_of_quarter", "comprehensive"],
+    ["week", "quarter", "week_of_quarter", "comprehensive"],
+    ["day", "quarter", "day_of_quarter", "comprehensive"],
+    ["week", "month", "week_of_month", "comprehensive"],
+    ["day", "month", "day", "efficient"],
+    ["day", "week", "weekday", "minimal"],
+    ["hour", "day", "hour", "minimal"],
+    ["minute", "hour", "minute", "minimal"],
+    ["second", "minute", "second", "minimal"],
+    ["millisecond", "second", "millisecond", "minimal"],
+]
+
+DUMMIES = _prep_dummies(_RAW_DUMMIES)
 
 
 class DateTimeFeatures(_SeriesToSeriesTransformer):
     """DateTime Feature  Extraction for use in e.g. tree based models.
 
     DateTimeFeatures uses a date index column and generates date features
-    identifying e.g. year, week of the year, day of the week etc.
+    identifying e.g. year, week of the year, day of the week.
 
     Parameters
     ----------
@@ -173,9 +184,9 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
 
-        _check_ts_freq(self.ts_freq, base_seasons)
+        _check_ts_freq(self.ts_freq, DUMMIES)
         _check_feature_scope(self.feature_scope)
-        _check_manual_selection(self.manual_selection, base_seasons)
+        _check_manual_selection(self.manual_selection, DUMMIES)
 
         Z = check_series(Z)
         Z = Z.copy()
@@ -190,17 +201,15 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
 
         if self.manual_selection is None:
             if self.ts_freq is not None:
-                supported = _get_supported_calendar(self.ts_freq)
+                supported = _get_supported_calendar(self.ts_freq, DUMMIES=DUMMIES)
                 supported = supported[supported["feature_scope"] <= self.feature_scope]
                 calendar_dummies = supported["dummy_func"].to_list()
             else:
-                supported = base_seasons[
-                    base_seasons["feature_scope"] <= self.feature_scope
-                ]
+                supported = DUMMIES[DUMMIES["feature_scope"] <= self.feature_scope]
                 calendar_dummies = supported["dummy_func"].to_list()
         else:
             if self.ts_freq is not None:
-                supported = _get_supported_calendar(self.ts_freq)
+                supported = _get_supported_calendar(self.ts_freq, DUMMIES=DUMMIES)
                 if not all(
                     elem in supported["dummy"] for elem in self.manual_selection
                 ):
@@ -212,8 +221,8 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
                     supported["dummy"].isin(self.manual_selection), "dummy_func"
                 ]
             else:
-                calendar_dummies = base_seasons.loc[
-                    base_seasons["dummy"].isin(self.manual_selection), "dummy_func"
+                calendar_dummies = DUMMIES.loc[
+                    DUMMIES["dummy"].isin(self.manual_selection), "dummy_func"
                 ]
 
         df = [_calendar_dummies(x_df, dummy) for dummy in calendar_dummies]
@@ -224,13 +233,13 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         return Z
 
 
-def _check_manual_selection(manual_selection, base_seasons):
+def _check_manual_selection(manual_selection, DUMMIES):
     if (manual_selection is not None) and (
-        not all(elem in base_seasons["dummy"].unique() for elem in manual_selection)
+        not all(elem in DUMMIES["dummy"].unique() for elem in manual_selection)
     ):
         raise ValueError(
             "Invalid manual_selection specified, must be in: "
-            + ", ".join(base_seasons["dummy"].unique())
+            + ", ".join(DUMMIES["dummy"].unique())
         )
 
 
@@ -243,11 +252,11 @@ def _check_feature_scope(feature_scope):
         )
 
 
-def _check_ts_freq(ts_freq, base_seasons):
-    if (ts_freq is not None) & (ts_freq not in base_seasons["ts_frequency"].unique()):
+def _check_ts_freq(ts_freq, DUMMIES):
+    if (ts_freq is not None) & (ts_freq not in DUMMIES["ts_frequency"].unique()):
         raise ValueError(
             "Invalid ts_freq specified, must be in: "
-            + ", ".join(base_seasons["ts_frequency"].unique())
+            + ", ".join(DUMMIES["ts_frequency"].unique())
         )
 
 
@@ -306,9 +315,9 @@ def _calendar_dummies(x, funcs):
         return x[funcs]
 
 
-def _get_supported_calendar(ts_freq, base_seasons=base_seasons):
-    rank = base_seasons.loc[base_seasons["ts_frequency"] == ts_freq, "rank"].max()
-    matches = base_seasons.loc[base_seasons["rank"] <= rank]
+def _get_supported_calendar(ts_freq, DUMMIES):
+    rank = DUMMIES.loc[DUMMIES["ts_frequency"] == ts_freq, "rank"].max()
+    matches = DUMMIES.loc[DUMMIES["rank"] <= rank]
     if matches.shape[0] == 0:
         raise ValueError("Seasonality or Frequency not supported")
     return matches
