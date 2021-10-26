@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for objects and fittable objects.
 
@@ -14,8 +15,8 @@ Interface specifications below.
     class name: BaseObject
 
 Hyper-parameter inspection and setter methods:
-    inspect hyper-parameters      - get_params()
-    setting hyper-parameters      - set_params(**params)
+    inspect hyper-parameters     - get_params()
+    setting hyper-parameters     - set_params(**params)
 
 Tag inspection and setter methods
     inspect tags (all)            - get_tags()
@@ -24,6 +25,10 @@ Tag inspection and setter methods
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags          - set_tag(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+
+Testing with default parameters methods
+    getting default parameters           - get_test_params()
+    get instance with default parameters - create_test_instance()
 
 ---
 
@@ -38,15 +43,12 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state check      - check_is_fitted (raises error if not is_fitted)
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
-
 from copy import deepcopy
 
 from sklearn import clone
@@ -129,25 +131,37 @@ class BaseObject(_BaseEstimator):
 
         return deepcopy(collected_tags)
 
-    def get_tag(self, tag_name, tag_value_default=None):
+    def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from estimator class and dynamic tag overrides.
 
         Parameters
         ----------
         tag_name : str
-            Name of tag value.
-        tag_value_default : any type
-            Default/fallback value if tag is not found.
+            Name of tag to be retrieved
+        tag_value_default : any type, optional; default=None
+            Default/fallback value if tag is not found
+        raise_error : bool
+            whether a ValueError is raised when the tag is not found
 
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of the `tag_name` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns `tag_value_default`.
+
+        Raises
+        ------
+        ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
+        ).keys()
         """
         collected_tags = self.get_tags()
 
-        return collected_tags.get(tag_name, tag_value_default)
+        tag_value = collected_tags.get(tag_name, tag_value_default)
+
+        if raise_error and tag_name not in collected_tags.keys():
+            raise ValueError(f"Tag with name {tag_name} could not be found.")
+
+        return tag_value
 
     def set_tags(self, **tag_dict):
         """Set dynamic tags to given values.
@@ -210,12 +224,15 @@ class BaseObject(_BaseEstimator):
 
     @classmethod
     def get_test_params(cls):
-        """Get default parameters of the estimator.
+        """Return testing parameter settings for the estimator.
 
         Returns
         -------
         params : dict or list of dict, default = {}
-            Default parameters related to the estimator class
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # imported inside the function to avoid circular imports
         from sktime.tests._config import ESTIMATOR_TEST_PARAMS
@@ -243,11 +260,11 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        instance : object of the class with default parameters
+        instance : instance of the class with default parameters
 
         Notes
         -----
-        get_test_params can return dict or list of dict.
+        `get_test_params` can return dict or list of dict.
         This function takes first or single dict that get_test_params returns, and
         constructs the object with that.
         """

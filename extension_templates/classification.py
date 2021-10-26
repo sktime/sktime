@@ -18,26 +18,33 @@ How to use this implementation template to implement a new estimator:
 - once complete: use as a local library, or contribute to sktime via PR
 
 Mandatory implements:
-    fitting         - _fit(self, X, y)
-    predicting      - _predict(self, X)
+    fitting                 - _fit(self, X, y)
+    predicting classes      - _predict(self, X)
 
 Optional implements:
-    fitted parameter inspection - get_fitted_params()
+    data conversion and capabilities tags - _tags
+    fitted parameter inspection           - get_fitted_params()
+    predicting class probabilities        - _predict_proba(self, X)
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
 
+Testing:
+    get default parameters for test instance(s) - get_test_params()
+    create a test instance of estimator class   - create_test_instance()
+
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+import numpy as np
 
 from sktime.classification.base import BaseClassifier
 
 # todo: add any necessary imports here
 
 
-class MyTSC(BaseClassifier):
+class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 
     todo: describe your custom time series classifier here
@@ -61,14 +68,17 @@ class MyTSC(BaseClassifier):
     and so on
     """
 
-    # todo: fill out estimator tags here
+    # optional todo: override base class estimator default tags here if necessary
     _tags = {
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "coerce-X-to-numpy": True,
+        "coerce-X-to-pandas": False,
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
+        "capability:multithreading": False,
     }
-    # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
@@ -88,8 +98,8 @@ class MyTSC(BaseClassifier):
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
 
-        # todo: change "MyTSC" to the name of the class
-        super(MyTSC, self).__init__()
+        # todo: change "MyTimeSeriesClassifier" to the name of the class
+        super(MyTimeSeriesClassifier, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -99,7 +109,7 @@ class MyTSC(BaseClassifier):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, X, y):
@@ -128,7 +138,7 @@ class MyTSC(BaseClassifier):
         # IMPORTANT: avoid side effects to X, y
 
     # todo: implement this, mandatory
-    def _predict(self, X):
+    def _predict(self, X) -> np.array:
         """Predict labels for sequences in X.
 
         core logic
@@ -149,6 +159,32 @@ class MyTSC(BaseClassifier):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
+    # if you do not implement it, then the default _predict_proba will be  called.
+    # the default simply calls predict and sets probas to 0 or 1.
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
+        of class membership.
+        """
+
+        # implement here
+        # IMPORTANT: avoid side effects to X
+
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -158,3 +194,31 @@ class MyTSC(BaseClassifier):
         fitted_params : dict
         """
         # implement here
+
+    # todo: return default parameters, so that a test instance can be created
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params

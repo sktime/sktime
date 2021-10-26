@@ -28,7 +28,7 @@ class BOSSEnsemble(BaseClassifier):
 
     Overview: Input "n" series of length "m" and BOSS performs a grid search over
     a set of parameter values, evaluating each with a LOOCV. It then retains
-    all ensemble members within 92% of the best by default for use in the ensmeble.
+    all ensemble members within 92% of the best by default for use in the ensemble.
     There are three primary parameters:
         - alpha: alphabet size
         - w: window length
@@ -76,6 +76,9 @@ class BOSSEnsemble(BaseClassifier):
         Length of all series (assumed equal).
     classifiers : list
        List of DecisionTree classifiers.
+    class_dictionary: dict
+        Dictionary of classes. Extracted from the data.
+
 
     See Also
     --------
@@ -284,7 +287,7 @@ class BOSSEnsemble(BaseClassifier):
 
         Returns
         -------
-        predicted_probs : array of shape (n_instances, n_classes)
+        dists : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
         self.check_is_fitted()
@@ -422,6 +425,8 @@ class IndividualBOSS(BaseClassifier):
         `max_ensemble_size` has been specified.
     series_length : int
         Length of all series (assumed equal).
+    class_dictionary: dict
+        Dictionary of classes. Extracted from the data.
 
     See Also
     --------
@@ -552,7 +557,7 @@ class IndividualBOSS(BaseClassifier):
 
         Returns
         -------
-        array of shape [n, self.n_classes]
+        dists : array of shape [n, self.n_classes]
         """
         preds = self.predict(X)
         dists = np.zeros((X.shape[0], self.num_classes))

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implements forecaster for applying different univariates by column."""
 
 __author__ = ["GuzalBulatova", "mloning"]
 __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
@@ -36,8 +35,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
     >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
-    >>> forecasters = [("trend", PolynomialTrendForecaster(), 0),\
-                        ("ses", ExponentialSmoothing(trend='add'), 1)]
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster(), 0),
+    ...     ("ses", ExponentialSmoothing(trend='add'), 1),
+    ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ColumnEnsembleForecaster(...)
@@ -47,7 +48,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

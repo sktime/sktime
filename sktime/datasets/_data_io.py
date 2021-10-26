@@ -8,6 +8,7 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
@@ -26,15 +27,21 @@ __all__ = [
     "load_uschange",
     "load_UCR_UEA_dataset",
     "load_PBS_dataset",
+    "load_gun_point_segmentation",
+    "load_electric_devices_segmentation",
+    "load_macroeconomic",
 ]
 
 __author__ = [
-    "Markus Löning",
-    "Sajay Ganesh",
-    "@big-o",
-    "Sebastiaan Koel",
-    "Emilia Rose",
-    "Tony Bagnall",
+    "mloning",
+    "sajaysurya",
+    "big-o",
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "yairbeer",
+    "patrickZIB",
+    "aiwalter",
 ]
 
 DIRNAME = "data"
@@ -175,6 +182,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         try:
             _download_and_extract(
                 url,
+                extract_path=extract_path,
             )
         except zipfile.BadZipFile as e:
             raise ValueError(
@@ -797,6 +805,82 @@ def load_uschange(y_name="Consumption"):
     return y, X
 
 
+def load_gun_point_segmentation():
+    """Load the GunPoint time series segmentation problem and returns X.
+
+    We group TS of the UCR GunPoint dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "GunPoint"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([900])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
+
+
+def load_electric_devices_segmentation():
+    """Load the Electric Devices segmentation problem and returns X.
+
+    We group TS of the UCR Electric Devices dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "ElectricDevices"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([1090, 4436, 5712, 7923])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
+
+
 def load_PBS_dataset():
     """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
 
@@ -834,4 +918,44 @@ def load_PBS_dataset():
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of scripts"
+    return y
+
+
+def load_macroeconomic():
+    """
+    Load the US Macroeconomic Data [1].
+
+    Returns
+    -------
+    y : pd.DataFrame
+     Time series
+
+    Notes
+    -----
+    US Macroeconomic Data for 1959Q1 - 2009Q3.
+
+    Dimensionality:     multivariate, 14
+    Series length:      203
+    Frequency:          Quarterly
+    Number of cases:    1
+
+    This data is kindly wrapped via `statsmodels.datasets.macrodata`.
+
+    References
+    ----------
+    ..[1] Wrapped via statsmodels:
+          https://www.statsmodels.org/dev/datasets/generated/macrodata.html
+    ..[2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
+          Bank of St. Louis; http://research.stlouisfed.org/fred2/;
+          accessed December 15, 2009.
+    ..[3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
+          http://www.bls.gov/data/; accessed December 15, 2009.
+    """
+    y = sm.datasets.macrodata.load_pandas().data
+    y["year"] = y["year"].astype(int).astype(str)
+    y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)
+    y["time"] = y["year"] + "-" + y["quarter"]
+    y.index = pd.PeriodIndex(data=y["time"], freq="Q", name="Period")
+    y = y.drop(columns=["year", "quarter", "time"])
+    y.name = "US Macroeconomic Data"
     return y

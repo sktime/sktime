@@ -10,34 +10,34 @@ __all__ = ["ProximityForest", "_CachedTransformer", "ProximityStump", "Proximity
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from scipy import stats
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.distances.elastic_cython import erp_distance
-from sktime.distances.elastic_cython import lcss_distance
-from sktime.distances.elastic_cython import msm_distance
-from sktime.distances.elastic_cython import twe_distance
-from sktime.distances.elastic_cython import wdtw_distance
-from sktime.classification.distance_based._proximity_forest_utils import max as _max
+
+from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._proximity_forest_utils import (
     arg_min as _arg_min,
 )
-from sktime.classification.base import BaseClassifier
+from sktime.classification.distance_based._proximity_forest_utils import max as _max
 from sktime.classification.distance_based._proximity_forest_utils import (
-    positive_dataframe_indices,
     max_instance_length,
     negative_dataframe_indices,
+    positive_dataframe_indices,
 )
 from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.distances.elastic_cython import (
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wdtw_distance,
+)
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -120,9 +120,14 @@ class _CachedTransformer(_PanelToPanelTransformer):
 def _derivative_distance(distance_measure, transformer):
     """Take derivative before conducting distance measure.
 
-    :param distance_measure: the distance measure to use
-    :param transformer: the transformer to use
-    :returns: a distance measure function with built in transformation
+    Parameters
+    ----------
+    distance_measure: the distance measure to use
+    transformer: the transformer to use
+
+    Return
+    ------
+    a distance measure function with built in transformation
     """
 
     def distance(instance_a, instance_b, **params):

@@ -1,7 +1,7 @@
 .. _meetups:
 
-Community meetups
-=================
+Meetups
+=======
 
 Join our discussions, tutorials, workshops and sprints!
 

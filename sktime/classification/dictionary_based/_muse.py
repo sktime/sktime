@@ -2,10 +2,10 @@
 """WEASEL+MUSE classifier.
 
 multivariate dictionary based classifier based on SFA transform, dictionaries
-and linear regression.
+and logistic regression.
 """
 
-__author__ = "Patrick Schäfer"
+__author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
@@ -23,8 +23,6 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class MUSE(BaseClassifier):
@@ -46,46 +44,48 @@ class MUSE(BaseClassifier):
              binning_strategy: the binning strategy used to disctrtize into
                                SFA words.
 
-
     Parameters
     ----------
-    anova:               boolean, default = True
+    anova: boolean, default = True
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
-
-    bigrams:             boolean, default = True
+    bigrams: boolean, default = True
         whether to create bigrams of SFA words
-
-    window_inc:          int, default = 4
+    window_inc: int, default = 4
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
-
-     p_threshold:      int, default = 0.05 (disabled by default)
+     p_threshold: int, default = 0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-
-    use_first_order_differences:    boolean, default = True
+    use_first_order_differences: boolean, default = True
         If set to True will add the first order differences of each dimension
         to the data.
-
-    random_state:        int or None,
+    random_state: int or None,
         Seed for random, integer
+
+    Attributes
+    ----------
+    word_length:
+    norm_option:
 
     See Also
     --------
     WEASEL
 
+    References
+    ----------
+    .. [1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
+        with WEASEL+MUSE", in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
+        https://arxiv.org/abs/1711.11343
+
     Notes
     -----
-    ..[1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
-    with WEASEL+MUSE",    in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
-    https://arxiv.org/abs/1711.11343
-    Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
-    classifiers/multivariate/WEASEL_MUSE.java
+    For the Java version, see
+    `MUSE <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/multivariate/WEASEL_MUSE.java>`_.
 
     Examples
     --------
@@ -100,12 +100,14 @@ class MUSE(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": True,
+        "capability:contractable": False,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
     }
 
     def __init__(
@@ -150,7 +152,7 @@ class MUSE(BaseClassifier):
 
         super(MUSE, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).
 
         Parameters
@@ -163,7 +165,6 @@ class MUSE(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, coerce_to_pandas=True)
         y = np.asarray(y)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
@@ -273,10 +274,9 @@ class MUSE(BaseClassifier):
         )
 
         self.clf.fit(all_words, y)
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n instances in X.
 
         Parameters
@@ -290,7 +290,7 @@ class MUSE(BaseClassifier):
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -305,9 +305,6 @@ class MUSE(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
-
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
 

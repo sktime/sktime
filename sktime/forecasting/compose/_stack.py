@@ -3,8 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecasters for combining forecasts via stacking."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["StackingForecaster"]
+
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -12,8 +14,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import SingleWindowSplitter
-
-from warnings import warn
+from sktime.utils.validation.forecasting import check_regressor
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
@@ -30,8 +31,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         The regressor is used as a meta-model and trained with the predictions
         of the ensemble forecasters as exog data and with y as endog data. The
         length of the data is dependent to the given fh. If None, then
-        a GradientBoostingRegressor(max_depth=5) is used. The regressor can also
-        be a sklearn.Pipeline().
+        a GradientBoostingRegressor(max_depth=5) is used.
+        The regressor can also be a sklearn.Pipeline().
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor.
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -42,31 +45,35 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     regressor_ : sklearn-like regressor
         Fitted meta-model (regressor)
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.compose import StackingForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecasters = [("trend", PolynomialTrendForecaster()),\
-                        ("naive", NaiveForecaster())]
-    >>> forecaster = StackingForecaster(forecasters=forecasters, n_jobs=2)
-    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster()),
+    ...     ("naive", NaiveForecaster()),
+    ... ]
+    >>> forecaster = StackingForecaster(forecasters=forecasters)
+    >>> forecaster.fit(y=y, fh=[1,2,3])
     StackingForecaster(...)
     >>> y_pred = forecaster.predict()
     """
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
-    def __init__(self, forecasters, regressor=None, n_jobs=None):
+    def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
+        self.random_state = random_state
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -88,7 +95,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             raise NotImplementedError()
 
         _, forecasters = self._check_forecasters()
-        self._check_regressor()
+        self.regressor_ = check_regressor(
+            regressor=self.regressor, random_state=self.random_state
+        )
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
