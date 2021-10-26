@@ -13,68 +13,6 @@ import pandas as pd
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
-
-def _prep_dummies(DUMMIES):
-    """Use to prepare dummy data.
-
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
-    """
-    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
-
-    date_order = [
-        "year",
-        "quarter",
-        "month",
-        "week",
-        "day",
-        "hour",
-        "minute",
-        "second",
-        "millisecond",
-    ]
-
-    DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
-    DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
-    DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-
-    DUMMIES["child"] = (
-        DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
-    )
-
-    flist = ["minimal", "efficient", "comprehensive"]
-
-    DUMMIES["feature_scope"] = (
-        DUMMIES["feature_scope"].astype("category").cat.reorder_categories(flist)
-    )
-
-    DUMMIES["feature_scope"] = pd.Categorical(DUMMIES["feature_scope"], ordered=True)
-
-    DUMMIES["rank"] = DUMMIES["child"].cat.codes
-
-    col = DUMMIES["child"]
-    DUMMIES.insert(0, "ts_frequency", col)
-
-    DUMMIES = DUMMIES.replace(
-        {
-            "ts_frequency": {
-                "year": "Y",
-                "quarter": "Q",
-                "month": "M",
-                "week": "W",
-                "day": "D",
-                "hour": "H",
-                "minute": "T",
-                "second": "S",
-                "millisecond": "L",
-            }
-        }
-    )
-
-    return DUMMIES
-
-
 _RAW_DUMMIES = [
     ["child", "parent", "dummy_func", "feature_scope"],
     ["year", "year", "year", "minimal"],
@@ -93,8 +31,6 @@ _RAW_DUMMIES = [
     ["second", "minute", "second", "minimal"],
     ["millisecond", "second", "millisecond", "minimal"],
 ]
-
-DUMMIES = _prep_dummies(_RAW_DUMMIES)
 
 
 class DateTimeFeatures(_SeriesToSeriesTransformer):
@@ -166,6 +102,7 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
+        self.dummies = _prep_dummies(_RAW_DUMMIES)
         super(DateTimeFeatures, self).__init__()
 
     def transform(self, Z, X=None):
@@ -184,9 +121,9 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
 
-        _check_ts_freq(self.ts_freq, DUMMIES)
+        _check_ts_freq(self.ts_freq, self.dummies)
         _check_feature_scope(self.feature_scope)
-        _check_manual_selection(self.manual_selection, DUMMIES)
+        _check_manual_selection(self.manual_selection, self.dummies)
 
         Z = check_series(Z)
         Z = Z.copy()
@@ -201,15 +138,17 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
 
         if self.manual_selection is None:
             if self.ts_freq is not None:
-                supported = _get_supported_calendar(self.ts_freq, DUMMIES=DUMMIES)
+                supported = _get_supported_calendar(self.ts_freq, DUMMIES=self.dummies)
                 supported = supported[supported["feature_scope"] <= self.feature_scope]
                 calendar_dummies = supported["dummy_func"].to_list()
             else:
-                supported = DUMMIES[DUMMIES["feature_scope"] <= self.feature_scope]
+                supported = self.dummies[
+                    self.dummies["feature_scope"] <= self.feature_scope
+                ]
                 calendar_dummies = supported["dummy_func"].to_list()
         else:
             if self.ts_freq is not None:
-                supported = _get_supported_calendar(self.ts_freq, DUMMIES=DUMMIES)
+                supported = _get_supported_calendar(self.ts_freq, DUMMIES=self.dummies)
                 if not all(
                     elem in supported["dummy"] for elem in self.manual_selection
                 ):
@@ -221,8 +160,8 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
                     supported["dummy"].isin(self.manual_selection), "dummy_func"
                 ]
             else:
-                calendar_dummies = DUMMIES.loc[
-                    DUMMIES["dummy"].isin(self.manual_selection), "dummy_func"
+                calendar_dummies = self.dummies.loc[
+                    self.dummies["dummy"].isin(self.manual_selection), "dummy_func"
                 ]
 
         df = [_calendar_dummies(x_df, dummy) for dummy in calendar_dummies]
@@ -321,3 +260,64 @@ def _get_supported_calendar(ts_freq, DUMMIES):
     if matches.shape[0] == 0:
         raise ValueError("Seasonality or Frequency not supported")
     return matches
+
+
+def _prep_dummies(DUMMIES):
+    """Use to prepare dummy data.
+
+    Includes defining function call names and ranking
+    of date information based on frequency (e.g. year
+    has a lower frequency than week).
+    """
+    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
+
+    date_order = [
+        "year",
+        "quarter",
+        "month",
+        "week",
+        "day",
+        "hour",
+        "minute",
+        "second",
+        "millisecond",
+    ]
+
+    DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
+    DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
+    DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
+
+    DUMMIES["child"] = (
+        DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
+    )
+
+    flist = ["minimal", "efficient", "comprehensive"]
+
+    DUMMIES["feature_scope"] = (
+        DUMMIES["feature_scope"].astype("category").cat.reorder_categories(flist)
+    )
+
+    DUMMIES["feature_scope"] = pd.Categorical(DUMMIES["feature_scope"], ordered=True)
+
+    DUMMIES["rank"] = DUMMIES["child"].cat.codes
+
+    col = DUMMIES["child"]
+    DUMMIES.insert(0, "ts_frequency", col)
+
+    DUMMIES = DUMMIES.replace(
+        {
+            "ts_frequency": {
+                "year": "Y",
+                "quarter": "Q",
+                "month": "M",
+                "week": "W",
+                "day": "D",
+                "hour": "H",
+                "minute": "T",
+                "second": "S",
+                "millisecond": "L",
+            }
+        }
+    )
+
+    return DUMMIES
