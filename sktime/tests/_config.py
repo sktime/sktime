@@ -14,6 +14,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
+from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.classification.compose import (
     ColumnEnsembleClassifier,
@@ -107,6 +108,7 @@ from sktime.transformations.series.acf import (
 )
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.transformations.series.compose import (
     ColumnwiseTransformer,
     OptionalPassthrough,
@@ -374,6 +376,8 @@ ESTIMATOR_TEST_PARAMS = {
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
+    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
+    ClaSPTransformer: {"window_length": 5},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
