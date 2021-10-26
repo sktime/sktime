@@ -5,7 +5,7 @@ Hybrid ensemble of classifiers from 4 separate time series classification
 representations, using the weighted probabilistic CAWPE as an ensemble controller.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["HIVECOTEV1"]
 
 from datetime import datetime
