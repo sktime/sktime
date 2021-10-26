@@ -63,6 +63,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does fit contain no logic and can be skipped? yes/no",
     ),
     (
+        "fit-in-predict",
+        "estimator",
+        "bool",
+        "does fit contain no logic and can be skipped? yes/no",
+    ),
+    (
         "transform-returns-same-time-index",
         "transformer",
         "bool",
@@ -177,7 +183,7 @@ ESTIMATOR_TAG_REGISTER = [
         "coerce-X-to-pandas",
         ["classifier", "transformer"],
         "bool",
-        "should X be coerced to a nested pandas DataFrame.? yes/no",
+        "should X be coerced to a nested pandas DataFrame?",
     ),
     # (
     #     "handles-panel",
