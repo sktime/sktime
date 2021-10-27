@@ -297,7 +297,7 @@ def test_predict_quantiles(Forecaster, fh, alpha):
         f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-        if "_predict_quantiles" not in type(f).__dict__.keys():
+        if not f._has_predict_quantiles_been_refactored():
             with pytest.raises(NotImplementedError):
                 f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
         else:
@@ -315,7 +315,7 @@ def test_predict_interval(Forecaster, fh, alpha):
         f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-        if "predict_interval" not in type(f).__dict__.keys():
+        if not f._has_predict_quantiles_been_refactored():
             with pytest.raises(NotImplementedError):
                 f.predict_interval(fh=fh, coverage=alpha)
         else:

@@ -221,7 +221,7 @@ class BaseForecaster(BaseEstimator):
                 FutureWarning,
             )
 
-            if "predict_interval" not in type(self).__dict__.keys():
+            if not self._has_predict_quantiles_been_refactored():
                 # this means the method is not refactored
                 y_pred = self._predict(
                     self.fh,
@@ -241,7 +241,7 @@ class BaseForecaster(BaseEstimator):
                 pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
 
                 if keep_old_return_type:
-                    pred_int = _temp_new_to_old_transformer(pred_int, alpha)
+                    pred_int = _convert_new_to_old_pred_int(pred_int, alpha)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -387,11 +387,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
 
         coverage = check_alpha(coverage)
-        alphas = []
-        for c in coverage:
-            alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
-        alphas.sort()
-        pred_int = self._predict_quantiles(fh=None, X=X_inner, alpha=alphas)
+        pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
         return pred_int
 
     def update(self, y, X=None, update_params=True):
@@ -1101,7 +1097,7 @@ class BaseForecaster(BaseEstimator):
         fh,
         X=None,
         update_params=True,
-        # todo deprecate return_pred_int in v 10.0.1
+        # todo: deprecate return_pred_int in v 10.0.1
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
     ):
@@ -1114,7 +1110,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _predict_interval(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+    def _predict_interval(self, fh, X, coverage):
         """
         Compute/return prediction intervals for a forecast.
 
@@ -1139,14 +1135,14 @@ class BaseForecaster(BaseEstimator):
            Prediction intervals with fh as row index. Column multi-index with
            first level being the variable name, second level being the alpha value.
         """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not have the capability to return "
-            "prediction intervals. If you "
-            "think this estimator should have the capability, please open "
-            "an issue on sktime."
-        )
+        alphas = []
+        for c in coverage:
+            alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
+        alphas.sort()
+        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        return pred_int
 
-    def _predict_quantiles(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+    def _predict_quantiles(self, fh, X, alpha):
         """
         Compute/return prediction quantiles for a forecast.
 
@@ -1229,6 +1225,13 @@ class BaseForecaster(BaseEstimator):
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
+    # TODO: remove in v0.10.0
+    def _has_predict_quantiles_been_refactored(self):
+        if "_predict_quantiles" in type(self).__dict__.keys():
+            return True
+        else:
+            return False
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
@@ -1280,19 +1283,22 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
     return y_pred
 
 
-def _convert_new_to_old_pred_int(pred_int_new, alpha, name="quantiles"):
+# TODO: remove in v0.10.0
+def _convert_new_to_old_pred_int(pred_int_new, alpha):
+    name = pred_int_new.columns.get_level_values(0).unique()[0]
+    alpha = check_alpha(alpha)
     pred_int_old_format = [
         pd.DataFrame(
             {
-                "lower": pred_int_new_format[name, a / 2],
-                "upper": pred_int_new_format[name, 1 - (a / 2)],
+                "lower": pred_int_new[name, a / 2],
+                "upper": pred_int_new[name, 1 - (a / 2)],
             }
         )
         for a in alpha
     ]
 
     # for a single alpha, return single pd.DataFrame
-    if isinstance(alpha, float):
+    if len(alpha) == 1:
         return pred_int_old_format[0]
 
     # otherwise return list of pd.DataFrames
