@@ -376,7 +376,7 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
     NetworkPipelineForecaster: {
         "steps": [
             (
