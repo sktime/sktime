@@ -224,7 +224,7 @@ class BaseForecaster(BaseEstimator):
                 "return_pred_int in predict() will be deprecated;"
                 "please use predict_interval() instead to generate "
                 "prediction intervals.",
-                DeprecationWarning,
+                FutureWarning,
             )
 
             if "predict_interval" not in type(self).__dict__.keys():
