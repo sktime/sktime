@@ -6,14 +6,13 @@ Base class template for forecaster scitype.
     class name: BaseForecaster
 
 Scitype defining methods:
-    fitting         - fit(self, y, X=None, fh=None)
-    forecasting     - predict(self, fh=None, X=None, return_pred_int=False,
-                              alpha=DEFAULT_ALPHA)
-    fit&forecast    - fit_predict(self, y, X=None, fh=None,
-                              return_pred_int=False, alpha=DEFAULT_ALPHA)
-    updating        - update(self, y, X=None, update_params=True)
-    update&forecast - update_predict(y, cv=None, X=None, update_params=True,
-                        return_pred_int=False, alpha=DEFAULT_ALPHA)
+    fitting            - fit(y, X=None, fh=None)
+    forecasting        - predict(fh=None, X=None)
+    fit&forecast       - fit_predict(y, X=None, fh=None)
+    forecast intervals - predict_interval(fh=None, X=None, coverage=0.90)
+    forecast quantiles - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
+    updating           - update(y, X=None, update_params=True)
+    update&forecast    - update_predict(cv=None, X=None, update_params=True)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -25,7 +24,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
 
 __all__ = ["BaseForecaster"]
 
@@ -317,16 +316,20 @@ class BaseForecaster(BaseEstimator):
             fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
         )
 
-    def predict_quantiles(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
-        """
-        Compute/return prediction quantiles for a forecast.
-
-        Must be run *after* the forecaster has been fitted.
+    def predict_quantiles(self, fh=None, X=None, alpha=[0.05, 0.95]):
+        """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
 
-        public method including checks & utility
-        dispatches to core logic in _predict_quantiles
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed in _fit.
 
         Parameters
         ----------
@@ -334,14 +337,16 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
+        alpha : float or list of float, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
 
         Returns
         -------
         quantiles : pd.DataFrame
-            Prediction quantiles with fh as row index. Column multi-index with
-            first level being the variable name, second level being the alpha value.
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         self.check_is_fitted()
         self._set_fh(fh)
@@ -355,15 +360,21 @@ class BaseForecaster(BaseEstimator):
         self,
         fh=None,
         X=None,
-        coverage=0.95,
+        coverage=0.90,
     ):
-        """
-        Compute/return prediction intervals for a forecast.
+        """Compute/return prediction interval forecasts.
 
-        Must be run *after* the forecaster has been fitted.
+        If coverage is iterable, multiple intervals will be calculated.
 
-        If alpha is iterable, multiple intervals will be calculated.
+        State required:
+            Requires state to be "fitted".
 
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed in _fit.
 
         Parameters
         ----------
@@ -371,14 +382,16 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : float or list, optional (default=0.95)
-
+        coverage : float or list of float, optional (default=0.90)
 
         Returns
         -------
         pred_int : pd.DataFrame
-            Prediction intervals with fh as row index. Column multi-index with
-            first level being the variable name, second level being the alpha value.
+            Column has multi-index: first level is variable name from y in fit,
+                second level being quantile fractions for interval low-high.
+                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         # input check for X
 
@@ -1111,14 +1124,14 @@ class BaseForecaster(BaseEstimator):
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict_interval(self, fh, X, coverage):
-        """
-        Compute/return prediction intervals for a forecast.
+        """Compute/return prediction interval forecasts.
 
-        Must be run *after* the forecaster has been fitted.
+        If coverage is iterable, multiple intervals will be calculated.
 
-        If alpha is iterable, multiple intervals will be calculated.
+            core logic
 
-        Core logic
+        State required:
+            Requires state to be "fitted".
 
         Parameters
         ----------
@@ -1132,8 +1145,11 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         pred_int : pd.DataFrame
-           Prediction intervals with fh as row index. Column multi-index with
-           first level being the variable name, second level being the alpha value.
+            Column has multi-index: first level is variable name from y in fit,
+                second level being quantile fractions for interval low-high.
+                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         alphas = []
         for c in coverage:
@@ -1156,14 +1172,16 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list, optional (default=0.95)
-            A quantile or list of quantile.
+        alpha : float or list of float, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
 
         Returns
         -------
         quantiles : pd.DataFrame
-            Prediction quantiles with fh as row index. Column multi-index with
-            first level being the variable name, second level being the alpha value.
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not have the capability to return "
