@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements automatic and manually exponential time series smoothing models."""
+
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 from itertools import product
-from joblib import delayed, Parallel
+
 import numpy as np
+from joblib import Parallel, delayed
+from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class AutoETS(_StatsModelsAdapter):
-    """
-    ETS models with both manual and automatic fitting capabilities.
+    """ETS models with both manual and automatic fitting capabilities.
 
     Manual fitting is adapted from statsmodels' version,
     while automatic fitting is adapted from R version of ets.
@@ -135,6 +140,10 @@ class AutoETS(_StatsModelsAdapter):
     additive_only : bool, optional
         If True, will only consider additive models.
         Default is False.
+    ignore_inf_ic: bool, optional
+        If True models with negative infinity Information Criterion
+        (aic, bic, aicc) will be ignored.
+        Default is True
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -142,12 +151,12 @@ class AutoETS(_StatsModelsAdapter):
 
     References
     ----------
-    [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
-        principles and practice*, 3rd edition, OTexts: Melbourne,
-        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
+       principles and practice*, 3rd edition, OTexts: Melbourne,
+       Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.ets import AutoETS
     >>> y = load_airline()
@@ -156,6 +165,8 @@ class AutoETS(_StatsModelsAdapter):
     AutoETS(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
+
+    _fitted_param_names = ("aic", "aicc", "bic", "hqic")
 
     def __init__(
         self,
@@ -183,6 +194,7 @@ class AutoETS(_StatsModelsAdapter):
         allow_multiplicative_trend=False,
         restrict=True,
         additive_only=False,
+        ignore_inf_ic=True,
         n_jobs=None,
         **kwargs
     ):
@@ -214,6 +226,7 @@ class AutoETS(_StatsModelsAdapter):
         self.allow_multiplicative_trend = allow_multiplicative_trend
         self.restrict = restrict
         self.additive_only = additive_only
+        self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
         super(AutoETS, self).__init__()
@@ -299,14 +312,27 @@ class AutoETS(_StatsModelsAdapter):
                 )
             )
 
+            # Store IC values for each model in a list
+            # Ignore infinite likelihood models if ignore_inf_ic is True
+            _ic_list = []
+            for result in _fitted_results:
+                ic = getattr(result[1], self.information_criterion)
+                if self.ignore_inf_ic and np.isinf(ic):
+                    _ic_list.append(np.nan)
+                else:
+                    _ic_list.append(ic)
+
             # Select best model based on information criterion
-            # Get index of best model
-            _index = np.argmin(
-                [
-                    getattr(result[1], self.information_criterion)
-                    for result in _fitted_results
-                ]
-            )
+            if np.all(np.isnan(_ic_list)) or len(_ic_list) == 0:
+                # if all models have infinite IC raise an error
+                raise ValueError(
+                    "None of the fitted models have finite %s"
+                    % self.information_criterion
+                )
+            else:
+                # Get index of best model
+                _index = np.nanargmin(_ic_list)
+
             # Update best model
             self._forecaster = _fitted_results[_index][0]
             self._fitted_forecaster = _fitted_results[_index][1]
@@ -339,9 +365,9 @@ class AutoETS(_StatsModelsAdapter):
             )
 
     def summary(self):
-        """
-        Get a summary of the fitted forecaster,
-        same as the implementation in statsmodels:
+        """Get a summary of the fitted forecaster.
+
+        This is the same as the implementation in statsmodels:
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()

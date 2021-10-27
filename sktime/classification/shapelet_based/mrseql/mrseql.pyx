@@ -224,9 +224,11 @@ class MrSEQLClassifier(BaseClassifier):
 
     # Capability tags
     capabilities = {
-        "multivariate": False,
+        "multivariate": True,
         "unequal_length": False,
-        "missing_values": False
+        "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
@@ -384,11 +386,12 @@ class MrSEQLClassifier(BaseClassifier):
             return self.seql_clf.predict_proba(mr_seqs)
 
     def predict(self, X):
-        """
-        Predict class labels for samples in X.
+        """Predict class labels for samples in X.
+
         Parameters
         ----------
         X : time series data.
+
         Returns
         -------
         C : array
@@ -398,7 +401,8 @@ class MrSEQLClassifier(BaseClassifier):
         return np.array([self.classes_[np.argmax(prob)] for prob in proba])
 
     def map_sax_model(self, ts):
-        """    For interpretation.
+        """For interpretation.
+
         Returns vectors of weights with the same length of the input time series.
         The weight of each point implies its contribution in the classification decision regarding the class.
 
@@ -410,8 +414,8 @@ class MrSEQLClassifier(BaseClassifier):
         -------
         weighted_ts: ndarray of (number of classes, length of time series)
 
-        Note
-        -------
+        Notes
+        -----
         Only supports univariate time series and SAX features.
         """
         self.check_is_fitted()

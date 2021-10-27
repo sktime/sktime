@@ -2,13 +2,15 @@
 __author__ = "Angus Dempster"
 __all__ = ["Rocket"]
 
+import multiprocessing
+
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
 
-from numba import njit
+from numba import njit, get_num_threads, set_num_threads
 from numba import prange
 
 
@@ -31,13 +33,16 @@ class Rocket(_PanelToTabularTransformer):
     num_kernels  : int, number of random convolutional kernels (default 10,000)
     normalise    : boolean, whether or not to normalise the input time
     series per instance (default True)
+    n_jobs             : int, optional (default=1) The number of jobs to run in
+    parallel for `transform`. ``-1`` means using all processors.
     random_state : int (ignored unless int due to compatability with Numba),
     random seed (optional, default None)
     """
 
-    def __init__(self, num_kernels=10_000, normalise=True, random_state=None):
+    def __init__(self, num_kernels=10_000, normalise=True, n_jobs=1, random_state=None):
         self.num_kernels = num_kernels
         self.normalise = normalise
+        self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
         super(Rocket, self).__init__()
 
@@ -81,7 +86,15 @@ class Rocket(_PanelToTabularTransformer):
             _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
                 _X.std(axis=-1, keepdims=True) + 1e-8
             )
-        return pd.DataFrame(_apply_kernels(_X, self.kernels))
+        prev_threads = get_num_threads()
+        if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
+            n_jobs = multiprocessing.cpu_count()
+        else:
+            n_jobs = self.n_jobs
+        set_num_threads(n_jobs)
+        t = pd.DataFrame(_apply_kernels(_X, self.kernels))
+        set_num_threads(prev_threads)
+        return t
 
 
 @njit(

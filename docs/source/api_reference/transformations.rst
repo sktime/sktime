@@ -1,14 +1,14 @@
 .. _transformations_ref:
 
-sktime.transformations: Time series transformers
-=============================================
+Time series transformations
+===========================
 
 The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
 .. automodule:: sktime.transformations
-    :no-members:
-    :no-inherited-members:
+   :no-members:
+   :no-inherited-members:
 
 Panel transformers
 ------------------
@@ -19,7 +19,7 @@ Dictionary-based
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     PAA
@@ -32,7 +32,7 @@ Summarize
 .. currentmodule:: sktime.transformations.panel.summarize
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     DerivativeSlopeTransformer
@@ -46,7 +46,7 @@ tsfresh
 .. currentmodule:: sktime.transformations.panel.tsfresh
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     TSFreshRelevantFeatureExtractor
@@ -55,10 +55,10 @@ tsfresh
 Catch22
 ~~~~~~~
 
-.. currentmodule:: sktime.transformations.panel.catch22_features
+.. currentmodule:: sktime.transformations.panel.catch22
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Catch22
@@ -69,7 +69,7 @@ Compose
 .. currentmodule:: sktime.transformations.panel.compose
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     ColumnTransformer
@@ -78,7 +78,7 @@ Compose
     SeriesToPrimitivesRowTransformer
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     make_row_transformer
@@ -89,7 +89,7 @@ Matrix profile
 .. currentmodule:: sktime.transformations.panel.matrix_profile
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     MatrixProfile
@@ -100,7 +100,7 @@ PCA
 .. currentmodule:: sktime.transformations.panel.pca
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     PCATransformer
@@ -111,7 +111,7 @@ Reduce
 .. currentmodule:: sktime.transformations.panel.reduce
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Tabularizer
@@ -122,7 +122,7 @@ Rocket
 .. currentmodule:: sktime.transformations.panel.rocket
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Rocket
@@ -135,7 +135,7 @@ Segment
 .. currentmodule:: sktime.transformations.panel.segment
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     IntervalSegmenter
@@ -147,11 +147,22 @@ Shapelet
 .. currentmodule:: sktime.transformations.panel.shapelets
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     ShapeletTransform
     ContractedShapeletTransform
+
+Signature
+~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.signature_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureTransformer
 
 Series transformers
 -------------------
@@ -162,7 +173,7 @@ Detrend
 .. currentmodule:: sktime.transformations.series.detrend
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Detrender
@@ -175,22 +186,33 @@ Adapt
 .. currentmodule:: sktime.transformations.series.adapt
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     TabularToSeriesAdaptor
 
-Box-cox
+Box-Cox
 ~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.boxcox
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     BoxCoxTransformer
     LogTransformer
+
+Difference
+~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.difference
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Differencer
 
 Auto-correlation
 ~~~~~~~~~~~~~~~~
@@ -198,7 +220,7 @@ Auto-correlation
 .. currentmodule:: sktime.transformations.series.acf
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     AutoCorrelationTransformer
@@ -210,10 +232,22 @@ Cosine
 .. currentmodule:: sktime.transformations.series.cos
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     CosineTransformer
+
+Exponent
+~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.exponent
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ExponentTransformer
+    SqrtTransformer
 
 Matrix Profile
 ~~~~~~~~~~~~~~
@@ -221,40 +255,63 @@ Matrix Profile
 .. currentmodule:: sktime.transformations.series.matrix_profile
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     MatrixProfileTransformer
 
-Imputer
-~~~~~~~~~~~~~~
+Missing value imputation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Imputer
 
-HampelFilter
-~~~~~~~~~~~~~~
+Outlier detection
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.outlier_detection
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     HampelFilter
 
-OptionalPassthrough
-~~~~~~~~~~~~~~
+Composition
+~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.compose
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     OptionalPassthrough
+    ColumnwiseTransformer
+
+Theta
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer
+
+FeatureSelection
+~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.feature_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FeatureSelection

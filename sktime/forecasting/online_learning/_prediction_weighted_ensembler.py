@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements online algorithms for prediction weighted ensembles."""
+
 import numpy as np
 from scipy.optimize import bisect
 from scipy.optimize import nnls
 
 
 class _PredictionWeightedEnsembler:
-    """Wrapper class to handle ensemble algorithms that use multiple forecasters
-    for prediction. We implement default methods for setting uniform weights,
-    updating and prediction.
+    """Wrapper class to handle ensemble algorithms that use multiple forecasters.
+
+    This implements default methods for setting uniform weights, updating
+    and prediction.
 
     Parameters
     ----------
@@ -17,15 +22,20 @@ class _PredictionWeightedEnsembler:
         loss function which follows sklearn.metrics API, for updating weights
     """
 
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, n_estimators=10, loss_func=None):
         self.n_estimators = n_estimators
         self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
         super(_PredictionWeightedEnsembler, self).__init__()
 
-    def predict(self, y_pred):
-        """Performs prediction by taking a weighted average of the estimator
-            predictions w.r.t the weights vector
+    def _predict(self, y_pred):
+        """Make predictions by taking weighted average of forecaster predictions.
 
         Parameters
         ----------
@@ -42,8 +52,7 @@ class _PredictionWeightedEnsembler:
         return prediction
 
     def _modify_weights(self, new_array):
-        """Performs a pointwise multiplication of the current
-        weights with a new array of weights.
+        """Multiply pointwise the current weights with a new array of weights.
 
         Parameters
         ----------
@@ -53,9 +62,11 @@ class _PredictionWeightedEnsembler:
         self.weights = self.weights * new_array
         self.weights /= np.sum(self.weights)
 
-    def update(self, y_pred, y_true):
-        """Resets the weights over the estimators by passing previous observations
-            to the weighting algorithm
+    def _update(self, y_pred, y_true):
+        """Update fitted paramters and performs a new ensemble fit.
+
+        Resets the weights over the estimators by passing previous
+        observations to the weighting algorithm.
 
         Parameters
         ----------
@@ -67,7 +78,7 @@ class _PredictionWeightedEnsembler:
         raise NotImplementedError()
 
     def _uniform_weights(self, n_estimators):
-        """Resets weights for n estimator to uniform weights
+        """Reset weights for n estimator to uniform weights.
 
         Parameters
         ----------
@@ -79,8 +90,10 @@ class _PredictionWeightedEnsembler:
 
 
 class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
-    """Wrapper class to set parameters for hedge-style ensemble algorithms with
-    a forecasting horizon and normalizing constant.
+    """Use hedge-style ensemble algorithms.
+
+    Wrapper for hedge-style ensemble algorithms with a forecasting horizon and
+    normalizing constant.
 
     Parameters
     ----------
@@ -94,6 +107,12 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
         loss function which follows sklearn.metrics API, for updating weights
     """
 
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, n_estimators=10, T=10, a=1, loss_func=None):
         super().__init__(n_estimators=n_estimators, loss_func=loss_func)
         self.T = T
@@ -103,7 +122,9 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
 
 
 class NormalHedgeEnsemble(HedgeExpertEnsemble):
-    """Implementation of A Parameter-free Hedging Algorithm,
+    """Parameter free hedging algorithm.
+
+    Implementation of A Parameter-free Hedging Algorithm,
     Kamalika Chaudhuri, Yoav Freund, Daniel Hsu (2009) as a hedge-style
     algorithm.
 
@@ -119,13 +140,21 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         loss function which follows sklearn.metrics API, for updating weights
     """
 
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, n_estimators=10, a=1, loss_func=None):
         super().__init__(n_estimators=n_estimators, T=None, a=a, loss_func=loss_func)
         self.R = np.zeros(n_estimators)
 
     def update(self, y_pred, y_true, low_c=0.01):
-        """Resets the weights over the estimators by passing previous observations
-            and updating based on Normal Hedge.
+        """Update forecaster weights.
+
+        The weights are updated over the estimators by passing previous
+        observations and updating based on Normal Hedge.
 
         Parameters
         ----------
@@ -152,7 +181,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             self._update_weights(low_c=low_c)
 
     def _update_weights(self, low_c=0.01):
-        """Updates the weights on each of the estimators by performing a potential
+        """Update forecaster weights.
+
+        Update the weights on each of the estimators by performing a potential
         function update with a root-finding search. low_c represents the lower
         bound on the window that the root finding is occuring over.
 
@@ -161,7 +192,6 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         low_c : float
             lowest value that c can take
         """
-
         # Calculating Normalizing Constant
         R_plus = np.array(list(map(lambda x: 0 if 0 > x else x, self.R)))
         normalizing_R = np.max(R_plus)
@@ -172,7 +202,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         high_c = (max(R_plus) ** 2) / 2
 
         def _pot(c):
-            """Internal Potential Function
+            """Calculate algorithm's potential Function.
 
             Parameters
             ----------
@@ -188,7 +218,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         c_t = bisect(_pot, low_c, high_c)
 
         def _prob(r, c_t):
-            """Internal Probability Function
+            """Calculate algorithm's probability Function.
 
             Parameters
             ----------
@@ -209,7 +239,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
 
 
 class NNLSEnsemble(_PredictionWeightedEnsembler):
-    """Ensemble class that performs a non-negative least squares to fit to the
+    """Ensemble forecasts with Non-negative least squares based weighting.
+
+    Ensemble class that performs a non-negative least squares to fit to the
     estimators. Keeps track of all observations seen so far and fits to it.
 
     Parameters
@@ -220,12 +252,27 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
         loss function which follows sklearn.metrics API, for updating weights
     """
 
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, n_estimators=10, loss_func=None):
         super().__init__(n_estimators=n_estimators, loss_func=loss_func)
         self.total_y_pred = np.empty((n_estimators, 0))
         self.total_y_true = np.empty(0)
 
     def update(self, y_pred, y_true):
+        """Update the online ensemble with new data.
+
+        Parameters
+        ----------
+        y_pred : np.array(), shape=(time_axis,estimator_axis)
+            array with predictions from the estimators
+        y_true : np.array(), shape=(time_axis)
+            array with actual values for predicted quantity
+        """
         self.total_y_pred = np.concatenate((self.total_y_pred, y_pred), axis=1)
         self.total_y_true = np.concatenate((self.total_y_true, y_true))
         weights, loss = nnls(self.total_y_pred.T, self.total_y_true)

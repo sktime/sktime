@@ -1,122 +1,115 @@
 # -*- coding: utf-8 -*-
-""" WEASEL classifier
-dictionary based classifier based on SFA transform, BOSS and linear regression.
+"""WEASEL classifier.
+
+Dictionary based classifier based on SFA transform, BOSS and linear regression.
 """
 
-__author__ = ["Patrick Schäfer", "Arik Ermshaus"]
+__author__ = ["patrickzib", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
+
 import numpy as np
+from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
-
-from joblib import Parallel, delayed
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
-
-# from sklearn.feature_selection import chi2
-# from numba.typed import Dict
 
 
 class WEASEL(BaseClassifier):
-    """
-    Word ExtrAction for time SEries cLassification (WEASEL) from [1].
+    """Word Extraction for Time Series Classification (WEASEL).
 
-    # Overview: Input n series length m
-    # WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
-    # for different window lengths and learns a logistic regression classifier
-    # on this bag.
-    #
-    # There are these primary parameters:
-    #         alphabet_size: alphabet size
-    #         chi2-threshold: used for feature selection to select best words
-    #         anova: select best l/2 fourier coefficients other than first ones
-    #         bigrams: using bigrams of SFA words
-    #         binning_strategy: the binning strategy used to discretise into
-    #                           SFA words.
-    #
-    # WEASEL slides a window length w along the series. The w length window
-    # is shortened to an l length word through taking a Fourier transform and
-    # keeping the best l/2 complex coefficients using an anova one-sided
-    # test. These l coefficients are then discretised into alpha possible
-    # symbols, to form a word of length l. A histogram of words for each
-    # series is formed and stored.
-    # For each window-length a bag is created and all words are joint into
-    # one bag-of-patterns. Words from different window-lengths are
-    # discriminated by different prefixes.
-    #
-    # fit involves training a logistic regression classifier on the single
-    # bag-of-patterns.
-    #
-    # predict uses the logistic regression classifier
+    Overview: Input n series length m
+    WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
+    for different window lengths and learns a logistic regression classifier
+    on this bag.
 
-    # For the Java version, see
-    # https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    # /tsml/classifiers/dictionary_based/WEASEL.java
+    There are these primary parameters:
+            alphabet_size: alphabet size
+            chi2-threshold: used for feature selection to select best words
+            anova: select best l/2 fourier coefficients other than first ones
+            bigrams: using bigrams of SFA words
+            binning_strategy: the binning strategy used to discretise into
+                             SFA words.
+    WEASEL slides a window length w along the series. The w length window
+    is shortened to an l length word through taking a Fourier transform and
+    keeping the best l/2 complex coefficients using an anova one-sided
+    test. These l coefficients are then discretised into alpha possible
+    symbols, to form a word of length l. A histogram of words for each
+    series is formed and stored.
+    For each window-length a bag is created and all words are joint into
+    one bag-of-patterns. Words from different window-lengths are
+    discriminated by different prefixes.
+    fit involves training a logistic regression classifier on the single
+    bag-of-patterns.
 
+    predict uses the logistic regression classifier
 
     Parameters
     ----------
-    anova:               boolean, default = True
+    anova: boolean, default=True
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
-
-    bigrams:             boolean, default = True
+    bigrams: boolean, default=True
         whether to create bigrams of SFA words
-
-    binning_strategy:    {"equi-depth", "equi-width", "information-gain"},
-                         default="information-gain"
+    binning_strategy: {"equi-depth", "equi-width", "information-gain"},
+    default="information-gain"
         The binning method used to derive the breakpoints.
-
-    window_inc:          int, default = 4
+    window_inc: int, default=4
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
-
-    p_threshold:      int, default = 0.05 (disabled by default)
+    p_threshold:  int, default=0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-
-    random_state:        int or None,
+    random_state: int or None, default=None
         Seed for random, integer
 
     Attributes
     ----------
+    n_classes_ : int
+        The number of classes.
+    classes_ : list
+        The classes labels.
 
-     classes_    : List of classes for a given problem
+    See Also
+    --------
+    MUSE
+
+    References
+    ----------
+    .. [1] Patrick Schäfer and Ulf Leser, "Fast and Accurate Time Series Classification
+    with WEASEL", in proc ACM on Conference on Information and Knowledge Management,
+    2017, https://dl.acm.org/doi/10.1145/3132847.3132980
 
     Notes
     -----
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    /tsml/classifiers/dictionary_based/WEASEL.java>`_.
 
-    ..[1]  Patrick Schäfer and Ulf Leser,    :
-    @inproceedings{schafer2017fast,
-      title={Fast and Accurate Time Series Classification with WEASEL},
-      author={Sch{\"a}fer, Patrick and Leser, Ulf},
-      booktitle={Proceedings of the 2017 ACM on Conference on Information and
-                 Knowledge Management},
-      pages={637--646},
-      year={2017}
-    }
-    https://dl.acm.org/doi/10.1145/3132847.3132980
-
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import WEASEL
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = WEASEL(window_inc=4)
+    >>> clf.fit(X_train, y_train)
+    WEASEL(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
-    # Capabilities: data types this classifier can handle
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
+    _tags = {
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -158,30 +151,28 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
-        self.classes_ = []
 
         super(WEASEL, self).__init__()
 
-    def fit(self, X, y):
-        """Build a WEASEL classifiers from the training set (X, y),
+    def _fit(self, X, y):
+        """Build a WEASEL classifiers from the training set (X, y).
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
-        self : object
+        self :
+            Reference to self.
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
-
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        win_inc = self.compute_window_inc()
+        win_inc = self._compute_window_inc()
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -246,12 +237,14 @@ class WEASEL(BaseClassifier):
                         if (not apply_chi_squared) or (key in relevant_features):
                             # append the prefixes to the words to
                             # distinguish between window-sizes
-                            word = WEASEL.shift_left(key, self.highest_bit, window_size)
+                            word = WEASEL._shift_left(
+                                key, self.highest_bit, window_size
+                            )
                             all_words[j][word] = value
 
                 return all_words, transformer, relevant_features_count
 
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
+        parallel_res = Parallel(n_jobs=self._threads_to_use)(
             delayed(_parallel_fit)(window_size) for window_size in self.window_sizes
         )  # , verbose=self.verbose
 
@@ -259,6 +252,7 @@ class WEASEL(BaseClassifier):
         all_words = [dict() for x in range(len(X))]
 
         for sfa_words, transformer, rel_features_count in parallel_res:
+            transformer.n_jobs = self._threads_to_use
             self.SFA_transformers.append(transformer)
             relevant_features_count += rel_features_count
 
@@ -276,32 +270,48 @@ class WEASEL(BaseClassifier):
                 # class_weight="balanced",
                 penalty="l2",
                 random_state=self.random_state,
+                n_jobs=self._threads_to_use,
             ),
         )
 
         # print("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
-        self._is_fitted = True
+
         return self
 
-    def predict(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+    def _predict(self, X):
+        """Predict class values of n instances in X.
 
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def predict_proba(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+    def _predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
 
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-
         bag_all_words = [dict() for _ in range(len(X))]
         for transformer in self.SFA_transformers:
             # SFA transform
@@ -315,14 +325,14 @@ class WEASEL(BaseClassifier):
                 for (key, value) in bag[j].items():
                     # append the prefices to the words to distinguish
                     # between window-sizes
-                    word = WEASEL.shift_left(
+                    word = WEASEL._shift_left(
                         key, self.highest_bit, transformer.window_size
                     )
                     bag_all_words[j][word] = value
 
         return bag_all_words
 
-    def compute_window_inc(self):
+    def _compute_window_inc(self):
         win_inc = self.window_inc
         if self.series_length < 100:
             win_inc = 1  # less than 100 is ok runtime-wise
@@ -330,5 +340,5 @@ class WEASEL(BaseClassifier):
 
     @staticmethod
     @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
-    def shift_left(key, highest_bit, window_size):
+    def _shift_left(key, highest_bit, window_size):
         return (key << highest_bit) | window_size

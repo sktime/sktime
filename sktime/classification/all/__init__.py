@@ -46,8 +46,8 @@ from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.classification.shapelet_based import MrSEQLClassifier
-from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.classification.kernel_based import ROCKETClassifier
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_basic_motions
 from sktime.datasets import load_gunpoint

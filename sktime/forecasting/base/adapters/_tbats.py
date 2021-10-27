@@ -1,22 +1,29 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for using tbats forecasters in sktime framework."""
 
-__author__ = ["Markus Löning", "Martin Walter"]
+__author__ = ["mloning", "aiwalter"]
 __all__ = ["_TbatsAdapter"]
 
 import numpy as np
 import pandas as pd
 
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_y_X
 
 
-class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
-    """Base class for interfacing tbats forecasting algorithms"""
+class _TbatsAdapter(BaseForecaster):
+    """Base class for interfacing tbats forecasting algorithms."""
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(
         self,
@@ -64,7 +71,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             context=self.context,
         )
 
-    def fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -80,17 +87,31 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        y, X = check_y_X(y, X)
-        self._set_y_X(y, X)
-        self._set_fh(fh)
-
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
 
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame - only if return_pred_int=True
+            Prediction intervals
+        """
         fh = fh.to_relative(cutoff=self.cutoff)
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
@@ -117,3 +138,53 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             return y_pred, pred_int
         else:
             return y_pred
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        self.check_is_fitted()
+        fitted_params = {}
+        for name in self._get_fitted_param_names():
+            fitted_params[name] = getattr(self._forecaster, name, None)
+        return fitted_params
+
+    def _get_fitted_param_names(self):
+        """Get names of fitted parameters."""
+        return self._fitted_param_names
+
+    def _get_pred_int(self, lower, upper):
+        """Combine lower/upper bounds of pred.intervals, slice on fh.
+
+        Parameters
+        ----------
+        lower : pd.Series
+            Lower bound (can contain also in-sample bound)
+        upper : pd.Series
+            Upper bound (can contain also in-sample bound)
+
+        Returns
+        -------
+        pd.DataFrame
+            pred_int, predicion intervalls (out-sample, sliced by fh)
+        """
+        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+        # Out-sample fh
+        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
+        # If pred_int contains in-sample prediction intervals
+        if len(pred_int) > len(self._y):
+            len_out = len(pred_int) - len(self._y)
+            # Workaround for slicing with negative index
+            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
+        # If pred_int does not contain in-sample prediction intervals
+        else:
+            pred_int["idx"] = [x for x in range(len(pred_int))]
+        pred_int = pred_int.loc[
+            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
+        ]
+        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int = pred_int.drop(columns=["idx"])
+        return pred_int

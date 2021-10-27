@@ -9,7 +9,7 @@ import pytest
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPE_LOOKUP
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
-from sktime.utils import all_estimators
+from sktime.registry import all_estimators
 
 
 @pytest.mark.parametrize("return_names", [True, False])

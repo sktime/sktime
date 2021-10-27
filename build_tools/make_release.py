@@ -232,7 +232,7 @@ class CheckPyPIFiles(Step):
 
 class PushTagToGitHub(Step):
     def action(self, context):
-        self.do_cmd("git push -u --tags origin main")
+        self.do_cmd(f"git push origin v{context['version']}")
 
 
 def main():

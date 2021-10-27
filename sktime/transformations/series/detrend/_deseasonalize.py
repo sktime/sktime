@@ -1,12 +1,11 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements transformations to deseasonalize a timeseries."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "Deseasonalizer",
-    "Deseasonalizer",
-    "ConditionalDeseasonalizer",
     "ConditionalDeseasonalizer",
 ]
 
@@ -22,15 +21,47 @@ from sktime.utils.validation.series import check_series
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
-    """A transformer that removes seasonal components from time
-    series
+    """Remove seasonal components from a time serie.
+
+    Fit computes :term:`seasonal components <Seasonality>` and
+    stores them in `seasonal_`.
+
+    Transform aligns seasonal components stored in `_seasonal` with
+    the time index of the passed :term:`series <Time series>` and then
+    substracts them ("additive" model) from the passed :term:`series <Time series>`
+    or divides the passed series by them ("multiplicative" model).
 
     Parameters
     ----------
-    sp : int, optional (default=1)
-        Seasonal periodicity
-    model : str {"additive", "multiplicative"}, optional (default="additive")
-        Model to use for estimating seasonal component
+    sp : int, default=1
+        Seasonal periodicity.
+    model : {"additive", "multiplicative"}, default="additive"
+        Model to use for estimating seasonal component.
+
+    Attributes
+    ----------
+    seasonal_ : array of length sp
+        Seasonal components computed in seasonal decomposition.
+
+    See Also
+    --------
+    ConditionalDeseasonalizer
+
+    Notes
+    -----
+    For further explanation on seasonal components and additive vs.
+    multiplicative models see
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
+    Seasonal decomposition is computed using `statsmodels
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Deseasonalizer()
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
@@ -51,7 +82,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         self._y_index = y.index
 
     def _align_seasonal(self, y):
-        """Align seasonal components with y's time index"""
+        """Align seasonal components with y's time index."""
         shift = (
             -_get_duration(
                 y.index[0],
@@ -75,6 +106,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
+        self._is_fitted = False
         z = check_series(Z, enforce_univariate=True)
         self._set_y_index(z)
         sp = check_sp(self.sp)
@@ -106,6 +138,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of y.
 
         Parameters
@@ -125,6 +158,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
+
         Returns a transformed version of y.
 
         Parameters
@@ -143,13 +177,13 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         return self._inverse_transform(z, seasonal)
 
     def update(self, Z, X=None, update_params=False):
-        """Update fitted parameters
+        """Update fitted parameters.
 
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
-        update_params : bool, optional (default=False)
+        update_params : bool, default=False
 
         Returns
         -------
@@ -162,19 +196,61 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
-    """A transformer that removes seasonal components from time
-    series, conditional on seasonality test.
+    """Remove seasonal components from time series, conditional on seasonality test.
+
+    Fit tests for :term:`seasonality <Seasonality>` and if the passed time series
+    has a seasonal component it applies seasonal decomposition provided by `statsmodels
+    <https://www.statsmodels.org>`
+    to compute the seasonal component.
+    If the test is negative `_seasonal` is set
+    to all ones (if `model` is "multiplicative")
+    or to all zeros (if `model` is "additive").
+
+    Transform aligns seasonal components stored in `seasonal_` with
+    the time index of the passed series and then
+    substracts them ("additive" model) from the passed series
+    or divides the passed series by them ("multiplicative" model).
+
 
     Parameters
     ----------
-    seasonality_test : callable, optional (default=None)
+    seasonality_test : callable or None, default=None
         Callable that tests for seasonality and returns True when data is
         seasonal and False otherwise. If None,
         90% autocorrelation seasonality test is used.
-    sp : int, optional (default=1)
-        Seasonal periodicity
-    model : str {"additive", "multiplicative"}, optional (default="additive")
-        Model to use for estimating seasonal component
+    sp : int, default=1
+        Seasonal periodicity.
+    model : {"additive", "multiplicative"}, default="additive"
+        Model to use for estimating seasonal component.
+
+    Attributes
+    ----------
+    seasonal_ : array of length sp
+        Seasonal components.
+    is_seasonal_ : bool
+        Return value of `seasonality_test`. True when data is
+        seasonal and False otherwise.
+
+    See Also
+    --------
+    Deseasonalizer
+
+    Notes
+    -----
+    For further explanation on seasonal components and additive vs.
+    multiplicative models see
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
+    Seasonal decomposition is computed using `statsmodels
+    <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
+
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = ConditionalDeseasonalizer()
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     def __init__(self, seasonality_test=None, sp=1, model="additive"):
@@ -183,8 +259,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         super(ConditionalDeseasonalizer, self).__init__(sp=sp, model=model)
 
     def _check_condition(self, y):
-        """Check if y meets condition"""
-
+        """Check if y meets condition."""
         if not callable(self.seasonality_test_):
             raise ValueError(
                 f"`func` must be a function/callable, but found: "
@@ -210,7 +285,6 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         -------
         self : an instance of self
         """
-
         z = check_series(Z, enforce_univariate=True)
         self._set_y_index(z)
         sp = check_sp(self.sp)

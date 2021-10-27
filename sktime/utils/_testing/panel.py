@@ -6,13 +6,15 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "make_classification_problem",
     "make_regression_problem",
+    "make_transformer_problem",
 ]
 
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.utils.data_processing import from_3d_numpy_to_nested
+from sktime.clustering.tests._clustering_tests import generate_univaritate_series
+from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 
 
 def _make_panel_X(
@@ -75,6 +77,7 @@ def make_classification_problem(
     return_numpy=False,
     random_state=None,
 ):
+    """Make Classification Problem."""
     y = _make_classification_y(
         n_instances, n_classes, return_numpy=return_numpy, random_state=random_state
     )
@@ -92,6 +95,7 @@ def make_classification_problem(
 def make_regression_problem(
     n_instances=20, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
 ):
+    """Make Regression Problem."""
     y = _make_regression_y(
         n_instances, random_state=random_state, return_numpy=return_numpy
     )
@@ -103,6 +107,63 @@ def make_regression_problem(
         y=y,
     )
     return X, y
+
+
+def make_clustering_problem(
+    n_instances=20,
+    series_size=20,
+    return_numpy=True,
+    random_state=None,
+    n_columns=None,
+):
+    """Make Clustering Problem."""
+    # Can only currently support univariate so converting
+    # to univaritate for the time being
+    X = generate_univaritate_series(n_instances, series_size, random_state)
+
+    if return_numpy:
+        return X
+    else:
+        return pd.Series(X)
+
+
+def make_transformer_problem(
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    return_numpy=True,
+    random_state=None,
+    panel=True,
+):
+    """Make Transformer Problem."""
+    if not panel:
+        X = make_transformer_problem(
+            n_instances=n_instances,
+            n_columns=n_columns,
+            n_timepoints=n_timepoints,
+            return_numpy=True,
+            random_state=random_state,
+            panel=True,
+        )
+        if return_numpy:
+            X = X[0]
+        else:
+            X = pd.DataFrame(X[0])
+    else:
+        X = _make_panel_X(
+            n_instances=n_instances,
+            n_columns=n_columns,
+            n_timepoints=n_timepoints,
+            return_numpy=True,
+            random_state=random_state,
+        )
+        if not return_numpy:
+            arr = []
+            for data in X:
+                arr.append(pd.DataFrame(data))
+            X = arr
+
+    return X
 
 
 def _make_nested_from_array(array, n_instances=20, n_columns=1):

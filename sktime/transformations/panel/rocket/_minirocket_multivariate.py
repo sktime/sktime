@@ -493,6 +493,8 @@ def _quantiles(n):
 
 
 def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
+    if seed is not None:
+        np.random.seed(seed)
 
     _, n_columns, n_timepoints = X.shape
 

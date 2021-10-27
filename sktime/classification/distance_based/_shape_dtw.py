@@ -1,36 +1,35 @@
 # -*- coding: utf-8 -*-
-# Utilities
+"""ShapeDTW classifier.
+
+Nearest neighbour classifier that extracts shapee features.
+"""
+
 import numpy as np
 import pandas as pd
-from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.utils.data_processing import from_nested_to_2d_array
 
 # Tuning
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
-
-# Transforms
-from sktime.transformations.panel.segment import SlidingWindowSegmenter
-from sktime.transformations.panel.dictionary_based._paa import PAA
-from sktime.transformations.panel.dwt import DWTTransformer
-from sktime.transformations.panel.slope import SlopeTransformer
-from sktime.transformations.panel.summarize._extract import (
-    DerivativeSlopeTransformer,
-)
-from sktime.transformations.panel.hog1d import HOG1DTransformer
+from sklearn.model_selection import GridSearchCV, KFold
 
 # Classifiers
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.panel.hog1d import HOG1DTransformer
+
+# Transforms
+from sktime.transformations.panel.segment import SlidingWindowSegmenter
+from sktime.transformations.panel.slope import SlopeTransformer
+from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer
 
 __author__ = ["Vincent Nicholson"]
 
 
 class ShapeDTW(BaseClassifier):
+    """ShapeDTW classifier.
 
-    """
-
-    The ShapeDTW classifier works by initially extracting a set of subsequences
+    ShapeDTW[1] works by initially extracting a set of subsequences
     describing local neighbourhoods around each data point in a time series.
     These subsequences are then passed into a shape descriptor function that
     transforms these local neighbourhoods into a new representation. This
@@ -104,38 +103,30 @@ class ShapeDTW(BaseClassifier):
                                   (default = None).
 
     Notes
-    _____
+    -----
     ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
 
     """
 
-    # Capabilities: data types this classifier can handle
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-    }
-
     def __init__(
         self,
-        n_neighbors=1,
+        n_neighbours=1,
         subsequence_length=30,
         shape_descriptor_function="raw",
         shape_descriptor_functions=["raw", "derivative"],  # noqa from flake8 B006
         metric_params=None,
     ):
-        self.n_neighbors = n_neighbors
+        self.n_neighbors = n_neighbours
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
         super(ShapeDTW, self).__init__()
 
-    def fit(self, X, y):
-        """
-        Method to perform training on the classifier.
+    def _fit(self, X, y):
+        """Train the classifier.
 
         Parameters
         ----------
@@ -154,8 +145,6 @@ class ShapeDTW(BaseClassifier):
                 + type(self.shape_descriptor_function).__name__
                 + "' instead."
             )
-
-        X, y = check_X_y(X, y, enforce_univariate=False)
 
         if self.metric_params is None:
             self.metric_params = {}
@@ -181,9 +170,9 @@ class ShapeDTW(BaseClassifier):
         return self
 
     def _calculate_weighting_factor_value(self, X, y):
-        """
-        Helper function for calculating the appropriate
-        weighting_factor for the compound shape descriptor.
+        """Calculate the appropriate weighting_factor.
+
+        Check for the compound shape descriptor.
         If a value is given, the weighting_factor is set
         as the given value. If not, its tuned via
         a 10-fold cross-validation on the training data.
@@ -230,7 +219,7 @@ class ShapeDTW(BaseClassifier):
 
             grid = GridSearchCV(
                 estimator=ShapeDTW(
-                    n_neighbors=n,
+                    n_neighbours=n,
                     subsequence_length=sl,
                     shape_descriptor_function=sdf,
                     shape_descriptor_functions=sdfs,
@@ -257,10 +246,10 @@ class ShapeDTW(BaseClassifier):
 
         return X
 
-    def predict_proba(self, X):
-        """
-        Function to perform predictions on the testing data X. This function
-        returns the probabilities for each class.
+    def _predict_proba(self, X):
+        """Perform predictions on the testing data X.
+
+        This function returns the probabilities for each class.
 
         Parameters
         ----------
@@ -271,19 +260,16 @@ class ShapeDTW(BaseClassifier):
         output : numpy array of shape =
                 [n_instances, num_classes] of probabilities
         """
-        X = check_X(X, enforce_univariate=False)
-
         # Transform the test data in the same way as the training data.
         X = self._preprocess(X)
 
         # Classify the test data
         return self.knn.predict_proba(X)
 
-    def predict(self, X):
-        """
-        Find predictions for all cases in X.
-        Could do a wrap function for predict_proba,
-        but this will do for now.
+    def _predict(self, X):
+        """Find predictions for all cases in X.
+
+        Parameters
         ----------
         X : The testing input samples of shape [n_instances,1].
 
@@ -291,8 +277,6 @@ class ShapeDTW(BaseClassifier):
         -------
         output : numpy array of shape = [n_instances]
         """
-        X = check_X(X, enforce_univariate=False)
-
         # Transform the test data in the same way as the training data.
         X = self._preprocess(X)
 
@@ -300,7 +284,8 @@ class ShapeDTW(BaseClassifier):
         return self.knn.predict(X)
 
     def _generate_shape_descriptors(self, data):
-        """
+        """Generate shape descriptors.
+
         This function is used to convert a list of
         subsequences into a list of shape descriptors
         to be used for classification.
@@ -346,11 +331,10 @@ class ShapeDTW(BaseClassifier):
         return result
 
     def _get_transformer(self, tName):
-        """
-        Function to extract the appropriate transformer
+        """Extract the appropriate transformer.
 
         Parameters
-        -------
+        ----------
         self   : the ShapeDTW object.
         tName  : the name of the required transformer.
 
@@ -432,10 +416,7 @@ class ShapeDTW(BaseClassifier):
             raise ValueError("Invalid shape desciptor function.")
 
     def _check_metric_params(self, parameters):
-        """
-        Helper function for checking if a user has entered in
-        an invalid metric_params.
-        """
+        """Check for an invalid metric_params."""
         valid_metric_params = [
             "num_intervals_paa",
             "num_levels_dwt",
@@ -459,9 +440,8 @@ class ShapeDTW(BaseClassifier):
                 )
 
     def _combine_data_frames(self, dataFrames, weighting_factor, col_names):
-        """
-        Helper function for the shape_dtw class to combine two dataframes
-        together into a single dataframe.
+        """Combine two dataframes together into a single dataframe.
+
         Used when the shape_descriptor_function is set to "compound".
         """
         first_desc = dataFrames[0]
@@ -503,5 +483,4 @@ class ShapeDTW(BaseClassifier):
                 inst = res[col][row]
                 colToAdd.append(pd.Series(inst))
             df[col] = colToAdd
-
         return df

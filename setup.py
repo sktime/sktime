@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Install script for sktime"""
+"""Install script for sktime."""
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master
 # /setup.py
@@ -21,25 +21,28 @@ from pkg_resources import parse_version
 
 MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
-    "numpy": "1.19.0",
+    "numpy": "1.19.3",
     "pandas": "1.1.0",
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
-    "numba": "0.50",
+    "numba": "0.53",
+}
+MAX_REQUIREMENTS = {
+    "statsmodels": "0.12.1",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
         "cython>=0.29.0",
         "matplotlib>=3.3.2",
-        "pmdarima>=1.8.0",
+        "pmdarima>=1.8.0,!=1.8.1",
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",
         "tsfresh>=0.17.0",
-        "catch22>=0.2.0",
         "hcrystalball>=0.1.9",
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
+        "pyod>=0.8.0",
     ],
 }
 
@@ -47,13 +50,17 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 def read(*parts):
-    # intentionally *not* adding an encoding option to open, See:
-    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    """Read.
+
+    intentionally *not* adding an encoding option to open, See:
+    https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    """
     with codecs.open(os.path.join(HERE, *parts), "r") as fp:
         return fp.read()
 
 
 def find_version(*file_paths):
+    """Find the version."""
     version_file = read(*file_paths)
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
@@ -65,7 +72,7 @@ def find_version(*file_paths):
 WEBSITE = "https://www.sktime.org"
 DISTNAME = "sktime"
 DESCRIPTION = "A unified Python toolbox for machine learning with time series"
-with codecs.open("README.rst", encoding="utf-8-sig") as f:
+with codecs.open("README.md", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "F. Király"
 MAINTAINER_EMAIL = "f.kiraly@ucl.ac.uk"
@@ -82,6 +89,10 @@ INSTALL_REQUIRES = [
     *[
         "{}>={}".format(package, version)
         for package, version in MIN_REQUIREMENTS.items()
+    ],
+    *[
+        "{}<={}".format(package, version)
+        for package, version in MAX_REQUIREMENTS.items()
     ],
     "wheel",
 ]
@@ -138,9 +149,12 @@ else:
 
 # Custom clean command to remove build artifacts
 class CleanCommand(Clean):
+    """Remove build artifacts from the source tree."""
+
     description = "Remove build artifacts from the source tree"
 
     def run(self):
+        """Run."""
         Clean.run(self)
 
         # Remove c files if we are not within a sdist package
@@ -177,7 +191,10 @@ try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
     class build_ext_subclass(build_ext):
+        """Build extension subclass."""
+
         def build_extensions(self):
+            """Build extensions."""
             from sktime._build_utils.openmp_helpers import get_openmp_flag
 
             if not os.getenv("SKTIME_NO_OPENMP"):
@@ -198,6 +215,7 @@ except ImportError:
 
 
 def configuration(parent_package="", top_path=None):
+    """Configure."""
     if os.path.exists("MANIFEST"):
         os.remove("MANIFEST")
 
@@ -220,7 +238,9 @@ def configuration(parent_package="", top_path=None):
 
 def check_package_status(package, min_version):
     """
-    Returns a dictionary containing a boolean specifying whether given package
+    Return a dictionary.
+
+    Dictionary contains a boolean specifying whether given package
     is up-to-date, along with the version string (empty string if
     not installed).
     """
@@ -264,6 +284,7 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
+    """Set up package."""
     metadata = dict(
         name=DISTNAME,
         maintainer=MAINTAINER,

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-""" The Elastic Ensemble (EE)
-    An ensemble of elastic nearest neighbour classifiers
+"""The Elastic Ensemble (EE).
+
+An ensemble of elastic nearest neighbour classifiers.
 """
 
 __author__ = "Jason Lines"
@@ -37,29 +38,20 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ElasticEnsemble(BaseClassifier):
-    """
-    The Elastic Ensemble (EE) as described in Jason Lines and Anthony Bagnall,
-    "Time Series Classification with Ensembles of Elastic Distance Measures",
-    Data Mining and Knowledge Discovery, 29(3), 2015.
+    """The Elastic Ensemble (EE).
 
-    https://link.springer.com/article/10.1007/s10618-014-0361-2
+    EE as described in [1].
 
     Overview:
 
     - Input n series length m
     - EE is an ensemble of elastic nearest neighbor classifiers
 
-    .. note::
-
-        For the original Java version, see `ElasticEnsemble <https://github.com
-        /uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/
-        distance_based/ElasticEnsemble.java>`__.
-
     Parameters
     ----------
     distance_measures : list of strings, optional (default="all")
       A list of strings identifying which distance measures to include.
-    proportion_of_param_option : float, optional (default=1)
+    proportion_of_param_options : float, optional (default=1)
       The proportion of the parameter grid space to search optional.
     proportion_train_in_param_finding : float, optional (default=1)
       The proportion of the train set to use in the parameter search optional.
@@ -82,13 +74,23 @@ class ElasticEnsemble(BaseClassifier):
       Store the train accuracies of the classifiers
     train_preds_by_classifier : list
       Store the train predictions of each classifier
+
+    Notes
+    -----
+    ..[1] Jason Lines and Anthony Bagnall,
+          "Time Series Classification with Ensembles of Elastic Distance Measures",
+              Data Mining and Knowledge Discovery, 29(3), 2015.
+    https://link.springer.com/article/10.1007/s10618-014-0361-2
+
     """
 
-    # Capabilities: data types this classifier can handle
+    # Capability tags
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
         "missing_values": False,
+        "train_estimate": False,
+        "contractable": False,
     }
 
     def __init__(
@@ -128,7 +130,8 @@ class ElasticEnsemble(BaseClassifier):
         super(ElasticEnsemble, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of 1-NN classifiers from the training set (X, y),
+        """Build an ensemble of 1-NN classifiers from the training set (X, y).
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
@@ -141,7 +144,6 @@ class ElasticEnsemble(BaseClassifier):
         -------
         self : object
         """
-
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=False)
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that
@@ -355,6 +357,16 @@ class ElasticEnsemble(BaseClassifier):
         return self
 
     def predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+
+        Returns
+        -------
+        array of shape [n, self.n_classes]
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_pandas=False)
 
@@ -404,6 +416,16 @@ class ElasticEnsemble(BaseClassifier):
         return output_probas
 
     def predict(self, X, return_preds_and_probas=False):
+        """Predict class values of n instances in X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame of shape [n, 1]
+        return_preds_and_probas: boolean option to return predictions
+        Returns
+        -------
+        array of shape [n, 1]
+        """
         probas = self.predict_proba(X)  # does derivative transform within (if required)
         idx = np.argmax(probas, axis=1)
         preds = np.asarray([self.classes_[x] for x in idx])
@@ -413,6 +435,7 @@ class ElasticEnsemble(BaseClassifier):
             return preds, probas
 
     def get_train_probs(self, X=None):
+        """Find and returns the probability estimates for data X."""
         num_cases = len(self.train_preds_by_classifier[0])
         num_classes = len(self.classes_)
         num_estimators = len(self.estimators_)
@@ -429,13 +452,14 @@ class ElasticEnsemble(BaseClassifier):
         return probs
 
     def get_metric_params(self):
+        """Return the parameters for the distance metrics used."""
         return {
             self.distance_measures[dm].__name__: str(self.estimators_[dm].metric_params)
             for dm in range(len(self.estimators_))
         }
 
     def write_constituent_train_files(self, output_file_path, dataset_name, actual_y):
-
+        """Write the train information to file in UEA format."""
         for c in range(len(self.estimators_)):
             measure_name = self.distance_measures[c].__name__
 

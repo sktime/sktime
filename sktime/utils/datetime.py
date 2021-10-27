@@ -1,8 +1,11 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Time format related utilities."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "xiaobenbenecho"]
 __all__ = []
+
+import re
 
 import numpy as np
 import pandas as pd
@@ -11,15 +14,14 @@ from sktime.utils.validation.series import check_time_index
 
 
 def _coerce_duration_to_int(duration, freq=None):
-    """Coerce durations into integer representations for a given unit of
-    duration
+    """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
     ----------
     duration : pd.DateOffset, pd.Timedelta, pd.TimedeltaIndex, pd.Index, int
         Duration type or collection of duration types
     freq : str
-        Frequency
+        Frequency of the above duration type.
 
     Returns
     -------
@@ -35,13 +37,21 @@ def _coerce_duration_to_int(duration, freq=None):
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
         if freq is None:
             raise ValueError("`unit` missing")
+        # Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
+        # extract the count and the unit. See
+        # https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+        m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
+        if not m:
+            raise ValueError("pandas frequency %s not understood." % freq)
+        count, unit = m.groups()
+        count = 1 if not count else int(count)
         # integer conversion only works reliably with non-ambiguous units (
         # e.g. days, seconds but not months, years)
         try:
             if isinstance(duration, pd.Timedelta):
-                return int(duration / pd.Timedelta(1, freq))
+                return int(duration / pd.Timedelta(count, unit))
             if isinstance(duration, pd.TimedeltaIndex):
-                return (duration / pd.Timedelta(1, freq)).astype(np.int)
+                return (duration / pd.Timedelta(count, unit)).astype(np.int)
         except ValueError:
             raise ValueError(
                 "Index type not supported. Please consider using pd.PeriodIndex."
@@ -51,15 +61,20 @@ def _coerce_duration_to_int(duration, freq=None):
 
 
 def _get_freq(x):
-    """Get unit for conversion of time deltas to integers"""
+    """Get unit for conversion of time deltas to integer."""
     if hasattr(x, "freqstr"):
-        return x.freqstr
+        if x.freqstr is None:
+            return None
+        elif "-" in x.freqstr:
+            return x.freqstr.split("-")[0]
+        else:
+            return x.freqstr
     else:
         return None
 
 
 def _shift(x, by=1):
-    """Shift time point `x` by a step (`by`) given frequency of `x`
+    """Shift time point `x` by a step (`by`) given frequency of `x`.
 
     Parameters
     ----------
@@ -82,8 +97,7 @@ def _shift(x, by=1):
 
 
 def _get_duration(x, y=None, coerce_to_int=False, unit=None):
-    """Compute duration of time index `x` or durations between time
-    points `x` and `y` if `y` is given
+    """Compute duration between the time indices.
 
     Parameters
     ----------

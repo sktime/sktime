@@ -1,20 +1,7 @@
 repos:
-- repo: https://github.com/psf/black
-  rev: 20.8b1
-  hooks:
-  - id: black
-    language_version: python3
-    # args: [--line-length 79]
-
-- repo: https://github.com/pycqa/flake8
-  rev: 3.8.3
-  hooks:
-  - id: flake8
-    exclude: docs/conf.py
-    additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.3.0
+  rev: v4.0.1
   hooks:
   - id: check-added-large-files
     args: ['--maxkb=1000']
@@ -28,21 +15,47 @@ repos:
   - id: requirements-txt-fixer
   - id: trailing-whitespace
 
+- repo: https://github.com/pycqa/isort
+  rev: 5.8.0
+  hooks:
+    - id: isort
+      name: isort (python)
+
+- repo: https://github.com/psf/black
+  rev: 21.5b1
+  hooks:
+  - id: black
+    language_version: python3
+    # args: [--line-length 79]
+
+- repo: https://github.com/pycqa/flake8
+  rev: 3.9.2
+  hooks:
+  - id: flake8
+    exclude: docs/conf.py
+    additional_dependencies: [flake8-bugbear, flake8-print]
+
 - repo: https://github.com/mgedmin/check-manifest
-  rev: "0.42"
+  rev: "0.46"
   hooks:
   - id: check-manifest
     stages: [manual]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.6.0
+  rev: 0.13.0
   hooks:
   - id: nbqa-black
-    args: ["--nbqa-mutate"]
+    args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
     additional_dependencies: [black==20.8b1]
   - id: nbqa-isort
-    args: ["--nbqa-mutate", "--nbqa-config=setup.cfg", "-p=sktime"]
+    args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
     additional_dependencies: [isort==5.6.4]
   - id: nbqa-flake8
-    args: ["--nbqa-config=setup.cfg", "--extend-ignore=E402,E203"]
+    args: [--nbqa-dont-skip-bad-cells, "--extend-ignore=E402,E203"]
     additional_dependencies: [flake8==3.8.3]
+
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 6.1.1
+  hooks:
+  - id: pydocstyle
+    args: ["--config=setup.cfg"]

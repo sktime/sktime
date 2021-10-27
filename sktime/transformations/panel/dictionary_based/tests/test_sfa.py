@@ -2,14 +2,18 @@
 import sys
 
 import numpy as np
+import pytest
 
 from sktime.datasets import load_gunpoint
 from sktime.transformations.panel.dictionary_based._sfa import SFA
-from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
 
 
 # Check the transformer has changed the data correctly.
-def test_transformer():
+@pytest.mark.parametrize(
+    "binning_method", ["equi-depth", "equi-width", "information-gain", "kmeans"]
+)
+def test_transformer(binning_method):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -19,198 +23,182 @@ def test_transformer():
     p = SFA(
         word_length=word_length,
         alphabet_size=alphabet_size,
-        anova=False,
-        binning_method="equi-depth",
-    ).fit(X, y)
-
-    # print("Equi Depth")
-    # print(p.breakpoints)
+        binning_method=binning_method,
+    )
+    p.fit(X, y)
 
     assert p.breakpoints.shape == (word_length, alphabet_size)
-    assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
-    _ = p.transform(X, y)
-
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        anova=False,
-        binning_method="equi-width",
-    ).fit(X, y)
-
-    # print("Equi Width")
-    # print(p.breakpoints)
-
-    assert p.breakpoints.shape == (word_length, alphabet_size)
-    assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
-    _ = p.transform(X, y)
-
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        anova=False,
-        binning_method="information-gain",
-    ).fit(X, y)
-    # print("Information Gain")
-    # print(p.breakpoints)
-
-    assert p.breakpoints.shape == (word_length, alphabet_size)
-
-    # print(p.breakpoints[1, :-1])
-    assert np.equal(sys.float_info.max, p.breakpoints[1, :-1]).all()
+    i = sys.float_info.max if binning_method == "information-gain" else 0
+    assert np.equal(i, p.breakpoints[1, :-1]).all()  # imag component is 0 or inf
     _ = p.transform(X, y)
 
 
-def test_dft_mft():
+@pytest.mark.parametrize("use_fallback_dft", [True, False])
+@pytest.mark.parametrize("norm", [True, False])
+def test_dft_mft(use_fallback_dft, norm):
     # load training data
-    X, Y = load_gunpoint(split="train", return_X_y=True)
+    X, y = load_gunpoint(split="train", return_X_y=True)
     X_tab = from_nested_to_2d_array(X, return_numpy=True)
 
     word_length = 6
     alphabet_size = 4
 
-    # print("Single DFT transformation")
+    # Single DFT transformation
     window_size = np.shape(X_tab)[1]
+
     p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
+        word_length=6,
+        alphabet_size=4,
         window_size=window_size,
-        binning_method="equi-depth",
-    ).fit(X, Y)
-    dft = p._discrete_fourier_transform(X_tab[0])
+        norm=norm,
+        use_fallback_dft=use_fallback_dft,
+    ).fit(X, y)
+
+    if use_fallback_dft:
+        dft = p._discrete_fourier_transform(X_tab[0], word_length, norm, 1, True)
+    else:
+        dft = p._fast_fourier_transform(X_tab[0])
+
     mft = p._mft(X_tab[0])
 
     assert (mft - dft < 0.0001).all()
 
-    # print("Windowed DFT transformation")
+    # Windowed DFT transformation
+    window_size = 140
 
-    for norm in [True, False]:
-        for window_size in [140]:
-            p = SFA(
-                word_length=word_length,
-                norm=norm,
-                alphabet_size=alphabet_size,
-                window_size=window_size,
-                binning_method="equi-depth",
-            ).fit(X, Y)
-            mft = p._mft(X_tab[0])
-            for i in range(len(X_tab[0]) - window_size + 1):
-                dft_transformed = p._discrete_fourier_transform(
-                    X_tab[0, i : window_size + i]
-                )
-                assert (mft[i] - dft_transformed < 0.001).all()
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        norm=norm,
+        use_fallback_dft=use_fallback_dft,
+    ).fit(X, y)
 
-            assert len(mft) == len(X_tab[0]) - window_size + 1
-            assert len(mft[0]) == word_length
+    mft = p._mft(X_tab[0])
+    for i in range(len(X_tab[0]) - window_size + 1):
+        if use_fallback_dft:
+            dft = p._discrete_fourier_transform(
+                X_tab[0, i : window_size + i], word_length, norm, 1, True
+            )
+        else:
+            dft = p._fast_fourier_transform(X_tab[0, i : window_size + i])
+
+        assert (mft[i] - dft < 0.001).all()
+
+    assert len(mft) == len(X_tab[0]) - window_size + 1
+    assert len(mft[0]) == word_length
 
 
-def test_sfa_anova():
+@pytest.mark.parametrize("binning_method", ["equi-depth", "information-gain"])
+def test_sfa_anova(binning_method):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
     word_length = 6
     alphabet_size = 4
 
-    for binning in ["information-gain", "equi-depth"]:
-        # print("SFA with ANOVA one-sided test")
-        window_size = 32
-        p = SFA(
-            word_length=word_length,
-            anova=True,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            binning_method=binning,
-        ).fit(X, y)
+    # SFA with ANOVA one-sided test
+    window_size = 32
+    p = SFA(
+        word_length=word_length,
+        anova=True,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        binning_method=binning_method,
+    ).fit(X, y)
 
-        # print(p.breakpoints)
-        # print(p.support)
-        # print(p.dft_length)
+    assert p.breakpoints.shape == (word_length, alphabet_size)
+    _ = p.transform(X, y)
 
-        assert p.breakpoints.shape == (word_length, alphabet_size)
-        _ = p.transform(X, y)
+    # SFA with first feq coefficients
+    p2 = SFA(
+        word_length=word_length,
+        anova=False,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        binning_method=binning_method,
+    ).fit(X, y)
 
-        # print("SFA with first feq coefficients")
-        p2 = SFA(
-            word_length=word_length,
-            anova=False,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            binning_method=binning,
-        ).fit(X, y)
-
-        # print(p2.breakpoints)
-        # print(p2.support)
-        # print(p2.dft_length)
-
-        assert p.dft_length != p2.dft_length
-        assert (p.breakpoints != p2.breakpoints).any()
-        _ = p2.transform(X, y)
+    assert p.dft_length != p2.dft_length
+    assert (p.breakpoints != p2.breakpoints).any()
+    _ = p2.transform(X, y)
 
 
 # test word lengths larger than the window-length
-def test_word_lengths():
+@pytest.mark.parametrize("word_length", [6, 7])
+@pytest.mark.parametrize("alphabet_size", [4, 5])
+@pytest.mark.parametrize("window_size", [5, 6])
+@pytest.mark.parametrize("bigrams", [True, False])
+@pytest.mark.parametrize("levels", [1, 2])
+@pytest.mark.parametrize("use_fallback_dft", [True, False])
+def test_word_lengths(
+    word_length, alphabet_size, window_size, bigrams, levels, use_fallback_dft
+):
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
-    word_lengths = [6, 7]
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        bigrams=bigrams,
+        levels=levels,
+        use_fallback_dft=use_fallback_dft,
+    ).fit(X, y)
+
+    assert p.breakpoints is not None
+    _ = p.transform(X, y)
+
+
+def test_bit_size():
+    # load training data
+    X, y = load_gunpoint(split="train", return_X_y=True)
+
+    word_length = 40
+    alphabet_size = 12
+    window_size = 75
+
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        levels=2,
+        bigrams=True,
+        window_size=window_size,
+    ).fit(X, y)
+
+    w = p.transform(X)
+    lengths = [x.bit_length() for x in list(w[0][0].keys())]
+
+    assert np.min(lengths) > 128
+    assert len(p.word_list(list(w[0][0].keys())[0])[0]) == 40
+
+
+def test_typed_dict():
+    # load training data
+    X, y = load_gunpoint(split="train", return_X_y=True)
+
+    word_length = 6
     alphabet_size = 4
-    window_sizes = [5, 6]
 
-    try:
-        for binning in ["equi-depth", "information-gain"]:
-            for word_length in word_lengths:
-                for bigrams in [True, False]:
-                    for norm in [True, False]:
-                        for anova in [True, False]:
-                            for window_size in window_sizes:
-                                p = SFA(
-                                    word_length=word_length,
-                                    anova=anova,
-                                    alphabet_size=alphabet_size,
-                                    bigrams=bigrams,
-                                    window_size=window_size,
-                                    norm=norm,
-                                    binning_method=binning,
-                                ).fit(X, y)
+    p = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        levels=2,
+        typed_dict=True,
+    )
+    p.fit(X, y)
+    word_list = p.bag_to_string(p.transform(X, y)[0][0])
 
-                                # print("Norm", norm, "Anova", anova)
-                                # print(np.shape(p.breakpoints), word_length,
-                                #      window_size)
-                                # print("dft_length", p.dft_length,
-                                #      "word_length", p.word_length)
-                                assert p.breakpoints is not None
+    word_length = 6
+    alphabet_size = 4
 
-                                _ = p.transform(X, y)
+    p2 = SFA(
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        levels=2,
+        typed_dict=False,
+    )
+    p2.fit(X, y)
+    word_list2 = p2.bag_to_string(p2.transform(X, y)[0][0])
 
-    except Exception as err:
-        raise AssertionError("An unexpected exception {0} raised.".format(repr(err)))
-
-
-# def test_reproducability():
-#     # load training data
-#     X, y = load_gunpoint(split="train", return_X_y=True)
-#     m = len(X.iloc[0]['dim_0'])
-#
-#     p = SFA(word_length=4,
-#             anova=True,
-#             alphabet_size=4,
-#             bigrams=False,
-#             window_size=m,
-#             norm=True,
-#             lower_bounding=False,
-#             binning_method="equi-depth").fit(X, y)
-#
-#     print(p.breakpoints)
-#     print(p.support)
-#
-#     print("m", m)
-#     p = SFA(word_length=4,
-#             anova=True,
-#             alphabet_size=4,
-#             bigrams=False,
-#             window_size=10,
-#             norm=False,
-#             lower_bounding=False,
-#             binning_method="equi-width").fit(X, y)
-#
-#     print(p.breakpoints)
-#     print(p.support)
+    assert word_list == word_list2

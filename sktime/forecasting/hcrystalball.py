@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements wrapper for using HCrystalBall forecastsers in sktime."""
+
 import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("hcrystalball")
@@ -28,7 +31,7 @@ def _check_index(index):
 
 
 def _adapt_y_X(y, X):
-    """Adapt fit data to HCB compliant format
+    """Adapt fit data to HCB compliant format.
 
     Parameters
     ----------
@@ -55,7 +58,7 @@ def _adapt_y_X(y, X):
 
 
 def _get_X_pred(X_pred, index):
-    """Translate forecast horizon interface to HCB native dataframe
+    """Translate forecast horizon interface to HCB native dataframe.
 
     Parameters
     ----------
@@ -78,9 +81,9 @@ def _get_X_pred(X_pred, index):
 
 
 def _adapt_y_pred(y_pred):
-    """Translate wrapper prediction to sktime format
+    """Translate wrapper prediction to sktime format.
 
-    From Dataframe to series
+    From Dataframe to series.
 
     Parameters
     ----------
@@ -94,35 +97,73 @@ def _adapt_y_pred(y_pred):
     return y_pred.iloc[:, 0]
 
 
-class HCrystalBallForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class HCrystalBallForecaster(BaseForecaster):
+    """Implement wrapper to allow use of HCrystalBall forecasters in sktime.
+
+    Parameters
+    ----------
+    model :
+        The HCrystalBall forecasting model to use.
+    """
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
     def __init__(self, model):
         self.model = model
         super(HCrystalBallForecaster, self).__init__()
 
-    def fit(self, y, X=None, fh=None):
-        self._set_y_X(y, X)
-        self._set_fh(fh)
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
 
-        if fh is not None:
-            _check_fh(self.fh, self.cutoff)
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series with which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecast horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
 
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         y, X = _adapt_y_X(y, X)
         self.model_ = clone(self.model)
         self.model_.fit(X, y)
 
-        self._is_fitted = True
         return self
 
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if return_pred_int:
-            raise NotImplementedError()
-        _check_fh(fh, self.cutoff)
+        """Make forecasts for the given forecast horizon.
 
+        Parameters
+        ----------
+        fh : int, list or np.array
+            The forecast horizon with the steps ahead to predict
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+        return_pred_int : bool, optional (default=False)
+            Return the prediction intervals for the forecast.
+        alpha : float or list, optional (default=0.95)
+            If alpha is iterable, multiple intervals will be calculated.
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions for the forecast
+        y_pred_int : pd.DataFrame
+        """
         X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
         y_pred = self.model_.predict(X=X_pred)
         return _adapt_y_pred(y_pred)
 
     def get_fitted_params(self):
+        """Get fitted parameters."""
         raise NotImplementedError()
 
     def _compute_pred_err(self, alphas):

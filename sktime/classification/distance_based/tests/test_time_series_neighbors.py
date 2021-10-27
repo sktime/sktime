@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-
+"""Test function of elastic distance nearest neighbour classifiers."""
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
-from sktime.datasets import load_arrow_head
+from sktime.datasets import load_unit_test
 
 distance_functions = [
     "euclidean",
@@ -25,19 +25,20 @@ distance_functions = [
 # but one tie, so expect 136 since sktime picks the first
 
 expected_correct = {
-    "euclidean": 140,
-    "dtw": 123,
-    "wdtw": 130,
-    "msm": 139,
-    "erp": 138,
-    "lcss": 136,
+    "euclidean": 19,
+    "dtw": 21,
+    "wdtw": 21,
+    "msm": 20,
+    "erp": 19,
+    "lcss": 14,
 }
 
 
-def test_knn_on_arrowhead():
+def test_knn_on_unit_test():
+    """Test function for elastic knn, to be reinstated soon."""
     # load arrowhead data for unit tests
-    X_train, y_train = load_arrow_head(split="train", return_X_y=True)
-    X_test, y_test = load_arrow_head(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
     for i in range(0, len(distance_functions)):
         knn = KNeighborsTimeSeriesClassifier(
             distance=distance_functions[i],

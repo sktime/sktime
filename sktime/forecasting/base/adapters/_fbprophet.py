@@ -1,25 +1,34 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for Facebook prophet to be used in sktime framework."""
 
-__author__ = ["Markus Löning", "Martin Walter"]
+__author__ = ["mloning", "aiwalter"]
 __all__ = ["_ProphetAdapter"]
 
 import os
+from contextlib import contextmanager
 
 import pandas as pd
 
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import _SktimeForecaster
-from contextlib import contextmanager
+from sktime.utils.validation.forecasting import check_y_X
 
 
-class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
-    """Base class for interfacing fbprophet and neuralprophet"""
+class _ProphetAdapter(BaseForecaster):
+    """Base class for interfacing fbprophet and neuralprophet."""
 
-    def fit(self, y, X=None, fh=None, **fit_params):
+    _tags = {
+        "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
+
+    def _fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
+
         Parameters
         ----------
         y : pd.Series
@@ -28,21 +37,25 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             Exogenous variables.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
+
         Returns
         -------
         self : returns an instance of self.
         """
         self._instantiate_model()
         self._check_changepoints()
-        self._set_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
-        self._set_fh(fh)
+        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
 
-        # Add seasonality
+        # Add seasonality/seasonalities
         if self.add_seasonality:
-            self._forecaster.add_seasonality(**self.add_seasonality)
+            if type(self.add_seasonality) == dict:
+                self._forecaster.add_seasonality(**self.add_seasonality)
+            elif type(self.add_seasonality) == list:
+                for seasonality in self.add_seasonality:
+                    self._forecaster.add_seasonality(**seasonality)
 
         # Add country holidays
         if self.add_country_holidays:
@@ -60,11 +73,10 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             with _suppress_stdout_stderr():
                 self._forecaster.fit(df=df, **fit_params)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Predict
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Forecast time series at future horizon.
 
         Parameters
         ----------
@@ -89,8 +101,6 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         Exception
             Error when merging data
         """
-        self.check_is_fitted()
-        self._set_fh(fh)
         self._update_X(X, enforce_index_type=pd.DatetimeIndex)
 
         fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
@@ -117,7 +127,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             return y_pred
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -136,7 +146,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         return fitted_params
 
     def _check_changepoints(self):
-        """Checking arguments for changepoints and assign related arguments
+        """Check arguments for changepoints and assign related arguments.
 
         Returns
         -------
@@ -163,7 +173,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
 
 def _merge_X(df, X):
-    """Merge X and df on the DatetimeIndex
+    """Merge X and df on the DatetimeIndex.
 
     Parameters
     ----------
@@ -194,13 +204,15 @@ def _merge_X(df, X):
 
 
 class _suppress_stdout_stderr(object):
-    """
+    """Context manager for doing  a "deep suppression" of stdout and stderr.
+
     A context manager for doing a "deep suppression" of stdout and stderr in
     Python, i.e. will suppress all print, even if the print originates in a
     compiled C/Fortran sub-function.
        This will not suppress raised exceptions, since exceptions are printed
     to stderr just before a script exits, and after the context manager has
     exited (at least, I think that is why it lets exceptions through).
+
 
     References
     ----------

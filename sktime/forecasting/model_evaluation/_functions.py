@@ -1,15 +1,24 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements functions to be used in evaluating forecasting models."""
 
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = ["evaluate"]
 
+import time
+
 import numpy as np
 import pandas as pd
-import time
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.utils.validation.forecasting import check_cv
+
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import check_scoring, check_fh
+from sktime.utils.validation.forecasting import (
+    check_cv,
+    check_fh,
+    check_scoring,
+    check_X,
+)
+from sktime.utils.validation.series import check_series
 
 
 def evaluate(
@@ -22,28 +31,28 @@ def evaluate(
     fit_params=None,
     return_data=False,
 ):
-    """Evaluate forecaster using cross-validation
+    """Evaluate forecaster using timeseries cross-validation.
 
     Parameters
     ----------
     forecaster : sktime.forecaster
         Any forecaster
-    y : pd.Series
-        Target time series to which to fit the forecaster.
-    X : pd.DataFrame, optional (default=None)
-        Exogenous variables
     cv : Temporal cross-validation splitter
         Splitter of how to split the data into test data and train data
-    strategy : str, optional (default="refit")
+    y : pd.Series
+        Target time series to which to fit the forecaster.
+    X : pd.DataFrame, default=None
+        Exogenous variables
+    strategy : {"refit", "update"}
         Must be "refit" or "update". The strategy defines whether the `forecaster` is
         only fitted on the first train window data and then updated, or always refitted.
-    scoring : object of class MetricFunctionWrapper from
-        sktime.performance_metrics, optional. Example scoring=sMAPE().
-        Used to get a score function that takes y_pred and y_test as arguments,
-        by default None (if None, uses sMAPE)
-    fit_params : dict, optional (default=None)
+    scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
+        Used to get a score function that takes y_pred and y_test arguments
+        and accept y_train as keyword argument.
+        If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
+    fit_params : dict, default=None
         Parameters passed to the `fit` call of the forecaster.
-    return_data : bool, optional
+    return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
         y_pred, y_test.
@@ -62,14 +71,21 @@ def evaluate(
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
-    >>> cv = ExpandingWindowSplitter(initial_window=24, step_length=12,
-    ...                              fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=24,
+    ...     step_length=12,
+    ...     fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
-    y, X = check_y_X(y, X)
+    y = check_series(
+        y,
+        enforce_univariate=forecaster.get_tag("scitype:y") == "univariate",
+        enforce_multivariate=forecaster.get_tag("scitype:y") == "multivariate",
+    )
+    X = check_X(X)
     fit_params = {} if fit_params is None else fit_params
 
     # Define score name.
@@ -101,7 +117,7 @@ def evaluate(
         pred_time = time.time() - start_pred
 
         # score
-        score = scoring(y_pred, y_test)
+        score = scoring(y_test, y_pred, y_train=y_train)
 
         # save results
         results = results.append(
@@ -127,7 +143,7 @@ def evaluate(
 
 
 def _split(y, X, train, test, fh):
-    """Split y and X for given train and test set indices"""
+    """Split y and X for given train and test set indices."""
     y_train = y.iloc[train]
     y_test = y.iloc[test]
 
@@ -150,7 +166,7 @@ def _split(y, X, train, test, fh):
 
 
 def _check_strategy(strategy):
-    """Assert strategy value
+    """Assert strategy value.
 
     Parameters
     ----------
