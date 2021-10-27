@@ -26,10 +26,59 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import numpy as np
+import pandas as pd
+import time
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X, check_X_y
+
+
+def check_classifier_input(
+        X,
+        y,
+        enforce_min_instances=1,
+        enforce_min_columns=1,
+):
+    """Check wether input X and y are valid formats with minimum data.
+
+    Parameters
+    ----------
+    X : pd.DataFrame or np.array
+    y : pd.Series or np.array
+    enforce_min_instances : int, optional (default=1)
+        Enforce minimum number of instances.
+    enforce_min_columns : int, optional (default=1)
+        Enforce minimum number of columns (or time-series variables).
+
+    Raises
+    ------
+    ValueError
+        If y or X is invalid input data type, or not enough data
+    """
+    if not isinstance(y, np.array):
+        raise ValueError(
+            f"y must be a np.array, "
+            f"but found type: {type(y)}"
+        )
+    if not isinstance(X, pd.pandas):
+        if not isinstance(X, np.ndarray):
+            raise ValueError(
+                f"x must be either a pd.Series or a np.ndarray, "
+                f"but found type: {type(X)}"
+            )
+        else:
+            n_cases,  n_dims = X.shape
+            if not (n_dims is 2 or n_dims is 3):
+                raise ValueError(
+                    f"x is an np.array but it must be 2 or 3 dimensional"
+                    f"but found to be: {n_dims}"
+                )
+        if n_cases != y.shape[0]:
+            raise ValueError(
+                f"unequal number of cases in X and y"
+                f"X has : {n_dims}, y has {y.shape[0]}"
+            )
 
 
 class BaseClassifier(BaseEstimator):
@@ -53,6 +102,7 @@ class BaseClassifier(BaseEstimator):
     def __init__(self):
         self.classes_ = []
         self.n_classes_ = 0
+        self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
         super(BaseClassifier, self).__init__()
@@ -80,6 +130,7 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        start = int(round(time.time() * 1000))
         coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
         coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
         allow_multivariate = self.get_tag("capability:multivariate")
@@ -110,6 +161,7 @@ class BaseClassifier(BaseEstimator):
         # this should happen last
         self._is_fitted = True
 
+        train_time_ = int(round(time.time() * 1000)) - start
         return self
 
     def predict(self, X) -> np.array:
