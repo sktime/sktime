@@ -5,12 +5,12 @@ Selection of simple transformers that can be used with
 `sktime.forecasting.compose._networkpipeline.NetworkPipelineForecaster`
 """
 
-from sktime.transformations.base import _PanelToPanelTransformer
-import pandas as pd
 import numpy as np
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested_adp
-from sktime.datatypes._convert import convert_to
+import pandas as pd
 
+from sktime.datatypes._convert import convert_to
+from sktime.datatypes._panel._convert import from_3d_numpy_to_nested_adp
+from sktime.transformations.base import _PanelToPanelTransformer
 
 __author__ = ["Viktor Kazakov"]
 __all__ = ["Selector", "SeriesUnion", "Converter"]
