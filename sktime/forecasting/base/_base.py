@@ -1059,7 +1059,7 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
-            - deprecate in v 0.10.1
+            - Will be removed in v 0.10.0
         alpha : float or list, optional (default=0.95)
 
         Returns
