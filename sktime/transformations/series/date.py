@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["Daniel Bartling"]
+__author__ = ["danbartl"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
