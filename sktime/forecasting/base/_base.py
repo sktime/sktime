@@ -1304,7 +1304,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
     return y_pred
 
 
-def _temp_new_to_old_transformer(pred_int_new_format, alpha, name="quantiles"):
+def _convert_new_to_old_pred_int(pred_int_new, alpha, name="quantiles"):
     pred_int_old_format = [
         pd.DataFrame(
             {
