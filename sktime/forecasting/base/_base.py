@@ -153,7 +153,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores fh to self.fh if fh is passed and has not been passed in _fit.
+            Stores fh to self.fh if fh is passed and has not been passed previously.
 
         Parameters
         ----------
@@ -329,7 +329,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores fh to self.fh if fh is passed and has not been passed in _fit.
+            Stores fh to self.fh if fh is passed and has not been passed previously.
 
         Parameters
         ----------
@@ -377,7 +377,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores fh to self.fh if fh is passed and has not been passed in _fit.
+            Stores fh to self.fh if fh is passed and has not been passed previously.
 
         Parameters
         ----------
@@ -484,7 +484,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
