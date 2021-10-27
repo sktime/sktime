@@ -142,8 +142,6 @@ class DrCIF(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": True,
     }
@@ -488,6 +486,8 @@ class DrCIF(BaseClassifier):
                     length = (
                         rng.randint(0, len_range - self._min_interval[r])
                         + self._min_interval[r]
+                        if len_range - self._min_interval[r] > 0
+                        else self._min_interval[r]
                     )
                     intervals[j][1] = intervals[j][0] + length
                 else:
