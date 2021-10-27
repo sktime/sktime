@@ -19,8 +19,8 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
-    _cif_feature,
     ContinuousIntervalTree,
+    _cif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation import check_n_jobs
@@ -275,6 +275,8 @@ class CanonicalIntervalForest(BaseClassifier):
                 )
                 length = (
                     rng.randint(0, len_range - self._min_interval) + self._min_interval
+                    if len_range - self._min_interval > 0
+                    else self._min_interval
                 )
                 intervals[j][1] = intervals[j][0] + length
             else:
