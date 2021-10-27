@@ -316,7 +316,7 @@ class BaseForecaster(BaseEstimator):
             fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
         )
 
-    def predict_quantiles(self, fh=None, X=None, alpha=[0.05, 0.95]):
+    def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
@@ -348,6 +348,9 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        if alpha is None:
+            alpha = [0.05, 0.95]
+
         self.check_is_fitted()
         self._set_fh(fh)
         alpha = check_alpha(alpha)
