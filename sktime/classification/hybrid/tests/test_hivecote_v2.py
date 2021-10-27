@@ -8,7 +8,7 @@ from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_hivecote_v2_on_unit_test():
+def test_hivecote_v2_on_unit_test_data():
     """Test of HIVECOTEV2 on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -36,7 +36,7 @@ def test_hivecote_v2_on_unit_test():
 
     # assert probabilities are the same
     probas = hc2.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, hivecote_v2_unit_test_probas)
+    testing.assert_array_almost_equal(probas, hivecote_v2_unit_test_probas, decimal=2)
 
 
 # def test_contracted_hivecote_v2_on_unit_test_data():
@@ -96,7 +96,9 @@ def test_hivecote_v2_on_basic_motions():
 
     # assert probabilities are the same
     probas = hc2.predict_proba(X_test.iloc[indices[:10]])
-    testing.assert_array_equal(probas, stc_basic_motions_probas)
+    testing.assert_array_almost_equal(
+        probas, hivecote_v2_basic_motions_probas, decimal=2
+    )
 
 
 hivecote_v2_unit_test_probas = np.array(
@@ -143,7 +145,7 @@ hivecote_v2_unit_test_probas = np.array(
         ],
     ]
 )
-stc_basic_motions_probas = np.array(
+hivecote_v2_basic_motions_probas = np.array(
     [
         [
             0.008897771212582005,
