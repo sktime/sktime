@@ -14,7 +14,8 @@ Description
 Before removing or changing sktime's public API, we need to deprecate it.
 This gives users and developers time to transition to the new functionality.
 
-Once functionality is deprecated, it will be removed in the next release.
+Once functionality is deprecated, it will be removed in the next minor release.
+We follow `semantic versioning <https://semver.org>`_, where the version number denotes <major>.<minor>.<patch>.
 For example, if we add the deprecation warning in release v0.9.0, we remove
 the functionality in release v0.10.0.
 
@@ -68,6 +69,6 @@ Classes
 
     from deprecated.sphinx import deprecated
 
-    @deprecated(version="0.8.0", reason="my_old_method will be removed in v0.10.0", category=FutureWarning)
-    class MyOldClass(object):
+    @deprecated(version="0.8.0", reason="MyOldClass will be removed in v0.10.0", category=FutureWarning)
+    class MyOldClass:
         pass
