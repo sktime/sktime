@@ -47,9 +47,8 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
 #                                    "replaced with a numba version",
 #            category=FutureWarning)
 @deprecated(
-    version="0.8.1",
     reason="cython dtw_distance is replaced by numba version in V0.10.",
-    category=FutureWarning,
+    version="0.8.1",
 )
 def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
     # make sure x is shorter than y
