@@ -8,6 +8,6 @@ __all__ = ["Detrender", "Deseasonalizer", "ConditionalDeseasonalizer", "STLTrans
 from sktime.transformations.series.detrend._deseasonalize import (
     ConditionalDeseasonalizer,
     Deseasonalizer,
-    STLTransformer
+    STLTransformer,
 )
 from sktime.transformations.series.detrend._detrend import Detrender
