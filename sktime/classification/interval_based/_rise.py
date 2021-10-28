@@ -15,12 +15,12 @@ __all__ = [
     "ps",
 ]
 
+import numpy as np
+
 from deprecated.sphinx import deprecated
 
 from joblib import Parallel, delayed
 from numba import int64, jit, prange
-import numpy as np
-
 
 from sklearn.base import clone
 from sklearn.ensemble._base import _partition_estimators
