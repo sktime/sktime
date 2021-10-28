@@ -19,9 +19,15 @@ from libc.math cimport exp, fabs, sqrt
 from deprecated.sphinx import deprecated
 
 
-cdef inline double min_c(double a, double b): return a if a <= b else b
-cdef inline int max_c_int(int a, int b): return a if a >= b else b
-cdef inline int min_c_int(int a, int b): return a if a <= b else b
+cdef inline double min_c(double a, double b):
+    """min c docstring."""
+    return a if a <= b else b
+cdef inline int max_c_int(int a, int b):
+    """max c int docstring."""
+    return a if a >= b else b
+cdef inline int min_c_int(int a, int b):
+    """min c int docstring."""
+    return a if a <= b else b
 
 # TO-DO: convert DDTW and WDDTW to use slope-based derivatives rather than np.diff
 
@@ -47,7 +53,10 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
     version="0.8.2",
     reason="cython dtw_distance is to be replaced by numba version in V0.10.",
 )
-def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
+def dtw_distance(
+        np.ndarray[double, ndim=2] x,
+        np.ndarray[double, ndim=2] y,
+        double w = -1):
     """ Cython version of DTW distance.
 
     Arguments
@@ -89,8 +98,8 @@ def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , do
     D[0,1:] = DBL_MAX
     D[1:,0] = DBL_MAX
 
-    D[1:,1:] = np.square(X[:,np.newaxis]-Y).sum(axis=2).astype(np.float64) # inspired by https://stackoverflow.com/a/27948463/9234713
-
+    # inspired by https://stackoverflow.com/a/27948463/9234713
+    D[1:,1:] = np.square(X[:,np.newaxis]-Y).sum(axis=2).astype(np.float64)
 
     for i in range(1,r):
         jstart = max_c_int(1 , i-band)
