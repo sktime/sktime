@@ -505,6 +505,15 @@
       ]
     },
     {
+      "login": "ermshaua",
+      "name": "Arik Ermshaus",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23294512?v=4",
+      "profile": "https://github.com/ermshaua/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "akanz1",
       "name": "Andreas Kanz",
       "avatar_url": "https://avatars3.githubusercontent.com/u/51492342?v=4",
@@ -1207,7 +1216,7 @@
     },
      {
       "login": "IlyasMoutawwakil",
-      "name": Ilyas Moutawwakil",
+      "name": "Ilyas Moutawwakil",
       "avatar_url": "https://avatars.githubusercontent.com/IlyasMoutawwakil",
       "profile": "https://github.com/IlyasMoutawwakil",
       "contributions": [
@@ -1225,10 +1234,10 @@
             ]
     },
     {
-      "login": "BINAYKUMAR943"
-      "name":"Binay Kumar"
-      "avatar_url":"https://avatars.githubusercontent.com/u/38756834?v=4
-      "profile":"https://github.com/BINAYKUMAR943"
+      "login": "BINAYKUMAR943",
+      "name":"Binay Kumar",
+      "avatar_url":"https://avatars.githubusercontent.com/u/38756834?v=4",
+      "profile":"https://github.com/BINAYKUMAR943",
       "contributions":[
         "code",
         "doc",
@@ -1260,6 +1269,17 @@
       "profile": "https://github.com/yairbeer",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "boukepostma",
+      "name": "Bouke Postma",
+      "avatar_url": "https://avatars.githubusercontent.com/boukepostma",
+      "profile": "https://github.com/boukepostma",
+      "contributions": [
+        "code",
+        "bug",
+        "ideas"
       ]
     }
   ],

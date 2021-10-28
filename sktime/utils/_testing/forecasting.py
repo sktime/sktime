@@ -30,12 +30,12 @@ def _get_n_columns(tag):
     elif tag == "both":
         n_columns_list = [1, 2]
     else:
-        raise ValueError(f"Unexpected tag {tag}.")
+        raise ValueError(f"Unexpected tag {tag} in _get_n_columns.")
     return n_columns_list
 
 
 def _get_expected_index_for_update_predict(y, fh, step_length):
-    """Compute expected time index from `update_predict`."""
+    """Compute expected time index from update_predict()."""
     # time points at which to make predictions
     fh = check_fh(fh)
     index = y.index

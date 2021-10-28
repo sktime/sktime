@@ -14,7 +14,7 @@ from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import check_X_y, check_random_state
+from sklearn.utils import check_random_state, check_X_y
 
 from sktime.base._base import _clone_estimator
 from sktime.exceptions import NotFittedError
@@ -146,7 +146,9 @@ class RotationForest(BaseEstimator):
         self._useful_atts = []
         self._pcas = []
         self._groups = []
+        self._class_dictionary = {}
         self._n_jobs = n_jobs
+        self._n_atts = 0
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
@@ -180,6 +182,8 @@ class RotationForest(BaseEstimator):
         self.n_instances, self.n_atts = X.shape
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
+        for index, classVal in enumerate(self.classes_):
+            self._class_dictionary[classVal] = index
 
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -193,6 +197,8 @@ class RotationForest(BaseEstimator):
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
         X = X[:, self._useful_atts]
 
+        self._n_atts = X.shape[1]
+
         # normalise attributes
         self._min = X.min(axis=0)
         self._ptp = X.max(axis=0) - self._min
@@ -200,34 +206,35 @@ class RotationForest(BaseEstimator):
 
         X_cls_split = [X[np.where(y == i)] for i in self.classes_]
 
-        while (
-            train_time < time_limit
-            and self._n_estimators < self.contract_max_n_estimators
-        ):
+        if time_limit > 0:
             self._n_estimators = 0
             self.estimators_ = []
             self._pcas = []
             self._groups = []
 
-            fit = Parallel(n_jobs=self._n_jobs)(
-                delayed(self._fit_estimator)(
-                    X,
-                    X_cls_split,
-                    y,
-                    i,
+            while (
+                train_time < time_limit
+                and self._n_estimators < self.contract_max_n_estimators
+            ):
+                fit = Parallel(n_jobs=self._n_jobs)(
+                    delayed(self._fit_estimator)(
+                        X,
+                        X_cls_split,
+                        y,
+                        i,
+                    )
+                    for i in range(self._n_jobs)
                 )
-                for i in range(self._n_estimators)
-            )
 
-            estimators, pcas, groups, transformed_data = zip(*fit)
+                estimators, pcas, groups, transformed_data = zip(*fit)
 
-            self.estimators_ += estimators
-            self._pcas = pcas
-            self._groups = groups
-            self.transformed_data += transformed_data
+                self.estimators_ += estimators
+                self._pcas = pcas
+                self._groups = groups
+                self.transformed_data += transformed_data
 
-            self._n_estimators += self._n_jobs
-            train_time = time.time() - start_time
+                self._n_estimators += self._n_jobs
+                train_time = time.time() - start_time
         else:
             fit = Parallel(n_jobs=self._n_jobs)(
                 delayed(self._fit_estimator)(
@@ -364,7 +371,11 @@ class RotationForest(BaseEstimator):
 
     def _fit_estimator(self, X, X_cls_split, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         groups = self._generate_groups(rng)
@@ -395,7 +406,9 @@ class RotationForest(BaseEstimator):
             while True:
                 # ignore err state on PCA because we account if it fails.
                 with np.errstate(divide="ignore", invalid="ignore"):
-                    pca = PCA().fit(X_t)
+                    # differences between os occasionally. seems to happen when there
+                    # are low amounts of cases in the fit
+                    pca = PCA(random_state=rs).fit(X_t)
 
                 if not np.isnan(pca.explained_variance_ratio_).all():
                     break
@@ -418,11 +431,24 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
-        return clf.predict_proba(X_t)
+        probas = clf.predict_proba(X_t)
+
+        if probas.shape[1] != self.n_classes:
+            new_probas = np.zeros((probas.shape[0], self.n_classes))
+            for i, cls in enumerate(clf.classes_):
+                cls_idx = self._class_dictionary[cls]
+                new_probas[:, cls_idx] = probas[:, i]
+            probas = new_probas
+
+        return probas
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         indices = range(self.n_instances)
@@ -433,6 +459,13 @@ class RotationForest(BaseEstimator):
         clf.fit(self.transformed_data[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data[idx][oob])
 
+        if probas.shape[1] != self.n_classes:
+            new_probas = np.zeros((probas.shape[0], self.n_classes))
+            for i, cls in enumerate(clf.classes_):
+                cls_idx = self._class_dictionary[cls]
+                new_probas[:, cls_idx] = probas[:, i]
+            probas = new_probas
+
         results = np.zeros((self.n_instances, self.n_classes))
         for n, proba in enumerate(probas):
             results[oob[n]] += proba
@@ -440,13 +473,13 @@ class RotationForest(BaseEstimator):
         return [results, oob]
 
     def _generate_groups(self, rng):
-        permutation = rng.permutation((np.arange(0, self.n_atts)))
+        permutation = rng.permutation((np.arange(0, self._n_atts)))
 
         # select the size of each group.
         group_size_count = np.zeros(self.max_group - self.min_group + 1)
         n_attributes = 0
         n_groups = 0
-        while n_attributes < self.n_atts:
+        while n_attributes < self._n_atts:
             n = rng.randint(group_size_count.shape[0])
             group_size_count[n] += 1
             n_attributes += self.min_group + n
