@@ -140,7 +140,7 @@ class NumbaDistance(ABC):
 
     @staticmethod
     @abstractmethod
-    def _numba_distance(x, y) -> float:
+    def _numba_distance(x: np.ndarray, y: np.ndarray) -> float:
         """Abstract method to define a no_python distance between two timeseries.
 
         Parameters

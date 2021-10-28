@@ -20,7 +20,7 @@ from sktime.dists_kernels.numba.distances.pairwise_distance import pairwise_dist
 def squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     r"""Compute the squared distance between two timeseries.
 
-    Squared distance is supported for 1D, 2D and 3D arrays.
+    Squared distance is supported for 1d, 2d and 3d arrays.
 
     The squared distance between two timeseries is defined as:
 
@@ -29,9 +29,9 @@ def squared_distance(x: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    x: np.ndarray (1D, 2D or 3D)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (1D, 2D or 3D)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
 
     Returns
@@ -47,18 +47,18 @@ def squared_distance(x: np.ndarray, y: np.ndarray) -> float:
 def pairwise_squared_distance(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     r"""Compute the Squared pairwise distance between two timeseries.
 
-    Pairwise Squared distance is supported for 1D, 2D and 3D arrays.
+    Pairwise Squared distance is supported for 1d, 2d and 3d arrays.
 
     Parameters
     ----------
-    x: np.ndarray (1D, 2D or 3D)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (1D, 2D or 3D)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
 
     Returns
     -------
-    np.ndarray (2D of size mxn where m is len(x) and m is len(y)
+    np.ndarray (2d of size mxn where m is len(x) and m is len(y)
         Pairwise Squared distance matrix of size nxm where n is len(x) and m is
         len(y).
     """
@@ -78,9 +78,9 @@ def numba_squared_distance_factory(
 
     Parameters
     ----------
-    x: np.ndarray (1D, 2D or 3D)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (1D, 2D or 3D)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     symmetric: bool
         Boolean that is true when x == y and false when x != y. Used in some instances
@@ -103,9 +103,9 @@ def _numba_squared_distance(x: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    x: np.ndarray (1D, 2D or 3D)
+    x: np.ndarray (2d array)
         First timeseries.
-    y: np.ndarray (1D, 2D or 3D)
+    y: np.ndarray (2d array)
         Second timeseries.
 
     Returns
