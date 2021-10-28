@@ -51,6 +51,8 @@ Core Developers
      - GitHub ID
    * - Aaron Bostrom
      - :user:`abostrom`
+   * - Freddy A Boulton
+     - :user:`freddyaboulton`
    * - Anthony Bagnall
      - :user:`TonyBagnall`
    * - Chris Holder
