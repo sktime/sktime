@@ -43,10 +43,6 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
 # the w argument corresponds to the length of the warping window in percentage of
 # the smallest length of the time series min(x,y) - if negative then no warping window
 # this function assumes that x is shorter than y
-@deprecated(
-    reason="cython dtw_distance is to be replaced by numba version in V0.10.",
-    version="0.8.1",
-)
 def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
     # make sure x is shorter than y
     # if not permute
