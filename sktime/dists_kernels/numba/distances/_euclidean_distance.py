@@ -10,6 +10,8 @@ from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDis
 
 
 class _EuclideanDistance(NumbaDistance):
+    """Euclidean distance between two timeseries."""
+
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: dict
     ) -> DistanceCallable:
@@ -34,8 +36,8 @@ class _EuclideanDistance(NumbaDistance):
 
     @staticmethod
     @njit(cache=True)
-    def _numba_distance(x, y) -> float:
-        """Euclidean distance compiled to numba.
+    def _numba_distance(x: np.ndarray, y: np.ndarray) -> float:
+        """Euclidean distance compiled to no_python.
 
         Parameters
         ----------
