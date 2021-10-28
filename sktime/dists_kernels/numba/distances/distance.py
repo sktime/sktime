@@ -9,7 +9,46 @@ from numba import njit
 
 from sktime.dists_kernels._utils import to_numba_timeseries
 from sktime.dists_kernels.numba.distances._euclidean_distance import _EuclideanDistance
+from sktime.dists_kernels.numba.distances._squared_distance import _SquaredDistance
 from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
+
+
+def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
+    r"""Compute the Squared distance between two timeseries.
+
+    Squared distance is supported for 1d, 2d and 3d arrays.
+
+    The squared distance between two timeseries is defined as:
+    .. math::
+        sd(x, y) = \sum_{i=1}^{n} (x_i - y_i)^2
+
+    Parameters
+    ----------
+    x: np.ndarray (1d, 2d or 3d)
+        First timeseries.
+    y: np.ndarray (1d, 2d or 3d)
+        Second timeseries.
+    kwargs: dict
+        Extra kwargs. For squared there are none however, this is kept for
+        consistency.
+
+    Returns
+    -------
+    distance: float
+        Squared distance between the two timeseries.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
+    """
+    return distance(x, y, metric="squared", **kwargs)
 
 
 def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
@@ -159,35 +198,6 @@ def _compute_distance(
     return total_distance
 
 
-class MetricInfo(NamedTuple):
-    """Define a registry entry for a metric."""
-
-    # Name of the distance
-    canonical_name: str
-    # All aliases, including canonical_name
-    aka: Set[str]
-    # Python distance function (can use numba inside but callable must be in python)
-    dist_func: Callable
-    # NumbaDistance class
-    dist_instance: NumbaDistance
-
-
-# Registry of implemented metrics:
-_METRIC_INFOS = [
-    MetricInfo(
-        canonical_name="euclidean",
-        aka={"euclidean", "ed", "euclid", "pythagorean"},
-        dist_func=euclidean_distance,
-        dist_instance=_EuclideanDistance(),
-    )
-]
-
-_METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
-_METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
-
-_METRICS_NAMES = list(_METRICS.keys())
-
-
 def _resolve_metric(
     metric: Union[str, Callable, NumbaDistance],
     x: np.ndarray,
@@ -321,3 +331,38 @@ def _is_no_python_distance_callable(metric: Callable) -> bool:
     correct_num_params = len(inspect.signature(metric).parameters) == 2
     return_num_params = inspect.signature(metric).return_annotation is float
     return correct_num_params and return_num_params
+
+
+class MetricInfo(NamedTuple):
+    """Define a registry entry for a metric."""
+
+    # Name of the distance
+    canonical_name: str
+    # All aliases, including canonical_name
+    aka: Set[str]
+    # Python distance function (can use numba inside but callable must be in python)
+    dist_func: Callable
+    # NumbaDistance class
+    dist_instance: NumbaDistance
+
+
+# Registry of implemented metrics:
+_METRIC_INFOS = [
+    MetricInfo(
+        canonical_name="euclidean",
+        aka={"euclidean", "ed", "euclid", "pythagorean"},
+        dist_func=euclidean_distance,
+        dist_instance=_EuclideanDistance(),
+    ),
+    MetricInfo(
+        canonical_name="squared",
+        aka={"squared"},
+        dist_func=squared_distance,
+        dist_instance=_SquaredDistance(),
+    ),
+]
+
+_METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
+_METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
+
+_METRICS_NAMES = list(_METRICS.keys())
