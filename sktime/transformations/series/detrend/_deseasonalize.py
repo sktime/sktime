@@ -8,16 +8,15 @@ __all__ = ["Deseasonalizer", "ConditionalDeseasonalizer", "STLTransformer"]
 
 import numpy as np
 import pandas as pd
-
 from statsmodels.tsa.seasonal import STL as _STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
+from sktime.forecasting.base._fh import _check_cutoff, _coerce_to_period
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.datetime import _get_duration, _get_freq, _coerce_duration_to_int
+from sktime.utils.datetime import _coerce_duration_to_int, _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
-from sktime.forecasting.base._fh import _check_cutoff, _coerce_to_period
 
 
 class Deseasonalizer(_SeriesToSeriesTransformer):
@@ -500,7 +499,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
                 robust=self.robust,
                 seasonal_jump=self.seasonal_jump,
                 trend_jump=self.trend_jump,
-                low_pass_jump=self.low_pass_jump
+                low_pass_jump=self.low_pass_jump,
             ).fit()
             self.stl_model = _seasonalizer
             self.seasonal_ = self.stl_model.seasonal
