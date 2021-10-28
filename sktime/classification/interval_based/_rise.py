@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Random Interval Spectral Forest (RISE).
 
-# TODO remove RandomIntervalSpectralForest in v0.10.0
+# TODO move or remove RandomIntervalSpectralForest in v0.10.0
 This classifier has been refactored to have the correct name. The incorrectly named
 algorithm will be depreciated.
 """
@@ -136,8 +136,8 @@ def _produce_intervals(
 @deprecated(
     version="0.8.1",
     reason="RandomIntervalSpectralForest will be removed in v0.10.0, to be replaced "
-           "by the correctly named RandomIntervalSpectralEnsemble",
-            category=FutureWarning,
+    "by the correctly named RandomIntervalSpectralEnsemble",
+    category=FutureWarning,
 )
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """Random Interval Spectral Forest (RISE).
