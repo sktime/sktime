@@ -16,12 +16,9 @@ __all__ = [
 ]
 
 import numpy as np
-
 from deprecated.sphinx import deprecated
-
 from joblib import Parallel, delayed
 from numba import int64, jit, prange
-
 from sklearn.base import clone
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import ForestClassifier
