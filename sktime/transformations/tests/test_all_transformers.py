@@ -57,7 +57,7 @@ def _construct_fit(Estimator, **kwargs):
 
 def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
     out = _construct_fit_transform(Estimator, **kwargs)
-    assert isinstance(out, (int, np.integer, float, np.floating, str))
+    assert isinstance(out, pd.DataFrame)
 
 
 def _check_raises_error(Estimator, **kwargs):
@@ -79,8 +79,9 @@ def check_series_to_primitive_transform_multivariate(Estimator):
         _check_raises_error(Estimator, n_columns=n_columns)
     else:
         out = _construct_fit_transform(Estimator, n_columns=n_columns)
-        assert isinstance(out, (pd.Series, np.ndarray))
-        assert out.shape == (n_columns,)
+        assert isinstance(out, pd.DataFrame)
+        # We don't know how many primitives wil be returned, so # of columns unknown.
+        assert out.shape[0] == n_columns
 
 
 def check_series_to_series_transform_univariate(Estimator):

@@ -316,6 +316,18 @@ Theta
 
     ThetaLinesTransformer
 
+Summary
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.summarize
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SummaryTransformer
+    MeanTransformer
+
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
