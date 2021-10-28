@@ -781,7 +781,7 @@ def load_from_arff_to_dataframe(
 
     # Parse the file
     # print(full_file_path_and_name)
-    with open(full_file_path_and_name, "r") as f:
+    with open(full_file_path_and_name, "r", encoding="utf-8") as f:
         for line in f:
 
             if line.strip():
@@ -1007,6 +1007,8 @@ def write_results_to_uea_format(
     predicted_probs=None,
     split="TEST",
     resample_seed=0,
+    timing_type="N/A",
+    first_line_comment=None,
     second_line="No Parameter Info",
     third_line="N/A",
 ):
@@ -1035,6 +1037,10 @@ def write_results_to_uea_format(
         Either TRAIN or TEST, depending on the results, influences file name.
     resample_seed : int, default = 0
         Indicates what data
+    timing_type : str or None, default = None
+        The format used for timings in the file, i.e. Seconds, Milliseconds, Nanoseconds
+    first_line_comment : str or None, default = None
+        Optional comment appended to the end of the first line
     second_line : str
         unstructured, used for predictor parameters
     third_line : str
@@ -1045,6 +1051,7 @@ def write_results_to_uea_format(
             "The number of predicted values is not the same as the "
             "number of actual class values"
         )
+
     # If the full directory path is not passed, make the standard structure
     if not full_path:
         output_path = (
@@ -1079,9 +1086,14 @@ def write_results_to_uea_format(
 
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    file.write(
-        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
+    first_line = (
+        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test)
     )
+    if timing_type is not None:
+        first_line += "," + timing_type
+    if first_line_comment is not None:
+        first_line += "," + first_line_comment
+    file.write(first_line + "\n")
 
     # the second line of the output is free form and estimator-specific; usually this
     # will record info such as build time, paramater options used, any constituent model

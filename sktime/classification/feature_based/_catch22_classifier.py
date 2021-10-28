@@ -125,7 +125,7 @@ class Catch22Classifier(BaseClassifier):
         )
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
+        if m is not None:
             self._estimator.n_jobs = self.n_jobs
 
         X_t = self._transformer.fit_transform(X, y)

@@ -146,6 +146,7 @@ class RotationForest(BaseEstimator):
         self._useful_atts = []
         self._pcas = []
         self._groups = []
+        self._class_dictionary = {}
         self._n_jobs = n_jobs
         self._n_atts = 0
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -181,6 +182,8 @@ class RotationForest(BaseEstimator):
         self.n_instances, self.n_atts = X.shape
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
+        for index, classVal in enumerate(self.classes_):
+            self._class_dictionary[classVal] = index
 
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -428,7 +431,16 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
-        return clf.predict_proba(X_t)
+        probas = clf.predict_proba(X_t)
+
+        if probas.shape[1] != self.n_classes:
+            new_probas = np.zeros((probas.shape[0], self.n_classes))
+            for i, cls in enumerate(clf.classes_):
+                cls_idx = self._class_dictionary[cls]
+                new_probas[:, cls_idx] = probas[:, i]
+            probas = new_probas
+
+        return probas
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
@@ -446,6 +458,13 @@ class RotationForest(BaseEstimator):
         clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data[idx][oob])
+
+        if probas.shape[1] != self.n_classes:
+            new_probas = np.zeros((probas.shape[0], self.n_classes))
+            for i, cls in enumerate(clf.classes_):
+                cls_idx = self._class_dictionary[cls]
+                new_probas[:, cls_idx] = probas[:, i]
+            probas = new_probas
 
         results = np.zeros((self.n_instances, self.n_classes))
         for n, proba in enumerate(probas):
