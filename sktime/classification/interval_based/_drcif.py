@@ -21,8 +21,8 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
-    _drcif_feature,
     ContinuousIntervalTree,
+    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation import check_n_jobs
@@ -142,8 +142,6 @@ class DrCIF(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": True,
     }
@@ -195,6 +193,7 @@ class DrCIF(BaseClassifier):
         self._min_interval = min_interval
         self._max_interval = max_interval
         self._base_estimator = base_estimator
+        self._class_dictionary = {}
         self._n_jobs = n_jobs
 
         super(DrCIF, self).__init__()
@@ -205,6 +204,8 @@ class DrCIF(BaseClassifier):
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        for index, classVal in enumerate(self.classes_):
+            self._class_dictionary[classVal] = index
 
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -485,6 +486,8 @@ class DrCIF(BaseClassifier):
                     length = (
                         rng.randint(0, len_range - self._min_interval[r])
                         + self._min_interval[r]
+                        if len_range - self._min_interval[r] > 0
+                        else self._min_interval[r]
                     )
                     intervals[j][1] = intervals[j][0] + length
                 else:
@@ -568,6 +571,13 @@ class DrCIF(BaseClassifier):
         clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data[idx][oob])
+
+        if probas.shape[1] != self.n_classes:
+            new_probas = np.zeros((probas.shape[0], self.n_classes))
+            for i, cls in enumerate(clf.classes_):
+                cls_idx = self._class_dictionary[cls]
+                new_probas[:, cls_idx] = probas[:, i]
+            probas = new_probas
 
         results = np.zeros((self.n_instances, self.n_classes))
         for n, proba in enumerate(probas):
