@@ -22,6 +22,27 @@ from sktime.dists_kernels.numba.tests._shared_tests import (
 from sktime.dists_kernels.tests._utils import create_test_distance_numpy
 
 
+def _check_symmetric(x: np.ndarray, rtol: float = 1e-05, atol: float = 1e-08) -> bool:
+    """Validate a matrix is symmetric.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        Matrix to test if symmetric.
+    rtol: float
+        The relative tolerance.
+    atol: float
+        The absolute tolerance.
+
+    Returns
+    -------
+    bool
+        True is matrix is symmetric and false if matrix not symmetric
+
+    """
+    return np.allclose(x, x.T, rtol=rtol, atol=atol)
+
+
 def _validate_pairwise_result(
     x: np.ndarray,
     y: np.ndarray,
@@ -35,9 +56,9 @@ def _validate_pairwise_result(
 
     Parameters
     ----------
-    x: np.ndarray
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     metric_str: str
         Metric string name.
@@ -60,12 +81,52 @@ def _validate_pairwise_result(
         x, y, metric=distance_numba_class, **kwargs_dict
     )
 
-    assert isinstance(metric_str_result, np.ndarray)
-    assert isinstance(metric_factory_result, np.ndarray)
-    assert isinstance(metric_numba_class_result, np.ndarray)
+    assert isinstance(metric_str_result, np.ndarray), (
+        f"The result for a pairwise using the string: {metric_str} as the "
+        f'"metric" parameter should return a 2d numpy array. It currently does not.'
+    )
 
-    assert np.array_equal(metric_str_result, metric_factory_result)
-    assert np.array_equal(metric_str_result, metric_numba_class_result)
+    assert isinstance(metric_factory_result, np.ndarray), (
+        f"The result for a pairwise using the distance factory: "
+        f'{distance_factory} as the "metric" parameter should return a 2d numpy '
+        f"array. It currently does not."
+    )
+
+    assert isinstance(metric_numba_class_result, np.ndarray), (
+        f"The result for a pairwise using the NumbaDistance class: "
+        f'{distance_numba_class} as the "metric" parameter should return a 2d '
+        f"numpy. It currently does not."
+    )
+
+    assert np.array_equal(metric_str_result, metric_factory_result), (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using the distance factory: "
+        f'{distance_factory} as the "metric" parameter. These results should be equal.'
+    )
+
+    assert np.array_equal(metric_str_result, metric_numba_class_result), (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using the NumbaDistance class: "
+        f'{distance_numba_class} as the "metric" parameter. These results should '
+        f"be equal."
+    )
+
+    metric_str_result_to_self = pairwise_distance(
+        x, x, metric=metric_str, **kwargs_dict
+    )
+    assert metric_str_result_to_self.trace() == 0, (
+        f"The pairwise distance when given two of the same timeseries e.g."
+        f"pairwise_distance(x, x, ...), diagonal should equal 0."
+        f"(np.trace(result)). This criteria is not met for the pairwise metric "
+        f"{metric_str}"
+    )
+
+    assert _check_symmetric(metric_str_result_to_self) is True, (
+        f"The pairwise distance when given two of the same timeseries e.g."
+        f"pairwise_distance(x, x, ...), should produce a symmetric matrix. This"
+        f"means the left of the center diagonal should equal the right of the center"
+        f"diagonal. This criteria is not met for the pairwise metric {metric_str}"
+    )
 
     if expected_result is not None:
         assert_almost_equal(metric_str_result.trace(), expected_result, 5)

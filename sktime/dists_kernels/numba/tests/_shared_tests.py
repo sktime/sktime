@@ -11,6 +11,8 @@ from sktime.dists_kernels.tests._utils import create_test_distance_numpy
 
 
 def _test_metric_parameters(distance_func: Callable):
+    """Test to ensure custom distances can be used."""
+
     @njit()
     def _standalone_numba_distance(x, y) -> float:
         return 5.0
@@ -29,8 +31,15 @@ def _test_metric_parameters(distance_func: Callable):
     x_numpy = create_test_distance_numpy(10, 10)
     y_numpy = create_test_distance_numpy(10, 10, random_state=2)
 
-    assert distance_func(x_numpy, y_numpy, metric=_ValidTestClass()) == 5.0
-    assert distance_func(x_numpy, y_numpy, metric=_standalone_numba_distance) == 5
+    assert distance_func(x_numpy, y_numpy, metric=_ValidTestClass()) == 5.0, (
+        "Using a custom NumbaDistance did not produce the expected result. Ensure"
+        "custom NumbaDistances can be passed."
+    )
+
+    assert distance_func(x_numpy, y_numpy, metric=_standalone_numba_distance) == 5, (
+        "Using a custom no_python compiled distance function did not produce the"
+        "expected result. Ensure no_python compiled functions can be passed."
+    )
 
 
 def _test_incorrect_parameters(distance_func: Callable):

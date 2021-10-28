@@ -66,14 +66,54 @@ def _validate_distance_result(
 
     distance_func_result = distance_function(x, y, **kwargs_dict)
 
-    assert isinstance(metric_str_result, float)
-    assert isinstance(metric_factory_result, float)
-    assert isinstance(metric_numba_class_result, float)
-    assert isinstance(distance_func_result, float)
+    assert isinstance(metric_str_result, float), (
+        f"The result for a distance using the string: {metric_str} as the "
+        f'"metric" parameter should return a float. It currently does not.'
+    )
 
-    assert metric_str_result == metric_factory_result
-    assert metric_str_result == metric_numba_class_result
-    assert metric_str_result == distance_func_result
+    assert isinstance(metric_factory_result, float), (
+        f"The result for a distance using the distance factory: "
+        f'{distance_factory} as the "metric" parameter should return a float. '
+        f"It currently does not."
+    )
+
+    assert isinstance(metric_numba_class_result, float), (
+        f"The result for a distance using the NumbaDistance class: "
+        f'{distance_numba_class} as the "metric" parameter should return a float. '
+        f"It currently does not."
+    )
+
+    assert isinstance(distance_func_result, float), (
+        f"The result for a distance using the NumbaDistance class: "
+        f'{distance_numba_class} as the "metric" parameter should return a float. '
+        f"It currently does not."
+    )
+
+    assert metric_str_result == metric_factory_result, (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using the distance factory: "
+        f'{distance_factory} as the "metric" parameter. These results should be equal.'
+    )
+
+    assert metric_str_result == metric_numba_class_result, (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using a NumbaDistance class: "
+        f'{distance_numba_class} as the "metric" parameter. These results should be '
+        f"equal."
+    )
+
+    assert metric_str_result == distance_func_result, (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using a distance function: "
+        f"{distance_function}. These results should be equal."
+    )
+
+    metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)
+    assert metric_str_result_to_self == 0, (
+        f"The distance when given two of the same timeseries e.g."
+        f"distance(x, x, ...), result should equal 0. This criteria is not met for "
+        f"the metric {metric_str}"
+    )
 
     if expected_result is not None:
         assert_almost_equal(metric_str_result, expected_result, 5)
