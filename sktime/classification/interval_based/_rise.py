@@ -7,20 +7,24 @@ algorithm will be depreciated.
 """
 
 __author__ = ["TonyBagnall", "Yi-Xuan Xu"]
-__all__ = ["RandomIntervalSpectralEnsemble", "RandomIntervalSpectralForest", "acf",
-           "matrix_acf", "ps"]
-
-
-from numba import int64, prange, jit
-import numpy as np
-from joblib import Parallel
-from joblib import delayed
+__all__ = [
+    "RandomIntervalSpectralEnsemble",
+    "RandomIntervalSpectralForest",
+    "acf",
+    "matrix_acf",
+    "ps",
+]
 
 from deprecated.sphinx import deprecated
 
+from joblib import Parallel, delayed
+from numba import int64, jit, prange
+import numpy as np
+
+
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
