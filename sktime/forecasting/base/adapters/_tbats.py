@@ -9,8 +9,8 @@ __all__ = ["_TbatsAdapter"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
 
@@ -150,9 +150,41 @@ class _TbatsAdapter(BaseForecaster):
         fitted_params = {}
         for name in self._get_fitted_param_names():
             fitted_params[name] = getattr(self._forecaster, name, None)
-
         return fitted_params
 
     def _get_fitted_param_names(self):
         """Get names of fitted parameters."""
         return self._fitted_param_names
+
+    def _get_pred_int(self, lower, upper):
+        """Combine lower/upper bounds of pred.intervals, slice on fh.
+
+        Parameters
+        ----------
+        lower : pd.Series
+            Lower bound (can contain also in-sample bound)
+        upper : pd.Series
+            Upper bound (can contain also in-sample bound)
+
+        Returns
+        -------
+        pd.DataFrame
+            pred_int, predicion intervalls (out-sample, sliced by fh)
+        """
+        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+        # Out-sample fh
+        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
+        # If pred_int contains in-sample prediction intervals
+        if len(pred_int) > len(self._y):
+            len_out = len(pred_int) - len(self._y)
+            # Workaround for slicing with negative index
+            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
+        # If pred_int does not contain in-sample prediction intervals
+        else:
+            pred_int["idx"] = [x for x in range(len(pred_int))]
+        pred_int = pred_int.loc[
+            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
+        ]
+        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int = pred_int.drop(columns=["idx"])
+        return pred_int
