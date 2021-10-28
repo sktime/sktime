@@ -63,6 +63,7 @@ def _validate_distance_result(
     metric_numba_class_result = distance(
         x, y, metric=distance_numba_class, **kwargs_dict
     )
+    metric_dist_func_result = distance(x, y, metric=distance_function, **kwargs_dict)
 
     distance_func_result = distance_function(x, y, **kwargs_dict)
 
@@ -106,6 +107,13 @@ def _validate_distance_result(
         f'The result of using the string: {metric_str} as the "metric" parameter'
         f"result does not equal the result of using a distance function: "
         f"{distance_function}. These results should be equal."
+    )
+
+    assert metric_str_result == metric_dist_func_result, (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using a NumbaDistance class: "
+        f'{distance_function} as the "metric" parameter. These results should be '
+        f"equal."
     )
 
     metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)

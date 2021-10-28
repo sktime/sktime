@@ -243,6 +243,11 @@ def _resolve_metric(
             metric = metric(x[0], y[0], **kwargs)
         elif _is_no_python_distance_callable(metric):
             metric = metric
+        elif metric in _METRIC_CALLABLES.values():
+            for val in _METRIC_INFOS:
+                if val.dist_func is metric:
+                    numba_dist_instance = val.dist_instance
+                    break
         else:
             raise ValueError(
                 "The callable provided must be no_python (using njit()) for"
@@ -306,7 +311,10 @@ def _is_distance_factory_callable(metric: Callable) -> bool:
     if is_no_python_compiled:
         return False
     correct_num_params = len(inspect.signature(metric).parameters) >= 2
-    return_num_params = len(inspect.signature(metric).return_annotation) == 1
+    return_num_params = (
+        inspect.signature(metric).return_annotation is not float
+        and len(inspect.signature(metric).return_annotation) == 1
+    )
     return correct_num_params and return_num_params
 
 
@@ -364,5 +372,7 @@ _METRIC_INFOS = [
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
 _METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
-
+_METRIC_CALLABLES = dict(
+    (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
+)
 _METRICS_NAMES = list(_METRICS.keys())

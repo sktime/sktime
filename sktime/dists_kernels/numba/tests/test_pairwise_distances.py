@@ -48,6 +48,7 @@ def _validate_pairwise_result(
     y: np.ndarray,
     metric_str: str,
     distance_factory: Callable,
+    distance_function: Callable,
     distance_numba_class: NumbaDistance,
     kwargs_dict: dict = None,
     expected_result: float = None,
@@ -64,6 +65,8 @@ def _validate_pairwise_result(
         Metric string name.
     distance_factory: Callable
         Distance factory callable
+    distance_function: Callable
+        Distance function callable
     distance_numba_class: Callable
         NumbaDistance class
     kwargs_dict: dict
@@ -79,6 +82,9 @@ def _validate_pairwise_result(
     )
     metric_numba_class_result = pairwise_distance(
         x, y, metric=distance_numba_class, **kwargs_dict
+    )
+    metric_dist_func_result = pairwise_distance(
+        x, y, metric=distance_function, **kwargs_dict
     )
 
     assert isinstance(metric_str_result, np.ndarray), (
@@ -109,6 +115,13 @@ def _validate_pairwise_result(
         f"result does not equal the result of using the NumbaDistance class: "
         f'{distance_numba_class} as the "metric" parameter. These results should '
         f"be equal."
+    )
+
+    assert np.array_equal(metric_str_result, metric_dist_func_result), (
+        f'The result of using the string: {metric_str} as the "metric" parameter'
+        f"result does not equal the result of using a NumbaDistance class: "
+        f'{distance_function} as the "metric" parameter. These results should be '
+        f"equal."
     )
 
     metric_str_result_to_self = pairwise_distance(
@@ -143,6 +156,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     """
     name = dist.canonical_name
     distance_numba_class = dist.dist_instance
+    distance_function = dist.dist_func
     distance_factory = distance_numba_class.distance_factory
 
     _validate_pairwise_result(
@@ -150,6 +164,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         y=np.array([15.0]),
         metric_str=name,
         distance_factory=distance_factory,
+        distance_function=distance_function,
         distance_numba_class=distance_numba_class,
         expected_result=_expected_distance_results[name][0],
     )
@@ -159,6 +174,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         y=create_test_distance_numpy(10, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
+        distance_function=distance_function,
         distance_numba_class=distance_numba_class,
         expected_result=_expected_distance_results[name][1],
     )
@@ -168,6 +184,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         y=create_test_distance_numpy(10, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
+        distance_function=distance_function,
         distance_numba_class=distance_numba_class,
         expected_result=_expected_distance_results[name][1],
     )
@@ -177,6 +194,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         y=create_test_distance_numpy(10, 10, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
+        distance_function=distance_function,
         distance_numba_class=distance_numba_class,
         expected_result=_expected_distance_results[name][2],
     )
@@ -186,6 +204,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         y=create_test_distance_numpy(10, 10, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
+        distance_function=distance_function,
         distance_numba_class=distance_numba_class,
         expected_result=_expected_distance_results[name][2],
     )
@@ -195,6 +214,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         y=create_test_distance_numpy(10, 10, 10, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
+        distance_function=distance_function,
         distance_numba_class=distance_numba_class,
         expected_result=_expected_distance_results[name][3],
     )
