@@ -24,6 +24,7 @@ Community Council
    * - Martin Walter
      - :user:`aiwalter`
 
+
 Code of Conduct Committee
 -------------------------
 
