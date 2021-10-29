@@ -9,7 +9,7 @@ from typing import Callable, Union
 import numpy as np
 from numba import njit, prange
 
-from sktime.dists_kernels._utils import to_numba_timeseries
+from sktime.dists_kernels._utils import to_numba_pairwise_timeseries
 from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
 from sktime.dists_kernels.numba.distances.distance import _resolve_metric
 
@@ -82,8 +82,9 @@ def pairwise_distance(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    _x = to_numba_timeseries(x)
-    _y = to_numba_timeseries(y)
+    # If 1d array given make it as if it was a 2d
+    _x = to_numba_pairwise_timeseries(x)
+    _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
 
     _metric_callable = _resolve_metric(metric, _x, _y, **kwargs)
