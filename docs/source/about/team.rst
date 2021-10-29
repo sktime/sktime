@@ -59,6 +59,8 @@ Core Developers
      - :user:`GuzalBulatova`
    * - Franz Kiraly
      - :user:`fkiraly`
+   * - Freddy A Boulton
+     - :user:`freddyaboulton`
    * - George Oastler
      - :user:`goastler`
    * - Markus Löning
