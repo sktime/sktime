@@ -36,9 +36,18 @@ def _validate_bounding_result(
         that uses a gradient and therefore the first a second column are allowed to
         be finite (aside the first and last element in the matrix).
     """
-    assert isinstance(matrix, np.ndarray)
-    assert matrix.ndim == 2
-    assert matrix.shape == (len(x), len(y))
+    assert isinstance(matrix, np.ndarray), (
+        f"A bounding matrix must be of type np.ndarray. Instead one was provided with "
+        f"{type(matrix)} type."
+    )
+    assert matrix.ndim == 2, (
+        f"A bounding matrix must have two dimensions. Instead one was provided with "
+        f"{matrix.ndim} dimensions."
+    )
+    assert matrix.shape == (len(x), len(y)), (
+        f"A bounding matrix with shape len(x) by len(y) is expected ({len(x), len(y)}. "
+        f"Instead one was given with shape {matrix.shape}"
+    )
 
     unique, counts = np.unique(matrix, return_counts=True)
     count_dict = dict(zip(unique, counts))
@@ -144,25 +153,20 @@ def test_lower_bounding() -> None:
     """Test for various lower bounding methods."""
     no_bounding = LowerBounding.NO_BOUNDING
     no_bounding_int = LowerBounding(1)
-    assert no_bounding_int is no_bounding, (
-        "No bounding must be able to be"
-        "constructed using the enum and a int "
-        "value."
-    )
+    assert (
+        no_bounding_int is no_bounding
+    ), "No bounding must be able to be constructed using the enum and a int value."
 
     sakoe_chiba = LowerBounding.SAKOE_CHIBA
     sakoe_chiba_int = LowerBounding(2)
-    assert sakoe_chiba_int is sakoe_chiba, (
-        "Sakoe chiba must be able to be" "constructed using the enum and a int" "value."
-    )
+    assert (
+        sakoe_chiba_int is sakoe_chiba
+    ), "Sakoe chiba must be able to be constructed using the enum and a int value."
 
     itakura_parallelogram = LowerBounding.ITAKURA_PARALLELOGRAM
     itakura_parallelogram_int = LowerBounding(3)
     assert itakura_parallelogram_int is itakura_parallelogram, (
-        "Itakura parallelogram"
-        "must be able to be"
-        "constructed using"
-        "the enum and a in "
+        "Itakura parallelogram must be able to be constructed using the enum and a int "
         "value"
     )
 

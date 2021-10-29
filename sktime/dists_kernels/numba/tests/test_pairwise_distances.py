@@ -87,32 +87,37 @@ def _validate_pairwise_result(
         x, y, metric=distance_function, **kwargs_dict
     )
 
-    assert isinstance(metric_str_result, np.ndarray), (
-        f"The result for a pairwise using the string: {metric_str} as the "
-        f'"metric" parameter should return a 2d numpy array. It currently does not.'
-    )
-
     assert metric_str_result.shape == (len(x), len(y)), (
         f'The result for a pairwise using the string: {metric_str} as the "metric"'
-        f"parameter should be of the size mxn where m is len(x) and n is len(y)"
+        f"parameter should be of the size mxn where m is len(x) and n is len(y). "
+        f"Instead the result was of shape {metric_str_result.shape}."
+    )
+
+    assert isinstance(metric_str_result, np.ndarray), (
+        f"The result for a pairwise using the string: {metric_str} as the "
+        f'"metric" parameter should return a 2d numpy array. The return type provided '
+        f"is of type {type(metric_str_result)}"
     )
 
     assert isinstance(metric_factory_result, np.ndarray), (
         f"The result for a pairwise using the distance factory: "
         f'{distance_factory} as the "metric" parameter should return a 2d numpy '
-        f"array. It currently does not."
+        f"The return type provided is of type {type(metric_factory_result)}"
     )
 
     assert isinstance(metric_numba_class_result, np.ndarray), (
         f"The result for a pairwise using the NumbaDistance class: "
         f'{distance_numba_class} as the "metric" parameter should return a 2d '
-        f"numpy. It currently does not."
+        f"numpy The return type provided is of type {type(metric_numba_class_result)}"
     )
 
     assert np.array_equal(metric_str_result, metric_factory_result), (
         f'The result of using the string: {metric_str} as the "metric" parameter'
         f"result does not equal the result of using the distance factory: "
         f'{distance_factory} as the "metric" parameter. These results should be equal.'
+        f"The result of the pairwise calculation where metric={metric_str} is "
+        f"{distance_factory}. The result of the distance calculation where "
+        f"metric={distance_factory} is {metric_factory_result}."
     )
 
     assert np.array_equal(metric_str_result, metric_numba_class_result), (
@@ -120,6 +125,9 @@ def _validate_pairwise_result(
         f"result does not equal the result of using the NumbaDistance class: "
         f'{distance_numba_class} as the "metric" parameter. These results should '
         f"be equal."
+        f"The result of the pairwise calculation where metric={metric_str} is "
+        f"{metric_str_result}. The result of the distance calculation where "
+        f"metric={distance_numba_class} is {metric_numba_class_result}."
     )
 
     assert np.array_equal(metric_str_result, metric_dist_func_result), (
@@ -127,6 +135,9 @@ def _validate_pairwise_result(
         f"result does not equal the result of using a NumbaDistance class: "
         f'{distance_function} as the "metric" parameter. These results should be '
         f"equal."
+        f"The result of the pairwise calculation where metric={metric_str} is "
+        f"{metric_str_result}. The result of the distance calculation where "
+        f"metric={distance_function} is {metric_dist_func_result}."
     )
 
     metric_str_result_to_self = pairwise_distance(
@@ -135,8 +146,8 @@ def _validate_pairwise_result(
     assert metric_str_result_to_self.trace() == 0, (
         f"The pairwise distance when given two of the same timeseries e.g."
         f"pairwise_distance(x, x, ...), diagonal should equal 0."
-        f"(np.trace(result)). This criteria is not met for the pairwise metric "
-        f"{metric_str}"
+        f"(np.trace(result)). Instead for the pairwise metric given where metric="
+        f"{metric_str} is {metric_str_result_to_self.trace()}"
     )
 
     assert _check_symmetric(metric_str_result_to_self) is True, (

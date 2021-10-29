@@ -31,15 +31,37 @@ def _test_metric_parameters(distance_func: Callable):
     x_numpy = create_test_distance_numpy(10, 10)
     y_numpy = create_test_distance_numpy(10, 10, random_state=2)
 
-    assert distance_func(x_numpy, y_numpy, metric=_ValidTestClass()) == 5.0, (
-        "Using a custom NumbaDistance did not produce the expected result. Ensure"
-        "custom NumbaDistances can be passed."
+    class_result = distance_func(x_numpy, y_numpy, metric=_ValidTestClass())
+    standalone_dist_result = distance_func(
+        x_numpy, y_numpy, metric=_standalone_numba_distance
     )
 
-    assert distance_func(x_numpy, y_numpy, metric=_standalone_numba_distance) == 5, (
-        "Using a custom no_python compiled distance function did not produce the"
-        "expected result. Ensure no_python compiled functions can be passed."
-    )
+    if isinstance(class_result, float):
+        expected = 5.0
+        assert class_result == expected, (
+            f"Using a custom NumbaDistance did not produce the expected result. Ensure"
+            f"custom NumbaDistances can be passed. Expected result {expected}, got "
+            f"{class_result}"
+        )
+
+        assert standalone_dist_result == expected, (
+            f"Using a custom no_python compiled distance function did not produce the"
+            f"expected result. Ensure no_python compiled functions can be passed. "
+            f"Expected result {expected}, got {class_result}"
+        )
+    else:
+        expected = 50.0
+        assert class_result.trace() == expected, (
+            f"Using a custom NumbaDistance did not produce the expected result. Ensure"
+            f"custom NumbaDistances can be passed. Expected result {expected}, got "
+            f"{class_result.trace()}"
+        )
+
+        assert standalone_dist_result.trace() == expected, (
+            f"Using a custom no_python compiled distance function did not produce the"
+            f"expected result. Ensure no_python compiled functions can be passed."
+            f"Expected result {expected}, got {class_result.trace()}"
+        )
 
 
 def _test_incorrect_parameters(distance_func: Callable):
