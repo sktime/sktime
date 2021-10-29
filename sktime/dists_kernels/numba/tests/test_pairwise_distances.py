@@ -92,6 +92,8 @@ def _validate_pairwise_result(
         f'"metric" parameter should return a 2d numpy array. It currently does not.'
     )
 
+    assert metric_str_result.shape == (len(x), len(y))
+
     assert isinstance(metric_factory_result, np.ndarray), (
         f"The result for a pairwise using the distance factory: "
         f'{distance_factory} as the "metric" parameter should return a 2d numpy '
