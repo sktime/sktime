@@ -162,9 +162,82 @@ def distance(
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    _metric_callable = _resolve_metric(metric, _x, _y, **kwargs)
+    _metric_callable = distance_factory(x, y, metric=metric, **kwargs)
 
     return _compute_distance(_x, _y, _metric_callable)
+
+
+def distance_factory(
+    x: np.ndarray,
+    y: np.ndarray,
+    metric: Union[
+        str,
+        Callable[
+            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+        ],
+        Callable[[np.ndarray, np.ndarray], float],
+        NumbaDistance,
+    ],
+    **kwargs: dict,
+) -> DistanceCallable:
+    """Create a no_python distance callable.
+
+    This function works for 1d, 2d and 3d timeseries.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d, 2d or 3d array)
+        First timeseries.
+    y: np.ndarray (1d, 2d or 3d array)
+        Second timeseries.
+    metric: str or Callable or NumbaDistance
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+
+        'euclidean', 'squared', 'dtw.
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If the distance takes kwargs then a distance factory should be provided. The
+        distance factory takes the form:
+
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
+
+        and should validate the kwargs, and return a no_python callable described
+        above as the return.
+
+        If a no_python callable provided it should take the form:
+
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ],
+    kwargs: dict, optional
+        Extra arguments for metric. Refer to each metric documentation for a list of
+        possible arguments.
+
+    Returns
+    -------
+    Callable[[np.ndarray, np.ndarray], float]]
+        No_python compiled distance resolved from the metric input.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
+    """
+    _x = to_numba_timeseries(x)
+    _y = to_numba_timeseries(y)
+
+    return _resolve_metric(metric, _x, _y, **kwargs)
 
 
 @njit(cache=True)
@@ -203,7 +276,7 @@ def _resolve_metric(
     x: np.ndarray,
     y: np.ndarray,
     **kwargs: dict,
-) -> Callable[[np.ndarray, np.ndarray], float]:
+) -> DistanceCallable:
     """Resolve a metric from a string or callable or NumbaDistance instance.
 
     Parameters
@@ -218,11 +291,10 @@ def _resolve_metric(
         Extra arguments for metric. Refer to each metric documentation for a list of
         possible arguments.
 
-
     Returns
     -------
     Callable[[np.ndarray, np.ndarray], float]]
-        Distance metric resolved from the metric input.
+        No_python compiled distance resolved from the metric input.
 
     Raises
     ------
