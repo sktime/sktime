@@ -59,11 +59,14 @@ cdef class PySAX:
         return self.thisptr.map_weighted_patterns(ts, sequences, weights)
 
 
-@deprecated(version="0.8.1", reason="AdaptedSFA will be removed in v0.10.0", category=FutureWarning)
+@deprecated(
+    version="0.8.1",
+    reason="AdaptedSFA will be removed in v0.10.0",
+    category=FutureWarning,
+)
 class AdaptedSFA:
-    '''
-    SFA adaptation for Mr-SEQL. This code uses a different alphabet for each Fourier coefficient in the output of SFA.
-    '''
+    """SFA adaptation for Mr-SEQL. This code uses a different alphabet for each
+    Fourier coefficient in the output of SFA."""
 
     def __init__(self, int N, int w, int a):
         self.sfa = SFA(w, a, N, norm=True, remove_repeat_words=True)
@@ -72,6 +75,7 @@ class AdaptedSFA:
         self.sfa.fit(train_x)
 
     def timeseries2SFAseq(self, ts):
+        """Convert time series to SFA sequence."""
         dfts = self.sfa._mft(ts)
         sfa_str = b''
         for window in range(dfts.shape[0]):
@@ -104,9 +108,7 @@ cdef extern from "seql.h":
 
 
 cdef class PySEQL:
-    '''
-    Wrapper of SEQL C++ implementation.
-    '''
+    """Wrapper of SEQL C++ implementation."""
 
     cdef SEQL * thisptr
 
@@ -121,7 +123,11 @@ cdef class PySEQL:
         return self.thisptr.get_sequence_features(False), self.thisptr.get_coefficients(False)
 
 # TODO: remove in v0.10.0
-@deprecated(version="0.8.1", reason="SEQLCLF will be removed in v0.10.0", category=FutureWarning)
+@deprecated(
+    version="0.8.1",
+    reason="SEQLCLF will be removed in v0.10.0",
+    category=FutureWarning,
+)
 class SEQLCLF:
     '''
     SEQL with multiple symbolic representations of time series.
@@ -206,8 +212,12 @@ class SEQLCLF:
 ######################### Mr-SEQL (main class) #########################
 
 # TODO: remove in v0.10.0
-@deprecated(version="0.8.1", reason="MrSEQLClassifier will be removed in v0.10.0. It will be replaced with "
-                   "an implementation based on Numba.", category=FutureWarning)
+@deprecated(
+    version="0.8.1",
+    reason="MrSEQLClassifier will be removed in v0.10.0. It will be replaced with an "
+           "implementation based on Numba.",
+    category=FutureWarning,
+)
 class MrSEQLClassifier(BaseClassifier):
     ''' Time Series Classification with multiple symbolic representations and SEQL (Mr-SEQL)
 
