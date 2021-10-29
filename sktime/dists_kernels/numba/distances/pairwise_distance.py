@@ -68,7 +68,7 @@ def pairwise_distance(
 
     Returns
     -------
-    np.ndarray
+    np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
         Pairwise distance matrix between the two timeseries.
 
     Raises
@@ -111,9 +111,8 @@ def _compute_pairwise_distance(
 
     Returns
     -------
-    np.ndarray
-        Pairwise distance matrix between x and y. This is of size [n, m] where n
-        is len(x) and m is len(y).
+    np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
+        Pairwise distance matrix between the two timeseries.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]

@@ -60,14 +60,6 @@ class LowerBounding(Enum):
         SAKOE_CHIBA = 2
         ITAKURA_PARALLELOGRAM = 3
 
-    Raises
-    ------
-    ValueError
-        If the input timeseries is not a numpy array.
-        If the input timeseries doesn't have exactly 2 dimensions.
-        If the itakura_max_slope is not a float.
-        If the sakoe_chiba_window_radius is not an integer.
-
     References
     ----------
     .. [1]  H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
@@ -96,7 +88,7 @@ class LowerBounding(Enum):
         x: np.ndarray,
         y: np.ndarray,
         sakoe_chiba_window_radius: int = 2,
-        itakura_max_slope: float = 2.0,
+        itakura_max_slope: Union[float, int] = 2.0,
     ) -> np.ndarray:
         """Create a bounding matrix.
 
@@ -111,7 +103,7 @@ class LowerBounding(Enum):
             Second timeseries.
         sakoe_chiba_window_radius: int, defaults = 2
             Integer that is the radius of the sakoe chiba window.
-        itakura_max_slope: float, defaults = 2.
+        itakura_max_slope: float or int, defaults = 2.
             Gradient of the slope for itakura parallelogram.
 
         Returns
@@ -121,6 +113,14 @@ class LowerBounding(Enum):
             Bounding matrix where the values inside the bound are finite values (0s) and
             outside the bounds are infinity (non finite). This allows you to
             check if a given index is in bound using np.isfinite(bounding_matrix[i, j]).
+
+        Raises
+        ------
+        ValueError
+            If the input timeseries is not a numpy array.
+            If the input timeseries doesn't have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
         """
         _x = self._check_input_timeseries(x)
         _y = self._check_input_timeseries(y)
@@ -133,7 +133,7 @@ class LowerBounding(Enum):
 
         return bounding_matrix
 
-    def no_bounding(self, x: np.ndarray, y: np.ndarray):
+    def no_bounding(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Create a matrix with no bounding.
 
         Parameters
@@ -212,8 +212,8 @@ class LowerBounding(Enum):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        itakura_max_slope: float
-            Float that is the gradient of the slope.
+        itakura_max_slope: float or int
+            Gradient of the slope.
 
         Returns
         -------
@@ -224,10 +224,13 @@ class LowerBounding(Enum):
         Raises
         ------
         ValueError
-            If the itakura_max_slope is not a float.
+            If the itakura_max_slope is not a float or int.
         """
         if not isinstance(itakura_max_slope, float):
-            raise ValueError("The itakura max slope must be a float")
+            if isinstance(itakura_max_slope, int):
+                itakura_max_slope = float(itakura_max_slope)
+            else:
+                raise ValueError("The itakura max slope must be a float or int.")
 
         bounding_matrix = np.full((y.shape[0], x.shape[0]), np.inf)
 
@@ -286,7 +289,7 @@ class LowerBounding(Enum):
         """
         if not isinstance(x, np.ndarray):
             raise ValueError("The input timeseries must be a numpy array.")
-        if 0 > x.ndim > 4:
+        if x.ndim <= 0 or x.ndim >= 4:
             raise ValueError(
                 "The input timeseries must have more than 0 dimensions and"
                 "less than 4 dimensions."
@@ -296,7 +299,7 @@ class LowerBounding(Enum):
         return x
 
     @staticmethod
-    def _check_line_steps(line: np.ndarray):
+    def _check_line_steps(line: np.ndarray) -> np.ndarray:
         """Check the next 'step' is along the line.
 
         Parameters
@@ -333,7 +336,7 @@ class LowerBounding(Enum):
         Parameters
         ----------
         bounding_matrix: np.ndarray (2d array)
-            Matrix of size nxm where n is len(x) and m is len(y). Values that
+            Matrix of size mxn where m is len(x) and n is len(y). Values that
             are inside the shape will be replaced with finite values (0.).
         y_upper_line: np.ndarray (1d array)
             Y points of the upper line.
