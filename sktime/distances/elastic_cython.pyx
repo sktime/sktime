@@ -16,7 +16,7 @@ np.import_array()
 from libc.float cimport DBL_MAX
 from libc.math cimport exp, fabs, sqrt
 
-from deprecated.sphinx import deprecated
+from deprecated import deprecated
 
 
 cdef inline double min_c(double a, double b):
@@ -52,12 +52,13 @@ cdef inline int min_c_int(int a, int b):
 @deprecated(
     version="0.8.2",
     reason="cython dtw_distance is to be replaced by numba version in V0.10.",
+    category=FutureWarning,
 )
 def dtw_distance(
         np.ndarray[double, ndim=2] x,
         np.ndarray[double, ndim=2] y,
         double w = -1):
-    """ Cython version of DTW distance.
+    """Cython version of DTW distance.
 
     Arguments
     ---------
