@@ -82,7 +82,6 @@ def pairwise_distance(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    # If 1d array given make it as if it was a 2d
     _x = to_numba_pairwise_timeseries(x)
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
