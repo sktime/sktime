@@ -1,5 +1,7 @@
 # cython: language_level=3, boundscheck=False, wraparound=False, initializedcheck=False, nonecheck=False,
-
+# TODO remove in v0.10.0
+# the functionality in this file is depreciated and to be replaced with a version
+# based on numba.
 # believe it or not, the below variable is required for cython to compile properly. A
 # global python variable hooks into a c global variable. Without this functions do
 # not compile properly!
@@ -49,11 +51,6 @@ cdef inline int min_c_int(int a, int b):
 # the w argument corresponds to the length of the warping window in percentage of
 # the smallest length of the time series min(x,y) - if negative then no warping window
 # this function assumes that x is shorter than y
-@deprecated(
-    version="0.8.2",
-    reason="cython dtw_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def dtw_distance(
         np.ndarray[double, ndim=2] x,
         np.ndarray[double, ndim=2] y,
@@ -70,6 +67,8 @@ def dtw_distance(
     -------
     float
     """
+    raise FutureWarning("cython dtw_distance is to be replaced by numba version in "
+                        "V0.10.")
 # make sure x is shorter than y
     # if not permute
     cdef np.ndarray[double, ndim=2] X = x
