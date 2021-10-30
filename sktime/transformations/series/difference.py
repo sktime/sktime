@@ -96,8 +96,8 @@ class Differencer(_SeriesToSeriesTransformer):
         Stores whether the Differencer drops the initial observations that contain
         missing values as a result of the differencing operation(s).
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.difference import Differencer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
