@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Register of estimator and object tags.
 
 Note for extenders: new tags should be entered in ESTIMATOR_TAG_REGISTER.
@@ -36,13 +38,11 @@ ESTIMATOR_TAG_LIST - list of string
 ---
 
 check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for tag_name
-
 """
 
 __author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
-
 
 ESTIMATOR_TAG_REGISTER = [
     (
@@ -196,7 +196,7 @@ ESTIMATOR_TAG_REGISTER = [
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
 
-ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
+ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE.iloc[:, 0].tolist()
 
 
 def check_tag_is_valid(tag_name, tag_value):

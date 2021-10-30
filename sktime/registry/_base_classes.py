@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Register of estimator base classes corresponding to sktime scitypes.
 
 This module exports the following:
@@ -50,13 +52,9 @@ TRANSFORMER_MIXIN_LIST - list of string
 
 TRANSFORMER_MIXIN_LOOKUP - dictionary
     keys/entries are 0/1-th entries of TRANSFORMER_MIXIN_REGISTER
-
-
 """
 
 __author__ = ["fkiraly"]
-
-import pandas as pd
 
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
@@ -67,13 +65,14 @@ from sktime.dists_kernels._base import (
 )
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.base import BaseTransformer
-
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-
+from sktime.statistical_tests import BaseStatisticalTest
+from sktime.transformations.base import (
+    BaseTransformer,
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
 
 BASE_CLASS_REGISTER = [
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),
@@ -92,14 +91,15 @@ BASE_CLASS_REGISTER = [
         BasePairwiseTransformerPanel,
         "pairwise transformer for panel data, distance or kernel",
     ),
+    (
+        "statistical-test",
+        BaseStatisticalTest,
+        "diagnostic and post-hoc statistical tests",
+    ),
 ]
-
-BASE_CLASS_SCITYPE_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[0].tolist()
-
-BASE_CLASS_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[1].tolist()
+BASE_CLASS_SCITYPE_LIST, BASE_CLASS_LIST, _ = zip(*BASE_CLASS_REGISTER)
 
 BASE_CLASS_LOOKUP = dict(zip(BASE_CLASS_SCITYPE_LIST, BASE_CLASS_LIST))
-
 
 TRANSFORMER_MIXIN_REGISTER = [
     (
@@ -120,9 +120,9 @@ TRANSFORMER_MIXIN_REGISTER = [
     ("panel-to-panel-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
 ]
 
-TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].tolist()
-
-TRANSFORMER_MIXIN_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[1].tolist()
+TRANSFORMER_MIXIN_SCITYPE_LIST, TRANSFORMER_MIXIN_LIST, _ = zip(
+    *TRANSFORMER_MIXIN_REGISTER
+)
 
 TRANSFORMER_MIXIN_LOOKUP = dict(
     zip(TRANSFORMER_MIXIN_SCITYPE_LIST, TRANSFORMER_MIXIN_LIST)
