@@ -1,17 +1,15 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements grid search functionality to tune forecasters."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection import check_cv
+from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
@@ -25,9 +23,10 @@ from sktime.utils.validation.forecasting import check_scoring
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
+        "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(
@@ -40,7 +39,9 @@ class BaseGridSearch(BaseForecaster):
         refit=False,
         scoring=None,
         verbose=0,
+        return_n_best_forecasters=1,
     ):
+
         self.forecaster = forecaster
         self.cv = cv
         self.strategy = strategy
@@ -49,7 +50,20 @@ class BaseGridSearch(BaseForecaster):
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
+        self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            "scitype:y",
+            "ignores-exogeneous-X",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+        ]
+        self.clone_tags(forecaster, tags_to_clone)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
@@ -57,51 +71,6 @@ class BaseGridSearch(BaseForecaster):
         self.check_is_fitted("update")
         self.best_forecaster_._update(y, X, update_params=update_params)
         return self
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict(
-        self,
-        y,
-        cv=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        """Call update_predict on the forecaster with the best found
-        parameters.
-        """
-        self.check_is_fitted("update_predict")
-
-        return self.best_forecaster_._update_predict(
-            y,
-            cv=cv,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict_single(
-        self,
-        y,
-        fh=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        """Call predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("update_predict_single")
-        return self.best_forecaster_._update_predict_single(
-            y,
-            fh=fh,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -112,12 +81,6 @@ class BaseGridSearch(BaseForecaster):
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        """Call compute_pred_int on the forecaster with the best found parameters."""
-        self.check_is_fitted("compute_pred_int")
-        return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
         """Call transform on the forecaster with the best found parameters."""
         self.check_is_fitted("transform")
@@ -125,7 +88,7 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -137,8 +100,10 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def inverse_transform(self, y, X=None):
         """Call inverse_transform on the forecaster with the best found params.
+
         Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
+
         Parameters
         ----------
         y : indexable, length n_samples
@@ -149,8 +114,8 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y, X)
 
     def score(self, y, X=None, fh=None):
-        """Returns the score on the given data, if the forecaster has been
-        refit.
+        """Return the score on the given data, if forecaster been refitted.
+
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
 
@@ -180,7 +145,7 @@ class BaseGridSearch(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def check_is_fitted(self, method_name=None):
-        """Has `fit` been called?
+        """Check if `fit` has been called.
 
         Parameters
         ----------
@@ -219,11 +184,13 @@ class BaseGridSearch(BaseForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
         """
         cv = check_cv(self.cv)
+
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
@@ -292,8 +259,9 @@ class BaseGridSearch(BaseForecaster):
 
         # Rank results, according to whether greater is better for the given scoring.
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=~scoring.greater_is_better
+            ascending=not scoring.greater_is_better
         )
+
         self.cv_results_ = results
 
         # Select best parameters.
@@ -306,12 +274,32 @@ class BaseGridSearch(BaseForecaster):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
 
+        # Sort values according to rank
+        results = results.sort_values(
+            by=f"rank_{scoring_name}", ascending=not scoring.greater_is_better
+        )
+        # Select n best forecaster
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = clone(self.forecaster).set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
+
         return self
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
-    """
-    Performs grid-search cross-validation to find optimal model parameters.
+    """Perform grid-search cross-validation to find optimal model parameters.
+
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
 
@@ -341,6 +329,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     refit: bool, optional (default=True)
         Refit the forecaster with the best parameters on all the data
     verbose: int, optional (default=0)
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
     pre_dispatch: str, optional (default='2*n_jobs')
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
@@ -363,9 +354,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Time (seconds) to refit the best forecaster
     scorer_ : function
         Function used to score model
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
@@ -401,6 +397,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         n_jobs=None,
         refit=True,
         verbose=0,
+        return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
     ):
         super(ForecastingGridSearchCV, self).__init__(
@@ -411,19 +408,20 @@ class ForecastingGridSearchCV(BaseGridSearch):
             cv=cv,
             strategy=strategy,
             verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
         )
         self.param_grid = param_grid
 
     def _run_search(self, evaluate_candidates):
-        """Search all candidates in param_grid"""
+        """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
-    """
-    Performs randomized-search cross-validation to find optimal model parameters.
+    """Perform randomized-search cross-validation to find optimal model parameters.
+
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
 
@@ -461,6 +459,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     refit: bool, optional (default=True)
         Refit the forecaster with the best parameters on all the data
     verbose: int, optional (default=0)
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch: str, optional (default='2*n_jobs')
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -479,6 +481,11 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Fitted estimator with the best parameters
     cv_results_ : dict
         Results from grid search cross validation
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
     """
 
     _required_parameters = ["forecaster", "cv", "param_distributions"]
@@ -494,6 +501,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         n_jobs=None,
         refit=True,
         verbose=0,
+        return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
     ):
@@ -505,6 +513,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             refit=refit,
             cv=cv,
             verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
         )
         self.param_distributions = param_distributions
@@ -512,7 +521,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.random_state = random_state
 
     def _run_search(self, evaluate_candidates):
-        """Search n_iter candidates from param_distributions"""
+        """Search n_iter candidates from param_distributions."""
         return evaluate_candidates(
             ParameterSampler(
                 self.param_distributions, self.n_iter, random_state=self.random_state

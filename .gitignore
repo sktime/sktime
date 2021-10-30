@@ -32,6 +32,9 @@ results/
 
 MANIFEST
 
+#downloaded datasets
+sktime/datasets/data/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -73,11 +76,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-# automatically generated content
-docs/source/modules/auto_generated/
-docs/source/api_reference/modules/auto_generated/
-
-# automatically sym-linked example notebooks
+docs/source/api_reference/auto_generated/
+docs/estimator_overview_table.md
 docs/source/examples
 
 # PyBuilder
@@ -160,3 +160,4 @@ sktime/contrib/nothing_to_see_here.py
 sktime/distances/elastic_cython.html
 *.html
 sktime/contrib/distance_based/old_time_series_neighbors.py
+sktime/contrib/debug.py

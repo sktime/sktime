@@ -1,9 +1,9 @@
 # This Dockerfile is used to build sktime when launching binder.
 # Find out more at: https://mybinder.readthedocs.io/en/latest/index.html
 
-# Load pre-existing docker image
-FROM jupyter/scipy-notebook:cf6258237ff9
-
+# Load jupyter python 3.8 image
+# 3.8 is the highest currently supported version we can use
+FROM  jupyter/scipy-notebook:python-3.8.8
 # Set up user to avoid running as root
 ARG NB_USER
 ARG NB_UID
@@ -21,5 +21,6 @@ USER ${USERR}
 WORKDIR ${HOME}
 
 # Install extra requirements and sktime based on master branch
+RUN pip install --upgrade pip --no-cache-dir -r .binder/prelim_requirements.txt
 RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
 RUN pip install --no-cache-dir .

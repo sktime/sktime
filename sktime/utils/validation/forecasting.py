@@ -13,13 +13,16 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
+    "check_regressor",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
 
-from sktime.utils import _has_tag
+from sklearn.base import clone, is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
+
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_series
@@ -241,7 +244,7 @@ def check_fh(fh, enforce_relative=False):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=True)
+        fh = ForecastingHorizon(fh, is_relative=None)
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
@@ -346,7 +349,9 @@ def check_scoring(scoring, allow_y_pred_benchmark=False):
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    if _has_tag(scoring, "requires-y-pred-benchmark") and not allow_y_pred_benchmark:
+    scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+
+    if scoring_req_bench and not allow_y_pred_benchmark:
         msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
                  fully supported yet. Please use a performance metric that does not
                  require y_pred_benchmark as a keyword argument in its call signature.
@@ -357,3 +362,33 @@ def check_scoring(scoring, allow_y_pred_benchmark=False):
         raise TypeError("`scoring` must be a callable object")
 
     return scoring
+
+
+def check_regressor(regressor=None, random_state=None):
+    """Check if a regressor is given and if it is valid, otherwise set default regressor.
+
+    Parameters
+    ----------
+    regressor : sklearn-like regressor, optional, default=None.
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor.
+
+    Returns
+    -------
+    regressor
+
+    Raises
+    ------
+    ValueError
+        Raise error if given regressor is not a valid sklearn-like regressor.
+    """
+    if regressor is None:
+        regressor = GradientBoostingRegressor(max_depth=5, random_state=random_state)
+    else:
+        if not is_regressor(regressor):
+            raise ValueError(
+                f"`regressor` should be a sklearn-like regressor, "
+                f"but found: {regressor}"
+            )
+        regressor = clone(regressor)
+    return regressor

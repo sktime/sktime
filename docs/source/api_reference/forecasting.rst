@@ -1,13 +1,15 @@
 
 .. _forecasting_ref:
 
-sktime.forecasting: Time series forecasting
-===========================================
+Forecasting
+===========
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
 .. automodule:: sktime.forecasting
     :no-members:
+    :no-inherited-members:
+
 
 Base
 ----
@@ -15,7 +17,7 @@ Base
 .. currentmodule:: sktime.forecasting.base
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     ForecastingHorizon
@@ -26,7 +28,7 @@ Naive
 .. currentmodule:: sktime.forecasting.naive
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     NaiveForecaster
@@ -37,7 +39,7 @@ Trend
 .. currentmodule:: sktime.forecasting.trend
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     PolynomialTrendForecaster
@@ -48,7 +50,7 @@ Exponential Smoothing
 .. currentmodule:: sktime.forecasting.exp_smoothing
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     ExponentialSmoothing
@@ -56,7 +58,7 @@ Exponential Smoothing
 .. currentmodule:: sktime.forecasting.ets
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     AutoETS
@@ -67,7 +69,7 @@ ARIMA
 .. currentmodule:: sktime.forecasting.arima
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     AutoARIMA
@@ -79,7 +81,7 @@ Theta
 .. currentmodule:: sktime.forecasting.theta
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     ThetaForecaster
@@ -90,7 +92,7 @@ BATS/TBATS
 .. currentmodule:: sktime.forecasting.bats
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     BATS
@@ -98,10 +100,21 @@ BATS/TBATS
 .. currentmodule:: sktime.forecasting.tbats
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     TBATS
+
+Croston
+-------
+
+.. currentmodule:: sktime.forecasting.croston
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Croston
 
 Prophet
 -------
@@ -109,10 +122,21 @@ Prophet
 .. currentmodule:: sktime.forecasting.fbprophet
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     Prophet
+
+Unobserved Components
+--------------------
+
+.. currentmodule:: sktime.forecasting.structural
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    UnobservedComponents
 
 Composition
 -----------
@@ -120,10 +144,13 @@ Composition
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
+    ColumnEnsembleForecaster
     EnsembleForecaster
+    AutoEnsembleForecaster
+    StackingForecaster
     TransformedTargetForecaster
     ForecastingPipeline
     DirectTabularRegressionForecaster
@@ -134,11 +161,10 @@ Composition
     RecursiveTimeSeriesRegressionForecaster
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
-    StackingForecaster
     MultiplexForecaster
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     make_reduction
@@ -149,7 +175,7 @@ Online Forecasting
 .. currentmodule:: sktime.forecasting.online_learning
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     OnlineEnsembleForecaster
@@ -162,7 +188,7 @@ Model Selection
 .. currentmodule:: sktime.forecasting.model_selection
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: class.rst
 
     CutoffSplitter
@@ -173,18 +199,18 @@ Model Selection
     ForecastingRandomizedSearchCV
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     temporal_train_test_split
 
 Model Evaluation (Backtesting)
-----------------
+------------------------------
 
 .. currentmodule:: sktime.forecasting.model_evaluation
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     evaluate

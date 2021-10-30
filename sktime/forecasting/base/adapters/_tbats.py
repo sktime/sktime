@@ -1,23 +1,26 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements adapter for using tbats forecasters in sktime framework."""
 
-__author__ = ["Markus Löning", "Martin Walter"]
+__author__ = ["mloning", "aiwalter"]
 __all__ = ["_TbatsAdapter"]
 
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
 
 
 class _TbatsAdapter(BaseForecaster):
-    """Base class for interfacing tbats forecasting algorithms"""
+    """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -84,14 +87,12 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
 
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
         """Forecast time series at future horizon.
 
         Parameters
@@ -139,7 +140,7 @@ class _TbatsAdapter(BaseForecaster):
             return y_pred
 
     def get_fitted_params(self):
-        """Get fitted parameters
+        """Get fitted parameters.
 
         Returns
         -------
@@ -149,9 +150,41 @@ class _TbatsAdapter(BaseForecaster):
         fitted_params = {}
         for name in self._get_fitted_param_names():
             fitted_params[name] = getattr(self._forecaster, name, None)
-
         return fitted_params
 
     def _get_fitted_param_names(self):
-        """Get names of fitted parameters"""
+        """Get names of fitted parameters."""
         return self._fitted_param_names
+
+    def _get_pred_int(self, lower, upper):
+        """Combine lower/upper bounds of pred.intervals, slice on fh.
+
+        Parameters
+        ----------
+        lower : pd.Series
+            Lower bound (can contain also in-sample bound)
+        upper : pd.Series
+            Upper bound (can contain also in-sample bound)
+
+        Returns
+        -------
+        pd.DataFrame
+            pred_int, predicion intervalls (out-sample, sliced by fh)
+        """
+        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+        # Out-sample fh
+        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
+        # If pred_int contains in-sample prediction intervals
+        if len(pred_int) > len(self._y):
+            len_out = len(pred_int) - len(self._y)
+            # Workaround for slicing with negative index
+            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
+        # If pred_int does not contain in-sample prediction intervals
+        else:
+            pred_int["idx"] = [x for x in range(len(pred_int))]
+        pred_int = pred_int.loc[
+            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
+        ]
+        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int = pred_int.drop(columns=["idx"])
+        return pred_int

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
-"""Prophet forecaster by wrapping fbprophet."""
+"""Implements Prophet forecaster by wrapping fbprophet."""
 
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
@@ -22,8 +21,8 @@ class Prophet(_ProphetAdapter):
     freq: String of DatetimeIndex frequency. See here for possible values:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
         #timeseries-offset-aliases
-    add_seasonality: Dict with args for Prophet.add_seasonality().
-        Dict can have the following keys/values:
+    add_seasonality: Dict or List of Dicts with args for Prophet.add_seasonality().
+        Dict or each Dict in List can have the following keys/values:
             name: string name of the seasonality component.
             period: float number of days in one period.
             fourier_order: int number of Fourier components to use.
@@ -85,8 +84,8 @@ class Prophet(_ProphetAdapter):
     https://facebook.github.io/prophet
     https://github.com/facebook/prophet
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex

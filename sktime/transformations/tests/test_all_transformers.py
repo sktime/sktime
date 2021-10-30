@@ -1,25 +1,29 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Unit tests common to all transformers."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.registry import all_estimators
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils import all_estimators
-from sktime.utils import _has_tag
-from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.estimator_checks import _make_args
-from sktime.utils.data_processing import is_nested_dataframe
+from sktime.transformations.base import (
+    BaseTransformer,
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
+from sktime.utils._testing.estimator_checks import (
+    _assert_array_almost_equal,
+    _construct_instance,
+    _make_args,
+)
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
 
@@ -53,12 +57,13 @@ def _construct_fit(Estimator, **kwargs):
 
 def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
     out = _construct_fit_transform(Estimator, **kwargs)
-    assert isinstance(out, (int, np.integer, float, np.floating, str))
+    assert isinstance(out, pd.DataFrame)
 
 
 def _check_raises_error(Estimator, **kwargs):
     with pytest.raises(ValueError, match=r"univariate"):
-        if _has_tag(Estimator, "fit-in-transform"):
+        estimator = _construct_instance(Estimator)
+        if estimator.get_tag("fit-in-transform", False):
             # As some estimators have an empty fit method, we here check if
             # they raise the appropriate error in transform rather than fit.
             _construct_fit_transform(Estimator, **kwargs)
@@ -69,35 +74,40 @@ def _check_raises_error(Estimator, **kwargs):
 
 def check_series_to_primitive_transform_multivariate(Estimator):
     n_columns = 3
-    if _has_tag(Estimator, "univariate-only"):
+    estimator = _construct_instance(Estimator)
+    if estimator.get_tag("univariate-only", False):
         _check_raises_error(Estimator, n_columns=n_columns)
     else:
         out = _construct_fit_transform(Estimator, n_columns=n_columns)
-        assert isinstance(out, (pd.Series, np.ndarray))
-        assert out.shape == (n_columns,)
+        assert isinstance(out, pd.DataFrame)
+        # We don't know how many primitives wil be returned, so # of columns unknown.
+        assert out.shape[0] == n_columns
 
 
 def check_series_to_series_transform_univariate(Estimator):
+    estimator = _construct_instance(Estimator)
     n_timepoints = 15
     out = _construct_fit_transform(
         Estimator,
         n_timepoints=n_timepoints,
-        add_nan=_has_tag(Estimator, "handles-missing-data"),
+        add_nan=estimator.get_tag("handles-missing-data", False),
     )
     assert isinstance(out, (pd.Series, np.ndarray, pd.DataFrame))
 
 
 def check_series_to_series_transform_multivariate(Estimator):
+    estimator = _construct_instance(Estimator)
     n_columns = 3
     n_timepoints = 15
-    if _has_tag(Estimator, "univariate-only"):
+    if estimator.get_tag("univariate-only", False):
         _check_raises_error(Estimator, n_timepoints=n_timepoints, n_columns=n_columns)
     else:
         out = _construct_fit_transform(
             Estimator, n_timepoints=n_timepoints, n_columns=n_columns
         )
         assert isinstance(out, (pd.DataFrame, np.ndarray))
-        assert out.shape == (n_timepoints, n_columns)
+        if estimator.get_tag("transform-returns-same-time-index"):
+            assert out.shape == (n_timepoints, n_columns)
 
 
 def check_panel_to_tabular_transform_univariate(Estimator):
@@ -108,8 +118,9 @@ def check_panel_to_tabular_transform_univariate(Estimator):
 
 
 def check_panel_to_tabular_transform_multivariate(Estimator):
+    estimator = _construct_instance(Estimator)
     n_instances = 5
-    if _has_tag(Estimator, "univariate-only"):
+    if estimator.get_tag("univariate-only", False):
         _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
     else:
         out = _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
@@ -129,8 +140,9 @@ def check_panel_to_panel_transform_univariate(Estimator):
 
 
 def check_panel_to_panel_transform_multivariate(Estimator):
+    estimator = _construct_instance(Estimator)
     n_instances = 5
-    if _has_tag(Estimator, "univariate-only"):
+    if estimator.get_tag("univariate-only", False):
         _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
     else:
         out = _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
@@ -143,15 +155,17 @@ def check_panel_to_panel_transform_multivariate(Estimator):
 
 
 def check_transform_returns_same_time_index(Estimator):
-    assert issubclass(Estimator, _SeriesToSeriesTransformer)
     estimator = _construct_instance(Estimator)
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
-    for method in ["transform", "inverse_transform"]:
-        if hasattr(estimator, method):
-            X = _make_args(estimator, method)[0]
-            Xt = estimator.transform(X)
-            np.testing.assert_array_equal(X.index, Xt.index)
+    if estimator.get_tag("transform-returns-same-time-index"):
+        assert issubclass(Estimator, _SeriesToSeriesTransformer)
+        estimator = _construct_instance(Estimator)
+        fit_args = _make_args(estimator, "fit")
+        estimator.fit(*fit_args)
+        for method in ["transform", "inverse_transform"]:
+            if hasattr(estimator, method):
+                X = _make_args(estimator, method)[0]
+                Xt = estimator.transform(X)
+                np.testing.assert_array_equal(X.index, Xt.index)
 
 
 def check_transform_inverse_transform_equivalent(Estimator):
@@ -159,7 +173,10 @@ def check_transform_inverse_transform_equivalent(Estimator):
     X = _make_args(estimator, "fit")[0]
     Xt = estimator.fit_transform(X)
     Xit = estimator.inverse_transform(Xt)
-    _assert_array_almost_equal(X, Xit)
+    if estimator.get_tag("transform-returns-same-time-index"):
+        _assert_array_almost_equal(X, Xit)
+    else:
+        _assert_array_almost_equal(X.loc[Xit.index], Xit)
 
 
 def check_transformer_type(Estimator):
@@ -198,5 +215,7 @@ def _yield_transformer_checks(Estimator):
         yield from panel_to_tabular_checks
     if issubclass(Estimator, _PanelToPanelTransformer):
         yield from panel_to_panel_checks
-    if _has_tag(Estimator, "transform-returns-same-time-index"):
+    if _construct_instance(Estimator).get_tag(
+        "transform-returns-same-time-index", False
+    ):
         yield check_transform_returns_same_time_index

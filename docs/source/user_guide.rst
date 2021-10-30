@@ -29,4 +29,7 @@ meant to provide a technical manual.
    user_guide/classification
    user_guide/regression
    user_guide/forecasting
+   user_guide/clustering
+   user_guide/annotation
+   user_guide/performance_metrics
    user_guide/resources

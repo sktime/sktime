@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-sktime window forecaster base class
-
+# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
+"""sktime window forecaster base class."""
 
 __author__ = ["@mloning", "@big-o"]
 __all__ = ["_BaseWindowForecaster"]
@@ -20,7 +18,7 @@ from sktime.utils.validation.forecasting import check_cv
 
 
 class _BaseWindowForecaster(BaseForecaster):
-    """Base class for forecasters that use."""
+    """Base class for forecasters that use sliding windows."""
 
     def __init__(self, window_length=None):
         super(_BaseWindowForecaster, self).__init__()

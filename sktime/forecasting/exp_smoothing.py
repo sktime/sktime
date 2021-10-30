@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements Holt-Winters exponential smoothing."""
+
 __all__ = ["ExponentialSmoothing"]
-__author__ = ["Markus Löning", "@big-o"]
+__author__ = ["mloning", "big-o"]
 
 from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
 
@@ -8,43 +12,51 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):
-    """
-    Holt-Winters exponential smoothing forecaster. Default settings use
-    simple exponential smoothing
-    without trend and seasonality components.
+    """Holt-Winters exponential smoothing forecaster.
+
+    Default settings use simple exponential smoothing without trend and
+    seasonality components.
 
     Parameters
     ----------
-    trend : str{"add", "mul", "additive", "multiplicative", None}, optional
-    (default=None)
+    trend : {"add", "mul", "additive", "multiplicative", None}, default=None
         Type of trend component.
-    damped_trend : bool, optional (default=None)
+    damped_trend : bool, default=False
         Should the trend component be damped.
-    seasonal : {"add", "mul", "additive", "multiplicative", None}, optional
-    (default=None)
-        Type of seasonal component.
-    sp : int, optional (default=None)
+    seasonal : {"add", "mul", "additive", "multiplicative", None}, default=None
+        Type of seasonal component.Takes one of
+    sp : int or None, default=None
         The number of seasonal periods to consider.
-    initial_level : float, optional
+    initial_level : float or None, default=None
         The alpha value of the simple exponential smoothing, if the value
         is set then this value will be used as the value.
-    initial_trend : float, optional
+    initial_trend : float or None, default=None
         The beta value of the Holt's trend method, if the value is
         set then this value will be used as the value.
-    initial_seasonal : float, optional
+    initial_seasonal : float or None, default=None
         The gamma value of the holt winters seasonal method, if the value
         is set then this value will be used as the value.
-    use_boxcox : {True, False, 'log', float}, optional
-        Should the Box-Cox transform be applied to the data first? If 'log'
-        then apply the log. If float then use lambda equal to float.
+    use_boxcox : {True, False, 'log', float}, default=None
+        Should the Box-Cox transform be applied to the data first?
+        If 'log' then apply the log. If float then use lambda equal to float.
+    initialization_method:{'estimated','heuristic','legacy-heuristic','known',None},
+        default='estimated'
+        Method for initialize the recursions.
+        If 'known' initialization is used, then `initial_level` must be
+        passed, as well as `initial_trend` and `initial_seasonal` if
+        applicable.
+        'heuristic' uses a heuristic based on the data to estimate initial
+        level, trend, and seasonal state. 'estimated' uses the same heuristic
+        as initial guesses, but then estimates the initial states as part of
+        the fitting process.
 
     References
     ----------
     [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
         and practice. OTexts, 2014.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = load_airline()

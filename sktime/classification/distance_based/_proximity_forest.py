@@ -10,34 +10,34 @@ __all__ = ["ProximityForest", "_CachedTransformer", "ProximityStump", "Proximity
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from scipy import stats
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.distances.elastic_cython import erp_distance
-from sktime.distances.elastic_cython import lcss_distance
-from sktime.distances.elastic_cython import msm_distance
-from sktime.distances.elastic_cython import twe_distance
-from sktime.distances.elastic_cython import wdtw_distance
-from sktime.classification.distance_based._proximity_forest_utils import max as _max
+
+from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._proximity_forest_utils import (
     arg_min as _arg_min,
 )
-from sktime.classification.base import BaseClassifier
+from sktime.classification.distance_based._proximity_forest_utils import max as _max
 from sktime.classification.distance_based._proximity_forest_utils import (
-    positive_dataframe_indices,
     max_instance_length,
     negative_dataframe_indices,
+    positive_dataframe_indices,
 )
 from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.distances.elastic_cython import (
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wdtw_distance,
+)
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.utils.data_processing import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -120,9 +120,14 @@ class _CachedTransformer(_PanelToPanelTransformer):
 def _derivative_distance(distance_measure, transformer):
     """Take derivative before conducting distance measure.
 
-    :param distance_measure: the distance measure to use
-    :param transformer: the transformer to use
-    :return: a distance measure function with built in transformation
+    Parameters
+    ----------
+    distance_measure: the distance measure to use
+    transformer: the transformer to use
+
+    Return
+    ------
+    a distance measure function with built in transformation
     """
 
     def distance(instance_a, instance_b, **params):
@@ -140,7 +145,7 @@ def distance_predefined_params(distance_measure, **params):
 
     :param distance_measure: the distance measure to use
     :param params: the parameters to use in the distance measure
-    :return: a distance measure with no parameters
+    :returns: a distance measure with no parameters
     """
 
     def distance(instance_a, instance_b):
@@ -154,7 +159,7 @@ def cython_wrapper(distance_measure):
 
      Converts to 1 column per dimension format.
     :param distance_measure: distance measure to wrap
-    :return: a distance measure which automatically formats data for cython
+    :returns: a distance measure which automatically formats data for cython
     distance measures
     """
 
@@ -332,7 +337,7 @@ def dtw_distance_measure_getter(X):
     """Generate the dtw distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     return {
         "distance_measure": [cython_wrapper(dtw_distance)],
@@ -344,7 +349,7 @@ def msm_distance_measure_getter(X):
     """Generate the msm distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     n_dimensions = 1  # todo use other dimensions
     return {
@@ -459,7 +464,7 @@ def erp_distance_measure_getter(X):
     """Generate the erp distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     stdp = _stdp(X)
     instance_length = max_instance_length(X)  # todo should this use the max instance
@@ -479,7 +484,7 @@ def lcss_distance_measure_getter(X):
     """Generate the lcss distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     stdp = _stdp(X)
     instance_length = max_instance_length(X)  # todo should this use the max instance
@@ -499,7 +504,7 @@ def twe_distance_measure_getter(X):
     """Generate the twe distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     return {
         "distance_measure": [cython_wrapper(twe_distance)],
@@ -523,7 +528,7 @@ def wdtw_distance_measure_getter(X):
     """Generate the wdtw distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     return {
         "distance_measure": [cython_wrapper(wdtw_distance)],
@@ -535,7 +540,7 @@ def euclidean_distance_measure_getter(X):
     """Generate the ed distance measure.
 
     :param X: dataset to derive parameter ranges from
-    :return: distance measure and parameter range dictionary
+    :returns: distance measure and parameter range dictionary
     """
     return {"distance_measure": [cython_wrapper(dtw_distance)], "w": [0]}
 
@@ -545,7 +550,7 @@ def setup_wddtw_distance_measure_getter(transformer):
 
     Bakes the derivative transformer into the dtw distance measure
     :param transformer: the transformer to use
-    :return: a getter to produce the distance measure
+    :returns: a getter to produce the distance measure
     """
 
     def getter(X):
@@ -564,7 +569,7 @@ def setup_ddtw_distance_measure_getter(transformer):
 
     Bakes the derivative transformer into the dtw distance measure
     :param transformer: the transformer to use
-    :return: a getter to produce the distance measure
+    :returns: a getter to produce the distance measure
     """
 
     def getter(X):
@@ -582,7 +587,7 @@ def setup_all_distance_measure_getter(proximity):
     """All distance measure getter functions from a proximity object.
 
     :param proximity: a PT / PF / PS
-    :return: a list of distance measure getters
+    :returns: a list of distance measure getters
     """
     transformer = _CachedTransformer(DerivativeSlopeTransformer())
     distance_measure_getters = [
@@ -602,7 +607,7 @@ def setup_all_distance_measure_getter(proximity):
 
         :param proximity: proximity object containing distance measures,
         ranges and dataset
-        :return: a distance measure with no parameters
+        :returns: a distance measure with no parameters
         """
         random_state = proximity.random_state
         X = proximity.X
@@ -830,7 +835,7 @@ class ProximityStump(BaseClassifier):
         :param instance: the instance to compare to each exemplar
         :param distance_measure: the distance measure to provide similarity
         values
-        :return: list of distances to each exemplar
+        :returns: list of distances to each exemplar
         """
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
@@ -853,8 +858,8 @@ class ProximityStump(BaseClassifier):
         ----------
         X: the dataset containing a list of instances
 
-        Return
-        ------
+        Returns
+        -------
         2d numpy array of distances from each instance to each
         exemplar (instance by exemplar)
         """
@@ -918,8 +923,8 @@ class ProximityStump(BaseClassifier):
         ----------
         X: the dataframe containing instances
 
-        Return
-        ------
+        Returns
+        -------
         1d numpy array of indices, one for each instance,
         reflecting the index of the closest exemplar
         """

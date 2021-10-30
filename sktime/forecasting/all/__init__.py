@@ -1,6 +1,9 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning"]
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Import all time series forecasting functionality available in sktime."""
+
+__author__ = ["mloning"]
 __all__ = [
     "ForecastingHorizon",
     "load_lynx",
@@ -21,6 +24,7 @@ __all__ = [
     "ARIMA",
     "AutoETS",
     "Prophet",
+    "TrendForecaster",
     "PolynomialTrendForecaster",
     "TransformedTargetForecaster",
     "MultiplexForecaster",
@@ -83,6 +87,7 @@ from sktime.datasets import load_lynx
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.trend import TrendForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.arima import ARIMA

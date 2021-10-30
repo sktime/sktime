@@ -6,7 +6,7 @@ version: 2
 # We need to build sktime before building the docs because otherwise Sphinx
 #  cannot read the docstrings from Cython and C extension files
 python:
-  version: 3.7
+  version: 3.8
   install:
     # install build requirements
     - requirements: build_tools/requirements.txt
@@ -18,3 +18,4 @@ python:
 
 sphinx:
   configuration: docs/source/conf.py
+#  fail_on_warning: True

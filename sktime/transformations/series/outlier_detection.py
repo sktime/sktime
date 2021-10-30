@@ -1,5 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements transformers for detecting outliers in a time series."""
 
 __author__ = ["Martin Walter"]
 __all__ = ["HampelFilter"]
@@ -14,8 +16,9 @@ import pandas as pd
 
 
 class HampelFilter(_SeriesToSeriesTransformer):
-    """HampelFilter to detect outliers based on a sliding window. Correction
-    of outliers is recommended by means of the sktime.Imputer,
+    """Use HampelFilter to detect outliers based on a sliding window.
+
+    Correction of outliers is recommended by means of the sktime.Imputer,
     so both can be tuned separately.
 
     Parameters
@@ -31,13 +34,17 @@ class HampelFilter(_SeriesToSeriesTransformer):
         If True, outliers are filled with True and non-outliers with False.
         Else, outliers are filled with np.nan.
 
+    Notes
+    -----
+    Implementation is based on [1]_.
+
     References
     ----------
-    Hampel F. R., "The influence curve and its role in robust estimation",
-    Journal of the American Statistical Association, 69, 382–393, 1974
+    .. [1] Hampel F. R., "The influence curve and its role in robust estimation",
+       Journal of the American Statistical Association, 69, 382–393, 1974
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.outlier_detection import HampelFilter
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -61,6 +68,7 @@ class HampelFilter(_SeriesToSeriesTransformer):
 
     def transform(self, Z, X=None):
         """Transform data.
+
         Returns a transformed version of Z.
 
         Parameters
@@ -86,7 +94,8 @@ class HampelFilter(_SeriesToSeriesTransformer):
         return Z
 
     def _transform_series(self, Z):
-        """
+        """Logic internal to the algorithm for transforming the input series.
+
         Parameters
         ----------
         Z : pd.Series
@@ -161,7 +170,7 @@ def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
 
 
 def _compare(value, cv_median, cv_sigma, n_sigma):
-    """Function to identify an outlier
+    """Identify an outlier.
 
     Parameters
     ----------

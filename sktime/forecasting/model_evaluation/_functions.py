@@ -1,15 +1,24 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements functions to be used in evaluating forecasting models."""
 
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = ["evaluate"]
 
+import time
+
 import numpy as np
 import pandas as pd
-import time
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.utils.validation.forecasting import check_cv
+
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import check_scoring, check_fh
+from sktime.utils.validation.forecasting import (
+    check_cv,
+    check_fh,
+    check_scoring,
+    check_X,
+)
+from sktime.utils.validation.series import check_series
 
 
 def evaluate(
@@ -49,13 +58,13 @@ def evaluate(
         y_pred, y_test.
 
     Returns
-    ----------
+    -------
     pd.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -71,7 +80,12 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
-    y, X = check_y_X(y, X)
+    y = check_series(
+        y,
+        enforce_univariate=forecaster.get_tag("scitype:y") == "univariate",
+        enforce_multivariate=forecaster.get_tag("scitype:y") == "multivariate",
+    )
+    X = check_X(X)
     fit_params = {} if fit_params is None else fit_params
 
     # Define score name.

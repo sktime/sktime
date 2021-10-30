@@ -13,11 +13,15 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
+from sktime.utils._maint import deprecated
 from sktime.utils.validation.panel import check_X
 
 
 class Catch22ForestClassifier(BaseClassifier):
     """Canonical Time-series Characteristics (catch22).
+
+    DEPRECATED. Please use `Catch22Classifier` from
+    `sktime.classification.feature_based` instead.
 
     Overview: Input n series length m. Transforms series into the 22 catch22
     features [1] extracted from the hctsa toolbox[2] and builds a random forest
@@ -64,6 +68,9 @@ class Catch22ForestClassifier(BaseClassifier):
         "contractable": False,
     }
 
+    @deprecated(
+        "Please use `Catch22Classifier` from `sktime.classification.feature_based` instead."  # noqa: E501
+    )
     def __init__(
         self,
         n_estimators=200,
