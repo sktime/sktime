@@ -26,13 +26,44 @@ class _DtwDistance(NumbaDistance):
         bounding_matrix: np.ndarray = None,
         **kwargs: dict
     ) -> DistanceCallable:
+        """Create a no_python compiled dtw distance callable.
 
+        Parameters
+        ----------
+        x: np.ndarray (2d array)
+            First timeseries.
+        y: np.ndarray (2d array)
+            Second timeseries.
+        lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+            Lower bounding technique to use.
+        window: int, defaults = 2
+            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding).
+        itakura_max_slope: float, defaults = 2.
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding).
+        custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                        defaults = squared_distance
+            Distance function to use internally for dtw.
+        bounding_matrix: np.ndarray (2d array)
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            and creation are ignored. The matrix should be structure so that indexes
+            considered in bound should be the value 0. and indexes outside the bounding
+            matrix should be infinity.
+        kwargs: dict
+            Extra kwargs.
+
+        Returns
+        -------
+        Callable[[np.ndarray, np.ndarray], float]
+            No_python compiled Dtw distance callable.
+        """
         _bounding_matrix = _DtwDistance._resolve_bounding_matrix(
             x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
         )
 
         # This needs to be here as potential distances only known at runtime not
-        # compile time so having this at the top would produce errors (circular import).
+        # compile time so having this at the top would cause circular import errors.
         from sktime.dists_kernels.numba.distances.distance import distance_factory
 
         _custom_distance = distance_factory(x, y, metric=custom_distance)
@@ -55,7 +86,30 @@ class _DtwDistance(NumbaDistance):
         itakura_max_slope: float = 2.0,
         bounding_matrix: np.ndarray = None,
     ):
-        """Resolve the bounding matrix parameters."""
+        """Resolve the bounding matrix parameters.
+
+        Parameters
+        ----------
+        x: np.ndarray (2d array)
+            First timeseries.
+        y: np.ndarray (2d array)
+            Second timeseries.
+        lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+            Lower bounding technique to use.
+        window: int, defaults = 2
+            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding).
+        itakura_max_slope: float, defaults = 2.
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding).
+
+        Returns
+        -------
+        np.ndarray (2d array)
+            Bounding matrix to use. The matrix is structured so that indexes
+            considered in bound are of the value 0. and indexes outside the bounding
+            matrix of the value infinity.
+        """
         if bounding_matrix is None:
             if isinstance(lower_bounding, int):
                 lower_bounding = LowerBounding(lower_bounding)
@@ -87,6 +141,12 @@ def _dtw_numba_distance(
         First timeseries.
     y: np.ndarray (2d array)
         Second timeseries.
+    custom_distance: Callable[[np.ndarray, np.ndarray], float]
+        Distance function to use internally for dtw.
+    bounding_matrix: np.ndarray (2d array)
+        Bounding matrix to observe. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
 
     Returns
     -------
@@ -117,12 +177,18 @@ def _cost_matrix(
         First timeseries.
     y: np.ndarray (2d array)
         Second timeseries.
-    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Bounding matrix where the values inside the bound are finite values (0s) and
-        outside the bounds are infinity (non finite).
+    bounding_matrix: np.ndarray (2d array)
+        Bounding matrix to observe. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
     pre_computed_distances: np.ndarray (2d of size mxn where m is len(x) and n is
                                         len(y))
-        Precomputed pairwise matrix between two timeseries.
+        Precomputed pairwise matrix between the two timeseries.
+
+    Returns
+    -------
+    np.ndarray (2d array of size mxn where m is len(x) and n is len(y))
+        Cost matrix between two timeseries.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]
