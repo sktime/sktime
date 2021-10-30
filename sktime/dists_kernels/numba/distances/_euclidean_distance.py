@@ -32,28 +32,28 @@ class _EuclideanDistance(NumbaDistance):
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled Euclidean distance callable.
         """
-        return _EuclideanDistance._numba_distance
+        return _euclidean_numba_distance
 
-    @staticmethod
-    @njit(cache=True)
-    def _numba_distance(x: np.ndarray, y: np.ndarray) -> float:
-        """Euclidean distance compiled to no_python.
 
-        Parameters
-        ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+@njit(cache=True)
+def _euclidean_numba_distance(x: np.ndarray, y: np.ndarray) -> float:
+    """Euclidean distance compiled to no_python.
 
-        Returns
-        -------
-        distance: float
-            Euclidean distance between the two timeseries.
-        """
-        distance = 0.0
-        for i in range(x.shape[0]):
-            curr = x[i] - y[i]
-            distance += np.sum(np.sqrt(curr * curr))
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
 
-        return distance
+    Returns
+    -------
+    distance: float
+        Euclidean distance between the two timeseries.
+    """
+    distance = 0.0
+    for i in range(x.shape[0]):
+        curr = x[i] - y[i]
+        distance += np.sum(np.sqrt(curr * curr))
+
+    return distance

@@ -3,7 +3,6 @@
 
 __author__ = ["chrisholder"]
 
-
 import numpy as np
 from numba import njit
 
@@ -33,29 +32,29 @@ class _SquaredDistance(NumbaDistance):
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled Squared distance callable.
         """
-        return _SquaredDistance._numba_distance
+        return _squared_numba_distance
 
-    @staticmethod
-    @njit(cache=True)
-    def _numba_distance(x: np.ndarray, y: np.ndarray) -> float:
-        """Squared distance compiled to no_python.
 
-        Parameters
-        ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+@njit(cache=True)
+def _squared_numba_distance(x: np.ndarray, y: np.ndarray) -> float:
+    """Squared distance compiled to no_python.
 
-        Returns
-        -------
-        distance: float
-            Euclidean distance between the two timeseries.
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
 
-        """
-        distance = 0.0
-        for i in range(x.shape[0]):
-            curr = x[i] - y[i]
-            distance += np.sum(curr * curr)
+    Returns
+    -------
+    distance: float
+        Euclidean distance between the two timeseries.
 
-        return distance
+    """
+    distance = 0.0
+    for i in range(x.shape[0]):
+        curr = x[i] - y[i]
+        distance += np.sum(curr * curr)
+
+    return distance

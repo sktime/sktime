@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
+from typing import Callable, NamedTuple, Set
 
 import numpy as np
 
@@ -138,21 +139,16 @@ class NumbaDistance(ABC):
         """
         ...
 
-    @staticmethod
-    @abstractmethod
-    def _numba_distance(x: np.ndarray, y: np.ndarray) -> float:
-        """Abstract method to define a no_python distance between two timeseries.
 
-        Parameters
-        ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+# Metric
+class MetricInfo(NamedTuple):
+    """Define a registry entry for a metric."""
 
-        Returns
-        -------
-        float
-            Distance between x and y.
-        """
-        ...
+    # Name of the distance
+    canonical_name: str
+    # All aliases, including canonical_name
+    aka: Set[str]
+    # Python distance function (can use numba inside but callable must be in python)
+    dist_func: Callable[[np.ndarray, np.ndarray], float]
+    # NumbaDistance class
+    dist_instance: NumbaDistance

@@ -7,8 +7,9 @@ __all__ = [
     "DistanceFactoryCallable",
     "DistancePairwiseCallable",
     "ValidCallableTypes",
+    "MetricInfo",
 ]
-from sktime.dists_kernels.numba.distances.base._base import NumbaDistance
+from sktime.dists_kernels.numba.distances.base._base import MetricInfo, NumbaDistance
 from sktime.dists_kernels.numba.distances.base._types import (
     DistanceCallable,
     DistanceFactoryCallable,
