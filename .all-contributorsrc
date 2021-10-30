@@ -1365,7 +1365,26 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+	{
+      "login": "fstinner",
+      "name": "Florian Stinner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11679462?v=4",
+      "profile": "https://github.com/fstinner",
+      "contributions": [
+        "code",
+		"test"
+      ]
+    },
+	{
+      "login": "ChangWeiTan",
+      "name": "Chang Wei Tan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/570744?v=4",
+      "profile": "https://github.com/ChangWeiTan",
+      "contributions": [
+        "code"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

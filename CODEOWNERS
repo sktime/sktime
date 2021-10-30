@@ -10,6 +10,8 @@ sktime/classification/feature_based/_signature_classifier.py @jambo6
 sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/kernel_based/_multirocket_classifier.py @ChangWeiTan @fstinner @MatthewMiddlehurst @TonyBagnall
+sktime/classification/kernel_based/_multirocket_multivariate_classifier.py @ChangWeiTan @fstinner @MatthewMiddlehurst @TonyBagnall
 sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
 sktime/classification/shapelet_based/_stc.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
 
@@ -18,6 +20,8 @@ sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/panel/shapelet_transform.py @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/shapelets.py @jasonlines @ABostrom @TonyBagnall
 sktime/transformations/panel/rocket/ @angus924
+sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
+sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
 sktime/transformations/series/impute.py @aiwalter
 sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
