@@ -19,7 +19,7 @@ from libc.float cimport DBL_MAX
 from libc.math cimport exp, fabs, sqrt
 
 from deprecated import deprecated
-
+from warnings import warn
 
 cdef inline double min_c(double a, double b):
     """min c docstring."""
@@ -67,9 +67,8 @@ def dtw_distance(
     -------
     float
     """
-    raise FutureWarning("cython dtw_distance is to be replaced by numba version in "
-                        "V0.10.")
-# make sure x is shorter than y
+    warn("Cython DTW deprecated from V0.10")
+    # make sure x is shorter than y
     # if not permute
     cdef np.ndarray[double, ndim=2] X = x
     cdef np.ndarray[double, ndim=2] Y = y
@@ -119,11 +118,6 @@ def dtw_distance(
 
     return D[lx,ly]
 
-@deprecated(
-    version="0.8.2",
-    reason="cython wdtw_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0.05):
 
     # make sure x is shorter than y
