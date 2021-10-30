@@ -18,8 +18,8 @@ np.import_array()
 from libc.float cimport DBL_MAX
 from libc.math cimport exp, fabs, sqrt
 
-from deprecated import deprecated
 from warnings import warn
+
 
 cdef inline double min_c(double a, double b):
     """min c docstring."""
