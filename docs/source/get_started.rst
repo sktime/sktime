@@ -96,38 +96,38 @@ Forecasting
 
 .. code-block:: python
 
-    from sktime.datasets import load_airline
-    from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.forecasting.theta import ThetaForecaster
-    from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-    forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
-    forecaster.fit(y_train)
-    y_pred = forecaster.predict(fh)
-    mean_absolute_percentage_error(y_test, y_pred)
-    >>> 0.08661467738190656
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
+    >>> forecaster.fit(y_train)
+    >>> y_pred = forecaster.predict(fh)
+    >>> mean_absolute_percentage_error(y_test, y_pred)
+    0.08661467738190656
 
 Time Series Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-    from sktime.classification.interval_based import TimeSeriesForestClassifier
-    from sktime.datasets import load_arrow_head
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import accuracy_score
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.datasets import load_arrow_head
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.metrics import accuracy_score
 
-    X, y = load_arrow_head(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    classifier = TimeSeriesForestClassifier()
-    classifier.fit(X_train, y_train)
-    y_pred = classifier.predict(X_test)
-    accuracy_score(y_test, y_pred)
-    >>> 0.8679245283018868
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> classifier = TimeSeriesForestClassifier()
+    >>> classifier.fit(X_train, y_train)
+    >>> y_pred = classifier.predict(X_test)
+    >>> accuracy_score(y_test, y_pred)
+    0.8679245283018868
 
 Time Series Regression
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -138,7 +138,7 @@ Time Series Regression
 
 .. code-block:: python
 
-    from sktime.regression.compose import ComposableTimeSeriesForestRegressor
+    >>> from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -150,17 +150,17 @@ Time Series Clustering
 
 .. code-block:: python
 
-    from sklearn.model_selection import train_test_split
-    from sktime.clustering import TimeSeriesKMeans
-    from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
-    from sktime.datasets import load_arrow_head
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.clustering import TimeSeriesKMeans
+    >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
+    >>> from sktime.datasets import load_arrow_head
 
-    X, y = load_arrow_head(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    k_means = TimeSeriesKMeans(n_clusters=5, init_algorithm="forgy", metric="dtw")
-    k_means.fit(X_train)
-    plot_cluster_algorithm(k_means, X_test, k_means.n_clusters)
+    >>> k_means = TimeSeriesKMeans(n_clusters=5, init_algorithm="forgy", metric="dtw")
+    >>> k_means.fit(X_train)
+    >>> plot_cluster_algorithm(k_means, X_test, k_means.n_clusters)
 
 Time Series Annotation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -172,11 +172,11 @@ Time Series Annotation
 
 .. code-block:: python
 
-    from sktime.annotation.adapters import PyODAnnotator
-    from pyod.models.iforest import IForest
-    from sktime.datasets import load_airline
-    y = load_airline()
-    pyod_model = IForest()
-    pyod_sktime_annotator = PyODAnnotator(pyod_model)
-    pyod_sktime_annotator.fit(y)
-    annotated_series = pyod_sktime_annotator.predict(y)
+    >>> from sktime.annotation.adapters import PyODAnnotator
+    >>> from pyod.models.iforest import IForest
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> pyod_model = IForest()
+    >>> pyod_sktime_annotator = PyODAnnotator(pyod_model)
+    >>> pyod_sktime_annotator.fit(y)
+    >>> annotated_series = pyod_sktime_annotator.predict(y)
