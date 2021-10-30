@@ -10,8 +10,11 @@ import pytest
 from numpy.testing import assert_almost_equal
 
 from sktime.dists_kernels.numba.distances.base import NumbaDistance
-from sktime.dists_kernels.numba.distances.distance import _METRIC_INFOS, MetricInfo
-from sktime.dists_kernels.numba.distances.pairwise_distance import pairwise_distance
+from sktime.dists_kernels.numba.distances.distance import (
+    _METRIC_INFOS,
+    MetricInfo,
+    pairwise_distance,
+)
 from sktime.dists_kernels.numba.tests._expected_results import (
     _expected_distance_results,
 )

@@ -44,19 +44,29 @@ class _DtwDistance(NumbaDistance):
             Parallelogram lower bounding).
         custom_distance: Callable[[np.ndarray, np.ndarray], float],
                         defaults = squared_distance
-            Distance function to use internally for dtw.
+            Distance function to used to compute distance between aligned timeseries.
         bounding_matrix: np.ndarray (2d array)
             Custom bounding matrix to use. If defined then other lower_bounding params
             and creation are ignored. The matrix should be structure so that indexes
             considered in bound should be the value 0. and indexes outside the bounding
             matrix should be infinity.
         kwargs: dict
-            Extra kwargs.
+            Extra arguments for custom distance should be put in the kwargs. See the
+            documentation for the distance for kwargs.
+
 
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled Dtw distance callable.
+
+        Raises
+        ------
+        ValueError
+            If the input timeseries is not a numpy array.
+            If the input timeseries doesn't have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
         """
         _bounding_matrix = _DtwDistance._resolve_bounding_matrix(
             x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
@@ -66,7 +76,7 @@ class _DtwDistance(NumbaDistance):
         # compile time so having this at the top would cause circular import errors.
         from sktime.dists_kernels.numba.distances.distance import distance_factory
 
-        _custom_distance = distance_factory(x, y, metric=custom_distance)
+        _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
         @njit()
         def numba_dtw_distance(
@@ -85,7 +95,7 @@ class _DtwDistance(NumbaDistance):
         window: int = 2,
         itakura_max_slope: float = 2.0,
         bounding_matrix: np.ndarray = None,
-    ):
+    ) -> np.ndarray:
         """Resolve the bounding matrix parameters.
 
         Parameters
@@ -109,6 +119,14 @@ class _DtwDistance(NumbaDistance):
             Bounding matrix to use. The matrix is structured so that indexes
             considered in bound are of the value 0. and indexes outside the bounding
             matrix of the value infinity.
+
+        Raises
+        ------
+        ValueError
+            If the input timeseries is not a numpy array.
+            If the input timeseries doesn't have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
         """
         if bounding_matrix is None:
             if isinstance(lower_bounding, int):
@@ -142,7 +160,7 @@ def _dtw_numba_distance(
     y: np.ndarray (2d array)
         Second timeseries.
     custom_distance: Callable[[np.ndarray, np.ndarray], float]
-        Distance function to use internally for dtw.
+        Distance function to used to compute distance between aligned timeseries.
     bounding_matrix: np.ndarray (2d array)
         Bounding matrix to observe. The matrix should be structure so that indexes
         considered in bound should be the value 0. and indexes outside the bounding
