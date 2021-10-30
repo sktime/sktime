@@ -30,55 +30,127 @@ import pandas as pd
 import time
 
 from sktime.base import BaseEstimator
+from sktime.utils.data_io import make_multi_index_dataframe
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X, check_X_y
-
 
 def check_classifier_input(
         X,
         y,
         enforce_min_instances=1,
-        enforce_min_columns=1,
+        enforce_min_series_length=1,
 ):
-    """Check wether input X and y are valid formats with minimum data.
+    """Check wether input X and y are valid formats with minimum data. Raises a
+    ValueError if the input is not valid.
 
     Parameters
     ----------
-    X : pd.DataFrame or np.array
-    y : pd.Series or np.array
+    X : check whether a pd.DataFrame or np.ndarray
+    y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
-        Enforce minimum number of instances.
-    enforce_min_columns : int, optional (default=1)
-        Enforce minimum number of columns (or time-series variables).
+        check there are a minimum number of instances.
+    enforce_min_series_length : int, optional (default=1)
+        Enforce minimum series length for input ndarray (i.e. fixed length problems)
 
     Raises
     ------
     ValueError
         If y or X is invalid input data type, or not enough data
     """
-    if not isinstance(y, np.array):
+    # Check y
+    if not isinstance(y, (pd.Series, np.ndarray)):
         raise ValueError(
-            f"y must be a np.array, "
+            f"y must be a np.array or a pd.Series, "
             f"but found type: {type(y)}"
         )
-    if not isinstance(X, pd.pandas):
-        if not isinstance(X, np.ndarray):
-            raise ValueError(
-                f"x must be either a pd.Series or a np.ndarray, "
-                f"but found type: {type(X)}"
-            )
-        else:
-            n_cases,  n_dims = X.shape
-            if not (n_dims is 2 or n_dims is 3):
+    # Check X
+    if not isinstance(X, (pd.DataFrame, np.ndarray)):
+        raise ValueError(
+            f"x must be either a pd.Series or a np.ndarray, "
+            f"but found type: {type(X)}"
+        )
+    # Check size of X and y match and minimum data input
+    n_cases = X.shape[0]
+    n_labels = y.shape[0]
+    if isinstance(X, np.ndarray):
+            if not (X.ndim is 2 or X.ndim is 3):
                 raise ValueError(
-                    f"x is an np.array but it must be 2 or 3 dimensional"
+                    f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
                     f"but found to be: {n_dims}"
                 )
-        if n_cases != y.shape[0]:
+            if X.ndim is 2 and X.shape[1] < enforce_min_series_length:
+                raise ValueError(
+                    f"x is a 2D np.ndarray, equal length series are length {n_dims}"
+                    f"but the minimum is  {enforce_min_series_length}"
+                )
+            if X.ndim is 3 and X.shape[2] < enforce_min_series_length:
+                raise ValueError(
+                    f"x is a 2D np.ndarray, equal length series are length {n_dims}"
+                    f"but the minimum is  {enforce_min_series_length}"
+                )
+
+    else:
+        if X.shape[1] is 0:
             raise ValueError(
-                f"unequal number of cases in X and y"
-                f"X has : {n_dims}, y has {y.shape[0]}"
+                f"x is an pd.pandas with no data (num columns == 0)."
             )
+    if n_cases < enforce_min_instances:
+        raise ValueError(
+            f"Minimum number of cases required is {enforce_min_instances} but X "
+            f"has : {n_cases}"
+        )
+    if n_cases != n_labels:
+        raise ValueError(
+            f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
+            f"{n_lables}"
+        )
+
+def test_check_classifier_input():
+    """test for valid estimator format.
+    1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
+    2. Test correct: X: pd.DataFrame with 1 and 3 cols vs y:np.array and np.Series
+    3. Test incorrect: X: np.array of 4 dimensions vs y:np.array
+    4. Test incorrect: X: np.array of 3 dimensions vs y:List
+    5. Test incorrect: mismatch in length
+    6. Test incorrect: too small or too short
+    """
+# 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
+    test_X1 = np.random.uniform(-1, 1, size=(5, 10))
+    test_X2 = np.random.uniform(-1, 1, size=(5, 2, 10))
+    test_y1 = np.random.randint(0, 1, size=5)
+    test_y2 = pd.Series(np.random.randn(5))
+    check_classifier_input(test_X1, test_y1)
+    check_classifier_input(test_X2, test_y1)
+    check_classifier_input(test_X1, test_y2)
+    check_classifier_input(test_X2, test_y2)
+# # 2. Test correct: X: pd.DataFrame with 1 and 3 cols vs y:np.array and np.Series
+    test_X3 = make_multi_index_dataframe(n_instances=5, n_columns=1, n_timepoints=10)
+    test_X4 = pd.DataFrame(size=(5, 3))
+    for i in rang(0,5):
+        test_X3[i][0] =  pd.Series(np.random.randn(5))
+        for j in rang(0,3):
+            test_X4[i][j] = pd.Series(np.random.randn(5))
+
+    check_classifier_input(test_X3, test_y1)
+    check_classifier_input(test_X4, test_y1)
+    check_classifier_input(test_X3, test_y2)
+    check_classifier_input(test_X4, test_y2)
+# # 3. Test incorrect: X: np.array of 4 dimensions vs y:np.array
+#     test_X5 = np.random.uniform(-1, 1, size=(5, 3, 10))
+#     check_classifier_input(test_X5, test_y1)
+# # 4. Test incorrect: X: np.array of 4 dimensions vs y:List
+#     test_y3 = [1, 2, 3, 4, 5]
+#     check_classifier_input(test_X5, test_y3)
+# # 5. Test incorrect: mismatch in length
+#     test_y4 = np.random.randint(0, 1, size=6)
+#     check_classifier_input(test_X1, test_y4)
+# # 6. Test incorrect: too small or too short
+#     check_classifier_input(test_X1, test_y1, enforce_min_instances=6)
+#     check_classifier_input(test_X1, test_y1, enforce_min_series_length=11)
+
+
+test_check_classifier_input()
+
 
 
 class BaseClassifier(BaseEstimator):
@@ -161,7 +233,7 @@ class BaseClassifier(BaseEstimator):
         # this should happen last
         self._is_fitted = True
 
-        train_time_ = int(round(time.time() * 1000)) - start
+        fit_time_ = int(round(time.time() * 1000)) - start
         return self
 
     def predict(self, X) -> np.array:
