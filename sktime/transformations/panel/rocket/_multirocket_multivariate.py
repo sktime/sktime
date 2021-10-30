@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 import multiprocessing
 from numba import njit, prange, get_num_threads, set_num_threads
@@ -46,8 +47,11 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
 
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        self.num_features = num_features / 2  # 1 per transformation
-        self.num_features = int(self.num_features / self.n_features_per_kernel)
+        self.num_features = num_features
+        self.num_kernels_total = self.num_features / 2  # 1 per transformation
+        self.num_kernels_total = int(
+            self.num_kernels_total / self.n_features_per_kernel
+        )
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
@@ -114,7 +118,7 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
                 _X.std(axis=-1, keepdims=True) + 1e-8
             )
 
-        _X1 = np.diff(X, 1)
+        _X1 = np.diff(_X, 1)
 
         # change n_jobs dependend on value and existing cores
         prev_threads = get_num_threads()
@@ -143,7 +147,7 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
         num_kernels = 84
 
         dilations, num_features_per_dilation = _fit_dilations(
-            input_length, self.num_features, self.max_dilations_per_kernel
+            input_length, self.num_kernels_total, self.max_dilations_per_kernel
         )
 
         num_features_per_kernel = np.sum(num_features_per_dilation)

@@ -7,6 +7,11 @@ from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
 from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
 
+from sktime.transformations.panel.rocket._rocket import Rocket
+from sktime.classification.kernel_based._rocket_classifier import ROCKETClassifier
+from sktime.classification.dictionary_based._boss import BOSSEnsemble
+from sktime.transformations.panel.rocket import MiniRocketMultivariate
+
 
 class MultiRocket(_PanelToTabularTransformer):
     """MultiROCKET
@@ -27,7 +32,7 @@ class MultiRocket(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    num_features             : int, number of features (default 10,000)
+    num_features             : int, number of features (default 50,000)
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     n_features_per_kernel    : int, number of features per kernel (default 4)
     normalise                : int, normalise the data (default False)
@@ -37,6 +42,8 @@ class MultiRocket(_PanelToTabularTransformer):
 
     Attributes
     ----------
+    num_kernels_total: int
+        total number of kernels used internally
     parameter : tuple
         parameter (dilations, num_features_per_dilation, biases) for transformation of input X
     parameter1 : tuple
@@ -48,7 +55,7 @@ class MultiRocket(_PanelToTabularTransformer):
 
     References
     ----------
-    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and Webb, Geoffrey I, 
+    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and Webb, Geoffrey I,
         "MultiRocket: Multiple pooling operators and transformations for fast and effective time series classification",
         2021, https://arxiv.org/abs/2102.00457v3
 
@@ -78,8 +85,11 @@ class MultiRocket(_PanelToTabularTransformer):
     ):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        self.num_features = num_features / 2  # 1 per transformation
-        self.num_features = int(self.num_features / self.n_features_per_kernel)
+
+        self.num_features = num_features
+        self.num_kernels_total = self.num_features / 2  # 1 per transformation
+        self.num_kernels_total = int(self.num_kernels_total / self.n_features_per_kernel)
+
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
@@ -92,7 +102,7 @@ class MultiRocket(_PanelToTabularTransformer):
     def fit(self, X, y=None):
         _X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         _X = _X[:, 0, :].astype(np.float64)
-        _X = from_3d_numpy_to_2d_array(X)
+        _X = from_3d_numpy_to_2d_array(_X)
         if self.normalise:
             _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
                 _X.std(axis=-1, keepdims=True) + 1e-8
@@ -150,7 +160,8 @@ class MultiRocket(_PanelToTabularTransformer):
         _X = np.nan_to_num(_X)
 
         set_num_threads(prev_threads)
-        
+        # # from_2d_array_to_3d_numpy
+        # _X = np.reshape(_X, (_X.shape[0], 1, _X.shape[1])).astype(np.float64)
         return pd.DataFrame(_X)
 
     def _get_parameter(self, X):
@@ -159,7 +170,7 @@ class MultiRocket(_PanelToTabularTransformer):
         num_kernels = 84
 
         dilations, num_features_per_dilation = _fit_dilations(
-            input_length, self.num_features, self.max_dilations_per_kernel
+            input_length, self.num_kernels_total, self.max_dilations_per_kernel
         )
 
         num_features_per_kernel = np.sum(num_features_per_dilation)
