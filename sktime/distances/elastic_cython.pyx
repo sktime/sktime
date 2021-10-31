@@ -174,30 +174,15 @@ def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , d
 
 # note - this implementation is more convenient for general use but it is more efficient
 # for standalone use to transform the data once, then use DTW on the transformed data
-@deprecated(
-    version="0.8.2",
-    reason="cython ddtw_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def ddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
     return dtw_distance(np.diff(x.T).T,np.diff(y.T).T,w)
 
 
 # note - this implementation is more convenient for use in ensembles, etc., but it is more efficient
 # for standalone use to transform the data once, then use WDTW on the transformed data
-@deprecated(
-    version="0.8.2",
-    reason="cython wddtw_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def wddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0):
     return wdtw_distance(np.diff(x.T).T,np.diff(y.T).T,g)
 
-@deprecated(
-    version="0.8.2",
-    reason="cython msm_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def msm_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double c = 1, int dim_to_use = 0):
 
     cdef np.ndarray[double, ndim=2] first = x
@@ -248,11 +233,6 @@ cdef _msm_calc_cost(double new_point, double x, double y, double c):
     else:
         return c + min_c(fabs(new_point - x), fabs(new_point - y))
 
-@deprecated(
-    version="0.8.2",
-    reason="cython lcss_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int delta
 = 3, double epsilon = 0.05,
                   int dim_to_use = 0):
@@ -295,11 +275,6 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
     return 1 - (max_val / m)
 
 #cython: boundscheck=False, wraparound=False, nonecheck=False
-@deprecated(
-    version="0.8.2",
-    reason="cython twe_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def twe_distance(np.ndarray[double, ndim=2] ta, np.ndarray[double, ndim=2] tb, double penalty = 1,
                  double stiffness = 1):
     cdef int dim = ta.shape[1] - 1
@@ -391,11 +366,6 @@ def twe_distance(np.ndarray[double, ndim=2] ta, np.ndarray[double, ndim=2] tb, d
     dist = D[r][c]
     return dist
 
-@deprecated(
-    version="0.8.2",
-    reason="cython erp_distance is to be replaced by numba version in V0.10.",
-    category=FutureWarning,
-)
 def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double band_size = 5, double g = 0,
                  int dim_to_use = 0):
     """
