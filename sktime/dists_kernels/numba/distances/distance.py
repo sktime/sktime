@@ -27,7 +27,100 @@ from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
     _DdtwDistance,
 )
 from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import _DtwDistance
+from sktime.dists_kernels.numba.distances.dtw_based._wdtw_distance import _WdtwDistance
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+
+
+def wdtw_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    bounding_matrix: np.ndarray = None,
+    g: float = 0.0,
+    **kwargs: dict,
+):
+    """Compute the weighted dynamic time warping (Wdtw) distance between timeseries.
+
+    Wdtw adds a multiplicative weight penalty based on the warping distance between
+    points in the warping path. First proposed in [1]_ a weight is applied
+    during the distance computation when generating a warping path. This means that
+    timeseries with lower phase difference have a smaller weight imposed (i.e less
+    penalty imposed) and timeseries with larger phase difference have a larger weight
+    imposed (i.e. larger penalty imposed).
+
+    Formally this can be described as:
+
+    .. math::
+        d_{w}(x_{i}, y_{j}) = ||w_{|i-j|}(x_{i} - y_{j}||
+
+    Where d_w is the distance with the weight applied to it for points i, j. Where
+    w(|i-j|) is a positive weight between the two points x_i and y_j and (x_i - y_j)
+    is the distance between x_i and y_j.
+
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                    defaults = squared_distance
+        Distance function to used to compute distance between aligned timeseries.
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        and creation are ignored. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
+    g: float, defaults = 0.
+        Constant that controls the curvature (slope) of the function; that is, g
+        controls the level of penalisation for the points with larger phase
+        difference.
+    kwargs: dict
+        Extra arguments for custom distance should be put in the kwargs. See the
+        documentation for the distance for kwargs.
+
+    Returns
+    -------
+    Callable[[np.ndarray, np.ndarray], float]
+        No_python compiled wdtw distance callable.
+
+    Raises
+    ------
+    ValueError
+        If the input timeseries is not a numpy array.
+        If the input timeseries doesn't have exactly 2 dimensions.
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+
+    References
+    ----------
+    .. [1] Young-Seon Jeong, Myong K. Jeong, Olufemi A. Omitaomu, Weighted dynamic time
+    warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
+    2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
+    """
+    format_kwargs = {
+        "lower_bounding": lower_bounding,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "custom_distance": custom_distance,
+        "bounding_matrix": bounding_matrix,
+        "g": g,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="wdtw", **format_kwargs)
 
 
 def ddtw_distance(
@@ -120,8 +213,12 @@ def ddtw_distance(
     References
     ----------
     .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
-           spoken word recognition," IEEE Transactions on Acoustics, Speech and
-           Signal Processing, vol. 26(1), pp. 43--49, 1978.
+        spoken word recognition," IEEE Transactions on Acoustics, Speech and
+        Signal Processing, vol. 26(1), pp. 43--49, 1978.
+
+    .. [2] Keogh, Eamonn & Pazzani, Michael. (2002). Derivative Dynamic Time Warping.
+        First SIAM International Conference on Data Mining.
+        1. 10.1137/1.9781611972719.1.
     """
     format_kwargs = {
         "lower_bounding": lower_bounding,
@@ -552,6 +649,12 @@ _METRIC_INFOS = [
         aka={"ddtw", "derivative dynamic time warping"},
         dist_func=ddtw_distance,
         dist_instance=_DdtwDistance(),
+    ),
+    MetricInfo(
+        canonical_name="wdtw",
+        aka={"wdtw", "weighted dynamic time warping"},
+        dist_func=wdtw_distance,
+        dist_instance=_WdtwDistance(),
     ),
 ]
 

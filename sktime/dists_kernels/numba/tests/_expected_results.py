@@ -5,6 +5,7 @@ _expected_distance_results = {
     # [single value series, univariate series, multivariate series, multivariate panel]
     "squared": [25.0, 6.93261, 50.31911, 499.67497],
     "euclidean": [5.0, 2.63298, 7.09359, 70.56413],
-    "dtw": [5.0, 1.47660, 6.83232, 67.99959],
-    "ddtw": [0.0, 1.44515, 5.61927, 55.59761],
+    "dtw": [25.0, 2.18036, 46.68062, 463.98655],
+    "ddtw": [0.0, 2.08848, 31.57625, 310.22540],
+    "wdtw": [25.0, 2.18036, 46.68062, 463.98655],
 }
