@@ -159,6 +159,10 @@ Rights and responsibilities
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be a core developer.
 
 .. _appointment-1:
 
@@ -176,6 +180,11 @@ anonymous.
 While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
+
+End of tenure
+^^^^^^^^^^^^^
+
+Core developers can resign voluntarily at any point in time, by informing the CC in writing.
 
 Core developers that have not contributed to the project in the past
 one-year-period will automatically become *inactive*
@@ -212,6 +221,11 @@ incidents and enforcing the CoC.
 They are the point of contact for reporting potential CoC incidents.
 
 In addition, they are responsible for maintaining and improving the CoC.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be a CoC committee member.
 
 .. _appointment-2:
 
@@ -263,6 +277,13 @@ Rights and responsibilities
    * - Project management
      - Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts)
 
+Eligibility
+^^^^^^^^^^^
+
+Only core developers are eligible for appointment as CC members.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointment vote
+concurrent with the 5 day discussion period (see below).
 
 .. _appointment-3:
 
@@ -280,10 +301,14 @@ stay open for 5 days excluding weekends. CC membership votes are subject to:
 The vote will take place in private communication channels and will be
 anonymous.
 
-To avoid deadlocks if there is an even number of CC members, one of them
-will have a tie breaking privilege.
+In case of ties, the CC member with shortest tenure breaks the tie.
 
-CC members who do not actively engage with the CC responsibilities are
+End of tenure
+^^^^^^^^^^^^^
+
+CC members can resign voluntarily at any point in time, by informing the CC in writing.
+
+CC members who do not actively engage with the responsibilities are
 expected to resign.
 
 Communications
