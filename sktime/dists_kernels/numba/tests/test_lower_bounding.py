@@ -146,8 +146,6 @@ def _validate_bounding(
         is_gradient_bounding=True,
     )
 
-    pass
-
 
 def test_lower_bounding() -> None:
     """Test for various lower bounding methods."""

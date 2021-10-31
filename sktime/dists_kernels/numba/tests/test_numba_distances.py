@@ -223,3 +223,35 @@ def test_metric_parameters():
 def test_incorrect_parameters():
     """Ensure incorrect parameters raise errors."""
     _test_incorrect_parameters(distance)
+
+
+# def test_dist():
+#     from sktime.dists_kernels.numba.distances.distance import dtw_distance
+#
+#     dist = dtw_distance
+#
+#     x_first = np.array([10.0])
+#     y_first = np.array([15.0])
+#
+#     x_second = create_test_distance_numpy(10)
+#     y_second = create_test_distance_numpy(10, random_state=2)
+#
+#     x_third = create_test_distance_numpy(10, 1)
+#     y_third = create_test_distance_numpy(10, 1, random_state=2)
+#
+#     x_fourth = create_test_distance_numpy(10, 10)
+#     y_fourth = create_test_distance_numpy(10, 10, random_state=2)
+#
+#     x_fifth = create_test_distance_numpy(10, 10, 1)
+#     y_fifth = create_test_distance_numpy(10, 10, 1, random_state=2)
+#
+#     x_sixth = create_test_distance_numpy(10, 10, 10)
+#     y_sixth = create_test_distance_numpy(10, 10, 10, random_state=2)
+#
+#     first = dist(x_first, y_first)
+#     second = dist(x_second, y_second)
+#     third = dist(x_third, y_third)
+#     fourth = dist(x_fourth, y_fourth)
+#     fifth = dist(x_fifth, y_fifth)
+#     sixth = dist(x_sixth, y_sixth)
+#     pass

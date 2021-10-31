@@ -7,16 +7,12 @@ from typing import Callable
 
 import numpy as np
 import pytest
-from numpy.testing import assert_almost_equal
 
 from sktime.dists_kernels.numba.distances.base import NumbaDistance
 from sktime.dists_kernels.numba.distances.distance import (
     _METRIC_INFOS,
     MetricInfo,
     pairwise_distance,
-)
-from sktime.dists_kernels.numba.tests._expected_results import (
-    _expected_distance_results,
 )
 from sktime.dists_kernels.numba.tests._shared_tests import (
     _test_incorrect_parameters,
@@ -41,7 +37,6 @@ def _check_symmetric(x: np.ndarray, rtol: float = 1e-05, atol: float = 1e-08) ->
     -------
     bool
         True is matrix is symmetric and false if matrix not symmetric
-
     """
     return np.allclose(x, x.T, rtol=rtol, atol=atol)
 
@@ -54,7 +49,6 @@ def _validate_pairwise_result(
     distance_function: Callable,
     distance_numba_class: NumbaDistance,
     kwargs_dict: dict = None,
-    expected_result: float = None,
 ):
     """Validate the pairwise distance gives desired result.
 
@@ -74,8 +68,6 @@ def _validate_pairwise_result(
         NumbaDistance class
     kwargs_dict: dict
         Extra kwargs
-    expected_result:
-        float that is the expected result of tests.
     """
     if kwargs_dict is None:
         kwargs_dict = {}
@@ -90,9 +82,13 @@ def _validate_pairwise_result(
         x, y, metric=distance_function, **kwargs_dict
     )
 
-    assert metric_str_result.shape == (len(x), len(y)), (
-        f'The result for a pairwise using the string: {metric_str} as the "metric"'
-        f"parameter should be of the size mxn where m is len(x) and n is len(y). "
+    expected_size = (len(x), len(y))
+    if x.ndim <= 1:
+        expected_size = (1, 1)
+
+    assert metric_str_result.shape == expected_size, (
+        f'The result for a pairwise using the string: {metric_str} as the "metric" '
+        f"parameter should be of the shape {expected_size}. "
         f"Instead the result was of shape {metric_str_result.shape}."
     )
 
@@ -160,8 +156,37 @@ def _validate_pairwise_result(
         f"diagonal. This criteria is not met for the pairwise metric {metric_str}"
     )
 
-    if expected_result is not None:
-        assert_almost_equal(metric_str_result.trace(), expected_result, 5)
+    _test_pw_equal_single_dists(x, y, distance_function, metric_str)
+
+
+def _test_pw_equal_single_dists(
+    x: np.ndarray, y: np.ndarray, distance_function: Callable, conical_name: str
+) -> None:
+    """Test pairwise result is equal to individual distance.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d, 2d or 3d array)
+        First timeseries
+    y: np.ndarray (1d, 2d or 3d array)
+        Second timeseries
+    distance_function: Callable
+        Distance function to test
+    conical_name: str
+        Name of the metric
+    """
+    if x.ndim < 2:
+        return
+    pw_result = pairwise_distance(x, y, metric=conical_name)
+
+    matrix = np.zeros((len(x), len(y)))
+    for i in range(len(x)):
+        curr_x = x[i]
+        for j in range(len(y)):
+            curr_y = y[j]
+            matrix[i, j] = distance_function(curr_x, curr_y)
+
+    assert np.array_equal(matrix, pw_result)
 
 
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -185,57 +210,51 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
         distance_factory=distance_factory,
         distance_function=distance_function,
         distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][0],
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(10),
-        y=create_test_distance_numpy(10, random_state=2),
+        x=create_test_distance_numpy(5),
+        y=create_test_distance_numpy(5, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
         distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][1],
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
+        x=create_test_distance_numpy(5, 1),
+        y=create_test_distance_numpy(5, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
         distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][1],
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(10, 10),
-        y=create_test_distance_numpy(10, 10, random_state=2),
+        x=create_test_distance_numpy(5, 5),
+        y=create_test_distance_numpy(5, 5, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
         distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][2],
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
+        x=create_test_distance_numpy(5, 5, 1),
+        y=create_test_distance_numpy(5, 5, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
         distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][2],
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
+        x=create_test_distance_numpy(5, 5, 5),
+        y=create_test_distance_numpy(5, 5, 5, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
         distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][3],
     )
 
 
