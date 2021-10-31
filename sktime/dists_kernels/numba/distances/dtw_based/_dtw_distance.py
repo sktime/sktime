@@ -124,7 +124,7 @@ def _dtw_numba_distance(
     )
 
     cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
-    return np.sqrt(cost_matrix[-1, -1])
+    return cost_matrix[-1, -1]
 
 
 @njit(cache=True)
