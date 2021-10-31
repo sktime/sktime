@@ -1,16 +1,18 @@
-import pandas as pd
-import numpy as np
+# -*- coding: utf-8 -*-
 import multiprocessing
-from numba import njit, prange, get_num_threads, set_num_threads
 
+import numpy as np
+import pandas as pd
+from numba import get_num_threads, njit, prange, set_num_threads
+
+from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
 
-from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
-
 
 class MultiRocket(_PanelToTabularTransformer):
-    """MultiROCKET
+    """
+    MultiRocket univariate version.
 
     Multi RandOm Convolutional KErnel Transform
 
@@ -98,6 +100,17 @@ class MultiRocket(_PanelToTabularTransformer):
         super(MultiRocket, self).__init__()
 
     def fit(self, X, y=None):
+        """Fit dilations and biases to input time series.
+
+        Parameters
+        ----------
+        X : pandas DataFrame, input time series (sktime format)
+        y : array_like, target values (optional, ignored as irrelevant)
+
+        Returns
+        -------
+        self
+        """
         _X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         _X = _X[:, 0, :].astype(np.float64)
         _X = from_3d_numpy_to_2d_array(_X)
@@ -116,7 +129,7 @@ class MultiRocket(_PanelToTabularTransformer):
         return self
 
     def transform(self, X, y=None):
-        """Transforms input time series using random convolutional kernels.
+        """Transform input time series using random convolutional kernels.
 
         Parameters
         ----------

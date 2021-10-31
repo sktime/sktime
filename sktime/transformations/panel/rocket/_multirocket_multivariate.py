@@ -11,7 +11,7 @@ from sktime.utils.validation.panel import check_X
 
 class MultiRocketMultivariate(_PanelToTabularTransformer):
     """
-    MultiRocketMultivariate version.
+    MultiRocket multivariate version.
 
     Multi RandOm Convolutional KErnel Transform
 
@@ -64,7 +64,7 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
         super(MultiRocketMultivariate, self).__init__()
 
     def fit(self, X, y=None):
-        """Fits dilations and biases to input time series.
+        """Fit dilations and biases to input time series.
 
         Parameters
         ----------
