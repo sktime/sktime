@@ -67,7 +67,7 @@ def dtw_distance(
     -------
     float
     """
-    warn("Cython DTW deprecated from V0.10")
+    warn("Cython DTW is deprecated from V0.10")
     # make sure x is shorter than y
     # if not permute
     cdef np.ndarray[double, ndim=2] X = x
@@ -120,6 +120,7 @@ def dtw_distance(
 
 def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0.05):
 
+    warn("Cython WDTW is deprecated from V0.10")
     # make sure x is shorter than y
     # if not permute
     cdef np.ndarray[double, ndim=2] X = x
@@ -175,16 +176,18 @@ def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , d
 # note - this implementation is more convenient for general use but it is more efficient
 # for standalone use to transform the data once, then use DTW on the transformed data
 def ddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
+    warn("Cython DDTW is deprecated from V0.10")
     return dtw_distance(np.diff(x.T).T,np.diff(y.T).T,w)
 
 
 # note - this implementation is more convenient for use in ensembles, etc., but it is more efficient
 # for standalone use to transform the data once, then use WDTW on the transformed data
 def wddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0):
+    warn("Cython WDDTW is deprecated from V0.10")
     return wdtw_distance(np.diff(x.T).T,np.diff(y.T).T,g)
 
 def msm_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double c = 1, int dim_to_use = 0):
-
+    warn("Cython MSM is deprecated from V0.10")
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
     cdef np.ndarray[double, ndim=2] temp
@@ -236,6 +239,7 @@ cdef _msm_calc_cost(double new_point, double x, double y, double c):
 def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int delta
 = 3, double epsilon = 0.05,
                   int dim_to_use = 0):
+    warn("Cython LCSS is deprecated from V0.10")
 
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
@@ -277,6 +281,7 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
 #cython: boundscheck=False, wraparound=False, nonecheck=False
 def twe_distance(np.ndarray[double, ndim=2] ta, np.ndarray[double, ndim=2] tb, double penalty = 1,
                  double stiffness = 1):
+    warn("Cython TWE is deprecated from V0.10")
     cdef int dim = ta.shape[1] - 1
     cdef double dist, disti1, distj1
     cdef np.ndarray[double, ndim=1] tsa = np.zeros([len(ta) + 1], dtype=np.double)
@@ -391,6 +396,7 @@ def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, dou
         You should have received a copy of the GNU Affero General Public License
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
+    warn("Cython ERP is deprecated from V0.10")
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
     cdef np.ndarray[double, ndim=2] t
