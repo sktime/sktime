@@ -2,7 +2,7 @@
 """Lower bounding enum."""
 
 __author__ = ["chrisholder"]
-__all__ = ["LowerBounding"]
+__all__ = ["LowerBounding", "resolve_bounding_matrix"]
 
 import math
 from enum import Enum
@@ -389,4 +389,65 @@ class LowerBounding(Enum):
                 bounding_matrix[upper_y, x] = 0.0
                 bounding_matrix[lower_y, x] = 0.0
 
+        return bounding_matrix
+
+
+def resolve_bounding_matrix(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    bounding_matrix: np.ndarray = None,
+) -> np.ndarray:
+    """Resolve the bounding matrix parameters.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then this matrix will be returned.
+        Other lower_bounding params and creation will be ignored. The matrix should be
+        structure so that indexes considered in bound should be the value 0. and indexes
+        outside the bounding matrix should be infinity.
+
+    Returns
+    -------
+    np.ndarray (2d array)
+        Bounding matrix to use. The matrix is structured so that indexes
+        considered in bound are of the value 0. and indexes outside the bounding
+        matrix of the value infinity.
+
+    Raises
+    ------
+    ValueError
+        If the input timeseries is not a numpy array.
+        If the input timeseries doesn't have exactly 2 dimensions.
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+    """
+    if bounding_matrix is None:
+        if isinstance(lower_bounding, int):
+            lower_bounding = LowerBounding(lower_bounding)
+        else:
+            lower_bounding = lower_bounding
+
+        return lower_bounding.create_bounding_matrix(
+            x,
+            y,
+            sakoe_chiba_window_radius=window,
+            itakura_max_slope=itakura_max_slope,
+        )
+    else:
         return bounding_matrix

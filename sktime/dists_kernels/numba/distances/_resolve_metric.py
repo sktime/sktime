@@ -4,6 +4,9 @@ from typing import Callable, List, Union
 
 import numpy as np
 
+from sktime.dists_kernels.numba.distances._numba_utils import (
+    is_no_python_compiled_callable,
+)
 from sktime.dists_kernels.numba.distances.base import (
     DistanceCallable,
     MetricInfo,
@@ -130,7 +133,7 @@ def _is_distance_factory_callable(metric: Callable) -> bool:
         Boolean that is true if callable is a valid distance factory and false
         if the callable is an invalid distance factory.
     """
-    is_no_python_compiled = hasattr(metric, "signatures")
+    is_no_python_compiled = is_no_python_compiled_callable(metric)
     if is_no_python_compiled:
         return False
     correct_num_params = len(inspect.signature(metric).parameters) >= 2
@@ -158,7 +161,7 @@ def _is_no_python_distance_callable(metric: Callable) -> bool:
         false if the callable is an invalid no_python callable.
 
     """
-    is_no_python_compiled = hasattr(metric, "signatures")
+    is_no_python_compiled = is_no_python_compiled_callable(metric)
     if not is_no_python_compiled:
         return False
     correct_num_params = len(inspect.signature(metric).parameters) == 2

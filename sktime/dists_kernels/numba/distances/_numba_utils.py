@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Callable
+
 import numpy as np
 from numba import njit, prange
 
@@ -90,3 +92,33 @@ def _compute_pairwise_distance(
                 pairwise_matrix[i, j] = distance_callable(curr_x, _y[j])
 
     return pairwise_matrix
+
+
+def is_no_python_compiled_callable(
+    no_python_callable: Callable, raise_error: bool = False
+):
+    """Check if a callable is no_python compiled.
+
+    Parameters
+    ----------
+    no_python_callable: Callable
+        Callable to check if no_python compiled.
+    raise_error: bool, defaults = False
+        Boolean that when True will raise an error if the callable is not no_python
+        compiled.
+
+    Returns
+    -------
+    bool
+        True if the callable is no_python compiled, False if the callable is not
+        no_python compiled
+    """
+    is_no_python_callable = hasattr(no_python_callable, "signatures")
+    if raise_error and not is_no_python_callable:
+        raise RuntimeError(
+            f"The callable provided must be no_python compiled. The callable that "
+            f"caused"
+            f"this error is named {no_python_callable.__name__}"
+        )
+
+    return is_no_python_callable

@@ -1,23 +1,58 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Chris Holder"]
+__author__ = ["chrisholder", "Jason Lines"]
 
 from typing import Callable, Union
 
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba.distances._numba_utils import _compute_pairwise_distance
+from sktime.dists_kernels.numba.distances._numba_utils import (
+    is_no_python_compiled_callable,
+)
 from sktime.dists_kernels.numba.distances._squared_distance import _SquaredDistance
 from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
+from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import (
+    _dtw_numba_distance,
+)
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import (
     LowerBounding,
     resolve_bounding_matrix,
 )
 
+DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
-class _DtwDistance(NumbaDistance):
-    """Dynamic time warping (DTW) between two timeseries."""
 
+@njit()
+def _average_of_slope(q: np.ndarray):
+    r"""Compute the average of a slope between points.
+
+    Computes the average of the slope of the line through the point in question and
+    its left neighbour, and the slope of the line through the left neighbour and the
+    right neighbour.
+
+    Mathematically this is defined at:
+
+    .. math::
+        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+
+    Where q is the original timeseries and d_q is the derived timeseries.
+
+    Parameters
+    ----------
+    q: np.ndarray (2d array)
+        A timeseries.
+
+    Returns
+    -------
+    np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
+                len(q.shape[1]))
+        Array containing the derivative of q.
+
+    """
+    return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
+
+
+class _DdtwDistance(NumbaDistance):
     def _distance_factory(
         self,
         x: np.ndarray,
@@ -27,9 +62,10 @@ class _DtwDistance(NumbaDistance):
         itakura_max_slope: float = 2.0,
         custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
         bounding_matrix: np.ndarray = None,
-        **kwargs: dict
+        compute_derivative: DerivativeCallable = _average_of_slope,
+        **kwargs: dict,
     ) -> DistanceCallable:
-        """Create a no_python compiled dtw distance callable.
+        """Create a no_python compiled ddtw distance callable.
 
         Parameters
         ----------
@@ -53,6 +89,10 @@ class _DtwDistance(NumbaDistance):
             and creation are ignored. The matrix should be structure so that indexes
             considered in bound should be the value 0. and indexes outside the bounding
             matrix should be infinity.
+        compute_derivative: Callable[[np.ndarray], np.ndarray],
+                                defaults = average slope difference (see above)
+            Callable that computes the derivative. If none is provided the average of
+            the slope between two points used.
         kwargs: dict
             Extra arguments for custom distance should be put in the kwargs. See the
             documentation for the distance for kwargs.
@@ -61,7 +101,7 @@ class _DtwDistance(NumbaDistance):
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled Dtw distance callable.
+            No_python compiled Ddtw distance callable.
 
         Raises
         ------
@@ -70,10 +110,18 @@ class _DtwDistance(NumbaDistance):
             If the input timeseries doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
+            If the compute derivative callable is not no_python compiled.
         """
         _bounding_matrix = resolve_bounding_matrix(
             x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
         )
+
+        if not is_no_python_compiled_callable(compute_derivative):
+            raise (
+                f"The derivative callable must be no_python compiled. The name"
+                f"of the callable that must be compiled is "
+                f"{compute_derivative.__name__}"
+            )
 
         # This needs to be here as potential distances only known at runtime not
         # compile time so having this at the top would cause circular import errors.
@@ -86,85 +134,14 @@ class _DtwDistance(NumbaDistance):
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
+            _x = compute_derivative(_x)
+            _y = compute_derivative(_y)
             return _dtw_numba_distance(_x, _y, _custom_distance, _bounding_matrix)
 
         return numba_dtw_distance
 
 
-@njit(cache=True)
-def _dtw_numba_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-    bounding_matrix: np.ndarray,
-) -> float:
-    """Dtw distance compiled to no_python.
-
-    Parameters
-    ----------
-    x: np.ndarray (2d array)
-        First timeseries.
-    y: np.ndarray (2d array)
-        Second timeseries.
-    custom_distance: Callable[[np.ndarray, np.ndarray], float]
-        Distance function to used to compute distance between aligned timeseries.
-    bounding_matrix: np.ndarray (2d array)
-        Bounding matrix to observe. The matrix should be structure so that indexes
-        considered in bound should be the value 0. and indexes outside the bounding
-        matrix should be infinity.
-
-    Returns
-    -------
-    distance: float
-        Dtw distance between the two timeseries.
-    """
-    symmetric = np.array_equal(x, y)
-    pre_computed_distances = _compute_pairwise_distance(
-        x, y, symmetric, custom_distance
-    )
-
-    cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
-    return np.sqrt(cost_matrix[-1, -1])
-
-
-@njit(cache=True)
-def _cost_matrix(
-    x: np.ndarray,
-    y: np.ndarray,
-    bounding_matrix: np.ndarray,
-    pre_computed_distances: np.ndarray,
-):
-    """Compute the dtw cost matrix between two timeseries.
-
-    Parameters
-    ----------
-    x: np.ndarray (2d array)
-        First timeseries.
-    y: np.ndarray (2d array)
-        Second timeseries.
-    bounding_matrix: np.ndarray (2d array)
-        Bounding matrix to observe. The matrix should be structure so that indexes
-        considered in bound should be the value 0. and indexes outside the bounding
-        matrix should be infinity.
-    pre_computed_distances: np.ndarray (2d of size mxn where m is len(x) and n is
-                                        len(y))
-        Precomputed pairwise matrix between the two timeseries.
-
-    Returns
-    -------
-    np.ndarray (2d array of size mxn where m is len(x) and n is len(y))
-        Cost matrix between two timeseries.
-    """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
-    cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
-    cost_matrix[0, 0] = 0.0
-
-    for i in range(x_size):
-        for j in range(y_size):
-            if np.isfinite(bounding_matrix[i, j]):
-                cost_matrix[i + 1, j + 1] = pre_computed_distances[i, j] + min(
-                    cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
-                )
-
-    return cost_matrix[1:, 1:]
+# @njit()
+# def _numpy_derivative(x: np.ndarray):
+#     return np.diff(x.T).T
+#

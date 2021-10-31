@@ -21,8 +21,119 @@ from sktime.dists_kernels.numba.distances.base import (
     MetricInfo,
     NumbaDistance,
 )
+from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
+    DerivativeCallable,
+    _average_of_slope,
+    _DdtwDistance,
+)
 from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import _DtwDistance
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+
+
+def ddtw_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    bounding_matrix: np.ndarray = None,
+    compute_derivative: DerivativeCallable = _average_of_slope,
+    **kwargs: dict,
+):
+    r"""Compute the derivative dynamic time warping (Ddtw) distance between timeseries.
+
+    Ddtw distance is supported for 1d, 2d and 3d arrays.
+
+    Ddtw is an adaptation of the original Dtw put forward in forward in [1]_. Ddtw was
+    originally put forward in [2]_ and attempts to solve an issue with Dtw in that it
+    fails to account for the y axis (or shape) of the timeseries.
+    Ddtw attempts to solves this limitation by considering y axis data points as
+    higher level features of 'shape'. This is done by taking the first derivative
+    of the sequence, and then using this 'derived sequence' to perform a Dtw
+    computation. This allows the shape of the timeseries to be considered in
+    dtw computation.
+
+    While there are many sophisticated methods for estimating derivatives,
+    the average of the slope of the line through the point in question and
+    its left neighbour, and the slope of the line through the left neighbour and the
+    right neighbour (this can be changed by passing a custom no_python compiled callable
+    to compute the derivative via the 'compute_derivative' parameter) is used. See
+    [2]_ for explanation.
+
+
+    Mathematically this derivative is defined as:
+
+    .. math::
+        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+
+    Where q is the original timeseries and d_q is the derived timeseries.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                    defaults = squared_distance
+        Distance function to used to compute distance between aligned timeseries.
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        and creation are ignored. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
+    compute_derivative: Callable[[np.ndarray], np.ndarray],
+                            defaults = average slope difference (see above)
+        Callable that computes the derivative. If none is provided the average of the
+        slope between two points used.
+    kwargs: dict
+        Extra arguments for custom distance should be put in the kwargs. See the
+        documentation for the distance for kwargs.
+
+    Returns
+    -------
+    distance: float
+        Dtw distance between the two timeseries.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric or compute derivative callable is not no_python compiled.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
+           spoken word recognition," IEEE Transactions on Acoustics, Speech and
+           Signal Processing, vol. 26(1), pp. 43--49, 1978.
+    """
+    format_kwargs = {
+        "lower_bounding": lower_bounding,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "custom_distance": custom_distance,
+        "bounding_matrix": bounding_matrix,
+        "compute_derivative": compute_derivative,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="ddtw", **format_kwargs)
 
 
 def dtw_distance(
@@ -435,6 +546,12 @@ _METRIC_INFOS = [
         aka={"dtw", "dynamic time warping"},
         dist_func=dtw_distance,
         dist_instance=_DtwDistance(),
+    ),
+    MetricInfo(
+        canonical_name="ddtw",
+        aka={"ddtw", "derivative dynamic time warping"},
+        dist_func=ddtw_distance,
+        dist_instance=_DdtwDistance(),
     ),
 ]
 
