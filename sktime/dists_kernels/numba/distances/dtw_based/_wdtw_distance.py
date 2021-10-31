@@ -7,9 +7,6 @@ from numba import njit
 from sktime.dists_kernels.numba.distances._numba_utils import _compute_pairwise_distance
 from sktime.dists_kernels.numba.distances._squared_distance import _SquaredDistance
 from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
-from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import (
-    _dtw_numba_distance,
-)
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import (
     LowerBounding,
     resolve_bounding_matrix,
@@ -89,7 +86,7 @@ class _WdtwDistance(NumbaDistance):
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            return _dtw_numba_distance(_x, _y, _custom_distance, _bounding_matrix)
+            return _wdtw_numba_distance(_x, _y, _custom_distance, _bounding_matrix, g)
 
         return numba_wdtw_distance
 
