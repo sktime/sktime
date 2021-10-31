@@ -83,7 +83,7 @@ class _DdtwDistance(NumbaDistance):
             Parallelogram lower bounding).
         custom_distance: Callable[[np.ndarray, np.ndarray], float],
                         defaults = squared_distance
-            Distance function to used to compute distance between aligned timeseries.
+            Distance function to used to compute distance between timeseries.
         bounding_matrix: np.ndarray (2d array)
             Custom bounding matrix to use. If defined then other lower_bounding params
             and creation are ignored. The matrix should be structure so that indexes
@@ -141,6 +141,8 @@ class _DdtwDistance(NumbaDistance):
         return numba_dtw_distance
 
 
+# This is how the original implementation calculated derivative kept just in case want
+# revert
 # @njit()
 # def _numpy_derivative(x: np.ndarray):
 #     return np.diff(x.T).T
