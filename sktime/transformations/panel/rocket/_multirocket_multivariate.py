@@ -1,15 +1,17 @@
-import pandas as pd
-import numpy as np
+# -*- coding: utf-8 -*-
 import multiprocessing
-from numba import njit, prange, get_num_threads, set_num_threads
+
+import numpy as np
+import pandas as pd
+from numba import get_num_threads, njit, prange, set_num_threads
 
 from sktime.transformations.base import _PanelToTabularTransformer
-
 from sktime.utils.validation.panel import check_X
 
 
 class MultiRocketMultivariate(_PanelToTabularTransformer):
-    """MultiRocket (Multivariate)
+    """
+    MultiRocketMultivariate version.
 
     Multi RandOm Convolutional KErnel Transform
 
@@ -29,7 +31,8 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    num_kernels              : int, number of random convolutional kernels (default 10,000)
+    num_kernels              : int, number of random convolutional kernels
+    (default 10,000)
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     n_features_per_kernel    : int, number of features per kernel (default 4)
     normalise                : int, normalise the data (default False)
@@ -97,7 +100,7 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
         return self
 
     def transform(self, X, y=None):
-        """Transforms input time series using random convolutional kernels.
+        """Transform input time series using random convolutional kernels.
 
         Parameters
         ----------
@@ -219,7 +222,9 @@ def _fit_biases(
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
+    # >>> indices = np.array(
+    #   [_ for _ in combinations(np.arange(9), 3)], dtype = np.int32
+    # )
     indices = np.array(
         (
             0,
@@ -596,7 +601,8 @@ def _quantiles(n):
 
 
 @njit(
-    "float32[:,:](float64[:,:,:],float64[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),"
+    "float32[:,:](float64[:,:,:],float64[:,:,:],"
+    "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),"
     "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),int32)",
     fastmath=True,
     parallel=True,
