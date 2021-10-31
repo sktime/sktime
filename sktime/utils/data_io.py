@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Functions for the input and output of data and results."""
+"""Functions for the input and output of data and results.
+todo: This file will be removed in version 0.10
+"""
 
 import itertools
 import os
@@ -11,6 +13,7 @@ import pandas as pd
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
+from warnings import warn
 
 
 class TsFileParseException(Exception):
@@ -55,6 +58,8 @@ def load_from_tsfile_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     # Initialize flags and variables used when parsing the file
     metadata_started = False
     data_started = False
@@ -772,6 +777,8 @@ def load_from_arff_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     instance_list = []
     class_val_list = []
 
@@ -881,6 +888,8 @@ def load_from_ucr_tsv_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     df = pd.read_csv(full_file_path_and_name, sep="\t", header=None)
     y = df.pop(0).values
     df.columns -= 1
@@ -907,6 +916,8 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     DataFrame
         A dataframe with sktime-formatted data
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     data = pd.read_csv(full_file_path_and_name, sep=separator, header=0)
     # ensure there are 4 columns in the long_format table
     if len(data.columns) != 4:
@@ -944,6 +955,8 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     -------
     DataFrame
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     rows_per_case = series_len * num_dims
     total_rows = num_cases * series_len * num_dims
 
@@ -986,6 +999,8 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
         The multi-indexed DataFrame with
         shape (n_instances*n_timepoints, n_column).
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     # Make long DataFrame
     long_df = generate_example_long_table(
         num_cases=n_instances, series_len=n_timepoints, num_dims=n_columns
@@ -1046,6 +1061,8 @@ def write_results_to_uea_format(
     third_line : str
         summary performance information (see comment below)
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     if len(y_true) != len(y_pred):
         raise IndexError(
             "The number of predicted values is not the same as the "
@@ -1182,6 +1199,8 @@ def write_tabular_transformation_to_arff(
     -------
     None
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     # ensure transformation provided is a transformer
     if not isinstance(transformation, BaseTransformer):
         raise ValueError("Transformation must be a BaseTransformer")
@@ -1307,6 +1326,8 @@ def write_dataframe_to_tsfile(
     -----
     This version currently does not support writing timestamp data.
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     # ensure data provided is a dataframe
     if not isinstance(data, pd.DataFrame):
         raise ValueError("Data provided must be a DataFrame")
@@ -1382,6 +1403,8 @@ def write_ndarray_to_tsfile(
     -----
     This version currently does not support writing timestamp data.
     """
+    warn("This function has moved to datasets/_data_io, this version will be removed "
+         "in V0.10")
     # ensure data provided is a ndarray
     if not isinstance(data, np.ndarray):
         raise ValueError("Data provided must be a ndarray")
