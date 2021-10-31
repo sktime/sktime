@@ -226,8 +226,8 @@ def test_incorrect_parameters():
 
 
 # def test_dist():
-#     from sktime.dists_kernels.numba.distances.distance import wdtw_distance as dist
-#     from sktime.distances.elastic_cython import wdtw_distance as sktime_ddtw
+#     from sktime.dists_kernels.numba.distances.distance import wddtw_distance as dist
+#     from sktime.distances.elastic_cython import wddtw_distance as sktime_ddtw
 #
 #     x_first = np.array([10.0])
 #     y_first = np.array([15.0])
