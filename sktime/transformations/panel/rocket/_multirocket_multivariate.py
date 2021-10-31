@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import multiprocessing
 from numba import njit, prange, get_num_threads, set_num_threads
+
 from sktime.transformations.base import _PanelToTabularTransformer
 
 from sktime.utils.validation.panel import check_X
@@ -18,10 +19,12 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
     class MultiRocket for univariate input.
 
     @article{Tan2021MultiRocket,
-    title={{MultiRocket}: Multiple pooling operators and transformations for fast and effective time series classification},
-    author={Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and Webb, Geoffrey I},
+    title={{MultiRocket}: Multiple pooling operators and transformations
+    for fast and effective time series classification},
+    author={Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and
+    Webb, Geoffrey I},
     year={2021},
-    journal={arxiv:2102.00457}
+    journal={arxiv:2102.00457v3}
     }
 
     Parameters
@@ -198,7 +201,8 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
 
 
 @njit(
-    "float32[:](float64[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int64))",
+    "float32[:](float64[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],"
+    "optional(int64))",
     fastmath=True,
     parallel=False,
     cache=True,
@@ -596,7 +600,8 @@ def _quantiles(n):
 
 
 @njit(
-    "float32[:,:](float64[:,:,:],float64[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),int32)",
+    "float32[:,:](float64[:,:,:],float64[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),"
+    "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),int32)",
     fastmath=True,
     parallel=True,
     cache=True,
@@ -615,7 +620,9 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
+    # >>> indices = np.array(
+    #   [_ for _ in combinations(np.arange(9), 3)], dtype = np.int32
+    # )
     indices = np.array(
         (
             0,

@@ -5,12 +5,8 @@ from numba import njit, prange, get_num_threads, set_num_threads
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
-from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
 
-from sktime.transformations.panel.rocket._rocket import Rocket
-from sktime.classification.kernel_based._rocket_classifier import ROCKETClassifier
-from sktime.classification.dictionary_based._boss import BOSSEnsemble
-from sktime.transformations.panel.rocket import MiniRocketMultivariate
+from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
 
 
 class MultiRocket(_PanelToTabularTransformer):
@@ -24,8 +20,10 @@ class MultiRocket(_PanelToTabularTransformer):
     input.
 
     @article{Tan2021MultiRocket,
-    title={{MultiRocket}: Multiple pooling operators and transformations for fast and effective time series classification},
-    author={Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and Webb, Geoffrey I},
+    title={{MultiRocket}: Multiple pooling operators and transformations
+    for fast and effective time series classification},
+    author={Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and
+    Webb, Geoffrey I},
     year={2021},
     journal={arxiv:2102.00457v3}
     }
@@ -45,9 +43,11 @@ class MultiRocket(_PanelToTabularTransformer):
     num_kernels_total: int
         total number of kernels used internally
     parameter : tuple
-        parameter (dilations, num_features_per_dilation, biases) for transformation of input X
+        parameter (dilations, num_features_per_dilation, biases) for
+        transformation of input X
     parameter1 : tuple
-        parameter (dilations, num_features_per_dilation, biases) for transformation of input X1 = np.diff(X, 1)
+        parameter (dilations, num_features_per_dilation, biases) for
+        transformation of input X1 = np.diff(X, 1)
 
     See Also
     --------
@@ -55,8 +55,10 @@ class MultiRocket(_PanelToTabularTransformer):
 
     References
     ----------
-    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and Webb, Geoffrey I,
-        "MultiRocket: Multiple pooling operators and transformations for fast and effective time series classification",
+    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph
+        and Webb, Geoffrey I,
+        "MultiRocket: Multiple pooling operators and transformations
+        for fast and effective time series classification",
         2021, https://arxiv.org/abs/2102.00457v3
 
     Examples
@@ -88,7 +90,9 @@ class MultiRocket(_PanelToTabularTransformer):
 
         self.num_features = num_features
         self.num_kernels_total = self.num_features / 2  # 1 per transformation
-        self.num_kernels_total = int(self.num_kernels_total / self.n_features_per_kernel)
+        self.num_kernels_total = int(
+            self.num_kernels_total / self.n_features_per_kernel
+        )
 
         self.normalise = normalise
         self.n_jobs = n_jobs
@@ -185,7 +189,8 @@ class MultiRocket(_PanelToTabularTransformer):
 
 
 @njit(
-    "float32[:,:](float64[:,:],float64[:,:],Tuple((int32[:],int32[:],float32[:])),Tuple((int32[:],int32[:],float32[:])),int32)",
+    "float32[:,:](float64[:,:],float64[:,:],Tuple((int32[:],int32[:],float32[:])),"
+    "Tuple((int32[:],int32[:],float32[:])),int32)",
     fastmath=True,
     parallel=True,
     cache=True,
@@ -199,7 +204,9 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel):
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
+    # >>> indices = np.array(
+    #   [_ for _ in combinations(np.arange(9), 3)], dtype = np.int32
+    # )
     indices = np.array(
         (
             0,
@@ -735,7 +742,9 @@ def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
+    # >>> indices = np.array(
+    #   [_ for _ in combinations(np.arange(9), 3)], dtype = np.int32
+    # )
     indices = np.array(
         (
             0,
