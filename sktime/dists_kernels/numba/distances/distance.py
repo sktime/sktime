@@ -76,8 +76,8 @@ def wdtw_distance(
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                    defaults = squared_distance
-        Distance function to used to compute distance between aligned timeseries.
+                        defaults = squared_distance
+            Distance function to used to compute distance between timeseries.
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -177,8 +177,8 @@ def ddtw_distance(
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                    defaults = squared_distance
-        Distance function to used to compute distance between aligned timeseries.
+                        defaults = squared_distance
+            Distance function to used to compute distance between timeseries.
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
