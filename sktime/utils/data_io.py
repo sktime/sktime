@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """Functions for the input and output of data and results.
+
 todo: This file will be removed in version 0.10
 """
 
 import itertools
 import os
 import textwrap
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -13,7 +15,6 @@ import pandas as pd
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
-from warnings import warn
 
 
 class TsFileParseException(Exception):
