@@ -27,8 +27,110 @@ from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
     _DdtwDistance,
 )
 from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import _DtwDistance
+from sktime.dists_kernels.numba.distances.dtw_based._wddtw_distance import (
+    _WddtwDistance,
+)
 from sktime.dists_kernels.numba.distances.dtw_based._wdtw_distance import _WdtwDistance
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+
+
+def wddtw_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    bounding_matrix: np.ndarray = None,
+    compute_derivative: DerivativeCallable = _average_of_slope,
+    g: float = 0.0,
+    **kwargs: dict,
+):
+    r"""Compute the weighted derivative dynamic time warping (Wddtw) distance.
+
+    Wddtw was first proposed in [1]_ as a further extension to ddtw. By adding a weight
+    to the derivative it means the alignment isn't only considering the shape of the
+    timeseries (gained from taking the derivative), but also the phase.
+
+    Formally the derivative is calculated as:
+
+    .. math::
+        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+
+    Which a weighted derivative can be calculated using D (the derivative) as:
+
+    .. math::
+        d_{w}(x_{i}, y_{j}) = ||w_{|i-j|}(D_{x_{i}} - D_{y_{j}})||
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                        defaults = squared_distance
+            Distance function to used to compute distance between timeseries.
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        and creation are ignored. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
+    compute_derivative: Callable[[np.ndarray], np.ndarray],
+                            defaults = average slope difference (see above)
+        Callable that computes the derivative. If none is provided the average of the
+        slope between two points used.
+    g: float, defaults = 0.
+        Constant that controls the curvature (slope) of the function; that is, g
+        controls the level of penalisation for the points with larger phase
+        difference.
+    kwargs: dict
+        Extra arguments for custom distance should be put in the kwargs. See the
+        documentation for the distance for kwargs.
+
+    Returns
+    -------
+    float
+        Wddtw distance between the two timeseries.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1] Young-Seon Jeong, Myong K. Jeong, Olufemi A. Omitaomu, Weighted dynamic time
+    warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
+    2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
+    """
+    format_kwargs = {
+        "lower_bounding": lower_bounding,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "custom_distance": custom_distance,
+        "bounding_matrix": bounding_matrix,
+        "compute_derivative": compute_derivative,
+        "g": g,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="wddtw", **format_kwargs)
 
 
 def wdtw_distance(
@@ -54,7 +156,7 @@ def wdtw_distance(
     Formally this can be described as:
 
     .. math::
-        d_{w}(x_{i}, y_{j}) = ||w_{|i-j|}(x_{i} - y_{j}||
+        d_{w}(x_{i}, y_{j}) = ||w_{|i-j|}(x_{i} - y_{j})||
 
     Where d_w is the distance with the weight applied to it for points i, j. Where
     w(|i-j|) is a positive weight between the two points x_i and y_j and (x_i - y_j)
@@ -93,16 +195,20 @@ def wdtw_distance(
 
     Returns
     -------
-    Callable[[np.ndarray, np.ndarray], float]
-        No_python compiled wdtw distance callable.
+    float
+        Wdtw distance between the two timeseries.
 
     Raises
     ------
     ValueError
-        If the input timeseries is not a numpy array.
-        If the input timeseries doesn't have exactly 2 dimensions.
         If the sakoe_chiba_window_radius is not an integer.
         If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
 
     References
     ----------
@@ -194,8 +300,8 @@ def ddtw_distance(
 
     Returns
     -------
-    distance: float
-        Dtw distance between the two timeseries.
+    float
+        Ddtw distance between the two timeseries.
 
     Raises
     ------
@@ -287,7 +393,7 @@ def dtw_distance(
 
     Returns
     -------
-    distance: float
+    float
         Dtw distance between the two timeseries.
 
     Raises
@@ -343,7 +449,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
 
     Returns
     -------
-    distance: float
+    float
         Squared distance between the two timeseries.
 
     Raises
@@ -382,7 +488,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
 
     Returns
     -------
-    distance: float
+    float
         Euclidean distance between the two timeseries.
 
     Raises
@@ -655,6 +761,12 @@ _METRIC_INFOS = [
         aka={"wdtw", "weighted dynamic time warping"},
         dist_func=wdtw_distance,
         dist_instance=_WdtwDistance(),
+    ),
+    MetricInfo(
+        canonical_name="wddtw",
+        aka={"wddtw", "weighted derivative dynamic time warping"},
+        dist_func=wddtw_distance,
+        dist_instance=_WddtwDistance(),
     ),
 ]
 
