@@ -30,7 +30,7 @@ class MultiRocket(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    num_features             : int, number of features (default 50,000)
+    num_kernels              : int, number of kernels (default 10,000)
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     n_features_per_kernel    : int, number of features per kernel (default 4)
     normalise                : int, normalise the data (default False)
@@ -40,8 +40,6 @@ class MultiRocket(_PanelToTabularTransformer):
 
     Attributes
     ----------
-    num_kernels_total: int
-        total number of kernels used internally
     parameter : tuple
         parameter (dilations, num_features_per_dilation, biases) for
         transformation of input X
@@ -78,7 +76,7 @@ class MultiRocket(_PanelToTabularTransformer):
 
     def __init__(
         self,
-        num_features=50_000,
+        num_kernels=10_000,
         max_dilations_per_kernel=32,
         n_features_per_kernel=4,
         normalise=False,
@@ -88,11 +86,7 @@ class MultiRocket(_PanelToTabularTransformer):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
 
-        self.num_features = num_features
-        self.num_kernels_total = self.num_features / 2  # 1 per transformation
-        self.num_kernels_total = int(
-            self.num_kernels_total / self.n_features_per_kernel
-        )
+        self.num_kernels = num_kernels
 
         self.normalise = normalise
         self.n_jobs = n_jobs
@@ -174,7 +168,7 @@ class MultiRocket(_PanelToTabularTransformer):
         num_kernels = 84
 
         dilations, num_features_per_dilation = _fit_dilations(
-            input_length, self.num_kernels_total, self.max_dilations_per_kernel
+            input_length, self.num_kernels, self.max_dilations_per_kernel
         )
 
         num_features_per_kernel = np.sum(num_features_per_dilation)
