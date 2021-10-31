@@ -106,12 +106,12 @@ def _dtw_numba_distance(
         First timeseries.
     y: np.ndarray (2d array)
         Second timeseries.
-    custom_distance: Callable[[np.ndarray, np.ndarray], float]
-        Distance function to used to compute distance between aligned timeseries.
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+        Distance function to used to compute distance between timeseries.
     bounding_matrix: np.ndarray (2d array)
-        Bounding matrix to observe. The matrix should be structure so that indexes
-        considered in bound should be the value 0. and indexes outside the bounding
-        matrix should be infinity.
+        Bounding matrix to restrict the warping path between the two timeseries.
+        The matrix should be structure so that indexes considered in bound should be
+        the value 0. and indexes outside the bounding matrix should be infinity
 
     Returns
     -------
@@ -143,9 +143,9 @@ def _cost_matrix(
     y: np.ndarray (2d array)
         Second timeseries.
     bounding_matrix: np.ndarray (2d array)
-        Bounding matrix to observe. The matrix should be structure so that indexes
-        considered in bound should be the value 0. and indexes outside the bounding
-        matrix should be infinity.
+        Bounding matrix to restrict the warping path between the two timeseries.
+        The matrix should be structure so that indexes considered in bound should be
+        the value 0. and indexes outside the bounding matrix should be infinity.
     pre_computed_distances: np.ndarray (2d of size mxn where m is len(x) and n is
                                         len(y))
         Precomputed pairwise matrix between the two timeseries.
