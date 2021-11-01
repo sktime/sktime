@@ -53,6 +53,8 @@ def _average_of_slope(q: np.ndarray):
 
 
 class _DdtwDistance(NumbaDistance):
+    """Derivative dynamic time warping (Ddtw) between two timeseries."""
+
     def _distance_factory(
         self,
         x: np.ndarray,
@@ -84,7 +86,7 @@ class _DdtwDistance(NumbaDistance):
         custom_distance: Callable[[np.ndarray, np.ndarray], float],
                         defaults = squared_distance
             Distance function to used to compute distance between timeseries.
-        bounding_matrix: np.ndarray (2d array)
+        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
             Custom bounding matrix to use. If defined then other lower_bounding params
             and creation are ignored. The matrix should be structure so that indexes
             considered in bound should be the value 0. and indexes outside the bounding
