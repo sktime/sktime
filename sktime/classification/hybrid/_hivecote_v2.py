@@ -5,7 +5,7 @@ Upgraded hybrid ensemble of classifiers from 4 separate time series classificati
 representations, using the weighted probabilistic CAWPE as an ensemble controller.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["HIVECOTEV2"]
 
 from datetime import datetime
@@ -13,14 +13,12 @@ from datetime import datetime
 import numpy as np
 from sklearn.metrics import accuracy_score
 from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.utils.validation import check_n_jobs
 
 
 class HIVECOTEV2(BaseClassifier):
@@ -56,8 +54,6 @@ class HIVECOTEV2(BaseClassifier):
         The number of classes.
     classes_ : list
         The unique class labels.
-    n_jobs_ : int
-        The number of threads used.
     stc_weight_ : float
         The weight for STC probabilities.
     drcif_weight_ : float
@@ -112,10 +108,8 @@ class HIVECOTEV2(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": True,
         "capability:contractable": True,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -140,9 +134,6 @@ class HIVECOTEV2(BaseClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.n_classes_ = 0
-        self.classes_ = []
-        self.n_jobs_ = n_jobs
         self.stc_weight_ = 0
         self.drcif_weight_ = 0
         self.arsenal_weight_ = 0
@@ -179,11 +170,6 @@ class HIVECOTEV2(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self.n_jobs_ = check_n_jobs(self.n_jobs)
-
-        self.n_classes_ = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-
         # Default values from HC2 paper
         if self.stc_params is None:
             self._stc_params = {"transform_limit_in_minutes": 120}
@@ -208,7 +194,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._stc_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._stc.fit(X, y)
 
@@ -232,7 +218,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._drcif_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._drcif.fit(X, y)
 
@@ -256,7 +242,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._arsenal_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._arsenal.fit(X, y)
 
@@ -280,7 +266,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._tde_params,
             save_train_predictions=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._tde.fit(X, y)
 
@@ -298,6 +284,8 @@ class HIVECOTEV2(BaseClassifier):
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
             print("TDE weight = " + str(self.tde_weight_))  # noqa
+
+        return self
 
     def _predict(self, X):
         """Predicts labels for sequences in X.
