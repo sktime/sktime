@@ -27,11 +27,109 @@ from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
     _DdtwDistance,
 )
 from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import _DtwDistance
+from sktime.dists_kernels.numba.distances.dtw_based._lcss_distance import _LcssDistance
 from sktime.dists_kernels.numba.distances.dtw_based._wddtw_distance import (
     _WddtwDistance,
 )
 from sktime.dists_kernels.numba.distances.dtw_based._wdtw_distance import _WdtwDistance
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+
+
+def lcss_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    bounding_matrix: np.ndarray = None,
+    compute_derivative: DerivativeCallable = _average_of_slope,
+    epsilon: float = 1.0,
+    **kwargs: dict,
+):
+    r"""Compute the longest common subsequence (lcss) score between two timeseries.
+
+    Lcss attempts to find the longest common sequence between two timeseries and returns
+    a value that is the percentage that longest common sequence assumes. Originally
+    present in [1]_, lcss is computed by matching indexes that are similar up until a
+    defined threshold (epsilon). Matches can occur even if the time indexes are
+    different. How far the time index difference can be is controlled by the
+    the bounding matrix used.
+
+    The value returned will be between 0 and 1 per time series (this means if a panel
+    is passed the value will be between 0 and max(len(x), len(y)). The value will
+    represent will represent a percentage over the timeseries of the longest common
+    sequence occurred.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                        defaults = squared_distance
+            Distance function to used to compute distance between timeseries.
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        and creation are ignored. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
+    compute_derivative: Callable[[np.ndarray], np.ndarray],
+                            defaults = average slope difference (see above)
+        Callable that computes the derivative. If none is provided the average of the
+        slope between two points used.
+    epsilon : float, defaults = 1.
+        Matching threshold to determine if two subsequences are considered close
+        enough to be considered 'common'.
+    kwargs: dict
+        Extra arguments for custom distance should be put in the kwargs. See the
+        documentation for the distance for kwargs.
+
+    Returns
+    -------
+    float
+        lcss score between the two timeseries.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1] M. Vlachos, D. Gunopoulos, and G. Kollios. 2002. "Discovering
+        Similar Multidimensional Trajectories", In Proceedings of the
+        18th International Conference on Data Engineering (ICDE '02).
+        IEEE Computer Society, USA, 673.
+    """
+    format_kwargs = {
+        "lower_bounding": lower_bounding,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "custom_distance": custom_distance,
+        "bounding_matrix": bounding_matrix,
+        "compute_derivative": compute_derivative,
+        "epsilon": epsilon,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="lcss", **format_kwargs)
 
 
 def wddtw_distance(
@@ -732,6 +830,12 @@ def pairwise_distance(
 
 
 _METRIC_INFOS = [
+    MetricInfo(
+        canonical_name="lcss",
+        aka={"lcss", "longest common subsequence"},
+        dist_func=lcss_distance,
+        dist_instance=_LcssDistance(),
+    ),
     MetricInfo(
         canonical_name="euclidean",
         aka={"euclidean", "ed", "euclid", "pythagorean"},
