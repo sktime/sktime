@@ -27,12 +27,105 @@ from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
     _DdtwDistance,
 )
 from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import _DtwDistance
+from sktime.dists_kernels.numba.distances.dtw_based._edr_distance import _EdrDistance
 from sktime.dists_kernels.numba.distances.dtw_based._lcss_distance import _LcssDistance
 from sktime.dists_kernels.numba.distances.dtw_based._wddtw_distance import (
     _WddtwDistance,
 )
 from sktime.dists_kernels.numba.distances.dtw_based._wdtw_distance import _WdtwDistance
 from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+
+
+def edr_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    bounding_matrix: np.ndarray = None,
+    epsilon: float = 1.0,
+    **kwargs: dict,
+) -> float:
+    """Compute the Edit distance for real sequences (edr) distance between two series.
+
+    Edr computes the minimum number of elements (as a percentage) that must be removed
+    from x and y so that the sum of the distance between the remaining signal elements
+    lies within the tolerance (epsilon). Edr was originally put forward in [1]_.
+
+    The value returned will be between 0 and 1 per time series (if a panel (3d array)
+    is passed the value will be between 0 and max(len(x), len(y)). The value will
+    represent as a percentage of elements that must be removed for the timeseries to
+    be an exact match.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                        defaults = squared_distance
+            Distance function to used to compute distance between timeseries.
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        and creation are ignored. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
+    epsilon : float, defaults = 1.
+        Matching threshold to determine if two subsequences are considered close
+        enough to be considered 'common'.
+    kwargs: dict
+        Extra arguments for custom distance should be put in the kwargs. See the
+        documentation for the distance for kwargs.
+
+    Returns
+    -------
+    float
+        edr distance between the two timeseries. The value will be between 0.0 and 1.0
+        (unless panel is passed the value will be between 0 and max(len(x), len(y)),
+        where 0.0 is an exact match between timeseries (i.e. they are the same) and
+        1.0 where the are no matching subsequences.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
+    search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
+    international conference on Management of data (SIGMOD '05). Association for
+    Computing Machinery, New York, NY, USA, 491–502.
+    DOI:https://doi.org/10.1145/1066157.1066213
+    """
+    format_kwargs = {
+        "lower_bounding": lower_bounding,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "custom_distance": custom_distance,
+        "bounding_matrix": bounding_matrix,
+        "epsilon": epsilon,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="edr", **format_kwargs)
 
 
 def lcss_distance(
@@ -43,11 +136,10 @@ def lcss_distance(
     itakura_max_slope: float = 2.0,
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
     epsilon: float = 1.0,
     **kwargs: dict,
-):
-    r"""Compute the longest common subsequence (lcss) score between two timeseries.
+) -> float:
+    """Compute the longest common subsequence (lcss) score between two timeseries.
 
     Lcss attempts to find the longest common sequence between two timeseries and returns
     a value that is the percentage that longest common sequence assumes. Originally
@@ -56,7 +148,8 @@ def lcss_distance(
     different. How far the time index difference can be is controlled by the
     the bounding matrix used.
 
-    The value returned will be between 0 and 1 per time series (this means if a panel
+    The value returned will be between 0 and 1 (0 is 100% subsequence match, 1 is 0%
+    subsequence match) per time series (this means if a panel
     is passed the value will be between 0 and max(len(x), len(y)). The value will
     represent will represent a percentage over the timeseries of the longest common
     sequence occurred.
@@ -83,10 +176,6 @@ def lcss_distance(
         and creation are ignored. The matrix should be structure so that indexes
         considered in bound should be the value 0. and indexes outside the bounding
         matrix should be infinity.
-    compute_derivative: Callable[[np.ndarray], np.ndarray],
-                            defaults = average slope difference (see above)
-        Callable that computes the derivative. If none is provided the average of the
-        slope between two points used.
     epsilon : float, defaults = 1.
         Matching threshold to determine if two subsequences are considered close
         enough to be considered 'common'.
@@ -97,7 +186,10 @@ def lcss_distance(
     Returns
     -------
     float
-        lcss score between the two timeseries.
+        lcss score between the two timeseries. The value will be between 0.0 and 1.0
+        (unless panel is passed the value will be between 0 and max(len(x), len(y)),
+        where 1.0 is an exact match between timeseries (i.e. they are the same) and
+        0.0 where the are no matching subsequences.
 
     Raises
     ------
@@ -124,7 +216,6 @@ def lcss_distance(
         "itakura_max_slope": itakura_max_slope,
         "custom_distance": custom_distance,
         "bounding_matrix": bounding_matrix,
-        "compute_derivative": compute_derivative,
         "epsilon": epsilon,
     }
     format_kwargs = {**format_kwargs, **kwargs}
@@ -143,7 +234,7 @@ def wddtw_distance(
     compute_derivative: DerivativeCallable = _average_of_slope,
     g: float = 0.0,
     **kwargs: dict,
-):
+) -> float:
     r"""Compute the weighted derivative dynamic time warping (Wddtw) distance.
 
     Wddtw was first proposed in [1]_ as a further extension to ddtw. By adding a weight
@@ -210,6 +301,7 @@ def wddtw_distance(
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
         If the metric type cannot be determined
+        If the compute derivative callable is not no_python compiled.
 
     References
     ----------
@@ -241,7 +333,7 @@ def wdtw_distance(
     bounding_matrix: np.ndarray = None,
     g: float = 0.0,
     **kwargs: dict,
-):
+) -> float:
     """Compute the weighted dynamic time warping (Wdtw) distance between timeseries.
 
     Wdtw adds a multiplicative weight penalty based on the warping distance between
@@ -337,7 +429,7 @@ def ddtw_distance(
     bounding_matrix: np.ndarray = None,
     compute_derivative: DerivativeCallable = _average_of_slope,
     **kwargs: dict,
-):
+) -> float:
     r"""Compute the derivative dynamic time warping (Ddtw) distance between timeseries.
 
     Ddtw distance is supported for 1d, 2d and 3d arrays.
@@ -446,7 +538,7 @@ def dtw_distance(
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     **kwargs: dict,
-):
+) -> float:
     r"""Compute the dynamic time warping (Dtw) distance between two timeseries.
 
     Dtw distance is supported for 1d, 2d and 3d arrays.
@@ -830,6 +922,12 @@ def pairwise_distance(
 
 
 _METRIC_INFOS = [
+    MetricInfo(
+        canonical_name="edr",
+        aka={"edr", "edit distance for real sequences", "edit distance"},
+        dist_func=edr_distance,
+        dist_instance=_EdrDistance(),
+    ),
     MetricInfo(
         canonical_name="lcss",
         aka={"lcss", "longest common subsequence"},
