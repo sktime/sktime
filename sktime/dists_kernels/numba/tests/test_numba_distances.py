@@ -241,10 +241,9 @@ def test_incorrect_parameters():
     _test_incorrect_parameters(distance)
 
 
-#
 # def test_dist():
-#     from sktime.dists_kernels.numba.distances.distance import lcss_distance as dist
-#     from sktime.distances.elastic_cython import lcss_distance as sktime_ddtw
+#     from sktime.dists_kernels.numba.distances.distance import edr_distance as dist
+#     from sktime.distances.elastic_cython import erp_distance as sktime_ddtw
 #
 #     x_first = np.array([10.0])
 #     y_first = np.array([15.0])
@@ -272,6 +271,8 @@ def test_incorrect_parameters():
 #
 #     fifth = dist(x_fifth, y_fifth)
 #     sixth = dist(x_sixth, y_sixth)
+#
+#     test = dist(x_third, x_third)
 #
 #
 #     sktime_third = sktime_ddtw(x_third, y_third)
