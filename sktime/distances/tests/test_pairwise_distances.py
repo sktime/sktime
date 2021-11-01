@@ -8,13 +8,9 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from sktime.dists_kernels.numba.distances.base import NumbaDistance
-from sktime.dists_kernels.numba.distances.distance import (
-    _METRIC_INFOS,
-    MetricInfo,
-    pairwise_distance,
-)
-from sktime.dists_kernels.numba.tests._shared_tests import (
+from sktime.distances.base import MetricInfo, NumbaDistance
+from sktime.distances.distance import _METRIC_INFOS, pairwise_distance
+from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )

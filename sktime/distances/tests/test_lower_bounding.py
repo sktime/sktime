@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+from sktime.distances.lower_bounding import LowerBounding
 from sktime.dists_kernels.tests._utils import create_test_distance_numpy
 
 

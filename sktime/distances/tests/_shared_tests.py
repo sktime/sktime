@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from numba import njit
 
-from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
+from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.dists_kernels.tests._utils import create_test_distance_numpy
 
 

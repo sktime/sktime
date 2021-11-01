@@ -323,7 +323,7 @@ class LowerBounding(Enum):
         return line
 
     @staticmethod
-    @njit(cache=True)
+    @njit()
     def create_shape_on_matrix(
         bounding_matrix: np.ndarray,
         y_upper_line: np.ndarray,

@@ -4,14 +4,8 @@ from typing import Callable, List, Union
 
 import numpy as np
 
-from sktime.dists_kernels.numba.distances._numba_utils import (
-    is_no_python_compiled_callable,
-)
-from sktime.dists_kernels.numba.distances.base import (
-    DistanceCallable,
-    MetricInfo,
-    NumbaDistance,
-)
+from sktime.distances._numba_utils import is_no_python_compiled_callable
+from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
 
 def _resolve_metric(

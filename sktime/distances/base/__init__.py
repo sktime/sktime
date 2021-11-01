@@ -9,8 +9,9 @@ __all__ = [
     "ValidCallableTypes",
     "MetricInfo",
 ]
-from sktime.dists_kernels.numba.distances.base._base import MetricInfo, NumbaDistance
-from sktime.dists_kernels.numba.distances.base._types import (
+
+from sktime.distances.base._base import MetricInfo, NumbaDistance
+from sktime.distances.base._types import (
     DistanceCallable,
     DistanceFactoryCallable,
     DistancePairwiseCallable,

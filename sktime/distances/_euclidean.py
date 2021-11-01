@@ -6,7 +6,7 @@ __author__ = ["chrisholder"]
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
+from sktime.distances.base import DistanceCallable, NumbaDistance
 
 
 class _EuclideanDistance(NumbaDistance):

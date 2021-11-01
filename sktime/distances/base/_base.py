@@ -4,7 +4,7 @@ from typing import Callable, NamedTuple, Set
 
 import numpy as np
 
-from sktime.dists_kernels.numba.distances.base._types import DistanceCallable
+from sktime.distances.base._types import DistanceCallable
 
 
 class NumbaDistance(ABC):

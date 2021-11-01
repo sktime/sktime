@@ -9,16 +9,10 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
-from sktime.dists_kernels.numba.distances.base import NumbaDistance
-from sktime.dists_kernels.numba.distances.distance import (
-    _METRIC_INFOS,
-    MetricInfo,
-    distance,
-)
-from sktime.dists_kernels.numba.tests._expected_results import (
-    _expected_distance_results,
-)
-from sktime.dists_kernels.numba.tests._shared_tests import (
+from sktime.distances.base import MetricInfo, NumbaDistance
+from sktime.distances.distance import _METRIC_INFOS, distance
+from sktime.distances.tests._expected_results import _expected_distance_results
+from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )

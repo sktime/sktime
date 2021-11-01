@@ -6,18 +6,11 @@ from typing import Callable, Union
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba.distances._numba_utils import (
-    is_no_python_compiled_callable,
-)
-from sktime.dists_kernels.numba.distances._squared_distance import _SquaredDistance
-from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
-from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import (
-    _dtw_numba_distance,
-)
-from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import (
-    LowerBounding,
-    resolve_bounding_matrix,
-)
+from sktime.distances._dtw import _dtw_numba_distance
+from sktime.distances._numba_utils import is_no_python_compiled_callable
+from sktime.distances._squared import _SquaredDistance
+from sktime.distances.base import DistanceCallable, NumbaDistance
+from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
 
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
@@ -49,6 +42,7 @@ def _average_of_slope(q: np.ndarray):
         Array containing the derivative of q.
 
     """
+    # Taken from https://github.com/tslearn-team/tslearn/issues/180
     return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
 
 
@@ -127,7 +121,7 @@ class _DdtwDistance(NumbaDistance):
 
         # This needs to be here as potential distances only known at runtime not
         # compile time so having this at the top would cause circular import errors.
-        from sktime.dists_kernels.numba.distances.distance import distance_factory
+        from sktime.distances.distance import distance_factory
 
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 

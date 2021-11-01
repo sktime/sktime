@@ -6,22 +6,12 @@ from typing import Union
 import numpy as np
 from numba import njit
 
-from sktime.dists_kernels.numba.distances._numba_utils import (
-    is_no_python_compiled_callable,
-)
-from sktime.dists_kernels.numba.distances._squared_distance import _SquaredDistance
-from sktime.dists_kernels.numba.distances.base import DistanceCallable, NumbaDistance
-from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
-    DerivativeCallable,
-    _average_of_slope,
-)
-from sktime.dists_kernels.numba.distances.dtw_based._wdtw_distance import (
-    _wdtw_numba_distance,
-)
-from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import (
-    LowerBounding,
-    resolve_bounding_matrix,
-)
+from sktime.distances._ddtw import DerivativeCallable, _average_of_slope
+from sktime.distances._numba_utils import is_no_python_compiled_callable
+from sktime.distances._squared import _SquaredDistance
+from sktime.distances._wdtw import _wdtw_numba_distance
+from sktime.distances.base import DistanceCallable, NumbaDistance
+from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
 
 
 class _WddtwDistance(NumbaDistance):
@@ -103,7 +93,7 @@ class _WddtwDistance(NumbaDistance):
 
         # This needs to be here as potential distances only known at runtime not
         # compile time so having this at the top would cause circular import errors.
-        from sktime.dists_kernels.numba.distances.distance import distance_factory
+        from sktime.distances.distance import distance_factory
 
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 

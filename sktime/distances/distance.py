@@ -5,35 +5,23 @@ from typing import Callable, Union
 
 import numpy as np
 
-from sktime.dists_kernels._utils import (
+from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
+from sktime.distances._dtw import _DtwDistance
+from sktime.distances._edr import _EdrDistance
+from sktime.distances._euclidean import _EuclideanDistance
+from sktime.distances._lcss import _LcssDistance
+from sktime.distances._numba_utils import (
+    _compute_distance,
+    _compute_pairwise_distance,
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
-from sktime.dists_kernels.numba.distances._euclidean_distance import _EuclideanDistance
-from sktime.dists_kernels.numba.distances._numba_utils import (
-    _compute_distance,
-    _compute_pairwise_distance,
-)
-from sktime.dists_kernels.numba.distances._resolve_metric import _resolve_metric
-from sktime.dists_kernels.numba.distances._squared_distance import _SquaredDistance
-from sktime.dists_kernels.numba.distances.base import (
-    DistanceCallable,
-    MetricInfo,
-    NumbaDistance,
-)
-from sktime.dists_kernels.numba.distances.dtw_based._ddtw_distance import (
-    DerivativeCallable,
-    _average_of_slope,
-    _DdtwDistance,
-)
-from sktime.dists_kernels.numba.distances.dtw_based._dtw_distance import _DtwDistance
-from sktime.dists_kernels.numba.distances.dtw_based._edr_distance import _EdrDistance
-from sktime.dists_kernels.numba.distances.dtw_based._lcss_distance import _LcssDistance
-from sktime.dists_kernels.numba.distances.dtw_based._wddtw_distance import (
-    _WddtwDistance,
-)
-from sktime.dists_kernels.numba.distances.dtw_based._wdtw_distance import _WdtwDistance
-from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import LowerBounding
+from sktime.distances._resolve_metric import _resolve_metric
+from sktime.distances._squared import _SquaredDistance
+from sktime.distances._wddtw import _WddtwDistance
+from sktime.distances._wdtw import _WdtwDistance
+from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
+from sktime.distances.lower_bounding import LowerBounding
 
 
 def edr_distance(
