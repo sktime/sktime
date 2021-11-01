@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.distances.lower_bounding import LowerBounding
-from sktime.dists_kernels.tests._utils import create_test_distance_numpy
+from sktime.distances.tests._utils import create_test_distance_numpy
 
 
 def _validate_bounding_result(

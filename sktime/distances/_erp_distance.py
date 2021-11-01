@@ -6,14 +6,14 @@ from typing import Callable, Union
 import numpy as np
 from numba import njit
 
+from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._numba_utils import _compute_pairwise_distance
-from sktime.distances._squared import _SquaredDistance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
 
 
-class _EdrDistance(NumbaDistance):
-    """Edit distance for real sequences (edr) between two timeseries."""
+class _ErpDistance(NumbaDistance):
+    """Edit distance with real penalty between two timeseries."""
 
     def _distance_factory(
         self,
@@ -22,12 +22,12 @@ class _EdrDistance(NumbaDistance):
         lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
         window: int = 2,
         itakura_max_slope: float = 2.0,
-        custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+        custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
         bounding_matrix: np.ndarray = None,
-        epsilon: float = 0.5,
+        g: float = 0.0,
         **kwargs: dict
     ) -> DistanceCallable:
-        """Create a no_python compiled edr distance callable.
+        """Create a no_python compiled erp distance callable.
 
         Parameters
         ----------
@@ -51,9 +51,8 @@ class _EdrDistance(NumbaDistance):
             and creation are ignored. The matrix should be structure so that indexes
             considered in bound should be the value 0. and indexes outside the bounding
             matrix should be infinity.
-        epsilon : float, defaults = 0.5
-            Matching threshold to determine if two subsequences are considered close
-            enough to be considered 'common'.
+        g: float, defaults = 0.
+            The reference value to penalise gaps.
         kwargs: dict
             Extra arguments for custom distance should be put in the kwargs. See the
             documentation for the distance for kwargs.
@@ -61,7 +60,7 @@ class _EdrDistance(NumbaDistance):
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled edr distance callable.
+            No_python compiled erp distance callable.
 
         Raises
         ------
@@ -82,26 +81,21 @@ class _EdrDistance(NumbaDistance):
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
         @njit()
-        def numba_edr_distance(
-            _x: np.ndarray,
-            _y: np.ndarray,
-        ) -> float:
-            return _numba_edr_distance(
-                _x, _y, _custom_distance, _bounding_matrix, epsilon
-            )
+        def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
+            return _numba_erp_distance(_x, _y, _custom_distance, _bounding_matrix, g)
 
-        return numba_edr_distance
+        return numba_erp_distance
 
 
-@njit()
-def _numba_edr_distance(
+@njit(cache=True)
+def _numba_erp_distance(
     x: np.ndarray,
     y: np.ndarray,
     distance: Callable[[np.ndarray, np.ndarray], float],
     bounding_matrix: np.ndarray,
-    epsilon: float,
+    g: float,
 ) -> float:
-    """Edr distance compiled to no_python.
+    """Erp distance compiled to no_python.
 
     Parameters
     ----------
@@ -115,34 +109,46 @@ def _numba_edr_distance(
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the values in bound are marked by finite values and
         outside bound points are infinite values.
-    epsilon : float
-        Matching threshold to determine if two subsequences are considered close enough
-        to be considered 'common'.
+    g: float
+        The reference value to penalise gaps.
 
     Returns
     -------
     float
-        Edr between two timeseries.
+        Erp distance between two timeseries.
     """
     symmetric = np.array_equal(x, y)
     pre_computed_distances = _compute_pairwise_distance(x, y, symmetric, distance)
 
-    cost_matrix = _edr_cost_matrix(
-        x, y, bounding_matrix, pre_computed_distances, epsilon
+    pre_computed_gx_distances = _compute_pairwise_distance(
+        np.full_like(x, g), x, False, distance
+    )[0]
+    pre_computed_gy_distances = _compute_pairwise_distance(
+        np.full_like(y, g), y, False, distance
+    )[0]
+
+    cost_matrix = _erp_cost_matrix(
+        x,
+        y,
+        bounding_matrix,
+        pre_computed_distances,
+        pre_computed_gx_distances,
+        pre_computed_gy_distances,
     )
 
-    return float(cost_matrix[-1, -1] / max(x.shape[0], y.shape[0]))
+    return cost_matrix[-1, -1]
 
 
-@njit()
-def _edr_cost_matrix(
+@njit(cache=True)
+def _erp_cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
     bounding_matrix: np.ndarray,
     pre_computed_distances: np.ndarray,
-    epsilon: float,
+    pre_computed_gx_distances: np.ndarray,
+    pre_computed_gy_distances: np.ndarray,
 ):
-    """Compute the edr cost matrix between two timeseries.
+    """Compute the erp cost matrix between two timeseries.
 
     Parameters
     ----------
@@ -156,29 +162,28 @@ def _edr_cost_matrix(
     pre_computed_distances: np.ndarray (2d of size mxn where m is len(x) and n is
                                         len(y))
         Pre-computed distances.
-    epsilon : float
-        Matching threshold to determine if two subsequences are considered close enough
-        to be considered 'common'.
+    pre_computed_gx_distances: np.ndarray (1d of size len(x))
+        pre-computed distances from x to g
+    pre_computed_gy_distances: np.ndarray (1d of size len(y))
+        pre-computed distances from y to g
 
     Returns
     -------
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Edr cost matrix between x and y.
+        Erp cost matrix between x and y.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
 
+    cost_matrix[1:, 0] = np.sum(pre_computed_gx_distances)
+    cost_matrix[0, 1:] = np.sum(pre_computed_gy_distances)
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                if pre_computed_distances[i - 1, j - 1] < epsilon:
-                    cost = 0
-                else:
-                    cost = 1
                 cost_matrix[i, j] = min(
-                    cost_matrix[i - 1, j - 1] + cost,
-                    cost_matrix[i - 1, j] + 1,
-                    cost_matrix[i, j - 1] + 1,
+                    cost_matrix[i - 1, j - 1] + pre_computed_distances[i - 1, j - 1],
+                    cost_matrix[i - 1, j] + pre_computed_gx_distances[i - 1],
+                    cost_matrix[i, j - 1] + pre_computed_gy_distances[j - 1],
                 )
     return cost_matrix[1:, 1:]

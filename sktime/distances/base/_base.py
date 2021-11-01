@@ -10,8 +10,7 @@ from sktime.distances.base._types import DistanceCallable
 class NumbaDistance(ABC):
     """Abstract class to define a numba compatible distance metric."""
 
-    @staticmethod
-    def distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
+    def distance(self, x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
         """Compute the distance between two timeseries.
 
         Parameters
@@ -28,7 +27,7 @@ class NumbaDistance(ABC):
         float
             Distance between x and y.
         """
-        dist_callable = NumbaDistance.distance_factory(x, y, **kwargs)
+        dist_callable = self.distance_factory(x, y, **kwargs)
         return dist_callable(x, y)
 
     def distance_factory(

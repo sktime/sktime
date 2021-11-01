@@ -16,7 +16,7 @@ from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )
-from sktime.dists_kernels.tests._utils import create_test_distance_numpy
+from sktime.distances.tests._utils import create_test_distance_numpy
 
 _ran_once = False
 
@@ -236,7 +236,7 @@ def test_incorrect_parameters():
 
 
 # def test_dist():
-#     from sktime.dists_kernels.numba.distances.distance import edr_distance as dist
+#     from sktime.distances.distance import erp_distance as dist
 #     from sktime.distances.elastic_cython import erp_distance as sktime_ddtw
 #
 #     x_first = np.array([10.0])

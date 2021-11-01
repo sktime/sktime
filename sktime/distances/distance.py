@@ -8,6 +8,7 @@ import numpy as np
 from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
+from sktime.distances._erp_distance import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._numba_utils import (
@@ -22,6 +23,102 @@ from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 from sktime.distances.lower_bounding import LowerBounding
+
+
+def erp_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
+    window: int = 2,
+    itakura_max_slope: float = 2.0,
+    custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
+    bounding_matrix: np.ndarray = None,
+    g: float = 0.0,
+    **kwargs: dict,
+) -> float:
+    """Compute the Edit distance for real penalty (erp) distance between two series.
+
+    Erp first proposed in [1]_ aims to improve on both dtw. Erp attempts
+    to improve accuracy of distance computation by considering how we carry forward
+    values that are 'gaps'. Gaps are defined in dtw when we choose which element
+    to carry forward. When computing the cost matrix we use:
+
+    min(cost_matrix[i, j],  cost_matrix[i - 1, j], cost_matrix[i, j - 1]
+
+    If cost_matrix[i, j] is chosen this means there is no gap and an alignment has
+    been found to the next element. If either cost_matrix[i - 1, j] or
+    cost_matrix[i, j - 1] are chosen this means there is a gap and no alignment
+    can be found to the next element. It is important to note when there is a gap
+    a value is assigned. In dtw this value is going to greatly vary in size because
+    it is derived from the computation between two points. This means that there
+    is an inconsistent penalty for gaps being found. Erp attempts to solve this by
+    defining a constant 'g' that when a gap is found, the distance between 'g' and
+    the unmatched point are taken to determine how detrimental the gap is to
+    the distance computation. By using a constant to compare to this gives a consistent
+    measure of detriment.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d, 2d or 3d array)
+        First timeseries.
+    y: np.ndarray (1d, 2d or 3d array)
+        Second timeseries.
+    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
+        Lower bounding technique to use.
+    window: int, defaults = 2
+        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding).
+    itakura_max_slope: float, defaults = 2.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding).
+    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+                        defaults = squared_distance
+            Distance function to used to compute distance between timeseries.
+    bounding_matrix: np.ndarray (2d array)
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        and creation are ignored. The matrix should be structure so that indexes
+        considered in bound should be the value 0. and indexes outside the bounding
+        matrix should be infinity.
+    g: float, defaults = 0.
+        The reference value to penalise gaps.
+    kwargs: dict
+        Extra arguments for custom distance should be put in the kwargs. See the
+        documentation for the distance for kwargs.
+
+    Returns
+    -------
+    float
+        erp distance between two timeseries.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
+    In Proceedings of the Thirtieth international conference on Very large data bases
+     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+    """
+    format_kwargs = {
+        "lower_bounding": lower_bounding,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "custom_distance": custom_distance,
+        "bounding_matrix": bounding_matrix,
+        "g": g,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="erp", **format_kwargs)
 
 
 def edr_distance(
@@ -48,9 +145,9 @@ def edr_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (2d array)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -144,9 +241,9 @@ def lcss_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (2d array)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -241,9 +338,9 @@ def wddtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (2d array)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -343,9 +440,9 @@ def wdtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (2d array)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -448,9 +545,9 @@ def ddtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (2d array)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -545,9 +642,9 @@ def dtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (1d, 2d or 3d array)
         First timeseries.
-    y: np.ndarray (2d array)
+    y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -911,8 +1008,14 @@ def pairwise_distance(
 
 _METRIC_INFOS = [
     MetricInfo(
+        canonical_name="erp",
+        aka={"erp", "edit distance with real penalty"},
+        dist_func=erp_distance,
+        dist_instance=_ErpDistance(),
+    ),
+    MetricInfo(
         canonical_name="edr",
-        aka={"edr", "edit distance for real sequences", "edit distance"},
+        aka={"edr", "edit distance for real sequences"},
         dist_func=edr_distance,
         dist_instance=_EdrDistance(),
     ),

@@ -14,7 +14,7 @@ from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )
-from sktime.dists_kernels.tests._utils import create_test_distance_numpy
+from sktime.distances.tests._utils import create_test_distance_numpy
 
 
 def _check_symmetric(x: np.ndarray, rtol: float = 1e-05, atol: float = 1e-08) -> bool:
