@@ -151,12 +151,13 @@ def _validate_pairwise_result(
         metric_str_result_to_self = pairwise_distance(
             x, x, metric=metric_str, **kwargs_dict
         )
-        assert metric_str_result_to_self.trace() == 0, (
-            f"The pairwise distance when given two of the same timeseries e.g."
-            f"pairwise_distance(x, x, ...), diagonal should equal 0."
-            f"(np.trace(result)). Instead for the pairwise metric given where metric="
-            f"{metric_str} is {metric_str_result_to_self.trace()}"
-        )
+        if metric_str != "lcss":
+            assert metric_str_result_to_self.trace() == 0, (
+                f"The pairwise distance when given two of the same timeseries e.g."
+                f"pairwise_distance(x, x, ...), diagonal should equal 0."
+                f"(np.trace(result)). Instead for the pairwise metric given where "
+                f"metric={metric_str} is {metric_str_result_to_self.trace()}"
+            )
 
         assert _check_symmetric(metric_str_result_to_self) is True, (
             f"The pairwise distance when given two of the same timeseries e.g."

@@ -138,11 +138,19 @@ def _validate_distance_result(
         )
 
     metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)
-    assert metric_str_result_to_self == 0, (
-        f"The distance when given two of the same timeseries e.g."
-        f"distance(x, x, ...), result should equal 0. This criteria is not met for "
-        f"the metric {metric_str}. The result was {metric_str_result_to_self}"
-    )
+    if metric_str == "lcss":
+        assert metric_str_result_to_self == 1.0 or metric_str_result_to_self == 10.0, (
+            f"The distance when given two of the same timeseries e.g."
+            f"distance(x, x, ...), result should equal 1.0 for lcss. "
+            f"This criteria is not met for the metric {metric_str}. "
+            f"The result was {metric_str_result_to_self}"
+        )
+    else:
+        assert metric_str_result_to_self == 0, (
+            f"The distance when given two of the same timeseries e.g."
+            f"distance(x, x, ...), result should equal 0. This criteria is not met for "
+            f"the metric {metric_str}. The result was {metric_str_result_to_self}"
+        )
 
     if expected_result is not None:
         assert_almost_equal(metric_str_result, expected_result, 5)
@@ -233,9 +241,10 @@ def test_incorrect_parameters():
     _test_incorrect_parameters(distance)
 
 
+#
 # def test_dist():
-#     from sktime.dists_kernels.numba.distances.distance import wddtw_distance as dist
-#     from sktime.distances.elastic_cython import wddtw_distance as sktime_ddtw
+#     from sktime.dists_kernels.numba.distances.distance import lcss_distance as dist
+#     from sktime.distances.elastic_cython import lcss_distance as sktime_ddtw
 #
 #     x_first = np.array([10.0])
 #     y_first = np.array([15.0])
@@ -267,5 +276,9 @@ def test_incorrect_parameters():
 #
 #     sktime_third = sktime_ddtw(x_third, y_third)
 #     sktime_fourth = sktime_ddtw(x_fourth, y_fourth)
+#
+#     from tslearn.metrics.dtw_variants import lcss as tsl_lcss
+#     tslearn_third = tsl_lcss(x_third, y_third)
+#     tslearn_fourth = tsl_lcss(x_fourth, y_fourth)
 #
 #     pass
