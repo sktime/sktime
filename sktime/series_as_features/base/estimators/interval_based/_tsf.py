@@ -19,8 +19,7 @@ __all__ = [
 import math
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
@@ -33,7 +32,6 @@ from sktime.utils.validation.panel import check_X_y
 class BaseTimeSeriesForest:
     """Base time series forest classifier."""
 
-    # Capability tags
     _tags = {
         "capability:multivariate": False,
         "capability:unequal_length": False,
@@ -69,7 +67,7 @@ class BaseTimeSeriesForest:
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def _fit(self, X, y):
+    def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         Parameters

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Time Series Forest (TSF) Classifier."""
+"""Time Series Forest (TSF) Classifier.
+
+Interval based TSF classifier, extracts basic summary features from random intervals.
+"""
 
 __author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -15,6 +17,7 @@ from sktime.series_as_features.base.estimators.interval_based import (
     BaseTimeSeriesForest,
 )
 from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
+from sktime.utils.validation.panel import check_X
 
 
 class TimeSeriesForestClassifier(
@@ -33,39 +36,57 @@ class TimeSeriesForestClassifier(
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
-    refinement described in [1]. This is an intentionally stripped down, non
+    refinement described in [1].
+
+    This is an intentionally stripped down, non
     configurable version for use as a hive-cote component. For a configurable
     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
     Parameters
     ----------
-    n_estimators    : int, ensemble size, optional (default = 200)
-    min_interval    : int, minimum width of an interval, optional (default
-    to 3)
-    n_jobs          : int, optional (default=1)
+    n_estimators : int, default=200
+        Number of estimators to build for the ensemble.
+    min_interval : int, default=3
+        Minimum length of an interval.
+    n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    random_state    : int, seed for random, optional (default = none)
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
-    n_classes    : int
-    n_intervals  : int
-    classes_    : List of classes for a given problem
+    n_classes_ : int
+        The number of classes.
+    classes_ : list
+        The classes labels.
+
+    Notes
+    -----
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+     java/tsml/classifiers/interval_based/TSF.java>`_.
 
     References
     ----------
     .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
-     classification and feature extraction",Information Sciences, 239, 2013
-     Java implementation
-     https://github.com/uea-machine-learning/tsml/blob/master/src/main/
-     java/tsml/classifiers/interval_based/TSF.java
-     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
+       classification and feature extraction",Information Sciences, 239, 2013
+
+    Examples
+    --------
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = TimeSeriesForestClassifier(n_estimators=10)
+    >>> clf.fit(X_train, y_train)
+    TimeSeriesForestClassifier(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    def _predict(self, X):
+    def predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -80,10 +101,10 @@ class TimeSeriesForestClassifier(
         -------
         output : array of shape = [n_test_instances]
         """
-        proba = self._predict_proba(X)
+        proba = self.predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def _predict_proba(self, X):
+    def predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -101,6 +122,8 @@ class TimeSeriesForestClassifier(
         output : nd.array of shape = (n_instances, n_classes)
             Predicted probabilities
         """
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         _, series_length = X.shape

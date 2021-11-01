@@ -37,6 +37,7 @@ from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
+    RandomIntervalSpectralEnsemble,
     RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
@@ -331,6 +332,11 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
+    RandomIntervalSpectralEnsemble: {
+        "n_estimators": 3,
+        "acf_lag": 10,
+        "min_interval": 5,
+    },
     SFA: {"return_pandas_data_series": True},
     BOSSEnsemble: {"max_ensemble_size": 3},
     ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
