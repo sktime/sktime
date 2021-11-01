@@ -30,9 +30,9 @@ import pandas as pd
 import time
 
 from sktime.base import BaseEstimator
-from sktime.utils.data_io import make_multi_index_dataframe
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X, check_X_y
+
 
 def check_classifier_input(
         X,
@@ -66,28 +66,28 @@ def check_classifier_input(
     # Check X
     if not isinstance(X, (pd.DataFrame, np.ndarray)):
         raise ValueError(
-            f"x must be either a pd.Series or a np.ndarray, "
+            f"X must be either a pd.DataFrame or a np.ndarray, "
             f"but found type: {type(X)}"
         )
     # Check size of X and y match and minimum data input
     n_cases = X.shape[0]
     n_labels = y.shape[0]
     if isinstance(X, np.ndarray):
-            if not (X.ndim is 2 or X.ndim is 3):
-                raise ValueError(
-                    f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
-                    f"but found to be: {n_dims}"
-                )
-            if X.ndim is 2 and X.shape[1] < enforce_min_series_length:
-                raise ValueError(
-                    f"x is a 2D np.ndarray, equal length series are length {n_dims}"
-                    f"but the minimum is  {enforce_min_series_length}"
-                )
-            if X.ndim is 3 and X.shape[2] < enforce_min_series_length:
-                raise ValueError(
-                    f"x is a 2D np.ndarray, equal length series are length {n_dims}"
-                    f"but the minimum is  {enforce_min_series_length}"
-                )
+        if not (X.ndim is 2 or X.ndim is 3):
+            raise ValueError(
+                f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
+                f"but found to be: {n_dims}"
+            )
+        if X.ndim is 2 and X.shape[1] < enforce_min_series_length:
+            raise ValueError(
+                f"x is a 2D np.ndarray, equal length series are length {n_dims}"
+                f"but the minimum is  {enforce_min_series_length}"
+            )
+        if X.ndim is 3 and X.shape[2] < enforce_min_series_length:
+            raise ValueError(
+                f"x is a 2D np.ndarray, equal length series are length {n_dims}"
+                f"but the minimum is  {enforce_min_series_length}"
+            )
 
     else:
         if X.shape[1] is 0:
@@ -119,21 +119,41 @@ def test_check_classifier_input():
     test_X2 = np.random.uniform(-1, 1, size=(5, 2, 10))
     test_y1 = np.random.randint(0, 1, size=5)
     test_y2 = pd.Series(np.random.randn(5))
+# # 2. Test correct: X: pd.DataFrame with 1 and 3 cols vs y:np.array and np.Series
+    instance_list = []
+    for i in range(0, 5):
+        instance_list.append(
+            pd.Series(np.random.randn(10))
+        )
+    test_X3 = pd.DataFrame(dtype=np.float32)
+    test_X3["dimension_1"] = instance_list
+    test_X4 = pd.DataFrame(dtype=np.float32)
+    for i in range(0, 3):
+        instance_list = []
+        for j in range(0, 5):
+            instance_list.append(
+                pd.Series(np.random.randn(10))
+            )
+        test_X4["dimension_" + str(i)] = instance_list
     check_classifier_input(test_X1, test_y1)
     check_classifier_input(test_X2, test_y1)
     check_classifier_input(test_X1, test_y2)
     check_classifier_input(test_X2, test_y2)
-# # 2. Test correct: X: pd.DataFrame with 1 and 3 cols vs y:np.array and np.Series
-    test_X3 = make_multi_index_dataframe(n_instances=5, n_columns=1, n_timepoints=10)
-    test_X4 = make_multi_index_dataframe(n_instances=5, n_columns=3, n_timepoints=10)
-
     check_classifier_input(test_X3, test_y1)
-#    check_classifier_input(test_X4, test_y1)
-#    check_classifier_input(test_X3, test_y2)
-#    check_classifier_input(test_X4, test_y2)
+    check_classifier_input(test_X4, test_y1)
+    check_classifier_input(test_X3, test_y2)
+    check_classifier_input(test_X4, test_y2)
 # # 3. Test incorrect: X: np.array of 4 dimensions vs y:np.array
-#     test_X5 = np.random.uniform(-1, 1, size=(5, 3, 10))
-#     check_classifier_input(test_X5, test_y1)
+    test_X5 = np.random.uniform(-1, 1, size=(5, 3, 10))
+    try:
+        check_classifier_input(test_X5, test_y1)
+        assert 1 == 2  # Fail if you get here
+    except ValueError:  # Correct outcome
+        assert 1 == 1
+    else:  # Incorrect error thrown
+        assert 1 == 2 # Fail if you get here
+
+
 # # 4. Test incorrect: X: np.array of 4 dimensions vs y:List
 #     test_y3 = [1, 2, 3, 4, 5]
 #     check_classifier_input(test_X5, test_y3)
