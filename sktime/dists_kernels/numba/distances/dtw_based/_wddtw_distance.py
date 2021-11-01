@@ -108,7 +108,7 @@ class _WddtwDistance(NumbaDistance):
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
         @njit()
-        def numba_dtw_distance(
+        def numba_wddtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
@@ -116,4 +116,4 @@ class _WddtwDistance(NumbaDistance):
             _y = compute_derivative(_y)
             return _wdtw_numba_distance(_x, _y, _custom_distance, _bounding_matrix, g)
 
-        return numba_dtw_distance
+        return numba_wddtw_distance

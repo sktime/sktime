@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["Chris Holder"]
+
 from typing import Callable, Union
 
 import numpy as np
@@ -13,8 +15,8 @@ from sktime.dists_kernels.numba.distances.dtw_based.lower_bounding import (
 )
 
 
-class _LcssDistance(NumbaDistance):
-    """Longest common subsequence (Lcss) between two timeseries."""
+class _EdrDistance(NumbaDistance):
+    """Edit distance for real sequences (edr) between two timeseries."""
 
     def _distance_factory(
         self,
@@ -25,10 +27,10 @@ class _LcssDistance(NumbaDistance):
         itakura_max_slope: float = 2.0,
         custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
         bounding_matrix: np.ndarray = None,
-        epsilon: float = 1.0,
-        **kwargs: dict,
+        epsilon: float = 0.5,
+        **kwargs: dict
     ) -> DistanceCallable:
-        """Create a no_python compiled lcss distance callable.
+        """Create a no_python compiled edr distance callable.
 
         Parameters
         ----------
@@ -46,13 +48,13 @@ class _LcssDistance(NumbaDistance):
             Parallelogram lower bounding).
         custom_distance: Callable[[np.ndarray, np.ndarray], float],
                         defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+            Distance function to used to compute distance between aligned timeseries.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
             Custom bounding matrix to use. If defined then other lower_bounding params
             and creation are ignored. The matrix should be structure so that indexes
             considered in bound should be the value 0. and indexes outside the bounding
             matrix should be infinity.
-        epsilon : float, defaults = 1.
+        epsilon : float, defaults = 0.5
             Matching threshold to determine if two subsequences are considered close
             enough to be considered 'common'.
         kwargs: dict
@@ -62,7 +64,7 @@ class _LcssDistance(NumbaDistance):
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled lcss distance callable.
+            No_python compiled Dtw distance callable.
 
         Raises
         ------
@@ -83,26 +85,26 @@ class _LcssDistance(NumbaDistance):
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
         @njit()
-        def numba_lcss_distance(
+        def numba_edr_distance(
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            return _numba_lcss_distance(
+            return _numba_edr_distance(
                 _x, _y, _custom_distance, _bounding_matrix, epsilon
             )
 
-        return numba_lcss_distance
+        return numba_edr_distance
 
 
-@njit(cache=True)
-def _numba_lcss_distance(
+@njit()
+def _numba_edr_distance(
     x: np.ndarray,
     y: np.ndarray,
     distance: Callable[[np.ndarray, np.ndarray], float],
     bounding_matrix: np.ndarray,
     epsilon: float,
 ) -> float:
-    """Lcss distance compiled to no_python.
+    """Edr distance compiled to no_python.
 
     Parameters
     ----------
@@ -123,26 +125,27 @@ def _numba_lcss_distance(
     Returns
     -------
     float
-        lcss between two timeseries.
+        Edr between two timeseries.
     """
     symmetric = np.array_equal(x, y)
     pre_computed_distances = _compute_pairwise_distance(x, y, symmetric, distance)
 
-    cost_matrix = _sequence_cost_matrix(
+    cost_matrix = _edr_cost_matrix(
         x, y, bounding_matrix, pre_computed_distances, epsilon
     )
-    return float(cost_matrix[-1, -1] / min(x.shape[0], y.shape[0]))
+
+    return float(cost_matrix[-1, -1] / max(x.shape[0], y.shape[0]))
 
 
-@njit(cache=True)
-def _sequence_cost_matrix(
+@njit()
+def _edr_cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
     bounding_matrix: np.ndarray,
     pre_computed_distances: np.ndarray,
     epsilon: float,
 ):
-    """Compute the lcss cost matrix between two timeseries.
+    """Compute the edr cost matrix between two timeseries.
 
     Parameters
     ----------
@@ -163,7 +166,7 @@ def _sequence_cost_matrix(
     Returns
     -------
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Lcss cost matrix between x and y.
+        Edr cost matrix between x and y.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]
@@ -172,11 +175,13 @@ def _sequence_cost_matrix(
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                if pre_computed_distances[i - 1, j - 1] <= epsilon:
-                    cost_matrix[i, j] = 1 + cost_matrix[i - 1, j - 1]
+                if pre_computed_distances[i - 1, j - 1] < epsilon:
+                    cost = 0
                 else:
-                    cost_matrix[i, j] = max(
-                        cost_matrix[i, j - 1], cost_matrix[i - 1, j]
-                    )
-
-    return cost_matrix
+                    cost = 1
+                cost_matrix[i, j] = min(
+                    cost_matrix[i - 1, j - 1] + cost,
+                    cost_matrix[i - 1, j] + 1,
+                    cost_matrix[i, j - 1] + 1,
+                )
+    return cost_matrix[1:, 1:]
