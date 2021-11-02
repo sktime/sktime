@@ -213,53 +213,6 @@ def check_classifier_input(
         X,
         y,
         enforce_min_instances=1,
-        enforce_min_columns=1,
-):
-    """Check wether input X and y are valid formats with minium data.
-
-    Parameters
-    ----------
-    X : pd.DataFrame or np.array
-    y : pd.Series or np.array
-    enforce_min_instances : int, optional (default=1)
-        Enforce minimum number of instances.
-    enforce_min_columns : int, optional (default=1)
-        Enforce minimum number of columns (or time-series variables).
-
-    Raises
-    ------
-    ValueError
-        If y or X is invalid input data type, or not enough data
-    """
-    if not isinstance(y, np.array):
-        raise ValueError(
-            f"y must be a np.array, "
-            f"but found type: {type(y)}"
-        )
-    if not isinstance(X, pd.pandas):
-        if not isinstance(X,np.array):
-            raise ValueError(
-                f"x must be either a pd.Series or a np.ndarray, "
-                f"but found type: {type(x)}"
-            )
-        else:
-            n_cases,  n_dims = X.shape
-            if not (n_dims is 2 or n_dims is 3):
-                raise ValueError(
-                    f"x is an np.array but it must be 2 or 3 dimensional"
-                    f"but found to be: {n_dims}"
-                )
-        if n_cases != y.shape[0]:
-            raise ValueError(
-                f"unequal number of cases in X and y"
-                f"X has : {n_dims}, y has {y.shape[0]}"
-            )
-
-
-def check_classifier_input(
-        X,
-        y,
-        enforce_min_instances=1,
         enforce_min_series_length=1,
 ):
     """Check wether input X and y are valid formats with minimum data. Raises a
@@ -277,7 +230,7 @@ def check_classifier_input(
     Raises
     ------
     ValueError
-        If y or X is invalid input data type, or not enough data
+        If y or X is invalid input data type, or there is not enough data
     """
     # Check y
     if not isinstance(y, (pd.Series, np.ndarray)):
@@ -298,16 +251,18 @@ def check_classifier_input(
         if not (X.ndim is 2 or X.ndim is 3):
             raise ValueError(
                 f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
-                f"but found to be: {n_dims}"
+                f"but found to be: {X.ndim}"
             )
         if X.ndim is 2 and X.shape[1] < enforce_min_series_length:
             raise ValueError(
-                f"x is a 2D np.ndarray, equal length series are length {n_dims}"
+                f"Series length below the minimum, equal length series are length"
+                f" {X.shape[1]}"
                 f"but the minimum is  {enforce_min_series_length}"
             )
         if X.ndim is 3 and X.shape[2] < enforce_min_series_length:
             raise ValueError(
-                f"x is a 2D np.ndarray, equal length series are length {n_dims}"
+                f"Series length below the minimum, equal length series are length"
+                f" {X.shape[2]}"
                 f"but the minimum is  {enforce_min_series_length}"
             )
 
@@ -351,12 +306,12 @@ def check_data_characteristics(X):
     """
     if isinstance(X,np.ndarray):
         missing = _has_nans(X)
-        multivariate =
+        multivariate = False
         return missing, multivariate, False
     else:
-        missing =
-        multivariate =
-        unequal =
+        missing = False
+        multivariate = False
+        unequal = False
         return missing, multivariate, unequal
 
 

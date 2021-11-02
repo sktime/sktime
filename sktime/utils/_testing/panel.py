@@ -171,8 +171,3 @@ def _make_nested_from_array(array, n_instances=20, n_columns=1):
         [[pd.Series(array) for _ in range(n_columns)] for _ in range(n_instances)],
         columns=[f"col{c}" for c in range(n_columns)],
     )
-
-def test_check_classifier_input:
-    """Test correct reaction to valid and invalid input for a classifier."""
-    #Test correct: 2D, 3D np.array, pdDataframe for X, np.array for y
-

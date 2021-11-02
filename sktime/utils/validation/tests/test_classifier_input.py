@@ -48,16 +48,17 @@ def test_check_classifier_input():
     check_classifier_input(test_X4, test_y2)
 # 3. Test incorrect: X with fewer cases than  y
     test_X5 = np.random.uniform(-1, 1, size=(3, 4, 10))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r".*Mismatch in number of cases*."):
         check_classifier_input(test_X5, test_y1)
 
-# 4. Test incorrect: X: np.array of 4 dimensions vs y:List
+# 4. Test incorrect data type: y is a List
     test_y3 = [1, 2, 3, 4, 5]
-    with pytest.raises(ValueError):
-        check_classifier_input(test_X5, test_y3)
+    with pytest.raises(ValueError, match=r".*y must be a np.array or a pd.Series*."):
+        check_classifier_input(test_X1, test_y3)
 # 5. Test incorrect: too few cases or too short a series
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r".*Minimum number of cases required*."):
         check_classifier_input(test_X1, test_y1, enforce_min_instances=6)
+    with pytest.raises(ValueError, match=r".*Series length below the minimum*."):
         check_classifier_input(test_X1, test_y1, enforce_min_series_length=11)
 
 
