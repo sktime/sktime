@@ -12,9 +12,12 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
+from numba import njit
 
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+from sktime.datatypes._panel._convert import(
+    from_3d_numpy_to_nested,
+    from_nested_to_3d_numpy,
+)
 from sktime.datatypes._panel._check import is_nested_dataframe
 
 VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame, 2d or 3d np.array
@@ -325,13 +328,52 @@ def check_classifier_input(
         )
 
 
-@njit(cache=True)
+def check_data_characteristics(X):
+    """Query the data to find its characteristics for classifier capability check.
+
+    This is for checking array input where we assume series are equal length.
+    classifiers can take either ndarray or pandas input, and the checks are different
+    for each. For ndarrays, it checks:
+        a) whether x contains missing values;
+        b) whether x is multivariate.
+    for pandas it checks
+        a) whether x contains unequal length series;
+        a) whether x contains missing values;
+        b) whether x is multivariate.
+
+    Arguments
+    ---------
+    X : pd.pandas containing pd.Series or np.ndarray of either 2 or 3 dimensions.
+
+    Returns
+    -------
+    Dictionary? three booleans? array of booleans?
+    """
+    if isinstance(X,np.ndarray):
+        missing = _has_nans(X)
+        multivariate =
+        return missing, multivariate, False
+    else:
+        missing =
+        multivariate =
+        unequal =
+        return missing, multivariate, unequal
+
+
+
+
+
+
+@njit(cache=True, fastMath=True)
 def _has_nans(x: np.ndarray) -> bool:
     """Check whether an input numpy array has nans.
     Arguments
     ---------
     X : np.ndarray of either 2 or 3 dimensions.
 
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
     """
     # 2D or 3D
     return False
