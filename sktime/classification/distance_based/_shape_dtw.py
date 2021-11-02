@@ -23,7 +23,7 @@ from sktime.transformations.panel.segment import SlidingWindowSegmenter
 from sktime.transformations.panel.slope import SlopeTransformer
 from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer
 
-__author__ = ["Vincent Nicholson"]
+__author__ = ["vincent-nich12"]
 
 
 class ShapeDTW(BaseClassifier):
@@ -123,6 +123,7 @@ class ShapeDTW(BaseClassifier):
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
+
         super(ShapeDTW, self).__init__()
 
     def _fit(self, X, y):
