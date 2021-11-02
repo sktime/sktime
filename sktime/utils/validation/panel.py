@@ -325,6 +325,13 @@ def check_classifier_input(
         )
 
 
-def has_nans(X) -> bool:
-    """Check whether an input numpy array has nans."""
+@njit(cache=True)
+def _has_nans(x: np.ndarray) -> bool:
+    """Check whether an input numpy array has nans.
+    Arguments
+    ---------
+    X : np.ndarray of either 2 or 3 dimensions.
+
+    """
+    # 2D or 3D
     return False
