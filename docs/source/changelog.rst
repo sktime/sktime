@@ -12,6 +12,143 @@ All notable changes to this project will be documented in this file. We keep tra
 
 For planned changes and upcoming releases, see our :ref:`roadmap`.
 
+
+
+[0.8.1] - 2021-10-28
+--------------------
+
+Highlights
+~~~~~~~~~~
+
+* main forecasting pipelines now support multivariate forecasting - tuning, pipelines, imputers (:pr:`1376`) :user:`aiwalter`
+* collection of new transformers - date-time dummies, statistical summaries, STL transform, transformer from function (:pr:`1329` :pr:`1356` :pr:`1463` :pr:`1498`) :user:`boukepostma` :user:`eyalshafran` :user:`danbartl` :user:`RNKuhns`
+* new interface points for probabilistic forecasting, :code:`predict_interval` and :code:`predict_quantiles` (:pr:`1421`) :user:`SveaMeyer13`
+* experimental interface for time series segmentation (:pr:`1352`) :user:`patrickzib`
+
+
+New deprecations for 0.10.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* current prediction intervals interface in :code:`predict` via :code:`return_pred_int` will be deprecated and replaced by the new interface points :code:`predict_interval` and :code:`predict_quantiles`
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* new interface points for probabilistic forecasting, :code:`predict_interval` and :code:`predict_quantiles` (:pr:`1421`) :user:`SveaMeyer13`
+* changed forecasting :code:`univariate-only` tag to :code:`ignores-exogeneous-X` (:pr:`1358`) :user:`fkiraly`
+
+
+Added
+~~~~~
+
+BaseEstimator/BaseObject
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Error handling for `get_tag` (:pr:`1450`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* statsmodels VAR interface (:pr:`1083`, :pr:`1491`) :user:`thayeylolu` :user:`fkiraly`
+* multivariate :code:`TransformedTargetForecaster`, :code:`ForecastingPipeline`, :code:`BaseGridSearch`, :code:`MultiplexForecaster` (:pr:`1376`) :user:`aiwalter`
+* prediction intervals for statsmodels interface :code:`_StatsModelsAdapter` (:pr:`1489`) :user:`eyalshafran`
+* geometric mean based forecasting metrics  (:pr:`1472`, :pr:`837`) :user:`RNKuhns`
+
+* new multivariate forecasting dataset, statsmodels macroeconomic data (:pr:`1553`) :user:`aiwalter` :user:`@SinghShreya05`
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* HIVE-COTE 2.0 Classifier (:pr:`1504`) :user:`MatthewMiddlehurst`
+* Auto-generate d classifier capabilities summary :pr:`997` (:pr:`1229`) :user:`BINAYKUMAR943`
+
+Transformers
+^^^^^^^^^^^^
+
+* date-time dummy feature transformer :code:`DateTimeFeatures` (:pr:`1356`) :user:`danbartl`
+* statistical summary transformer, :code:`SummaryTransformer` (:pr:`1329`) :user:`RNKuhns`
+* transformer factory from function, :code:`FunctionTransformer` (:pr:`1498`) :user:`boukepostma`
+* STL transformation, :code:`STLTransformer` (:pr:`1463`) :user:`eyalshafran`
+* Multivariate imputer (:pr:`1461`) :user:`aiwalter`
+
+Annotation: change-points, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Clasp for time series segmentation (CIKM'21 publication) (:pr:`1352`) :user:`patrickzib`
+
+Documentation
+^^^^^^^^^^^^^
+
+* Add badge to track pypi downloads to README (:pr:`1506`) :user:`RNKuhns`
+* [DOC] Add deprecation guide (:pr:`1552`) :user:`mloning`
+* [DOC] Add coverage consideration to reviewer guide (:pr:`1403`) :user:`mloning`
+* [DOC] Update to TSC extension template (:pr:`1525`) :user:`TonyBagnall`
+
+Governance
+^^^^^^^^^^
+
+* Governance change: clearer timelines and conditions for decision making (:pr:`1110`) :user:`fkiraly`
+* :user:`aiwalter` joined community council (:pr:`1532`)
+* :user:`SveaMeyer13`, :user:`GuzalBulatova`, and :user:`freddyaboulton` joined core devs (:pr:`1444`)
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* Tests refactor: using `pytest_generate_tests` instead of loops (:pr:`1407`) :user:`fkiraly`
+* Tests refactor: Adding get_test_params method to extension template (:pr:`1395`) :user:`Aparna-Sakshi`
+* Changed defaults in `make_forecasting_problem` (:pr:`1477`) :user:`aiwalter`
+
+Fixed
+~~~~~
+
+* Refactor TSC: base class (:pr:`1517`) :user:`TonyBagnall`
+* Refactor TSC: Hybrid/kernel based classification package (:pr:`1557`) :user:`MatthewMiddlehurst`
+* Refactor TSC: Dictionary based classification package (:pr:`1544`) :user:`MatthewMiddlehurst`
+* Refactor TSC: Time series classifiers refactor/Shape_DTW (:pr:`1554`) :user:`Piyush1729`
+* Refactor TSC: :code:`_muse` classifier (:pr:`1359`) :user:`BINAYKUMAR943`
+* Refactor TSC: :code:`ShapeletTransformClassifier`, documentation for HC2 (:pr:`1490`) :user:`MatthewMiddlehurst`
+* Refactor TSC: catch22 (:pr:`1487`) :user:`RavenRudi`
+* Refactor TSC: tsfresh classifier (:pr:`1473`) :user:`kejsitake`
+
+* Refactor forecasting: forecaster x/y checks (:pr:`1436`) :user:`fkiraly`
+
+* [MNT] Fix appveyor failure (:pr:`1541`) :user:`freddyaboulton`
+* [MNT] Fix macOS CI (:pr:`1511`) :user:`mloning`
+* [MNT] Depcrecate manylinux2010 (:pr:`1379`) :user:`mloning`
+* [MNT] Added pre-commit hook to sort imports (:pr:`1465`) :user:`aiwalter`
+* [MNT] add :code:`max_requirements`, bound statsmodels (:pr:`1479`) :user:`fkiraly`
+* [MNT] Hotfix tag scitype:y typo (:pr:`1449`) :user:`aiwalter`
+* [MNT] Add :code:`pydocstyle` to precommit (:pr:`890`) :user:`mloning`
+
+* [BUG] incorrect/missing weighted geometric mean in forecasting ensemble (:pr:`1370`) :user:`fkiraly`
+* [BUG] :pr:`1469`: stripping names of index X and y  (:pr:`1493`) :user:`boukepostma`
+* [BUG] W-XXX frequency bug from :pr:`866` (:pr:`1409`) :user:`xiaobenbenecho`
+* [BUG] Pandas.NA for unpredictible insample forecasts in AutoARIMA (:pr:`1442`) :user:`IlyasMoutawwakil`
+* [BUG] missing :code:`extract_path` in :code:`_data_io` (:pr:`1475`) :user:`yairbeer`
+* [BUG] Refactor sktime/.../_panels/_examples.py for tsai compatibility (:pr:`1453`) :user:`bobbys-dev`
+* [BUG] Grid/random search tag fix (:pr:`1455`) :user:`fkiraly`
+* [BUG] model_selection/split passed the entire DataFrame as index if DataFrame was provided (:pr:`1456`) :user:`fkiraly`
+* [BUG] multivariate :code:`NaiveForecaster` was missing :code:`update` (:pr:`1457`) :user:`fkiraly`
+
+* [DOC] docstring fixes in :code:`_proximity_forest.py` (:pr:`1531`) :user:`TonyBagnall`
+* [DOC] fixes to landing page links (:pr:`1429`) :user:`Aparna-Sakshi`
+* [DOC] Add DataChef blog post to community showcase (:pr:`1464`) :user:`myprogrammerpersonality`
+* [DOC] Fixes broken links/estimator overview (:pr:`1445`) :user:`afzal442`
+* [DOC] Remove license info from docstrings (:pr:`1437`) :user:`ronnie-llamado`
+
+
+All contributors: :user:`Aparna-Sakshi`, :user:`BINAYKUMAR943`, :user:`IlyasMoutawwakil`, :user:`MatthewMiddlehurst`, :user:`Piyush1729`, :user:`RNKuhns`, :user:`RavenRudi`, :user:`SveaMeyer13`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`bobbys-dev`, :user:`boukepostma`, :user:`danbartl`, :user:`eyalshafran`, :user:`fkiraly`, :user:`freddyaboulton`, :user:`kejsitake`, :user:`mloning`, :user:`myprogrammerpersonality`, :user:`patrickzib`, :user:`ronnie-llamado`, :user:`xiaobenbenecho`, :user:`@SinghShreya05`, and :user:`yairbeer`
+
+
+
 [0.8.0] - 2021-09-17
 --------------------
 
