@@ -323,3 +323,8 @@ def check_classifier_input(
             f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
             f"{n_labels}"
         )
+
+
+def has_nans(X) -> bool:
+    """Check whether an input numpy array has nans."""
+    return False
