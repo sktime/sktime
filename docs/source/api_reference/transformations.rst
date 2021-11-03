@@ -179,6 +179,7 @@ Detrend
     Detrender
     Deseasonalizer
     ConditionalDeseasonalizer
+    STLTransformer
 
 Adapt
 ~~~~~
@@ -202,6 +203,17 @@ Box-Cox
 
     BoxCoxTransformer
     LogTransformer
+
+ClaSP
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.clasp
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClaSPTransformer
 
 Difference
 ~~~~~~~~~~
