@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-""" shapelet transformations
-transformer from the time domain into the shapelet domain. Standard full
-transform, a contracted version and
-a randoms sampler
+"""Shapelet transformation.
+
+# TODO move to contrib in v0.10.0
+Transformer from the time domain into the shapelet domain. Standard full
+transform, a contracted version and a randoms sampler.
 """
 __author__ = ["Jason Lines", "David Guijo"]
 __all__ = [
@@ -22,12 +23,12 @@ from operator import itemgetter
 
 import numpy as np
 import pandas as pd
+from deprecated.sphinx import deprecated
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -50,6 +51,12 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # TO-DO: add CI tests, comments, documentation, etc.
 
 
+@deprecated(
+    version="0.8.1",
+    reason="ShapeletTransform will move to contrib in V0.10 it has been replaced by "
+    "shapelet_transform.py",
+    category=FutureWarning,
+)
 class ShapeletTransform(_PanelToTabularTransformer):
     """Shapelet Transform.
 
@@ -83,7 +90,6 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     Attributes
     ----------
-
     predefined_ig_rejection_level       : float, minimum information gain
     required to keep a shapelet (default = 0.05)
     self.shapelets                      : list of Shapelet objects,
@@ -114,7 +120,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         super(ShapeletTransform, self).__init__()
 
     def fit(self, X, y=None):
-        """A method to fit the shapelet transform to a specified X and y
+        """Fit the shapelet transform to a specified X and y.
 
         Parameters
         ----------
@@ -631,11 +637,11 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def remove_self_similar_shapelets(shapelet_list):
-        """Remove self-similar shapelets from an input list. Note: this
-        method assumes
-        that shapelets are pre-sorted in descending order of quality (i.e.
-        if two candidates
-        are self-similar, the one with the later index will be removed)
+        """Remove self-similar shapelets from an input list.
+
+        Note: this method assumes that shapelets are pre-sorted in descending order
+        of quality (i.e. if two candidates are self-similar, the one with the later
+        index will be removed)
 
         Parameters
         ----------
@@ -645,13 +651,11 @@ class ShapeletTransform(_PanelToTabularTransformer):
         -------
         shapelet_list: list of Shapelet objects
         """
-
         # IMPORTANT: it is assumed that shapelets are already in descending
         # order of quality. This is preferable in the fit method as removing
         # self-similar
         # shapelets may be False so the sort needs to happen there in those
         # cases, and avoids a second redundant sort here if it is set to True
-
         def is_self_similar(shapelet_one, shapelet_two):
             # not self similar if from different series
             if shapelet_one.series_id != shapelet_two.series_id:
@@ -682,7 +686,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     # transform a set of data into distances to each extracted shapelet
     def transform(self, X, y=None):
-        """Transforms X according to the extracted shapelets (self.shapelets)
+        """Transform X according to the extracted shapelets (self.shapelets).
 
         Parameters
         ----------
@@ -737,7 +741,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         return pd.DataFrame(output)
 
     def get_shapelets(self):
-        """An accessor method to return the extracted shapelets
+        """Accessor method to return the extracted shapelets.
 
         Returns
         -------
@@ -747,6 +751,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def binary_entropy(num_this_class, num_other_class):
+        """Binary entropy."""
         ent = 0
         if num_this_class != 0:
             ent -= (
@@ -765,6 +770,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
     # could cythonise
     @staticmethod
     def calc_binary_ig(orderline, total_num_this_class, total_num_other_class):
+        """Binary information gain."""
         # def entropy(ent_class_counts, all_class_count):
 
         initial_ent = ShapeletTransform.binary_entropy(
@@ -813,6 +819,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
         num_to_add_this_class,
         num_to_add_other_class,
     ):
+        """Early binary IG."""
         # def entropy(ent_class_counts, all_class_count):
 
         initial_ent = ShapeletTransform.binary_entropy(
@@ -878,7 +885,8 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def zscore(a, axis=0, ddof=0):
-        """A static method to return the normalised version of series.
+        """Return the normalised version of series.
+
         This mirrors the scipy implementation
         with a small difference - rather than allowing /0, the function
         returns output = np.zeroes(len(input)).
@@ -928,6 +936,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
     @staticmethod
     def euclidean_distance_early_abandon(u, v, min_dist):
+        """Euclidean distance with early abandon."""
         sum_dist = 0
         for i in range(0, len(u[0])):
             for j in range(0, len(u)):
@@ -941,6 +950,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
 
 class ContractedShapeletTransform(ShapeletTransform):
     """Contracted Shapelet Transform.
+
     @incollection{bostrom2017binary,
       title={Binary shapelet transform for multiclass time series
       classification},
@@ -974,7 +984,6 @@ class ContractedShapeletTransform(ShapeletTransform):
 
     Attributes
     ----------
-
     predefined_ig_rejection_level       : float, minimum information gain
     required to keep a shapelet (default = 0.05)
     self.shapelets                      : list of Shapelet objects,
@@ -1009,12 +1018,14 @@ class ContractedShapeletTransform(ShapeletTransform):
 
 
 class _RandomEnumerationShapeletTransform(ShapeletTransform):
+    """Empty class."""
+
     pass
     # to follow
 
 
 class Shapelet:
-    """A simple class to model a Shapelet with associated information
+    """A simple class to model a Shapelet with associated information.
 
     Parameters
     ----------
@@ -1027,7 +1038,7 @@ class Shapelet:
     info_gain: flaot
         The calculated information gain of this shapelet
     data: array-like
-        The (z-normalised) data of this shapelet
+        The (z-normalised) data of this shapelet.
     """
 
     def __init__(self, series_id, start_pos, length, info_gain, data):
@@ -1038,6 +1049,7 @@ class Shapelet:
         self.data = data
 
     def __str__(self):
+        """Print."""
         return (
             "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3},"
             " ".format(self.series_id, self.start_pos, self.length, self.info_gain)
@@ -1045,29 +1057,36 @@ class Shapelet:
 
 
 class ShapeletPQ:
+    """Shapelet PQ."""
+
     def __init__(self):
         self._queue = []
         self._index = 0
 
     def push(self, shapelet):
+        """Push."""
         heapq.heappush(self._queue, (shapelet.info_gain, self._index, shapelet))
         self._index += 1
 
     def pop(self):
+        """Pop."""
         return heapq.heappop(self._queue)[-1]
 
     def peek(self):
+        """Peek."""
         return self._queue[0]
 
     def get_size(self):
+        """Get size."""
         return len(self._queue)
 
     def get_array(self):
+        """Get array."""
         return self._queue
 
 
 def write_transformed_data_to_arff(transform, labels, file_name):
-    """A simple function to save the transform obtained in arff format
+    """Save the transform obtained in arff format.
 
     Parameters
     ----------
@@ -1101,7 +1120,7 @@ def write_transformed_data_to_arff(transform, labels, file_name):
 
 
 def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
-    """A simple function to save the shapelets obtained in csv format
+    """Save the shapelets obtained in csv format.
 
     Parameters
     ----------
