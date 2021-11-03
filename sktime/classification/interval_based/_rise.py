@@ -426,7 +426,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         The number of classes.
     classes_ : list
         The classes labels.
-    intervals : array of shape = [n_estimators][2]
+    intervals_ : array of shape = [n_estimators][2]
         Stores indexes of start and end points for all classifiers.
 
     Notes
@@ -474,6 +474,8 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         self.acf_min_values = acf_min_values
         self.n_jobs = n_jobs
         self.random_state = random_state
+
+        self.intervals_ = []
 
         self.base_estimator = DecisionTreeClassifier(random_state=random_state)
 
@@ -525,8 +527,8 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         #     self.series_length,
         #     rng
         # )
-        self.intervals = np.empty((self.n_estimators, 2), dtype=int)
-        self.intervals[:] = [
+        self.intervals_ = np.empty((self.n_estimators, 2), dtype=int)
+        self.intervals_[:] = [
             _select_interval(
                 self.min_interval_, self.max_interval_, self.series_length, rng
             )
@@ -554,7 +556,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
                 X,
                 y,
                 tree,
-                self.intervals[i],
+                self.intervals_[i],
                 self.acf_lag_,
                 self.acf_min_values,
             )
@@ -628,7 +630,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
             delayed(_predict_proba_for_estimator)(
                 X,
                 self.estimators_[i],
-                self.intervals[i],
+                self.intervals_[i],
                 self.lags[i],
             )
             for i in range(self.n_estimators)
