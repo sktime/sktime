@@ -771,6 +771,8 @@ class ProximityStump(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
     }
 
     __author__ = "George Oastler (linkedin.com/goastler; github.com/goastler)"
@@ -1030,6 +1032,8 @@ class ProximityTree(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
     }
 
     def __init__(
@@ -1272,6 +1276,8 @@ class ProximityForest(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
     }
 
     def __init__(

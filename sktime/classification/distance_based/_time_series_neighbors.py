@@ -190,7 +190,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         X, y = check_X_y(
             X,
             y,
-            enforce_univariate=not self.capabilities["multivariate"],
+            enforce_univariate=not self._tags["capability:multivariate"],
             coerce_to_numpy=True,
         )
         # Transpose to work correctly with distance functions
@@ -292,7 +292,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self.check_is_fitted()
         X = check_X(
             X,
-            enforce_univariate=not self.capabilities["multivariate"],
+            enforce_univariate=not self._tags["capability:multivariate"],
             coerce_to_numpy=True,
         )
         # Transpose to work correctly with distance functions
