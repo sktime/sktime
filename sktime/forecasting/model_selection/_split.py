@@ -113,8 +113,9 @@ def _check_y(y):
 
     Raises
     ------
-    ValueError if y is not one of the expected types
-    ValueError if y is not a supported sktime index type
+    TypeError if y is not of one of the expected types
+    NotImplementedError if y_index is not a supported sktime index type
+    ValueError if y_index is not monotonous
     """
     if isinstance(y, (pd.Series, pd.DataFrame)):
         y_index = y.index
@@ -123,7 +124,7 @@ def _check_y(y):
     elif isinstance(y, pd.Index):
         y_index = y
     else:
-        raise ValueError(
+        raise TypeError(
             "Input to _check_y must be pd.Series, pd.DataFrame, np.ndarray, or pd.Index"
         )
     return check_time_index(y_index)
