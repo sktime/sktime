@@ -9,7 +9,13 @@ __all__ = [
     "ShapeDTW",
 ]
 
-from ._elastic_ensemble import ElasticEnsemble
-from ._proximity_forest import ProximityForest, ProximityStump, ProximityTree
-from ._shape_dtw import ShapeDTW
-from ._time_series_neighbors import KNeighborsTimeSeriesClassifier
+from sktime.classification.distance_based._elastic_ensemble import ElasticEnsemble
+from sktime.classification.distance_based._proximity_forest import (
+    ProximityForest,
+    ProximityStump,
+    ProximityTree,
+)
+from sktime.classification.distance_based._shape_dtw import ShapeDTW
+from sktime.classification.distance_based._time_series_neighbors import (
+    KNeighborsTimeSeriesClassifier,
+)
