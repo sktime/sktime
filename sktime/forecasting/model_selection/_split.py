@@ -97,11 +97,34 @@ def _repr(self):
 
 
 def _check_y(y):
-    """Check input to `split` function."""
+    """Coerce input to `split` function.
+
+    Parameters
+    ----------
+    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+
+    Returns
+    -------
+    check_time_index(y_index), where y_index is as follows:
+        if y is pd.Series, pd.DataFrame, y_index = y.index
+        if y is pd.Index, y_index = y itself
+        if y is np.ndarray, y_index =  pd.Index(y)
+
+    Raises
+    ------
+    ValueError if y is not one of the expected types
+    ValueError if y is not a supported sktime index type
+    """
     if isinstance(y, (pd.Series, pd.DataFrame)):
         y_index = y.index
-    if isinstance(y, np.ndarray):
+    elif isinstance(y, np.ndarray):
         y_index = pd.Index(y)
+    elif isinstance(y, pd.Index):
+        y_index = y
+    else:
+        raise ValueError(
+            "Input to _check_y must be pd.Series, pd.DataFrame, np.ndarray, or pd.Index"
+        )
     return check_time_index(y_index)
 
 
