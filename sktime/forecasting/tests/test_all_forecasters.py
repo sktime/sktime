@@ -317,19 +317,34 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             with pytest.raises(NotImplementedError, match="prediction intervals"):
                 f.predict(return_pred_int=True, alpha=alpha)
 
-def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, y_pred: pd.Series, fh):
-    # make iterable
-    if isinstance(pred_quantiles, pd.DataFrame):
-        pred_quantiles = [pred_quantiles]
+def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
+    # alpha can be a float or a list
+    # if a list, it has to be sorted
+    # if alpha is a list check that it is increasing and the values are in the given interval
+    if isinstance(alpha, list):
+        # check that alpha contains strictly increasing values
+        assert all(x < y for x, y in zip(alpha, alpha[1:]))
+        # check that alpha vales are in the [0, 1] interval
+        assert min(alpha) >= 0
+        assert max(alpha) <= 1
+    else:
+        assert 0 <= alpha <= 1
 
-    for pred_int in pred_quantiles:
+    # check if the input is a dataframe
+    assert isinstance(pred_quantiles, pd.DataFrame)
 
-        # check time index
-        _assert_correct_pred_time_index(pred_quantiles.index, y_train.index[-1], fh)
+    # check time index (also checks forecasting horizon is more than one element)
+    _assert_correct_pred_time_index(pred_quantiles.index.levels[0], y_train.index[-1], fh)
 
-        # check values
-        assert np.all(pred_int.iloc[:, 0] < y_pred)
-        assert np.all(pred_int.iloc[:,-1:] > y_pred)
+    # multiply variables with all alpha values
+    expected = pd.MultiIndex.from_product(y_train.columns, alpha)
+    assert all(expected == pred_quantiles.columns.to_flat_index())
+
+    # check if values are monotonically increasing
+    for var in pred_quantiles.columns.levels[0]:
+        for index in range(len(pred_quantiles.index)):
+            assert pred_quantiles[var].iloc[index].is_monotonic_increasing
+
 
 
 
@@ -337,20 +352,33 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, y_pred: p
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
 def test_predict_quantiles(Forecaster, fh, alpha):
-    f = Forecaster.create_test_instance()
+    """Check prediction intervals returned by predict.
+
+        Arguments
+        ---------
+        Forecaster: BaseEstimator class descendant, forecaster to test
+        fh: ForecastingHorizon, fh at which to test prediction
+        alpha: float, alpha at which to make prediction intervals
+
+        Raises
+        ------
+        AssertionError - if Forecaster test instance has "capability:pred_int"
+                and pred. int are not returned correctly when asking predict for them
+        AssertionError - if Forecaster test instance does not have "capability:pred_int"
+                and no NotImplementedError is raised when asking predict for pred.int
+        """
+    f = _construct_instance(Forecaster)
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
     for n_columns in n_columns_list:
         f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-
-        y_pred = f.predict()
-        if "_predict_quantiles" not in type(f).__dict__.keys():
+        if not f._has_predict_quantiles_been_refactored():
             with pytest.raises(NotImplementedError):
                 f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
         else:
             quantiles = f.predict_quantiles(fh=fh, alpha=alpha)
-            _check_predict_quantiles(quantiles, y_train, y_pred)
+            _check_predict_quantiles(quantiles, y_train, alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
