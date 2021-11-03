@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Distance based time series classifiers."""
+"""Dictionary based time series classifiers."""
 __all__ = [
     "IndividualBOSS",
     "BOSSEnsemble",
