@@ -10,7 +10,7 @@ __all__ = [
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["Markus Löning", "Kutay Koralturk"]
+__author__ = ["mloning", "kkoralturk"]
 
 import inspect
 import numbers
