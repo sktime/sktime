@@ -12,7 +12,7 @@ __all__ = [
 from sktime.classification.interval_based._cif import CanonicalIntervalForest
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.interval_based._rise import (
-    RandomIntervalSpectralForest,  # todo remove in 1.0
+    RandomIntervalSpectralForest,  # todo remove in 0.10.0
 )
 from sktime.classification.interval_based._rise import RandomIntervalSpectralEnsemble
 from sktime.classification.interval_based._stsf import SupervisedTimeSeriesForest
