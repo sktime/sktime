@@ -817,7 +817,7 @@ class ProximityStump(BaseClassifier):
         self.random_state = random_state
         self.get_distance_measure = get_distance_measure
         self.distance_measure = distance_measure
-        self.pick_exemplars = get_exemplars
+        self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.verbosity = verbosity
         self.n_jobs = n_jobs
@@ -916,7 +916,7 @@ class ProximityStump(BaseClassifier):
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
             self.distance_measure = self.get_distance_measure(self)
-        self.X_exemplar, self.y_exemplar = self.pick_exemplars(self)
+        self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
 
         return self
 
