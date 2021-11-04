@@ -54,7 +54,6 @@ def _numba_squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     """
     distance = 0.0
     for i in range(x.shape[0]):
-        curr = x[i] - y[i]
-        distance += np.sum(curr * curr)
+        distance += np.sum((x[i] - y[i]) ** 2)
 
     return distance
