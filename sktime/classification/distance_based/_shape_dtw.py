@@ -12,7 +12,9 @@ from sklearn.model_selection import GridSearchCV, KFold
 
 # Classifiers
 from sktime.classification.base import BaseClassifier
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.distance_based._time_series_neighbors import (
+    KNeighborsTimeSeriesClassifier,
+)
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.panel.dictionary_based._paa import PAA
 from sktime.transformations.panel.dwt import DWTTransformer
