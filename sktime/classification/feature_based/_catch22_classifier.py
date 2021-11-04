@@ -96,6 +96,25 @@ class Catch22Classifier(BaseClassifier):
         super(Catch22Classifier, self).__init__()
 
     def _fit(self, X, y):
+        """Fit a pipeline on cases (X,y), where y is the target variable.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
         self._transformer = Catch22(outlier_norm=self.outlier_norm)
 
         self._estimator = _clone_estimator(
@@ -116,11 +135,35 @@ class Catch22Classifier(BaseClassifier):
         return self
 
     def _predict(self, X):
+        """Predict class values of n instances in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
         X_t = self._transformer.transform(X)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
         X_t = self._transformer.transform(X)
         X_t = np.nan_to_num(X_t, False, 0, 0, 0)
 

@@ -109,6 +109,25 @@ class TSFreshClassifier(BaseClassifier):
         super(TSFreshClassifier, self).__init__()
 
     def _fit(self, X, y):
+        """Fit a pipeline on cases (X,y), where y is the target variable.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
         self._transformer = (
             TSFreshRelevantFeatureExtractor(
                 default_fc_parameters=self.default_fc_parameters,
@@ -144,9 +163,33 @@ class TSFreshClassifier(BaseClassifier):
         return self
 
     def _predict(self, X):
+        """Predict class values of n instances in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
         return self._estimator.predict(self._transformer.transform(X))
 
     def _predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))
