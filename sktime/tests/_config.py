@@ -29,6 +29,7 @@ from sktime.classification.dictionary_based import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
+    MatrixProfileClassifier,
     SignatureClassifier,
     TSFreshClassifier,
 )
@@ -286,6 +287,9 @@ ESTIMATOR_TEST_PARAMS = {
     },
     Catch22Classifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
+    },
+    MatrixProfileClassifier: {
+        "subsequence_length": 4,
     },
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
