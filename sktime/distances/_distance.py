@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Compute the distance between two timeseries."""
 
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import numpy as np
 
@@ -87,7 +87,7 @@ def erp_distance(
         infinity.
     g: float, defaults = 0.
         The reference value to penalise gaps.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distances. See the documentation for the
         distance itself for valid kwargs.
 
@@ -163,7 +163,7 @@ def edr_distance(
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     epsilon: float = 1.0,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real sequences (edr) between two series.
 
@@ -220,7 +220,7 @@ def edr_distance(
     epsilon : float, defaults = 1.
         Matching threshold to determine if two subsequences are considered close
         enough to be considered 'common'.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distance should be put in the kwargs. See the
         documentation for the distance for kwargs.
 
@@ -300,7 +300,7 @@ def lcss_distance(
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     epsilon: float = 1.0,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     """Compute the longest common subsequence (lcss) score between two timeseries.
 
@@ -357,7 +357,7 @@ def lcss_distance(
     epsilon : float, defaults = 1.
         Matching threshold to determine if two subsequences are considered close
         enough to be considered 'common'.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distance should be put in the kwargs. See the
         documentation for the distance for kwargs.
 
@@ -428,7 +428,7 @@ def wddtw_distance(
     bounding_matrix: np.ndarray = None,
     compute_derivative: DerivativeCallable = _average_of_slope,
     g: float = 0.0,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     r"""Compute the weighted derivative dynamic time warping (wddtw) distance.
 
@@ -496,7 +496,7 @@ def wddtw_distance(
         Constant that controls the curvature (slope) of the function; that is, g
         controls the level of penalisation for the points with larger phase
         difference.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distances. See the documentation for the
         distance itself for valid kwargs.
 
@@ -565,7 +565,7 @@ def wdtw_distance(
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     g: float = 0.0,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     """Compute the weighted dynamic time warping (wdtw) distance between timeseries.
 
@@ -629,7 +629,7 @@ def wdtw_distance(
         Constant that controls the curvature (slope) of the function; that is, g
         controls the level of penalisation for the points with larger phase
         difference.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distance should be put in the kwargs. See the
         documentation for the distance for kwargs.
 
@@ -696,7 +696,7 @@ def ddtw_distance(
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     compute_derivative: DerivativeCallable = _average_of_slope,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (ddtw) distance between timeseries.
 
@@ -759,7 +759,7 @@ def ddtw_distance(
                             defaults = average slope difference (see above)
         Callable that computes the derivative. If none is provided the average of the
         slope between two points used.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distance should be put in the kwargs. See the
         documentation for the distance for kwargs.
 
@@ -826,7 +826,7 @@ def dtw_distance(
     itakura_max_slope: float = 2.0,
     custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     r"""Compute the dynamic time warping (dtw) distance between two timeseries.
 
@@ -883,7 +883,7 @@ def dtw_distance(
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
         infinity.
-    kwargs: dict
+    kwargs: Any
         Extra arguments for custom distance should be put in the kwargs. See the
         documentation for the distance for kwargs.
 
@@ -941,7 +941,7 @@ def dtw_distance(
     return distance(x, y, metric="dtw", **format_kwargs)
 
 
-def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
+def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     r"""Compute the Squared distance between two timeseries.
 
     The squared distance between two timeseries is defined as:
@@ -955,7 +955,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
         First timeseries.
     y: np.ndarray (1d or 2d array)
         Second timeseries.
-    kwargs: dict
+    kwargs: Any
         Extra kwargs. For squared there are none however, this is kept for
         consistency.
 
@@ -996,7 +996,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
     return distance(x, y, metric="squared", **kwargs)
 
 
-def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
+def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     r"""Compute the Euclidean distance between two timeseries.
 
     Euclidean distance is supported for 1d, 2d and 3d arrays.
@@ -1012,7 +1012,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
         First timeseries.
     y: np.ndarray (1d or 2d array)
         Second timeseries.
-    kwargs: dict
+    kwargs: Any
         Extra kwargs. For euclidean there are none however, this is kept for
         consistency.
 
@@ -1064,7 +1064,7 @@ def distance(
         Callable[[np.ndarray, np.ndarray], float],
         NumbaDistance,
     ],
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     """Compute the distance between two timeseries.
 
@@ -1097,7 +1097,7 @@ def distance(
             [np.ndarray, np.ndarray, bool, dict],
             Callable[[np.ndarray, np.ndarray], float]
         ]
-    kwargs: dict
+    kwargs: Any
         Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
 
@@ -1111,6 +1111,43 @@ def distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
+
+    Examples
+    --------
+    >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
+    array([1, 2, 3, 4])
+    >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
+    array([4, 5, 6, 7])
+    >>> distance(x_1d, y_1d, metric='dtw')
+    58.0
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> distance(x_2d, y_2d, metric='dtw')
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> distance(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
+    512.0
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> distance(x_2d, y_2d, metric='dtw',
+                    lower_bounding=LowerBounding.ITAKURA_PARALLELOGRAM,
+                    itakura_max_slope=4.)
+    512.0
 
     Returns
     -------
@@ -1136,7 +1173,7 @@ def distance_factory(
         Callable[[np.ndarray, np.ndarray], float],
         NumbaDistance,
     ],
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> DistanceCallable:
     """Create a no_python distance callable.
 
@@ -1165,8 +1202,8 @@ def distance_factory(
             [np.ndarray, np.ndarray, bool, dict],
             Callable[[np.ndarray, np.ndarray], float]
         ]
-    kwargs: dict, optional
-        Extra arguments for metric. Refer to each metrics documentation for a list of
+    kwargs: Any
+        Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
 
     Returns
@@ -1184,6 +1221,49 @@ def distance_factory(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
+
+    Examples
+    --------
+    >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
+    array([1, 2, 3, 4])
+    >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
+    array([4, 5, 6, 7])
+    >>> distance_factory(x_1d, y_1d, metric='dtw')
+    CPUDispatcher(<function _DtwDistance._distance_factory.<locals>.numba_dtw_distance
+                    ...>)
+
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> distance_factory(x_2d, y_2d, metric='dtw')
+    CPUDispatcher(<function _DtwDistance._distance_factory.<locals>.numba_dtw_distance
+                    ...>)
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> distance_factory(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
+    CPUDispatcher(<function _DtwDistance._distance_factory.<locals>.numba_dtw_distance
+                    ...>)
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> distance_factory(x_2d, y_2d, metric='dtw',
+                    lower_bounding=LowerBounding.ITAKURA_PARALLELOGRAM,
+                    itakura_max_slope=4.)
+    CPUDispatcher(<function _DtwDistance._distance_factory.<locals>.numba_dtw_distance
+                    ...>)
     """
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
@@ -1202,7 +1282,7 @@ def pairwise_distance(
         Callable[[np.ndarray, np.ndarray], float],
         NumbaDistance,
     ],
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two timeseries.
 
@@ -1236,7 +1316,7 @@ def pairwise_distance(
             [np.ndarray, np.ndarray, bool, dict],
             Callable[[np.ndarray, np.ndarray], float]
         ]
-    kwargs: dict, optional
+    kwargs: Any
         Extra arguments for metric. Refer to each metric documentation for a list of
         possible arguments.
 
@@ -1255,6 +1335,51 @@ def pairwise_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
+
+    Examples
+    --------
+    >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
+    array([1, 2, 3, 4])
+    >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
+    array([4, 5, 6, 7])
+    >>> pairwise_distance(x_1d, y_1d, metric='dtw')
+    [[64.]]
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw')
+    [[256., 576.], [58., 256.]]
+
+    >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
+    array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])
+    >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
+    array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])
+    >>> pairwise_distance(x_3d, y_3d)
+    [[256., 576.], [58., 256.]]
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
+    [[256., 576.], [58., 256.]]
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    array([[1, 2, 3, 4],
+           [5, 6, 7, 8]])
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    array([[ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw',
+                    lower_bounding=LowerBounding.ITAKURA_PARALLELOGRAM,
+                    itakura_max_slope=4.)
+    [[256., 576.], [58., 256.]]
     """
     _x = to_numba_pairwise_timeseries(x)
     _y = to_numba_pairwise_timeseries(y)
