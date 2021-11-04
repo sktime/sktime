@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Chris Holder"]
+__author__ = ["chrisholder"]
 
 from typing import Callable, Union
 
@@ -36,24 +36,47 @@ class _DtwDistance(NumbaDistance):
             Second timeseries.
         lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
             Lower bounding technique to use.
+            If LowerBounding enum provided, the following are valid:
+                LowerBounding.NO_BOUNDING - No bounding
+                LowerBounding.SAKOE_CHIBA - Sakoe chiba
+                LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
+            If int value provided, the following are valid:
+                1 - No bounding
+                2 - Sakoe chiba
+                3 - Itakura parallelogram
         window: int, defaults = 2
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding).
         itakura_max_slope: float, defaults = 2.
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between aligned timeseries.
+        custom_distance: str or Callable, defaults = squared
+            The distance metric to use.
+            If a string is given, see sktime/distances/distance/_distance.py for a
+            list of valid string values.
+
+            If callable then it has to be a distance factory or numba distance callable.
+            If you want to pass custom kwargs to the distance at runtime, use a distance
+            factory as it constructs the distance before distance computation.
+            A distance callable takes the form (must be no_python compiled):
+            Callable[
+                [np.ndarray, np.ndarray],
+                float
+            ]
+
+            A distance factory takes the form (must return a no_python callable):
+            Callable[
+                [np.ndarray, np.ndarray, bool, dict],
+                Callable[[np.ndarray, np.ndarray], float]
+            ]
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-            Custom bounding matrix to use. If defined then other lower_bounding params
-            and creation are ignored. The matrix should be structure so that indexes
-            considered in bound should be the value 0. and indexes outside the bounding
+            Custom bounding matrix to use. If defined then other lower bounding params
+            are ignored. The matrix should be structure so that indexes
+            considered in bound are the value 0. and indexes outside the bounding
             matrix should be infinity.
         kwargs: dict
-            Extra arguments for custom distance should be put in the kwargs. See the
-            documentation for the distance for kwargs.
-
+            Extra arguments for custom distances. See the documentation for the
+            distance itself for valid kwargs.
 
         Returns
         -------
@@ -74,11 +97,11 @@ class _DtwDistance(NumbaDistance):
 
         # This needs to be here as potential distances only known at runtime not
         # compile time so having this at the top would cause circular import errors.
-        from sktime.distances.distance import distance_factory
+        from sktime.distances._distance import distance_factory
 
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
-        @njit()
+        @njit(fastmath=True)
         def numba_dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
@@ -88,11 +111,11 @@ class _DtwDistance(NumbaDistance):
         return numba_dtw_distance
 
 
-@njit()
+@njit(cache=True, fastmath=True)
 def _dtw_numba_distance(
     x: np.ndarray,
     y: np.ndarray,
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
+    distance: Callable[[np.ndarray, np.ndarray], float],
     bounding_matrix: np.ndarray,
 ) -> float:
     """Dtw distance compiled to no_python.
@@ -103,27 +126,26 @@ def _dtw_numba_distance(
         First timeseries.
     y: np.ndarray (2d array)
         Second timeseries.
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-        Distance function to used to compute distance between timeseries.
+    distance: Callable[[np.ndarray, np.ndarray], float],
+                    defaults = squared_distance
+        Distance function to compute distance between timeseries.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Bounding matrix where the values in bound are marked by finite values and
-        outside bound points are infinite values.
+        Bounding matrix where the index in bound finite values (0.) and indexes
+        outside bound points are infinite values (non finite).
 
     Returns
     -------
     distance: float
-        Dtw distance between the two timeseries.
+        Dtw distance between the x and y timeseries.
     """
     symmetric = np.array_equal(x, y)
-    pre_computed_distances = _compute_pairwise_distance(
-        x, y, symmetric, custom_distance
-    )
+    pre_computed_distances = _compute_pairwise_distance(x, y, symmetric, distance)
 
     cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
     return cost_matrix[-1, -1]
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
@@ -139,8 +161,8 @@ def _cost_matrix(
     y: np.ndarray (2d array)
         Second timeseries.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Bounding matrix where the values in bound are marked by finite values and
-        outside bound points are infinite values.
+        Bounding matrix where the index in bound finite values (0.) and indexes
+        outside bound points are infinite values (non finite).
     pre_computed_distances: np.ndarray (2d of size mxn where m is len(x) and n is
                                         len(y))
         Precomputed pairwise matrix between the two timeseries.
@@ -148,7 +170,7 @@ def _cost_matrix(
     Returns
     -------
     np.ndarray (2d array of size mxn where m is len(x) and n is len(y))
-        Cost matrix between two timeseries.
+        Dtw cost matrix between x and y.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]

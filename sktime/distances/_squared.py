@@ -32,11 +32,11 @@ class _SquaredDistance(NumbaDistance):
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled Squared distance callable.
         """
-        return _squared_numba_distance
+        return _numba_squared_distance
 
 
 @njit(cache=True)
-def _squared_numba_distance(x: np.ndarray, y: np.ndarray) -> float:
+def _numba_squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Squared distance compiled to no_python.
 
     Parameters
@@ -49,7 +49,7 @@ def _squared_numba_distance(x: np.ndarray, y: np.ndarray) -> float:
     Returns
     -------
     distance: float
-        Euclidean distance between the two timeseries.
+        Squared distance between the x and y.
 
     """
     distance = 0.0

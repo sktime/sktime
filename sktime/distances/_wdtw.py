@@ -11,7 +11,7 @@ from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matr
 
 
 class _WdtwDistance(NumbaDistance):
-    """Weighted dynamic time warping (Wdtw) distance between two timeseries."""
+    """Weighted dynamic time warping (wdtw) distance between two timeseries."""
 
     def _distance_factory(
         self,
@@ -76,7 +76,7 @@ class _WdtwDistance(NumbaDistance):
 
         # This needs to be here as potential distances only known at runtime not
         # compile time so having this at the top would cause circular import errors.
-        from sktime.distances.distance import distance_factory
+        from sktime.distances._distance import distance_factory
 
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 

@@ -6,6 +6,7 @@ __author__ = ["chrisholder"]
 import numpy as np
 from numba import njit
 
+from sktime.distances._squared import _numba_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 
 
@@ -15,7 +16,7 @@ class _EuclideanDistance(NumbaDistance):
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: dict
     ) -> DistanceCallable:
-        """Create a no_python compiled Euclidean distance callable.
+        """Create a no_python compiled euclidean distance callable.
 
         Parameters
         ----------
@@ -30,13 +31,13 @@ class _EuclideanDistance(NumbaDistance):
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled Euclidean distance callable.
+            No_python compiled euclidean distance callable.
         """
-        return _euclidean_numba_distance
+        return _numba_euclidean_distance
 
 
 @njit(cache=True)
-def _euclidean_numba_distance(x: np.ndarray, y: np.ndarray) -> float:
+def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Euclidean distance compiled to no_python.
 
     Parameters
@@ -49,11 +50,7 @@ def _euclidean_numba_distance(x: np.ndarray, y: np.ndarray) -> float:
     Returns
     -------
     distance: float
-        Euclidean distance between the two timeseries.
+        Euclidean distance between x and y.
     """
-    distance = 0.0
-    for i in range(x.shape[0]):
-        curr = x[i] - y[i]
-        distance += np.sum(curr * curr)
-
+    distance = _numba_squared_distance(x, y)
     return np.sqrt(distance)

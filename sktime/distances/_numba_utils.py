@@ -7,9 +7,6 @@ from numba import njit, prange
 from sktime.distances.base import DistanceCallable
 
 
-# This seems to be slower maybe need an njit when above a certain num points and just
-# python when under certain num points
-# @njit(cache=True)
 def _compute_distance(
     x: np.ndarray, y: np.ndarray, distance_callable: DistanceCallable
 ) -> float:
@@ -41,7 +38,19 @@ def _compute_distance(
 
 
 @njit(cache=True)
-def _check_numba_pairwise_series(x: np.ndarray):
+def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
+    """Check a potential series being passed into pairwise.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        A timeseries
+
+    Returns
+    -------
+    np.ndarray
+        Validated and reshaped (where appropriate) timeseries.
+    """
     if x.ndim == 2:
         shape = x.shape
         _x = np.reshape(x, (shape[0], shape[1], 1))
@@ -54,7 +63,7 @@ def _check_numba_pairwise_series(x: np.ndarray):
 def _compute_pairwise_distance(
     x: np.ndarray, y: np.ndarray, symmetric: bool, distance_callable: DistanceCallable
 ) -> np.ndarray:
-    """Compute pairwise distance between two 3d numpy array.
+    """Compute pairwise distance between two numpy arrays.
 
     Parameters
     ----------
@@ -112,10 +121,16 @@ def is_no_python_compiled_callable(
     bool
         True if the callable is no_python compiled, False if the callable is not
         no_python compiled
+
+    Raises
+    ------
+    ValueError
+        If the raise_error parameter is True and the callable passed is not no_python
+        compiled.
     """
     is_no_python_callable = hasattr(no_python_callable, "signatures")
     if raise_error and not is_no_python_callable:
-        raise RuntimeError(
+        raise ValueError(
             f"The callable provided must be no_python compiled. The callable that "
             f"caused"
             f"this error is named {no_python_callable.__name__}"
@@ -126,12 +141,6 @@ def is_no_python_compiled_callable(
 
 def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
     """Convert a timeseries to a valid timeseries for numba pairwise use.
-
-    The main way a timeseries is changed to be ready for numba pairwise use is the
-    values are moved to the outer dimensions of a panel. This is because we want
-    to get a distance between each point and if the values are in the inner most
-    dimensions they will be considered a singular multivariate set of timepoints rather
-    than individual timeseries.
 
     Parameters
     ----------

@@ -15,7 +15,7 @@ from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matr
 
 
 class _WddtwDistance(NumbaDistance):
-    """Weighted derivative dynamic time warping (Wddtw) distance between two series."""
+    """Weighted derivative dynamic time warping (wddtw) distance between two series."""
 
     def _distance_factory(
         self,
@@ -40,19 +40,43 @@ class _WddtwDistance(NumbaDistance):
             Second timeseries.
         lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
             Lower bounding technique to use.
+            If LowerBounding enum provided, the following are valid:
+                LowerBounding.NO_BOUNDING - No bounding
+                LowerBounding.SAKOE_CHIBA - Sakoe chiba
+                LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
+            If int value provided, the following are valid:
+                1 - No bounding
+                2 - Sakoe chiba
+                3 - Itakura parallelogram
         window: int, defaults = 2
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding).
         itakura_max_slope: float, defaults = 2.
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+        custom_distance: str or Callable, defaults = squared
+            The distance metric to use.
+            If a string is given, see sktime/distances/distance/_distance.py for a
+            list of valid string values.
+
+            If callable then it has to be a distance factory or numba distance callable.
+            If you want to pass custom kwargs to the distance at runtime, use a distance
+            factory as it constructs the distance before distance computation.
+            A distance callable takes the form (must be no_python compiled):
+            Callable[
+                [np.ndarray, np.ndarray],
+                float
+            ]
+
+            A distance factory takes the form (must return a no_python callable):
+            Callable[
+                [np.ndarray, np.ndarray, bool, dict],
+                Callable[[np.ndarray, np.ndarray], float]
+            ]
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-            Custom bounding matrix to use. If defined then other lower_bounding params
-            and creation are ignored. The matrix should be structure so that indexes
-            considered in bound should be the value 0. and indexes outside the bounding
+            Custom bounding matrix to use. If defined then other lower bounding params
+            are ignored. The matrix should be structure so that indexes
+            considered in bound are the value 0. and indexes outside the bounding
             matrix should be infinity.
         compute_derivative: Callable[[np.ndarray], np.ndarray],
                                 defaults = average slope difference (see above)
@@ -63,8 +87,8 @@ class _WddtwDistance(NumbaDistance):
             controls the level of penalisation for the points with larger phase
             difference.
         kwargs: dict
-            Extra arguments for custom distance should be put in the kwargs. See the
-            documentation for the distance for kwargs.
+            Extra arguments for custom distances. See the documentation for the
+            distance itself for valid kwargs.
 
         Returns
         -------
@@ -93,7 +117,7 @@ class _WddtwDistance(NumbaDistance):
 
         # This needs to be here as potential distances only known at runtime not
         # compile time so having this at the top would cause circular import errors.
-        from sktime.distances.distance import distance_factory
+        from sktime.distances._distance import distance_factory
 
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 

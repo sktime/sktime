@@ -15,7 +15,7 @@ def _resolve_metric(
     known_metric_dict: List[MetricInfo],
     **kwargs: dict,
 ) -> DistanceCallable:
-    """Resolve a metric from a string or callable or NumbaDistance instance.
+    """Resolve a metric from a string, callable or NumbaDistance instance.
 
     Parameters
     ----------
@@ -96,7 +96,7 @@ def _resolve_str_metric(
     Returns
     -------
     NumbaDistance
-        Instance of distance resolved from string
+        Instance of distance resolved from string.
 
     Raises
     ------

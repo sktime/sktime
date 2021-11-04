@@ -8,7 +8,7 @@ import numpy as np
 from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
-from sktime.distances._erp_distance import _ErpDistance
+from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._numba_utils import (
@@ -38,24 +38,11 @@ def erp_distance(
 ) -> float:
     """Compute the Edit distance for real penalty (erp) distance between two series.
 
-    Erp first proposed in [1]_ aims to improve on both dtw. Erp attempts
-    to improve accuracy of distance computation by considering how we carry forward
-    values that are 'gaps'. Gaps are defined in dtw when we choose which element
-    to carry forward. When computing the cost matrix we use:
-
-    min(cost_matrix[i, j],  cost_matrix[i - 1, j], cost_matrix[i, j - 1]
-
-    If cost_matrix[i, j] is chosen this means there is no gap and an alignment has
-    been found to the next element. If either cost_matrix[i - 1, j] or
-    cost_matrix[i, j - 1] are chosen this means there is a gap and no alignment
-    can be found to the next element. It is important to note when there is a gap
-    a value is assigned. In dtw this value is going to greatly vary in size because
-    it is derived from the computation between two points. This means that there
-    is an inconsistent penalty for gaps being found. Erp attempts to solve this by
-    defining a constant 'g' that when a gap is found, the distance between 'g' and
-    the unmatched point are taken to determine how detrimental the gap is to
-    the distance computation. By using a constant to compare to this gives a consistent
-    measure of detriment.
+    Erp first proposed in [1]_ attempts to improve accuracy of distance computation
+    by better considering how indexes are carried forward through the cost matrix.
+    Usually in the dtw cost matrix, if an alignment can't be found the previous value
+    is carried forward. Erp instead proposes the idea of gaps or sequences of points
+    that have no matches. These gaps are then punished based on their distance from 'g'.
 
     Parameters
     ----------
@@ -71,9 +58,25 @@ def erp_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -157,9 +160,25 @@ def edr_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -219,7 +238,7 @@ def lcss_distance(
     lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
     window: int = 2,
     itakura_max_slope: float = 2.0,
-    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     epsilon: float = 1.0,
     **kwargs: dict,
@@ -229,15 +248,10 @@ def lcss_distance(
     Lcss attempts to find the longest common sequence between two timeseries and returns
     a value that is the percentage that longest common sequence assumes. Originally
     present in [1]_, lcss is computed by matching indexes that are similar up until a
-    defined threshold (epsilon). Matches can occur even if the time indexes are
-    different. How far the time index difference can be is controlled by the
-    the bounding matrix used.
+    defined threshold (epsilon).
 
-    The value returned will be between 0 and 1 (0 is 100% subsequence match, 1 is 0%
-    subsequence match) per time series (this means if a panel
-    is passed the value will be between 0 and max(len(x), len(y)). The value will
-    represent will represent a percentage over the timeseries of the longest common
-    sequence occurred.
+    The value returned will be between 0.0 and 1.0, where 0.0 means the two timeseries
+    are exactly the same and 1.0 means they are complete opposites.
 
     Parameters
     ----------
@@ -253,9 +267,25 @@ def lcss_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -271,10 +301,9 @@ def lcss_distance(
     Returns
     -------
     float
-        lcss score between the two timeseries. The value will be between 0.0 and 1.0
-        (unless panel is passed the value will be between 0 and max(len(x), len(y)),
-        where 1.0 is an exact match between timeseries (i.e. they are the same) and
-        0.0 where the are no matching subsequences.
+        Lcss distance between x and y. The value returned will be between 0.0 and 1.0,
+        where 0.0 means the two timeseries are exactly the same and 1.0 means they
+        are complete opposites.
 
     Raises
     ------
@@ -350,9 +379,25 @@ def wddtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -452,9 +497,25 @@ def wdtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -557,9 +618,25 @@ def ddtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                        defaults = squared_distance
-            Distance function to used to compute distance between timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -654,9 +731,25 @@ def dtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: Callable[[np.ndarray, np.ndarray], float],
-                    defaults = squared_distance
-        Distance function to used to compute distance between aligned timeseries.
+    custom_distance: str or Callable
+        The distance metric to use.
+        If a string is given, see sktime/distances/distance/_distance.py for a
+        list of valid string values.
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[
+            [np.ndarray, np.ndarray, bool, dict],
+            Callable[[np.ndarray, np.ndarray], float]
+        ]
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then other lower_bounding params
         and creation are ignored. The matrix should be structure so that indexes
@@ -805,32 +898,27 @@ def distance(
         First timeseries.
     y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
-    metric: str or Callable or NumbaDistance
+    metric: str or Callable
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-
-        'euclidean', 'squared', 'dtw.
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
 
         If callable then it has to be a distance factory or numba distance callable.
-        If the distance takes kwargs then a distance factory should be provided. The
-        distance factory takes the form:
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
 
+        A distance factory takes the form (must return a no_python callable):
         Callable[
             [np.ndarray, np.ndarray, bool, dict],
             Callable[[np.ndarray, np.ndarray], float]
         ]
-
-        and should validate the kwargs, and return a no_python callable described
-        above as the return.
-
-        If a no_python callable provided it should take the form:
-
-        Callable[
-            [np.ndarray, np.ndarray],
-            float
-        ],
-    kwargs: dict, optional
-        Extra arguments for metric. Refer to each metric documentation for a list of
+    kwargs: dict
+        Arguments for metric. Refer to each metric documentation for a list of
         possible arguments.
 
     Returns
@@ -880,30 +968,25 @@ def distance_factory(
         First timeseries.
     y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
-    metric: str or Callable or NumbaDistance
+    metric: str or Callable
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-
-        'euclidean', 'squared', 'dtw.
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
 
         If callable then it has to be a distance factory or numba distance callable.
-        If the distance takes kwargs then a distance factory should be provided. The
-        distance factory takes the form:
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
 
+        A distance factory takes the form (must return a no_python callable):
         Callable[
             [np.ndarray, np.ndarray, bool, dict],
             Callable[[np.ndarray, np.ndarray], float]
         ]
-
-        and should validate the kwargs, and return a no_python callable described
-        above as the return.
-
-        If a no_python callable provided it should take the form:
-
-        Callable[
-            [np.ndarray, np.ndarray],
-            float
-        ],
     kwargs: dict, optional
         Extra arguments for metric. Refer to each metric documentation for a list of
         possible arguments.
@@ -954,30 +1037,25 @@ def pairwise_distance(
         First timeseries.
     y: np.ndarray (1d, 2d or 3d array)
         Second timeseries.
-    metric: str or Callable or NumbaDistance
+    metric: str or Callable
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-
-        'euclidean', 'squared', 'dtw.
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
 
         If callable then it has to be a distance factory or numba distance callable.
-        If the distance takes kwargs then a distance factory should be provided. The
-        distance factory takes the form:
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance before distance computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[
+            [np.ndarray, np.ndarray],
+            float
+        ]
 
+        A distance factory takes the form (must return a no_python callable):
         Callable[
             [np.ndarray, np.ndarray, bool, dict],
             Callable[[np.ndarray, np.ndarray], float]
         ]
-
-        and should validate the kwargs, and return a no_python callable described
-        above as the return.
-
-        If a no_python callable provided it should take the form:
-
-        Callable[
-            [np.ndarray, np.ndarray],
-            float
-        ],
     kwargs: dict, optional
         Extra arguments for metric. Refer to each metric documentation for a list of
         possible arguments.
@@ -1008,6 +1086,12 @@ def pairwise_distance(
 
 _METRIC_INFOS = [
     MetricInfo(
+        canonical_name="euclidean",
+        aka={"euclidean", "ed", "euclid", "pythagorean"},
+        dist_func=euclidean_distance,
+        dist_instance=_EuclideanDistance(),
+    ),
+    MetricInfo(
         canonical_name="erp",
         aka={"erp", "edit distance with real penalty"},
         dist_func=erp_distance,
@@ -1024,12 +1108,6 @@ _METRIC_INFOS = [
         aka={"lcss", "longest common subsequence"},
         dist_func=lcss_distance,
         dist_instance=_LcssDistance(),
-    ),
-    MetricInfo(
-        canonical_name="euclidean",
-        aka={"euclidean", "ed", "euclid", "pythagorean"},
-        dist_func=euclidean_distance,
-        dist_instance=_EuclideanDistance(),
     ),
     MetricInfo(
         canonical_name="squared",

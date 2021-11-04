@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
+from sktime.distances._distance import _METRIC_INFOS, distance
 from sktime.distances.base import MetricInfo, NumbaDistance
-from sktime.distances.distance import _METRIC_INFOS, distance
 from sktime.distances.tests._expected_results import _expected_distance_results
 from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
@@ -132,19 +132,11 @@ def _validate_distance_result(
         )
 
     metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)
-    if metric_str == "lcss":
-        assert metric_str_result_to_self == 1.0 or metric_str_result_to_self == 10.0, (
-            f"The distance when given two of the same timeseries e.g."
-            f"distance(x, x, ...), result should equal 1.0 for lcss. "
-            f"This criteria is not met for the metric {metric_str}. "
-            f"The result was {metric_str_result_to_self}"
-        )
-    else:
-        assert metric_str_result_to_self == 0, (
-            f"The distance when given two of the same timeseries e.g."
-            f"distance(x, x, ...), result should equal 0. This criteria is not met for "
-            f"the metric {metric_str}. The result was {metric_str_result_to_self}"
-        )
+    assert metric_str_result_to_self == 0, (
+        f"The distance when given two of the same timeseries e.g."
+        f"distance(x, x, ...), result should equal 0. This criteria is not met for "
+        f"the metric {metric_str}. The result was {metric_str_result_to_self}"
+    )
 
     if expected_result is not None:
         assert_almost_equal(metric_str_result, expected_result, 5)
@@ -234,46 +226,45 @@ def test_incorrect_parameters():
     """Ensure incorrect parameters raise errors."""
     _test_incorrect_parameters(distance)
 
+    # def test_dist():
+    #     from sktime.distances.distance import lcss_distance as dist
+    #     from sktime.distances.elastic_cython import lcss_distance as sktime_ddtw
+    #
+    #     x_first = np.array([10.0])
+    #     y_first = np.array([15.0])
+    #
+    #     x_second = create_test_distance_numpy(10)
+    #     y_second = create_test_distance_numpy(10, random_state=2)
+    #
+    #     x_third = create_test_distance_numpy(10, 1)
+    #     y_third = create_test_distance_numpy(10, 1, random_state=2)
+    #
+    #     x_fourth = create_test_distance_numpy(10, 10)
+    #     y_fourth = create_test_distance_numpy(10, 10, random_state=2)
+    #
+    #     x_fifth = create_test_distance_numpy(10, 10, 1)
+    #     y_fifth = create_test_distance_numpy(10, 10, 1, random_state=2)
+    #
+    #     x_sixth = create_test_distance_numpy(10, 10, 10)
+    #     y_sixth = create_test_distance_numpy(10, 10, 10, random_state=2)
+    #
+    #     first = dist(x_first, y_first)
+    #     second = dist(x_second, y_second)
+    #
+    #     third = dist(x_third, y_third)
+    #     fourth = dist(x_fourth, y_fourth)
+    #
+    #     fifth = dist(x_fifth, y_fifth)
+    #     sixth = dist(x_sixth, y_sixth)
+    #
+    #     test = dist(x_third, x_third)
+    #
+    #     sktime_third = sktime_ddtw(x_third, y_third)
+    #     sktime_fourth = sktime_ddtw(x_fourth, y_fourth)
+    #
+    #     from tslearn.metrics.dtw_variants import lcss as tsl_lcss
+    #     tslearn_third = tsl_lcss(x_third, y_third)
+    #     tslearn_fourth = tsl_lcss(x_fourth, y_fourth)
+    #     tsl = tsl_lcss(x_fourth, x_fourth)
 
-# def test_dist():
-#     from sktime.distances.distance import erp_distance as dist
-#     from sktime.distances.elastic_cython import erp_distance as sktime_ddtw
-#
-#     x_first = np.array([10.0])
-#     y_first = np.array([15.0])
-#
-#     x_second = create_test_distance_numpy(10)
-#     y_second = create_test_distance_numpy(10, random_state=2)
-#
-#     x_third = create_test_distance_numpy(10, 1)
-#     y_third = create_test_distance_numpy(10, 1, random_state=2)
-#
-#     x_fourth = create_test_distance_numpy(10, 10)
-#     y_fourth = create_test_distance_numpy(10, 10, random_state=2)
-#
-#     x_fifth = create_test_distance_numpy(10, 10, 1)
-#     y_fifth = create_test_distance_numpy(10, 10, 1, random_state=2)
-#
-#     x_sixth = create_test_distance_numpy(10, 10, 10)
-#     y_sixth = create_test_distance_numpy(10, 10, 10, random_state=2)
-#
-#     first = dist(x_first, y_first)
-#     second = dist(x_second, y_second)
-#
-#     third = dist(x_third, y_third)
-#     fourth = dist(x_fourth, y_fourth)
-#
-#     fifth = dist(x_fifth, y_fifth)
-#     sixth = dist(x_sixth, y_sixth)
-#
-#     test = dist(x_third, x_third)
-#
-#
-#     sktime_third = sktime_ddtw(x_third, y_third)
-#     sktime_fourth = sktime_ddtw(x_fourth, y_fourth)
-#
-#     from tslearn.metrics.dtw_variants import lcss as tsl_lcss
-#     tslearn_third = tsl_lcss(x_third, y_third)
-#     tslearn_fourth = tsl_lcss(x_fourth, y_fourth)
-#
-#     pass
+    pass

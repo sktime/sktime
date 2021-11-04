@@ -8,8 +8,8 @@ from typing import Callable
 import numpy as np
 import pytest
 
+from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
 from sktime.distances.base import MetricInfo, NumbaDistance
-from sktime.distances.distance import _METRIC_INFOS, pairwise_distance
 from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
