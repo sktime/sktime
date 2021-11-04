@@ -10,6 +10,7 @@ and methodologies described in the paper:
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
+from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
@@ -148,7 +149,7 @@ class SignatureClassifier(BaseClassifier):
         if self.estimator is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
         else:
-            classifier = self.estimator
+            classifier = _clone_estimator(self.estimator, self.random_state)
 
         # Main classification pipeline
         self.pipeline = Pipeline(
