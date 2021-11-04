@@ -318,7 +318,6 @@ def check_data_characteristics(X):
 
 
 
-
 @njit(cache=True, fastMath=True)
 def _has_nans(x: np.ndarray) -> bool:
     """Check whether an input numpy array has nans.
@@ -330,5 +329,18 @@ def _has_nans(x: np.ndarray) -> bool:
     -------
     True if x contains any NaNs, False otherwise.
     """
-    # 2D or 3D
+    # 2D
+    if x.ndim == 2:
+        for i in range(x.size[0]):
+            for j in range(x.size[1]):
+                if np.isnan([i][j]):
+                    return True
+    elif x.ndim == 3:
+        for i in range(x.size[0]):
+            for j in range(x.size[1]):
+                for k in range(x.size[2]):
+                    if np.isnan([i][j][k]):
+                        return True
+    else:
+        raise ValueError(f"Expected array of two or three dimensions, got {x.ndim}")
     return False
