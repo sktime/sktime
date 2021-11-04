@@ -81,6 +81,19 @@ class ElasticEnsemble(BaseClassifier):
               Data Mining and Knowledge Discovery, 29(3), 2015.
     https://link.springer.com/article/10.1007/s10618-014-0361-2
 
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ElasticEnsemble
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ElasticEnsemble(
+    ...     proportion_of_param_options=0.1,
+    ...     proportion_train_for_test=0.1,
+    ... )
+    >>> clf.fit(X_train, y_train)
+    ElasticEnsemble(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {

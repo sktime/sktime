@@ -767,6 +767,17 @@ class ProximityStump(BaseClassifier):
         get_gain: function to score the quality of a split
         verbosity: logging verbosity
         n_jobs: number of jobs to run in parallel *across threads"
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ProximityStump
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProximityStump()
+    >>> clf.fit(X_train, y_train)
+    ProximityStump(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -1028,6 +1039,17 @@ class ProximityTree(BaseClassifier):
         y: train data labels
         stump: the stump used to split data at this node
         branches: the partitions of data driven by the stump
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ProximityTree
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProximityTree()
+    >>> clf.fit(X_train, y_train)
+    ProximityTree(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -1272,6 +1294,16 @@ class ProximityForest(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/distance_based/proximity/ProximityForest.java
 
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ProximityForest
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProximityForest(n_estimators=5)
+    >>> clf.fit(X_train, y_train)
+    ProximityForest(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
