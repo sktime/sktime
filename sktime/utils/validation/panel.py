@@ -302,11 +302,13 @@ def check_data_characteristics(X):
 
     Returns
     -------
-    Dictionary? three booleans? array of booleans?
+    three booleans: missing, multivariate and unequal
     """
     if isinstance(X,np.ndarray):
         missing = _has_nans(X)
         multivariate = False
+        if x.ndim == 3 and x.shape[1]>1:
+            multivariate = True
         return missing, multivariate, False
     else:
         missing = False
