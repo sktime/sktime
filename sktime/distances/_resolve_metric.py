@@ -21,9 +21,9 @@ def _resolve_metric(
     ----------
     metric: str or Callable or NumbaDistance
         The distance metric to use.
-    x: np.ndarray (3d array)
+    x: np.ndarray (2d array)
         First timeseries.
-    y: np.ndarray (3d array)
+    y: np.ndarray (2d array)
         Second timeseries.
     known_metric_dict: List[MetricInfo]
         List of known distance functions.
@@ -53,7 +53,7 @@ def _resolve_metric(
         numba_dist_instance = _resolve_str_metric(metric, known_metric_dict)
     elif callable(metric):
         if _is_distance_factory_callable(metric):
-            metric = metric(x[0], y[0], **kwargs)
+            metric = metric(x, y, **kwargs)
         elif _is_no_python_distance_callable(metric):
             metric = metric
         else:
@@ -76,7 +76,7 @@ def _resolve_metric(
         )
 
     if numba_dist_instance is not None:
-        metric = numba_dist_instance.distance_factory(x[0], y[0], **kwargs)
+        metric = numba_dist_instance.distance_factory(x, y, **kwargs)
 
     return metric
 

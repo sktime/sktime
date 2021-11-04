@@ -196,26 +196,6 @@ def test_distance(dist: MetricInfo) -> None:
         expected_result=_expected_distance_results[name][2],
     )
 
-    _validate_distance_result(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][2],
-    )
-
-    _validate_distance_result(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][3],
-    )
-
 
 def test_metric_parameters():
     """Ensure different parameters can be passed to distance."""

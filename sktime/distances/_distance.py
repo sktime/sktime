@@ -12,7 +12,6 @@ from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._numba_utils import (
-    _compute_distance,
     _compute_pairwise_distance,
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
@@ -46,9 +45,9 @@ def erp_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -178,9 +177,9 @@ def edr_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -315,9 +314,9 @@ def lcss_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -369,6 +368,18 @@ def lcss_distance(
         where 0.0 means the two timeseries are exactly the same and 1.0 means they
         are complete opposites.
 
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+
     Examples
     --------
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
@@ -386,27 +397,6 @@ def lcss_distance(
            [13, 14, 15, 16]])
     >>> lcss_distance(x_2d, y_2d)
     1.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> lcss_distance(x_3d, y_3d)
-    1.0
-
-    Raises
-    ------
-    ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
-        If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
-        If a metric string provided, and is not a defined valid string.
-        If a metric object (instance of class) is provided and doesn't inherit from
-        NumbaDistance.
-        If the metric type cannot be determined
 
     References
     ----------
@@ -458,9 +448,9 @@ def wddtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -515,6 +505,19 @@ def wddtw_distance(
     float
         Wddtw distance between x and y.
 
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not an integer.
+        If the itakura_max_slope is not a float or int.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+        If the compute derivative callable is not no_python compiled.
+
     Examples
     --------
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
@@ -532,28 +535,6 @@ def wddtw_distance(
            [13, 14, 15, 16]])
     >>> wddtw_distance(x_2d, y_2d)
     0.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> wddtw_distance(x_3d, y_3d)
-    0.0
-
-    Raises
-    ------
-    ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
-        If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
-        If a metric string provided, and is not a defined valid string.
-        If a metric object (instance of class) is provided and doesn't inherit from
-        NumbaDistance.
-        If the metric type cannot be determined
-        If the compute derivative callable is not no_python compiled.
 
     References
     ----------
@@ -604,9 +585,9 @@ def wdtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -663,7 +644,7 @@ def wdtw_distance(
         If the sakoe_chiba_window_radius is not an integer.
         If the itakura_max_slope is not a float or int.
         If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
+        If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
@@ -686,15 +667,6 @@ def wdtw_distance(
            [13, 14, 15, 16]])
     >>> wdtw_distance(x_2d, y_2d)
     16.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> wdtw_distance(x_3d, y_3d)
-    22.67416...
 
     References
     ----------
@@ -743,9 +715,9 @@ def ddtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -802,7 +774,7 @@ def ddtw_distance(
         If the sakoe_chiba_window_radius is not an integer.
         If the itakura_max_slope is not a float or int.
         If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
+        If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
@@ -825,15 +797,6 @@ def ddtw_distance(
     array([[ 9, 10, 11, 12],
            [13, 14, 15, 16]])
     >>> ddtw_distance(x_2d, y_2d)
-    0.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> ddtw_distance(x_3d, y_3d)
     0.0
 
     References
@@ -880,9 +843,9 @@ def dtw_distance(
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
@@ -935,7 +898,7 @@ def dtw_distance(
         If the sakoe_chiba_window_radius is not an integer.
         If the itakura_max_slope is not a float or int.
         If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
+        If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
@@ -958,15 +921,6 @@ def dtw_distance(
     array([[ 9, 10, 11, 12],
            [13, 14, 15, 16]])
     >>> dtw_distance(x_2d, y_2d)
-    512.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> dtw_distance(x_3d, y_3d)
     512.0
 
     References
@@ -997,9 +951,9 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     kwargs: dict
         Extra kwargs. For squared there are none however, this is kept for
@@ -1009,6 +963,17 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
     -------
     float
         Squared distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
 
     Examples
     --------
@@ -1027,26 +992,6 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
            [13, 14, 15, 16]])
     >>> ddtw_distance(x_2d, y_2d)
     512.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> ddtw_distance(x_3d, y_3d)
-    512.0
-
-    Raises
-    ------
-    ValueError
-        If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
-        If a metric string provided, and is not a defined valid string.
-        If a metric object (instance of class) is provided and doesn't inherit from
-        NumbaDistance.
-        If a resolved metric is not no_python compiled.
-        If the metric type cannot be determined.
     """
     return distance(x, y, metric="squared", **kwargs)
 
@@ -1063,9 +1008,9 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     kwargs: dict
         Extra kwargs. For euclidean there are none however, this is kept for
@@ -1074,7 +1019,18 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
     Returns
     -------
     float
-        Euclidean distance between the two timeseries.
+        Euclidean distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
 
     Examples
     --------
@@ -1093,26 +1049,6 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
            [13, 14, 15, 16]])
     >>> ddtw_distance(x_2d, y_2d)
     22.67416...
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> ddtw_distance(x_3d, y_3d)
-    32.0
-
-    Raises
-    ------
-    ValueError
-        If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
-        If a metric string provided, and is not a defined valid string.
-        If a metric object (instance of class) is provided and doesn't inherit from
-        NumbaDistance.
-        If a resolved metric is not no_python compiled.
-        If the metric type cannot be determined.
     """
     return distance(x, y, metric="euclidean", **kwargs)
 
@@ -1132,15 +1068,15 @@ def distance(
 ) -> float:
     """Compute the distance between two timeseries.
 
-    This function works for 1d, 2d and 3d timeseries. No matter how many dimensions
-    passed, a single float will always be returned. If you want the distance between
-    each timeseries individually look at the pairwise_distance function instead.
+    First the distance metric is 'resolved'. This means the metric that is passed
+    is resolved to a callable. The callable is then called with x and y and the
+    value is then returned.
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2 array)
         Second timeseries.
     metric: str or Callable
         The distance metric to use.
@@ -1162,39 +1098,31 @@ def distance(
             Callable[[np.ndarray, np.ndarray], float]
         ]
     kwargs: dict
-        Arguments for metric. Refer to each metric documentation for a list of
+        Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
-
-    Returns
-    -------
-    float
-        Distance between the two timeseries.
 
     Raises
     ------
     ValueError
         If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
+        If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
+
+    Returns
+    -------
+    float
+        Distance between the x and y.
     """
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    _metric_callable = distance_factory(x, y, metric=metric, **kwargs)
+    _metric_callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
 
-    result = _compute_distance(_x, _y, _metric_callable)
-
-    # Used to make result between 0 and 1 for some distances
-    if (
-        _metric_callable.__name__ == "numba_edr_distance"
-        or _metric_callable.__name__ == "numba_lcss_distance"
-    ):
-        result = result / _x.shape[0]
-    return result
+    return _metric_callable(_x, _y)
 
 
 def distance_factory(
@@ -1212,13 +1140,11 @@ def distance_factory(
 ) -> DistanceCallable:
     """Create a no_python distance callable.
 
-    This function works for 1d, 2d and 3d timeseries.
-
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d, 2d or 3d array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     metric: str or Callable
         The distance metric to use.
@@ -1240,19 +1166,19 @@ def distance_factory(
             Callable[[np.ndarray, np.ndarray], float]
         ]
     kwargs: dict, optional
-        Extra arguments for metric. Refer to each metric documentation for a list of
+        Extra arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
 
     Returns
     -------
     Callable[[np.ndarray, np.ndarray], float]]
-        No_python compiled distance resolved from the metric input.
+        No_python compiled distance callable.
 
     Raises
     ------
     ValueError
         If the value of x or y provided is not a numpy array.
-        If the value of x or y has more than 3 dimensions.
+        If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
@@ -1280,8 +1206,10 @@ def pairwise_distance(
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two timeseries.
 
-    This function works for 1d, 2d and 3d timeseries. No matter the number of dimensions
-    passed a 2d array will always be returned.
+    First the distance metric is 'resolved'. This means the metric that is passed
+    is resolved to a callable. The callable is then called with x and y and the
+    value is then returned. Then for each combination of x and y, the distance between
+    the values are computed resulting in a 2d pairwise matrix.
 
     Parameters
     ----------
@@ -1332,7 +1260,7 @@ def pairwise_distance(
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
 
-    _metric_callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    _metric_callable = _resolve_metric(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
 

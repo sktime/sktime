@@ -7,36 +7,6 @@ from numba import njit, prange
 from sktime.distances.base import DistanceCallable
 
 
-def _compute_distance(
-    x: np.ndarray, y: np.ndarray, distance_callable: DistanceCallable
-) -> float:
-    """Compute distance between two 3d numpy array.
-
-    Parameters
-    ----------
-    x: np.ndarray (3d array)
-        First timeseries.
-    y: np.ndarray (3d array)
-        Second timeseries.
-    distance_callable: Callable[[np.ndarray, np.ndarray], float]
-        No_python distance callable to measure the distance between two 2d numpy
-        arrays.
-
-    Returns
-    -------
-    float
-        Distance between two timeseries.
-    """
-    loop_to = min(x.shape[0], y.shape[0])
-
-    total_distance = 0.0
-
-    for i in range(loop_to):
-        total_distance += distance_callable(x[i], y[i])
-
-    return total_distance
-
-
 @njit(cache=True)
 def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
     """Check a potential series being passed into pairwise.
@@ -175,8 +145,6 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
     elif num_dims == 3:
         shape = _x.shape
         _x = np.reshape(_x, (shape[0], shape[1], shape[2]))
-        # if shape.count(1) >= 2:
-        #     _x = np.reshape(_x, ())
     elif num_dims > 3:
         raise ValueError(
             "The matrix provided has more than 3 dimensions. This is not"
@@ -191,19 +159,19 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    x: np.ndarray (1d, 2d or 3d array)
+    x: np.ndarray (1d or 2d)
         A timeseries.
 
     Returns
     -------
-    np.ndarray (3d array)
-        3d array that is the formatted timeseries.
+    np.ndarray (2d array)
+        2d array that is the formatted timeseries.
 
     Raises
     ------
     ValueError
         If the value provided is not a numpy array
-        If the matrix provided is greater than 3 dimensions
+        If the matrix provided is greater than 2 dimensions
     """
     if not isinstance(x, np.ndarray):
         raise ValueError(
@@ -215,18 +183,11 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
     num_dims = _x.ndim
     if num_dims == 1:
         shape = _x.shape
-        _x = np.reshape(_x, (1, shape[0], 1))
-    elif num_dims == 2:
-        shape = _x.shape
-        _x = np.reshape(_x, (1, shape[0], shape[1]))
-    elif num_dims == 3:
-        shape = _x.shape
-        if shape[2] == 1:
-            _x = np.reshape(_x, (1, shape[0], shape[1]))
-    elif num_dims > 3:
+        _x = np.reshape(_x, (shape[0], 1))
+    elif num_dims > 2:
         raise ValueError(
-            "The matrix provided has more than 3 dimensions. This is not"
+            "The matrix provided has more than 2 dimensions. This is not"
             "supported. Please provide a matrix with less than "
-            "3 dimensions"
+            "2 dimensions"
         )
     return _x
