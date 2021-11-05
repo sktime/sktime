@@ -29,7 +29,7 @@ def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
     return _x
 
 
-@njit(cache=True, parallel=True)
+@njit(parallel=True)
 def _compute_pairwise_distance(
     x: np.ndarray, y: np.ndarray, symmetric: bool, distance_callable: DistanceCallable
 ) -> np.ndarray:

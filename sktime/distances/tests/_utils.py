@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import time
+from typing import Callable
+
 from sktime.datatypes import convert_to
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.series import _make_series
@@ -61,3 +64,16 @@ def _create_test_distances(n_instance, n_columns, n_timepoints, random_state=1):
         )
     else:
         return _make_series(n_timepoints, n_columns, random_state=random_state)
+
+
+def _time_distance(callable: Callable, average: int = 30, **kwargs):
+    for _ in range(3):
+        callable(**kwargs)
+
+    total = 0
+    for _ in range(average):
+        start = time.time()
+        callable(**kwargs)
+        total += time.time() - start
+
+    return total / average
