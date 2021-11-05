@@ -456,7 +456,8 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _set_oob_score_and_attributes(self, X, y):  # TODO - Implement this abstract method properly.
+    # TODO - Implement this abstract method properly.
+    def _set_oob_score_and_attributes(self, X, y):
         pass
 
     def _validate_y_class_weight(self, y):
