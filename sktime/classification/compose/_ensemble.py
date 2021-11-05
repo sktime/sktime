@@ -3,26 +3,25 @@
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
+import numbers
 from warnings import warn
 import numpy as np
-import numbers
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 
 from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble._forest import _generate_unsampled_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
-from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
@@ -190,25 +189,25 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     """
 
     def __init__(
-            self,
-            estimator=None,
-            n_estimators=100,
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            min_weight_fraction_leaf=0.0,
-            max_features=None,
-            max_leaf_nodes=None,
-            min_impurity_decrease=0.0,
-            min_impurity_split=None,
-            bootstrap=False,
-            oob_score=False,
-            n_jobs=None,
-            random_state=None,
-            verbose=0,
-            warm_start=False,
-            class_weight=None,
-            max_samples=None,
+        self,
+        estimator=None,
+        n_estimators=100,
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features=None,
+        max_leaf_nodes=None,
+        min_impurity_decrease=0.0,
+        min_impurity_split=None,
+        bootstrap=False,
+        oob_score=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+        class_weight=None,
+        max_samples=None,
     ):
 
         self.estimator = estimator

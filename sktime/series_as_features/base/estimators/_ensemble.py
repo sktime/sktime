@@ -8,6 +8,7 @@ __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
 from warnings import catch_warnings, simplefilter, warn
+
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
@@ -22,9 +23,8 @@ from sklearn.ensemble._forest import (
     _get_n_samples_bootstrap,
 )
 from sklearn.exceptions import DataConversionWarning
-from sklearn.utils import check_array
-from sklearn.utils import check_random_state
-from sklearn.utils import compute_sample_weight
+from sklearn.utils import check_array, check_random_state, compute_sample_weight
+
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
