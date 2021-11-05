@@ -58,19 +58,25 @@ class RandomIntervals(_PanelToTabularTransformer):
         _, n_dims, series_length = X.shape
 
         if self.transformers is None:
-            self._transformers = SummaryTransformer(
-                summary_function=("mean", "std", "min", "max"),
-                quantiles=(0.25, 0.5, 0.75),
-            )
+            self._transformers = [
+                SummaryTransformer(
+                    summary_function=("mean", "std", "min", "max"),
+                    quantiles=(0.25, 0.5, 0.75),
+                )
+            ]
 
         if not isinstance(self._transformers, list):
             self._transformers = [self._transformers]
 
         for i in range(len(self._transformers)):
-            self._transformers[i] = _clone_estimator(
-                self._transformers[i],
-                self.random_state,
+            li = []
+            li.append(
+                _clone_estimator(
+                    self._transformers[i],
+                    self.random_state,
+                )
             )
+            self._transformers = li
 
             m = getattr(self._transformers[i], "n_jobs", None)
             if m is not None:
@@ -120,7 +126,14 @@ class RandomIntervals(_PanelToTabularTransformer):
         for i in range(0, self.n_intervals):
             for j in range(len(self._transformers)):
                 t = self._transformers[j].fit_transform(
-                    X[:, self._dims[i], self._intervals[i][0] : self._intervals[i][1]],
+                    np.expand_dims(
+                        X[
+                            :,
+                            self._dims[i],
+                            self._intervals[i][0] : self._intervals[i][1],
+                        ],
+                        axis=1,
+                    ),
                     y,
                 )
 

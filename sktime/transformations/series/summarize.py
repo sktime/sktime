@@ -10,7 +10,6 @@ import pandas as pd
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.utils._maint import deprecated
-from sktime.utils.validation.series import check_series
 
 ALLOWED_SUM_FUNCS = [
     "mean",
@@ -175,25 +174,6 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
             summary_value = pd.DataFrame(summary_value)
 
         return summary_value.T
-
-    def transform(self, Z, X=None):
-        """Transform series.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            The series to transform.
-
-        Returns
-        -------
-        summary_value : pd.DataFrame
-            DataFrame where series are instances (rows) and calculated summary
-            values are treated as features (columns).
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        summary_value = self._transform(Z, X=X)
-        return summary_value
 
 
 class MeanTransformer(SummaryTransformer):
