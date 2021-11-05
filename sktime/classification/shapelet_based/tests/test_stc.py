@@ -29,7 +29,7 @@ def test_stc_on_unit_test_data():
 
     # assert probabilities are the same
     probas = stc.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, stc_unit_test_probas)
+    testing.assert_array_almost_equal(probas, stc_unit_test_probas, decimal=2)
 
     # test train estimate
     train_probas = stc._get_train_probs(X_train, y_train)
@@ -76,7 +76,7 @@ def test_stc_on_basic_motions():
 
     # assert probabilities are the same
     probas = stc.predict_proba(X_test.iloc[indices[:10]])
-    testing.assert_array_equal(probas, stc_basic_motions_probas)
+    testing.assert_array_almost_equal(probas, stc_basic_motions_probas, decimal=2)
 
 
 stc_unit_test_probas = np.array(
