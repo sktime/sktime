@@ -128,15 +128,6 @@ def erp_distance(
     >>> erp_distance(x_2d, y_2d)
     32.0
 
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> erp_distance(x_3d, y_3d)
-    32.0
-
     References
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
@@ -262,15 +253,6 @@ def edr_distance(
     array([[ 9, 10, 11, 12],
            [13, 14, 15, 16]])
     >>> edr_distance(x_2d, y_2d)
-    1.0
-
-    >>> x_3d = np.array([[[1, 2, 3, 4]], [[5, 6, 7, 8]]])  #3d array
-    array([[[1, 2, 3, 4]],
-           [[5, 6, 7, 8]]])
-    >>> y_3d = np.array([[[9, 10, 11, 12]], [[13, 14, 15, 16]]])  #3d array
-    array([[[ 9, 10, 11, 12]],
-           [[13, 14, 15, 16]]])
-    >>> edr_distance(x_3d, y_3d)
     1.0
 
     References
