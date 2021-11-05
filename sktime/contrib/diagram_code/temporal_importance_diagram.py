@@ -6,6 +6,7 @@ __author__ = ["Matthew Middlehurst"]
 import numpy as np
 from matplotlib import pyplot as plt
 
+from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel import catch22
 
 
@@ -50,6 +51,9 @@ def plot_curves(curves, curve_names, top_curves_shown=None, plot_mean=True):
 
 def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=True):
     """Temporal importance curve diagram generator for the CanonicalIntervalForest."""
+    if not isinstance(cif, CanonicalIntervalForest) or not cif._is_fitted:
+        raise ValueError("Input must be a fitted CanonicalIntervalForest classifier.")
+
     curves = cif._temporal_importance_curves(
         normalise_time_points=normalise_time_points
     )

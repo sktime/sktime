@@ -8,7 +8,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and anyone who has experienced discrimination in the past. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -83,7 +83,7 @@ guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rs
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed `here <contributors.md>`_.
+All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 .. _algorithm-maintainers:
 
@@ -136,7 +136,9 @@ Core developers are contributors who have shown that they are dedicated
 to the continued development of the project through ongoing engagement
 with the community.
 
-Current core developers are listed in :ref:`team`.
+Current core developers are listed in the `core-developers
+team <https://www.sktime.org/en/stable/about/team.html>`__
+within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-1:
 
@@ -157,6 +159,10 @@ Rights and responsibilities
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be a core developer.
 
 .. _appointment-1:
 
@@ -175,10 +181,26 @@ While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
 
-Core developers that have not contributed to the project (commits or
-GitHub comments) in the past 12 months will automatically become *inactive*
+End of tenure
+^^^^^^^^^^^^^
+
+Core developers can resign voluntarily at any point in time, by informing the CC in writing.
+
+Core developers that have not contributed to the project in the past
+one-year-period will automatically become *inactive*
 and give up their rights and responsibilities. When they become active
 again, they can retake their role without having to be appointed.
+
+Becoming inactive in the above sense means not contributing for the period via:
+
+* creating pull requests
+* commenting on pull requests or issues
+* attending one of the regular meetings
+
+Becoming active (after becoming inactive) in the above sense requires one of:
+
+* an approved pull request authored by the core developer
+* a contribution to the community that is minuted in one of the regular meetings
 
 .. _coc-committee-members:
 
@@ -186,7 +208,8 @@ CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
 CoC members are contributors with special rights and responsibilities.
-The current members of the CoC committee are listed in :ref:`team`.
+The current members of the CoC committee are listed in the
+`CoC <https://www.sktime.org/en/stable/about/team.html>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -198,6 +221,11 @@ incidents and enforcing the CoC.
 They are the point of contact for reporting potential CoC incidents.
 
 In addition, they are responsible for maintaining and improving the CoC.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be a CoC committee member.
 
 .. _appointment-2:
 
@@ -228,7 +256,9 @@ CC (community council) members are core developers with additional rights and
 responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
-Current CC members are listed in :ref:`team`.
+Current CC members are listed in the `community-council
+team <https://www.sktime.org/en/stable/about/team.html>`__
+within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-3:
 
@@ -247,6 +277,13 @@ Rights and responsibilities
    * - Project management
      - Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts)
 
+Eligibility
+^^^^^^^^^^^
+
+Only core developers are eligible for appointment as CC members.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointment vote
+concurrent with the 5 day discussion period (see below).
 
 .. _appointment-3:
 
@@ -264,10 +301,14 @@ stay open for 5 days excluding weekends. CC membership votes are subject to:
 The vote will take place in private communication channels and will be
 anonymous.
 
-To avoid deadlocks if there is an even number of CC members, one of them
-will have a tie breaking privilege.
+In case of ties, the CC member with shortest tenure breaks the tie.
 
-CC members who do not actively engage with the CC responsibilities are
+End of tenure
+^^^^^^^^^^^^^
+
+CC members can resign voluntarily at any point in time, by informing the CC in writing.
+
+CC members who do not actively engage with the responsibilities are
 expected to resign.
 
 Communications
@@ -275,7 +316,7 @@ Communications
 
 The CC has regular public meetings that the full community is welcome to attend.
 
-For more details about our meetings, please go to our `community-org repository <https://github.com/sktime/community-org/>`_.
+For more details about our meetings, please go to our `community-council repository <https://github.com/sktime/community-council/>`__.
 
 To contact the CC directly, please send an email to info@sktime.org.
 
@@ -317,11 +358,11 @@ corresponding decision making process is described in more detail below.
    * - Code changes and major documentation changes
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
-     - Lazy consensus based on an :ref:`steps`
+     - Lazy consensus, requires a :ref:`steps`
    * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus based on an :ref:`steps`
+     - Lazy consensus, requires a :ref:`steps`
    * - Appointment
-     - Voting
+     - Directly starts with voting (stage 2)
 
 .. _stage-1:
 
@@ -332,16 +373,31 @@ sktime uses a “consensus seeking” process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
--  To accept proposed changes, we require approval by one core developer
-   (lazy consensus) and no rejection by a core developer (veto right).
--  Approvals and rejections can be expressed as +1 and -1 comments,
-   respectively.
--  Core developers are expected to give reasonable time to others to
-   give their opinion on the pull request if they’re not confident
-   others would agree.
--  More important changes that impact the full project require a more
-   detailed analysis and a consensus that is both explicit and informed.
-   These changes require an :ref:`steps`.
+-  Proposed changes should be in the form of GitHub pull requests (PR).
+   Some changes also require a worked out :ref:`steps`. This depends on the type of change, see
+   `decision making process <#Decision-making>`__ above.
+-  For a proposed change to be approved via lazy consensus, it needs to
+   approval by at least one core developer (lazy consensus) and no rejection by a core developer (veto right).
+   The approval required for this condition must be by a core developer different from a proposer.
+-  For a proposed change to be rejected via lazy consensus, it needs to receive a
+   rejection by at least one core developer, and no acceptance by a core developer.
+-  Approvals must be in the form of a GitHub PR approval of the PR in question.
+   Rejections can be expressed as -1 comments, or any written comments
+   containing "I formally reject" in the PR, in reference to it.
+-  Proposers are expected to give reasonable time for consideration, that is,
+   time and opportunity for core developers to review and
+   give their opinion on the PR.
+   Ten working days excluding week-ends constitute "reasonable time" in the above sense.
+   The period resets at every new change made to the PR.
+   It starts only when all GitHub checks pass.
+-  During this period, the PR can be merged if it has an approval and no rejection, but should be
+   reverted if it receives a rejection in addition.
+-  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
+   the PR is scheduled at the top of agenda for the next developer meetup.
+   In that meeting, a core developer is assigned to review the PR and either approve or reject within five days of the meeting excluding weekends.
+
+Failure of lazy consensus, in the above sense, can arise only under the following condition:
+at least one approval and at least one rejection in the PR.
 
 When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 
@@ -350,20 +406,23 @@ When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 Stage 2: voting
 ~~~~~~~~~~~~~~~
 
-When no consensus can be found, any core developer can call for a vote
-at any point during the discussion.
+Voting takes place:
 
+* when no lazy consensus can be found in stage 1 above
+* for appointments
+
+-  The start of a voting period after stage 1 is at the moment the lazy consensus fails.
+-  Start and end time of the vote must be announced in the core developer channel, and on the PR (if on a PR).
 -  The vote will conclude 5 days excluding weekends from the call for the vote.
--  Votes are voluntary. Abstentions are allowed. You can
+-  Votes are voluntary. Abstentions are allowed. Core developers can
    abstain by simply not casting a vote.
--  All votes are a binary vote: for or against accepting the proposed
-   changes.
+-  All votes are a binary vote: for or against accepting the proposal.
 -  Votes are casts as comments: +1 (approval) or -1 (rejection).
 
 For all types of changes, except appointments, votes take place on the
 related public issue or pull request. The winning condition is a 2/3
-majority of the votes casts by core developers including CC members. If the
-proposed change cannot gather a 2/3 majority of the votes cast by core
+majority of the votes cast by core developers (including CC members) for the proposal.
+If the proposal cannot gather a 2/3 majority of the votes cast by core
 developers, the decision is escalated to the :ref:`stage-3`.
 
 For appointments, votes take place in private communication channels
@@ -381,10 +440,38 @@ If the proposed change cannot gather a 2/3 majority of the votes cast,
 the CC tries to resolve the deadlock.
 
 -  The CC will use consensus seeking.
--  If no consensus can be found within a month, the decision is made
-   through a simple majority vote (with tie breaking) among the CC
+-  If no consensus can be found within twenty working days excluding weekends
+   since the beginning of the stage-1 "reasonable time for consideration" period,
+   the decision is made through a simple majority vote (with tie breaking) among the CC
    members.
--  Any CC decision must be supported by an :ref:`steps`, which has been made public and discussed before the vote.
+-  Any proposal reaching stage 3 must be supported by an :ref:`steps`,
+   which has been made public at least 5 days, excluding weekends, before the vote.
+
+.. _steps:
+
+sktime enhancement proposal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sktime enhancement proposals (STEPs) are required for:
+
+* certain types of proposed changes, by default, see `decision making process <#Decision-making>`__
+* for all stage 3 decisions
+
+If a STEP is required by a vote, it must have been made public at least 5 working days (excluding week-ends) before that vote.
+
+A STEP is a consolidated document, with a concise
+problem statement, a clear description of the proposed solution and a
+comparison with alternative solutions, as outlined in our
+`template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
+
+A complete STEP must always include at least a high-level design for the proposed change,
+not just a wishlist of features.
+
+Usually, we collect and discuss proposals in sktime’s `repository for
+enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
+
+For smaller changes, such as punctual changes to the API or governance documents,
+the STEP can also be be part of an issue or pull request.
 
 .. _algorithm-inclusion-guidelines:
 
@@ -447,7 +534,8 @@ of contributions and are committed to recognising each of them fairly.
 
 We follow the `all-contributors <https://allcontributors.org>`__
 specification to recognise all contributors, including those that don’t
-contribute code. Please see our list of all contributors `here <contributors.md>`_.
+contribute code. Please see `our list of all
+contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 If you think, we’ve missed anything, please let us know or open a PR
 with the appropriate changes to

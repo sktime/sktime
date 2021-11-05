@@ -21,12 +21,13 @@ def test_tde_on_unit_test_data():
         max_ensemble_size=5,
         randomly_selected_params=5,
         random_state=0,
+        save_train_predictions=True,
     )
     tde.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = tde.predict_proba(X_test.iloc[indices]).round(6)
-    testing.assert_array_equal(probas, tde_unit_test_probas)
+    probas = tde.predict_proba(X_test.iloc[indices])
+    testing.assert_array_almost_equal(probas, tde_unit_test_probas, decimal=2)
 
     # test loocv train estimate
     train_probas = tde._get_train_probs(X_train, y_train)
@@ -76,8 +77,8 @@ def test_tde_on_basic_motions():
     tde.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = tde.predict_proba(X_test.iloc[indices]).round(6)
-    testing.assert_array_equal(probas, tde_basic_motions_probas)
+    probas = tde.predict_proba(X_test.iloc[indices])
+    testing.assert_array_almost_equal(probas, tde_basic_motions_probas, decimal=2)
 
 
 tde_unit_test_probas = np.array(
@@ -87,36 +88,36 @@ tde_unit_test_probas = np.array(
             1.0,
         ],
         [
-            0.492418,
-            0.507582,
+            0.49241837193506105,
+            0.5075816280649389,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.904333,
-            0.095667,
+            0.9043327688966699,
+            0.09566723110333018,
         ],
         [
-            0.801624,
-            0.198376,
+            0.8016244295841345,
+            0.19837557041586543,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            0.705957,
-            0.294043,
+            0.7059571984808044,
+            0.2940428015191956,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.801624,
-            0.198376,
+            0.8016244295841345,
+            0.19837557041586543,
         ],
         [
             1.0,
@@ -146,8 +147,8 @@ tde_basic_motions_probas = np.array(
         ],
         [
             0.0,
-            0.626119,
-            0.373881,
+            0.6261191124951343,
+            0.3738808875048657,
             0.0,
         ],
         [
@@ -163,10 +164,10 @@ tde_basic_motions_probas = np.array(
             1.0,
         ],
         [
-            0.747762,
+            0.7477617750097314,
             0.0,
             0.0,
-            0.252238,
+            0.25223822499026854,
         ],
         [
             0.0,
@@ -176,14 +177,14 @@ tde_basic_motions_probas = np.array(
         ],
         [
             0.0,
-            0.747762,
-            0.252238,
+            0.7477617750097314,
+            0.25223822499026854,
             0.0,
         ],
         [
             0.0,
-            0.747762,
-            0.252238,
+            0.7477617750097314,
+            0.25223822499026854,
             0.0,
         ],
     ]
@@ -214,7 +215,7 @@ tde_basic_motions_probas = np.array(
 #     )
 #
 #     tde_u.fit(X_train, y_train)
-#     probas = tde_u.predict_proba(X_test.iloc[indices]).round(6)
+#     probas = tde_u.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
@@ -229,5 +230,5 @@ tde_basic_motions_probas = np.array(
 #     )
 #
 #     tde_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = tde_m.predict_proba(X_test.iloc[indices]).round(6)
+#     probas = tde_m.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
