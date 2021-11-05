@@ -5,9 +5,9 @@ __all__ = ["ComposableTimeSeriesForestClassifier"]
 
 import numbers
 from warnings import warn
+
 import numpy as np
 from joblib import Parallel, delayed
-
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import (
     _generate_unsampled_indices,
@@ -17,6 +17,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
+
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
