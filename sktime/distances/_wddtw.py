@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Chris Holder"]
+__author__ = ["chrisholder"]
 
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 from numba import njit
@@ -28,7 +28,7 @@ class _WddtwDistance(NumbaDistance):
         bounding_matrix: np.ndarray = None,
         compute_derivative: DerivativeCallable = _average_of_slope,
         g: float = 0.0,
-        **kwargs: dict,
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled wddtw distance callable.
 
@@ -54,39 +54,36 @@ class _WddtwDistance(NumbaDistance):
         itakura_max_slope: float, defaults = 2.
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        custom_distance: str or Callable, defaults = squared
+        custom_distance: str or Callable, defaults = squared euclidean
             The distance metric to use.
-            If a string is given, see sktime/distances/distance/_distance.py for a
-            list of valid string values.
+            If a string is given, the value must be one of the following strings:
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
 
             If callable then it has to be a distance factory or numba distance callable.
             If you want to pass custom kwargs to the distance at runtime, use a distance
-            factory as it constructs the distance before distance computation.
+            factory as it constructs the distance using the kwargs before distance
+            computation.
             A distance callable takes the form (must be no_python compiled):
-            Callable[
-                [np.ndarray, np.ndarray],
-                float
-            ]
+            Callable[[np.ndarray, np.ndarray], float]
 
             A distance factory takes the form (must return a no_python callable):
-            Callable[
-                [np.ndarray, np.ndarray, bool, dict],
-                Callable[[np.ndarray, np.ndarray], float]
-            ]
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-            Custom bounding matrix to use. If defined then other lower bounding params
-            are ignored. The matrix should be structure so that indexes
-            considered in bound are the value 0. and indexes outside the bounding
-            matrix should be infinity.
+            Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+            np.ndarray], float]].
+        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                        defaults = None)
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
         compute_derivative: Callable[[np.ndarray], np.ndarray],
-                                defaults = average slope difference (see above)
+                                defaults = average slope difference
             Callable that computes the derivative. If none is provided the average of
             the slope between two points used.
         g: float, defaults = 0.
             Constant that controls the curvature (slope) of the function; that is, g
             controls the level of penalisation for the points with larger phase
             difference.
-        kwargs: dict
+        kwargs: Any
             Extra arguments for custom distances. See the documentation for the
             distance itself for valid kwargs.
 
@@ -103,13 +100,19 @@ class _WddtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
+            If the value of g is not a float
         """
         _bounding_matrix = resolve_bounding_matrix(
             x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
         )
 
+        if not isinstance(g, float):
+            raise ValueError(
+                f"The value of g must be a float. The current value is {g}"
+            )
+
         if not is_no_python_compiled_callable(compute_derivative):
-            raise (
+            raise ValueError(
                 f"The derivative callable must be no_python compiled. The name"
                 f"of the callable that must be compiled is "
                 f"{compute_derivative.__name__}"

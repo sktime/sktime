@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
-__all__ = ["_DdtwDistance"]
 
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import numpy as np
 from numba import njit
@@ -60,7 +59,7 @@ class _DdtwDistance(NumbaDistance):
         custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
         bounding_matrix: np.ndarray = None,
         compute_derivative: DerivativeCallable = _average_of_slope,
-        **kwargs: dict,
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled ddtw distance callable.
 
@@ -86,35 +85,32 @@ class _DdtwDistance(NumbaDistance):
         itakura_max_slope: float, defaults = 2.
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        custom_distance: str or Callable, defaults = squared
+        custom_distance: str or Callable, defaults = squared euclidean
             The distance metric to use.
-            If a string is given, see sktime/distances/distance/_distance.py for a
-            list of valid string values.
+            If a string is given, the value must be one of the following strings:
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
 
             If callable then it has to be a distance factory or numba distance callable.
             If you want to pass custom kwargs to the distance at runtime, use a distance
-            factory as it constructs the distance before distance computation.
+            factory as it constructs the distance using the kwargs before distance
+            computation.
             A distance callable takes the form (must be no_python compiled):
-            Callable[
-                [np.ndarray, np.ndarray],
-                float
-            ]
+            Callable[[np.ndarray, np.ndarray], float]
 
             A distance factory takes the form (must return a no_python callable):
-            Callable[
-                [np.ndarray, np.ndarray, bool, dict],
-                Callable[[np.ndarray, np.ndarray], float]
-            ]
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-            Custom bounding matrix to use. If defined then other lower bounding params
-            are ignored. The matrix should be structure so that indexes
-            considered in bound are the value 0. and indexes outside the bounding
-            matrix should be infinity.
+            Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+            np.ndarray], float]].
+        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                        defaults = None)
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
         compute_derivative: Callable[[np.ndarray], np.ndarray],
-                                defaults = average slope difference (see above)
+                                defaults = average slope difference
             Callable that computes the derivative. If none is provided the average of
             the slope between two points used.
-        kwargs: dict
+        kwargs: Any
             Extra arguments for custom distances. See the documentation for the
             distance itself for valid kwargs.
 

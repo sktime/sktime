@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import numpy as np
 from numba import njit
 
+from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._numba_utils import _compute_pairwise_distance
-from sktime.distances._squared import _SquaredDistance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
 
@@ -22,10 +22,10 @@ class _EdrDistance(NumbaDistance):
         lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
         window: int = 2,
         itakura_max_slope: float = 2.0,
-        custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+        custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
         bounding_matrix: np.ndarray = None,
-        epsilon: float = 0.5,
-        **kwargs: dict
+        epsilon: float = None,
+        **kwargs: Any
     ) -> DistanceCallable:
         """Create a no_python compiled edr distance callable.
 
@@ -51,36 +51,33 @@ class _EdrDistance(NumbaDistance):
         itakura_max_slope: float, defaults = 2.
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        custom_distance: str or Callable, defaults = squared
+        custom_distance: str or Callable, defaults = Euclidean
             The distance metric to use.
-            If a string is given, see sktime/distances/distance/_distance.py for a
-            list of valid string values.
+            If a string is given, the value must be one of the following strings:
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
 
             If callable then it has to be a distance factory or numba distance callable.
             If you want to pass custom kwargs to the distance at runtime, use a distance
-            factory as it constructs the distance before distance computation.
+            factory as it constructs the distance using the kwargs before distance
+            computation.
             A distance callable takes the form (must be no_python compiled):
-            Callable[
-                [np.ndarray, np.ndarray],
-                float
-            ]
+            Callable[[np.ndarray, np.ndarray], float]
 
             A distance factory takes the form (must return a no_python callable):
-            Callable[
-                [np.ndarray, np.ndarray, bool, dict],
-                Callable[[np.ndarray, np.ndarray], float]
-            ]
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-            Custom bounding matrix to use. If defined then other lower bounding params
-            are ignored. The matrix should be structure so that indexes
-            considered in bound are the value 0. and indexes outside the bounding
-            matrix should be infinity.
-        epsilon : float, defaults = 0.5
-            Matching threshold to determine if distance between two subsequences are
-            considered similar (similar if distance less than the threshold).
-        kwargs: dict
-            Extra arguments for custom distances. See the documentation for the
-            distance itself for valid kwargs.
+            Callable[[np.ndarray, np.ndarray, bool, dict],
+                Callable[[np.ndarray, np.ndarray], float]]
+        bounding_matrix: np.ndarray (2d array)
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
+        epsilon : float, defaults = None
+            Matching threshold to determine if two subsequences are considered close
+            enough to be considered 'common'. If not specified as per the original paper
+            epsilon is set to a quarter of the maximum standard deviation.
+        kwargs: Any
+            Extra arguments for custom distance should be put in the kwargs. See the
+            documentation for the distance for kwargs.
 
         Returns
         -------
@@ -100,7 +97,7 @@ class _EdrDistance(NumbaDistance):
             x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
         )
 
-        if not isinstance(epsilon, float):
+        if epsilon is not None and not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
         # This needs to be here as potential distances only known at runtime not
@@ -110,10 +107,8 @@ class _EdrDistance(NumbaDistance):
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
         @njit(fastmath=True)
-        def numba_edr_distance(
-            _x: np.ndarray,
-            _y: np.ndarray,
-        ) -> float:
+        def numba_edr_distance(_x: np.ndarray, _y: np.ndarray) -> float:
+            # Set epsilon to a quarter of the maximum of the standard deviation
             return _numba_edr_distance(
                 _x, _y, _custom_distance, _bounding_matrix, epsilon
             )
@@ -152,8 +147,13 @@ def _numba_edr_distance(
     float
         Edr between two timeseries.
     """
-    symmetric = np.array_equal(x, y)
-    pre_computed_distances = _compute_pairwise_distance(x, y, symmetric, distance)
+    if epsilon is None:
+        epsilon = max(np.std(x), np.std(y)) / 4
+
+    if np.array_equal(x, y) is True:  # If same return 0.
+        return 0.0
+
+    pre_computed_distances = _compute_pairwise_distance(x, y, False, distance)
 
     cost_matrix = _edr_cost_matrix(
         x, y, bounding_matrix, pre_computed_distances, epsilon

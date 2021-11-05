@@ -33,7 +33,7 @@ def erp_distance(
     custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     g: float = 0.0,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real penalty (erp) distance between two series.
 
@@ -65,7 +65,7 @@ def erp_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -78,9 +78,10 @@ def erp_distance(
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[[np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]]
-    bounding_matrix: np.ndarray (2d array)
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None)
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -107,6 +108,7 @@ def erp_distance(
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
         If the metric type cannot be determined
+        If g is not a float.
 
     Examples
     --------
@@ -160,9 +162,9 @@ def edr_distance(
     lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
     window: int = 2,
     itakura_max_slope: float = 2.0,
-    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
-    epsilon: float = 1.0,
+    epsilon: float = None,
     **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real sequences (edr) between two series.
@@ -197,7 +199,7 @@ def edr_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -217,9 +219,10 @@ def edr_distance(
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
         infinity.
-    epsilon : float, defaults = 1.
+    epsilon : float, defaults = None
         Matching threshold to determine if two subsequences are considered close
-        enough to be considered 'common'.
+        enough to be considered 'common'. If not specified as per the original paper
+        epsilon is set to a quarter of the maximum standard deviation.
     kwargs: Any
         Extra arguments for custom distance should be put in the kwargs. See the
         documentation for the distance for kwargs.
@@ -297,7 +300,7 @@ def lcss_distance(
     lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
     window: int = 2,
     itakura_max_slope: float = 2.0,
-    custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
+    custom_distance: DistanceCallable = _EuclideanDistance().distance_factory,
     bounding_matrix: np.ndarray = None,
     epsilon: float = 1.0,
     **kwargs: Any,
@@ -334,7 +337,7 @@ def lcss_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -347,9 +350,10 @@ def lcss_distance(
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[[np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]]
-    bounding_matrix: np.ndarray (2d array)
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None)
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -468,7 +472,7 @@ def wddtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = squared euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -481,15 +485,16 @@ def wddtw_distance(
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[[np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]]
-    bounding_matrix: np.ndarray (2d array)
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None)
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
         infinity.
     compute_derivative: Callable[[np.ndarray], np.ndarray],
-                            defaults = average slope difference (see above)
+                            defaults = average slope difference
         Callable that computes the derivative. If none is provided the average of the
         slope between two points used.
     g: float, defaults = 0.
@@ -517,6 +522,7 @@ def wddtw_distance(
         NumbaDistance.
         If the metric type cannot be determined
         If the compute derivative callable is not no_python compiled.
+        If the value of g is not a float
 
     Examples
     --------
@@ -605,7 +611,7 @@ def wdtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = squared euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -618,9 +624,10 @@ def wdtw_distance(
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[[np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]]
-    bounding_matrix: np.ndarray (2d array)
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None)
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -630,8 +637,8 @@ def wdtw_distance(
         controls the level of penalisation for the points with larger phase
         difference.
     kwargs: Any
-        Extra arguments for custom distance should be put in the kwargs. See the
-        documentation for the distance for kwargs.
+        Extra arguments for custom distances. See the documentation for the
+        distance itself for valid kwargs.
 
     Returns
     -------
@@ -735,7 +742,7 @@ def ddtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = squared euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -748,20 +755,21 @@ def ddtw_distance(
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[[np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]]
-    bounding_matrix: np.ndarray (2d array)
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None)
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
         infinity.
     compute_derivative: Callable[[np.ndarray], np.ndarray],
-                            defaults = average slope difference (see above)
+                            defaults = average slope difference
         Callable that computes the derivative. If none is provided the average of the
         slope between two points used.
     kwargs: Any
-        Extra arguments for custom distance should be put in the kwargs. See the
-        documentation for the distance for kwargs.
+        Extra arguments for custom distances. See the documentation for the
+        distance itself for valid kwargs.
 
     Returns
     -------
@@ -780,6 +788,7 @@ def ddtw_distance(
         NumbaDistance.
         If a resolved metric or compute derivative callable is not no_python compiled.
         If the metric type cannot be determined
+        If the compute derivative callable is not no_python compiled.
 
     Examples
     --------
@@ -863,7 +872,7 @@ def dtw_distance(
     itakura_max_slope: float, defaults = 2.
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    custom_distance: str or Callable
+    custom_distance: str or Callable, defaults = squared euclidean
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -876,9 +885,10 @@ def dtw_distance(
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[[np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]]
-    bounding_matrix: np.ndarray (2d array)
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None)
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -1087,16 +1097,11 @@ def distance(
         If you want to pass custom kwargs to the distance at runtime, use a distance
         factory as it constructs the distance before distance computation.
         A distance callable takes the form (must be no_python compiled):
-        Callable[
-            [np.ndarray, np.ndarray],
-            float
-        ]
+        Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[
-            [np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]
-        ]
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]]
     kwargs: Any
         Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
