@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Configurable time series ensembles
-"""
+"""Configurable time series ensembles."""
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
@@ -310,16 +308,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     def predict(self, X):
         """
         Predict class for X.
+
         The predicted class of an input sample is a vote by the trees in
         the forest, weighted by their probability estimates. That is,
         the predicted class is the one with highest mean probability
         estimate across the trees.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -346,15 +347,18 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     def predict_log_proba(self, X):
         """
         Predict class log-probabilities for X.
+
         The predicted class log-probabilities of an input sample is computed as
         the log of the mean predicted class probabilities of the trees in the
         forest.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         p : array of shape (n_samples, n_classes), or a list of n_outputs
@@ -375,17 +379,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
+
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
         class probability of a single tree is the fraction of samples of the
-        same
-        class in a leaf.
+        same class in a leaf.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
@@ -409,7 +415,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
     def _set_oob_score(self, X, y):
-        """Compute out-of-bag score"""
+        """Compute out-of-bag score."""
         check_X_y(X, y)
         check_X(X, enforce_univariate=True)
 
