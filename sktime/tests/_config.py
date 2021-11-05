@@ -30,7 +30,9 @@ from sktime.classification.dictionary_based import (
 from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,
+    RandomIntervalClassifier,
     SignatureClassifier,
+    SummaryClassifier,
     TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
@@ -93,6 +95,7 @@ from sktime.transformations.panel.compose import (
 )
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
+from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.shapelets import (
@@ -294,6 +297,16 @@ ESTIMATOR_TEST_PARAMS = {
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
+    },
+    RandomIntervals: {
+        "n_intervals": 3,
+    },
+    RandomIntervalClassifier: {
+        "n_intervals": 3,
+        "estimator": RandomForestClassifier(n_estimators=3),
+    },
+    SummaryClassifier: {
+        "estimator": RandomForestClassifier(n_estimators=3),
     },
     ROCKETClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
