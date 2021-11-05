@@ -195,7 +195,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             self,
             estimator=None,
             n_estimators=100,
-            # criterion="entropy", # TODO - Check if this can be removed permanently.
             max_depth=None,
             min_samples_split=2,
             min_samples_leaf=1,
@@ -218,7 +217,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
-        # self.criterion = criterion # TODO - Check if this can be removed permanently.
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -291,7 +289,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Set parameters according to naming in pipeline
         estimator_params = {
-            # "criterion": self.criterion, # TODO - Check if this can be removed permanently.
             "max_depth": self.max_depth,
             "min_samples_split": self.min_samples_split,
             "min_samples_leaf": self.min_samples_leaf,
@@ -299,7 +296,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_features": self.max_features,
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
-            # "min_impurity_split": self.min_impurity_split, # TODO - Check if this can be removed permanently.
         }
         final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {
