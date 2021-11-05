@@ -192,33 +192,33 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     """
 
     def __init__(
-        self,
-        estimator=None,
-        n_estimators=100,
-        criterion="entropy",
-        max_depth=None,
-        min_samples_split=2,
-        min_samples_leaf=1,
-        min_weight_fraction_leaf=0.0,
-        max_features=None,
-        max_leaf_nodes=None,
-        min_impurity_decrease=0.0,
-        min_impurity_split=None,
-        bootstrap=False,
-        oob_score=False,
-        n_jobs=None,
-        random_state=None,
-        verbose=0,
-        warm_start=False,
-        class_weight=None,
-        max_samples=None,
+            self,
+            estimator=None,
+            n_estimators=100,
+            # criterion="entropy", # TODO - Check if this can be removed permanently.
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.0,
+            max_features=None,
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.0,
+            min_impurity_split=None,
+            bootstrap=False,
+            oob_score=False,
+            n_jobs=None,
+            random_state=None,
+            verbose=0,
+            warm_start=False,
+            class_weight=None,
+            max_samples=None,
     ):
 
         self.estimator = estimator
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
-        self.criterion = criterion
+        # self.criterion = criterion # TODO - Check if this can be removed permanently.
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -291,7 +291,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Set parameters according to naming in pipeline
         estimator_params = {
-            "criterion": self.criterion,
+            # "criterion": self.criterion, # TODO - Check if this can be removed permanently.
             "max_depth": self.max_depth,
             "min_samples_split": self.min_samples_split,
             "min_samples_leaf": self.min_samples_leaf,
@@ -299,7 +299,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_features": self.max_features,
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
-            "min_impurity_split": self.min_impurity_split,
+            # "min_impurity_split": self.min_impurity_split, # TODO - Check if this can be removed permanently.
         }
         final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {
@@ -460,7 +460,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y):  # TODO - Implement this abstract method properly.
         pass
 
     def _validate_y_class_weight(self, y):

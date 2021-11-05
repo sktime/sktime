@@ -1,7 +1,7 @@
 import unittest
 
 
-def test_tsf_instantiable():
+def test_tsf():
     import numpy as np
 
     from sklearn.model_selection import train_test_split
@@ -34,20 +34,18 @@ def test_tsf_instantiable():
     tsf = ComposableTimeSeriesForestClassifier(
         estimator=time_series_tree,
         n_estimators=100,
-        criterion="entropy",
+        # criterion="entropy", # TODO - Check if this can be removed permanently.
         bootstrap=True,
         oob_score=True,
         random_state=1,
         n_jobs=-1
     )
 
-    print(tsf.estimator.get_params().keys())
-
     # Fit and obtain oob score
     tsf.fit(x_train, y_train)
 
     if tsf.oob_score:
-        print(tsf.oob_score)
+        print(tsf.oob_score_)
 
 
 if __name__ == '__main__':
