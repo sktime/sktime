@@ -7,30 +7,25 @@ __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
-from warnings import catch_warnings
-from warnings import simplefilter
-from warnings import warn
-
+from warnings import catch_warnings, simplefilter, warn
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
-from sklearn.ensemble._forest import BaseForest
-from sklearn.ensemble._forest import MAX_INT
-from sklearn.ensemble._forest import _generate_sample_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
+from sklearn.ensemble._forest import (
+    MAX_INT,
+    BaseForest,
+    _generate_sample_indices,
+    _get_n_samples_bootstrap,
+)
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
 
