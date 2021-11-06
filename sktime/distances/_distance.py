@@ -1246,29 +1246,33 @@ def pairwise_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
-    [[64.]]
+    array([[64.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw')
-    [[256., 576.], [58., 256.]]
+    array([[256., 576.],
+           [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
-    >>> pairwise_distance(x_3d, y_3d)
-    [[256., 576.], [58., 256.]]
+    >>> pairwise_distance(x_3d, y_3d, metric='dtw')
+    array([[256., 576.],
+           [ 58., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
-    [[256., 576.], [58., 256.]]
+    array([[256., 576.],
+           [ 58., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw',
                     lower_bounding=LowerBounding.ITAKURA_PARALLELOGRAM,
                     itakura_max_slope=4.)
-    [[256., 576.], [58., 256.]]
+    array([[256., 576.],
+           [ 58., 256.]])
     """
     _x = to_numba_pairwise_timeseries(x)
     _y = to_numba_pairwise_timeseries(y)
