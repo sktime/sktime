@@ -29,11 +29,17 @@ import numpy as np
 import time
 
 from sktime.base import BaseEstimator
+from sktime.datatypes._panel._convert import(
+    from_3d_numpy_to_nested,
+    from_nested_to_3d_numpy,
+)
+from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import (
     check_X,
     check_X_y,
     check_classifier_input,
+    get_data_characteristics,
 )
 
 
@@ -92,7 +98,9 @@ class BaseClassifier(BaseEstimator):
         allow_multivariate = self.get_tag("capability:multivariate")
 
         check_classifier_input(X)
-
+        missing, multivariate, unequal = get_data_characteristics(X)
+        check_capabilities(self, missing, multivariate, unequal)
+        #convert X and y if necessary, only if equal length
         X, y = check_X_y(
             X,
             y,
@@ -277,3 +285,72 @@ class BaseClassifier(BaseEstimator):
             dists[i, self._class_dictionary[preds[i]]] = 1
 
         return dists
+
+
+def check_capabilities(self, missing, multivariate, unequal):
+    """Check wether this classifier can handle the data characteristics.
+    Attributes
+    ----------
+    missing : boolean, does the data passed to fit contain missing values?
+    multivariate : boolean, does the data passed to fit contain missing values?
+    unequal : boolea, do the time series passed to fit have variable lengths?
+
+    Raises
+    ------
+    ValueError if the capabilities in self._tags do not handle the data.
+
+    """
+    allow_multivariate = self.get_tag("capability:multivariate")
+    allow_missing = self.get_tag("capability:missing_values")
+    allow_unequal = self.get_tag("capability:missing_values")
+    if missing and not allow_missing:
+        raise ValueError("The data has missing values, this classifier cannot handle "
+                         "missing values")
+    if multivariate and not allow_multivariate:
+        raise ValueError("The data is multivariate, this classifier cannot handle "
+                         "multivariate time serries")
+    if unequal and not allow_unequal:
+        raise ValueError("The data has unequal length series, this classifier cannot "
+                         "handle unequal length series")
+
+
+def convert_data(self, X):
+    """Convert equal length series from pandas to numpy or vice versa.
+
+    Parameters
+    ----------
+    self : this classifier
+    X : pd.DataFrame or np.array
+        Input data
+
+    Returns
+    -------
+    X : pd.DataFrame or np.array
+        Checked and possibly converted input data
+
+    Raises
+    ------
+    ValueError
+        If X is invalid input data
+    """
+    convert_to_numpy = self.get_tag("coerce-X-to-numpy")
+    convert_to_pandas = self.get_tag("coerce-X-to-pandas")
+    if convert_to_numpy and convert_to_pandas:
+        raise ValueError("Tag error: cannot set both coerce-X-to-numpy and "
+                         "coerce-X-to-pandas to be true.")
+    # check pd.DataFrame
+    if isinstance(X, pd.DataFrame):
+        if not is_nested_dataframe(X):
+            raise ValueError(
+                "If passed as a pd.DataFrame, X must be a nested "
+                "pd.DataFrame, with pd.Series or np.arrays inside cells."
+            )
+        # convert pd.DataFrame
+        if convert_to_numpy:
+            X = from_nested_to_3d_numpy(X)
+    # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
+    # simply convert back to 2D. This squashing should be done here, but touches a
+    # lot of files, so will get this to work first.
+    elsif isinstance(X,np.ndarray) and X.dims == 2:
+        X=X
+    return X

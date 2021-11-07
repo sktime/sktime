@@ -7,6 +7,7 @@ __all__ = [
     "check_y",
     "check_X_y",
     "check_classifier_input",
+    "get_data_characteristics",
 ]
 
 import numpy as np
@@ -283,7 +284,7 @@ def check_classifier_input(
         )
 
 
-def check_data_characteristics(X):
+def get_data_characteristics(X):
     """Query the data to find its characteristics for classifier capability check.
 
     This is for checking array input where we assume series are equal length.
@@ -302,22 +303,70 @@ def check_data_characteristics(X):
 
     Returns
     -------
-    three booleans: missing, multivariate and unequal
+    three boolean data characteristics: missing, multivariate and unequal
     """
-    if isinstance(X,np.ndarray):
+    if isinstance(X, np.ndarray):
         missing = _has_nans(X)
-        multivariate = False
-        if x.ndim == 3 and x.shape[1]>1:
+        if X.ndim == 3 and X.shape[1] > 1:
             multivariate = True
+        else:
+            multivariate = False
         return missing, multivariate, False
     else:
-        missing = False
-        multivariate = False
-        unequal = False
+        missing = _pandas_has_nans(X)
+        cols = len(X.columns)
+        if cols > 1:
+            multivariate = True
+        else:
+            multivariate = False
+        unequal = _pandas_has_unequal(X)
         return missing, multivariate, unequal
 
 
+def _pandas_has_unequal(X: pd.DataFrame) -> bool:
+    """Check whether an input pandas of Series has unequal length series.
 
+    Arguments
+    ---------
+    X : pd.DataFrame where each cell is a pd.Series
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    rows = len(X)
+    cols = len(X.columns)
+    s = X[0][0]
+    length = len(s)
+
+    for i in range(0, rows):
+        for j in range(0, cols):
+            s = X[i][j]
+            l = len(s)
+            if l is not length:
+                return True
+    return False
+
+
+def _pandas_has_nans(X: pd.DataFrame) -> bool:
+    """Check whether an input pandas of Series has nans.
+    Arguments
+    ---------
+    X : pd.DataFrame where each cell is a pd.Series
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    rows = len(X)
+    cols = len(X.columns)
+    for i in range(0, rows):
+        for j in range(0, cols):
+            s = X[i][j]
+            for k in range(0, s.size):
+                if pd.isna(s[k]):
+                    return True
+    return False
 
 
 @njit(cache=True, fastMath=True)
