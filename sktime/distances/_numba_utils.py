@@ -2,7 +2,7 @@
 from typing import Callable
 
 import numpy as np
-from numba import njit, prange
+from numba import njit
 
 from sktime.distances.base import DistanceCallable
 
@@ -29,7 +29,7 @@ def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
     return _x
 
 
-@njit(parallel=True)
+@njit()
 def _compute_pairwise_distance(
     x: np.ndarray, y: np.ndarray, symmetric: bool, distance_callable: DistanceCallable
 ) -> np.ndarray:
@@ -64,7 +64,7 @@ def _compute_pairwise_distance(
     for i in range(x_size):
         curr_x = _x[i]
 
-        for j in prange(y_size):
+        for j in range(y_size):
             if symmetric and j < i:
                 pairwise_matrix[i, j] = pairwise_matrix[j, i]
             else:
