@@ -348,9 +348,11 @@ def convert_data(self, X):
         # convert pd.DataFrame
         if convert_to_numpy:
             X = from_nested_to_3d_numpy(X)
+    elsif isinstance(X,np.ndarray):
     # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
     # simply convert back to 2D. This squashing should be done here, but touches a
     # lot of files, so will get this to work first.
-    elsif isinstance(X,np.ndarray) and X.dims == 2:
+        if X.ndims == 2:
+
         X=X
     return X
