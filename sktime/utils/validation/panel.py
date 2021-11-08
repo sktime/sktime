@@ -16,7 +16,7 @@ from numba import njit
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.datatypes._panel._convert import(
+from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
 )
