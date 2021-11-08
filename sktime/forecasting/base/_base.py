@@ -811,7 +811,10 @@ class BaseForecaster(BaseEstimator):
                 self._y = np.concatenate(self._y, y)
             #  if y is pandas, we use combine_first to update
             elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
-                self._y = y
+                if self._is_fitted:
+                    self._y = y.combine_first(self._y)
+                else:
+                    self._y = y
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
@@ -827,7 +830,10 @@ class BaseForecaster(BaseEstimator):
                 self._X = np.concatenate(self._X, X)
             #  if X is pandas, we use combine_first to update
             elif isinstance(X, (pd.Series, pd.DataFrame)) and len(X) > 0:
-                self._X = X.combine_first(self._X)
+                if self._is_fitted:
+                    self._X = X.combine_first(self._X)
+                else:
+                    self._X = X
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
