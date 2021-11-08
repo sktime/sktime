@@ -212,7 +212,7 @@ def _enforce_min_instances(x, min_instances=1):
 
 def check_classifier_input(
         X,
-        y,
+        y = None,
         enforce_min_instances=1,
         enforce_min_series_length=1,
 ):
@@ -233,21 +233,13 @@ def check_classifier_input(
     ValueError
         If y or X is invalid input data type, or there is not enough data
     """
-    # Check y
-    if not isinstance(y, (pd.Series, np.ndarray)):
-        raise ValueError(
-            f"y must be a np.array or a pd.Series, "
-            f"but found type: {type(y)}"
-        )
     # Check X
     if not isinstance(X, (pd.DataFrame, np.ndarray)):
         raise ValueError(
             f"X must be either a pd.DataFrame or a np.ndarray, "
             f"but found type: {type(X)}"
         )
-    # Check size of X and y match and minimum data input
     n_cases = X.shape[0]
-    n_labels = y.shape[0]
     if isinstance(X, np.ndarray):
         if not (X.ndim is 2 or X.ndim is 3):
             raise ValueError(
@@ -266,7 +258,6 @@ def check_classifier_input(
                 f" {X.shape[2]}"
                 f"but the minimum is  {enforce_min_series_length}"
             )
-
     else:
         if X.shape[1] is 0:
             raise ValueError(
@@ -277,11 +268,31 @@ def check_classifier_input(
             f"Minimum number of cases required is {enforce_min_instances} but X "
             f"has : {n_cases}"
         )
-    if n_cases != n_labels:
-        raise ValueError(
-            f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
-            f"{n_labels}"
-        )
+    if isinstance(X, pd.DataFrame):
+        if not is_nested_dataframe(X):
+            raise ValueError(
+                "If passed as a pd.DataFrame, X must be a nested "
+                "pd.DataFrame, with pd.Series or np.arrays inside cells."
+            )
+    #Check y if passed
+    if y is not None:
+        n_labels = y.shape[0]
+        # Check y valid input and has no missing values
+        if not isinstance(y, (pd.Series, np.ndarray)):
+            raise ValueError(
+                f"y must be a np.array or a pd.Series, "
+                f"but found type: {type(y)}"
+            )
+        if isinstance(y, np.ndarray):
+            if np.isnan(y).any():
+                raise ValueError(
+                    f"y contains missing values, this is not allowed for classification."
+                )
+        if n_cases != n_labels:
+            raise ValueError(
+                f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
+                f"{n_labels}"
+            )
 
 
 def get_data_characteristics(X):

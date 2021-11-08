@@ -26,6 +26,7 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import numpy as np
+import pandas as pd
 import time
 
 from sktime.base import BaseEstimator
@@ -36,8 +37,6 @@ from sktime.datatypes._panel._convert import(
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import (
-    check_X,
-    check_X_y,
     check_classifier_input,
     get_data_characteristics,
 )
@@ -93,21 +92,15 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         start = int(round(time.time() * 1000))
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
-        allow_multivariate = self.get_tag("capability:multivariate")
-
-        check_classifier_input(X)
+        #Check the data is either numpy arrays or pandas dataframes
+        #TODO: add parameters for min instances and min length
+        check_classifier_input(X, y)
+        #Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
+        #Check this classifier can handle characteristics
         check_capabilities(self, missing, multivariate, unequal)
-        #convert X and y if necessary, only if equal length
-        X, y = check_X_y(
-            X,
-            y,
-            coerce_to_numpy=coerce_to_numpy,
-            coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=not allow_multivariate,
-        )
+        #Convert data as dictated by the classifier tags
+        X, y = convert_input(self, X, y)
 
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -149,15 +142,15 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
 
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
-        allow_multivariate = self.get_tag("capability:multivariate")
-        X = check_X(
-            X,
-            coerce_to_numpy=coerce_to_numpy,
-            coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=not allow_multivariate,
-        )
+        #Check the data is either numpy arrays or pandas dataframes
+        #TODO: add parameters for min instances and min length
+        check_classifier_input(X)
+        #Query the data for characteristics
+        missing, multivariate, unequal = get_data_characteristics(X)
+        #Check this classifier can handle characteristics
+        check_capabilities(self, missing, multivariate, unequal)
+        #Convert data as dictated by the classifier tags
+        X, y = convert_input(self, X, y)
 
         return self._predict(X)
 
@@ -180,15 +173,15 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
 
-        coerce_to_numpy = self.get_tag("coerce-X-to-numpy")
-        coerce_to_pandas = self.get_tag("coerce-X-to-pandas")
-        allow_multivariate = self.get_tag("capability:multivariate")
-        X = check_X(
-            X,
-            coerce_to_numpy=coerce_to_numpy,
-            coerce_to_pandas=coerce_to_pandas,
-            enforce_univariate=not allow_multivariate,
-        )
+        #Check the data is either numpy arrays or pandas dataframes
+        #TODO: add parameters for min instances and min length
+        check_classifier_input(X)
+        #Query the data for characteristics
+        missing, multivariate, unequal = get_data_characteristics(X)
+        #Check this classifier can handle characteristics
+        check_capabilities(self, missing, multivariate, unequal)
+        #Convert data as dictated by the classifier tags
+        X, y = convert_input(self, X, y)
 
         return self._predict_proba(X)
 
@@ -314,7 +307,7 @@ def check_capabilities(self, missing, multivariate, unequal):
                          "handle unequal length series")
 
 
-def convert_data(self, X):
+def convert_input(self, X, y):
     """Convert equal length series from pandas to numpy or vice versa.
 
     Parameters
@@ -327,32 +320,24 @@ def convert_data(self, X):
     -------
     X : pd.DataFrame or np.array
         Checked and possibly converted input data
-
-    Raises
-    ------
-    ValueError
-        If X is invalid input data
     """
     convert_to_numpy = self.get_tag("coerce-X-to-numpy")
     convert_to_pandas = self.get_tag("coerce-X-to-pandas")
     if convert_to_numpy and convert_to_pandas:
         raise ValueError("Tag error: cannot set both coerce-X-to-numpy and "
                          "coerce-X-to-pandas to be true.")
-    # check pd.DataFrame
-    if isinstance(X, pd.DataFrame):
-        if not is_nested_dataframe(X):
-            raise ValueError(
-                "If passed as a pd.DataFrame, X must be a nested "
-                "pd.DataFrame, with pd.Series or np.arrays inside cells."
-            )
-        # convert pd.DataFrame
-        if convert_to_numpy:
+    # convert pd.DataFrame
+    if convert_to_numpy:
+        if isinstance(X, pd.DataFrame):
             X = from_nested_to_3d_numpy(X)
-    elsif isinstance(X,np.ndarray):
-    # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
-    # simply convert back to 2D. This squashing should be done here, but touches a
-    # lot of files, so will get this to work first.
-        if X.ndims == 2:
-
-        X=X
-    return X
+        if isinstance(y, pd.DataFrame):
+            y = y.to_numpy()
+    elif coerce_to_pandas:
+        # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
+        # simply convert back to 2D. This squashing should be done here, but touches a
+        # lot of files, so will get this to work first.
+        if isinstance(X, np.ndarray):
+            if not X.ndim == 2:
+                X = X.reshape(X.shape[0], 1, X.shape[1])
+            X = from_3d_numpy_to_nested(X)
+    return X, y
