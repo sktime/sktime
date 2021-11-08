@@ -12,14 +12,14 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_consistent_length
 from numba import njit
+from sklearn.utils.validation import check_consistent_length
 
+from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.datatypes._panel._convert import(
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
 )
-from sktime.datatypes._panel._check import is_nested_dataframe
 
 VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame, 2d or 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
@@ -211,10 +211,10 @@ def _enforce_min_instances(x, min_instances=1):
 
 
 def check_classifier_input(
-        X,
-        y = None,
-        enforce_min_instances=1,
-        enforce_min_series_length=1,
+    X,
+    y=None,
+    enforce_min_instances=1,
+    enforce_min_series_length=1,
 ):
     """Check wether input X and y are valid formats with minimum data.
 
@@ -260,10 +260,8 @@ def check_classifier_input(
                 f"but the minimum is  {enforce_min_series_length}"
             )
     else:
-        if X.shape[1] is 0:
-            raise ValueError(
-                f"x is an pd.pandas with no data (num columns == 0)."
-            )
+        if X.shape[1] == 0:
+            raise ValueError(f"x is a pd.DataFrame with no data (num columns == 0).")
     if n_cases < enforce_min_instances:
         raise ValueError(
             f"Minimum number of cases required is {enforce_min_instances} but X "
@@ -275,18 +273,17 @@ def check_classifier_input(
                 "If passed as a pd.DataFrame, X must be a nested "
                 "pd.DataFrame, with pd.Series or np.arrays inside cells."
             )
-    #Check y if passed
+    # Check y if passed
     if y is not None:
         # Check y valid input and has no missing values
         if not isinstance(y, (pd.Series, np.ndarray)):
             raise ValueError(
-                f"y must be a np.array or a pd.Series, "
-                f"but found type: {type(y)}"
+                f"y must be a np.array or a pd.Series, but found type: {type(y)}"
             )
         if isinstance(y, np.ndarray):
             if np.isnan(y).any():
                 raise ValueError(
-                    f"y contains missing values, this is not allowed for classification."
+                    f"y contains missing values, this is not allowed for classification"
                 )
         n_labels = y.shape[0]
         if n_cases != n_labels:
@@ -309,8 +306,8 @@ def get_data_characteristics(X):
         a) whether x contains missing values;
         b) whether x is multivariate.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     X : pd.pandas containing pd.Series or np.ndarray of either 2 or 3 dimensions.
 
     Returns
@@ -338,8 +335,8 @@ def get_data_characteristics(X):
 def _pandas_has_unequal(X: pd.DataFrame) -> bool:
     """Check whether an input pandas of Series has unequal length series.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     X : pd.DataFrame where each cell is a pd.Series
 
     Returns
@@ -363,8 +360,8 @@ def _pandas_has_unequal(X: pd.DataFrame) -> bool:
 def _pandas_has_nans(X: pd.DataFrame) -> bool:
     """Check whether an input pandas of Series has nans.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     X : pd.DataFrame where each cell is a pd.Series
 
     Returns
@@ -386,8 +383,8 @@ def _pandas_has_nans(X: pd.DataFrame) -> bool:
 def _has_nans(x: np.ndarray) -> bool:
     """Check whether an input numpy array has nans.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     X : np.ndarray of either 2 or 3 dimensions.
 
     Returns

@@ -10,7 +10,8 @@ from sktime.utils.validation.panel import check_classifier_input
 
 
 def test_check_classifier_input():
-    """test for valid estimator format.
+    """Test for valid estimator format.
+
     1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     2. Test correct: X: pd.DataFrame with 1 and 3 cols vs y:np.array and np.Series
     3. Test incorrect: X with fewer cases than y

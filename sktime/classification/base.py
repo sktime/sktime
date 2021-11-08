@@ -25,12 +25,13 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-import numpy as np
-import pandas as pd
 import time
 
+import numpy as np
+import pandas as pd
+
 from sktime.base import BaseEstimator
-from sktime.datatypes._panel._convert import(
+from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
 )
@@ -91,14 +92,14 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         start = int(round(time.time() * 1000))
-        #Check the data is either numpy arrays or pandas dataframes
-        #TODO: add parameters for min instances and min length
+        # Check the data is either numpy arrays or pandas dataframes
+        # TODO: add parameters for min instances and min length
         check_classifier_input(X, y)
-        #Query the data for characteristics
+        # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
-        #Check this classifier can handle characteristics
+        # Check this classifier can handle characteristics
         check_capabilities(self, missing, multivariate, unequal)
-        #Convert data as dictated by the classifier tags
+        # Convert data as dictated by the classifier tags
         X, y = convert_input(self, X, y)
 
         multithread = self.get_tag("capability:multithreading")
@@ -141,14 +142,14 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
 
-        #Check the data is either numpy arrays or pandas dataframes
-        #TODO: add parameters for min instances and min length
+        # Check the data is either numpy arrays or pandas dataframes
+        # TODO: add parameters for min instances and min length
         check_classifier_input(X)
-        #Query the data for characteristics
+        # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
-        #Check this classifier can handle characteristics
+        # Check this classifier can handle characteristics
         check_capabilities(self, missing, multivariate, unequal)
-        #Convert data as dictated by the classifier tags
+        # Convert data as dictated by the classifier tags
         X, y = convert_input(self, X, y)
 
         return self._predict(X)
@@ -172,14 +173,14 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
 
-        #Check the data is either numpy arrays or pandas dataframes
-        #TODO: add parameters for min instances and min length
+        # Check the data is either numpy arrays or pandas dataframes
+        # TODO: add parameters for min instances and min length
         check_classifier_input(X)
-        #Query the data for characteristics
+        # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
-        #Check this classifier can handle characteristics
+        # Check this classifier can handle characteristics
         check_capabilities(self, missing, multivariate, unequal)
-        #Convert data as dictated by the classifier tags
+        # Convert data as dictated by the classifier tags
         X, y = convert_input(self, X, y)
 
         return self._predict_proba(X)
@@ -296,14 +297,20 @@ class BaseClassifier(BaseEstimator):
         allow_missing = self.get_tag("capability:missing_values")
         allow_unequal = self.get_tag("capability:missing_values")
         if missing and not allow_missing:
-            raise ValueError("The data has missing values, this classifier cannot "
-                             "handle missing values")
+            raise ValueError(
+                "The data has missing values, this classifier cannot handle missing "
+                "values"
+            )
         if multivariate and not allow_multivariate:
-            raise ValueError("The data is multivariate, this classifier cannot handle "
-                             "multivariate time serries")
+            raise ValueError(
+                "The data is multivariate, this classifier cannot handle multivariate "
+                "time serries"
+            )
         if unequal and not allow_unequal:
-            raise ValueError("The data has unequal length series, this classifier "
-                             "cannot handle unequal length series")
+            raise ValueError(
+                "The data has unequal length series, this classifier cannot handle "
+                "unequal length series"
+            )
 
     def convert_input(self, X, y):
         """Convert equal length series from pandas to numpy or vice versa.
@@ -322,8 +329,10 @@ class BaseClassifier(BaseEstimator):
         convert_to_numpy = self.get_tag("coerce-X-to-numpy")
         convert_to_pandas = self.get_tag("coerce-X-to-pandas")
         if convert_to_numpy and convert_to_pandas:
-            raise ValueError("Tag error: cannot set both coerce-X-to-numpy and "
-                             "coerce-X-to-pandas to be true.")
+            raise ValueError(
+                "Tag error: cannot set both coerce-X-to-numpy and coerce-X-to-pandas "
+                "to be true."
+            )
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
             if X.ndim == 2:
