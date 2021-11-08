@@ -34,7 +34,6 @@ from sktime.datatypes._panel._convert import(
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
 )
-from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import (
     check_classifier_input,
@@ -279,7 +278,6 @@ class BaseClassifier(BaseEstimator):
 
         return dists
 
-
     def check_capabilities(self, missing, multivariate, unequal):
         """Check wether this classifier can handle the data characteristics.
         Attributes
@@ -297,15 +295,14 @@ class BaseClassifier(BaseEstimator):
         allow_missing = self.get_tag("capability:missing_values")
         allow_unequal = self.get_tag("capability:missing_values")
         if missing and not allow_missing:
-            raise ValueError("The data has missing values, this classifier cannot handle "
-                             "missing values")
+            raise ValueError("The data has missing values, this classifier cannot "
+                             "handle missing values")
         if multivariate and not allow_multivariate:
             raise ValueError("The data is multivariate, this classifier cannot handle "
                              "multivariate time serries")
         if unequal and not allow_unequal:
-            raise ValueError("The data has unequal length series, this classifier cannot "
-                             "handle unequal length series")
-
+            raise ValueError("The data has unequal length series, this classifier "
+                             "cannot handle unequal length series")
 
     def convert_input(self, X, y):
         """Convert equal length series from pandas to numpy or vice versa.
@@ -327,17 +324,17 @@ class BaseClassifier(BaseEstimator):
             raise ValueError("Tag error: cannot set both coerce-X-to-numpy and "
                              "coerce-X-to-pandas to be true.")
         # convert pd.DataFrame
+        if isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                X = X.reshape(X.shape[0], 1, X.shape[1])
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
                 X = from_nested_to_3d_numpy(X)
-            if isinstance(y, pd.DataFrame):
+            if isinstance(y, pd.Series):
                 y = y.to_numpy()
-        elif coerce_to_pandas:
-            # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
-            # simply convert back to 2D. This squashing should be done here, but touches a
-            # lot of files, so will get this to work first.
-            if isinstance(X, np.ndarray):
-                if not X.ndim == 2:
-                    X = X.reshape(X.shape[0], 1, X.shape[1])
-                X = from_3d_numpy_to_nested(X)
+        elif convert_to_pandas:
+            # Temporary fix to insist on 3D numpy. For univariate problems,
+            # most classifiers simply convert back to 2D. This squashing should be
+            # done here, but touches a lot of files, so will get this to work first.
+            X = from_3d_numpy_to_nested(X)
         return X, y
