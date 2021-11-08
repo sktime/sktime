@@ -276,7 +276,6 @@ def check_classifier_input(
             )
     #Check y if passed
     if y is not None:
-        n_labels = y.shape[0]
         # Check y valid input and has no missing values
         if not isinstance(y, (pd.Series, np.ndarray)):
             raise ValueError(
@@ -288,6 +287,7 @@ def check_classifier_input(
                 raise ValueError(
                     f"y contains missing values, this is not allowed for classification."
                 )
+        n_labels = y.shape[0]
         if n_cases != n_labels:
             raise ValueError(
                 f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "

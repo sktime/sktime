@@ -280,64 +280,64 @@ class BaseClassifier(BaseEstimator):
         return dists
 
 
-def check_capabilities(self, missing, multivariate, unequal):
-    """Check wether this classifier can handle the data characteristics.
-    Attributes
-    ----------
-    missing : boolean, does the data passed to fit contain missing values?
-    multivariate : boolean, does the data passed to fit contain missing values?
-    unequal : boolea, do the time series passed to fit have variable lengths?
+    def check_capabilities(self, missing, multivariate, unequal):
+        """Check wether this classifier can handle the data characteristics.
+        Attributes
+        ----------
+        missing : boolean, does the data passed to fit contain missing values?
+        multivariate : boolean, does the data passed to fit contain missing values?
+        unequal : boolea, do the time series passed to fit have variable lengths?
 
-    Raises
-    ------
-    ValueError if the capabilities in self._tags do not handle the data.
+        Raises
+        ------
+        ValueError if the capabilities in self._tags do not handle the data.
 
-    """
-    allow_multivariate = self.get_tag("capability:multivariate")
-    allow_missing = self.get_tag("capability:missing_values")
-    allow_unequal = self.get_tag("capability:missing_values")
-    if missing and not allow_missing:
-        raise ValueError("The data has missing values, this classifier cannot handle "
-                         "missing values")
-    if multivariate and not allow_multivariate:
-        raise ValueError("The data is multivariate, this classifier cannot handle "
-                         "multivariate time serries")
-    if unequal and not allow_unequal:
-        raise ValueError("The data has unequal length series, this classifier cannot "
-                         "handle unequal length series")
+        """
+        allow_multivariate = self.get_tag("capability:multivariate")
+        allow_missing = self.get_tag("capability:missing_values")
+        allow_unequal = self.get_tag("capability:missing_values")
+        if missing and not allow_missing:
+            raise ValueError("The data has missing values, this classifier cannot handle "
+                             "missing values")
+        if multivariate and not allow_multivariate:
+            raise ValueError("The data is multivariate, this classifier cannot handle "
+                             "multivariate time serries")
+        if unequal and not allow_unequal:
+            raise ValueError("The data has unequal length series, this classifier cannot "
+                             "handle unequal length series")
 
 
-def convert_input(self, X, y):
-    """Convert equal length series from pandas to numpy or vice versa.
+    def convert_input(self, X, y):
+        """Convert equal length series from pandas to numpy or vice versa.
 
-    Parameters
-    ----------
-    self : this classifier
-    X : pd.DataFrame or np.array
-        Input data
+        Parameters
+        ----------
+        self : this classifier
+        X : pd.DataFrame or np.array
+            Input data
 
-    Returns
-    -------
-    X : pd.DataFrame or np.array
-        Checked and possibly converted input data
-    """
-    convert_to_numpy = self.get_tag("coerce-X-to-numpy")
-    convert_to_pandas = self.get_tag("coerce-X-to-pandas")
-    if convert_to_numpy and convert_to_pandas:
-        raise ValueError("Tag error: cannot set both coerce-X-to-numpy and "
-                         "coerce-X-to-pandas to be true.")
-    # convert pd.DataFrame
-    if convert_to_numpy:
-        if isinstance(X, pd.DataFrame):
-            X = from_nested_to_3d_numpy(X)
-        if isinstance(y, pd.DataFrame):
-            y = y.to_numpy()
-    elif coerce_to_pandas:
-        # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
-        # simply convert back to 2D. This squashing should be done here, but touches a
-        # lot of files, so will get this to work first.
-        if isinstance(X, np.ndarray):
-            if not X.ndim == 2:
-                X = X.reshape(X.shape[0], 1, X.shape[1])
-            X = from_3d_numpy_to_nested(X)
-    return X, y
+        Returns
+        -------
+        X : pd.DataFrame or np.array
+            Checked and possibly converted input data
+        """
+        convert_to_numpy = self.get_tag("coerce-X-to-numpy")
+        convert_to_pandas = self.get_tag("coerce-X-to-pandas")
+        if convert_to_numpy and convert_to_pandas:
+            raise ValueError("Tag error: cannot set both coerce-X-to-numpy and "
+                             "coerce-X-to-pandas to be true.")
+        # convert pd.DataFrame
+        if convert_to_numpy:
+            if isinstance(X, pd.DataFrame):
+                X = from_nested_to_3d_numpy(X)
+            if isinstance(y, pd.DataFrame):
+                y = y.to_numpy()
+        elif coerce_to_pandas:
+            # Temporary fix to insist on 3D numpy. For univariate problems, most classifiers
+            # simply convert back to 2D. This squashing should be done here, but touches a
+            # lot of files, so will get this to work first.
+            if isinstance(X, np.ndarray):
+                if not X.ndim == 2:
+                    X = X.reshape(X.shape[0], 1, X.shape[1])
+                X = from_3d_numpy_to_nested(X)
+        return X, y
