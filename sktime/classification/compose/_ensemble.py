@@ -306,8 +306,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             self.__setattr__(pname, pval)
 
     def predict(self, X):
-        """
-        Predict class for X.
+        """Predict class for X.
 
         The predicted class of an input sample is a vote by the trees in
         the forest, weighted by their probability estimates. That is,
@@ -345,8 +344,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             return predictions
 
     def predict_log_proba(self, X):
-        """
-        Predict class log-probabilities for X.
+        """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
         the log of the mean predicted class probabilities of the trees in the
@@ -464,7 +462,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
     # TODO - Implement this abstract method properly.
     def _set_oob_score_and_attributes(self, X, y):
-        pass
+        raise NotImplementedError("Not implemented.")
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
