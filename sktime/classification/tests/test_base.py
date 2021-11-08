@@ -93,4 +93,3 @@ def test_convert_input():
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == 5
     assert tempX.shape[1] == 2
-
