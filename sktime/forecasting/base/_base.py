@@ -811,7 +811,7 @@ class BaseForecaster(BaseEstimator):
                 self._y = np.concatenate(self._y, y)
             #  if y is pandas, we use combine_first to update
             elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
-                self._y = y.combine_first(self._y)
+                self._y = y
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
