@@ -617,7 +617,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         n_instances, n_columns = X.shape
         if n_columns != self.series_length:
-            raise TypeError(
+            raise ValueError(
                 "ERROR number of attributes in the train does not match "
                 "that in the test data."
             )

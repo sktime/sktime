@@ -360,7 +360,7 @@ class DrCIF(BaseClassifier):
     def _predict_proba(self, X):
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
-            raise TypeError(
+            raise ValueError(
                 "ERROR number of attributes in the train does not match "
                 "that in the test data"
             )

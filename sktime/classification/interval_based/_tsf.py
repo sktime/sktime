@@ -128,7 +128,7 @@ class TimeSeriesForestClassifier(
 
         _, series_length = X.shape
         if series_length != self.series_length:
-            raise TypeError(
+            raise ValueError(
                 "The number of time points in the training data does not match "
                 "that in the test data."
             )
