@@ -216,11 +216,12 @@ def check_classifier_input(
         enforce_min_instances=1,
         enforce_min_series_length=1,
 ):
-    """Check wether input X and y are valid formats with minimum data. Raises a
-    ValueError if the input is not valid.
+    """Check wether input X and y are valid formats with minimum data.
 
-    Parameters
-    ----------
+    Raises a ValueError if the input is not valid.
+
+    Arguments
+    ---------
     X : check whether a pd.DataFrame or np.ndarray
     y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
@@ -241,18 +242,18 @@ def check_classifier_input(
         )
     n_cases = X.shape[0]
     if isinstance(X, np.ndarray):
-        if not (X.ndim is 2 or X.ndim is 3):
+        if not (X.ndim == 2 or X.ndim == 3):
             raise ValueError(
                 f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
                 f"but found to be: {X.ndim}"
             )
-        if X.ndim is 2 and X.shape[1] < enforce_min_series_length:
+        if X.ndim == 2 and X.shape[1] < enforce_min_series_length:
             raise ValueError(
                 f"Series length below the minimum, equal length series are length"
                 f" {X.shape[1]}"
                 f"but the minimum is  {enforce_min_series_length}"
             )
-        if X.ndim is 3 and X.shape[2] < enforce_min_series_length:
+        if X.ndim == 3 and X.shape[2] < enforce_min_series_length:
             raise ValueError(
                 f"Series length below the minimum, equal length series are length"
                 f" {X.shape[2]}"
@@ -361,6 +362,7 @@ def _pandas_has_unequal(X: pd.DataFrame) -> bool:
 
 def _pandas_has_nans(X: pd.DataFrame) -> bool:
     """Check whether an input pandas of Series has nans.
+
     Arguments
     ---------
     X : pd.DataFrame where each cell is a pd.Series
@@ -383,6 +385,7 @@ def _pandas_has_nans(X: pd.DataFrame) -> bool:
 @njit(cache=True, fastMath=True)
 def _has_nans(x: np.ndarray) -> bool:
     """Check whether an input numpy array has nans.
+
     Arguments
     ---------
     X : np.ndarray of either 2 or 3 dimensions.

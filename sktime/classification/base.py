@@ -280,6 +280,7 @@ class BaseClassifier(BaseEstimator):
 
     def check_capabilities(self, missing, multivariate, unequal):
         """Check wether this classifier can handle the data characteristics.
+
         Attributes
         ----------
         missing : boolean, does the data passed to fit contain missing values?

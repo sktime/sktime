@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Unit tests for classifier base class functionality. """
+"""Unit tests for classifier base class functionality."""
 
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
@@ -11,8 +11,10 @@ from sktime.classification.base import BaseClassifier
 
 
 def test_check_capabilities():
-    """Test the checking of capabilities. There are eight different combinations to
-    be tested with a classifier that can handle it and that cannot.
+    """Test the checking of capabilities.
+
+    There are eight different combinations to be tested with a classifier that can
+    handle it and that cannot.
     """
     handles_none = BaseClassifier()
 
@@ -47,8 +49,9 @@ def test_check_capabilities():
 
 def test_convert_input():
     """Test the conversions from dataframe to numpy.
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
+
+    "coerce-X-to-numpy": True,
+    "coerce-X-to-pandas": False,
     1. Pass a 2D numpy X, get a 3D numpy X
     2. Pass a 3D numpy X, get a 3D numpy X
     3. Pass a pandas numpy X, equal length, get a 3D numpy X
