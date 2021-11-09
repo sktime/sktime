@@ -4,7 +4,7 @@
 An ensemble of elastic nearest neighbour classifiers.
 """
 
-__author__ = "Jason Lines"
+__author__ = ["jasonlines"]
 __all__ = ["ElasticEnsemble"]
 
 import os
@@ -14,13 +14,15 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import (
+    GridSearchCV,
+    LeaveOneOut,
+    RandomizedSearchCV,
+    StratifiedShuffleSplit,
+    cross_val_predict,
+)
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils.multiclass import class_distribution
+
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
@@ -33,8 +35,6 @@ from sktime.distances.elastic_cython import msm_distance as msm_c
 from sktime.distances.elastic_cython import wddtw_distance as wddtw_c
 from sktime.distances.elastic_cython import wdtw_distance as wdtw_c
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
 class ElasticEnsemble(BaseClassifier):
@@ -57,9 +57,8 @@ class ElasticEnsemble(BaseClassifier):
       The proportion of the train set to use in the parameter search optional.
     proportion_train_for_test : float, optional (default=1)
       The proportion of the train set to use in classifying new cases optional.
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, optional (default=1)
       The number of jobs to run in parallel for both `fit` and `predict`.
-      ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
       ``-1`` means using all processors.
     random_state : int, default=0
       The random seed.
@@ -82,15 +81,23 @@ class ElasticEnsemble(BaseClassifier):
               Data Mining and Knowledge Discovery, 29(3), 2015.
     https://link.springer.com/article/10.1007/s10618-014-0361-2
 
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ElasticEnsemble
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ElasticEnsemble(
+    ...     proportion_of_param_options=0.1,
+    ...     proportion_train_for_test=0.1,
+    ... )
+    >>> clf.fit(X_train, y_train)
+    ElasticEnsemble(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -99,7 +106,7 @@ class ElasticEnsemble(BaseClassifier):
         proportion_of_param_options=1.0,
         proportion_train_in_param_finding=1.0,
         proportion_train_for_test=1.0,
-        n_jobs=None,
+        n_jobs=1,
         random_state=0,
         verbose=0,
     ):
@@ -121,15 +128,15 @@ class ElasticEnsemble(BaseClassifier):
         self.estimators_ = None
         self.train_accs_by_classifier = None
         self.train_preds_by_classifier = None
-        self.classes_ = None
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
         self.train = None
         self.constituent_build_times = None
+
         super(ElasticEnsemble, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build an ensemble of 1-NN classifiers from the training set (X, y).
 
         Parameters
@@ -144,8 +151,6 @@ class ElasticEnsemble(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=False)
-
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that
         # are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data
@@ -173,7 +178,6 @@ class ElasticEnsemble(BaseClassifier):
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.train_preds_by_classifier = [None] * len(self.distance_measures)
         self.estimators_ = [None] * len(self.distance_measures)
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         rand = np.random.RandomState(self.random_state)
 
         # The default EE uses all training instances for setting parameters,
@@ -287,7 +291,7 @@ class ElasticEnsemble(BaseClassifier):
                     ),
                     cv=LeaveOneOut(),
                     scoring="accuracy",
-                    n_jobs=self.n_jobs,
+                    n_jobs=self._threads_to_use,
                     verbose=self.verbose,
                 )
                 grid.fit(param_train_to_use, param_train_y)
@@ -305,7 +309,7 @@ class ElasticEnsemble(BaseClassifier):
                     n_iter=100 * self.proportion_of_param_options,
                     cv=LeaveOneOut(),
                     scoring="accuracy",
-                    n_jobs=self.n_jobs,
+                    n_jobs=self._threads_to_use,
                     random_state=rand,
                     verbose=self.verbose,
                 )
@@ -321,6 +325,7 @@ class ElasticEnsemble(BaseClassifier):
                 n_neighbors=1,
                 distance=this_measure,
                 distance_params=grid.best_params_["distance_params"],
+                n_jobs=self._threads_to_use,
             )
             preds = cross_val_predict(
                 best_model, full_train_to_use, y, cv=LeaveOneOut()
@@ -353,10 +358,9 @@ class ElasticEnsemble(BaseClassifier):
             self.train_accs_by_classifier[dm] = acc
             self.train_preds_by_classifier[dm] = preds
 
-        self._is_fitted = True
         return self
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -367,9 +371,6 @@ class ElasticEnsemble(BaseClassifier):
         -------
         array of shape [n, self.n_classes]
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=False)
-
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that
         # are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data
@@ -415,7 +416,7 @@ class ElasticEnsemble(BaseClassifier):
         output_probas = np.divide(output_probas, train_sum)
         return output_probas
 
-    def predict(self, X, return_preds_and_probas=False):
+    def _predict(self, X, return_preds_and_probas=False):
         """Predict class values of n instances in X.
 
         Parameters
@@ -426,7 +427,7 @@ class ElasticEnsemble(BaseClassifier):
         -------
         array of shape [n, 1]
         """
-        probas = self.predict_proba(X)  # does derivative transform within (if required)
+        probas = self._predict_proba(X)  # does derivative transform within if required
         idx = np.argmax(probas, axis=1)
         preds = np.asarray([self.classes_[x] for x in idx])
         if return_preds_and_probas is False:
