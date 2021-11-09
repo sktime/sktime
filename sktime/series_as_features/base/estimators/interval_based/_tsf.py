@@ -19,8 +19,7 @@ __all__ = [
 import math
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
@@ -33,13 +32,12 @@ from sktime.utils.validation.panel import check_X_y
 class BaseTimeSeriesForest:
     """Base time series forest classifier."""
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -87,7 +85,7 @@ class BaseTimeSeriesForest:
         X, y = check_X_y(
             X,
             y,
-            enforce_univariate=not self.capabilities["multivariate"],
+            enforce_univariate=not self._tags["capability:multivariate"],
             coerce_to_numpy=True,
         )
         X = X.squeeze(1)
