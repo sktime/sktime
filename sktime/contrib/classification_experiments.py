@@ -5,7 +5,7 @@ This file is configured for runs of the main method with command line arguments,
 single debugging runs. Results are written in a standard format.
 """
 
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 
 import os
 import sys
