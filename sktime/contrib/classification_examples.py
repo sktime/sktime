@@ -9,8 +9,8 @@ __author__ = ["TonyBagnall"]
 import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
-from sktime.classification.hybrid import HIVECOTEV2
-
+#from sktime.classification.hybrid import HIVECOTEV2
+from sktime.classification.interval_based import TimeSeriesForestClassifier
 
 def build_classifiers():
     """Examples of building a classifier.
@@ -28,7 +28,7 @@ def build_classifiers():
     randf.fit(trainX, train_y)
     print("Fit complete")
     print(" rand f acc = ", randf.score(testX, test_y))
-    hc2 = HIVECOTEV2(time_limit_in_minutes = 1)
+    hc2 = TimeSeriesForestClassifier(n_estimators=3)
     hc2.fit(trainX, train_y)
     print(" rand f acc = ", hc2.score(testX, test_y))
 
