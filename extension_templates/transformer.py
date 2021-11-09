@@ -124,7 +124,7 @@ class MyTransformer(BaseTransformer):
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+        #     self.est2 = MyDefaultEstimator()
 
         # todo: change "MyTransformer" to the name of the class
         super(MyTransformer, self).__init__()
