@@ -105,7 +105,8 @@ class MyTransformer(BaseTransformer):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
     }
     # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
+    #  alternatively, descendants can set tags in __init__
+    #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
