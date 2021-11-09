@@ -1023,13 +1023,14 @@ def distance(
 
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
-        factory as it constructs the distance before distance computation.
+        factory as it constructs the distance using the kwargs before distance
+        computation.
         A distance callable takes the form (must be no_python compiled):
         Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
         Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
-        np.ndarray], float]]
+        np.ndarray], float]].
     kwargs: Any
         Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
@@ -1103,18 +1104,14 @@ def distance_factory(
 
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
-        factory as it constructs the distance before distance computation.
+        factory as it constructs the distance using the kwargs before distance
+        computation.
         A distance callable takes the form (must be no_python compiled):
-        Callable[
-            [np.ndarray, np.ndarray],
-            float
-        ]
+        Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[
-            [np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]
-        ]
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
     kwargs: Any
         Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
@@ -1174,18 +1171,14 @@ def pairwise_distance(
 
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
-        factory as it constructs the distance before distance computation.
+        factory as it constructs the distance using the kwargs before distance
+        computation.
         A distance callable takes the form (must be no_python compiled):
-        Callable[
-            [np.ndarray, np.ndarray],
-            float
-        ]
+        Callable[[np.ndarray, np.ndarray], float]
 
         A distance factory takes the form (must return a no_python callable):
-        Callable[
-            [np.ndarray, np.ndarray, bool, dict],
-            Callable[[np.ndarray, np.ndarray], float]
-        ]
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
     kwargs: Any
         Extra arguments for metric. Refer to each metric documentation for a list of
         possible arguments.
