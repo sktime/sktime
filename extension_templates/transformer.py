@@ -40,9 +40,11 @@ Testing:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
+# todo: add any necessary sktime external imports here
+
 from sktime.transformations.base import BaseTransformer
 
-# todo: add any necessary imports here
+# todo: add any necessary sktime internal imports here
 
 
 class MyTransformer(BaseTransformer):
