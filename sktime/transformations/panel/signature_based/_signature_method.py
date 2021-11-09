@@ -63,12 +63,6 @@ class SignatureTransformer(_PanelToTabularTransformer):
 
         self.setup_feature_pipeline()
 
-    def _assertions(self):
-        """Some assertions to run on initialisation."""
-        assert not all(
-            [self.sig_tfm == "logsignature", self.rescaling == "post"]
-        ), "Cannot have post rescaling with the logsignature."
-
     def setup_feature_pipeline(self):
         """Sets up the signature method as an sklearn pipeline."""
         augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
