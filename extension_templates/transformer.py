@@ -199,6 +199,12 @@ class MyTransformer(BaseTransformer):
         #  if multiple X_inner_mtype are supported, ensure same input/output
         # if transform-output is "Panel":
         #  return a multi-indexed pd.DataFrame of Panel mtype pd_multiindex
+        #
+        # todo: add the return mtype/scitype to the docstring, e.g.,
+        #  Returns
+        #  -------
+        #  X_transformed : Series of mtype pd.DataFrame
+        #       transformed version of X
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _inverse_transform method
