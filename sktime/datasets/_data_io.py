@@ -272,7 +272,7 @@ def load_gunpoint(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def _loadload_osuleaf(split=None, return_X_y=False):
+def load_osuleaf(split=None, return_X_y=False):
     """
     Load the OSULeaf time series classification problem and returns X and y.
 

@@ -121,7 +121,7 @@ class BaseClassifier(BaseEstimator):
         # this should happen last
         self._is_fitted = True
 
-        fit_time_ = int(round(time.time() * 1000)) - start
+        self.fit_time_ = int(round(time.time() * 1000)) - start
         return self
 
     def predict(self, X) -> np.array:
@@ -179,7 +179,7 @@ class BaseClassifier(BaseEstimator):
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        check_capabilities(self, missing, multivariate, unequal)
+        self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
         X = self.convert_input(X)
 
