@@ -416,3 +416,16 @@ def test_update_predict_predicted_index_update_params(
     _check_update_predict_predicted_index(
         Forecaster, fh, window_length, step_length, update_params
     )
+
+
+# test that _y is updated when forecaster is refitted
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test__y_when_refitting(Forecaster):
+    f = _construct_instance(Forecaster)
+    columns = _get_n_columns(f.get_tag("scitype:y"))
+    for n_columns in columns:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=FH0)
+        f.fit(y_train[3:], fh=FH0)
+        assert np.all(f._y == y_train[3:])
