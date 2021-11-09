@@ -84,12 +84,12 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
+        # todo: what scitype is returned: Primitives, Series, Panel
         "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
+        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
