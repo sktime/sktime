@@ -980,12 +980,12 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     --------
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> euclidean(x_1d, y_1d)
+    >>> euclidean_distance(x_1d, y_1d)
     8.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> euclidean(x_2d, y_2d)
+    >>> euclidean_distance(x_2d, y_2d)
     22.627416997969522
     """
     return distance(x, y, metric="euclidean", **kwargs)
@@ -1060,13 +1060,6 @@ def distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> distance(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
-    512.0
-
-    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
-    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> distance(x_2d, y_2d, metric='dtw',
-                    lower_bounding=LowerBounding.ITAKURA_PARALLELOGRAM,
-                    itakura_max_slope=4.)
     512.0
 
     Returns
