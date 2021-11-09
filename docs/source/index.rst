@@ -1,13 +1,38 @@
 .. _home:
 
+=================
 Welcome to sktime
 =================
 
   A unified framework for machine learning with time series
 
-sktime provides time series algorithms and scikit-learn compatible tools to build, tune and validate time series models. sktime provides a unified interface for multiple time series learning tasks, including time series classification, regression, clustering, annotation and forecasting.
+Mission
+=======
+
+.. include:: about/_mission.rst
 
 
+Scope
+=====
+
+sktime features a unified interface for multiple time series learning tasks.
+Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>` and :ref:`time series regression <regression_ref>`.
+We have experimental support for time series clustering and time series annotation.
+
+Features:
+
+* API for machine learning with time series, for the purpose of specifying, fitting, applying and validating machine learning models
+* Interactive user experience with scikit-learn like syntax conventions
+
+Technical specification:
+
+* In-memory computation of a single machine, no distributed computing
+* Medium-sized data in pandas and NumPy
+* Modular, principled and object-oriented API
+* Making use of interactive Python interpreter, no command-line interface or graphical user interface
+
+Contents
+========
 
 .. toctree::
    :maxdepth: 1
@@ -19,8 +44,6 @@ sktime provides time series algorithms and scikit-learn compatible tools to buil
    get_involved
    developers
    about
-
-From here, you can navigate to:
 
 .. panels::
     :card: + intro-card text-center

@@ -63,6 +63,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does fit contain no logic and can be skipped? yes/no",
     ),
     (
+        "fit-in-predict",
+        "estimator",
+        "bool",
+        "does fit contain no logic and can be skipped? yes/no",
+    ),
+    (
         "transform-returns-same-time-index",
         "transformer",
         "bool",
@@ -246,7 +252,6 @@ ESTIMATOR_TAG_REGISTER = [
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
-
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
 
 
