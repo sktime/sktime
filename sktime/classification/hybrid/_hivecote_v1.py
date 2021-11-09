@@ -18,7 +18,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.interval_based import (
-    RandomIntervalSpectralForest,
+    RandomIntervalSpectralEnsemble,
     TimeSeriesForestClassifier,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -239,7 +239,7 @@ class HIVECOTEV1(BaseClassifier):
             print("TSF weight = " + str(self.tsf_weight_))  # noqa
 
         # Build RISE
-        self._rise = RandomIntervalSpectralForest(
+        self._rise = RandomIntervalSpectralEnsemble(
             **self._rise_params,
             random_state=self.random_state,
             n_jobs=self._threads_to_use,
@@ -251,7 +251,7 @@ class HIVECOTEV1(BaseClassifier):
 
         # Find RISE weight using train set estimate found through CV
         train_preds = cross_val_predict(
-            RandomIntervalSpectralForest(
+            RandomIntervalSpectralEnsemble(
                 **self._rise_params,
                 random_state=self.random_state,
             ),
