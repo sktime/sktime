@@ -322,18 +322,18 @@ def get_data_characteristics(X):
             multivariate = False
         return missing, multivariate, False
     else:
-        missing = _pandas_has_nans(X)
+        missing = _nested_dataframe_has_nans(X)
         cols = len(X.columns)
         if cols > 1:
             multivariate = True
         else:
             multivariate = False
-        unequal = _pandas_has_unequal(X)
+        unequal = _nested_dataframe_has_unequal(X)
         return missing, multivariate, unequal
 
 
-def _pandas_has_unequal(X: pd.DataFrame) -> bool:
-    """Check whether an input pandas of Series has unequal length series.
+def _nested_dataframe_has_unequal(X: pd.DataFrame) -> bool:
+    """Check whether an input nested DataFrame of Series has unequal length series.
 
     Parameters
     ----------
@@ -345,19 +345,19 @@ def _pandas_has_unequal(X: pd.DataFrame) -> bool:
     """
     rows = len(X)
     cols = len(X.columns)
-    s = X[0][0]
+    s = X.iloc[0, 0]
     length = len(s)
 
     for i in range(0, rows):
         for j in range(0, cols):
-            s = X[i][j]
+            s = X.iloc[i, j]
             temp = len(s)
             if temp != length:
                 return True
     return False
 
 
-def _pandas_has_nans(X: pd.DataFrame) -> bool:
+def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
     """Check whether an input pandas of Series has nans.
 
     Parameters
@@ -368,18 +368,18 @@ def _pandas_has_nans(X: pd.DataFrame) -> bool:
     -------
     True if x contains any NaNs, False otherwise.
     """
-    rows = len(X)
-    cols = len(X.columns)
-    for i in range(0, rows):
-        for j in range(0, cols):
-            s = X[i][j]
+    cases = len(X)
+    dimensions = len(X.columns)
+    for i in range(0, cases):
+        for j in range(0, dimensions):
+            s = X.iloc[i, j]
             for k in range(0, s.size):
                 if pd.isna(s[k]):
                     return True
     return False
 
 
-@njit(cache=True, fastMath=True)
+#@njit(cache=True)
 def _has_nans(x: np.ndarray) -> bool:
     """Check whether an input numpy array has nans.
 
@@ -393,15 +393,15 @@ def _has_nans(x: np.ndarray) -> bool:
     """
     # 2D
     if x.ndim == 2:
-        for i in range(x.size[0]):
-            for j in range(x.size[1]):
-                if np.isnan([i][j]):
+        for i in range(0, x.shape[0]):
+            for j in range(0, x.shape[1]):
+                if np.isnan(x[i][j]):
                     return True
     elif x.ndim == 3:
-        for i in range(x.size[0]):
-            for j in range(x.size[1]):
-                for k in range(x.size[2]):
-                    if np.isnan([i][j][k]):
+        for i in range(0, x.shape[0]):
+            for j in range(0, x.shape[1]):
+                for k in range(0, x.shape[2]):
+                    if np.isnan(x[i][j][k]):
                         return True
     else:
         raise ValueError(f"Expected array of two or three dimensions, got {x.ndim}")
