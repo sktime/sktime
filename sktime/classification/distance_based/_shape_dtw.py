@@ -12,7 +12,9 @@ from sklearn.model_selection import GridSearchCV, KFold
 
 # Classifiers
 from sktime.classification.base import BaseClassifier
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.distance_based._time_series_neighbors import (
+    KNeighborsTimeSeriesClassifier,
+)
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.panel.dictionary_based._paa import PAA
 from sktime.transformations.panel.dwt import DWTTransformer
@@ -23,7 +25,7 @@ from sktime.transformations.panel.segment import SlidingWindowSegmenter
 from sktime.transformations.panel.slope import SlopeTransformer
 from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer
 
-__author__ = ["Vincent Nicholson"]
+__author__ = ["vincent-nich12"]
 
 
 class ShapeDTW(BaseClassifier):
@@ -123,6 +125,7 @@ class ShapeDTW(BaseClassifier):
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
+
         super(ShapeDTW, self).__init__()
 
     def _fit(self, X, y):
