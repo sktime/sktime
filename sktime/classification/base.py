@@ -100,7 +100,7 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = self.convert_input(X, y)
+        X, y = self.convert_X_y(X, y)
 
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -150,7 +150,7 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = self.convert_input(X)
+        X, y = self.convert_X_y(X)
 
         return self._predict(X)
 
@@ -181,7 +181,7 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self.convert_input(X)
+        X, y = self.convert_X_y(X)
 
         return self._predict_proba(X)
 
@@ -312,7 +312,7 @@ class BaseClassifier(BaseEstimator):
                 "unequal length series"
             )
 
-    def convert_input(self, X, y=None):
+    def convert_X_y(self, X, y=None):
         """Convert equal length series from pandas to numpy or vice versa.
 
         Parameters
