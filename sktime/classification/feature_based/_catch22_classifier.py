@@ -39,7 +39,7 @@ class Catch22Classifier(BaseClassifier):
     ----------
     n_classes_ : int
         Number of classes. Extracted from the data.
-    classes_ : ndarray of shape (n_classes)
+    classes_ : ndarray of shape (n_classes_)
         Holds the label for each class.
 
     See Also
