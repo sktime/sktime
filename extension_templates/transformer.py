@@ -163,7 +163,7 @@ class MyTransformer(BaseTransformer):
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        #  the clones, not the originals, should be used or fitted if needed
         #
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
