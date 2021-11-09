@@ -379,7 +379,7 @@ def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
     return False
 
 
-#@njit(cache=True)
+# @njit(cache=True)
 def _has_nans(x: np.ndarray) -> bool:
     """Check whether an input numpy array has nans.
 
