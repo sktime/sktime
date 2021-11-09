@@ -7,11 +7,11 @@ import pandas as pd
 import pytest
 
 from sktime.utils.validation.panel import (
-    check_classifier_input,
-    get_data_characteristics,
     _has_nans,
     _nested_dataframe_has_nans,
     _nested_dataframe_has_unequal,
+    check_classifier_input,
+    get_data_characteristics,
 )
 
 
@@ -162,7 +162,7 @@ def _create_nested_dataframe(cases=5, dimensions=1, length=10):
         instance_list = []
         for _ in range(0, cases):
             instance_list.append(pd.Series(np.random.randn(length)))
-        testy["dimension_" + str(i+1)] = instance_list
+        testy["dimension_" + str(i + 1)] = instance_list
     return testy
 
 
@@ -170,9 +170,9 @@ def _create_unequal_length_nested_dataframe(cases=5, dimensions=1, length=10):
     testy = pd.DataFrame(dtype=np.float32)
     for i in range(0, dimensions):
         instance_list = []
-        for _ in range(0, cases-1):
+        for _ in range(0, cases - 1):
             instance_list.append(pd.Series(np.random.randn(length)))
-        instance_list.append(pd.Series(np.random.randn(length-1)))
-        testy["dimension_" + str(i+1)] = instance_list
+        instance_list.append(pd.Series(np.random.randn(length - 1)))
+        testy["dimension_" + str(i + 1)] = instance_list
 
     return testy
