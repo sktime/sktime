@@ -62,6 +62,9 @@ class MUSE(BaseClassifier):
     use_first_order_differences: boolean, default=True
         If set to True will add the first order differences of each dimension
         to the data.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
     random_state: int or None, default=None
         Seed for random, integer
 
