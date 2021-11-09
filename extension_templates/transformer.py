@@ -137,7 +137,7 @@ class MyTransformer(BaseTransformer):
         # example 2: cloning tags from component
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
-    # todo: implement this, mandatory
+    # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
         """
         Fit transformer to X and y.
