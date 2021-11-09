@@ -165,7 +165,7 @@ class MyTransformer(BaseTransformer):
         #  if used, estimators should be cloned to attributes ending in "_"
         #  the clones, not the originals shoudld be used or fitted if needed
         #
-        # special case: no fitting happens before transformation
+        # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
         #   set "fit-in-transform" tag to True
 
