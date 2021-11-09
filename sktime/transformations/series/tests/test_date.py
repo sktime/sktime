@@ -16,18 +16,18 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
 # Test that comprehensive feature_scope works for weeks
 pipe = DateTimeFeatures(ts_freq="W", feature_scope="comprehensive")
-pipe.fit(Z=X_train)
-test_full_featurescope = pipe.transform(Z=X_train).columns.to_list()
+pipe.fit(X=X_train)
+test_full_featurescope = pipe.transform(X=X_train).columns.to_list()
 
 # Test that minimal feature_scope works for weeks
 pipe = DateTimeFeatures(ts_freq="W", feature_scope="minimal")
-pipe.fit(Z=X_train)
-test_reduced_featurescope = pipe.transform(Z=X_train).columns.to_list()
+pipe.fit(X=X_train)
+test_reduced_featurescope = pipe.transform(X=X_train).columns.to_list()
 
 # Test that comprehensive feature_scope works for months
 pipe = DateTimeFeatures(ts_freq="M", feature_scope="comprehensive")
-pipe.fit(Z=X_train)
-test_changing_frequency = pipe.transform(Z=X_train).columns.to_list()
+pipe.fit(X=X_train)
+test_changing_frequency = pipe.transform(X=X_train).columns.to_list()
 
 # Test that manual_selection works for with provided arguments
 # Should ignore feature scope and raise warning for second_of_minute,
@@ -38,31 +38,31 @@ pipe = DateTimeFeatures(
     feature_scope="comprehensive",
     manual_selection=["year", "second_of_minute"],
 )
-pipe.fit(Z=X_train)
-test_manspec_with_tsfreq = pipe.transform(Z=X_train).columns.to_list()
+pipe.fit(X=X_train)
+test_manspec_with_tsfreq = pipe.transform(X=X_train).columns.to_list()
 
 # Test that manual_selection works for with provided arguments
 # Should ignore feature scope and raise no warning for second_of_minute,
 # since ts_freq is not provided.
 
 pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
-pipe.fit(Z=X_train)
-test_manspec_wo_tsfreq = pipe.transform(Z=X_train).columns.to_list()
+pipe.fit(X=X_train)
+test_manspec_wo_tsfreq = pipe.transform(X=X_train).columns.to_list()
 
 # Test that prior test works for with univariate dataset
 y = load_airline()
 y_train, y_test = temporal_train_test_split(y)
 
 pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
-pipe.fit(Z=y_train)
-test_univariate_data = pipe.transform(Z=y_train).columns.to_list()
+pipe.fit(X=y_train)
+test_univariate_data = pipe.transform(X=y_train).columns.to_list()
 
 # Test that prior test also works when Index is converted to DateTime index
 y.index = y.index.to_timestamp().astype("datetime64[ns]")
 y_train, y_test = temporal_train_test_split(y)
 pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
-pipe.fit(Z=y_train)
-test_diffdateformat = pipe.transform(Z=y_train).columns.to_list()
+pipe.fit(X=y_train)
+test_diffdateformat = pipe.transform(X=y_train).columns.to_list()
 
 
 @pytest.mark.parametrize(
