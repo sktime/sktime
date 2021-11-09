@@ -49,9 +49,11 @@ class MyTransformer(BaseTransformer):
     """Custom transformer. todo: write docstring.
 
     todo: describe your custom transformer here
+        fill in sections appropriately
+        docstring must be numpydoc compliant
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -59,9 +61,6 @@ class MyTransformer(BaseTransformer):
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
     and so on
-
-    Components
-    ----------
     est : sktime.estimator, BaseEstimator descendant
         descriptive explanation of est
     est2: another estimator
