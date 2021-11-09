@@ -261,7 +261,7 @@ def check_classifier_input(
             )
     else:
         if X.shape[1] == 0:
-            raise ValueError(f"x is a pd.DataFrame with no data (num columns == 0).")
+            raise ValueError("x is a pd.DataFrame with no data (num columns == 0).")
     if n_cases < enforce_min_instances:
         raise ValueError(
             f"Minimum number of cases required is {enforce_min_instances} but X "
@@ -283,7 +283,7 @@ def check_classifier_input(
         if isinstance(y, np.ndarray):
             if np.isnan(y).any():
                 raise ValueError(
-                    f"y contains missing values, this is not allowed for classification"
+                    "y contains missing values, this is not allowed for classification"
                 )
         n_labels = y.shape[0]
         if n_cases != n_labels:
@@ -351,8 +351,8 @@ def _pandas_has_unequal(X: pd.DataFrame) -> bool:
     for i in range(0, rows):
         for j in range(0, cols):
             s = X[i][j]
-            l = len(s)
-            if l is not length:
+            temp = len(s)
+            if temp != length:
                 return True
     return False
 

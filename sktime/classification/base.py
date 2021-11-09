@@ -98,9 +98,9 @@ class BaseClassifier(BaseEstimator):
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        check_capabilities(self, missing, multivariate, unequal)
+        self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = convert_input(self, X, y)
+        X, y = self.convert_input(X, y)
 
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -148,9 +148,9 @@ class BaseClassifier(BaseEstimator):
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        check_capabilities(self, missing, multivariate, unequal)
+        self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = convert_input(self, X, y)
+        X, y = self.convert_input(X)
 
         return self._predict(X)
 
@@ -181,7 +181,7 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         check_capabilities(self, missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = convert_input(self, X, y)
+        X = self.convert_input(X)
 
         return self._predict_proba(X)
 
@@ -312,14 +312,14 @@ class BaseClassifier(BaseEstimator):
                 "unequal length series"
             )
 
-    def convert_input(self, X, y):
+    def convert_input(self, X, y=None):
         """Convert equal length series from pandas to numpy or vice versa.
 
         Parameters
         ----------
         self : this classifier
-        X : pd.DataFrame or np.array
-            Input data
+        X : pd.DataFrame or np.ndarray. Input attribute data
+        y : pd.DataFrame or np.array (optional)
 
         Returns
         -------
@@ -340,7 +340,7 @@ class BaseClassifier(BaseEstimator):
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
                 X = from_nested_to_3d_numpy(X)
-            if isinstance(y, pd.Series):
+            if y is not None and isinstance(y, pd.Series):
                 y = y.to_numpy()
         elif convert_to_pandas:
             # Temporary fix to insist on 3D numpy. For univariate problems,

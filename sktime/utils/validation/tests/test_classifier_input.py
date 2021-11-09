@@ -32,14 +32,14 @@ def test_check_classifier_input():
     # 2. Test correct: X: pd.DataFrame with 1 (univariate) and 3 cols(multivariate) vs
     # y:np.array and np.Series
     instance_list = []
-    for i in range(0, 5):
+    for _ in range(0, 5):
         instance_list.append(pd.Series(np.random.randn(10)))
     test_X3 = pd.DataFrame(dtype=np.float32)
     test_X3["dimension_1"] = instance_list
     test_X4 = pd.DataFrame(dtype=np.float32)
     for i in range(0, 3):
         instance_list = []
-        for j in range(0, 5):
+        for _ in range(0, 5):
             instance_list.append(pd.Series(np.random.randn(10)))
         test_X4["dimension_" + str(i)] = instance_list
     check_classifier_input(test_X3, test_y1)
