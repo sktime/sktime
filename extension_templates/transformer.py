@@ -15,8 +15,8 @@ How to use this implementation template to implement a new estimator:
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-- ensure interface compatibility by testing forecasting/tests/test_all_forecasters
-        and forecasting/tests/test_sktime_forecasters
+- ensure interface compatibility by testing transformations/tests/test_all_transformers
+        and tests/test_all_estimators
 - once complete: use as a local library, or contribute to sktime via PR
 
 Mandatory implements:
@@ -40,18 +40,22 @@ Testing:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
+# todo: add any necessary sktime external imports here
+
 from sktime.transformations.base import BaseTransformer
 
-# todo: add any necessary imports here
+# todo: add any necessary sktime internal imports here
 
 
 class MyTransformer(BaseTransformer):
     """Custom transformer. todo: write docstring.
 
     todo: describe your custom transformer here
+        fill in sections appropriately
+        docstring must be numpydoc compliant
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -59,9 +63,6 @@ class MyTransformer(BaseTransformer):
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
     and so on
-
-    Components
-    ----------
     est : sktime.estimator, BaseEstimator descendant
         descriptive explanation of est
     est2: another estimator
@@ -84,12 +85,12 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
+        # todo: what scitype is returned: Primitives, Series, Panel
         "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
+        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -104,7 +105,8 @@ class MyTransformer(BaseTransformer):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
     }
     # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
+    #  alternatively, descendants can set tags in __init__
+    #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
@@ -122,7 +124,7 @@ class MyTransformer(BaseTransformer):
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+        #     self.est2 = MyDefaultEstimator()
 
         # todo: change "MyTransformer" to the name of the class
         super(MyTransformer, self).__init__()
@@ -137,7 +139,7 @@ class MyTransformer(BaseTransformer):
         # example 2: cloning tags from component
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
-    # todo: implement this, mandatory
+    # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
         """
         Fit transformer to X and y.
@@ -163,9 +165,9 @@ class MyTransformer(BaseTransformer):
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        #  the clones, not the originals, should be used or fitted if needed
         #
-        # special case: no fitting happens before transformation
+        # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
         #   set "fit-in-transform" tag to True
 
@@ -199,6 +201,12 @@ class MyTransformer(BaseTransformer):
         #  if multiple X_inner_mtype are supported, ensure same input/output
         # if transform-output is "Panel":
         #  return a multi-indexed pd.DataFrame of Panel mtype pd_multiindex
+        #
+        # todo: add the return mtype/scitype to the docstring, e.g.,
+        #  Returns
+        #  -------
+        #  X_transformed : Series of mtype pd.DataFrame
+        #       transformed version of X
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _inverse_transform method
