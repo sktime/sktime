@@ -281,7 +281,7 @@ def check_classifier_input(
             raise ValueError(
                 f"y must be a np.array or a pd.Series, but found type: {type(y)}"
             )
-        #TODO: check y for NaNs, but need to check strings
+        # TODO: check y for NaNs, but need to check strings
         n_labels = y.shape[0]
         if n_cases != n_labels:
             raise ValueError(

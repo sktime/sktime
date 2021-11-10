@@ -23,7 +23,7 @@ def test_check_classifier_input():
     3. Test incorrect: X with fewer cases than y
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
-    6. Test incorrect: y contains missing values
+    6. todo: test y input.
     """
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
@@ -57,12 +57,6 @@ def test_check_classifier_input():
         check_classifier_input(test_X1, test_y1, enforce_min_instances=6)
     with pytest.raises(ValueError, match=r".*Series length below the minimum*."):
         check_classifier_input(test_X1, test_y1, enforce_min_series_length=11)
-    # 5. Y contains missing
-    test_y1[0] = np.nan
-    with pytest.raises(ValueError, match=r".*y contains missing values, this is not "
-                                         r"allowed for classification."):
-        check_classifier_input(test_X1, test_y1)
-
 
 
 def test_get_data_characteristics():
