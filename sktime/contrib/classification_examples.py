@@ -10,6 +10,7 @@ import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
 from sktime.classification.hybrid import HIVECOTEV2
+from sktime.datasets import load_unit_test
 
 def build_classifiers():
     """Examples of building a classifier.
@@ -53,8 +54,12 @@ def make_toy_problem():
 def compare_classifiers():
     """Build pipeline classifiers and compare to published results."""
     # Data set list
-
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
     # Define Transformer pipeline
+    print(y_train)
+    print(type(y_train))
+    print(type(y_train[0]))
 
     # fit and score for each dataset
 
@@ -62,4 +67,4 @@ def compare_classifiers():
 
     # Draw CD diagram
 
-build_classifiers()
+compare_classifiers()
