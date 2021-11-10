@@ -35,7 +35,7 @@ def build_classifiers():
 
 
 def make_toy_problem():
-    """Makes a toy classification problem out of numpy arrays."""
+    """Make a toy classification problem out of numpy arrays."""
     X_train_class1 = np.random.uniform(-1, 1, size=(20, 100))
     y_train_class1 = np.zeros(
         20,
