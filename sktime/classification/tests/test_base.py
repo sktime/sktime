@@ -63,9 +63,9 @@ def test_convert_input():
     test_X2 = np.random.uniform(-1, 1, size=(5, 2, 10))
     test_y1 = np.random.randint(0, 1, size=5)
     tester = BaseClassifier()
-    tempX, tempy = tester.convert_X(test_X1, test_y1)
+    tempX = tester.convert_X(test_X1)
     assert tempX.shape[0] == 5 and tempX.shape[1] == 1 and tempX.shape[2] == 10
-    tempX, tempy = tester.convert_X(test_X2, test_y1)
+    tempX = tester.convert_X(test_X2)
     assert tempX.shape[0] == 5 and tempX.shape[1] == 2 and tempX.shape[2] == 10
     instance_list = []
     for _ in range(0, 5):
@@ -78,17 +78,18 @@ def test_convert_input():
         for _ in range(0, 5):
             instance_list.append(pd.Series(np.random.randn(10)))
         test_X4["dimension_" + str(i)] = instance_list
-    tempX, tempy = tester.convert_X(test_X3, test_y1)
+    tempX = tester.convert_X(test_X3)
     assert tempX.shape[0] == 5 and tempX.shape[1] == 1 and tempX.shape[2] == 10
-    tempX, tempy = tester.convert_X(test_X4, test_y1)
+    tempX = tester.convert_X(test_X4)
     assert tempX.shape[0] == 5 and tempX.shape[1] == 3 and tempX.shape[2] == 10
     tester._tags["coerce-X-to-numpy"] = False
     tester._tags["coerce-X-to-pandas"] = True
-    tempX, tempy = tester.convert_X(test_X1, test_y1)
+    tempX = tester.convert_X(test_X1)
+    assert isinstance(tempX, pd.DataFrame)
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == 5
     assert tempX.shape[1] == 1
-    tempX, tempy = tester.convert_X(test_X2, test_y1)
+    tempX = tester.convert_X(test_X2)
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == 5
     assert tempX.shape[1] == 2
