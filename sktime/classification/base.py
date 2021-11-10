@@ -343,7 +343,8 @@ class BaseClassifier(BaseEstimator):
             if isinstance(X, pd.DataFrame):
                 X = from_nested_to_3d_numpy(X)
         elif convert_to_pandas:
-            X = from_3d_numpy_to_nested(X)
+            if isinstance(X, np.ndarray):
+                X = from_3d_numpy_to_nested(X)
         return X
 
     def convert_y(self, y):
