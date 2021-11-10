@@ -100,8 +100,8 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = self.convert_X_y(X, y)
-
+        X = self.convert_X(X)
+        y = self.convert_y(y)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
             try:
@@ -150,7 +150,7 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = self.convert_X_y(X)
+        X = self.convert_X(X)
 
         return self._predict(X)
 
@@ -181,7 +181,7 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X, y = self.convert_X_y(X)
+        X = self.convert_X(X)
 
         return self._predict_proba(X)
 
@@ -312,14 +312,13 @@ class BaseClassifier(BaseEstimator):
                 "unequal length series"
             )
 
-    def convert_X_y(self, X, y=None):
-        """Convert equal length series from pandas to numpy or vice versa.
+    def convert_X(self, X):
+        """Convert equal length series from DataFrame to numpy array or vice versa.
 
         Parameters
         ----------
         self : this classifier
         X : pd.DataFrame or np.ndarray. Input attribute data
-        y : pd.DataFrame or np.array (optional)
 
         Returns
         -------
@@ -335,16 +334,20 @@ class BaseClassifier(BaseEstimator):
             )
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
+            # Temporary fix to insist on 3D numpy. For univariate problems,
+            # most classifiers simply convert back to 2D. This squashing should be
+            # done here, but touches a lot of files, so will get this to work first.
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
                 X = from_nested_to_3d_numpy(X)
-            if y is not None and isinstance(y, pd.Series):
-                y = y.to_numpy()
         elif convert_to_pandas:
-            # Temporary fix to insist on 3D numpy. For univariate problems,
-            # most classifiers simply convert back to 2D. This squashing should be
-            # done here, but touches a lot of files, so will get this to work first.
             X = from_3d_numpy_to_nested(X)
-        return X, y
+        return X
+
+    def convert_y(self, y):
+        """Convert y into a np.array."""
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
+        return y
