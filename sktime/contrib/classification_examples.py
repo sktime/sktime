@@ -7,10 +7,11 @@ This will become a note book once complete.
 __author__ = ["TonyBagnall"]
 
 import numpy as np
-
 from sklearn.ensemble import RandomForestClassifier
+
 from sktime.classification.hybrid import HIVECOTEV2
 from sktime.datasets import load_unit_test
+
 
 def build_classifiers():
     """Examples of building a classifier.
@@ -36,9 +37,13 @@ def build_classifiers():
 def make_toy_problem():
     """Makes a toy classification problem out of numpy arrays."""
     X_train_class1 = np.random.uniform(-1, 1, size=(20, 100))
-    y_train_class1 = np.zeros(20,)
+    y_train_class1 = np.zeros(
+        20,
+    )
     X_train_class2 = np.random.uniform(-0.9, 1.1, size=(20, 100))
-    y_train_class2 = np.ones(20,)
+    y_train_class2 = np.ones(
+        20,
+    )
     X_train = np.concatenate((X_train_class1, X_train_class2), axis=0)
     y_train = np.concatenate((y_train_class1, y_train_class2))
 
@@ -66,5 +71,3 @@ def compare_classifiers():
     # Pull down accuracies
 
     # Draw CD diagram
-
-compare_classifiers()
