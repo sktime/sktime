@@ -61,7 +61,6 @@ def test_convert_input():
     """
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
     test_X2 = np.random.uniform(-1, 1, size=(5, 2, 10))
-    test_y1 = np.random.randint(0, 1, size=5)
     tester = BaseClassifier()
     tempX = tester.convert_X(test_X1)
     assert tempX.shape[0] == 5 and tempX.shape[1] == 1 and tempX.shape[2] == 10
