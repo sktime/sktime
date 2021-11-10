@@ -17,7 +17,9 @@ def test_catch22_classifier_on_unit_test_data():
 
     # train catch22 classifier
     c22c = Catch22Classifier(
-        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+        random_state=0,
+        estimator=RandomForestClassifier(n_estimators=10),
+        outlier_norm=True,
     )
     c22c.fit(X_train, y_train)
 
@@ -51,8 +53,28 @@ def test_catch22_classifier_on_basic_motions():
 catch22_classifier_unit_test_probas = np.array(
     [
         [
-            0.1,
+            0.0,
+            1.0,
+        ],
+        [
             0.9,
+            0.1,
+        ],
+        [
+            0.3,
+            0.7,
+        ],
+        [
+            0.9,
+            0.1,
+        ],
+        [
+            0.9,
+            0.1,
+        ],
+        [
+            0.9,
+            0.1,
         ],
         [
             0.9,
@@ -63,32 +85,12 @@ catch22_classifier_unit_test_probas = np.array(
             0.6,
         ],
         [
-            0.9,
-            0.1,
+            0.7,
+            0.3,
         ],
         [
             0.8,
             0.2,
-        ],
-        [
-            0.7,
-            0.3,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.4,
-            0.6,
-        ],
-        [
-            0.6,
-            0.4,
-        ],
-        [
-            0.7,
-            0.3,
         ],
     ]
 )
@@ -175,8 +177,9 @@ catch22_classifier_basic_motions_probas = np.array(
 #     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
 #     c22c_u = Catch22Classifier(
-#        random_state=0,
-#        estimator=RandomForestClassifier(n_estimators=10),
+#         random_state=0,
+#         estimator=RandomForestClassifier(n_estimators=10),
+#         outlier_norm=True,
 #     )
 #
 #     c22c_u.fit(X_train, y_train)
@@ -187,11 +190,11 @@ catch22_classifier_basic_motions_probas = np.array(
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
-#    c22c_m = Catch22Classifier(
-#        random_state=0,
-#        estimator=RandomForestClassifier(n_estimators=10)
-#    )
+#     c22c_m = Catch22Classifier(
+#         random_state=0,
+#         estimator=RandomForestClassifier(n_estimators=10),
+#     )
 #
-#    c22c_m.fit(X_train.iloc[indices], y_train[indices])
-#    probas = c22c_m.predict_proba(X_test.iloc[indices])
-#    print_array(probas)
+#     c22c_m.fit(X_train.iloc[indices], y_train[indices])
+#     probas = c22c_m.predict_proba(X_test.iloc[indices])
+#     print_array(probas)

@@ -66,7 +66,10 @@ class Catch22Classifier(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=10))
+    >>> clf = Catch22Classifier(
+    ...     estimator=RandomForestClassifier(n_estimators=10),
+    ...     outlier_norm=True,
+    ... )
     >>> clf.fit(X_train, y_train)
     Catch22Classifier(...)
     >>> y_pred = clf.predict(X_test)
