@@ -48,9 +48,13 @@ def make_toy_problem():
     y_train = np.concatenate((y_train_class1, y_train_class2))
 
     X_test_class1 = np.random.uniform(-1, 1, size=(20, 100))
-    y_test_class1 = np.zeros(20,)
+    y_test_class1 = np.zeros(
+        20,
+    )
     X_test_class2 = np.random.uniform(-0.9, 1.1, size=(20, 100))
-    y_test_class2 = np.ones(20,)
+    y_test_class2 = np.ones(
+        20,
+    )
     X_test = np.concatenate((X_test_class1, X_test_class2), axis=0)
     y_test = np.concatenate((y_test_class1, y_test_class2))
     return X_train, y_train, X_test, y_test
