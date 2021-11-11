@@ -15,7 +15,6 @@ from sktime.utils.validation.panel import check_y
 
 BAD_INPUT_ARGS = [
     [0, 1, 2],  # list
-    np.empty((3, 2)),  # 2d np.array
     np.empty(2),  # 1d np.array
     np.empty((3, 2, 3, 2)),  # 4d np.array
     pd.DataFrame(np.empty((2, 3))),  # non-nested pd.DataFrame
