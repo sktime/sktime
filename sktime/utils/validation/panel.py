@@ -76,7 +76,7 @@ def check_X(
             X = X.reshape(X.shape[0], 1, X.shape[1])
         elif X.ndim == 1 or X.ndim > 3:
             raise ValueError(
-                f"If passed as a np.array, X must be a2 or 3-dimensional "
+                f"If passed as a np.array, X must be a 2 or 3-dimensional "
                 f"array, but found shape: {X.shape}"
             )
         if coerce_to_pandas:
