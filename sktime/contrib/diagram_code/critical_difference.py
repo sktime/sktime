@@ -3,9 +3,11 @@
 
 __author__ = ["Svea Meyer"]
 
+import math
+
 import numpy as np
 from scipy.stats import rankdata, find_repeats, distributions
-import math
+
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib")

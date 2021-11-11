@@ -79,6 +79,13 @@ sktime.
         patients, chemical process runs, machines, countries, etc. May also be referred to as samples, examples, observations or records
         depending on the discipline and context.
 
+    Trend
+        When data shows a long-term increase or decrease, this is referred to as a trend. Trends can also be non-linear.
+
+    Seasonality
+        When a :term: `time series` is affected by seasonal characteristics such as the time of year or the day of the week, it is called a seasonal pattern.
+        The duration of a season is always fixed and known.
+
     Tabular
         Is a setting where each :term:`timepoint` of the :term:`univariate time series` being measured for each instance are treated as features and
         stored as a primitive data type in the DataFrame’s cells. E.g., there are N :term:`instances <instance>` of time series and each has T

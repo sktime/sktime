@@ -18,9 +18,9 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.classification_intervals._continuous_interval_tree import (
-    _cif_feature,
+from sktime.contrib.vector_classifiers._continuous_interval_tree import (
     ContinuousIntervalTree,
+    _cif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation import check_n_jobs
@@ -275,6 +275,8 @@ class CanonicalIntervalForest(BaseClassifier):
                 )
                 length = (
                     rng.randint(0, len_range - self._min_interval) + self._min_interval
+                    if len_range - self._min_interval > 0
+                    else self._min_interval
                 )
                 intervals[j][1] = intervals[j][0] + length
             else:
@@ -306,7 +308,7 @@ class CanonicalIntervalForest(BaseClassifier):
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
-            return classifier.predict_proba_cif(X, c22, intervals, dims, atts)
+            return classifier._predict_proba_cif(X, c22, intervals, dims, atts)
         else:
             transformed_x = np.empty(
                 shape=(self._att_subsample_size * self._n_intervals, X.shape[0]),
@@ -337,7 +339,7 @@ class CanonicalIntervalForest(BaseClassifier):
             counts = np.zeros((25, self.n_dims, self.series_length))
 
         for i, tree in enumerate(self.estimators_):
-            splits, gains = tree.tree_splits_gain()
+            splits, gains = tree.tree_node_splits_and_gain()
 
             for n, split in enumerate(splits):
                 gain = gains[n]

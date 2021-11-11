@@ -17,7 +17,6 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -78,12 +77,12 @@ class TSFreshClassifier(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
     }
 
     def __init__(
@@ -112,7 +111,7 @@ class TSFreshClassifier(BaseClassifier):
 
         super(TSFreshClassifier, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit an estimator using transformed data from the Catch22 transformer.
 
         Parameters
@@ -125,7 +124,6 @@ class TSFreshClassifier(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.n_classes = np.unique(y).shape[0]
 
@@ -155,16 +153,15 @@ class TSFreshClassifier(BaseClassifier):
                 self._transformer.disable_progressbar = True
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
+        if m is not None:
             self._estimator.n_jobs = self.n_jobs
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class values of n_instances in X.
 
         Parameters
@@ -176,12 +173,9 @@ class TSFreshClassifier(BaseClassifier):
         preds : np.ndarray of shape (n, 1)
             Predicted class.
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         return self._estimator.predict(self._transformer.transform(X))
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for n_instances in X.
 
         Parameters
@@ -193,9 +187,6 @@ class TSFreshClassifier(BaseClassifier):
         predicted_probs : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))

@@ -137,6 +137,7 @@ Time Series Regression
     its features is still in progress.
 
 .. code-block:: python
+
     from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 
 Time Series Clustering

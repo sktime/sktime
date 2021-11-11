@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Registry lookup methods.
 
@@ -9,27 +10,23 @@ all_estimators(estimator_types, filter_tags)
 
 all_tags(estimator_types)
     lookup and filtering of estimator tags
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 import inspect
 import pkgutil
-import pandas as pd
-
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 
+import pandas as pd
+
 from sktime.base import BaseEstimator
-
-from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
-
 from sktime.registry._base_classes import (
-    TRANSFORMER_MIXIN_LIST,
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
+    TRANSFORMER_MIXIN_LIST,
 )
+from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
 
 VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
 VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
@@ -65,8 +62,8 @@ def all_estimators(
         'forecaster' to get estimators only of these specific types, or a list of
         these to get the estimators that fit at least one of the types.
     return_names: bool, optional (default=True)
-        If True, return estimators as list of (name, estimator) tuples.
-        If False, return list of estimators.
+        If True, return estimators as list of (name, estimator class) tuples.
+        If False, return list of estimators classes.
     filter_tags: dict of (str or list of str), optional (default=None)
         subsets the returned estimators as follows:
             each key/value pair is statement in "and"/conjunction
@@ -81,8 +78,8 @@ def all_estimators(
 
     Returns
     -------
-    estimators: list of class, if return_names=True,
-            or list of tuples (str, class), if return_names=False
+    estimators: list of class, if return_names=False,
+            or list of tuples (str, class), if return_names=True
         if list of estimators:
             entries are estimator classes matching the query,
             in alphabetical order of class name
@@ -134,20 +131,29 @@ def all_estimators(
     # packages
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
+        warnings.simplefilter("module", category=ImportWarning)
         for _, module_name, _ in pkgutil.walk_packages(path=[ROOT], prefix="sktime."):
 
             # Filter modules
             if _is_ignored_module(module_name) or _is_private_module(module_name):
                 continue
 
-            module = import_module(module_name)
-            classes = inspect.getmembers(module, inspect.isclass)
+            try:
+                module = import_module(module_name)
+                classes = inspect.getmembers(module, inspect.isclass)
 
-            # Filter classes
-            estimators = [
-                (name, klass) for name, klass in classes if _is_estimator(name, klass)
-            ]
-            all_estimators.extend(estimators)
+                # Filter classes
+                estimators = [
+                    (name, klass)
+                    for name, klass in classes
+                    if _is_estimator(name, klass)
+                ]
+                all_estimators.extend(estimators)
+            except ModuleNotFoundError as e:
+                # Skip missing soft dependencies
+                if "soft dependency" not in str(e):
+                    raise e
+                warnings.warn(str(e), ImportWarning)
 
     # Drop duplicates
     all_estimators = set(all_estimators)

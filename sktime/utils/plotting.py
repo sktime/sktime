@@ -1,29 +1,15 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Common timeseries plotting functionality.
+"""Common timeseries plotting functionality."""
 
-Functions
----------
-plot_series(*series, labels=None, markers=None, ax=None)
-plot_correlations(
-    series,
-    lags=24,
-    alpha=0.05,
-    zero_lag=True,
-    acf_fft=False,
-    acf_adjusted=True,
-    pacf_method="ywadjusted",
-    suptitle=None,
-    series_title=None,
-    acf_title="Autocorrelation",
-    pacf_title="Partial Autocorrelation",
-)
-"""
 __all__ = ["plot_series", "plot_correlations"]
-__author__ = ["Markus Löning", "Ryan Kuhns", "Drishti Bhasin"]
+__author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
+
+import math
 
 import numpy as np
+import pandas as pd
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
@@ -146,6 +132,79 @@ def plot_series(
         return fig, ax
     else:
         return ax
+
+
+def plot_lags(series, lags=1, suptitle=None):
+    """Plot one or more lagged versions of a time series.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Time series for plotting lags.
+    lags : int or array-like, default=1
+        The lag or lags to plot.
+
+        - int plots the specified lag
+        - array-like  plots specified lags in the array/list
+
+    suptitle : str, default=None
+        The text to use as the Figure's suptitle. If None, then the title
+        will be "Plot of series against lags {lags}"
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+
+    axes : np.ndarray
+        Array of the figure's Axe objects
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)
+    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # plots of y(t) with y(t-1),y(t-2)..
+    """
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    check_y(series)
+
+    if isinstance(lags, int):
+        single_lag = True
+        lags = [lags]
+    elif isinstance(lags, (tuple, list, np.ndarray)):
+        single_lag = False
+    else:
+        raise ValueError("`lags should be an integer, tuple, list, or np.ndarray.")
+
+    length = len(lags)
+    n_cols = min(3, length)
+    n_rows = math.ceil(length / n_cols)
+    fig, ax = plt.subplots(
+        nrows=n_rows,
+        ncols=n_cols,
+        figsize=(8, 6 * n_rows),
+        sharex=True,
+        sharey=True,
+    )
+    if single_lag:
+        axes = ax
+        pd.plotting.lag_plot(series, lag=lags[0], ax=axes)
+    else:
+        axes = ax.ravel()
+        for i, val in enumerate(lags):
+            pd.plotting.lag_plot(series, lag=val, ax=axes[i])
+
+    if suptitle is None:
+        fig.suptitle(
+            f"Plot of series against lags {', '.join([str(lag) for lag in lags])}",
+            size="xx-large",
+        )
+    else:
+        fig.suptitle(suptitle, size="xx-large")
+
+    return fig, np.array(fig.get_axes())
 
 
 def plot_correlations(

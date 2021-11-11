@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Non-linear, network pipeline in which steps are not executed sequentially."""
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sklearn.base import clone
+
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 __author__ = ["ViktorKaz"]
 __all__ = ["NetworkPipelineForecaster"]
@@ -82,7 +83,11 @@ class NetworkPipelineForecaster(BaseForecaster):
     """
 
     _required_parameters = ["steps"]
-    _tags = {"requires-fh-in-fit": True, "y_inner_mtype": "pd.DataFrame"}
+    _tags = {
+        "requires-fh-in-fit": True,
+        # "scitype:y": "both",
+        # "X_inner_mtype": "pd.DataFrame",
+    }
 
     def __init__(self, steps, *args):
         self.steps = steps

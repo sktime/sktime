@@ -69,7 +69,7 @@ class Arsenal(BaseClassifier):
     transformed_data : list of shape (n_estimators) of ndarray with shape
     (n_instances,total_intervals * att_subsample_size)
         The transformed dataset for all classifiers. Only saved when
-        save_transformed_data is true
+        save_transformed_data is true.
 
     See Also
     --------

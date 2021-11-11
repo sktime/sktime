@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Machine type checkers for scitypes.
 
 Exports
@@ -13,8 +14,6 @@ check_raise(obj, mtype: str, scitype:str)
 
 mtype(obj, as_scitype: str = None)
     infer the mtype of obj, considering it as as_scitype
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["fkiraly"]
@@ -36,6 +35,14 @@ from sktime.datatypes._registry import mtype_to_scitype
 check_dict = dict()
 check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
+
+
+def _check_scitype_valid(scitype: str = None):
+    """Check validity of scitype."""
+    valid_scitypes = list(set([x[1] for x in check_dict.keys()]))
+
+    if scitype is not None and scitype not in valid_scitypes:
+        raise TypeError(scitype + " is not a supported scitype")
 
 
 def check_is(
@@ -69,12 +76,14 @@ def check_is(
         fields:
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
+            "mtype": str, mtype of obj if inferred
 
     Raises
     ------
     TypeError if no checks defined for mtype/scitype combination
     ValueError if mtype input argument is not of expected type
     """
+    _check_scitype_valid(scitype)
 
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
@@ -92,7 +101,10 @@ def check_is(
 
     valid_keys = check_dict.keys()
 
+    # we loop through individual mtypes in mtype and see whether they pass the check
+    #  for each check we remember whether it passed and what it returned
     msg = []
+    found_mtype = []
 
     for m in mtype:
         if scitype is None:
@@ -109,14 +121,32 @@ def check_is(
             check_passed = res
 
         if check_passed:
-            return res
+            found_mtype.append(m)
+            final_result = res
         elif return_metadata:
             msg.append(res[1])
 
-    if len(msg) == 1:
-        msg = msg[0]
+    # there are three options on the result of check_is:
+    # a. two or more mtypes are found - this is unexpected and an error with checks
+    if len(found_mtype) > 1:
+        raise TypeError(
+            f"Error in check_is, more than one mtype identified: {found_mtype}"
+        )
+    # b. one mtype is found - then return that mtype
+    elif len(found_mtype) == 1:
+        if return_metadata:
+            # add the mtype return to the metadata
+            final_result[2]["mtype"] = found_mtype[0]
+            # final_result already has right shape and dependency on return_metadata
+            return final_result
+        else:
+            return True
+    # c. no mtype is found - then return False and all error messages if requested
+    else:
+        if len(msg) == 1:
+            msg = msg[0]
 
-    return ret(False, msg, None, return_metadata)
+        return ret(False, msg, None, return_metadata)
 
 
 def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
@@ -181,10 +211,7 @@ def mtype(obj, as_scitype: str = None):
     if obj is None:
         return None
 
-    valid_as_scitypes = list(set([x[1] for x in check_dict.keys()]))
-
-    if as_scitype is not None and as_scitype not in valid_as_scitypes:
-        raise TypeError(as_scitype + " is not a supported scitype")
+    _check_scitype_valid(as_scitype)
 
     if as_scitype is None:
         mtypes = np.array([x[0] for x in check_dict.keys()])
