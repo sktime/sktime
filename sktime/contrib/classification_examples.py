@@ -27,6 +27,13 @@ def build_classifiers():
     # Random forest, rocket and HC2.
     randf = RandomForestClassifier()
     trainX, train_y, testX, test_y = make_toy_2d_problem()
+    X = trainX.reshape(trainX.shape[0], 1, trainX.shape[1])
+    print(trainX)
+    print("Shape = ",trainX.shape)
+    print("*****************")
+    print(X)
+    print("Shape = ",X.shape)
+
     randf.fit(trainX, train_y)
     print("Fit complete")
     print(" rand f acc = ", randf.score(testX, test_y))
@@ -39,7 +46,6 @@ def build_classifiers():
     trainX, train_y, testX, test_y = make_toy_3d_problem()
     afc.fit(trainX, train_y)
     print(" Arsenal acc = ", afc.score(testX, test_y))
-
 
 
 def make_toy_2d_problem():
