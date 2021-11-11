@@ -72,7 +72,7 @@ def check_X(
     # check first if we have the right number of dimensions, otherwise we
     # may not be able to get the shape of the second dimension below
     if isinstance(X, np.ndarray):
-        if not X.ndim == 2:
+        if X.ndim == 2:
             X = X.reshape(X.shape[0], 1, X.shape[1])
         elif X.ndim == 1 or X.ndim > 3:
             raise ValueError(
