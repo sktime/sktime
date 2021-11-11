@@ -9,9 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
-from sktime.utils.validation.panel import check_y
+from sktime.utils.validation.panel import check_X, check_X_y, check_y
 
 BAD_INPUT_ARGS = [
     [0, 1, 2],  # list
