@@ -12,9 +12,11 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._convert import (
+    from_3d_numpy_to_nested,
+    from_nested_to_3d_numpy,
+)
 
 VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
