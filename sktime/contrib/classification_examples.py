@@ -28,24 +28,15 @@ def build_classifiers():
     randf = RandomForestClassifier()
     trainX, train_y, testX, test_y = make_toy_2d_problem()
     X = trainX.reshape(trainX.shape[0], 1, trainX.shape[1])
-    print(trainX)
-    print("Shape = ",trainX.shape)
-    print("*****************")
-    print(X)
-    print("Shape = ",X.shape)
 
     randf.fit(trainX, train_y)
-    print("Fit complete")
-    print(" rand f acc = ", randf.score(testX, test_y))
     hc2 = HIVECOTEV2(time_limit_in_minutes=1)
-#    hc2.fit(trainX, train_y)
-#   print(" HC2 acc = ", hc2.score(testX, test_y))
     afc = Arsenal()
     afc.fit(trainX, train_y)
-    print(" Arsenal acc = ", afc.score(testX, test_y))
+    # print(" Arsenal acc = ", afc.score(testX, test_y))
     trainX, train_y, testX, test_y = make_toy_3d_problem()
     afc.fit(trainX, train_y)
-    print(" Arsenal acc = ", afc.score(testX, test_y))
+    # print(" Arsenal acc = ", afc.score(testX, test_y))
 
 
 def make_toy_2d_problem():
@@ -98,6 +89,7 @@ def make_toy_3d_problem():
     X_test = np.concatenate((X_test_class1, X_test_class2), axis=0)
     y_test = np.concatenate((y_test_class1, y_test_class2))
     return X_train, y_train, X_test, y_test
+
 
 def compare_classifiers():
     """Build pipeline classifiers and compare to published results."""
