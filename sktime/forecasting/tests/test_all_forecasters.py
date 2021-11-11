@@ -428,4 +428,6 @@ def test__y_when_refitting(Forecaster):
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=FH0)
         f.fit(y_train[3:], fh=FH0)
-        assert np.all(f._y == y_train[3:])
+        # using np.squeeze to make the test flexible to shape differeces like
+        # (50,) and (50, 1)
+        assert np.all(np.squeeze(f._y) == np.squeeze(y_train[3:]))
