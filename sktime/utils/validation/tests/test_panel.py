@@ -22,6 +22,7 @@ y = pd.Series(dtype=np.int)
 
 @pytest.mark.parametrize("X", BAD_INPUT_ARGS)
 def test_check_X_bad_input_args(X):
+    """Test for the correct reaction for bad input in check_X."""
     with pytest.raises(ValueError):
         check_X(X)
 
@@ -30,6 +31,7 @@ def test_check_X_bad_input_args(X):
 
 
 def test_check_enforce_min_instances():
+    """Test minimum instances enforced in check_X."""
     X, y = make_classification_problem(n_instances=3)
     msg = r"instance"
     with pytest.raises(ValueError, match=msg):
@@ -43,6 +45,7 @@ def test_check_enforce_min_instances():
 
 
 def test_check_X_enforce_univariate():
+    """Test univariate enforced in check_X."""
     X, y = make_classification_problem(n_columns=2)
     msg = r"univariate"
     with pytest.raises(ValueError, match=msg):
@@ -53,6 +56,7 @@ def test_check_X_enforce_univariate():
 
 
 def test_check_X_enforce_min_columns():
+    """Test minimum columns enforced in check_X."""
     X, y = make_classification_problem(n_columns=2)
     msg = r"columns"
     with pytest.raises(ValueError, match=msg):
