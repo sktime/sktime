@@ -1,7 +1,8 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Unit tests for sktime.utils.validation.panel check functions."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "TonyBagnall"]
 __all__ = ["test_check_X_bad_input_args"]
 
 import numpy as np
