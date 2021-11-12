@@ -103,6 +103,7 @@ def _check_y(y):
     Parameters
     ----------
     y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+        coerced and checked version of input y
 
     Returns
     -------
@@ -113,9 +114,12 @@ def _check_y(y):
 
     Raises
     ------
-    TypeError if y is not of one of the expected types
-    NotImplementedError if y_index is not a supported sktime index type
-    ValueError if y_index is not monotonous
+    TypeError
+        if y is not of one of the expected types
+    NotImplementedError
+        if y_index is not a supported sktime index type
+    ValueError
+        if y_index is not monotonous
     """
     if isinstance(y, (pd.Series, pd.DataFrame)):
         y_index = y.index
