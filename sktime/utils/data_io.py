@@ -1422,7 +1422,7 @@ def write_ndarray_to_tsfile(
     Returns
     -------
     None
-    
+
     Notes
     -----
     This version currently does not support writing timestamp data.
