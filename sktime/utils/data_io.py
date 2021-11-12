@@ -35,6 +35,7 @@ def load_from_tsfile_to_dataframe(
     replace_missing_vals_with="NaN",
 ):
     """Load data from a .ts file into a Pandas DataFrame.
+
     Parameters
     ----------
     full_file_path_and_name: str
@@ -751,6 +752,7 @@ def load_from_arff_to_dataframe(
     replace_missing_vals_with="NaN",
 ):
     """Load data from a .ts file into a Pandas DataFrame.
+
     Parameters
     ----------
     full_file_path_and_name: str
@@ -766,6 +768,7 @@ def load_from_arff_to_dataframe(
     replace_missing_vals_with: str
        The value that missing values in the text file should be replaced
        with prior to parsing.
+
     Returns
     -------
     DataFrame, ndarray
@@ -870,6 +873,7 @@ def load_from_ucr_tsv_to_dataframe(
     full_file_path_and_name, return_separate_X_and_y=True
 ):
     """Load data from a .tsv file into a Pandas DataFrame.
+
     Parameters
     ----------
     full_file_path_and_name: str
@@ -878,6 +882,7 @@ def load_from_ucr_tsv_to_dataframe(
         true then X and Y values should be returned as separate Data Frames (
         X) and a numpy array (y), false otherwise.
         This is only relevant for data.
+
     Returns
     -------
     DataFrame, ndarray
@@ -907,12 +912,14 @@ def load_from_ucr_tsv_to_dataframe(
 
 def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     """Load data from a long format file into a Pandas DataFrame.
+
     Parameters
     ----------
     full_file_path_and_name: str
         The full pathname of the .csv file to read.
     separator: str
         The character that the csv uses as a delimiter
+
     Returns
     -------
     DataFrame
@@ -946,6 +953,7 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
 # left here for now, better elsewhere later perhaps
 def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     """Generate example from long table format file.
+
     Parameters
     ----------
     num_cases: int
@@ -954,6 +962,7 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
         Length of the series.
     num_dims: int
         Number of dimensions.
+
     Returns
     -------
     DataFrame
@@ -987,6 +996,7 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
 
 def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
     """Generate example multi-index DataFrame.
+
     Parameters
     ----------
     n_instances : int
@@ -995,6 +1005,7 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
         Number of columns (series) in multi-indexed DataFrame.
     n_timepoints : int
         Number of timepoints per instance-column pair.
+
     Returns
     -------
     mi_df : pd.DataFrame
@@ -1033,6 +1044,7 @@ def write_results_to_uea_format(
     third_line="N/A",
 ):
     """Write the predictions for an experiment in the standard format used by sktime.
+
     Parameters
     ----------
     estimator_name : str,
@@ -1177,6 +1189,7 @@ def write_tabular_transformation_to_arff(
 ):
     """
     Transform a dataset using a tabular transformer and write the result to a arff file.
+
     Parameters
     ----------
     data: pandas dataframe or 3d numpy array
@@ -1200,6 +1213,7 @@ def write_tabular_transformation_to_arff(
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
     fit_transform: bool, default=True
         Whether to fit the transformer prior to calling transform.
+
     Returns
     -------
     None
@@ -1293,6 +1307,7 @@ def write_dataframe_to_tsfile(
 ):
     """
     Output a dataset in dataframe format to .ts file.
+
     Parameters
     ----------
     data: pandas dataframe
@@ -1324,9 +1339,11 @@ def write_dataframe_to_tsfile(
         Comment text to be inserted before the header in a block.
     fold: str or None, default=None
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
+
     Returns
     -------
     None
+
     Notes
     -----
     This version currently does not support writing timestamp data.
@@ -1373,6 +1390,7 @@ def write_ndarray_to_tsfile(
 ):
     """
     Output a dataset in ndarray format to .ts file.
+
     Parameters
     ----------
     data: pandas dataframe
@@ -1400,9 +1418,11 @@ def write_ndarray_to_tsfile(
         Comment text to be inserted before the header in a block.
     fold: str or None, default=None
         Addon at the end of the filename, i.e. _TRAIN or _TEST.
+
     Returns
     -------
     None
+    
     Notes
     -----
     This version currently does not support writing timestamp data.
