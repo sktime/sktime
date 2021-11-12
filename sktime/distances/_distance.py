@@ -1014,7 +1014,7 @@ def distance(
     ----------
     x: np.ndarray (1d or 2d array)
         First timeseries.
-    y: np.ndarray (1d or 2 array)
+    y: np.ndarray (1d or 2d array)
         Second timeseries.
     metric: str or Callable
         The distance metric to use.
