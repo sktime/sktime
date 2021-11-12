@@ -59,4 +59,3 @@ _expected_distance_results = {
 #     y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
 #     result_2 = dist(x_2d, y_2d, metric='dtw')
 #     pass
-#

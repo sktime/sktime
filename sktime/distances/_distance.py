@@ -1077,8 +1077,8 @@ def distance(
 
 
 def distance_factory(
-    x: np.ndarray,
-    y: np.ndarray,
+    x: np.ndarray = None,
+    y: np.ndarray = None,
     metric: Union[
         str,
         Callable[
@@ -1086,18 +1086,18 @@ def distance_factory(
         ],
         Callable[[np.ndarray, np.ndarray], float],
         NumbaDistance,
-    ],
+    ] = "euclidean",
     **kwargs: Any,
 ) -> DistanceCallable:
     """Create a no_python distance callable.
 
     Parameters
     ----------
-    x: np.ndarray (1d or 2d array)
+    x: np.ndarray (1d or 2d array), defaults = None
         First timeseries.
-    y: np.ndarray (1d or 2d array)
+    y: np.ndarray (1d or 2d array), defaults = None
         Second timeseries.
-    metric: str or Callable
+    metric: str or Callable, defaults  = 'euclidean'
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -1132,6 +1132,10 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
+    if x is None:
+        x = np.zeros((10, 10))
+    if y is None:
+        y = np.zeros((10, 10))
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
