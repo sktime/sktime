@@ -1,30 +1,28 @@
 # -*- coding: utf-8 -*-
-"""
-Configurable time series ensembles
-"""
+"""Configurable time series ensembles."""
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
-from warnings import warn
-import numpy as np
 import numbers
-from joblib import Parallel
-from joblib import delayed
+from warnings import warn
 
+import numpy as np
+from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble._forest import _generate_unsampled_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
-from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X, check_X_y
+
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
@@ -58,10 +56,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=200)
         The number of trees in the forest.
-    criterion : string, optional (default="entropy")
-        The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific. Default is "entropy"
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -114,9 +108,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float or None, (default=None)
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
@@ -195,7 +186,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self,
         estimator=None,
         n_estimators=100,
-        criterion="entropy",
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
@@ -203,7 +193,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         max_features=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
-        min_impurity_split=None,
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -218,7 +207,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
-        self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -226,7 +214,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
         # Pass on params.
@@ -291,7 +278,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Set parameters according to naming in pipeline
         estimator_params = {
-            "criterion": self.criterion,
             "max_depth": self.max_depth,
             "min_samples_split": self.min_samples_split,
             "min_samples_leaf": self.min_samples_leaf,
@@ -299,7 +285,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_features": self.max_features,
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
-            "min_impurity_split": self.min_impurity_split,
         }
         final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {
@@ -312,18 +297,20 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             self.__setattr__(pname, pval)
 
     def predict(self, X):
-        """
-        Predict class for X.
+        """Predict class for X.
+
         The predicted class of an input sample is a vote by the trees in
         the forest, weighted by their probability estimates. That is,
         the predicted class is the one with highest mean probability
         estimate across the trees.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -348,17 +335,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             return predictions
 
     def predict_log_proba(self, X):
-        """
-        Predict class log-probabilities for X.
+        """Predict class log-probabilities for X.
+
         The predicted class log-probabilities of an input sample is computed as
         the log of the mean predicted class probabilities of the trees in the
         forest.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         p : array of shape (n_samples, n_classes), or a list of n_outputs
@@ -379,17 +368,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
+
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
         class probability of a single tree is the fraction of samples of the
-        same
-        class in a leaf.
+        same class in a leaf.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
@@ -413,7 +404,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
     def _set_oob_score(self, X, y):
-        """Compute out-of-bag score"""
+        """Compute out-of-bag score."""
         check_X_y(X, y)
         check_X(X, enforce_univariate=True)
 
@@ -459,6 +450,10 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             self.oob_decision_function_ = oob_decision_function
 
         self.oob_score_ = oob_score / self.n_outputs_
+
+    # TODO - Implement this abstract method properly.
+    def _set_oob_score_and_attributes(self, X, y):
+        raise NotImplementedError("Not implemented.")
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)

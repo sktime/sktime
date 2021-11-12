@@ -1365,6 +1365,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "OliverMatthews",
+      "name": "Oliver Matthews",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31141490?v=4",
+      "profile": "https://github.com/olivermatthews",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
