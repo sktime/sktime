@@ -387,7 +387,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
     >>> forecaster = TransformedTargetForecaster([
     ...     ("deseasonalize", STLTransformer(sp=12)),
     ...     ("forecaster", PolynomialTrendForecaster(degree=1)),
-    ... ]
+    ... ])
     >>> forecaster.fit(y)
     TransformedTargetForecaster(...)
     >>> y_pred = forecaster.predict()
