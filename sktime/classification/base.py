@@ -295,7 +295,7 @@ class BaseClassifier(BaseEstimator):
         """
         allow_multivariate = self.get_tag("capability:multivariate")
         allow_missing = self.get_tag("capability:missing_values")
-        allow_unequal = self.get_tag("capability:missing_values")
+        allow_unequal = self.get_tag("capability:unequal_length")
         if missing and not allow_missing:
             raise ValueError(
                 "The data has missing values, this classifier cannot handle missing "
@@ -304,7 +304,7 @@ class BaseClassifier(BaseEstimator):
         if multivariate and not allow_multivariate:
             raise ValueError(
                 "The data is multivariate, this classifier cannot handle multivariate "
-                "time serries"
+                "time series"
             )
         if unequal and not allow_unequal:
             raise ValueError(

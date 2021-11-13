@@ -10,6 +10,21 @@ import pytest
 from sktime.classification.base import BaseClassifier
 
 
+class _DummyClassifier(BaseEstimator):
+    """Dummy classifier for testing."""
+    def _fit(self, X, y):
+        """Fit dummy."""
+        return self
+
+    def _predict(self, X):
+        """predict dummy."""
+        return self
+
+    def _predict_proba(self):
+        """Predict proba dummy."""
+        return self
+
+
 def test_check_capabilities():
     """Test the checking of capabilities.
 
