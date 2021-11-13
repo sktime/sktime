@@ -1374,6 +1374,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Carlosbogo",
+      "name": "Carlos Borrajo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84228424?v=4",
+      "profile": "https://github.com/Carlosbogo",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",
