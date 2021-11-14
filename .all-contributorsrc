@@ -997,6 +997,15 @@
       ]
     },
     {
+      "login": "chernika158",
+      "name": "Galina Chernikova",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43787741?s=400&v=4",
+      "profile": "https://github.com/chernika158",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "GuzalBulatova",
       "name": "Guzal Bulatova",
       "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
@@ -1373,6 +1382,16 @@
       "profile": "https://github.com/olivermatthews",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "Carlosbogo",
+      "name": "Carlos Borrajo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84228424?v=4",
+      "profile": "https://github.com/Carlosbogo",
+      "contributions": [
+        "code",
+        "doc"
       ]
     }
   ],

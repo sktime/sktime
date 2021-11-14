@@ -1003,10 +1003,8 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
     ----------
     n_instances : int
         Number of instances.
-
     n_columns : int
         Number of columns (series) in multi-indexed DataFrame.
-
     n_timepoints : int
         Number of timepoints per instance-column pair.
 
