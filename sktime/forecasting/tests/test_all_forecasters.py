@@ -318,17 +318,6 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
                 f.predict(return_pred_int=True, alpha=alpha)
 
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
-    # alpha can be a float or a list
-    # if a list, it has to be sorted
-    # check if alpha is increasing and in the given interval
-    if isinstance(alpha, list):
-        # check that alpha contains strictly increasing values
-        assert all(x < y for x, y in zip(alpha, alpha[1:]))
-        # check that alpha vales are in the [0, 1] interval
-        assert min(alpha) >= 0
-        assert max(alpha) <= 1
-    else:
-        assert 0 <= alpha <= 1
 
     # check if the input is a dataframe
     assert isinstance(pred_quantiles, pd.DataFrame)
@@ -340,10 +329,14 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha
     expected = pd.MultiIndex.from_product(y_train.columns, alpha)
     assert all(expected == pred_quantiles.columns.to_flat_index())
 
-    # check if values are monotonically increasing
-    for var in pred_quantiles.columns.levels[0]:
-        for index in range(len(pred_quantiles.index)):
-            assert pred_quantiles[var].iloc[index].is_monotonic_increasing
+    if isinstance(alpha, list):
+        # sorts the columns that correspond to alpha values
+        pred_quantiles = pred_quantiles.reindex(columns= pred_quantiles.columns.reindex(sorted(alpha), level = 1)[0])
+
+        # check if values are monotonically increasing
+        for var in pred_quantiles.columns.levels[0]:
+            for index in range(len(pred_quantiles.index)):
+                assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
 
 
