@@ -390,7 +390,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
     ... ])
     >>> forecaster.fit(y)
     TransformedTargetForecaster(...)
-    >>> y_pred = forecaster.predict()
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
