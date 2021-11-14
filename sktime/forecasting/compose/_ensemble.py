@@ -89,7 +89,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=[1,2,3])
     AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -99,6 +99,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -244,7 +245,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
-    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -254,6 +255,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):

@@ -6,13 +6,16 @@
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
+import warnings
 from itertools import product
 
 import numpy as np
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
+from sktime.utils.validation.forecasting import check_alpha
 
 
 class AutoETS(_StatsModelsAdapter):
@@ -167,6 +170,12 @@ class AutoETS(_StatsModelsAdapter):
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+    }
 
     def __init__(
         self,
@@ -198,7 +207,6 @@ class AutoETS(_StatsModelsAdapter):
         n_jobs=None,
         **kwargs
     ):
-
         # Model params
         self.error = error
         self.trend = trend
@@ -236,15 +244,27 @@ class AutoETS(_StatsModelsAdapter):
         # Select model automatically
         if self.auto:
             # Initialise parameter ranges
-            error_range = ["add", "mul"]
-            if self.allow_multiplicative_trend:
+            if (y > 0).all():
+                error_range = ["add", "mul"]
+            else:
+                warnings.warn(
+                    "Warning: time series is not strictly positive,"
+                    "multiplicative components are ommitted"
+                )
+                error_range = ["add"]
+
+            if self.allow_multiplicative_trend and (y > 0).all():
                 trend_range = ["add", "mul", None]
             else:
                 trend_range = ["add", None]
+
             if self.sp <= 1 or self.sp is None:
                 seasonal_range = [None]
-            else:
+            elif (y > 0).all():
                 seasonal_range = ["add", "mul", None]
+            else:
+                seasonal_range = ["add", None]
+
             damped_range = [True, False]
 
             # Check information criterion input
@@ -363,6 +383,85 @@ class AutoETS(_StatsModelsAdapter):
                 callback=self.callback,
                 return_params=self.return_params,
             )
+
+    def compute_pred_int(self, valid_indices, alpha, **simulate_kwargs):
+        """Compute/return prediction intervals for AutoETS.
+
+        Must be run *after* the forecaster has been fitted.
+        If alpha is iterable, multiple intervals will be calculated.
+
+        Parameters
+        ----------
+        valid_indices : pd.PeriodIndex
+            indices to compute the prediction intervals for
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+        simulate_kwargs : see statsmodels ETSResults.get_prediction
+
+        Returns
+        -------
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
+        """
+        self.check_is_fitted()
+        alphas = check_alpha(alpha)
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, **simulate_kwargs
+        )
+
+        pred_ints = []
+        for alpha_iter in alphas:
+            pred_int = prediction_results.pred_int(alpha_iter)
+            pred_int.columns = ["lower", "upper"]
+            pred_ints.append(pred_int.loc[valid_indices])
+
+        if isinstance(alpha, float):
+            pred_ints = pred_ints[0]
+
+        return pred_ints
+
+    def _predict(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, **simulate_kwargs
+    ):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
+            i.e. np.array([1])
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        return_pred_int : bool, optional (default=False)
+        alpha : int or list, optional (default=0.95)
+        **simulate_kwargs : see statsmodels ETSResults.get_prediction
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Returns series of predicted values.
+        """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        y_pred = self._fitted_forecaster.predict(start=start, end=end)
+
+        if return_pred_int:
+            pred_int = self.compute_pred_int(
+                valid_indices, alpha=alpha, **simulate_kwargs
+            )
+
+            return y_pred.loc[valid_indices], pred_int
+        else:
+            return y_pred.loc[valid_indices]
 
     def summary(self):
         """Get a summary of the fitted forecaster.

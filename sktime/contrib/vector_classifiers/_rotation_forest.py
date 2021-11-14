@@ -229,8 +229,8 @@ class RotationForest(BaseEstimator):
                 estimators, pcas, groups, transformed_data = zip(*fit)
 
                 self.estimators_ += estimators
-                self._pcas = pcas
-                self._groups = groups
+                self._pcas += pcas
+                self._groups += groups
                 self.transformed_data += transformed_data
 
                 self._n_estimators += self._n_jobs
