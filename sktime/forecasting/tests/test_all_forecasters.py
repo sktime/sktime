@@ -320,7 +320,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
     # alpha can be a float or a list
     # if a list, it has to be sorted
-    # if alpha is a list check that it is increasing and the values are in the given interval
+    # check if alpha is increasing and in the given interval
     if isinstance(alpha, list):
         # check that alpha contains strictly increasing values
         assert all(x < y for x, y in zip(alpha, alpha[1:]))
