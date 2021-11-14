@@ -803,7 +803,7 @@ class BaseForecaster(BaseEstimator):
         # we only need to modify _y if y is not None
         if y is not None:
             # if _y does not exist yet, initialize it with y
-            if not hasattr(self, "_y") or self._y is None:
+            if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
             # otherwise, update _y with the new rows in y
             #  if y is np.ndarray, we assume all rows are new
@@ -811,10 +811,7 @@ class BaseForecaster(BaseEstimator):
                 self._y = np.concatenate(self._y, y)
             #  if y is pandas, we use combine_first to update
             elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
-                if self._is_fitted:
-                    self._y = y.combine_first(self._y)
-                else:
-                    self._y = y
+                self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
@@ -822,7 +819,7 @@ class BaseForecaster(BaseEstimator):
         # we only need to modify _X if X is not None
         if X is not None:
             # if _X does not exist yet, initialize it with X
-            if not hasattr(self, "_X") or self._X is None:
+            if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
             # otherwise, update _X with the new rows in X
             #  if X is np.ndarray, we assume all rows are new
@@ -830,10 +827,7 @@ class BaseForecaster(BaseEstimator):
                 self._X = np.concatenate(self._X, X)
             #  if X is pandas, we use combine_first to update
             elif isinstance(X, (pd.Series, pd.DataFrame)) and len(X) > 0:
-                if self._is_fitted:
-                    self._X = X.combine_first(self._X)
-                else:
-                    self._X = X
+                self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
