@@ -43,7 +43,7 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
 
     def __init__(
         self,
-        num_kernels=10_000,
+        num_kernels=6_250,
         max_dilations_per_kernel=32,
         n_features_per_kernel=4,
         normalise=False,
