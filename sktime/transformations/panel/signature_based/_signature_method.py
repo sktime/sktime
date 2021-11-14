@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from sklearn.pipeline import Pipeline
+
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.panel.signature_based._compute import (
-    _WindowSignatureTransform,
-)
 from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
 from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
+)
+from sktime.transformations.panel.signature_based._compute import (
+    _WindowSignatureTransform,
 )
 
 
@@ -63,14 +64,8 @@ class SignatureTransformer(_PanelToTabularTransformer):
 
         self.setup_feature_pipeline()
 
-    def _assertions(self):
-        """Some assertions to run on initialisation."""
-        assert not all(
-            [self.sig_tfm == "logsignature", self.rescaling == "post"]
-        ), "Cannot have post rescaling with the logsignature."
-
     def setup_feature_pipeline(self):
-        """Sets up the signature method as an sklearn pipeline."""
+        """Set up the signature method as an sklearn pipeline."""
         augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
         transform_step = _WindowSignatureTransform(
             window_name=self.window_name,
@@ -92,10 +87,38 @@ class SignatureTransformer(_PanelToTabularTransformer):
 
     @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels=None):
+        """Fit to data, then transform it.
+
+        Parameters
+        ----------
+        data: pd.Dataframe or np.ndarray (3d array)
+            Data to transform.
+        labels: np.ndarray (1d array) or pd.series or list
+            Labels for the data.
+
+        Returns
+        -------
+        pd.Dataframe or np.ndarray or pd.series
+        Transformed data.
+        """
         self.signature_method.fit(data, labels)
         self._is_fitted = True
         return self
 
     @_handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
+        """Transform the class from the signature method.
+
+        Parameters
+        ----------
+        data: pd.Dataframe or np.ndarray (3d array)
+            Data to transform.
+        labels: np.ndarray (1d array) or pd.series or list
+            Labels for the data.
+
+        Returns
+        -------
+        pd.Dataframe or np.ndarray or pd.series
+            Transformed data.
+        """
         return self.signature_method.transform(data)
