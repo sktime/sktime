@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
+"""MultiRocketMultivariate test code."""
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
+
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.rocket import MultiRocketMultivariate
 
 
 def test_multirocket_multivariate_on_basic_motions():
-
+    """Test of MultiRocketMultivariate on basic motions."""
     # load training data
     X_training, Y_training = load_basic_motions(split="train", return_X_y=True)
 

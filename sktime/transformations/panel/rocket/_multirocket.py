@@ -63,7 +63,7 @@ class MultiRocket(_PanelToTabularTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.rocket._multi_rocket import MultiRocket
+    >>> from sktime.transformations.panel.rocket._multirocket import MultiRocket
     >>> from sktime.datasets import load_italy_power_demand
     >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
