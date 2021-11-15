@@ -6,6 +6,7 @@
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
+import warnings
 from itertools import product
 
 import numpy as np
@@ -243,15 +244,27 @@ class AutoETS(_StatsModelsAdapter):
         # Select model automatically
         if self.auto:
             # Initialise parameter ranges
-            error_range = ["add", "mul"]
-            if self.allow_multiplicative_trend:
+            if (y > 0).all():
+                error_range = ["add", "mul"]
+            else:
+                warnings.warn(
+                    "Warning: time series is not strictly positive,"
+                    "multiplicative components are ommitted"
+                )
+                error_range = ["add"]
+
+            if self.allow_multiplicative_trend and (y > 0).all():
                 trend_range = ["add", "mul", None]
             else:
                 trend_range = ["add", None]
+
             if self.sp <= 1 or self.sp is None:
                 seasonal_range = [None]
-            else:
+            elif (y > 0).all():
                 seasonal_range = ["add", "mul", None]
+            else:
+                seasonal_range = ["add", None]
+
             damped_range = [True, False]
 
             # Check information criterion input
