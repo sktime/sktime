@@ -305,14 +305,10 @@ def run_classification_experiment(
             second.replace("\r", " ")
 
             # Line 3 format:
-
-
-
-            # 4. setBenchmarkTime
             preds = classifier.classes_[np.argmax(probs, axis=1)]
             acc = accuracy_score(y_test, preds)
             third = (
-                str(acc) # 1. accuracy
+                str(acc)  # 1. accuracy
                 + ","
                 + str(build_time)  # 2. fit time
                 + ","
