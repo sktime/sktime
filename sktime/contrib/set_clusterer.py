@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Set classifier function."""
+__author__ = ["TonyBagnall"]
 
 
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids

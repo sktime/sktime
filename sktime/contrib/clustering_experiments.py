@@ -5,7 +5,7 @@ code to run experiments for clustering, saving results in a standard format.
 The main method is run_clustering_experiment. However, this file is also configured for
 runs of the main method with command line arguments, or for single debugging runs.
 """
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 import os
 import sys
 import pandas as pd

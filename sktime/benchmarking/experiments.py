@@ -315,7 +315,7 @@ def run_classification_experiment(
                 + str(test_time)  # 3. predict time
                 + ",-1,-1,"  # 4. 5. benchmark time, memory (to do)
                 + str(len(classifier.classes_))  # 6. number of classes
-                + ",,-1,-1"  # 7. 8. error estimate method, build plus estimate time
+                + ",,-1,-1"  # 7. 8. 9.
             )
             le = preprocessing.LabelEncoder()
             le.fit(y_test)
