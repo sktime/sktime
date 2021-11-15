@@ -137,7 +137,7 @@ def load_and_run_clustering_experiment(
     results_path,
     cls_name,
     dataset,
-    clusterer=None,
+    clusterer,
     resample_id=0,
     overwrite=False,
     format=".ts",
@@ -162,6 +162,7 @@ def load_and_run_clustering_experiment(
     dataset : str
         Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
         "_TRAIN"+format, same for "_TEST"
+    clusterer : the clusterer
     resample_id : int, default = 0
         Seed for resampling. If set to 0, the default train/test split from file is
         used. Also used in output file name.
@@ -216,9 +217,6 @@ def load_and_run_clustering_experiment(
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    if clusterer is None:
-        clusterer = set_clusterer(cls_name, resample_id)
-
     run_clustering_experiment(
         trainX,
         clusterer,
