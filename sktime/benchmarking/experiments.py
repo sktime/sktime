@@ -304,18 +304,27 @@ def run_classification_experiment(
             second.replace("\n", " ")
             second.replace("\r", " ")
 
+            # Line 3 format:
+
+
+
+            # 4. setBenchmarkTime
             preds = classifier.classes_[np.argmax(probs, axis=1)]
             acc = accuracy_score(y_test, preds)
             third = (
-                str(acc)
+                str(acc) # 1. accuracy
                 + ","
-                + str(build_time)
+                + str(build_time)  # 2. fit time
                 + ","
-                + str(test_time)
-                + ",-1,-1,"
-                + str(len(classifier.classes_))
-                + ",,-1,-1"
+                + str(test_time)  # 3. predict time
+                + ",-1,-1,"  # 4. 5. benchmark time, memory (to do)
+                + str(len(classifier.classes_))  # 6. number of classes
+                + ",,-1,-1"  # 7. 8. error estimate method, build plus estimate time
             )
+            le = preprocessing.LabelEncoder()
+            le.fit(y_test)
+            predicted = le.transform(preds)
+            actual = le.transform(y_test)
 
             write_results_to_uea_format(
                 second_line=second,
@@ -327,10 +336,10 @@ def run_classification_experiment(
                 output_path=results_path,
                 estimator_name=cls_name,
                 resample_seed=resample_id,
-                y_pred=preds,
+                y_pred=predicted,
                 predicted_probs=probs,
                 dataset_name=dataset,
-                y_true=y_test,
+                y_true=actual,
                 split="TEST",
                 full_path=False,
             )
@@ -371,6 +380,10 @@ def run_classification_experiment(
             + ","
             + str(build_time + train_time)
         )
+        le = preprocessing.LabelEncoder()
+        le.fit(y_train)
+        predicted = le.transform(train_preds)
+        actual = le.transform(y_train)
 
         write_results_to_uea_format(
             second_line=second,
@@ -382,10 +395,10 @@ def run_classification_experiment(
             output_path=results_path,
             estimator_name=cls_name,
             resample_seed=resample_id,
-            y_pred=train_preds,
+            y_pred=predicted,
             predicted_probs=train_probs,
             dataset_name=dataset,
-            y_true=y_train,
+            y_true=actual,
             split="TRAIN",
             full_path=False,
         )
