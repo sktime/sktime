@@ -7,7 +7,6 @@ __author__ = ["TonyBagnall"]
 __all__ = [
     "run_clustering_experiment",
     "load_and_run_clustering_experiment",
-    "set_clusterer",
     "run_classification_experiment",
     "load_and_run_classification_experiment",
 ]
@@ -22,7 +21,6 @@ from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
-from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.data_io import write_results_to_uea_format
 from sktime.utils.sampling import stratified_resample
@@ -231,47 +229,6 @@ def load_and_run_clustering_experiment(
         dataset_name=dataset,
         results_path=results_path,
     )
-
-
-def set_clusterer(cls, resample_id=None):
-    """Construct a clusterer.
-
-    Basic way of creating the clusterer to build using the default settings. This
-    set up is to help with batch jobs for multiple problems to facilitate easy
-    reproducability through run_clustering_experiment. You can set up bespoke
-    clusterers and pass them to run_clustering_experiment if you prefer. It also
-    serves to illustrate the base clusterer parameters
-
-    Parameters
-    ----------
-    cls : str
-        indicating which clusterer you want
-    resample_id : int or None, default = None
-        clusterer random seed
-
-    Return
-    ------
-    A clusterer.
-    """
-    name = cls.lower()
-    # Distance based
-    if name == "kmeans" or name == "k-means":
-        return TimeSeriesKMeans(
-            n_clusters=5,
-            max_iter=50,
-            averaging_algorithm="mean",
-            random_state=resample_id,
-        )
-    if name == "kmedoids" or name == "k-medoids":
-        return TimeSeriesKMedoids(
-            n_clusters=5,
-            max_iter=50,
-            averaging_algorithm="mean",
-            random_state=resample_id,
-        )
-
-    else:
-        raise Exception("UNKNOWN CLUSTERER")
 
 
 def run_classification_experiment(
