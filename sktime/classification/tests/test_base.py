@@ -46,8 +46,7 @@ def test_base_classifier_fit():
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
     test_y1 = np.random.randint(0, 1, size=(cases))
-    test_y3 = pd.Series(test_y1)
-    result = dummy.fit(test_x1, test_y1)
+    result = dummy.fit(test_X1, test_y1)
     assert result is dummy
     result = dummy.fit(test_X2, test_y1)
     assert result is dummy
@@ -59,8 +58,8 @@ def test_base_classifier_fit():
     test_y2 = np.array([test_y1])
     # What if it is in a 2D matrix (cases,1)?
     test_y2 = np.array([test_y1]).transpose()
-    with pytest.raises(ValueError, match=r"value rerror"):
-        result = dummy.fit(test_x1, test_y2)
+    with pytest.raises(ValueError, match=r"value error"):
+        result = dummy.fit(test_X1, test_y2)
 
 
 def test_check_capabilities():

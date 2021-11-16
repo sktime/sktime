@@ -182,6 +182,7 @@ class BaseClassifier(BaseEstimator):
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
         X = self.convert_X(X)
+        y = self.convert_y(y)
 
         return self._predict_proba(X)
 
@@ -348,7 +349,24 @@ class BaseClassifier(BaseEstimator):
         return X
 
     def convert_y(self, y):
-        """Convert y into a np.array."""
-        if isinstance(y, pd.Series):
-            y = y.to_numpy()
+        """Convert y into a pd.Series.
+
+        y is the target variable.
+
+        Parameters
+        ----------
+        self : this classifier
+        y : np.array, np.ndarray shape (n,1) or pd.Series.
+
+        Returns
+        -------
+        y: pd.Series
+        """
+        if isinstance(y, np.array()):
+            y = np.Series(y)
+        elif isinstance(y, np.ndarray()):
+            if y.shape[0] > 1:
+                y = np.Series(y)
+            else:
+                y = np.Series(y.transpose())
         return y
