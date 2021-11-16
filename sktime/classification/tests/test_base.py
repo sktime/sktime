@@ -30,13 +30,13 @@ def test_base_classifier_fit():
     """Test function for the BaseClassifier class fit.
 
     Test fit. It should:
-     1. Work with 2D, 3D and DataFrame for X and nparray for y.
-     2. Calculate the number of classes and record the fit time.
-     3. have self.n_jobs set or throw  an exception if the classifier can
-     multithread.
-     4. Set the class dictionary correctly.
-     5. Set is_fitted after a call to _fit.
-     5. Return self."""
+    1. Work with 2D, 3D and DataFrame for X and nparray for y.
+    2. Calculate the number of classes and record the fit time.
+    3. have self.n_jobs set or throw  an exception if the classifier can
+    multithread.
+    4. Set the class dictionary correctly.
+    5. Set is_fitted after a call to _fit.
+    6. Return self."""
     dummy = _DummyClassifier()
     cases = 5
     length = 10
