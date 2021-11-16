@@ -107,9 +107,8 @@ def test_convert_input():
     1. Pass a 2D numpy X, get a 3D numpy X
     2. Pass a 3D numpy X, get a 3D numpy X
     3. Pass a pandas numpy X, equal length, get a 3D numpy X
-    4. Pass a pd.Series y, get a 1S numpy y
-        "coerce-X-to-numpy": False,
-        "coerce-X-to-pandas": True,
+    4. Pass a pd.Series y, get a pd.Series back
+    5. Pass a np.ndarray y, get a pd.Series back
     """
     cases = 5
     length = 10
@@ -140,6 +139,12 @@ def test_convert_input():
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == cases
     assert tempX.shape[1] == 2
+    test_y1 = np.random.randint(0, 1, size=(cases))
+    test_y2 = pd.Series(test_y1)
+    tempY = tester.convert_y(test_y1)
+    assert isinstance(temp,pd.Series)
+    tempY = tester.convert_y(test_y2)
+    assert isinstance(temp,pd.Series)
 
 
 def _create_example_dataframe(cases=5, dimensions=1, length=10):

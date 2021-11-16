@@ -361,7 +361,7 @@ class BaseClassifier(BaseEstimator):
         -------
         y: pd.Series
         """
-        if isinstance(y, np.array()):
+        if isinstance(y, np.ndarray):
             y = np.Series(y)
         # elif isinstance(y, np.ndarray()):
         #     if y.shape[0] > 1:
