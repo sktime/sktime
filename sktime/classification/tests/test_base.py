@@ -36,7 +36,8 @@ def test_base_classifier_fit():
     multithread.
     4. Set the class dictionary correctly.
     5. Set is_fitted after a call to _fit.
-    6. Return self."""
+    6. Return self.
+    """
     dummy = _DummyClassifier()
     cases = 5
     length = 10
