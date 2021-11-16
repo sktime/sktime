@@ -11,13 +11,14 @@ from sktime.classification.base import BaseClassifier
 
 
 class _DummyClassifier(BaseEstimator):
-    """Dummy classifier for testing."""
+    """Dummy classifier for testing base class fit/predict/predict_proba."""
+
     def _fit(self, X, y):
         """Fit dummy."""
         return self
 
     def _predict(self, X):
-        """predict dummy."""
+        """Predict dummy."""
         return self
 
     def _predict_proba(self):
