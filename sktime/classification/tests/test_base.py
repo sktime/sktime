@@ -10,7 +10,7 @@ import pytest
 from sktime.classification.base import BaseClassifier
 
 
-class _DummyClassifier(BaseEstimator):
+class _DummyClassifier(BaseClassifier):
     """Dummy classifier for testing base class fit/predict/predict_proba."""
 
     def _fit(self, X, y):
