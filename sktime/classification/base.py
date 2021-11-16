@@ -93,7 +93,6 @@ class BaseClassifier(BaseEstimator):
         """
         start = int(round(time.time() * 1000))
         # Check the data is either numpy arrays or pandas dataframes
-        # TODO: add parameters for min instances and min length
         check_classifier_input(X, y)
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
@@ -362,7 +361,7 @@ class BaseClassifier(BaseEstimator):
         y: pd.Series
         """
         if isinstance(y, np.ndarray):
-            y = np.Series(y)
+            y = pd.Series(y)
         # elif isinstance(y, np.ndarray()):
         #     if y.shape[0] > 1:
         #         y = np.Series(y)
