@@ -355,7 +355,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         self : this classifier
-        y : np.array, np.ndarray shape (n,1) or pd.Series.
+        y : np.array or pd.Series.
 
         Returns
         -------
@@ -363,9 +363,9 @@ class BaseClassifier(BaseEstimator):
         """
         if isinstance(y, np.array()):
             y = np.Series(y)
-        elif isinstance(y, np.ndarray()):
-            if y.shape[0] > 1:
-                y = np.Series(y)
-            else:
-                y = np.Series(y.transpose())
+        # elif isinstance(y, np.ndarray()):
+        #     if y.shape[0] > 1:
+        #         y = np.Series(y)
+        #     else:
+        #         y = np.Series(y.transpose())
         return y
