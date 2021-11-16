@@ -182,7 +182,6 @@ class BaseClassifier(BaseEstimator):
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
         X = self.convert_X(X)
-        y = self.convert_y(y)
 
         return self._predict_proba(X)
 
