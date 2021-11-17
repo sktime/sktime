@@ -45,20 +45,22 @@ def test_base_classifier_fit():
     test_X2 = np.random.uniform(-1, 1, size=(cases, 2, length))
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
-    test_y1 = np.random.randint(0, 1, size=(cases))
+    test_y1 = np.random.randint(0, 2, size=(cases))
     result = dummy.fit(test_X1, test_y1)
     assert result is dummy
-    result = dummy.fit(test_X2, test_y1)
+    with pytest.raises(ValueError, match=r"this classifier cannot handle multivariate"):
+        result = dummy.fit(test_X2, test_y1)
     assert result is dummy
     result = dummy.fit(test_X3, test_y1)
     assert result is dummy
-    result = dummy.fit(test_X4, test_y1)
+    with pytest.raises(ValueError, match=r"this classifier cannot handle multivariate"):
+        result = dummy.fit(test_X4, test_y1)
     assert result is dummy
     # Raise a specific error if y is in a 2D matrix (1,cases)?
     test_y2 = np.array([test_y1])
     # What if it is in a 2D matrix (cases,1)?
     test_y2 = np.array([test_y1]).transpose()
-    with pytest.raises(ValueError, match=r"value error"):
+    with pytest.raises(ValueError, match=r"must be 1-dimensional"):
         result = dummy.fit(test_X1, test_y2)
 
 
