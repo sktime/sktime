@@ -105,6 +105,3 @@ def compare_classifiers():
     # Pull down accuracies
 
     # Draw CD diagram
-
-
-build_classifiers()
