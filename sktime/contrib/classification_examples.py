@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
+from sktime.classification.dictionary_based import ContractableBOSS, BOSSEnsemble
 from sktime.classification.hybrid import HIVECOTEV2
 from sktime.classification.kernel_based import Arsenal
-from sktime.classification.dictionary_based import ContractableBOSS, BOSSEnsemble
 from sktime.datasets import load_unit_test
 
 
@@ -37,6 +37,7 @@ def build_classifiers():
     cls2 = BOSSEnsemble()
     cls1.fit(trainX, train_y)
     preds = cls1.predict(testX)
+
 
 def make_toy_2d_problem():
     """Make a toy classification problem out of numpy arrays."""
