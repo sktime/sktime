@@ -106,13 +106,11 @@ def test_y_multivariate_raises_error(Forecaster):
     f = _construct_instance(Forecaster)
 
     if f.get_tag("scitype:y") == "univariate":
-
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
     if f.get_tag("scitype:y") == "multivariate":
-
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
             f.fit(y, fh=FH0)
@@ -287,6 +285,41 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
                 f.predict(return_pred_int=True, alpha=alpha)
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("alpha", TEST_ALPHAS)
+def test_predict_quantiles(Forecaster, fh, alpha):
+    f = _construct_instance(Forecaster)
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
+    for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=fh)
+        if not f._has_predict_quantiles_been_refactored():
+            with pytest.raises(NotImplementedError):
+                f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
+        else:
+            f.predict_quantiles(fh=fh, alpha=alpha)
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("alpha", TEST_ALPHAS)
+def test_predict_interval(Forecaster, fh, alpha):
+    f = _construct_instance(Forecaster)
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
+
+    for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=fh)
+        if not f._has_predict_quantiles_been_refactored():
+            with pytest.raises(NotImplementedError):
+                f.predict_interval(fh=fh, coverage=alpha)
+        else:
+            f.predict_interval(fh=fh, coverage=alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)

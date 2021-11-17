@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Functions for the input and output of data and results."""
+"""Functions for the input and output of data and results.
+
+todo: This file will be removed in version 0.10 and functionality moved to
+datasets/_data_io.py
+"""
 
 import itertools
 import os
 import textwrap
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -55,6 +60,11 @@ def load_from_tsfile_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     # Initialize flags and variables used when parsing the file
     metadata_started = False
     data_started = False
@@ -772,6 +782,11 @@ def load_from_arff_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     instance_list = []
     class_val_list = []
 
@@ -781,7 +796,7 @@ def load_from_arff_to_dataframe(
 
     # Parse the file
     # print(full_file_path_and_name)
-    with open(full_file_path_and_name, "r") as f:
+    with open(full_file_path_and_name, "r", encoding="utf-8") as f:
         for line in f:
 
             if line.strip():
@@ -881,6 +896,11 @@ def load_from_ucr_tsv_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     df = pd.read_csv(full_file_path_and_name, sep="\t", header=None)
     y = df.pop(0).values
     df.columns -= 1
@@ -907,6 +927,11 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     DataFrame
         A dataframe with sktime-formatted data
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     data = pd.read_csv(full_file_path_and_name, sep=separator, header=0)
     # ensure there are 4 columns in the long_format table
     if len(data.columns) != 4:
@@ -944,6 +969,11 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     -------
     DataFrame
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     rows_per_case = series_len * num_dims
     total_rows = num_cases * series_len * num_dims
 
@@ -973,10 +1003,8 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
     ----------
     n_instances : int
         Number of instances.
-
     n_columns : int
         Number of columns (series) in multi-indexed DataFrame.
-
     n_timepoints : int
         Number of timepoints per instance-column pair.
 
@@ -986,6 +1014,11 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
         The multi-indexed DataFrame with
         shape (n_instances*n_timepoints, n_column).
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     # Make long DataFrame
     long_df = generate_example_long_table(
         num_cases=n_instances, series_len=n_timepoints, num_dims=n_columns
@@ -1007,6 +1040,8 @@ def write_results_to_uea_format(
     predicted_probs=None,
     split="TEST",
     resample_seed=0,
+    timing_type="N/A",
+    first_line_comment=None,
     second_line="No Parameter Info",
     third_line="N/A",
 ):
@@ -1035,16 +1070,26 @@ def write_results_to_uea_format(
         Either TRAIN or TEST, depending on the results, influences file name.
     resample_seed : int, default = 0
         Indicates what data
+    timing_type : str or None, default = None
+        The format used for timings in the file, i.e. Seconds, Milliseconds, Nanoseconds
+    first_line_comment : str or None, default = None
+        Optional comment appended to the end of the first line
     second_line : str
         unstructured, used for predictor parameters
     third_line : str
         summary performance information (see comment below)
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     if len(y_true) != len(y_pred):
         raise IndexError(
             "The number of predicted values is not the same as the "
             "number of actual class values"
         )
+
     # If the full directory path is not passed, make the standard structure
     if not full_path:
         output_path = (
@@ -1079,9 +1124,14 @@ def write_results_to_uea_format(
 
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    file.write(
-        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
+    first_line = (
+        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test)
     )
+    if timing_type is not None:
+        first_line += "," + timing_type
+    if first_line_comment is not None:
+        first_line += "," + first_line_comment
+    file.write(first_line + "\n")
 
     # the second line of the output is free form and estimator-specific; usually this
     # will record info such as build time, paramater options used, any constituent model
@@ -1170,6 +1220,11 @@ def write_tabular_transformation_to_arff(
     -------
     None
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10",
+        FutureWarning,
+    )
     # ensure transformation provided is a transformer
     if not isinstance(transformation, BaseTransformer):
         raise ValueError("Transformation must be a BaseTransformer")
@@ -1295,6 +1350,10 @@ def write_dataframe_to_tsfile(
     -----
     This version currently does not support writing timestamp data.
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10"
+    )
     # ensure data provided is a dataframe
     if not isinstance(data, pd.DataFrame):
         raise ValueError("Data provided must be a DataFrame")
@@ -1370,6 +1429,10 @@ def write_ndarray_to_tsfile(
     -----
     This version currently does not support writing timestamp data.
     """
+    warn(
+        "This function has moved to datasets/_data_io, this version will be removed "
+        "in V0.10"
+    )
     # ensure data provided is a ndarray
     if not isinstance(data, np.ndarray):
         raise ValueError("Data provided must be a ndarray")

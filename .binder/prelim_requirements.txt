@@ -1,5 +1,6 @@
 convertdate >= 2.3.2
 cython>=0.29.0
+deprecated>=1.2.13
 esig==0.9.7
 hcrystalball>=0.1.9
 LunarCalendar >= 0.0.9
