@@ -38,7 +38,7 @@ def build_classifiers():
     cls1= ContractableBOSS(time_limit_in_minutes=1)
     cls2 = BOSSEnsemble()
     cls1.fit(trainX, train_y)
-    preds = cls1.predict(test_y)
+    preds = cls1.predict(testX)
     print(preds)
     #print(" CBOSS acc = ", cls1.score(testX, test_y))
    # trainX, train_y, testX, test_y = make_toy_3d_problem()

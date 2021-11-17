@@ -360,8 +360,10 @@ class BaseClassifier(BaseEstimator):
         -------
         y: pd.Series
         """
-        if isinstance(y, np.ndarray):
-            y = pd.Series(y)
+        if isinstance(y, pd.Series):
+            y = pd.Series.to_numpy(y)
+        # if isinstance(y, np.ndarray):
+        #    y = pd.Series(y)
         # elif isinstance(y, np.ndarray()):
         #     if y.shape[0] > 1:
         #         y = np.Series(y)
