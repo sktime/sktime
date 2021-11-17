@@ -96,6 +96,9 @@ class _DtwDistance(NumbaDistance):
         # compile time so having this at the top would cause circular import errors.
         from sktime.distances._distance import distance_factory
 
+        # _custom_distance = distance_factory(x[0], y[0], metric=custom_distance,
+        # **kwargs)
+        # _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
         _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
 
         @njit(fastmath=True)
@@ -137,9 +140,49 @@ def _dtw_numba_distance(
     """
     symmetric = np.array_equal(x, y)
     pre_computed_distances = _compute_pairwise_distance(x, y, symmetric, distance)
-
     cost_matrix = _cost_matrix(x, y, bounding_matrix, pre_computed_distances)
+    # cost_matrix = _cost_matrix_test(x, y, bounding_matrix, _local_squared_dist)
     return cost_matrix[-1, -1]
+
+
+@njit(cache=True, fastmath=True)
+def _cost_matrix_test(
+    x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, distance: Callable
+):
+    """Compute the dtw cost matrix between two timeseries.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
+        Bounding matrix where the index in bound finite values (0.) and indexes
+        outside bound points are infinite values (non finite).
+    pre_computed_distances: np.ndarray (2d of size mxn where m is len(x) and n is
+                                        len(y))
+        Precomputed pairwise matrix between the two timeseries.
+
+    Returns
+    -------
+    np.ndarray (2d array of size mxn where m is len(x) and n is len(y))
+        Dtw cost matrix between x and y.
+    """
+    x_size = x.shape[0]
+    y_size = y.shape[0]
+    cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
+    cost_matrix[0, 0] = 0.0
+
+    for i in range(x_size):
+        for j in range(y_size):
+            if np.isfinite(bounding_matrix[i, j]):
+                cost_matrix[i + 1, j + 1] = distance(x[i], y[j])
+                cost_matrix[i + 1, j + 1] += min(
+                    cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
+                )
+
+    return cost_matrix[1:, 1:]
 
 
 @njit(cache=True, fastmath=True)

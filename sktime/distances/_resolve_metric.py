@@ -57,17 +57,17 @@ def _resolve_metric(
         elif _is_no_python_distance_callable(metric):
             metric = metric
         else:
-            found = False
+            # found = False
             for val in known_metric_dict:
                 if val.dist_func is metric:
                     numba_dist_instance = val.dist_instance
-                    found = True
+                    # found = True
                     break
-            if found is False:
-                raise ValueError(
-                    "The callable provided must be no_python (using njit()) for"
-                    "this operation. Please compile the function and try again."
-                )
+            # if found is False:
+            #     raise ValueError(
+            #         "The callable provided must be no_python (using njit()) for"
+            #         "this operation. Please compile the function and try again."
+            #     )
     else:
         raise ValueError(
             "Unable to resolve the metric with the parameters provided."

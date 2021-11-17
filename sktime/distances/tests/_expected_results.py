@@ -14,9 +14,9 @@ _expected_distance_results = {
     "erp": [5.0, 5.03767, 20.78718],
 }
 
-
+#
 # def test_dist_result():
-#     from sktime.distances import edr_distance as dist
+#     from sktime.distances import dtw_distance as dist
 #     import numpy as np
 #     from sktime.distances.tests._utils import create_test_distance_numpy
 #
