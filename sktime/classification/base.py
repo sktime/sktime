@@ -52,6 +52,8 @@ class BaseClassifier(BaseEstimator):
     _tags = {
         "coerce-X-to-numpy": True,
         "coerce-X-to-pandas": False,
+        "convert_y_to_series": True,
+        "convert_y_to_numpy": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -347,7 +349,7 @@ class BaseClassifier(BaseEstimator):
         return X
 
     def convert_y(self, y):
-        """Convert y into a pd.Series.
+        """Convert y into a pd.Series or an np.array, depending on convert tags.
 
         y is the target variable.
 
@@ -358,15 +360,13 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        y: pd.Series
+        y: pd.Series or np.ndarray
         """
+
         if isinstance(y, pd.Series):
-            y = pd.Series.to_numpy(y)
-        # if isinstance(y, np.ndarray):
-        #    y = pd.Series(y)
-        # elif isinstance(y, np.ndarray()):
-        #     if y.shape[0] > 1:
-        #         y = np.Series(y)
-        #     else:
-        #         y = np.Series(y.transpose())
+            if self.get_tag("convert_y_to_numpy"):
+                y = pd.Series.to_numpy(y)
+        elif isinstance(y, np.ndarray):
+            if self.get_tag("convert_y_to_series"):
+                y = pd.Series(y)
         return y

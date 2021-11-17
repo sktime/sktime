@@ -111,6 +111,18 @@ ESTIMATOR_TAG_REGISTER = [
         "should X be coerced to numpy type in check_X? yes/no",
     ),
     (
+        "convert_y_to_numpy",
+        "classifier",
+        "bool",
+        "should y be converted to numpy array in the base classs? yes/no",
+    ),
+    (
+        "convert_y_to_series",
+        "classifier",
+        "bool",
+        "should y be converted to pandas Series in the base classs? yes/no",
+    ),
+    (
         "symmetric",
         ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
         "bool",

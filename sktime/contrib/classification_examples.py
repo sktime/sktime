@@ -11,8 +11,6 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.dictionary_based import BOSSEnsemble, ContractableBOSS
-from sktime.classification.hybrid import HIVECOTEV2
-from sktime.classification.kernel_based import Arsenal
 from sktime.datasets import load_unit_test
 
 
@@ -34,9 +32,10 @@ def build_classifiers():
     test_y = pd.Series(test_y)
     # randf.fit(trainX, train_y)
     cls1 = ContractableBOSS(time_limit_in_minutes=1)
-    cls2 = BOSSEnsemble()
+    # cls2 = BOSSEnsemble()
     cls1.fit(trainX, train_y)
-    preds = cls1.predict(testX)
+    print(" CBOSS acc = ",cls1.score(testX, test_y))
+    # preds = cls1.predict(testX)
 
 
 def make_toy_2d_problem():
@@ -106,3 +105,6 @@ def compare_classifiers():
     # Pull down accuracies
 
     # Draw CD diagram
+
+
+build_classifiers()
