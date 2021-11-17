@@ -42,6 +42,7 @@ Trend
     :toctree: auto_generated/
     :template: class.rst
 
+    TrendForecaster
     PolynomialTrendForecaster
 
 Exponential Smoothing

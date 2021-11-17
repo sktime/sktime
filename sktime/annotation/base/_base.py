@@ -24,9 +24,7 @@ State:
 __author__ = ["satya-pattnaik ", "fkiraly"]
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation.annotation import check_fmt
-from sktime.utils.validation.annotation import check_labels
-
+from sktime.utils.validation.annotation import check_fmt, check_labels
 from sktime.utils.validation.series import check_series
 
 
@@ -130,6 +128,23 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
+    def predict_scores(self, X):
+        """Return scores for predicted annotations on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate (time series).
+
+        Returns
+        -------
+        Y : pd.Series
+            Scores for sequence X exact format depends on annotation type.
+        """
+        self.check_is_fitted()
+        X = check_series(X)
+        return self._predict_scores(X)
+
     def update(self, X, Y=None):
         """Update model with new data and optional ground truth annotations.
 
@@ -189,6 +204,28 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
+    def fit_predict(self, X, Y=None):
+        """Fit to data, then predict it.
+
+        Fits model to X and Y with given annotation parameters
+        and returns the annotations made by the model.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+        Y : pd.Series or np.ndarray, optional (default=None)
+            Target values of data to be predicted.
+
+        Returns
+        -------
+        self : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        # Non-optimized default implementation; override when a better
+        # method is possible for a given algorithm.
+        return self.fit(X, Y).predict(X)
+
     def _fit(self, X, Y=None):
         """Fit to training data.
 
@@ -214,6 +251,23 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     def _predict(self, X):
         """Create annotations on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _predict_scores(self, X):
+        """Return scores for predicted annotations on test/deployment data.
 
         core logic
 

@@ -27,6 +27,8 @@ __all__ = [
     "load_uschange",
     "load_UCR_UEA_dataset",
     "load_PBS_dataset",
+    "load_gun_point_segmentation",
+    "load_electric_devices_segmentation",
     "load_macroeconomic",
 ]
 
@@ -38,6 +40,7 @@ __author__ = [
     "Emiliathewolf",
     "TonyBagnall",
     "yairbeer",
+    "patrickZIB",
     "aiwalter",
 ]
 
@@ -119,7 +122,7 @@ def _list_downloaded_datasets(extract_path):
     return datasets
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
+def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -205,6 +208,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
+        y = pd.Series.to_numpy(y, dtype=np.str)
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -800,6 +804,82 @@ def load_uschange(y_name="Consumption"):
         data = data.drop("Quarter", axis=1)
     X = data.drop(y_name, axis=1)
     return y, X
+
+
+def load_gun_point_segmentation():
+    """Load the GunPoint time series segmentation problem and returns X.
+
+    We group TS of the UCR GunPoint dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "GunPoint"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([900])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
+
+
+def load_electric_devices_segmentation():
+    """Load the Electric Devices segmentation problem and returns X.
+
+    We group TS of the UCR Electric Devices dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "ElectricDevices"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([1090, 4436, 5712, 7923])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
 
 
 def load_PBS_dataset():

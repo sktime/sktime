@@ -16,7 +16,7 @@ class BaseMetric(BaseObject):
     """
 
     def __init__(self, func, name=None):
-        self._func = func
+        self.func = func
         self.name = name if name is not None else func.__name__
 
     def __call__(self, y_true, y_pred, **kwargs):
