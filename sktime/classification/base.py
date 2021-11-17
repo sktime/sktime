@@ -362,7 +362,6 @@ class BaseClassifier(BaseEstimator):
         -------
         y: pd.Series or np.ndarray
         """
-
         if isinstance(y, pd.Series):
             if self.get_tag("convert_y_to_numpy"):
                 y = pd.Series.to_numpy(y)
