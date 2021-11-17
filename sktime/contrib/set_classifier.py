@@ -142,4 +142,3 @@ def set_classifier(cls, resample_id=None, train_file=False):
         )
     else:
         raise Exception("UNKNOWN CLASSIFIER")
-
