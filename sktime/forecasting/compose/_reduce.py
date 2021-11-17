@@ -10,6 +10,7 @@ __author__ = [
     "Luis Zugasti",
     "Lovkush Agarwal",
     "Markus Löning",
+    "Arelo Tanoh",
 ]
 
 __all__ = [
@@ -27,8 +28,8 @@ __all__ = [
 ]
 
 import numpy as np
-from sklearn.base import RegressorMixin
-from sklearn.base import clone
+import pandas as pd
+from sklearn.base import RegressorMixin, clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -442,10 +443,39 @@ class _RecursiveReducer(_Reducer):
         return y_pred[fh_idx]
 
 
+class _SimpleReducer(_Reducer):
+    strategy = "simple"
+    _tags = {
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+    }
+
+    def __init__(self, regressor):
+        # storing hyper-parameters
+        self.regressor = regressor
+        super(_SimpleReducer, self).__init__()
+
+    def _fit(self, y, X=None, fh=None):
+        X = X.to_numpy()
+        y = y.to_numpy().reshape(-1, 1)
+        self.regressor_ = clone(self.regressor)
+        self.regressor_.fit(X, y)
+
+        return self
+
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=None):
+        assert not return_pred_int
+        X = X.to_numpy()
+        y = self.regressor_.predict(X)
+        y = y.flatten()
+        y_pred = pd.Series(y, index=self.fh.to_absolute(self.cutoff))
+
+        return y_pred
+
+
 class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
     }
 
     def _transform(self, y, X=None):
@@ -635,6 +665,24 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+    """
+
+    _estimator_scitype = "tabular-regressor"
+
+
+class SimpleTabularRegressionForecaster(_SimpleReducer):
+    """Recursive reduction from forecasting to tabular regression.
+
+    For the recursive strategy, a single estimator is fit for a one-step-ahead
+    forecasting horizon and then called iteratively to predict multiple steps ahead.
+
+    Parameters
+    ----------
+    estimator : Estimator
+        A tabular regression estimator as provided by scikit-learn.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix.
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -881,6 +929,7 @@ def _get_forecaster(scitype, strategy):
             "recursive": RecursiveTabularRegressionForecaster,
             "multioutput": MultioutputTabularRegressionForecaster,
             "dirrec": DirRecTabularRegressionForecaster,
+            "simple": SimpleTabularRegressionForecaster,
         },
         "time-series-regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
