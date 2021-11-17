@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
-from sktime.classification.dictionary_based import ContractableBOSS, BOSSEnsemble
+from sktime.classification.dictionary_based import BOSSEnsemble, ContractableBOSS
 from sktime.classification.hybrid import HIVECOTEV2
 from sktime.classification.kernel_based import Arsenal
 from sktime.datasets import load_unit_test
