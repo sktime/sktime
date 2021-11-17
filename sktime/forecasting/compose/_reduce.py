@@ -31,13 +31,12 @@ import numpy as np
 import pandas as pd
 from sklearn.base import RegressorMixin, clone
 
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
-from sktime.forecasting.base import BaseForecaster
 
 
 def _concat_y_X(y, X):
