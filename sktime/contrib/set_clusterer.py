@@ -42,6 +42,5 @@ def set_clusterer(cls, resample_id=None):
             averaging_algorithm="mean",
             random_state=resample_id,
         )
-
     else:
         raise Exception("UNKNOWN CLUSTERER")
