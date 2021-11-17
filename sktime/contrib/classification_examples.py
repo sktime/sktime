@@ -33,7 +33,7 @@ def build_classifiers():
     train_y = pd.Series(train_y)
     test_y = pd.Series(test_y)
     # randf.fit(trainX, train_y)
-    cls1= ContractableBOSS(time_limit_in_minutes=1)
+    cls1 = ContractableBOSS(time_limit_in_minutes=1)
     cls2 = BOSSEnsemble()
     cls1.fit(trainX, train_y)
     preds = cls1.predict(testX)
@@ -105,7 +105,3 @@ def compare_classifiers():
     # Pull down accuracies
 
     # Draw CD diagram
-
-
-
-build_classifiers()
