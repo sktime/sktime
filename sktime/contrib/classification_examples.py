@@ -30,8 +30,6 @@ def build_classifiers():
     randf = RandomForestClassifier()
     trainX, train_y, testX, test_y = make_toy_2d_problem()
     X = trainX.reshape(trainX.shape[0], 1, trainX.shape[1])
-    #trainX, train_y = load_unit_test(split="Test",return_X_y=True)
-    #testX, test_y = load_unit_test(split="Train",return_X_y=True)
     train_y = pd.Series(train_y)
     test_y = pd.Series(test_y)
     # randf.fit(trainX, train_y)
@@ -39,12 +37,6 @@ def build_classifiers():
     cls2 = BOSSEnsemble()
     cls1.fit(trainX, train_y)
     preds = cls1.predict(testX)
-    print(preds)
-    #print(" CBOSS acc = ", cls1.score(testX, test_y))
-   # trainX, train_y, testX, test_y = make_toy_3d_problem()
-    #cls2.fit(trainX, train_y)
-    #print(" BOSS acc = ", cls2.score(testX, test_y))
-
 
 def make_toy_2d_problem():
     """Make a toy classification problem out of numpy arrays."""
