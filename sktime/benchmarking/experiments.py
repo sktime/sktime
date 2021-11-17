@@ -135,10 +135,10 @@ def run_clustering_experiment(
 def load_and_run_clustering_experiment(
     problem_path,
     results_path,
-    cls_name,
     dataset,
     clusterer,
     resample_id=0,
+    cls_name=None,
     overwrite=False,
     format=".ts",
     train_file=False,
@@ -156,13 +156,13 @@ def load_and_run_clustering_experiment(
         Location of problem files, full path.
     results_path : str
         Location of where to write results. Any required directories will be created
-    cls_name : str
-        determines which clusterer to use if clusterer is None. In this
-        case, set_clusterer is called with this cls_name
     dataset : str
         Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
         "_TRAIN"+format, same for "_TEST"
     clusterer : the clusterer
+    cls_name : str, default =None
+        determines what to call the write directory. If None, it is set to
+        type(clusterer).__name__
     resample_id : int, default = 0
         Seed for resampling. If set to 0, the default train/test split from file is
         used. Also used in output file name.
@@ -176,6 +176,9 @@ def load_and_run_clustering_experiment(
         whether to generate train files or not. If true, it performs a 10xCV on the
         train and saves
     """
+    if cls_name is None:
+        cls_name = type(clusterer).__name__
+
     # Set up the file path in standard format
     if not overwrite:
         full_path = (
@@ -403,10 +406,10 @@ def run_classification_experiment(
 def load_and_run_classification_experiment(
     problem_path,
     results_path,
-    cls_name,
     dataset,
     classifier,
     resample_id=0,
+    cls_name=None,
     overwrite=False,
     build_train=False,
     predefined_resample=False,
@@ -422,16 +425,15 @@ def load_and_run_classification_experiment(
         Location of problem files, full path.
     results_path : str
         Location of where to write results. Any required directories will be created.
-    cls_name : str
-        Name of classifier used in writing results. This assumes
-        predict_proba is implemented, to avoid predicting twice. May break some
-        classifiers though.
     dataset : str
         Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN.ts",
         same for "_TEST".
     classifier : BaseClassifier
         Classifier to be used in the experiment, if none is provided one is selected
         using cls_name using resample_id as a seed.
+    cls_name : str, default = None
+        Name of classifier used in writing results. If none the name is taken from
+        the classifier
     resample_id : int, default=0
         Seed for resampling. If set to 0, the default train/test split from file is
         used. Also used in output file name.
@@ -447,6 +449,8 @@ def load_and_run_classification_experiment(
         the file format must include the resample_id at the end of the dataset name i.e.
         <problem_path>/<dataset>/<dataset>+<resample_id>+"_TRAIN.ts".
     """
+    if cls_name is None:
+        cls_name = type(classifier).__name__
     # Check which files exist, if both exist, exit
     build_test = True
     if not overwrite:
