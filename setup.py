@@ -30,6 +30,7 @@ MIN_REQUIREMENTS = {
 }
 MAX_REQUIREMENTS = {
     "statsmodels": "0.12.1",
+    "numpy": "1.19.3",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
