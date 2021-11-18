@@ -106,8 +106,8 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "convert_X_to": False,
-        "coerce-X-to-pandas": True,
+        "convert_X_to_numpy": False,
+        "convert_X_to_dataframe": True,
     }
 
     def __init__(
