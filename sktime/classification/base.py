@@ -50,10 +50,10 @@ class BaseClassifier(BaseEstimator):
     """
 
     _tags = {
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
-        "convert_y_to_series": True,
+        "convert_X_to_numpy": True,
+        "convert_X_to_dataframe": False,
         "convert_y_to_numpy": False,
+        "convert_y_to_series": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -61,6 +61,7 @@ class BaseClassifier(BaseEstimator):
         "capability:contractable": False,
         "capability:multithreading": False,
     }
+coerce_X
 
     def __init__(self):
         self.classes_ = []
@@ -326,12 +327,12 @@ class BaseClassifier(BaseEstimator):
         X : pd.DataFrame or np.array
             Checked and possibly converted input data
         """
-        convert_to_numpy = self.get_tag("coerce-X-to-numpy")
-        convert_to_pandas = self.get_tag("coerce-X-to-pandas")
+        convert_to_numpy = self.get_tag("convert_X_to_numpy")
+        convert_to_pandas = self.get_tag("convert_X_to_dataframe")
         if convert_to_numpy and convert_to_pandas:
             raise ValueError(
-                "Tag error: cannot set both coerce-X-to-numpy and coerce-X-to-pandas "
-                "to be true."
+                "Tag error: cannot set both convert_X_to_numpy and "
+                "convert_X_to_dataframe to be true."
             )
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
