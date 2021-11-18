@@ -21,7 +21,7 @@ from pkg_resources import parse_version
 
 MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
-    "numpy": "1.20.1",
+    "numpy": "1.20.0",
     "pandas": "1.1.0",
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
@@ -30,7 +30,7 @@ MIN_REQUIREMENTS = {
 }
 MAX_REQUIREMENTS = {
     "statsmodels": "0.12.1",
-    "numpy": "1.20.1",
+    "numpy": "1.20.0",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
