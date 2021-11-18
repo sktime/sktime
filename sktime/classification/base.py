@@ -61,7 +61,6 @@ class BaseClassifier(BaseEstimator):
         "capability:contractable": False,
         "capability:multithreading": False,
     }
-coerce_X
 
     def __init__(self):
         self.classes_ = []

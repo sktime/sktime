@@ -108,26 +108,25 @@ ESTIMATOR_TAG_REGISTER = [
         "convert_X_to_dataframe",
         "classifier",
         "bool",
-        "should X be coerced to a nested pandas DataFrame?",
+        "should X be converted to a nested pandas DataFrame?",
     ),
-
     (
         "convert_X_to_numpy",
         "classifier",
         "bool",
-        "should X be coerced to numpy type in check_X? yes/no",
+        "should X be converted to numpy array? yes/no",
     ),
     (
         "convert_y_to_numpy",
         "classifier",
         "bool",
-        "should y be converted to numpy array in the base classs? yes/no",
+        "should y be converted to numpy array? yes/no",
     ),
     (
         "convert_y_to_series",
         "classifier",
         "bool",
-        "should y be converted to pandas Series in the base classs? yes/no",
+        "should y be converted to pandas Series? yes/no",
     ),
     (
         "symmetric",
