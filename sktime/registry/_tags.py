@@ -111,6 +111,12 @@ ESTIMATOR_TAG_REGISTER = [
         "should X be converted to a nested pandas DataFrame?",
     ),
     (
+        "convert_y_to_series",
+        "classifier",
+        "bool",
+        "should y be converted to pandas Series? yes/no",
+    ),
+    (
         "convert_X_to_numpy",
         "classifier",
         "bool",
@@ -121,12 +127,6 @@ ESTIMATOR_TAG_REGISTER = [
         "classifier",
         "bool",
         "should y be converted to numpy array? yes/no",
-    ),
-    (
-        "convert_y_to_series",
-        "classifier",
-        "bool",
-        "should y be converted to pandas Series? yes/no",
     ),
     (
         "symmetric",
