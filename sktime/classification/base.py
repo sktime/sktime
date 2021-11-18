@@ -102,8 +102,9 @@ class BaseClassifier(BaseEstimator):
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
-        for index, classVal in enumerate(self.classes_):
-            self._class_dictionary[classVal] = index
+        self._class_dictionary = {}
+        for index, class_val in enumerate(self.classes_):
+            self._class_dictionary[class_val] = index
 
         self._fit(X, y)
 
