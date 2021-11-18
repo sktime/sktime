@@ -134,7 +134,6 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
-
     (
         "scitype:y",
         "forecaster",
