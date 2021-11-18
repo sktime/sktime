@@ -107,6 +107,8 @@ class HIVECOTEV2(BaseClassifier):
     """
 
     _tags = {
+        "convert_y_to_series": False,
+        "convert_y_to_numpy": True,
         "capability:multivariate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
