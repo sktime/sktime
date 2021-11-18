@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 from numba import njit
 
-from sktime.distances._squared import _numba_squared_distance
+from sktime.distances._squared import _local_squared_distance, _numba_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 
 
@@ -38,7 +38,26 @@ class _EuclideanDistance(NumbaDistance):
         return _numba_euclidean_distance
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
+def _local_euclidean_distance(x, y):
+    """Compute the local euclidean distance.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d array)
+        First time series
+    y: np.ndarray (1d array)
+        Second time series
+
+    Returns
+    -------
+    float
+        Euclidean distance between the two time series
+    """
+    return np.sqrt(_local_squared_distance(x, y))
+
+
+@njit(cache=True, fastmath=True)
 def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Euclidean distance compiled to no_python.
 

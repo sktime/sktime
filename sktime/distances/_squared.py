@@ -35,7 +35,7 @@ class _SquaredDistance(NumbaDistance):
         return _numba_squared_distance
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _numba_squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     """Squared distance compiled to no_python.
 
@@ -50,18 +50,32 @@ def _numba_squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     -------
     distance: float
         Squared distance between the x and y.
-
     """
     dist = 0.0
-    x_size = x.shape[0]
-    y_size = y.shape[0]
-    min_dist = min(x_size, y_size)
-    for i in range(min_dist):
-        curr_x = x[i]
-        curr_y = y[i]
-        diff = curr_x - curr_y
-        # diff = np.square(diff)
-        for curr_diff in diff:
-            dist += curr_diff * curr_diff
-            # dist += curr_diff
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            dist += (x[i, j] - y[i, j]) ** 2
     return dist
+
+
+@njit(cache=True, fastmath=True)
+def _local_squared_distance(x: np.ndarray, y: np.ndarray):
+    """Compute the local squared distance.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d array)
+        First time series
+    y: np.ndarray (1d array)
+        Second time series
+
+    Returns
+    -------
+    float
+        Squared distance between the two time series
+    """
+    distance = 0.0
+    for i in range(x.shape[0]):
+        difference = x[i] - y[i]
+        distance += difference * difference
+    return distance

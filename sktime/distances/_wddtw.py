@@ -8,8 +8,7 @@ from numba import njit
 
 from sktime.distances._ddtw import DerivativeCallable, _average_of_slope
 from sktime.distances._numba_utils import is_no_python_compiled_callable
-from sktime.distances._squared import _SquaredDistance
-from sktime.distances._wdtw import _wdtw_numba_distance
+from sktime.distances._wdtw import _weighted_cost_matrix
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
 
@@ -24,7 +23,6 @@ class _WddtwDistance(NumbaDistance):
         lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
         window: int = 2,
         itakura_max_slope: float = 2.0,
-        custom_distance: DistanceCallable = _SquaredDistance().distance_factory,
         bounding_matrix: np.ndarray = None,
         compute_derivative: DerivativeCallable = _average_of_slope,
         g: float = 0.0,
@@ -54,21 +52,6 @@ class _WddtwDistance(NumbaDistance):
         itakura_max_slope: float, defaults = 2.
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        custom_distance: str or Callable, defaults = squared euclidean
-            The distance metric to use.
-            If a string is given, the value must be one of the following strings:
-            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
-
-            If callable then it has to be a distance factory or numba distance callable.
-            If you want to pass custom kwargs to the distance at runtime, use a distance
-            factory as it constructs the distance using the kwargs before distance
-            computation.
-            A distance callable takes the form (must be no_python compiled):
-            Callable[[np.ndarray, np.ndarray], float]
-
-            A distance factory takes the form (must return a no_python callable):
-            Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
-            np.ndarray], float]].
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None)
             Custom bounding matrix to use. If defined then other lower_bounding params
@@ -118,12 +101,6 @@ class _WddtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        # This needs to be here as potential distances only known at runtime not
-        # compile time so having this at the top would cause circular import errors.
-        from sktime.distances._distance import distance_factory
-
-        _custom_distance = distance_factory(x, y, metric=custom_distance, **kwargs)
-
         @njit()
         def numba_wddtw_distance(
             _x: np.ndarray,
@@ -131,6 +108,7 @@ class _WddtwDistance(NumbaDistance):
         ) -> float:
             _x = compute_derivative(_x)
             _y = compute_derivative(_y)
-            return _wdtw_numba_distance(_x, _y, _custom_distance, _bounding_matrix, g)
+            cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
+            return cost_matrix[-1, -1]
 
         return numba_wddtw_distance
