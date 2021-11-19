@@ -303,9 +303,11 @@ class BaseClassifier(BaseEstimator):
                 "values"
             )
         if multivariate and not allow_multivariate:
+            # this error message could be more informative, but it is for backward
+            # compatibility with the testing functions
             raise ValueError(
-                "The data is multivariate, this classifier cannot handle multivariate "
-                "time series"
+                "X must be univariate, this classifier cannot deal with "
+                "multivariate input."
             )
         if unequal and not allow_unequal:
             raise ValueError(
