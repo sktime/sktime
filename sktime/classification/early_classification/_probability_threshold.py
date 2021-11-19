@@ -55,14 +55,18 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         )
         # remove duplicates
         self._classification_points = list(set(self._classification_points))
+        self._classification_points.sort()
         # remove classification points that are less than 3
         self._classification_points = [i for i in self._classification_points if i >= 3]
+        # make sure the full series length is included
+        if self._classification_points[-1] != series_length:
+            self._classification_points.append(series_length)
         # create dictionary of classification point indicies
         self._classification_point_dictionary = {}
-        for index, classification_point in enumerate(self.classes_):
+        for index, classification_point in enumerate(self._classification_points):
             self._classification_point_dictionary[classification_point] = index
 
-        fit = Parallel(n_jobs=self._threads_to_use)(
+        self._estimators = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._fit_estimator)(
                 X,
                 y,
@@ -70,8 +74,6 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             )
             for i in range(len(self._classification_points))
         )
-
-        self._estimators = zip(*fit)
 
         return self
 
@@ -86,7 +88,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
     def _predict_proba(self, X):
         _, _, series_length = X.shape
-        idx = self._classification_point_dictionary.get(series_length, default=-1)
+        idx = self._classification_point_dictionary.get(series_length, -1)
         if idx == -1:
             raise ValueError(
                 f"Input series length does not match the classification points produced"
@@ -104,20 +106,25 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             return dists
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
-        """Decide on the safety of an early classification"""
+        """Decide on the safety of an early classification."""
         n_instances, _, series_length = X.shape
-        idx = self._classification_point_dictionary.get(series_length, default=-1)
+        idx = self._classification_point_dictionary.get(series_length, -1)
+
+        if idx == -1:
+            raise ValueError(
+                f"Input series length does not match the classification points produced"
+                f" in fit. Current classification points: {self._classification_points}"
+            )
 
         # If this is the smallest dataset, there should be no state_info, else we
         # should have state info for each, and they should all be the same length
-        if state_info is None and idx == 0:
-            state_info = [(0, 0, 0) for _ in range(n_instances)]
-        elif (
-            isinstance(state_info, list)
-            and idx > 0
-            and not all(si[0] == idx for si in state_info)
+        if state_info is None and (
+            idx == 0 or idx == len(self._classification_points) - 1
         ):
-            raise ValueError("All input instances must be of the same length.")
+            state_info = [(0, 0, 0) for _ in range(n_instances)]
+        elif isinstance(state_info, list) and idx > 0:
+            if not all(si[0] == idx for si in state_info):
+                raise ValueError("All input instances must be of the same length.")
         else:
             raise ValueError(
                 "state_info should be None for first time input, and a list of "
@@ -126,7 +133,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         # if we have the full series, always return true
         if idx == len(self._classification_points) - 1:
-            return [True for _ in n_instances]
+            return [True for _ in range(n_instances)], None
 
         # find predicted class for each instance
         rng = check_random_state(self.random_state)
