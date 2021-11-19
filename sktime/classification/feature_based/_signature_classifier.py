@@ -102,7 +102,7 @@ class SignatureClassifier(BaseClassifier):
     """
 
     _tags = {
-        "coerce-X-to-numpy": False,
+        "convert_X_to_numpy": False,
         "capability:multivariate": True,
     }
 
