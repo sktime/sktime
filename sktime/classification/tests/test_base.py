@@ -26,6 +26,9 @@ class _DummyClassifier(BaseClassifier):
         return self
 
 
+multivariate_message = r"X must be univariate, this classifier cannot deal with"
+
+
 def test_base_classifier_fit():
     """Test function for the BaseClassifier class fit.
 
@@ -48,12 +51,12 @@ def test_base_classifier_fit():
     test_y1 = np.random.randint(0, 2, size=(cases))
     result = dummy.fit(test_X1, test_y1)
     assert result is dummy
-    with pytest.raises(ValueError, match=r"this classifier cannot handle multivariate"):
+    with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X2, test_y1)
     assert result is dummy
     result = dummy.fit(test_X3, test_y1)
     assert result is dummy
-    with pytest.raises(ValueError, match=r"this classifier cannot handle multivariate"):
+    with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X4, test_y1)
     assert result is dummy
     # Raise a specific error if y is in a 2D matrix (1,cases)?
@@ -78,7 +81,7 @@ def test_check_capabilities():
         handles_none.check_capabilities(True, True, False)
         handles_none.check_capabilities(True, False, False)
         handles_none.check_capabilities(True, False, True)
-    with pytest.raises(ValueError, match=r"The data is multivariate"):
+    with pytest.raises(ValueError, match=multivariate_message):
         handles_none.check_capabilities(False, True, True)
         handles_none.check_capabilities(False, True, False)
         handles_none.check_capabilities(False, False, True)
@@ -104,8 +107,8 @@ def test_check_capabilities():
 def test_convert_input():
     """Test the conversions from dataframe to numpy.
 
-    "coerce-X-to-numpy": True,
-    "coerce-X-to-pandas": False,
+    "convert_X_to_numpy": True,
+    "convert_X_to_dataframe": False,
     1. Pass a 2D numpy X, get a 3D numpy X
     2. Pass a 3D numpy X, get a 3D numpy X
     3. Pass a pandas numpy X, equal length, get a 3D numpy X
@@ -130,8 +133,8 @@ def test_convert_input():
     assert tempX.shape[0] == cases and tempX.shape[1] == 1 and tempX.shape[2] == length
     tempX = tester.convert_X(test_X4)
     assert tempX.shape[0] == cases and tempX.shape[1] == 3 and tempX.shape[2] == length
-    tester._tags["coerce-X-to-numpy"] = False
-    tester._tags["coerce-X-to-pandas"] = True
+    tester._tags["convert_X_to_numpy"] = False
+    tester._tags["convert_X_to_dataframe"] = True
     tempX = tester.convert_X(test_X1)
     assert isinstance(tempX, pd.DataFrame)
     assert isinstance(tempX, pd.DataFrame)
