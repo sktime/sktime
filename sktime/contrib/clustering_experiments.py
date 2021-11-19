@@ -5,24 +5,17 @@ code to run experiments for clustering, saving results in a standard format.
 The main method is run_clustering_experiment. However, this file is also configured for
 runs of the main method with command line arguments, or for single debugging runs.
 """
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 import os
 import sys
-import pandas as pd
-from sklearn.model_selection import cross_val_predict
-import sklearn.preprocessing
-import sklearn.utils
-import sktime.datasets.tsc_dataset_names as dataset_lists
-from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 
-from sktime.clustering import (
-    TimeSeriesKMeans,
-    TimeSeriesKMedoids,
-)
+import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import (
-    run_clustering_experiment,
     load_and_run_clustering_experiment,
+    run_clustering_experiment,
 )
+from sktime.clustering import TimeSeriesKMeans
+from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 
 # We sometimes want to force execution in a single thread. sklearn often threads in ways
 # beyond the users control. This forces single thread execution, which is required,
@@ -31,7 +24,6 @@ from sktime.benchmarking.experiments import (
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
-import numpy as np
 
 
 def demo_loading():
