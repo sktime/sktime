@@ -44,6 +44,7 @@ EXTRAS_REQUIRE = {
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
         "pyod>=0.8.0",
+        "dtw_python>=1.1.5",
     ],
 }
 
