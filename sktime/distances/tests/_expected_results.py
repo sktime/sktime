@@ -48,6 +48,20 @@ _expected_distance_results = {
 #
 #     pass
 #
+# def test_create_examples():
+#     import numpy as np
+#     from sktime.distances import distance as dist
+#     metric = 'wddtw'
+#
+#     x_1d = np.array([1, 2, 3, 4])  # 1d array
+#     y_1d = np.array([5, 6, 7, 8])  # 1d array
+#     result_1 = dist(x_1d, y_1d, metric=metric)
+#
+#     x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+#     y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+#     result_2 = dist(x_2d, y_2d, metric=metric)
+#     pass
+#
 #
 # if __name__ == "__main__":
-#     test_dist_result(dist)
+#     test_create_examples()

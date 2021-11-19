@@ -531,12 +531,12 @@ def wdtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wdtw_distance(x_1d, y_1d)
-    5.385164807134504
+    29.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wdtw_distance(x_2d, y_2d)
-    16.0
+    256.0
 
     References
     ----------
