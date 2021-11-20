@@ -63,7 +63,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         X : 2D np.array (univariate, equal length series) of shape = [n_instances,
-        series_length]
+            series_length]
             or 3D np.array (any number of dimensions, equal length series) of shape =
             [n_instances,n_dimensions,series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series (any
