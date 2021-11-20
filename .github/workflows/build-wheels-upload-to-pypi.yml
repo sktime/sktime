@@ -27,9 +27,6 @@ jobs:
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
-        # to supply options, put them in 'env', like:
-        # env:
-        #   CIBW_SOME_OPTION: value
 
       - name: Publish package to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
