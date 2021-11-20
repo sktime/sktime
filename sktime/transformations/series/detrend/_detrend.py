@@ -6,13 +6,13 @@
 __all__ = ["Detrender"]
 __author__ = ["mloning", "SveaMeyer13"]
 
-from sklearn.base import clone
 import pandas as pd
+from sklearn.base import clone
 
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
-from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
 class Detrender(_SeriesToSeriesTransformer):
@@ -28,26 +28,17 @@ class Detrender(_SeriesToSeriesTransformer):
     Depending on the passed data, this will require it to generate in-sample
     or out-of-sample forecasts.
 
-    The detrender also works in a pipeline as a form of boosting,
-    by first detrending a time series and then fitting another forecaster on
-    the residuals.
-
-    For example, to remove the linear trend of a time series:
-    forecaster = PolynomialTrendForecaster(degree=1)
-    transformer = Detrender(forecaster=forecaster)
-    yt = transformer.fit_transform(y_train)
-
     Parameters
     ----------
-    forecaster : estimator object, default=None
+    forecaster : sktime-like forecaster, default=None
         If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
         The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster).
 
     Attributes
     ----------
-    forecaster_ : estimator object
-        Model that defines the trend in the series.
+    forecaster_ : Fitted sktime-like forecaster
+        Forecaster that defines the trend in the series.
 
     See Also
     --------
@@ -64,7 +55,10 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {
+        "transform-returns-same-time-index": True,
+        "univariate-only": False,
+    }
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster
@@ -76,7 +70,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Y : pd.Series
+        Z : pd.Series, pd.DataFrame
             Endogenous time series to fit a trend to.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
@@ -108,15 +102,15 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y : pd.Series
+        Z : pd.Series, pd.DataFrame
             Time series to be detrended.
         X : pd.DataFrame, optional (default=False)
             Exogenous variables.
 
         Returns
         -------
-        y_hat : pd.Series
-            De-trended series.
+        Zt : pd.Series, pd.DataFrame
+            Detrended version of input series `Z`.
         """
         self.check_is_fitted()
         z = check_series(Z)
@@ -148,14 +142,14 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y : pd.Series, list
-            Detrended time series to revert.
+        Z : pd.Series, pd.DataFrame
+            Detrended time series to add trend back again.
         X : pd.DataFrame, optional (default=False)
             Exogenous variables.
 
         Returns
         -------
-        y_hat : pd.Series
+        Z_inv : pd.Series, pd.DataFrame
             Series with the trend.
         """
         self.check_is_fitted()
@@ -188,7 +182,7 @@ class Detrender(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y_new : pd.Series
+        Z : pd.Series, pd.DataFrame
             New time series.
         update_params : bool, optional (default=True)
             Update the parameters of the detrender model.

@@ -245,10 +245,10 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.detrend import ConditionalDeseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = ConditionalDeseasonalizer()
+    >>> transformer = ConditionalDeseasonalizer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -278,7 +278,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
         Parameters
         ----------
-        y_train : pd.Series
+        Z : pd.Series
 
         Returns
         -------
