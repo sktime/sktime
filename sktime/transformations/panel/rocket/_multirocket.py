@@ -32,7 +32,11 @@ class MultiRocket(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    num_kernels              : int, number of kernels (default 10,000)
+    num_kernels              : int, number of random convolutional kernels
+    (default 6,250)
+    calculated number of features is the nearest multiple of
+    n_features_per_kernel(default 4)*84=336 < 50,000
+    (2*n_features_per_kernel(default 4)*num_kernels(default 6,250))
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     n_features_per_kernel    : int, number of features per kernel (default 4)
     normalise                : int, normalise the data (default False)

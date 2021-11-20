@@ -21,7 +21,7 @@ def test_multirocket_multivariate_on_basic_motions():
     X_training_transform = multirocket.transform(X_training)
 
     # test shape of transformed training data -> (number of training
-    # examples, nearest multiple of 4*84=336 < 50,000)
+    # examples, nearest multiple of 4*84=336 < 50,000 (2*4*6_250))
     np.testing.assert_equal(X_training_transform.shape, (len(X_training), 49_728))
 
     # fit classifier
@@ -35,7 +35,7 @@ def test_multirocket_multivariate_on_basic_motions():
     X_test_transform = multirocket.transform(X_test)
 
     # test shape of transformed test data -> (number of test examples,
-    # nearest multiple of 4*84=336 < 50,000)
+    # nearest multiple of 4*84=336 < 50,000 (2*4*6_250))
     np.testing.assert_equal(X_test_transform.shape, (len(X_test), 49_728))
 
     # predict (alternatively: 'classifier.score(X_test_transform, Y_test)')

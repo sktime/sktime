@@ -32,13 +32,49 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
     Parameters
     ----------
     num_kernels              : int, number of random convolutional kernels
-    (default 10,000)
+    (default 6,250)
+    calculated number of features is the nearest multiple of
+    n_features_per_kernel(default 4)*84=336 < 50,000
+    (2*n_features_per_kernel(default 4)*num_kernels(default 6,250))
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     n_features_per_kernel    : int, number of features per kernel (default 4)
     normalise                : int, normalise the data (default False)
     n_jobs                   : int, optional (default=1) The number of jobs to run in
     parallel for `transform`. ``-1`` means using all processors.
     random_state             : int, random seed (optional, default None)
+
+    Attributes
+    ----------
+    parameter : tuple
+        parameter (dilations, num_features_per_dilation, biases) for
+        transformation of input X
+    parameter1 : tuple
+        parameter (dilations, num_features_per_dilation, biases) for
+        transformation of input X1 = np.diff(X, 1)
+
+    See Also
+    --------
+    MultiRocket, MiniRocket, MiniRocketMultivariate, Rocket
+
+    References
+    ----------
+    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph
+        and Webb, Geoffrey I,
+        "MultiRocket: Multiple pooling operators and transformations
+        for fast and effective time series classification",
+        2021, https://arxiv.org/abs/2102.00457v3
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.rocket._multirocket import MultiRocket
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> trf = MultiRocket()
+    >>> trf.fit(X_train)
+    MultiRocket(...)
+    >>> X_train = trf.transform(X_train)
+    >>> X_test = trf.transform(X_test)
     """
 
     def __init__(
