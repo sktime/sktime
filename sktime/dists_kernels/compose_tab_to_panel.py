@@ -101,3 +101,11 @@ class AggrDist(BasePairwiseTransformerPanel):
                     distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
 
         return distmat
+
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for AggrDist."""
+        # importing inside to avoid circular dependencies
+        from sktime.dists_kernels import ScipyDist
+
+        return {"transformer": ScipyDist()}
