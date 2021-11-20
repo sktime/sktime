@@ -10,6 +10,9 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
+from sktime.transformations.panel.signature_based._compute import (
+    _WindowSignatureTransform,
+)
 
 
 class SignatureTransformer(_PanelToTabularTransformer):
@@ -67,12 +70,6 @@ class SignatureTransformer(_PanelToTabularTransformer):
         self.depth = depth
 
         self.setup_feature_pipeline()
-
-    def _assertions(self):
-        """Run assertions on initialisation."""
-        assert not all(
-            [self.sig_tfm == "logsignature", self.rescaling == "post"]
-        ), "Cannot have post rescaling with the logsignature."
 
     def setup_feature_pipeline(self):
         """Set up the signature method as an sklearn pipeline."""
