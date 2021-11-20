@@ -72,16 +72,22 @@ class MyTransformer(BaseTransformer):
 
     # todo: fill out estimator tags here
     #  tags are inherited from parent class if they are not set
+    #
     # todo: define the transformer scitype by setting the tags
-    #  the "transformer scitype" is determined by the tags
-    #  these define the input and output types of transform(X, y=None)
     #   scitype:transform-input - the expected input scitype of X
     #   scitype:transform-output - the output scitype that transform produces
     #   scitype:transform-labels - whether y is used and if yes which scitype
     #   scitype:instancewise - whether transform uses all samples or acts by instance
-    #  when changing scitype:transform-input to Panel:
+    #
+    # todo: define internally supported types by setting the tags
+    #   X_inner_mtype - the internal mtype used for X in _fit and _transform
+    #   y_inner_mtype - if y is used, the internal mtype used for y; usually "None"
+    #   for possible mtypes see datatypes.MTYPE_REGISTER, or the datatypes tutorial
+    #   setting this guarantees that X, y passed to _fit, _transform are of this type
+    #
+    #  when scitype:transform-input is set to Panel:
     #   X_inner_mtype must be changed to one or a list of sktime Panel mtypes
-    #  when changing scitype:transform-labels to Series or Panel:
+    #  when scitype:transform-labels is set to Series or Panel:
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
@@ -95,7 +101,7 @@ class MyTransformer(BaseTransformer):
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # this can be a Panel mtype even if transform-input is Series, vectorized
+        # X_inner_mtype can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
