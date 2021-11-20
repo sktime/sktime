@@ -10,9 +10,6 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.transformations.panel.signature_based._compute import (
-    _WindowSignatureTransform,
-)
 
 
 class SignatureTransformer(_PanelToTabularTransformer):
