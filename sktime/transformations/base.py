@@ -298,6 +298,21 @@ class BaseTransformer(BaseEstimator):
             | `Series` | `Panel`      | `Panel`                |
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
+
+        Explicitly, with examples:
+            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
+                then the return is a single `Series` of the same mtype
+                Example: detrending a single series
+            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
+                then the return is `Panel` with same number of instances as `X`
+                    (the transformer is applied to each input Series instance)
+                Example: all series in the panel are detrended individually
+            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
+                then the return is `pd.DataFrame` with as many rows as instances in `X`
+                Example: i-th row of the return has mean and variance of the i-th series
+            if `X` is `Series` and `transform-output` is `Panel`
+                then the return is a `Panel` object of type `pd-multiindex`
+                Example: i-th instance of the output is the i-th window running over `X`
         """
         X = _handle_alias(X, Z)
 
@@ -510,6 +525,21 @@ class BaseTransformer(BaseEstimator):
             | `Series` | `Panel`      | `Panel`                |
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
+
+        Explicitly, with examples:
+            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
+                then the return is a single `Series` of the same mtype
+                Example: detrending a single series
+            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
+                then the return is `Panel` with same number of instances as `X`
+                    (the transformer is applied to each input Series instance)
+                Example: all series in the panel are detrended individually
+            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
+                then the return is `pd.DataFrame` with as many rows as instances in `X`
+                Example: i-th row of the return has mean and variance of the i-th series
+            if `X` is `Series` and `transform-output` is `Panel`
+                then the return is a `Panel` object of type `pd-multiindex`
+                Example: i-th instance of the output is the i-th window running over `X`
         """
         X = _handle_alias(X, Z)
         # Non-optimized default implementation; override when a better
