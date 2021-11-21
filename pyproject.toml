@@ -82,7 +82,7 @@ pytest-cov = "*"
 wheel = "*"
 
 [tool.poetry.extras]
-all = [
+all_extras = [
     "cython",
     "fbprophet",
     "hcrystalball",
