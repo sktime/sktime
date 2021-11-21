@@ -224,7 +224,9 @@ class BaseTransformer(BaseEstimator):
         X_mtype = mtype(X)
         X_scitype = mtype_to_scitype(X_mtype)
 
-        assert X_scitype in X_inner_scitypes, "conversion of X to X_inner unsuccessful"
+        # for debugging, exception if the conversion fails (this should never happen)
+        if X_scitype not in X_inner_scitypes:
+            raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
 
         # convert X/y to supported inner type, if necessary
         ###################################################
