@@ -119,7 +119,6 @@ class BaseTransformer(BaseEstimator):
     ]
 
     def __init__(self):
-        self._is_fitted = False
         super(BaseTransformer, self).__init__()
 
     def fit(self, X, y=None, Z=None):
@@ -141,7 +140,7 @@ class BaseTransformer(BaseEstimator):
                     nested pd.DataFrame, or pd.DataFrame in long/wide format
                 subject to sktime mtype format specifications, for further details see
                     examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
             alias Z will be deprecated in version 0.10.0
@@ -279,7 +278,7 @@ class BaseTransformer(BaseEstimator):
                     nested pd.DataFrame, or pd.DataFrame in long/wide format
                 subject to sktime mtype format specifications, for further details see
                     examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
             alias Z will be deprecated in version 0.10.0
@@ -507,7 +506,7 @@ class BaseTransformer(BaseEstimator):
                     nested pd.DataFrame, or pd.DataFrame in long/wide format
                 subject to sktime mtype format specifications, for further details see
                     examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
             alias Z will be deprecated in version 0.10.0
@@ -563,7 +562,7 @@ class BaseTransformer(BaseEstimator):
         X : Series or Panel of mtype X_inner_mtype
             if X_inner_mtype is list, _fit must support all types in it
             Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, optional, default=None
+        y : Series or Panel of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for tarnsformation
 
         Returns
@@ -583,7 +582,7 @@ class BaseTransformer(BaseEstimator):
         X : Series or Panel of mtype X_inner_mtype
             if X_inner_mtype is list, _transform must support all types in it
             Data to be transformed
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
 
         Returns
