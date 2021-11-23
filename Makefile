@@ -41,11 +41,15 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf coverage.xml
 	rm -f MANIFEST
 	rm -f ./$(PACKAGE)/*.so
+	rm -rf ./wheelhouse/*
 	find . -type f -iname '*.pyc' -delete
 	find . -type d -name '__pycache__' -empty -delete
 
 dist: ## Make Python source distribution
 	python3 setup.py sdist bdist_wheel
+
+build:
+	python -m build --sdist --wheel --outdir wheelhouse
 
 docs: doc
 
