@@ -57,6 +57,7 @@ CCODE = textwrap.dedent(
 
 
 def get_openmp_flag(compiler):
+    """Return an compiler and platform specific flag for OpenMP."""
     if hasattr(compiler, "compiler"):
         compiler = compiler.compiler[0]
     else:
@@ -86,7 +87,7 @@ def get_openmp_flag(compiler):
 
 
 def check_openmp_support():
-    """Check whether OpenMP test code can be compiled and run"""
+    """Check whether OpenMP test code can be compiled and run."""
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
 
@@ -171,6 +172,7 @@ def check_openmp_support():
 
 
 def long_description():
+    """Read and return README as long description."""
     with codecs.open("README.md", encoding="utf-8-sig") as f:
         return f.read()
 
