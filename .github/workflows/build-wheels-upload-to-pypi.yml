@@ -23,10 +23,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install cibuildwheel
-        run: python -m pip install build
+        run: python -m pip install cibuildwheel
 
       - name: Build wheels
-        run: python -m build --sdist --wheel --outdir wheelhouse
+        run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Publish package to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
