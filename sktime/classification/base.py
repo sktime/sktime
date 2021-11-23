@@ -125,7 +125,7 @@ class BaseClassifier(BaseEstimator):
         self.fit_time_ = int(round(time.time() * 1000)) - start
         return self
 
-    def predict(self, X) -> np.array:
+    def predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -155,7 +155,7 @@ class BaseClassifier(BaseEstimator):
 
         return self._predict(X)
 
-    def predict_proba(self, X) -> np.array:
+    def predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -234,7 +234,7 @@ class BaseClassifier(BaseEstimator):
             "_fit is a protected abstract method, it must be implemented."
         )
 
-    def _predict(self, X) -> np.array:
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
