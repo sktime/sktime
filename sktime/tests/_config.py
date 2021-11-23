@@ -42,7 +42,7 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
@@ -297,7 +297,7 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
     },
-    ROCKETClassifier: {"num_kernels": 100},
+    RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
