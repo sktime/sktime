@@ -5,120 +5,182 @@
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master
 # /setup.py
 
+####################
+
+# Helpers for OpenMP support during the build.
+
+# adapted fom https://github.com/scikit-learn/scikit-learn/blob/master
+# /sklearn/_build_utils/openmp_helpers.py
+# This code is adapted for a large part from the astropy openmp helpers, which
+# can be found at: https://github.com/astropy/astropy-helpers/blob/master
+# /astropy_helpers/openmp_helpers.py  # noqa
+
+
 __author__ = ["Markus Löning"]
 
 import codecs
+import glob
 import importlib
 import os
 import platform
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
+import textwrap
 import traceback
 from distutils.command.clean import clean as Clean  # noqa
+from distutils.errors import CompileError, LinkError
 from distutils.extension import Extension
+from distutils.sysconfig import customize_compiler
 
+import toml
 from Cython.Build import cythonize
+from numpy.distutils.ccompiler import new_compiler
 from pkg_resources import parse_version
 from setuptools import find_packages
 
-MIN_PYTHON_VERSION = "3.6"
-MIN_REQUIREMENTS = {
-    "numpy": "1.19.3",
-    "pandas": "1.1.0",
-    "scikit-learn": "0.24.0",
-    "statsmodels": "0.12.1",
-    "numba": "0.53",
-    "deprecated": "1.2.13",
-}
-MAX_REQUIREMENTS = {
-    "statsmodels": "0.12.1",
-    "numpy": "1.19.3",
-}
-EXTRAS_REQUIRE = {
-    "all_extras": [
-        "cython>=0.29.0",
-        "matplotlib>=3.3.2",
-        "pmdarima>=1.8.0,!=1.8.1",
-        "scikit_posthocs>= 0.6.5",
-        "seaborn>=0.11.0",
-        "tsfresh>=0.17.0",
-        "hcrystalball>=0.1.9",
-        "stumpy>=1.5.1,<=1.9.2",
-        "tbats>=1.1.0",
-        "fbprophet>=0.7.1",
-        "pyod>=0.8.0",
-        "dtw_python>=1.1.5",
-    ],
-}
+pyproject = toml.load("pyproject.toml")
+
+CCODE = textwrap.dedent(
+    """\
+    #include <omp.h>
+    #include <stdio.h>
+    int main(void) {
+    #pragma omp parallel
+    printf("nthreads=%d\\n", omp_get_num_threads());
+    return 0;
+    }
+    """
+)
+
+
+def get_openmp_flag(compiler):
+    if hasattr(compiler, "compiler"):
+        compiler = compiler.compiler[0]
+    else:
+        compiler = compiler.__class__.__name__
+
+    if sys.platform == "win32" and ("icc" in compiler or "icl" in compiler):
+        return ["/Qopenmp"]
+    elif sys.platform == "win32":
+        return ["/openmp"]
+    elif sys.platform == "darwin" and ("icc" in compiler or "icl" in compiler):
+        return ["-openmp"]
+    elif sys.platform == "darwin" and "openmp" in os.getenv("CPPFLAGS", ""):
+        # -fopenmp can't be passed as compile flag when using Apple-clang.
+        # OpenMP support has to be enabled during preprocessing.
+        #
+        # For example, our macOS wheel build jobs use the following environment
+        # variables to build with Apple-clang and the brew installed "libomp":
+        #
+        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+        return []
+    # Default flag for GCC and clang:
+    return ["-fopenmp"]
+
+
+def check_openmp_support():
+    """Check whether OpenMP test code can be compiled and run"""
+    ccompiler = new_compiler()
+    customize_compiler(ccompiler)
+
+    if os.getenv("SKTIME_NO_OPENMP"):
+        # Build explicitly without OpenMP support
+        return False
+
+    start_dir = os.path.abspath(".")
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            os.chdir(tmp_dir)
+
+            # Write test program
+            with open("test_openmp.c", "w") as f:
+                f.write(CCODE)
+
+            os.mkdir("objects")
+
+            # Compile, test program
+            openmp_flags = get_openmp_flag(ccompiler)
+            ccompiler.compile(
+                ["test_openmp.c"], output_dir="objects", extra_postargs=openmp_flags
+            )
+
+            # Link test program
+            extra_preargs = os.getenv("LDFLAGS", None)
+            if extra_preargs is not None:
+                extra_preargs = extra_preargs.split(" ")
+            else:
+                extra_preargs = []
+
+            objects = glob.glob(os.path.join("objects", "*" + ccompiler.obj_extension))
+            ccompiler.link_executable(
+                objects,
+                "test_openmp",
+                extra_preargs=extra_preargs,
+                extra_postargs=openmp_flags,
+            )
+
+            # Run test program
+            output = subprocess.check_output("./test_openmp")
+            output = output.decode(sys.stdout.encoding or "utf-8").splitlines()
+
+            # Check test program output
+            if "nthreads=" in output[0]:
+                nthreads = int(output[0].strip().split("=")[1])
+                openmp_supported = len(output) == nthreads
+            else:
+                openmp_supported = False
+
+        except (CompileError, LinkError, subprocess.CalledProcessError):
+            openmp_supported = False
+
+        finally:
+            os.chdir(start_dir)
+
+    err_message = textwrap.dedent(
+        """
+                            ***
+        It seems that sktime cannot be built with OpenMP support.
+
+        - If your compiler supports OpenMP but the build still fails, please
+          submit a bug report at:
+          'https://github.com/alan-turing-institute/sktime/issues'
+
+        - If you want to build sktime without OpenMP support, you can set
+          the environment variable SKTIME_NO_OPENMP and rerun the build
+          command. Note however that some estimators will run in sequential
+          mode and their `n_jobs` parameter will have no effect anymore.
+
+        - See sktime advanced installation instructions for more info:
+          'https://https://www.sktime.org/en/latest/installation.html'
+                            ***
+        """
+    )
+
+    if not openmp_supported:
+        raise CompileError(err_message)
+
+    return True
+
+
+def long_description():
+    with codecs.open("README.md", encoding="utf-8-sig") as f:
+        return f.read()
+
+
+# ground truth package metadata is loaded from pyproject.toml
+# for context see:
+#   - [PEP 621 -- Storing project metadata in pyproject.toml](https://www.python.org/dev/peps/pep-0621)
+pyproject = toml.load("pyproject.toml")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-
-
-def read(*parts):
-    """Read.
-
-    intentionally *not* adding an encoding option to open, See:
-    https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-    """
-    with codecs.open(os.path.join(HERE, *parts), "r") as fp:
-        return fp.read()
-
-
-def find_version(*file_paths):
-    """Find the version."""
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    else:
-        raise RuntimeError("Unable to find version string.")
-
-
-WEBSITE = "https://www.sktime.org"
-DISTNAME = "sktime"
-DESCRIPTION = "A unified Python toolbox for machine learning with time series"
-with codecs.open("README.md", encoding="utf-8-sig") as f:
-    LONG_DESCRIPTION = f.read()
-MAINTAINER = "F. Király"
-MAINTAINER_EMAIL = "f.kiraly@ucl.ac.uk"
-URL = "https://github.com/alan-turing-institute/sktime"
-LICENSE = "BSD-3-Clause"
-DOWNLOAD_URL = "https://pypi.org/project/sktime/#files"
-PROJECT_URLS = {
-    "Issue Tracker": "https://github.com/alan-turing-institute/sktime/issues",
-    "Documentation": WEBSITE,
-    "Source Code": "https://github.com/alan-turing-institute/sktime",
-}
-VERSION = find_version("sktime", "__init__.py")
-INSTALL_REQUIRES = [
-    *[
-        "{}>={}".format(package, version)
-        for package, version in MIN_REQUIREMENTS.items()
-    ],
-    *[
-        "{}<={}".format(package, version)
-        for package, version in MAX_REQUIREMENTS.items()
-    ],
-    "wheel",
-]
-CLASSIFIERS = [
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved",
-    "Programming Language :: Python",
-    "Topic :: Software Development",
-    "Topic :: Scientific/Engineering",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX",
-    "Operating System :: Unix",
-    "Operating System :: MacOS",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-]
-
-SETUP_REQUIRES = ["wheel"]
 
 # Optional setuptools features
 # For some commands, use setuptools
@@ -150,7 +212,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     )
 
 else:
-    extra_setuptools_args = dict()
+    extra_setuptools_args = {}
 
 
 # Custom clean command to remove build artifacts
@@ -193,31 +255,31 @@ cmdclass = {"clean": CleanCommand}
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
-# try:
-#     from numpy.distutils.command.build_ext import build_ext  # noqa
+try:
+    from numpy.distutils.command.build_ext import build_ext  # noqa
 
-#     class build_ext_subclass(build_ext):
-#         """Build extension subclass."""
+    class build_ext_subclass(build_ext):
+        """Build extension subclass."""
 
-#         def build_extensions(self):
-#             """Build extensions."""
-#             from sktime._build_utils.openmp_helpers import get_openmp_flag
+        def build_extensions(self):
+            """Build extensions."""
+            # from sktime._build_utils.openmp_helpers import get_openmp_flag
 
-#             if not os.getenv("SKTIME_NO_OPENMP"):
-#                 openmp_flag = get_openmp_flag(self.compiler)
+            if not os.getenv("SKTIME_NO_OPENMP"):
+                openmp_flag = get_openmp_flag(self.compiler)
 
-#                 for e in self.extensions:
-#                     e.extra_compile_args += openmp_flag
-#                     e.extra_link_args += openmp_flag
+                for e in self.extensions:
+                    e.extra_compile_args += openmp_flag
+                    e.extra_link_args += openmp_flag
 
-#             build_ext.build_extensions(self)
+            build_ext.build_extensions(self)
 
-#     cmdclass["build_ext"] = build_ext_subclass
+    cmdclass["build_ext"] = build_ext_subclass
 
-# except ImportError:
-#     # Numpy should not be a dependency just to be able to introspect
-#     # that python 3.6 is required.
-#     pass
+except ImportError:
+    # Numpy should not be a dependency just to be able to introspect
+    # that python 3.6 is required.
+    pass
 
 
 def configuration(parent_package="", top_path=None):
@@ -242,53 +304,6 @@ def configuration(parent_package="", top_path=None):
     return config
 
 
-def check_package_status(package, min_version):
-    """
-    Return a dictionary.
-
-    Dictionary contains a boolean specifying whether given package
-    is up-to-date, along with the version string (empty string if
-    not installed).
-    """
-    if package == "scikit-learn":
-        package = "sklearn"
-
-    package_status = {}
-    try:
-        module = importlib.import_module(package)
-        package_version = module.__version__
-        package_status["up_to_date"] = parse_version(package_version) >= parse_version(
-            min_version
-        )
-        package_status["version"] = package_version
-    except ImportError:
-        traceback.print_exc()
-        package_status["up_to_date"] = False
-        package_status["version"] = ""
-
-    req_str = "sktime requires {} >= {}.\n".format(package, min_version)
-
-    instructions = (
-        "Installation instructions are available on the "
-        "sktime website: "
-        "https://www.sktime.org/en/latest"
-        "/installation.html\n"
-    )
-
-    if package_status["up_to_date"] is False:
-        if package_status["version"]:
-            raise ImportError(
-                "Your installation of {} "
-                "{} is out-of-date.\n{}{}".format(
-                    package, package_status["version"], req_str, instructions
-                )
-            )
-        else:
-            raise ImportError(
-                "{} is not " "installed.\n{}{}".format(package, req_str, instructions)
-            )
-
-
 extensions = [
     Extension(
         "sktime.distances.elastic_cython",
@@ -296,7 +311,6 @@ extensions = [
         extra_compile_args=["-O2", "-fopenmp"],
         extra_link_args=["-fopenmp"],
         language="c++",
-        # include_dirs=[numpy.get_include()],
     ),
     Extension(
         "sktime.classification.shapelet_based.mrseql.mrseql",
@@ -304,7 +318,6 @@ extensions = [
         extra_compile_args=["-O2", "-fopenmp"],
         extra_link_args=["-fopenmp"],
         language="c++",
-        # include_dirs=[numpy.get_include()],
     ),
 ]
 
@@ -312,22 +325,25 @@ extensions = [
 def setup_package():
     """Set up package."""
     metadata = dict(
-        name=DISTNAME,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        description=DESCRIPTION,
-        license=LICENSE,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        project_urls=PROJECT_URLS,
-        version=VERSION,
-        long_description=LONG_DESCRIPTION,
-        classifiers=CLASSIFIERS,
+        name=pyproject["project"]["name"],
+        author=pyproject["project"]["authors"][0]["name"],
+        author_email=pyproject["project"]["authors"][0]["email"],
+        maintainer=pyproject["project"]["maintainers"][0]["name"],
+        maintainer_email=pyproject["project"]["maintainers"][0]["email"],
+        description=pyproject["project"]["description"],
+        license=pyproject["project"]["license"],
+        keywords=pyproject["project"]["keywords"],
+        url=pyproject["project"]["urls"]["repository"],
+        download_url=pyproject["project"]["urls"]["download"],
+        project_urls=pyproject["project"]["urls"],
+        version=pyproject["project"]["version"],
+        long_description=long_description(),
+        classifiers=pyproject["project"]["classifiers"],
         cmdclass=cmdclass,
-        python_requires=">={}".format(MIN_PYTHON_VERSION),
-        setup_requires=SETUP_REQUIRES,
-        install_requires=INSTALL_REQUIRES,
-        extras_require=EXTRAS_REQUIRE,
+        python_requires=pyproject["project"]["requires-python"],
+        setup_requires=pyproject["build-system"]["requires"],
+        install_requires=pyproject["project"]["dependencies"],
+        extras_require=pyproject["project"]["optional-dependencies"],
         ext_modules=cythonize(extensions),
         packages=find_packages(
             where=".",
@@ -352,20 +368,9 @@ def setup_package():
         except ImportError:
             from distutils.core import setup
 
-        metadata["version"] = VERSION
+        metadata["version"] = pyproject["project"]["version"]
 
-    # otherwise check Python and required package versions
     else:
-        if sys.version_info < tuple([int(i) for i in MIN_PYTHON_VERSION.split(".")]):
-            raise RuntimeError(
-                "sktime requires Python %s or later. The current"
-                " Python version is %s installed in %s."
-                % (MIN_PYTHON_VERSION, platform.python_version(), sys.executable)
-            )
-
-        # for package, version in MIN_REQUIREMENTS.items():
-        #     check_package_status(package, version)
-
         from numpy.distutils.core import setup
 
         metadata["configuration"] = configuration
