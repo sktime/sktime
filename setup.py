@@ -110,11 +110,9 @@ def check_openmp_support():
 
             # Link test program
             extra_preargs = os.getenv("LDFLAGS", None)
-            if extra_preargs is not None:
-                extra_preargs = extra_preargs.split(" ")
-            else:
-                extra_preargs = []
-
+            extra_preargs = (
+                extra_preargs.split(" ") if extra_preargs is not None else []
+            )
             objects = glob.glob(os.path.join("objects", "*" + ccompiler.obj_extension))
             ccompiler.link_executable(
                 objects,
@@ -179,38 +177,6 @@ def long_description():
 pyproject = toml.load("pyproject.toml")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-
-# Optional setuptools features
-# For some commands, use setuptools
-SETUPTOOLS_COMMANDS = {
-    "install",
-    "develop",
-    "release",
-    "build_ext",
-    "bdist_egg",
-    "bdist_rpm",
-    "bdist_wininst",
-    "install_egg_info",
-    "build_sphinx",
-    "egg_info",
-    "easy_install",
-    "upload",
-    "bdist_wheel",
-    "--single-version-externally-managed",
-    "sdist",
-}
-if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    # We need to import setuptools early, if we want setuptools features,
-    # (e.g. "bdist_wheel") as it monkey-patches the 'setup' function
-    import setuptools  # noqa
-
-    extra_setuptools_args = dict(
-        zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
-    )
-
-else:
-    extra_setuptools_args = {}
 
 
 # Custom clean command to remove build artifacts
@@ -347,7 +313,8 @@ def setup_package():
             where=".",
             exclude=["tests", "tests.*"],
         ),
-        **extra_setuptools_args,
+        zip_safe=False,
+        include_package_data=True,
     )
 
     # For these actions, NumPy is not required
