@@ -20,16 +20,12 @@ __author__ = ["Markus Löning"]
 
 import codecs
 import glob
-import importlib
 import os
-import platform
-import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import textwrap
-import traceback
 from distutils.command.clean import clean as Clean  # noqa
 from distutils.errors import CompileError, LinkError
 from distutils.extension import Extension
@@ -38,7 +34,6 @@ from distutils.sysconfig import customize_compiler
 import toml
 from Cython.Build import cythonize
 from numpy.distutils.ccompiler import new_compiler
-from pkg_resources import parse_version
 from setuptools import find_packages
 
 pyproject = toml.load("pyproject.toml")
@@ -179,7 +174,8 @@ def long_description():
 
 # ground truth package metadata is loaded from pyproject.toml
 # for context see:
-#   - [PEP 621 -- Storing project metadata in pyproject.toml](https://www.python.org/dev/peps/pep-0621)
+#   - [PEP 621 -- Storing project metadata in pyproject.toml]
+#     (https://www.python.org/dev/peps/pep-0621)
 pyproject = toml.load("pyproject.toml")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
