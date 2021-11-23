@@ -78,7 +78,7 @@ def erp_distance(
     Returns
     -------
     float
-        Erp distance between x and y.
+        ERP distance between x and y.
 
     Raises
     ------
@@ -137,7 +137,7 @@ def edr_distance(
 
     EDR computes the minimum number of elements (as a percentage) that must be removed
     from x and y so that the sum of the distance between the remaining signal elements
-    lies within the tolerance (epsilon). Edr was originally put forward in [1]_.
+    lies within the tolerance (epsilon). EDR was originally proposed in [1]_.
 
     The value returned will be between 0 and 1 per time series. The value will
     represent as a percentage of elements that must be removed for the time series to
@@ -238,11 +238,11 @@ def lcss_distance(
     epsilon: float = 1.0,
     **kwargs: Any,
 ) -> float:
-    """Compute the longest common subsequence (lcss) score between two time series.
+    """Compute the longest common subsequence (LCSS) score between two time series.
 
-    Lcss attempts to find the longest common sequence between two time series and
+    LCSS attempts to find the longest common sequence between two time series and
     returns a value that is the percentage that longest common sequence assumes.
-    Originally present in [1]_, lcss is computed by matching indexes that are
+    Originally present in [1]_, LCSS is computed by matching indexes that are
     similar up until a defined threshold (epsilon).
 
     The value returned will be between 0.0 and 1.0, where 0.0 means the two time series
@@ -343,9 +343,9 @@ def wddtw_distance(
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
-    r"""Compute the weighted derivative dynamic time warping (wddtw) distance.
+    r"""Compute the weighted derivative dynamic time warping (WDDTW) distance.
 
-    Wddtw was first proposed in [1]_ as an extension of ddtw. By adding a weight
+    WDDTW was first proposed in [1]_ as an extension of DDTW. By adding a weight
     to the derivative it means the alignment isn't only considering the shape of the
     time series, but also the phase.
 
@@ -458,9 +458,9 @@ def wdtw_distance(
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
-    """Compute the weighted dynamic time warping (wdtw) distance between time series.
+    """Compute the weighted dynamic time warping (WDTW) distance between time series.
 
-    First proposed in [1]_, wdtw adds a  adds a multiplicative weight penalty based on
+    First proposed in [1]_, WDTW adds a  adds a multiplicative weight penalty based on
     the warping distance. This means that time series with lower phase difference have
     a smaller weight imposed (i.e less penalty imposed) and time series with larger
     phase difference have a larger weight imposed (i.e. larger penalty imposed).
@@ -566,9 +566,9 @@ def ddtw_distance(
     compute_derivative: DerivativeCallable = _average_of_slope,
     **kwargs: Any,
 ) -> float:
-    r"""Compute the derivative dynamic time warping (ddtw) distance between time series.
+    r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
 
-    Ddtw is an adaptation of Dtw originally proposed in [1]_. Ddtw attempts to
+    DDTW is an adaptation of DTW originally proposed in [1]_. DDTW attempts to
     improve on dtw by better account for the 'shape' of the time series.
     This is done by considering y axis data points as higher level features of 'shape'.
     To do this the first derivative of the sequence is taken, and then using this
@@ -674,9 +674,9 @@ def dtw_distance(
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
-    r"""Compute the dynamic time warping (dtw) distance between two time series.
+    r"""Compute the dynamic time warping (DTW) distance between two time series.
 
-    Originally proposedin [1]_ dtw computes the distance between two time series by
+    Originally proposedin [1]_ DTW computes the distance between two time series by
     considering their alignments during the calculation. This is done by measuring
     the pointwise distance (normally using Euclidean) between all elements of the two
     time series and then using dynamic programming to find the warping path
@@ -766,7 +766,7 @@ def dtw_distance(
 
 
 def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
-    r"""Compute the Squared distance between two time series.
+    r"""Compute the squared distance between two time series.
 
     The squared distance between two time series is defined as:
 
@@ -819,7 +819,8 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Euclidean distance is supported for 1d, 2d and 3d arrays.
 
-    The euclidean distance between two time series is defined as:
+    The Euclidean distance between two time series is the square root of the squared
+    distance and is defined as:
 
     .. math::
         ed(x, y) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
