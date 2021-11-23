@@ -16,10 +16,11 @@ import shutil
 import sys
 import traceback
 from distutils.command.clean import clean as Clean  # noqa
-from Cython.Build import cythonize
 from distutils.extension import Extension
-from setuptools import find_packages
+
+from Cython.Build import cythonize
 from pkg_resources import parse_version
+from setuptools import find_packages
 
 MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
