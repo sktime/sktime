@@ -219,31 +219,31 @@ cmdclass = {"clean": CleanCommand}
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
-try:
-    from numpy.distutils.command.build_ext import build_ext  # noqa
+# try:
+#     from numpy.distutils.command.build_ext import build_ext  # noqa
 
-    class build_ext_subclass(build_ext):
-        """Build extension subclass."""
+#     class build_ext_subclass(build_ext):
+#         """Build extension subclass."""
 
-        def build_extensions(self):
-            """Build extensions."""
-            # from sktime._build_utils.openmp_helpers import get_openmp_flag
+#         def build_extensions(self):
+#             """Build extensions."""
+#             # from sktime._build_utils.openmp_helpers import get_openmp_flag
 
-            if not os.getenv("SKTIME_NO_OPENMP"):
-                openmp_flag = get_openmp_flag(self.compiler)
+#             if not os.getenv("SKTIME_NO_OPENMP"):
+#                 openmp_flag = get_openmp_flag(self.compiler)
 
-                for e in self.extensions:
-                    e.extra_compile_args += openmp_flag
-                    e.extra_link_args += openmp_flag
+#                 for e in self.extensions:
+#                     e.extra_compile_args += openmp_flag
+#                     e.extra_link_args += openmp_flag
 
-            build_ext.build_extensions(self)
+#             build_ext.build_extensions(self)
 
-    cmdclass["build_ext"] = build_ext_subclass
+#     cmdclass["build_ext"] = build_ext_subclass
 
-except ImportError:
-    # Numpy should not be a dependency just to be able to introspect
-    # that python 3.6 is required.
-    pass
+# except ImportError:
+#     # Numpy should not be a dependency just to be able to introspect
+#     # that python 3.6 is required.
+#     pass
 
 
 def configuration(parent_package="", top_path=None):
@@ -289,56 +289,69 @@ extensions = [
 def setup_package():
     """Set up package."""
     metadata = dict(
-        name=pyproject["project"]["name"],
-        author=pyproject["project"]["authors"][0]["name"],
         author_email=pyproject["project"]["authors"][0]["email"],
-        maintainer=pyproject["project"]["maintainers"][0]["name"],
-        maintainer_email=pyproject["project"]["maintainers"][0]["email"],
-        description=pyproject["project"]["description"],
-        license=pyproject["project"]["license"],
-        keywords=pyproject["project"]["keywords"],
-        url=pyproject["project"]["urls"]["repository"],
-        download_url=pyproject["project"]["urls"]["download"],
-        project_urls=pyproject["project"]["urls"],
-        version=pyproject["project"]["version"],
-        long_description=long_description(),
+        author=pyproject["project"]["authors"][0]["name"],
         classifiers=pyproject["project"]["classifiers"],
         cmdclass=cmdclass,
-        python_requires=pyproject["project"]["requires-python"],
-        setup_requires=pyproject["build-system"]["requires"],
-        install_requires=pyproject["project"]["dependencies"],
-        extras_require=pyproject["project"]["optional-dependencies"],
+        description=pyproject["project"]["description"],
+        download_url=pyproject["project"]["urls"]["download"],
         ext_modules=cythonize(extensions),
+        extras_require=pyproject["project"]["optional-dependencies"],
+        include_package_data=True,
+        install_requires=pyproject["project"]["dependencies"],
+        keywords=pyproject["project"]["keywords"],
+        license=pyproject["project"]["license"],
+        long_description=long_description(),
+        maintainer_email=pyproject["project"]["maintainers"][0]["email"],
+        maintainer=pyproject["project"]["maintainers"][0]["name"],
+        name=pyproject["project"]["name"],
+        package_data={
+            "sktime": [
+                "*.csv",
+                "*.csv.gz",
+                "*.arff",
+                "*.arff.gz",
+                "*.txt",
+                "*.ts",
+            ]
+        },
         packages=find_packages(
             where=".",
             exclude=["tests", "tests.*"],
         ),
+        project_urls=pyproject["project"]["urls"],
+        python_requires=pyproject["project"]["requires-python"],
+        setup_requires=pyproject["build-system"]["requires"],
+        url=pyproject["project"]["urls"]["repository"],
+        version=pyproject["project"]["version"],
         zip_safe=False,
-        include_package_data=True,
     )
 
     # For these actions, NumPy is not required
     # They are required to succeed without Numpy for example when
     # pip is used to install sktime when Numpy is not yet
     # present in the system.
-    if len(sys.argv) == 1 or (
-        len(sys.argv) >= 2
-        and (
-            "--help" in sys.argv[1:]
-            or sys.argv[1] in ("--help-commands", "egg_info", "--version", "clean")
-        )
-    ):
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
+    # if len(sys.argv) == 1 or (
+    #     len(sys.argv) >= 2
+    #     and (
+    #         "--help" in sys.argv[1:]
+    #         or sys.argv[1] in ("--help-commands", "egg_info", "--version", "clean")
+    #     )
+    # ):
+    #     try:
+    #         from setuptools import setup
+    #     except ImportError:
+    #         from distutils.core import setup
 
-        metadata["version"] = pyproject["project"]["version"]
+    #     metadata["version"] = pyproject["project"]["version"]
 
-    else:
-        from numpy.distutils.core import setup
+    # else:
+    #     from numpy.distutils.core import setup
 
-        metadata["configuration"] = configuration
+    #     metadata["configuration"] = configuration
+    from setuptools import setup
+
+    # from numpy.distutils.core import setup
 
     setup(**metadata)
 
