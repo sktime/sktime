@@ -306,15 +306,15 @@ extensions = [
     Extension(
         "sktime.distances.elastic_cython",
         ["sktime/distances/elastic_cython.pyx"],
-        extra_compile_args=["-O2", "-fopenmp"],
-        extra_link_args=["-fopenmp"],
+        extra_compile_args=["-O2"],
+        # extra_link_args=["-fopenmp"],
         language="c++",
     ),
     Extension(
         "sktime.classification.shapelet_based.mrseql.mrseql",
         ["sktime/classification/shapelet_based/mrseql/mrseql.pyx"],
-        extra_compile_args=["-O2", "-fopenmp"],
-        extra_link_args=["-fopenmp"],
+        extra_compile_args=["-O2"],
+        # extra_link_args=["-fopenmp"],
         language="c++",
     ),
 ]
