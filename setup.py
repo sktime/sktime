@@ -16,7 +16,9 @@ import shutil
 import sys
 import traceback
 from distutils.command.clean import clean as Clean  # noqa
-
+from Cython.Build import cythonize
+from distutils.extension import Extension
+from setuptools import find_packages
 from pkg_resources import parse_version
 
 MIN_PYTHON_VERSION = "3.6"
@@ -190,31 +192,31 @@ cmdclass = {"clean": CleanCommand}
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
-try:
-    from numpy.distutils.command.build_ext import build_ext  # noqa
+# try:
+#     from numpy.distutils.command.build_ext import build_ext  # noqa
 
-    class build_ext_subclass(build_ext):
-        """Build extension subclass."""
+#     class build_ext_subclass(build_ext):
+#         """Build extension subclass."""
 
-        def build_extensions(self):
-            """Build extensions."""
-            from sktime._build_utils.openmp_helpers import get_openmp_flag
+#         def build_extensions(self):
+#             """Build extensions."""
+#             from sktime._build_utils.openmp_helpers import get_openmp_flag
 
-            if not os.getenv("SKTIME_NO_OPENMP"):
-                openmp_flag = get_openmp_flag(self.compiler)
+#             if not os.getenv("SKTIME_NO_OPENMP"):
+#                 openmp_flag = get_openmp_flag(self.compiler)
 
-                for e in self.extensions:
-                    e.extra_compile_args += openmp_flag
-                    e.extra_link_args += openmp_flag
+#                 for e in self.extensions:
+#                     e.extra_compile_args += openmp_flag
+#                     e.extra_link_args += openmp_flag
 
-            build_ext.build_extensions(self)
+#             build_ext.build_extensions(self)
 
-    cmdclass["build_ext"] = build_ext_subclass
+#     cmdclass["build_ext"] = build_ext_subclass
 
-except ImportError:
-    # Numpy should not be a dependency just to be able to introspect
-    # that python 3.6 is required.
-    pass
+# except ImportError:
+#     # Numpy should not be a dependency just to be able to introspect
+#     # that python 3.6 is required.
+#     pass
 
 
 def configuration(parent_package="", top_path=None):
@@ -286,6 +288,26 @@ def check_package_status(package, min_version):
             )
 
 
+extensions = [
+    Extension(
+        "sktime.distances.elastic_cython",
+        ["sktime/distances/elastic_cython.pyx"],
+        extra_compile_args=["-O2", "-fopenmp"],
+        extra_link_args=["-fopenmp"],
+        language="c++",
+        # include_dirs=[numpy.get_include()],
+    ),
+    Extension(
+        "sktime.classification.shapelet_based.mrseql.mrseql",
+        ["sktime/classification/shapelet_based/mrseql/mrseql.pyx"],
+        extra_compile_args=["-O2", "-fopenmp"],
+        extra_link_args=["-fopenmp"],
+        language="c++",
+        # include_dirs=[numpy.get_include()],
+    ),
+]
+
+
 def setup_package():
     """Set up package."""
     metadata = dict(
@@ -305,7 +327,12 @@ def setup_package():
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
-        **extra_setuptools_args
+        ext_modules=cythonize(extensions),
+        packages=find_packages(
+            where=".",
+            exclude=["tests", "tests.*"],
+        ),
+        **extra_setuptools_args,
     )
 
     # For these actions, NumPy is not required
@@ -335,8 +362,8 @@ def setup_package():
                 % (MIN_PYTHON_VERSION, platform.python_version(), sys.executable)
             )
 
-        for package, version in MIN_REQUIREMENTS.items():
-            check_package_status(package, version)
+        # for package, version in MIN_REQUIREMENTS.items():
+        #     check_package_status(package, version)
 
         from numpy.distutils.core import setup
 
