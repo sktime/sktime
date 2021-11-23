@@ -124,6 +124,12 @@ docs = [
     "tabulate",
 ]
 
+[tool.poetry.build]
+generate-setup-file = false
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+# requires = ["poetry-core>=1.0.0", "cython>=0.29.0", "wheel"]
+# build-backend = "poetry.core.masonry.api"
+
+requires = ["setuptools", "cython>=0.29.0", "wheel", "numpy==1.19.3"]
+build-backend = "setuptools.build_meta"
