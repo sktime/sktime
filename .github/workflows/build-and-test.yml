@@ -36,6 +36,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip build
+          python -m build --wheel --outdir wheelhouse
+          python -m pip install wheelhouse/*.whl
           python -m pip install .[binder]
       - name: Run example notebooks
         run: build_tools/run_examples.sh
@@ -46,7 +48,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+        os: [ubuntu-20.04]
+        # os: [ubuntu-20.04, windows-2019, macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@v2
