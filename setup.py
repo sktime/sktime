@@ -31,6 +31,7 @@ from distutils.errors import CompileError, LinkError
 from distutils.extension import Extension
 from distutils.sysconfig import customize_compiler
 
+import numpy
 import toml
 from Cython.Build import cythonize
 from numpy.distutils.ccompiler import new_compiler
@@ -275,6 +276,7 @@ extensions = [
         extra_compile_args=["-O2"],
         # extra_link_args=["-fopenmp"],
         language="c++",
+        include_dirs=[numpy.get_include()],
     ),
     Extension(
         "sktime.classification.shapelet_based.mrseql.mrseql",
@@ -282,6 +284,7 @@ extensions = [
         extra_compile_args=["-O2"],
         # extra_link_args=["-fopenmp"],
         language="c++",
+        include_dirs=[numpy.get_include()],
     ),
 ]
 
