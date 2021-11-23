@@ -5,12 +5,16 @@ __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
 
 from abc import ABC, abstractmethod
+from typing import Union
 
 import numpy as np
+import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.clustering.base._types import TimeSeriesPanel
 from sktime.utils.validation.panel import check_X
+
+# Types
+TimeSeriesPanel = Union[pd.DataFrame, np.ndarray]
 
 
 class BaseClusterer(BaseEstimator, ABC):
@@ -18,7 +22,7 @@ class BaseClusterer(BaseEstimator, ABC):
 
     _tags = {
         "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": True,
+        "coerce-X-to-pandas": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -32,15 +36,16 @@ class BaseClusterer(BaseEstimator, ABC):
         self._is_fitted = False
         super(BaseClusterer, self).__init__()
 
-    def fit(self, X: TimeSeriesPanel, y=None):
+    def fit(self, X: TimeSeriesPanel, y=None) -> None:
         """Fit time series clusterer to training data.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.DataFrame (where each column
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each column
             is a dimension, each cell is a pd.Series (any number of dimensions, equal or
             unequal length series)) or List[pd.Dataframe].
+            Training time series instances to cluster.
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -67,18 +72,18 @@ class BaseClusterer(BaseEstimator, ABC):
         self._fit(X, y)
 
         self._is_fitted = True
-
         return self
 
-    def predict(self, X: TimeSeriesPanel, y=None):
+    def predict(self, X: TimeSeriesPanel, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.DataFrame (where each column
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each column
             is a dimension, each cell is a pd.Series (any number of dimensions, equal or
             unequal length series)) or List[pd.Dataframe].
+            Time series instances to predict their cluster indexes.
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -96,7 +101,7 @@ class BaseClusterer(BaseEstimator, ABC):
 
         return self._predict(X)
 
-    def fit_predict(self, X: TimeSeriesPanel, y=None):
+    def fit_predict(self, X: TimeSeriesPanel, y=None) -> np.ndarray:
         """Compute cluster centers and predict cluster index for each time series.
 
         Convenience method; equivalent of calling fit(X) followed by predict(X)
@@ -104,9 +109,11 @@ class BaseClusterer(BaseEstimator, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.DataFrame (where each column
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each column
             is a dimension, each cell is a pd.Series (any number of dimensions, equal or
             unequal length series)) or List[pd.Dataframe].
+            Time series instances to train clusterer and then have indexes each belong to
+            returned.
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -119,8 +126,36 @@ class BaseClusterer(BaseEstimator, ABC):
 
     @abstractmethod
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        np.ndarray (1d array of shape (n_instances,))
+            Index of the cluster each time series in X belongs to.
+        """
         ...
 
     @abstractmethod
     def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+        """Fit time series clusterer to training data.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances,n_dimensions,series_length))
+            Training time series instances to cluster.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        self:
+            Fitted estimator.
+        """
         ...

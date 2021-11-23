@@ -3,4 +3,4 @@
 __author__ = ["chrisholder"]
 __all__ = ["BaseClusterer"]
 
-from sktime.clustering_redo.base import BaseClusterer
+from sktime.clustering_redo.base._base import BaseClusterer

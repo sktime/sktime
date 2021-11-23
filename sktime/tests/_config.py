@@ -150,6 +150,7 @@ EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
+    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
 }
 
 # We here configure estimators for basic unit testing, including setting of
