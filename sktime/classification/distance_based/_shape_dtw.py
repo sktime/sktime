@@ -114,13 +114,13 @@ class ShapeDTW(BaseClassifier):
 
     def __init__(
         self,
-        n_neighbours=1,
+        n_neighbors=1,
         subsequence_length=30,
         shape_descriptor_function="raw",
         shape_descriptor_functions=["raw", "derivative"],  # noqa from flake8 B006
         metric_params=None,
     ):
-        self.n_neighbors = n_neighbours
+        self.n_neighbors = n_neighbors
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
