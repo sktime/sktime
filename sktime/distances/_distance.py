@@ -674,13 +674,13 @@ def dtw_distance(
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
-    r"""Compute the dynamic time warping (dtw) distance between two timeseries.
+    r"""Compute the dynamic time warping (dtw) distance between two time series.
 
-    Originally put forward in [1]_ dtw goal is to compute a more accurate distance
-    between two timeseries by considering their alignments during the calculation. This
-    is done by measuring the distance (normally using Euclidean) between two timeseries
-    and then generate a warping path to 'realign' the two timeseries thereby creating
-    a path between the two that accounts for alignment.
+    Originally proposedin [1]_ dtw computes the distance between two time series by
+    considering their alignments during the calculation. This is done by measuring
+    the pointwise distance (normally using Euclidean) between all elements of the two
+    time series and then using dynamic programming to find the warping path
+    that minimises the total pointwise distance between realigned series.
 
     Mathematically dtw can be defined as:
 
@@ -690,9 +690,9 @@ def dtw_distance(
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (1d or 2d array)
-        Second timeseries.
+        Second time series.
     lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
         Lower bounding technique to use.
         If LowerBounding enum provided, the following are valid:
