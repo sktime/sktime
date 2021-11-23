@@ -32,10 +32,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip build
           python -m pip install .[binder]
       - name: Run example notebooks
         run: build_tools/run_examples.sh
@@ -61,7 +61,7 @@ jobs:
       run: python -c "import sys; print(sys.version)"
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip pytest pytest-cov
+        python -m pip install --upgrade pip pytest pytest-cov cython
         pip install .
     - name: Run tests
       run: |
