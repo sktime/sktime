@@ -86,10 +86,6 @@ class _DtwDistance(NumbaDistance):
         return numba_dtw_distance
 
 
-def _dtw_numba_distance():
-    pass
-
-
 @njit(cache=True, fastmath=True)
 def _cost_matrix(
     x: np.ndarray,
