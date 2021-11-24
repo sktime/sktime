@@ -298,7 +298,7 @@ def setup_package():
         cmdclass=cmdclass,
         description=pyproject["project"]["description"],
         download_url=pyproject["project"]["urls"]["download"],
-        ext_modules=cythonize(extensions),
+        ext_modules=cythonize(extensions, language_level="3"),
         extras_require=pyproject["project"]["optional-dependencies"],
         include_package_data=True,
         install_requires=pyproject["project"]["dependencies"],
