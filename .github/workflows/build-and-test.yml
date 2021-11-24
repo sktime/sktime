@@ -46,7 +46,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.2.2
         env:
-          CIBW_BEFORE_TEST: pip install .[binder]
+          CIBW_BEFORE_TEST: python -m pip install .[binder]
           CIBW_TEST_COMMAND: bash build_tools/run_examples.sh
 
       - uses: actions/upload-artifact@v2
