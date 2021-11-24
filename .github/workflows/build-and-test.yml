@@ -41,17 +41,6 @@ jobs:
         run: build_tools/run_examples.sh
         shell: bash
 
-      # - name: Build wheels
-      #   uses: pypa/cibuildwheel@v2.2.2
-      #   env:
-      #     CIBW_BUILD: cp39-*
-      #     CIBW_BEFORE_TEST: python -m pip install .[binder]
-      #     CIBW_TEST_COMMAND: bash build_tools/run_examples.sh
-
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     path: ./wheelhouse/*.whl
-
   run-tests:
     # needs: code-quality
     runs-on: ${{ matrix.os }}
