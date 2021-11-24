@@ -38,7 +38,7 @@ from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
 def set_classifier(cls, resample_id=None, train_file=False):
-    """Construct a classifier.
+    """Construct a classifier, possibly seeded.
 
     Basic way of creating the classifier to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy

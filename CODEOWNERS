@@ -18,6 +18,8 @@ sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/panel/shapelet_transform.py @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/shapelets.py @jasonlines @ABostrom @TonyBagnall
 sktime/transformations/panel/rocket/ @angus924
+sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
+sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
 sktime/transformations/series/impute.py @aiwalter
 sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/compose.py @aiwalter
