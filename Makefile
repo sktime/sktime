@@ -23,7 +23,7 @@ install: ## Install for the current user using the default python command
 	python3 setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
-	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
+	pytest --cov-report html --cov=sktime --showlocals --durations=20 -n 4 --pyargs $(PACKAGE)
 
 tests: test
 
