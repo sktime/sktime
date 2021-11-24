@@ -271,6 +271,11 @@ def configuration(parent_package="", top_path=None):
 
 extensions = [
     Extension(
+        "sktime.__check_build._check_build",
+        ["sktime/__check_build/_check_build.pyx"],
+        extra_compile_args=["-O2"],
+    ),
+    Extension(
         "sktime.distances.elastic_cython",
         ["sktime/distances/elastic_cython.pyx"],
         extra_compile_args=["-O2"],
