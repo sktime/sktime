@@ -25,7 +25,7 @@ jobs:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
 
   run-notebook-examples:
-    needs: code-quality
+    # needs: code-quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -33,29 +33,27 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      # - name: Install dependencies
-      #   run: |
-      #     python -m pip install --upgrade pip build
-      #     python -m build --wheel --outdir wheelhouse
-      #     python -m pip install wheelhouse/*.whl
-      #     python -m pip install .[binder]
-      # - name: Run example notebooks
-      #   run: build_tools/run_examples.sh
-      #   shell: bash
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[all_extras,binder]
+      - name: Run example notebooks
+        run: build_tools/run_examples.sh
+        shell: bash
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.2.2
-        env:
-          CIBW_BUILD: cp39-*
-          CIBW_BEFORE_TEST: python -m pip install .[binder]
-          CIBW_TEST_COMMAND: bash build_tools/run_examples.sh
+      # - name: Build wheels
+      #   uses: pypa/cibuildwheel@v2.2.2
+      #   env:
+      #     CIBW_BUILD: cp39-*
+      #     CIBW_BEFORE_TEST: python -m pip install .[binder]
+      #     CIBW_TEST_COMMAND: bash build_tools/run_examples.sh
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
+      # - uses: actions/upload-artifact@v2
+      #   with:
+      #     path: ./wheelhouse/*.whl
 
   run-tests:
-    needs: code-quality
+    # needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -74,33 +72,33 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-        # - name: Install dependencies
-        # run: |
-        #   python -m pip install --upgrade pip pytest pytest-cov cython
-        #   pip install .
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.2.2
-        env:
-          CIBW_BUILD: cp39-*
-          CIBW_BEFORE_TEST: python -m pip install .[all_extras]
-          CIBW_TEST_COMMAND: >
-            mkdir -p testdir/ &&
-            cp .coveragerc testdir/ &&
-            cp setup.cfg testdir/ &&
-            cd testdir/ &&
-            pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+        - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[all_extras,dev]
+      # - name: Build wheels
+      #   uses: pypa/cibuildwheel@v2.2.2
+      #   env:
+      #     CIBW_BUILD: cp39-*
+      #     CIBW_BEFORE_TEST: python -m pip install .[all_extras]
+      #     CIBW_TEST_COMMAND: >
+      #       mkdir -p testdir/ &&
+      #       cp .coveragerc testdir/ &&
+      #       cp setup.cfg testdir/ &&
+      #       cd testdir/ &&
+      #       pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
+      # - uses: actions/upload-artifact@v2
+      #   with:
+      #     path: ./wheelhouse/*.whl
 
-      # - name: Run tests
-      #   run: |
-      #     mkdir -p testdir/
-      #     cp .coveragerc testdir/
-      #     cp setup.cfg testdir/
-      #     cd testdir/
-      #     pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+      - name: Run tests
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          cd testdir/
+          pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
