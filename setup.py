@@ -325,6 +325,7 @@ def setup_package():
                 "*.arff.gz",
                 "*.txt",
                 "*.ts",
+                "*.tsv",
             ]
         },
         packages=find_packages(
