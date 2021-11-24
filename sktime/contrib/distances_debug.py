@@ -36,17 +36,32 @@ generated in java.
 
 def _window_sizes():
     """Roadtest the new distances."""
-    x = np.random.rand(1000)
-    y = np.random.rand(1000)
-
+    x = np.zeros(10)
+    x[1] = 10
+    y = np.roll(x, 5)
+    print(x)
+    print(y)
     t = time.time()
-    print("Full DTW Distance = ", dtw_distance(x, y), " takes = ", (time.time() - t))
     print(
         "Euclidean Distance = ",
         euclidean_distance(x, y),
         " takes = ",
         (time.time() - t),
     )
+    print("Full DTW Distance = ", dtw_distance(x, y), " takes = ", (time.time() - t))
+    print(
+        "Zero window DTW Distance = ",
+        dtw_distance(x, y, window=0),
+        " takes = ",
+        (time.time() - t),
+    )
+    print(
+        "Too Small Window DTW Distance = ",
+        dtw_distance(x, y, window=10),
+        " takes " "= ",
+        (time.time() - t),
+    )
+
     print(
         "Using generalised distance function ED = ", distance(x, y, metric="euclidean")
     )
@@ -110,69 +125,6 @@ def demo_loading():
 temp = [
     "Chinatown",
     "Beef",
-    "BeetleFly",
-    "BirdChicken",
-    "Car",
-    "CBF",
-    "Coffee",
-    "Computers",
-    "DiatomSizeReduction",
-    "Earthquakes",
-    "ECG200",
-    "FaceAll",
-    "FaceFour",
-    "FacesUCR",
-    "FiftyWords",
-    "Fish",
-    "FreezerRegularTrain",
-    "FreezerSmallTrain",
-    "GunPoint",
-    "GunPointAgeSpan",
-    "GunPointMaleVersusFemale",
-    "GunPointOldVersusYoung",
-    "Ham",
-    "Haptics",
-    "Herring",
-    "HouseTwenty",
-    "ItalyPowerDemand",
-    "LargeKitchenAppliances",
-    "Lightning2",
-    "Lightning7",
-    "Mallat",
-    "Meat",
-    "MoteStrain",
-    "OliveOil",
-    "OSULeaf",
-    "PigAirwayPressure",
-    "PigArtPressure",
-    "PigCVP",
-    "Plane",
-    "PowerCons",
-    "Rock",
-    "ScreenType",
-    "SemgHandGenderCh2",
-    "SemgHandMovementCh2",
-    "SemgHandSubjectCh2",
-    "ShapeletSim",
-    "ShapesAll",
-    "SonyAIBORobotSurface1",
-    "SonyAIBORobotSurface2",
-    "Strawberry",
-    "SwedishLeaf",
-    "Symbols",
-    "SyntheticControl",
-    "ToeSegmentation1",
-    "ToeSegmentation2",
-    "Trace",
-    "TwoLeadECG",
-    "TwoPatterns",
-    "UMD",
-    "Wafer",
-    "Wine",
-    "WordSynonyms",
-    "Worms",
-    "WormsTwoClass",
-    "Yoga",
 ]
 if __name__ == "__main__":
     """
@@ -208,8 +160,8 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "Z:/Results Working Area/Debug/DistancesNew/"
+        data_dir = "../datasets/data/"
+        results_dir = "C:/Temp/"
         classifier = "1nn-dtw"
         # dataset = "UnitTest"
         resample = 0
@@ -222,7 +174,7 @@ if __name__ == "__main__":
                 problem_path=data_dir,
                 results_path=results_dir,
                 cls_name=classifier,
-                classifier=KNeighborsTimeSeriesClassifier(metric="dtw"),
+                classifier=KNeighborsTimeSeriesClassifier(distance="dtw"),
                 dataset=temp[i],
                 resample_id=resample,
                 build_train=tf,
