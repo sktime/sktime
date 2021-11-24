@@ -280,7 +280,11 @@ extensions = [
     ),
     Extension(
         "sktime.classification.shapelet_based.mrseql.mrseql",
-        ["sktime/classification/shapelet_based/mrseql/mrseql.pyx"],
+        [
+            "sktime/classification/shapelet_based/mrseql/mrseql.pyx",
+            "sktime/classification/shapelet_based/mrseql/seql_learn.cpp",
+            "sktime/classification/shapelet_based/mrseql/SNode.cpp",
+        ],
         extra_compile_args=["-O2"],
         # extra_link_args=["-fopenmp"],
         language="c++",
