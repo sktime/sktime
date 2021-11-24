@@ -77,11 +77,12 @@ jobs:
         # run: |
         #   python -m pip install --upgrade pip pytest pytest-cov cython
         #   pip install .
-
+      - name: Install libjpeg  # requirement to build Pillow
+        run: sudo apt-get install -y libjpeg-dev
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.2.2
         env:
-          CIBW_BEFORE_TEST: pip install .[all_extras]
+          CIBW_BEFORE_TEST: python -m pip install .[all_extras]
           CIBW_TEST_COMMAND: >
             mkdir -p testdir/ &&
             cp .coveragerc testdir/ &&
