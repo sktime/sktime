@@ -43,7 +43,11 @@ class MiniRocket(_PanelToTabularTransformer):
     _tags = {"univariate-only": True}
 
     def __init__(
-        self, num_kernels=1000, max_dilations_per_kernel=32, n_jobs=1, random_state=None
+        self,
+        num_kernels=10_000,
+        max_dilations_per_kernel=32,
+        n_jobs=1,
+        random_state=None,
     ):
         self.num_kernels = num_kernels
         self.max_dilations_per_kernel = max_dilations_per_kernel
