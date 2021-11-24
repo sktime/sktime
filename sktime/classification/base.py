@@ -144,7 +144,6 @@ class BaseClassifier(BaseEstimator):
         self.check_is_fitted()
 
         # Check the data is either numpy arrays or pandas dataframes
-        # TODO: add parameters for min instances and min length
         check_classifier_input(X)
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
