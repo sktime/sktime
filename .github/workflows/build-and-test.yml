@@ -33,15 +33,25 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build --wheel --outdir wheelhouse
-          python -m pip install wheelhouse/*.whl
-          python -m pip install .[binder]
-      - name: Run example notebooks
-        run: build_tools/run_examples.sh
-        shell: bash
+      # - name: Install dependencies
+      #   run: |
+      #     python -m pip install --upgrade pip build
+      #     python -m build --wheel --outdir wheelhouse
+      #     python -m pip install wheelhouse/*.whl
+      #     python -m pip install .[binder]
+      # - name: Run example notebooks
+      #   run: build_tools/run_examples.sh
+      #   shell: bash
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_BEFORE_TEST: pip install .[binder]
+          CIBW_TEST_COMMAND: bash build_tools/run_examples.sh
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
 
   run-tests:
     needs: code-quality
@@ -52,30 +62,47 @@ jobs:
         # os: [ubuntu-20.04, windows-2019, macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
-    - uses: actions/checkout@v2
-    - name: Check for missing init files
-      run: build_tools/fail_on_missing_init_files.sh
-      shell: bash
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip pytest pytest-cov cython
-        pip install .
-    - name: Run tests
-      run: |
-        mkdir -p testdir/
-        cp .coveragerc testdir/
-        cp setup.cfg testdir/
-        cd testdir/
-        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
-    - name: Display coverage report
-      run: ls -l ./testdir/
-    - name: Publish code coverage
-      uses: codecov/codecov-action@v1
-      with:
-        file: ./testdir/coverage.xml
+      - uses: actions/checkout@v2
+      - name: Check for missing init files
+        run: build_tools/fail_on_missing_init_files.sh
+        shell: bash
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+ 
+        # - name: Install dependencies
+        # run: |
+        #   python -m pip install --upgrade pip pytest pytest-cov cython
+        #   pip install .
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_BEFORE_TEST: pip install .[all_extras]
+          CIBW_TEST_COMMAND: >
+            mkdir -p testdir/ &&
+            cp .coveragerc testdir/ &&
+            cp setup.cfg testdir/ && 
+            cd testdir/ &&
+            pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime  
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+      # - name: Run tests
+      #   run: |
+      #     mkdir -p testdir/
+      #     cp .coveragerc testdir/
+      #     cp setup.cfg testdir/
+      #     cd testdir/
+      #     pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+      - name: Display coverage report
+        run: ls -l ./testdir/
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./testdir/coverage.xml
