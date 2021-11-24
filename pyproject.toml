@@ -50,17 +50,18 @@ dependencies = [
 all_extras = [
     "fbprophet>=0.7.1",
     "hcrystalball>=0.1.9",
-    "matplotlib",
+    "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
-    "seaborn",
+    "seaborn>=0.11.0",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
     "tsfresh>=0.17.0",
 ]
 
 dev = [
+    "cython",
     "pytest",
     "pytest-cov",
     "wheel",
@@ -69,15 +70,9 @@ dev = [
 binder = [
     "convertdate>= 2.3.2",
     "esig==0.9.7",
-    "hcrystalball>=0.1.9",
     "jupyter",
     "LunarCalendar>=0.0.9",
-    "matplotlib>=3.3.2",
     "pystan==2.19.1.1",
-    "seaborn>=0.11.0",
-    "stumpy>=1.5.1",
-    "tbats>=1.1.0",
-    "tsfresh>=0.17.0",
 ]
 
 docs = [
