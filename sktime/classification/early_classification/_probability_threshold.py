@@ -12,7 +12,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.classification.feature_based import Catch22Classifier
+from sktime.classification.interval_based import CanonicalIntervalForest
 
 
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
@@ -179,7 +179,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         rng = check_random_state(rs)
 
         estimator = _clone_estimator(
-            Catch22Classifier() if self.estimator is None else self.estimator,
+            CanonicalIntervalForest() if self.estimator is None else self.estimator,
             rng,
         )
 
