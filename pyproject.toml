@@ -48,7 +48,8 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
-    "prophet>=0.7.1",
+    "dtw-python",
+    "fbprophet>=0.7.1",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
@@ -65,6 +66,7 @@ dev = [
     "cython",
     "pytest",
     "pytest-cov",
+    "pytest-xdist",
     "wheel",
 ]
 
