@@ -55,3 +55,8 @@ docs: doc
 
 doc: ## Build documentation with Sphinx
 	$(MAKE) -C $(DOC_DIR) html
+
+nb: clean
+	rm -rf .venv || true
+	python3 -m venv .venv
+	. .venv/bin/activate && python -m pip install .[all_extras,binder] && ./build_tools/run_examples.sh
