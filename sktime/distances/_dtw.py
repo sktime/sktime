@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 from numba import njit
 
 from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
 class _DtwDistance(NumbaDistance):
@@ -18,9 +18,8 @@ class _DtwDistance(NumbaDistance):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-        window: int = 2,
-        itakura_max_slope: float = 2.0,
+        window: int = None,
+        itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         **kwargs: Any
     ) -> DistanceCallable:
@@ -32,31 +31,20 @@ class _DtwDistance(NumbaDistance):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-            Lower bounding technique to use.
-            If LowerBounding enum provided, the following are valid:
-                LowerBounding.NO_BOUNDING - No bounding
-                LowerBounding.SAKOE_CHIBA - Sakoe chiba
-                LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-            If int value provided, the following are valid:
-                1 - No bounding
-                2 - Sakoe chiba
-                3 - Itakura parallelogram
-        window: int, defaults = 2
+        window: int, defaults = None
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding).
-        itakura_max_slope: float, defaults = 2.
+        itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None)
+                                        defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
-        kwargs: Any
-            Extra arguments for custom distance should be put in the kwargs. See the
-            documentation for the distance for kwargs.
+        kwargs: any
+            extra kwargs.
 
         Returns
         -------
@@ -72,7 +60,7 @@ class _DtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
         """
         _bounding_matrix = resolve_bounding_matrix(
-            x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
+            x, y, window, itakura_max_slope, bounding_matrix
         )
 
         @njit(fastmath=True)
