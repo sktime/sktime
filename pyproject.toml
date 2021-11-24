@@ -49,6 +49,7 @@ dependencies = [
 [project.optional-dependencies]
 all_extras = [
     "dtw-python",
+    "esig==0.9.7",
     "fbprophet>=0.7.1",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
@@ -72,7 +73,6 @@ dev = [
 
 binder = [
     "convertdate>= 2.3.2",
-    "esig==0.9.7",
     "jupyter",
     "LunarCalendar>=0.0.9",
 ]
