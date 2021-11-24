@@ -85,9 +85,9 @@ jobs:
           CIBW_TEST_COMMAND: >
             mkdir -p testdir/ &&
             cp .coveragerc testdir/ &&
-            cp setup.cfg testdir/ && 
+            cp setup.cfg testdir/ &&
             cd testdir/ &&
-            pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime  
+            pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
 
       - uses: actions/upload-artifact@v2
         with:
