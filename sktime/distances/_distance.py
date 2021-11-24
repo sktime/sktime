@@ -21,16 +21,14 @@ from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
-from sktime.distances.lower_bounding import LowerBounding
 
 
 def erp_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
-    bounding_matrix: np.ndarray = None,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -48,24 +46,14 @@ def erp_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+                                    defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -92,6 +80,7 @@ def erp_distance(
         NumbaDistance.
         If the metric type cannot be determined
         If g is not a float.
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -112,7 +101,6 @@ def erp_distance(
      - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -126,10 +114,9 @@ def erp_distance(
 def edr_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
-    bounding_matrix: np.ndarray = None,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
     epsilon: float = None,
     **kwargs: Any,
 ) -> float:
@@ -149,23 +136,13 @@ def edr_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    bounding_matrix: np.ndarray (2d array)
+    bounding_matrix: np.ndarray (2d array), defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -195,6 +172,7 @@ def edr_distance(
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
         If the metric type cannot be determined
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -217,7 +195,6 @@ def edr_distance(
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -231,10 +208,9 @@ def edr_distance(
 def lcss_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
-    bounding_matrix: np.ndarray = None,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
     epsilon: float = 1.0,
     **kwargs: Any,
 ) -> float:
@@ -254,24 +230,14 @@ def lcss_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+                                    defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -300,6 +266,7 @@ def lcss_distance(
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
         If the metric type cannot be determined
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -321,7 +288,6 @@ def lcss_distance(
         IEEE Computer Society, USA, 673.
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -335,10 +301,9 @@ def lcss_distance(
 def wddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
-    bounding_matrix: np.ndarray = None,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[int, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
     compute_derivative: DerivativeCallable = _average_of_slope,
     g: float = 0.0,
     **kwargs: Any,
@@ -365,24 +330,14 @@ def wddtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+                                    defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -416,6 +371,7 @@ def wddtw_distance(
         If the metric type cannot be determined
         If the compute derivative callable is not no_python compiled.
         If the value of g is not a float
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -436,7 +392,6 @@ def wddtw_distance(
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -451,9 +406,8 @@ def wddtw_distance(
 def wdtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
     g: float = 0.0,
     **kwargs: Any,
@@ -480,24 +434,14 @@ def wdtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+                                    defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -525,6 +469,7 @@ def wdtw_distance(
         If a metric object (instance of class) is provided and doesn't inherit from
         NumbaDistance.
         If the metric type cannot be determined
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -545,7 +490,6 @@ def wdtw_distance(
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -559,9 +503,8 @@ def wdtw_distance(
 def ddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
     compute_derivative: DerivativeCallable = _average_of_slope,
     **kwargs: Any,
@@ -587,24 +530,14 @@ def ddtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+                                    defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -634,6 +567,7 @@ def ddtw_distance(
         If a resolved metric or compute derivative callable is not no_python compiled.
         If the metric type cannot be determined
         If the compute derivative callable is not no_python compiled.
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -654,7 +588,6 @@ def ddtw_distance(
         1. 10.1137/1.9781611972719.1.
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -668,9 +601,8 @@ def ddtw_distance(
 def dtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
@@ -693,24 +625,14 @@ def dtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
-        If LowerBounding enum provided, the following are valid:
-            LowerBounding.NO_BOUNDING - No bounding
-            LowerBounding.SAKOE_CHIBA - Sakoe chiba
-            LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-        If int value provided, the following are valid:
-            1 - No bounding
-            2 - Sakoe chiba
-            3 - Itakura parallelogram
-    window: int, defaults = 2
+    window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
-    itakura_max_slope: float, defaults = 2.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+                                    defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should be
@@ -735,6 +657,7 @@ def dtw_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+        If both window and itakura_max_slope are set
 
     Examples
     --------
@@ -755,7 +678,6 @@ def dtw_distance(
            Signal Processing, vol. 26(1), pp. 43--49, 1978.
     """
     format_kwargs = {
-        "lower_bounding": lower_bounding,
         "window": window,
         "itakura_max_slope": itakura_max_slope,
         "bounding_matrix": bounding_matrix,
@@ -935,7 +857,7 @@ def distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> distance(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
+    >>> distance(x_2d, y_2d, metric='dtw', window=3)
     512.0
 
     Returns
@@ -1099,7 +1021,7 @@ def pairwise_distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw', lower_bounding=2, window=3)
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=3)
     array([[256., 576.],
            [ 58., 256.]])
     """

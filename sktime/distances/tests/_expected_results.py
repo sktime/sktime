@@ -13,14 +13,11 @@ _expected_distance_results = {
     "edr": [1.0, 0.6, 1.0],
     "erp": [5.0, 5.03767, 20.78718],
 }
-#
-# import numpy as np
-#
-# from sktime.distances import edr_distance as dist
-# from sktime.distances.tests._utils import create_test_distance_numpy
-#
-#
 # def test_dist_result(dist):
+#     import numpy as np
+#
+#     from sktime.distances.tests._utils import create_test_distance_numpy
+#
 #     x_first = np.array([10.0])
 #     y_first = np.array([15.0])
 #
@@ -33,16 +30,17 @@ _expected_distance_results = {
 #     x_fourth = create_test_distance_numpy(10, 10)
 #     y_fourth = create_test_distance_numpy(10, 10, random_state=2)
 #
+#     x_trunc = np.reshape(x_third, (x_third.shape[1], x_third.shape[0]))
+#     y_trunc = np.reshape(y_third, (y_third.shape[1], y_third.shape[0]))
+#
 #     first = dist(x_first, y_first)
 #     second = dist(x_second, y_second)
-#
 #     third = dist(x_third, y_third)
 #     fourth = dist(x_fourth, y_fourth)
+#     trunc = dist(x_trunc, y_trunc)
 #
-#     test = dist(x_first, x_first)
-#     tst_1 = dist(x_second, x_second)
-#     tst_2 = dist(x_third, x_third)
-#     tst_3 = dist(x_fourth, x_fourth)
+#     result_3 = dist(x_third, x_third, window=2)
+#     result_4 = dist(x_third, x_third, itakura_max_slope=2.)
 #
 #     expected = [round(first, 5), round(second, 5), round(fourth, 5)]
 #
@@ -51,7 +49,7 @@ _expected_distance_results = {
 # def test_create_examples():
 #     import numpy as np
 #     from sktime.distances import distance as dist
-#     metric = 'wddtw'
+#     metric = 'edr'
 #
 #     x_1d = np.array([1, 2, 3, 4])  # 1d array
 #     y_1d = np.array([5, 6, 7, 8])  # 1d array
@@ -60,8 +58,10 @@ _expected_distance_results = {
 #     x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
 #     y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
 #     result_2 = dist(x_2d, y_2d, metric=metric)
+#
 #     pass
 #
 #
 # if __name__ == "__main__":
-#     test_create_examples()
+#     from sktime.distances import dtw_distance as dist
+#     test_dist_result(dist)
