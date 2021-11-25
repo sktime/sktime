@@ -14,6 +14,7 @@ all_tags(estimator_types)
 
 import inspect
 import pkgutil
+from copy import deepcopy
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
@@ -314,6 +315,9 @@ def all_tags(
 
 
 def _check_estimator_types(estimator_types):
+    """Returns list of classes corresponding to type strings."""
+    estimator_types = deepcopy(estimator_types)
+
     if not isinstance(estimator_types, list):
         estimator_types = [estimator_types]  # make iterable
 
