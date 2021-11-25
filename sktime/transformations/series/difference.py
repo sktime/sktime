@@ -5,6 +5,7 @@
 __author__ = ["Ryan Kuhns"]
 __all__ = ["Differencer"]
 
+from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
@@ -40,16 +41,17 @@ def _check_lags(lags):
     return lags
 
 
-def _diff_transform(Z, lags):
+def _diff_transform(Z: Union[pd.Series, pd.DataFrame], lags: np.array):
+    """Perform differencing on Series or DataFrame"""
+
     Zt = Z.copy()
 
-    if len(lags) == 0:
-        return Zt
-
-    else:
+    if len(lags) != 0:
         for lag in lags:
-            Zt = Zt.diff(lag)
-        return Zt
+            # converting lag to int since pandas complains if it's np.int64
+            Zt = Zt.diff(periods=int(lag))
+
+    return Zt
 
 
 def _inverse_diff(Z, lag):
@@ -290,9 +292,7 @@ class Differencer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         Z = check_series(Z)
 
-        Zt = self._transform(Z, X=X)
-
-        return Zt
+        return self._transform(Z, X=X)
 
     def inverse_transform(self, Z, X=None):
         """Reverse transformation on input series `Z`.
@@ -310,6 +310,4 @@ class Differencer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         Z = check_series(Z)
 
-        Z_inv = self._inverse_transform(Z, X=X)
-
-        return Z_inv
+        return self._inverse_transform(Z, X=X)
