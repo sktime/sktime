@@ -6,6 +6,7 @@ __author__ = ["Ryan Kuhns"]
 __all__ = ["Differencer"]
 
 from typing import Union
+
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
@@ -42,8 +43,7 @@ def _check_lags(lags):
 
 
 def _diff_transform(Z: Union[pd.Series, pd.DataFrame], lags: np.array):
-    """Perform differencing on Series or DataFrame"""
-
+    """Perform differencing on Series or DataFrame."""
     Zt = Z.copy()
 
     if len(lags) != 0:
