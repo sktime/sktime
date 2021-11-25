@@ -53,8 +53,7 @@ def _numba_squared_distance(x: np.ndarray, y: np.ndarray) -> float:
     """
     dist = 0.0
     for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-            dist += (x[i, j] - y[i, j]) ** 2
+        dist += _local_squared_distance(x[i], y[i])
     return dist
 
 
