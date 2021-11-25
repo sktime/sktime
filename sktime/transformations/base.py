@@ -196,9 +196,10 @@ class BaseTransformer(BaseEstimator):
         # there are three cases to treat:
         # 1. if the internal _fit supports X's scitype, move on to mtype conversion
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        # 3. internal only has Series but X is Panel:  loop over instances
-        #     currently this is enabled by conversion to df-list mtype
-        #     and this does not support y (unclear what should happen here)
+        # 3. internal only has Series but X is Panel: auto-vectorization over instances
+        #     currently, this is enabled by conversion to df-list mtype
+        #     auto-vectorization is not supported if y is passed
+        #       individual estimators that vectorize over y must implement individually
 
         # 1. nothing to do - simply don't enter any of the ifs below
 
