@@ -282,11 +282,26 @@ def all_tags(
                 ("list", list_of_string) - any individual string and sub-list is valid
         d : string - plain English description of the tag
     """
+    def is_tag_for_type(tag, estimator_types):
+        tag_types = tag[1]
+        if isinstance(tag_types, str):
+            tag_types = [tag_types]
+        elif not isinstance(tag_types, list):
+            raise ValueError(
+                "Error in ESTIMATOR_TAG_REGISTER, "
+                "2nd entries of register tuples must be list or list of str"
+            )
+
+        tag_types = set(tag_types)
+        is_valid_tag_for_type = len(tag_types.intersection(estimator_types)) > 0
+
+        return is_valid_tag_for_type
+
     all_tags = ESTIMATOR_TAG_REGISTER
 
     if estimator_types is not None:
         estimator_types = _check_estimator_types(estimator_types)
-        all_tags = [tag for tag in all_tags if tag[1] in estimator_types]
+        all_tags = [tag for tag in all_tags if is_tag_for_type(tag, estimator_types)]
 
     all_tags = sorted(all_tags, key=itemgetter(0))
 
