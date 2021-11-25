@@ -20,7 +20,7 @@ VALID_SCITYPES_SET = set(
 
 double_estimator_scitypes = [
     [x, y] for x in BASE_CLASS_SCITYPE_LIST for y in BASE_CLASS_SCITYPE_LIST
-    ]
+]
 estimator_scitype_fixture = [None] + BASE_CLASS_SCITYPE_LIST + double_estimator_scitypes
 
 
@@ -30,6 +30,7 @@ def _to_list(obj):
         return [obj]
     else:
         return obj
+
 
 def _get_type_tuple(estimator_scitype):
     """Convert scitype string(s) into tuple of classes for isinstance check.
@@ -49,7 +50,7 @@ def _get_type_tuple(estimator_scitype):
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )
     else:
-        estimator_classes = (BaseEstimator)
+        estimator_classes = BaseEstimator,
 
     return estimator_classes
 
@@ -61,7 +62,7 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
     estimators = all_estimators(
         estimator_types=estimator_scitype,
         return_names=return_names,
-        )
+    )
 
     estimator_classes = _get_type_tuple(estimator_scitype)
 

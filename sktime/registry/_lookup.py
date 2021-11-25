@@ -283,6 +283,7 @@ def all_tags(
                 ("list", list_of_string) - any individual string and sub-list is valid
         d : string - plain English description of the tag
     """
+
     def is_tag_for_type(tag, estimator_types):
         tag_types = tag[1]
         if isinstance(tag_types, str):
@@ -315,7 +316,7 @@ def all_tags(
 
 
 def _check_estimator_types(estimator_types):
-    """Returns list of classes corresponding to type strings."""
+    """Return list of classes corresponding to type strings."""
     estimator_types = deepcopy(estimator_types)
 
     if not isinstance(estimator_types, list):
