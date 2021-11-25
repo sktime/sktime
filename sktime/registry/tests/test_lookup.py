@@ -88,7 +88,6 @@ def test_all_tags(estimator_scitype):
     for tag in tags:
         assert isinstance(tag, tuple)
         assert isinstance(tag[0], str)
-        print(VALID_SCITYPES_SET)
         assert VALID_SCITYPES_SET.issuperset(_to_list(tag[1]))
         assert isinstance(tag[2], (str, tuple))
         if isinstance(tag[2], tuple):
