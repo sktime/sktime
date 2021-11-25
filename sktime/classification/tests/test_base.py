@@ -65,6 +65,9 @@ def test_base_classifier_fit():
     test_y2 = np.array([test_y1]).transpose()
     with pytest.raises(ValueError, match=r"must be 1-dimensional"):
         result = dummy.fit(test_X1, test_y2)
+    # Pass a data fram
+    with pytest.raises(ValueError, match=r"must be a np.array or a pd.Series"):
+        result = dummy.fit(test_X1, test_X3)
 
 
 def test_check_capabilities():

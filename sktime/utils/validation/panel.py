@@ -278,18 +278,23 @@ def check_classifier_input(
             )
     # Check y if passed
     if y is not None:
-        # Check y valid input and has no missing values
+        # Check y valid input
         if not isinstance(y, (pd.Series, np.ndarray)):
             raise ValueError(
                 f"y must be a np.array or a pd.Series, but found type: {type(y)}"
             )
-        # TODO: check y for NaNs, but need to check strings
+        # Check matching number of labels
         n_labels = y.shape[0]
         if n_cases != n_labels:
             raise ValueError(
                 f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
                 f"{n_labels}"
             )
+        if isinstance(y, np.ndarray):
+            if y.ndim > 1:
+                raise ValueError(
+                    f"y must be 1-dimensional but is in fact " f"{y.ndim} dimensional"
+                )
 
 
 def get_data_characteristics(X):
