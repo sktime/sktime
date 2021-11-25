@@ -50,7 +50,7 @@ def _get_type_tuple(estimator_scitype):
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )
     else:
-        estimator_classes = BaseEstimator,
+        estimator_classes = (BaseEstimator,)
 
     return estimator_classes
 
