@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
+import warnings
 from typing import Any
 
 import numpy as np
 from numba import njit
+from numba.core.errors import NumbaWarning
 
 from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+
+# Warning occurs when using large time series (i.e. 1000x1000)
+warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _WdtwDistance(NumbaDistance):
@@ -75,7 +80,7 @@ class _WdtwDistance(NumbaDistance):
                 f"The value of g must be a float. The current value is {g}"
             )
 
-        @njit()
+        @njit(cache=True, fastmath=True)
         def numba_wdtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
@@ -86,7 +91,7 @@ class _WdtwDistance(NumbaDistance):
         return numba_wdtw_distance
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True)
 def _weighted_cost_matrix(
     x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, g: float
 ):

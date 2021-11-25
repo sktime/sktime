@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
+import warnings
 from typing import Any
 
 import numpy as np
 from numba import njit
+from numba.core.errors import NumbaWarning
 
 from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+
+# Warning occurs when using large time series (i.e. 1000x1000)
+warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _DtwDistance(NumbaDistance):
@@ -63,7 +68,7 @@ class _DtwDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(fastmath=True)
+        @njit(cache=True, fastmath=True)
         def numba_dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
@@ -74,7 +79,7 @@ class _DtwDistance(NumbaDistance):
         return numba_dtw_distance
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True)
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,

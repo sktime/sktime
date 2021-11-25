@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
+import warnings
 from typing import Any, Callable
 
 import numpy as np
 from numba import njit
+from numba.core.errors import NumbaWarning
 
 from sktime.distances._dtw import _cost_matrix
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+
+# Warning occurs when using large time series (i.e. 1000x1000)
+warnings.simplefilter("ignore", category=NumbaWarning)
 
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
@@ -110,7 +115,7 @@ class _DdtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        @njit(fastmath=True)
+        @njit(cache=True, fastmath=True)
         def numba_ddtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
