@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
+import warnings
 from typing import Any
 
 import numpy as np
 from numba import njit
+from numba.core.errors import NumbaWarning
 
 from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+
+# Warning occurs when using large time series (i.e. 1000x1000)
+warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _ErpDistance(NumbaDistance):
@@ -70,7 +75,7 @@ class _ErpDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
-        @njit(fastmath=True)
+        @njit(cache=True, fastmath=True)
         def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
             cost_matrix = _erp_cost_matrix(x, y, _bounding_matrix, g)
 
@@ -79,7 +84,7 @@ class _ErpDistance(NumbaDistance):
         return numba_erp_distance
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True)
 def _erp_cost_matrix(
     x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, g: float
 ):

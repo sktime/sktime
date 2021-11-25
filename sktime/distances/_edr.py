@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
+import warnings
 from typing import Any
 
 import numpy as np
 from numba import njit
+from numba.core.errors import NumbaWarning
 
 from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+
+# Warning occurs when using large time series (i.e. 1000x1000)
+warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _EdrDistance(NumbaDistance):
@@ -86,7 +91,7 @@ class _EdrDistance(NumbaDistance):
         return numba_edr_distance
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True)
 def _edr_cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
