@@ -128,7 +128,7 @@ class CanonicalIntervalForest(BaseClassifier):
         att_subsample_size=8,
         min_interval=3,
         max_interval=None,
-        base_estimator="DTC",
+        base_estimator="CIT",
         n_jobs=1,
         random_state=None,
     ):

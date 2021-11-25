@@ -465,8 +465,10 @@ class _TreeNode:
             interval = int(self.best_split / len(atts))
             att = self.best_split % len(atts)
             value = _cif_feature(X, intervals[interval], dims[interval], atts[att], c22)
+            value = round(value, 8)
             value = np.nan_to_num(value, False, 0, 0, 0)
 
+            # currently unused
             if np.isnan(value):
                 return self.children[0]._predict_proba_cif(
                     X, c22, intervals, dims, atts, n_classes, class_dictionary
@@ -503,8 +505,10 @@ class _TreeNode:
             value = _drcif_feature(
                 X[rep], intervals[interval], dims[interval], atts[att], c22
             )
+            value = round(value, 8)
             value = np.nan_to_num(value, False, 0, 0, 0)
 
+            # currently unused
             if np.isnan(value):
                 return self.children[0]._predict_proba_drcif(
                     X,

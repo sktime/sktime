@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numba import njit
-from numba.typed import List
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
@@ -224,7 +223,7 @@ class Catch22(_PanelToTabularTransformer):
         return _histogram_mode(X, 10, smin, smax)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def SB_BinaryStats_diff_longstretch0(X, smean):
         # Longest period of consecutive values above the mean
         mean_binary = np.zeros(len(X))
@@ -240,13 +239,13 @@ class Catch22(_PanelToTabularTransformer):
         return _outlier_include(X)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def DN_OutlierInclude_n_001_mdrmd(X):
         # Time intervals between successive extreme events below the mean
         return _outlier_include(-X)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def CO_f1ecac(X_ac):
         # First 1/e crossing of autocorrelation function
         threshold = 0.36787944117144233  # 1 / np.exp(1)
@@ -256,7 +255,7 @@ class Catch22(_PanelToTabularTransformer):
         return len(X_ac)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def CO_FirstMin_ac(X_ac):
         # First minimum of autocorrelation function
         for i in range(1, len(X_ac) - 1):
@@ -275,7 +274,7 @@ class Catch22(_PanelToTabularTransformer):
         return _summaries_welch_rect(X, True, X_fft)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def FC_LocalSimple_mean3_stderr(X):
         # Mean error from a rolling 3-sample mean forecasting
         if len(X) - 3 < 3:
@@ -284,7 +283,7 @@ class Catch22(_PanelToTabularTransformer):
         return np.std(res)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def CO_trev_1_num(X):
         # Time-reversibility statistic, ((x_t+1 − x_t)^3)_t
         y = np.zeros(len(X) - 1)
@@ -293,7 +292,7 @@ class Catch22(_PanelToTabularTransformer):
         return np.mean(y)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def CO_HistogramAMI_even_2_5(X, smin, smax):
         # Automutual information, m = 2, τ = 5
         new_min = smin - 0.1
@@ -323,7 +322,7 @@ class Catch22(_PanelToTabularTransformer):
         return nsum
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def IN_AutoMutualInfoStats_40_gaussian_fmmi(X_ac):
         # First minimum of the automutual information function
         tau = int(min(40, np.ceil(len(X_ac) / 2)))
@@ -342,7 +341,7 @@ class Catch22(_PanelToTabularTransformer):
         return tau
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def MD_hrv_classic_pnn40(X):
         # Proportion of successive differences exceeding 0.04σ (Mietus 2002)
         diffs = np.zeros(len(X) - 1)
@@ -357,7 +356,7 @@ class Catch22(_PanelToTabularTransformer):
         return nsum / len(diffs)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def SB_BinaryStats_mean_longstretch1(X):
         # Longest period of successive incremental decreases
         diff_binary = np.zeros(len(X) - 1)
@@ -368,35 +367,45 @@ class Catch22(_PanelToTabularTransformer):
         return _long_stretch(diff_binary, 0)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def SB_MotifThree_quantile_hh(X):
         # Shannon entropy of two successive letters in equiprobable 3-letter
         # symbolization
         indicies = np.argsort(X)
-        p = List()
         bins = np.zeros(len(X))
         q1 = int(len(X) / 3)
         q2 = q1 * 2
-        l1 = List()
-        for i in range(q1 + 1):
-            l1.append(indicies[i])
-        p.append(l1)
-        l2 = List()
-        for i in range(q1 + 1, q2 + 1):
+        l1 = np.zeros(q1, dtype=np.int_)
+        for i in range(q1):
+            l1[i] = indicies[i]
+        l2 = np.zeros(q1, dtype=np.int_)
+        c1 = 0
+        for i in range(q1, q2):
             bins[indicies[i]] = 1
-            l2.append(indicies[i])
-        p.append(l2)
-        l3 = List()
-        for i in range(q2 + 1, len(indicies)):
+            l2[c1] = indicies[i]
+            c1 += 1
+        l3 = np.zeros(len(indicies) - q2, dtype=np.int_)
+        c2 = 0
+        for i in range(q2, len(indicies)):
             bins[indicies[i]] = 2
-            l3.append(indicies[i])
-        p.append(l3)
+            l3[c2] = indicies[i]
+            c2 += 1
 
+        found_last = False
         nsum = 0
         for i in range(3):
-            o = p[i]
-            if len(X) - 1 in o:
-                o.remove(len(X) - 1)
+            if i == 0:
+                o = l1
+            elif i == 1:
+                o = l2
+            else:
+                o = l3
+
+            if not found_last:
+                for n in range(len(o)):
+                    if o[n] == len(X) - 1:
+                        o = np.delete(o, n)
+                        break
 
             for n in range(3):
                 nsum2 = 0
@@ -426,7 +435,7 @@ class Catch22(_PanelToTabularTransformer):
         return _ac_first_zero(ac) / acfz
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def CO_Embed2_Dist_tau_d_expfit_meandiff(X, acfz):
         # Exponential fit to successive distances in 2-d embedding space
         tau = acfz
@@ -478,7 +487,7 @@ class Catch22(_PanelToTabularTransformer):
         return sum / num_bins
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(X):
         # Proportion of slower timescale fluctuations that scale with DFA (50%
         # sampling)
@@ -490,7 +499,7 @@ class Catch22(_PanelToTabularTransformer):
         return _fluct_prop(cs, len(X), True)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(X):
         # Proportion of slower timescale fluctuations that scale with linearly rescaled
         # range fits
@@ -502,7 +511,7 @@ class Catch22(_PanelToTabularTransformer):
         return _fluct_prop(cs, len(X), False)
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def SB_TransitionMatrix_3ac_sumdiagcov(X, acfz):
         # Trace of covariance of transition matrix between symbols in 3-letter alphabet
         ds = np.zeros(int((len(X) - 1) / acfz + 1))
@@ -545,7 +554,7 @@ class Catch22(_PanelToTabularTransformer):
         return ssum
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    #@njit(fastmath=True, cache=True)
     def PD_PeriodicityWang_th0_01(X):
         # Periodicity measure of (Wang et al. 2007)
         y_spline = _spline_fit(X)
@@ -592,7 +601,7 @@ class Catch22(_PanelToTabularTransformer):
         return out
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _histogram_mode(X, num_bins, smin, smax):
     bin_width = (smax - smin) / num_bins
 
@@ -625,7 +634,7 @@ def _histogram_mode(X, num_bins, smin, smax):
     return max_sum / num_maxs
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _long_stretch(X_binary, val):
     last_val = 0
     max_stretch = 0
@@ -639,7 +648,7 @@ def _long_stretch(X_binary, val):
     return max_stretch
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _outlier_include(X):
     total = 0
     threshold = 0
@@ -659,21 +668,23 @@ def _outlier_include(X):
     for i in range(num_thresholds):
         d = i * 0.01
 
-        r = List()
+        count = 0
+        r = np.zeros(len(X))
         for n in range(len(X)):
             if X[n] >= d:
-                r.append(n + 1)
+                r[count] = n + 1
+                count += 1
 
-        if len(r) == 0:
+        if count == 0:
             continue
 
-        diff = np.zeros(len(r) - 1)
+        diff = np.zeros(count - 1)
         for n in range(len(diff)):
             diff[n] = r[n + 1] - r[n]
 
         means[i] = np.mean(diff) if len(diff) > 0 else 9999999999
         dists[i] = len(diff) * 100 / total
-        medians[i] = _typed_list_median(r) / (len(X) / 2) - 1
+        medians[i] = np.median(r[:count]) / (len(X) / 2) - 1
 
     mj = 0
     fbi = num_thresholds - 1
@@ -688,21 +699,12 @@ def _outlier_include(X):
     return np.median(medians[: trim_limit + 1])
 
 
-@njit(fastmath=True, cache=True)
-def _typed_list_median(X):
-    X.sort()
-    if len(X) % 2 == 1:
-        return X[int(len(X) / 2)]
-    else:
-        return (X[int(len(X) / 2) - 1] + X[int(len(X) / 2)]) / 2
-
-
 def _autocorr(X, X_fft):
     ca = np.fft.ifft(_multiply_complex_arr(X_fft))
     return _get_acf(X, ca)
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _multiply_complex_arr(X_fft):
     c = np.zeros(len(X_fft), dtype=np.complex128)
     for i, n in enumerate(X_fft):
@@ -710,7 +712,7 @@ def _multiply_complex_arr(X_fft):
     return c
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _get_acf(X, ca):
     acf = np.zeros(len(X))
     if ca[0].real != 0:
@@ -719,7 +721,7 @@ def _get_acf(X, ca):
     return acf
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _summaries_welch_rect(X, centroid, X_fft):
     new_length = int(len(X_fft) / 2) + 1
     p = np.zeros(new_length)
@@ -748,7 +750,7 @@ def _summaries_welch_rect(X, centroid, X_fft):
                 return w[i]
         return np.nan
     else:
-        tau = np.floor(new_length / 5)
+        tau = int(np.floor(new_length / 5))
         nsum = 0
         for i in range(tau):
             nsum += p[i]
@@ -756,12 +758,12 @@ def _summaries_welch_rect(X, centroid, X_fft):
         return nsum * (w[1] - w[0])
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _complex_magnitude(c):
     return np.sqrt(c.real * c.real + c.imag * c.imag)
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _local_simple_mean(X, train_length):
     res = np.zeros(len(X) - train_length)
     for i in range(len(res)):
@@ -772,7 +774,7 @@ def _local_simple_mean(X, train_length):
     return res
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _ac_first_zero(X_ac):
     for i in range(1, len(X_ac)):
         if X_ac[i] <= 0:
@@ -781,18 +783,19 @@ def _ac_first_zero(X_ac):
     return len(X_ac)
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _fluct_prop(X, og_length, dfa):
-    a = List()
-    a.append(5)
+    a = np.zeros(50, dtype=np.int_)
+    a[0] = 5
+    n_tau = 1
     smin = 1.6094379124341003  # Math.log(5);
     smax = np.log(og_length / 2)
     inc = (smax - smin) / 49
     for i in range(1, 50):
         val = int(np.round(np.exp(smin + inc * i) + 0.000000000001))
-        if val != a[len(a) - 1]:
-            a.append(val)
-    n_tau = len(a)
+        if val != a[n_tau - 1]:
+            a[n_tau] = val
+            n_tau += 1
 
     if n_tau < 12:
         return np.nan
@@ -858,7 +861,7 @@ def _fluct_prop(X, og_length, dfa):
     return (np.argmin(sserr) + 6) / n_tau
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _linear_regression(X, y, n, lag):
     sumx = 0
     sumx2 = 0
@@ -877,7 +880,7 @@ def _linear_regression(X, y, n, lag):
     return (n * sumxy - sumx * sumy) / denom, (sumy * sumx2 - sumx * sumxy) / denom
 
 
-@njit(fastmath=True, cache=True)
+#@njit(fastmath=True, cache=True)
 def _spline_fit(X):
     breaks = np.array([0, len(X) / 2 - 1, len(X) - 1])
     h0 = np.array([breaks[1] - breaks[0], breaks[2] - breaks[1]])
@@ -1145,7 +1148,7 @@ if __name__ == "__main__":
             [2, 3, 2, 1, 2, 2, 2, 1, 4, 4, 2, 1, 1, 3, 2, 2, 1, 4, 2, 2, 2, 1, 2, 1, 1, 4, 3, 3, 6, 3, 2, 3, 3, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1, 1, 3, 2, 2, 1, 3, 1, 1, 2, 1, 6, 4, 3, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 2, 1, 2, 1, 1, 5, 2, 2, 1, 5, 4, 1, 2, 2, 5, 2, 2, 2, 2, 3, 1, 1, 1, 2, 2, 3, 2, 1, 2, 1, 1, 4, 1],
             [0.9619619619619619, 0.954954954954955, 0.9579579579579579, 0.950950950950951, 0.953953953953954, 0.9579579579579579, 0.9529529529529529, 0.95995995995996, 0.9619619619619619, 0.95995995995996, 0.9534767383691846, 0.959479739869935, 0.9469734867433717, 0.9574787393696849, 0.9599799899949975, 0.9479739869934968, 0.9549774887443722, 0.9514757378689345, 0.9569784892446224, 0.9579789894947474, 0.9546515505168389, 0.9593197732577526, 0.952650883627876, 0.9489829943314438, 0.9546515505168389, 0.9603201067022341, 0.9516505501833945, 0.9543181060353451, 0.9569856618872957, 0.9599866622207403, 0.9502375593898474, 0.948737184296074, 0.9547386846711677, 0.9579894973743436, 0.9522380595148787, 0.9517379344836209, 0.9532383095773943, 0.962240560140035, 0.9504876219054764, 0.9584896224056014, 0.9581916383276655, 0.9477895579115824, 0.9537907581516303, 0.958991798359672, 0.9567913582716543, 0.9543908781756352, 0.9515903180636127, 0.9495899179835967, 0.9551910382076415, 0.956991398279656, 0.9531588598099683, 0.953492248708118, 0.9539923320553425, 0.9549924987497916, 0.9554925820970162, 0.9523253875645941, 0.9553258876479414, 0.9526587764627438, 0.9514919153192198, 0.9544924154025671, 0.9527075296470925, 0.9554222031718816, 0.9572796113730533, 0.9534219174167738, 0.952993284754965, 0.9515645092156022, 0.952993284754965, 0.9578511215887984, 0.9601371624517788, 0.954564937848264, 0.9562445305663207, 0.9567445930741343, 0.9574946868358545, 0.9548693586698337, 0.9599949993749218, 0.9571196399549944, 0.960745093136642, 0.9547443430428804, 0.9566195774471808, 0.9584948118514814, 0.9539948883209245, 0.956772974774975, 0.9548838759862207, 0.9573285920657851, 0.9561062340260029, 0.9524391599066563, 0.9556617401933548, 0.9581064562729192, 0.9526614068229803, 0.9553283698188688, 0.9554955495549555, 0.9503950395039504, 0.9512951295129513, 0.957995799579958, 0.9541954195419542, 0.9531953195319532, 0.9518951895189519, 0.9564956495649565, 0.9568956895689569, 0.9528952895289529],
             [5, 6, 7, 5, 6, 5, 5, 6, 5, 5, 6, 6, 6, 7, 5, 7, 6, 6, 6, 7, 6, 6, 7, 7, 6, 8, 6, 6, 8, 6, 8, 7, 7, 7, 7, 7, 6, 7, 7, 7, 7, 7, 8, 6, 6, 7, 6, 8, 7, 7, 6, 6, 7, 7, 7, 6, 8, 10, 7, 7, 7, 7, 6, 6, 7, 6, 7, 7, 7, 7, 6, 6, 8, 7, 7, 7, 9, 7, 6, 7, 7, 7, 7, 7, 6, 7, 7, 7, 8, 6, 9, 7, 8, 6, 7, 6, 9, 8, 7, 7],
-            [2.19620517733847, 2.1949946773106705, 2.1967908842235606, 2.1944687253288557, 2.195759753846239, 2.1943685756829083, 2.1965264444181876, 2.1958178078454, 2.1958987926411413, 2.192076672843464, 2.1971561561621358, 2.1960736490600907, 2.1941998147127046, 2.196838723436473, 2.1956779470442593, 2.195136828734869, 2.1953200943287907, 2.1965777343336086, 2.195183957277222, 2.195160759688801, 2.196783455692945, 2.196959860537555, 2.1955501032525473, 2.195748263632202, 2.196731320970017, 2.1961599043190585, 2.1963944885565096, 2.1961766403167413, 2.19716467964601, 2.196321449105441, 2.1966951288786163, 2.1967105534523013, 2.1965964370449433, 2.1970018284889936, 2.1970893288683695, 2.1969288087635075, 2.196295109900963, 2.1960957669663177, 2.1969588507186444, 2.1967208113011427, 2.1969291664116066, 2.1966763802169336, 2.1969325142800487, 2.1959422942585807, 2.196672114572059, 2.196761731466264, 2.1967364305066113, 2.196943012343415, 2.1960342515354205, 2.196414428388734, 2.1966996993981045, 2.196952765764404, 2.1969771577157475, 2.1971361382658676, 2.196696903826335, 2.1965744630049735, 2.1969135659982872, 2.1970142859781094, 2.19711498137897, 2.1967121275594654, 2.1963687101271883, 2.196947536387945, 2.1970049621234584, 2.196942339156209, 2.1959984683576157, 2.1971671378744517, 2.196981566048583, 2.1970750573037154, 2.197108930351979, 2.196984711910036, 2.1971177151380408, 2.1968888652070384, 2.1971697880093615, 2.196901243949964, 2.196860869657082, 2.1971716525817953, 2.1968661727175127, 2.197106711335978, 2.196999944043148, 2.1971043757115924, 2.19707837856678, 2.1969438649978175, 2.197050925271401, 2.1969991910117526, 2.1971835187177473, 2.1970001648691646, 2.1972130916834085, 2.196945827401891, 2.196933199003522, 2.1970656771455612, 2.1970347332538496, 2.197091092393358, 2.19687805885109, 2.197133029418199, 2.1971638858130143, 2.197036951987611, 2.1966759061282057, 2.1968070928175805, 2.1970374783415703, 2.1970643880043754],
+            [2.1962061011175087, 2.194615875167326, 2.1966286804060053, 2.194242501797669, 2.1959119852379407, 2.194715598269832, 2.196426260083125, 2.1958430530017807, 2.196083094549542, 2.192041035464842, 2.197129235068252, 2.196056682691427, 2.194076882313547, 2.1968526831742676, 2.195777179116218, 2.1950419758885182, 2.1954401250213142, 2.19656936281488, 2.195267519909418, 2.195224242013793, 2.1967901824714633, 2.196949950603822, 2.19558230274153, 2.195758928204687, 2.1967649786868897, 2.1960991345370484, 2.196373293743389, 2.196182716246947, 2.1971536307674975, 2.19622922962561, 2.1966863220741284, 2.1966604156634717, 2.1965448342565748, 2.1969945079796216, 2.197090389239114, 2.196934714469845, 2.1963276355751757, 2.1960735521859878, 2.1969403318393113, 2.1967160340892864, 2.1969288333464667, 2.1966884081054356, 2.1969217277220547, 2.196014967428756, 2.1966711938406442, 2.1967560101148402, 2.1967661309493938, 2.1969472275664788, 2.1960390233595435, 2.1964003513767083, 2.1967133342217364, 2.19693772291586, 2.196984790983799, 2.1971348562947965, 2.1967111620041875, 2.1965475119428644, 2.196896842562747, 2.197014113082182, 2.1971060039404917, 2.196704472311037, 2.196382045359333, 2.196956408620042, 2.196997914565055, 2.1969425941671386, 2.1959907096389664, 2.1971695327199643, 2.196992902344908, 2.197074121285789, 2.1970981562511698, 2.196991657582012, 2.1971114530598257, 2.1968700439082536, 2.1971692379916212, 2.196906809505881, 2.1968513815359128, 2.1971705283534795, 2.1968570104936793, 2.197107872229829, 2.196989613123543, 2.1971099083936894, 2.197068230704794, 2.1969502857944176, 2.197044636825541, 2.196998303742788, 2.197180521917175, 2.1970130590045547, 2.1972131994718063, 2.1969482857387335, 2.196940301084963, 2.1970517051962544, 2.197045876950111, 2.1970870511903584, 2.196890825651289, 2.197127237054817, 2.1971650794202966, 2.1970351508292514, 2.196671537952103, 2.19679762382266, 2.197018992553525, 2.197064346054422],
             [1.0, 0.25, 1.0, 1.0, 1.0, 1.0, 0.14285714285714285, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.3333333333333333, 1.0, 0.5, 1.0, 1.0, 0.5, 1.0, 0.25, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 1.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 0.3333333333333333, 1.0, 0.2, 1.0, 1.0, 1.0, 0.16666666666666666, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.16666666666666666, 0.5, 0.5, 1.0, 0.5, 1.0, 1.0, 0.3333333333333333, 1.0, 0.25, 1.0, 0.14285714285714285, 1.0, 1.0, 1.0, 0.5, 0.3333333333333333, 1.0, 0.25, 1.0, 0.2, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.3333333333333333, 1.0, 1.0, 1.0, 1.0, 0.5, 0.16666666666666666, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0],
             [0.2300453859258666, 0.25247063177954854, 0.24596909133925027, 0.23855772347181842, 0.30203632669893155, 0.2548113934273738, 0.3051060687663565, 0.22992291563007897, 0.3000459586889097, 0.28277299326269667, 0.2187959926143159, 0.24357021068344836, 0.2578335284074818, 0.24596577089255156, 0.2867933430082778, 0.2469895372891057, 0.24648243364539835, 0.2784425728070021, 0.25574138530874085, 0.27256171677704255, 0.30667614811651694, 0.26269372828457505, 0.30468607065348785, 0.2949171995374715, 0.24581114365286785, 0.250123038975584, 0.2651177665819501, 0.20833629841122203, 0.28563177110580396, 0.2967845451883759, 0.29695965785246403, 0.2975530851638281, 0.30097842243458733, 0.31122099640692397, 0.26968222791951824, 0.273254425782179, 0.23365144344781344, 0.25465729047673613, 0.30313511496197715, 0.2415856939286508, 0.30663838744385097, 0.2551244696339735, 0.25573432360454024, 0.2650405903914317, 0.3051290658752833, 0.27339213442874016, 0.26562699751766783, 0.2852067587889056, 0.2728311617015359, 0.23697471880823823, 0.26986632049309717, 0.27391996811005165, 0.30405111437287285, 0.29894558697176105, 0.30184021527664007, 0.2913151225696284, 0.24212631792955236, 0.2879375423771719, 0.2656133972040211, 0.23935580804168521, 0.2517640128739765, 0.2549264687818927, 0.3023501560251229, 0.2600113338818126, 0.31617411208663615, 0.2576418012187987, 0.2446005181992934, 0.2534989843848779, 0.2878681352671877, 0.30050343329251517, 0.242883441684842, 0.29186666428602415, 0.26369263771554646, 0.2962476043685415, 0.24003512150960418, 0.31661635532226523, 0.29291092216813497, 0.24262534394682467, 0.283562855605459, 0.29663428652429547, 0.27345613993764184, 0.27389465841057037, 0.2681420594067151, 0.264706103998558, 0.21511954139652215, 0.2608539503039714, 0.284683943449041, 0.26143190075211914, 0.26554216187385027, 0.26289444128545375, 0.26381459069248175, 0.28579234827332795, 0.30030099253475373, 0.2747255658753526, 0.23927760666373588, 0.29856528684788947, 0.2584829816489029, 0.2790733175908464, 0.22778569853075872, 0.2607997008340703],
             [0.8125, 0.8125, 0.8333333333333334, 0.14583333333333334, 0.4791666666666667, 0.4791666666666667, 0.875, 0.8541666666666666, 0.125, 0.5833333333333334, 0.7142857142857143, 0.7959183673469388, 0.8163265306122449, 0.12244897959183673, 0.7959183673469388, 0.6326530612244898, 0.12244897959183673, 0.7755102040816326, 0.7755102040816326, 0.2857142857142857, 0.22448979591836735, 0.5918367346938775, 0.5918367346938775, 0.14285714285714285, 0.12244897959183673, 0.8367346938775511, 0.12244897959183673, 0.7959183673469388, 0.7551020408163265, 0.8775510204081632, 0.8163265306122449, 0.7551020408163265, 0.12244897959183673, 0.7551020408163265, 0.5510204081632653, 0.16326530612244897, 0.14285714285714285, 0.7959183673469388, 0.4897959183673469, 0.8775510204081632, 0.8775510204081632, 0.20408163265306123, 0.12244897959183673, 0.14285714285714285, 0.5510204081632653, 0.12244897959183673, 0.7755102040816326, 0.5714285714285714, 0.14285714285714285, 0.5918367346938775, 0.673469387755102, 0.12244897959183673, 0.6530612244897959, 0.6122448979591837, 0.22448979591836735, 0.8775510204081632, 0.7346938775510204, 0.5102040816326531, 0.14285714285714285, 0.46938775510204084, 0.12244897959183673, 0.8775510204081632, 0.8367346938775511, 0.5102040816326531, 0.8775510204081632, 0.12244897959183673, 0.673469387755102, 0.14285714285714285, 0.5918367346938775, 0.8775510204081632, 0.12, 0.54, 0.2, 0.86, 0.84, 0.7, 0.14, 0.88, 0.22, 0.84, 0.12, 0.88, 0.26, 0.12, 0.48, 0.12, 0.12, 0.16, 0.12, 0.6, 0.52, 0.12, 0.7, 0.12, 0.12, 0.72, 0.78, 0.12, 0.88, 0.54],
