@@ -18,9 +18,15 @@ VALID_SCITYPES_SET = set(
     BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
 )
 
+# shorthands for easy reading
+b = BASE_CLASS_SCITYPE_LIST
+n = len(b)
+
+# selected examples of "search for two types at once to avoid quadratic scaling"
 double_estimator_scitypes = [
-    [x, y] for x in BASE_CLASS_SCITYPE_LIST for y in BASE_CLASS_SCITYPE_LIST
+    [b[i], b[(i + 3) % n]] for i in range(n)
 ]
+# fixtures search by individual scitypes, "None", and some pairs
 estimator_scitype_fixture = [None] + BASE_CLASS_SCITYPE_LIST + double_estimator_scitypes
 
 
