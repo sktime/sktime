@@ -329,8 +329,10 @@ ESTIMATOR_TEST_PARAMS = {
         },
     },
     ProbabilityThresholdEarlyClassifier: {
-        "classification_points": [5],
-        "estimator": RandomForestClassifier(n_estimators=2),
+        "classification_points": [3],
+        "estimator": Catch22Classifier(
+            estimator=RandomForestClassifier(n_estimators=2)
+        ),
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
