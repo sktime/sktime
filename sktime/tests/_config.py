@@ -125,7 +125,6 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
-    "ShapeDTW",
     "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
@@ -150,6 +149,7 @@ EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
+    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
 }
 
 # We here configure estimators for basic unit testing, including setting of
