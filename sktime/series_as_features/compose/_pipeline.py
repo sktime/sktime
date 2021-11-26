@@ -130,7 +130,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         Stacks X horizontally.
 
         Supports input types (X): list of
-            numpy arrays, sparse arrays and DataFrames
+            numpy arrays, sparse arrays and DataFrames.
         """
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
