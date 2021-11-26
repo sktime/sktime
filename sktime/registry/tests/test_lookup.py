@@ -18,6 +18,9 @@ VALID_SCITYPES_SET = set(
     BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
 )
 
+# some scitypes have no associated tags yet
+SCITYPES_WITHOUT_TAGS = ["series-annotator", "clusterer"]
+
 # shorthands for easy reading
 b = BASE_CLASS_SCITYPE_LIST
 n = len(b)
@@ -71,7 +74,10 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
     estimator_classes = _get_type_tuple(estimator_scitype)
 
     assert isinstance(estimators, list)
+    # there should be at least one estimator returned
+    assert len(estimators) > 0
 
+    # checks return type specification (see docstring)
     if return_names:
         for estimator in estimators:
             assert isinstance(estimator, tuple) and len(estimator) == 2
@@ -89,6 +95,12 @@ def test_all_tags(estimator_scitype):
     tags = all_tags(estimator_types=estimator_scitype)
     assert isinstance(tags, list)
 
+    # there should be at least one tag returned
+    # exception: scitypes which we know don't have tags associated
+    if estimator_scitype not in SCITYPES_WITHOUT_TAGS:
+        assert len(tags) > 0
+
+    # checks return type specification (see docstring)
     for tag in tags:
         assert isinstance(tag, tuple)
         assert isinstance(tag[0], str)
