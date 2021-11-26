@@ -39,7 +39,6 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 # whether the checks insist on freq attribute is set
@@ -74,6 +73,11 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."
         )
+        return ret(False, msg, None, return_metadata)
+
+    # check that no dtype is object
+    if "object" in obj.dtypes.values:
+        msg = f"{var_name} should not have column of 'object' dtype"
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
@@ -117,6 +121,11 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1
     metadata["is_univariate"] = True
+
+    # check that dtype is not object
+    if "object" == obj.dtypes:
+        msg = f"{var_name} should not be of 'object' dtype"
+        return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not type(index) in VALID_INDEX_TYPES:
@@ -163,13 +172,18 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
-    if not len(obj.shape) == 2:
-        msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
+    if len(obj.shape) == 2:
+        # we now know obj is a 2D np.ndarray
+        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+        metadata["is_univariate"] = obj.shape[1] < 2
+    elif len(obj.shape) == 1:
+        # we now know obj is a 1D np.ndarray
+        metadata["is_empty"] = len(obj) < 1
+        metadata["is_univariate"] = True
+    else:
+        msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)
 
-    # we now know obj is a 2D np.ndarray
-    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
-    metadata["is_univariate"] = obj.shape[1] < 2
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
 
