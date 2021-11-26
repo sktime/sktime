@@ -67,7 +67,7 @@ jobs:
           python -m pip install .[all_extras,dev]
 
       - name: Show dependecies
-      - run: python -m pip list
+        run: python -m pip list
 
       # - name: Build wheels
       #   uses: pypa/cibuildwheel@v2.2.2
