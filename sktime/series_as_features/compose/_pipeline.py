@@ -16,6 +16,7 @@ __author__ = ["Markus Löning"]
 
 class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     """Concatenates results of multiple transformer objects.
+
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
@@ -60,6 +61,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all transformations, transform the data and concatenate results.
+
         Parameters
         ----------
         X : pandas DataFrame
@@ -91,16 +93,19 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         return Xs
 
     def fit(self, X, y=None, **fit_params):
+        """Fit parameters."""
         super(FeatureUnion, self).fit(X, y, **fit_params)
         self._is_fitted = True
         return self
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
+
         Parameters
         ----------
         X : pandas DataFrame
             Input data to be transformed.
+
         Returns
         -------
         Xt : pandas DataFrame
@@ -123,10 +128,10 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     def _hstack(self, Xs):
         """
         Stacks X horizontally.
+
         Supports input types (X): list of
             numpy arrays, sparse arrays and DataFrames
         """
-
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
 
