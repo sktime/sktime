@@ -64,6 +64,7 @@ _expected_distance_results = {
 #     pass
 #
 # def time_experiment(x, y, dist, iters, **kwargs):
+#     import time
 #     total = 0
 #
 #     # Run 3 times to ensure cache'd
@@ -94,8 +95,8 @@ _expected_distance_results = {
 #     x = np.zeros(100)
 #     x[1] = 10
 #     y = np.roll(x, 50)
-#     # x = create_test_distance_numpy(100, 1000)
-#     # y = create_test_distance_numpy(100, 1000, random_state=2)
+#     x = create_test_distance_numpy(1000, 1000)
+#     y = create_test_distance_numpy(1000, 1000, random_state=2)
 #
 #     _x = to_numba_timeseries(x)
 #     _y = to_numba_timeseries(y)
@@ -118,54 +119,53 @@ _expected_distance_results = {
 #         euclidean_distance,
 #         50
 #     )
+
+# time_dtw_no_window = time_experiment(
+#     x,
+#     y,
+#     dtw_distance,
+#     50
+# )
 #
-#     time_dtw_no_window = time_experiment(
-#         x,
-#         y,
-#         dtw_distance,
-#         50
+# time_dtw_0_window = time_experiment(
+#     x,
+#     y,
+#     dtw_distance,
+#     50,
+#     bounding_matrix = sakoe_chiba_bounding_0
+# )
+#
+# time_dtw_10_window = time_experiment(
+#     x,
+#     y,
+#     dtw_distance,
+#     50,
+#     bounding_matrix=sakoe_chiba_bounding_10
+# )
+#
+# print(
+#     "Euclidean Distance = ",
+#     euclidean_distance(x, y),
+#     " takes = ",
+#     time_euclidean
 #     )
+# print("Full DTW Distance = ",
+#       dtw_distance(x, y),
+#       " takes = ",
+#       time_dtw_no_window
+#       )
 #
-#     time_dtw_0_window = time_experiment(
-#         x,
-#         y,
-#         dtw_distance,
-#         50,
-#         bounding_matrix = sakoe_chiba_bounding_0
-#     )
+# print("Zero window DTW Distance = ",
+#       dtw_distance(x, y, bounding_matrix=sakoe_chiba_bounding_0),
+#       " takes = ",
+#       time_dtw_0_window
+#       )
 #
-#     time_dtw_10_window = time_experiment(
-#         x,
-#         y,
-#         dtw_distance,
-#         50,
-#         bounding_matrix=sakoe_chiba_bounding_10
-#     )
-#
-#     print(
-#         "Euclidean Distance = ",
-#         euclidean_distance(x, y),
-#         " takes = ",
-#         time_euclidean
-#         )
-#
-#     print("Full DTW Distance = ",
-#           dtw_distance(x, y),
-#           " takes = ",
-#           time_dtw_no_window
-#           )
-#
-#     print("Zero window DTW Distance = ",
-#           dtw_distance(x, y, bounding_matrix=sakoe_chiba_bounding_0),
-#           " takes = ",
-#           time_dtw_0_window
-#           )
-#
-#     print("Too Small Window DTW Distance = ",
-#           dtw_distance(x, y, bounding_matrix=sakoe_chiba_bounding_10),
-#           " takes = ",
-#           time_dtw_10_window
-#           )
+# print("Too Small Window DTW Distance = ",
+#       dtw_distance(x, y, bounding_matrix=sakoe_chiba_bounding_10),
+#       " takes = ",
+#       time_dtw_10_window
+#       )
 #
 #
 # if __name__ == "__main__":
