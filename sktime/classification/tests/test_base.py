@@ -27,6 +27,10 @@ class _DummyClassifier(BaseClassifier):
 
 
 multivariate_message = r"X must be univariate, this classifier cannot deal with"
+missing_message = r"The data has missing values"
+unequal_message = r"The data has unequal length series"
+incorrect_X_data_structure = r"must be a np.array or a pd.Series"
+incorrect_y_data_structure = r"must be 1-dimensional"
 
 
 def test_base_classifier_fit():
@@ -63,10 +67,10 @@ def test_base_classifier_fit():
     test_y2 = np.array([test_y1])
     # What if y is in a 2D matrix (cases,1)?
     test_y2 = np.array([test_y1]).transpose()
-    with pytest.raises(ValueError, match=r"must be 1-dimensional"):
+    with pytest.raises(ValueError, match=incorrect_y_data_structure):
         result = dummy.fit(test_X1, test_y2)
     # Pass a data fram
-    with pytest.raises(ValueError, match=r"must be a np.array or a pd.Series"):
+    with pytest.raises(ValueError, match=incorrect_X_data_structure):
         result = dummy.fit(test_X1, test_X3)
 
 
@@ -79,7 +83,7 @@ def test_check_capabilities():
     handles_none = _DummyClassifier()
 
     handles_none.check_capabilities(False, False, False)
-    with pytest.raises(ValueError, match=r"The data has missing values"):
+    with pytest.raises(ValueError, match=missing_message):
         handles_none.check_capabilities(True, True, True)
         handles_none.check_capabilities(True, True, False)
         handles_none.check_capabilities(True, False, False)
@@ -88,7 +92,7 @@ def test_check_capabilities():
         handles_none.check_capabilities(False, True, True)
         handles_none.check_capabilities(False, True, False)
         handles_none.check_capabilities(False, False, True)
-    with pytest.raises(ValueError, match=r"The data has unequal length series"):
+    with pytest.raises(ValueError, match=unequal_message):
         handles_none.check_capabilities(False, False, True)
 
     handles_all = _DummyClassifier()
