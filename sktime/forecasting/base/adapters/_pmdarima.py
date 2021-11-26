@@ -7,9 +7,8 @@ __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
-
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
