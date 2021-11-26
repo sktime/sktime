@@ -39,6 +39,7 @@ def _window_sizes():
     x = np.zeros(10)
     x[1] = 10
     y = np.roll(x, 5)
+    y[9] = 10
     print(x)
     print(y)
     t = time.time()
@@ -57,7 +58,7 @@ def _window_sizes():
     )
     print(
         "Too Small Window DTW Distance = ",
-        dtw_distance(x, y, window=1),
+        dtw_distance(x, y, window=4),
         " takes " "= ",
         (time.time() - t),
     )
@@ -82,7 +83,7 @@ def _window_sizes():
             " takes = ",
             (time.time() - t),
         )
-    for w in range(0, len(x), 100):
+    for w in range(0, len(x), 1):
         t = time.time()
         print(
             "Window ",

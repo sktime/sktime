@@ -68,7 +68,7 @@ class _DtwDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True, fastmath=True)
+        @njit(cache=True)
         def numba_dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
