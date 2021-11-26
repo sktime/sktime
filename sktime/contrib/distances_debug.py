@@ -57,11 +57,17 @@ def _window_sizes():
     )
     print(
         "Too Small Window DTW Distance = ",
-        dtw_distance(x, y, window=10),
+        dtw_distance(x, y, window=1),
         " takes " "= ",
         (time.time() - t),
     )
 
+    print(
+        "Big enough window DTW Distance = ",
+        dtw_distance(x, y, window=5),
+        " takes " "= ",
+        (time.time() - t),
+    )
     print(
         "Using generalised distance function ED = ", distance(x, y, metric="euclidean")
     )
@@ -169,14 +175,14 @@ if __name__ == "__main__":
         predefined_resample = False
         for i in range(0, len(temp)):
             print(" Running problem ", temp[i])
-            load_and_run_classification_experiment(
-                overwrite=True,
-                problem_path=data_dir,
-                results_path=results_dir,
-                cls_name=classifier,
-                classifier=KNeighborsTimeSeriesClassifier(distance="dtw"),
-                dataset=temp[i],
-                resample_id=resample,
-                build_train=tf,
-                predefined_resample=predefined_resample,
-            )
+            # load_and_run_classification_experiment(
+            #     overwrite=True,
+            #     problem_path=data_dir,
+            #     results_path=results_dir,
+            #     cls_name=classifier,
+            #     classifier=KNeighborsTimeSeriesClassifier(distance="dtw"),
+            #     dataset=temp[i],
+            #     resample_id=resample,
+            #     build_train=tf,
+            #     predefined_resample=predefined_resample,
+            # )
