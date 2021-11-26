@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from scipy import sparse
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
-from sklearn.pipeline import _fit_transform_one
-from sklearn.pipeline import _transform_one
+from sklearn.pipeline import _fit_transform_one, _transform_one
 
 from sktime.transformations.base import _PanelToPanelTransformer
 
