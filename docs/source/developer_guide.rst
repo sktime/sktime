@@ -22,3 +22,4 @@ If you’re already familiar with scikit-learn, you may still learn something ne
    developer_guide/add_dataset
    developer_guide/add_estimators
    developer_guide/documentation
+   developer_guide/deprecation

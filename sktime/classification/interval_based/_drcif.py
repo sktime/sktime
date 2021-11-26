@@ -16,16 +16,14 @@ from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
-    _drcif_feature,
     ContinuousIntervalTree,
+    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
-from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -86,28 +84,28 @@ class DrCIF(BaseClassifier):
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         The number of classes.
-    n_instances : int
+    n_instances_ : int
         The number of train cases.
-    n_dims : int
+    n_dims_ : int
         The number of dimensions per case.
-    series_length : int
+    series_length_ : int
         The length of each series.
     classes_ : list
         The classes labels.
-    total_intervals : int
+    total_intervals_ : int
         Total number of intervals per tree from all representations.
     estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
-    intervals : list of shape (n_estimators) of ndarray with shape (total_intervals,2)
+    intervals_ : list of shape (n_estimators) of ndarray with shape (total_intervals,2)
         Stores indexes of each intervals start and end points for all classifiers.
-    atts : list of shape (n_estimators) of array with shape (att_subsample_size)
+    atts_ : list of shape (n_estimators) of array with shape (att_subsample_size)
         Attribute indexes of the subsampled catch22 or summary statistic for all
         classifiers.
-    dims : list of shape (n_estimators) of array with shape (total_intervals)
+    dims_ : list of shape (n_estimators) of array with shape (total_intervals)
         The dimension to extract attributes from each interval for all classifiers.
-    transformed_data : list of shape (n_estimators) of ndarray with shape
+    transformed_data_ : list of shape (n_estimators) of ndarray with shape
     (n_instances,total_intervals * att_subsample_size)
         The transformed dataset for all classifiers. Only saved when
         save_transformed_data is true.
@@ -142,10 +140,9 @@ class DrCIF(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": True,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -177,17 +174,15 @@ class DrCIF(BaseClassifier):
         self.n_jobs = n_jobs
 
         # The following set in method fit
-        self.n_classes = 0
-        self.n_instances = 0
-        self.n_dims = 0
-        self.series_length = 0
-        self.classes_ = []
-        self.total_intervals = 0
+        self.n_instances_ = 0
+        self.n_dims_ = 0
+        self.series_length_ = 0
+        self.total_intervals_ = 0
         self.estimators_ = []
-        self.intervals = []
-        self.atts = []
-        self.dims = []
-        self.transformed_data = []
+        self.intervals_ = []
+        self.atts_ = []
+        self.dims_ = []
+        self.transformed_data_ = []
 
         self._n_estimators = n_estimators
         self._n_intervals = n_intervals
@@ -195,16 +190,11 @@ class DrCIF(BaseClassifier):
         self._min_interval = min_interval
         self._max_interval = max_interval
         self._base_estimator = base_estimator
-        self._n_jobs = n_jobs
 
         super(DrCIF, self).__init__()
 
     def _fit(self, X, y):
-        self._n_jobs = check_n_jobs(self.n_jobs)
-
-        self.n_instances, self.n_dims, self.series_length = X.shape
-        self.n_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -221,11 +211,11 @@ class DrCIF(BaseClassifier):
 
         X_p = np.zeros(
             (
-                self.n_instances,
-                self.n_dims,
+                self.n_instances_,
+                self.n_dims_,
                 int(
-                    math.pow(2, math.ceil(math.log(self.series_length, 2)))
-                    - self.series_length
+                    math.pow(2, math.ceil(math.log(self.series_length_, 2)))
+                    - self.series_length_
                 ),
             )
         )
@@ -237,13 +227,13 @@ class DrCIF(BaseClassifier):
         if self.n_intervals is None:
             self._n_intervals = [None, None, None]
             self._n_intervals[0] = 4 + int(
-                (math.sqrt(self.series_length) * math.sqrt(self.n_dims)) / 3
+                (math.sqrt(self.series_length_) * math.sqrt(self.n_dims_)) / 3
             )
             self._n_intervals[1] = 4 + int(
-                (math.sqrt(X_p.shape[2]) * math.sqrt(self.n_dims)) / 3
+                (math.sqrt(X_p.shape[2]) * math.sqrt(self.n_dims_)) / 3
             )
             self._n_intervals[2] = 4 + int(
-                (math.sqrt(X_d.shape[2]) * math.sqrt(self.n_dims)) / 3
+                (math.sqrt(X_d.shape[2]) * math.sqrt(self.n_dims_)) / 3
             )
         elif isinstance(self.n_intervals, int):
             self._n_intervals = [self.n_intervals, self.n_intervals, self.n_intervals]
@@ -268,8 +258,8 @@ class DrCIF(BaseClassifier):
             self._min_interval = self.min_interval
         else:
             raise ValueError("DrCIF min_interval must be an int or list of length 3.")
-        if self.series_length < self._min_interval[0]:
-            self._min_interval[0] = self.series_length
+        if self.series_length_ < self._min_interval[0]:
+            self._min_interval[0] = self.series_length_
         if X_p.shape[2] < self._min_interval[1]:
             self._min_interval[1] = X_p.shape[2]
         if X_d.shape[2] < self._min_interval[2]:
@@ -277,7 +267,7 @@ class DrCIF(BaseClassifier):
 
         if self.max_interval is None:
             self._max_interval = [
-                self.series_length / 2,
+                self.series_length_ / 2,
                 X_p.shape[2] / 2,
                 X_d.shape[2] / 2,
             ]
@@ -295,21 +285,21 @@ class DrCIF(BaseClassifier):
             if n < self._min_interval[i]:
                 self._max_interval[i] = self._min_interval[i]
 
-        self.total_intervals = sum(self._n_intervals)
+        self.total_intervals_ = sum(self._n_intervals)
 
         if time_limit > 0:
             self._n_estimators = 0
             self.estimators_ = []
-            self.intervals = []
-            self.atts = []
-            self.dims = []
-            self.transformed_data = []
+            self.intervals_ = []
+            self.atts_ = []
+            self.dims_ = []
+            self.transformed_data_ = []
 
             while (
                 train_time < time_limit
                 and self._n_estimators < self.contract_max_n_estimators
             ):
-                fit = Parallel(n_jobs=self._n_jobs)(
+                fit = Parallel(n_jobs=self._threads_to_use)(
                     delayed(self._fit_estimator)(
                         X,
                         X_p,
@@ -317,7 +307,7 @@ class DrCIF(BaseClassifier):
                         y,
                         i,
                     )
-                    for i in range(self._n_jobs)
+                    for i in range(self._threads_to_use)
                 )
 
                 (
@@ -329,15 +319,15 @@ class DrCIF(BaseClassifier):
                 ) = zip(*fit)
 
                 self.estimators_ += estimators
-                self.intervals += intervals
-                self.atts += atts
-                self.dims += dims
-                self.transformed_data += transformed_data
+                self.intervals_ += intervals
+                self.atts_ += atts
+                self.dims_ += dims
+                self.transformed_data_ += transformed_data
 
-                self._n_estimators += self._n_jobs
+                self._n_estimators += self._threads_to_use
                 train_time = time.time() - start_time
         else:
-            fit = Parallel(n_jobs=self._n_jobs)(
+            fit = Parallel(n_jobs=self._threads_to_use)(
                 delayed(self._fit_estimator)(
                     X,
                     X_p,
@@ -350,11 +340,13 @@ class DrCIF(BaseClassifier):
 
             (
                 self.estimators_,
-                self.intervals,
-                self.dims,
-                self.atts,
-                self.transformed_data,
+                self.intervals_,
+                self.dims_,
+                self.atts_,
+                self.transformed_data_,
             ) = zip(*fit)
+
+        return self
 
     def _predict(self, X):
         rng = check_random_state(self.random_state)
@@ -367,8 +359,8 @@ class DrCIF(BaseClassifier):
 
     def _predict_proba(self, X):
         n_test_instances, _, series_length = X.shape
-        if series_length != self.series_length:
-            raise TypeError(
+        if series_length != self.series_length_:
+            raise ValueError(
                 "ERROR number of attributes in the train does not match "
                 "that in the test data"
             )
@@ -376,10 +368,10 @@ class DrCIF(BaseClassifier):
         X_p = np.zeros(
             (
                 n_test_instances,
-                self.n_dims,
+                self.n_dims_,
                 int(
-                    math.pow(2, math.ceil(math.log(self.series_length, 2)))
-                    - self.series_length
+                    math.pow(2, math.ceil(math.log(self.series_length_, 2)))
+                    - self.series_length_
                 ),
             )
         )
@@ -388,21 +380,21 @@ class DrCIF(BaseClassifier):
 
         X_d = np.diff(X, 1)
 
-        y_probas = Parallel(n_jobs=self._n_jobs)(
+        y_probas = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 X_p,
                 X_d,
                 self.estimators_[i],
-                self.intervals[i],
-                self.dims[i],
-                self.atts[i],
+                self.intervals_[i],
+                self.dims_[i],
+                self.atts_[i],
             )
             for i in range(self._n_estimators)
         )
 
         output = np.sum(y_probas, axis=0) / (
-            np.ones(self.n_classes) * self._n_estimators
+            np.ones(self.n_classes_) * self._n_estimators
         )
         return output
 
@@ -413,9 +405,9 @@ class DrCIF(BaseClassifier):
         n_instances, n_dims, series_length = X.shape
 
         if (
-            n_instances != self.n_instances
-            or n_dims != self.n_dims
-            or series_length != self.series_length
+            n_instances != self.n_instances_
+            or n_dims != self.n_dims_
+            or series_length != self.series_length_
         ):
             raise ValueError(
                 "n_instances, n_dims, series_length mismatch. X should be "
@@ -426,7 +418,7 @@ class DrCIF(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        p = Parallel(n_jobs=self._n_jobs)(
+        p = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._train_probas_for_estimator)(
                 y,
                 i,
@@ -443,9 +435,9 @@ class DrCIF(BaseClassifier):
 
         for i in range(n_instances):
             results[i] = (
-                np.ones(self.n_classes) * (1 / self.n_classes)
+                np.ones(self.n_classes_) * (1 / self.n_classes_)
                 if divisors[i] == 0
-                else results[i] / (np.ones(self.n_classes) * divisors[i])
+                else results[i] / (np.ones(self.n_classes_) * divisors[i])
             )
 
         return results
@@ -458,13 +450,13 @@ class DrCIF(BaseClassifier):
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
-            shape=(self._att_subsample_size * self.total_intervals, self.n_instances),
+            shape=(self._att_subsample_size * self.total_intervals_, self.n_instances_),
             dtype=np.float32,
         )
 
         atts = rng.choice(29, self._att_subsample_size, replace=False)
-        dims = rng.choice(self.n_dims, self.total_intervals, replace=True)
-        intervals = np.zeros((self.total_intervals, 2), dtype=int)
+        dims = rng.choice(self.n_dims_, self.total_intervals_, replace=True)
+        intervals = np.zeros((self.total_intervals_, 2), dtype=int)
 
         p = 0
         j = 0
@@ -485,6 +477,8 @@ class DrCIF(BaseClassifier):
                     length = (
                         rng.randint(0, len_range - self._min_interval[r])
                         + self._min_interval[r]
+                        if len_range - self._min_interval[r] > 0
+                        else self._min_interval[r]
                     )
                     intervals[j][1] = intervals[j][0] + length
                 else:
@@ -535,7 +529,7 @@ class DrCIF(BaseClassifier):
             T = [X, X_p, X_d]
 
             transformed_x = np.empty(
-                shape=(self._att_subsample_size * self.total_intervals, X.shape[0]),
+                shape=(self._att_subsample_size * self.total_intervals_, X.shape[0]),
                 dtype=np.float32,
             )
 
@@ -561,15 +555,22 @@ class DrCIF(BaseClassifier):
         rs = None if self.random_state is None else rs * 37 * (idx + 1)
         rng = check_random_state(rs)
 
-        indices = range(self.n_instances)
-        subsample = rng.choice(self.n_instances, size=self.n_instances)
+        indices = range(self.n_instances_)
+        subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
         clf = _clone_estimator(self._base_estimator, rs)
-        clf.fit(self.transformed_data[idx][subsample], y[subsample])
-        probas = clf.predict_proba(self.transformed_data[idx][oob])
+        clf.fit(self.transformed_data_[idx][subsample], y[subsample])
+        probas = clf.predict_proba(self.transformed_data_[idx][oob])
 
-        results = np.zeros((self.n_instances, self.n_classes))
+        if probas.shape[1] != self.n_classes_:
+            new_probas = np.zeros((probas.shape[0], self.n_classes_))
+            for i, cls in enumerate(clf.classes_):
+                cls_idx = self._class_dictionary[cls]
+                new_probas[:, cls_idx] = probas[:, i]
+            probas = new_probas
+
+        results = np.zeros((self.n_instances_, self.n_classes_))
         for n, proba in enumerate(probas):
             results[oob[n]] += proba
 

@@ -24,17 +24,20 @@ __all__ = [
     "mtype",
 ]
 
+from typing import List, Union
+
 import numpy as np
 
-from typing import Union, List
+from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._panel import check_dict_Panel
-from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes._series import check_dict_Series
 
 # pool convert_dict-s
 check_dict = dict()
 check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Alignment)
 
 
 def _check_scitype_valid(scitype: str = None):
@@ -108,10 +111,12 @@ def check_is(
 
     for m in mtype:
         if scitype is None:
-            scitype = mtype_to_scitype(m)
-        key = (m, scitype)
-        if (m, scitype) not in valid_keys:
-            raise TypeError(f"no check defined for mtype {m}, scitype {scitype}")
+            scitype_of_m = mtype_to_scitype(m)
+        else:
+            scitype_of_m = scitype
+        key = (m, scitype_of_m)
+        if (m, scitype_of_m) not in valid_keys:
+            raise TypeError(f"no check defined for mtype {m}, scitype {scitype_of_m}")
 
         res = check_dict[key](obj, return_metadata=return_metadata, var_name=var_name)
 

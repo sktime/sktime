@@ -3,61 +3,24 @@
 
 Results are saved a standardised format used by both tsml and sktime.
 """
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 __all__ = [
     "run_clustering_experiment",
     "load_and_run_clustering_experiment",
-    "set_clusterer",
     "run_classification_experiment",
     "load_and_run_classification_experiment",
-    "set_classifier",
 ]
 
 
 import os
 import time
+from datetime import datetime
 
 import numpy as np
 from sklearn import preprocessing
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
-from sktime.classification.dictionary_based import (
-    BOSSEnsemble,
-    ContractableBOSS,
-    TemporalDictionaryEnsemble,
-    WEASEL,
-    MUSE,
-)
-from sktime.classification.distance_based import (
-    ProximityForest,
-    ProximityTree,
-    ProximityStump,
-    KNeighborsTimeSeriesClassifier,
-    ElasticEnsemble,
-    ShapeDTW,
-)
-from sktime.classification.feature_based import (
-    Catch22Classifier,
-    MatrixProfileClassifier,
-    SignatureClassifier,
-    TSFreshClassifier,
-)
-from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.interval_based import (
-    RandomIntervalSpectralForest,
-    TimeSeriesForestClassifier,
-    CanonicalIntervalForest,
-    SupervisedTimeSeriesForest,
-    DrCIF,
-)
-from sktime.classification.kernel_based import ROCKETClassifier, Arsenal
-from sktime.classification.shapelet_based import (
-    ShapeletTransformClassifier,
-    MrSEQLClassifier,
-)
-from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.data_io import write_results_to_uea_format
 from sktime.utils.sampling import stratified_resample
@@ -172,10 +135,10 @@ def run_clustering_experiment(
 def load_and_run_clustering_experiment(
     problem_path,
     results_path,
-    cls_name,
     dataset,
-    clusterer=None,
+    clusterer,
     resample_id=0,
+    cls_name=None,
     overwrite=False,
     format=".ts",
     train_file=False,
@@ -193,12 +156,13 @@ def load_and_run_clustering_experiment(
         Location of problem files, full path.
     results_path : str
         Location of where to write results. Any required directories will be created
-    cls_name : str
-        determines which clusterer to use if clusterer is None. In this
-        case, set_clusterer is called with this cls_name
     dataset : str
         Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+
         "_TRAIN"+format, same for "_TEST"
+    clusterer : the clusterer
+    cls_name : str, default =None
+        determines what to call the write directory. If None, it is set to
+        type(clusterer).__name__
     resample_id : int, default = 0
         Seed for resampling. If set to 0, the default train/test split from file is
         used. Also used in output file name.
@@ -212,6 +176,9 @@ def load_and_run_clustering_experiment(
         whether to generate train files or not. If true, it performs a 10xCV on the
         train and saves
     """
+    if cls_name is None:
+        cls_name = type(clusterer).__name__
+
     # Set up the file path in standard format
     if not overwrite:
         full_path = (
@@ -253,9 +220,6 @@ def load_and_run_clustering_experiment(
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    if clusterer is None:
-        clusterer = set_clusterer(cls_name, resample_id)
-
     run_clustering_experiment(
         trainX,
         clusterer,
@@ -268,58 +232,18 @@ def load_and_run_clustering_experiment(
     )
 
 
-def set_clusterer(cls, resample_id=None):
-    """Construct a clusterer.
-
-    Basic way of creating the clusterer to build using the default settings. This
-    set up is to help with batch jobs for multiple problems to facilitate easy
-    reproducability through run_clustering_experiment. You can set up bespoke
-    clusterers and pass them to run_clustering_experiment if you prefer. It also
-    serves to illustrate the base clusterer parameters
-
-    Parameters
-    ----------
-    cls : str
-        indicating which clusterer you want
-    resample_id : int or None, default = None
-        clusterer random seed
-
-    Return
-    ------
-    A clusterer.
-    """
-    name = cls.lower()
-    # Distance based
-    if name == "kmeans" or name == "k-means":
-        return TimeSeriesKMeans(
-            n_clusters=5,
-            max_iter=50,
-            averaging_algorithm="mean",
-            random_state=resample_id,
-        )
-    if name == "kmedoids" or name == "k-medoids":
-        return TimeSeriesKMedoids(
-            n_clusters=5,
-            max_iter=50,
-            averaging_algorithm="mean",
-            random_state=resample_id,
-        )
-
-    else:
-        raise Exception("UNKNOWN CLUSTERER")
-
-
 def run_classification_experiment(
-    trainX,
-    trainY,
-    testX,
-    testY,
+    X_train,
+    y_train,
+    X_test,
+    y_test,
     classifier,
     results_path,
     cls_name="",
     dataset="",
     resample_id=0,
     train_file=False,
+    test_file=True,
 ):
     """Run a classification experiment and save the results to file.
 
@@ -328,13 +252,13 @@ def run_classification_experiment(
 
     Parameters
     ----------
-    trainX : pd.DataFrame or np.array
+    X_train : pd.DataFrame or np.array
         The data to train the classifier.
-    trainY : np.array, default = None
+    y_train : np.array, default = None
         Training data class labels.
-    testX : pd.DataFrame or np.array, default = None
+    X_test : pd.DataFrame or np.array, default = None
         The data used to test the trained classifier.
-    testY : np.array, default = None
+    y_test : np.array, default = None
         Testing data class labels.
     classifier : BaseClassifier
         Classifier to be used in the experiment.
@@ -351,79 +275,129 @@ def run_classification_experiment(
         Whether to generate train files or not. If true, it performs a 10-fold
         cross-validation on the train data and saves. If the classifier can produce its
         own estimates, those are used instead.
+    test_file : bool, default=True:
+         Whether to generate test files or not. If the classifier can generate its own
+         train probabilities, the classifier will be built but no file will be output.
     """
-    start = int(round(time.time() * 1000))
-    classifier.fit(trainX, trainY)
-    build_time = int(round(time.time() * 1000)) - start
-    start = int(round(time.time() * 1000))
-    probs = classifier.predict_proba(testX)
-    preds = classifier.classes_[np.argmax(probs, axis=1)]
-    test_time = int(round(time.time() * 1000)) - start
-    ac = accuracy_score(testY, preds)
-    if "Composite" in cls_name:
-        second = "Para info too long!"
-    else:
-        second = str(classifier.get_params())
-    second.replace("\n", " ")
-    second.replace("\r", " ")
-    third = (
-        str(ac)
-        + ","
-        + str(build_time)
-        + ","
-        + str(test_time)
-        + ",-1,-1,"
-        + str(len(classifier.classes_))
+    if not test_file and not train_file:
+        raise Exception(
+            "Both test_file and train_file are set to False. "
+            "At least one must be output."
+        )
+
+    classifier_train_probs = (
+        train_file and getattr(classifier, "time_limit_in_minutes", None) is not None
     )
-    write_results_to_uea_format(
-        second_line=second,
-        third_line=third,
-        output_path=results_path,
-        estimator_name=cls_name,
-        resample_seed=resample_id,
-        y_pred=preds,
-        predicted_probs=probs,
-        dataset_name=dataset,
-        y_true=testY,
-        split="TEST",
-        full_path=False,
-    )
+    build_time = -1
+
+    if test_file or classifier_train_probs:
+        start = int(round(time.time() * 1000))
+        classifier.fit(X_train, y_train)
+        build_time = int(round(time.time() * 1000)) - start
+
+        if test_file:
+            start = int(round(time.time() * 1000))
+            probs = classifier.predict_proba(X_test)
+            test_time = int(round(time.time() * 1000)) - start
+
+            if "composite" in cls_name.lower():
+                second = "Para info too long!"
+            else:
+                second = str(classifier.get_params())
+            second.replace("\n", " ")
+            second.replace("\r", " ")
+
+            # Line 3 format:
+            preds = classifier.classes_[np.argmax(probs, axis=1)]
+            acc = accuracy_score(y_test, preds)
+            third = (
+                str(acc)  # 1. accuracy
+                + ","
+                + str(build_time)  # 2. fit time
+                + ","
+                + str(test_time)  # 3. predict time
+                + ",-1,-1,"  # 4. 5. benchmark time, memory (to do)
+                + str(len(classifier.classes_))  # 6. number of classes
+                + ",,-1,-1"  # 7. 8. 9.
+            )
+            le = preprocessing.LabelEncoder()
+            le.fit(y_test)
+            predicted = le.transform(preds)
+            actual = le.transform(y_test)
+
+            write_results_to_uea_format(
+                second_line=second,
+                third_line=third,
+                first_line_comment="PREDICTIONS,Generated by experiments.py on "
+                + datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+                + ".",
+                timing_type="MILLISECONDS",
+                output_path=results_path,
+                estimator_name=cls_name,
+                resample_seed=resample_id,
+                y_pred=predicted,
+                predicted_probs=probs,
+                dataset_name=dataset,
+                y_true=actual,
+                split="TEST",
+                full_path=False,
+            )
+
     if train_file:
         start = int(round(time.time() * 1000))
-        if hasattr(
-            classifier, "_get_train_probs"
-        ):  # Normally Can only do this if test has been built
-            train_probs = classifier._get_train_probs(trainX)
+        if classifier_train_probs:  # Normally Can only do this if test has been built
+            train_probs = classifier._get_train_probs(X_train, y_train)
         else:
+            cv_size = 10
+            _, counts = np.unique(y_train, return_counts=True)
+            min_class = np.min(counts)
+            if min_class < cv_size:
+                cv_size = min_class
+
             train_probs = cross_val_predict(
-                classifier, X=trainX, y=trainY, cv=10, method="predict_proba"
+                classifier, X=X_train, y=y_train, cv=cv_size, method="predict_proba"
             )
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
-        train_acc = accuracy_score(trainY, train_preds)
-        if "Composite" in cls_name:
+
+        if "composite" in cls_name.lower():
             second = "Para info too long!"
         else:
             second = str(classifier.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
+
+        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
+        train_acc = accuracy_score(y_train, train_preds)
         third = (
             str(train_acc)
             + ","
-            + str(train_time)
+            + str(build_time)
             + ",-1,-1,-1,"
             + str(len(classifier.classes_))
+            + ",,"
+            + str(train_time)
+            + ","
+            + str(build_time + train_time)
         )
+        le = preprocessing.LabelEncoder()
+        le.fit(y_train)
+        predicted = le.transform(train_preds)
+        actual = le.transform(y_train)
+
         write_results_to_uea_format(
             second_line=second,
             third_line=third,
+            first_line_comment="PREDICTIONS,Generated by experiments.py on "
+            + datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            + ".",
+            timing_type="NANOSECONDS",
             output_path=results_path,
             estimator_name=cls_name,
             resample_seed=resample_id,
-            y_pred=train_preds,
+            y_pred=predicted,
             predicted_probs=train_probs,
             dataset_name=dataset,
-            y_true=trainY,
+            y_true=actual,
             split="TRAIN",
             full_path=False,
         )
@@ -432,12 +406,13 @@ def run_classification_experiment(
 def load_and_run_classification_experiment(
     problem_path,
     results_path,
-    cls_name,
     dataset,
-    classifier=None,
+    classifier,
     resample_id=0,
+    cls_name=None,
     overwrite=False,
     build_train=False,
+    predefined_resample=False,
 ):
     """Load a dataset and run a classification experiment.
 
@@ -450,16 +425,15 @@ def load_and_run_classification_experiment(
         Location of problem files, full path.
     results_path : str
         Location of where to write results. Any required directories will be created.
-    cls_name : str
-        Determines which classifier to use, as defined in set_classifier. This assumes
-        predict_proba is implemented, to avoid predicting twice. May break some
-        classifiers though.
     dataset : str
-        Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN.ts,
+        Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN.ts",
         same for "_TEST".
-    classifier : BaseClassifier, default=None
+    classifier : BaseClassifier
         Classifier to be used in the experiment, if none is provided one is selected
-        using cls_name.
+        using cls_name using resample_id as a seed.
+    cls_name : str, default = None
+        Name of classifier used in writing results. If none the name is taken from
+        the classifier
     resample_id : int, default=0
         Seed for resampling. If set to 0, the default train/test split from file is
         used. Also used in output file name.
@@ -470,154 +444,73 @@ def load_and_run_classification_experiment(
         Whether to generate train files or not. If true, it performs a 10-fold
         cross-validation on the train data and saves. If the classifier can produce its
         own estimates, those are used instead.
+    predefined_resample : bool, default=False
+        Read a predefined resample from file instead of performing a resample. If True
+        the file format must include the resample_id at the end of the dataset name i.e.
+        <problem_path>/<dataset>/<dataset>+<resample_id>+"_TRAIN.ts".
     """
+    if cls_name is None:
+        cls_name = type(classifier).__name__
     # Check which files exist, if both exist, exit
     build_test = True
     if not overwrite:
         full_path = (
-            str(results_path)
+            results_path
             + "/"
-            + str(cls_name)
+            + cls_name
             + "/Predictions/"
-            + str(dataset)
+            + dataset
             + "/testResample"
             + str(resample_id)
             + ".csv"
         )
+
         if os.path.exists(full_path):
             build_test = False
+
         if build_train:
             full_path = (
-                str(results_path)
+                results_path
                 + "/"
-                + str(cls_name)
+                + cls_name
                 + "/Predictions/"
-                + str(dataset)
+                + dataset
                 + "/trainResample"
                 + str(resample_id)
                 + ".csv"
             )
+
             if os.path.exists(full_path):
                 build_train = False
+
         if build_train is False and build_test is False:
             return
 
-    trainX, trainY = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN.ts")
-    testX, testY = load_ts(problem_path + dataset + "/" + dataset + "_TEST.ts")
-    if resample_id != 0:
-        trainX, trainY, testX, testY = stratified_resample(
-            trainX, trainY, testX, testY, resample_id
+    if predefined_resample:
+        X_train, y_train = load_ts(
+            problem_path + dataset + "/" + dataset + str(resample_id) + "_TRAIN.ts"
         )
-    if classifier is None:
-        classifier = set_classifier(cls_name, resample_id)
+        X_test, y_test = load_ts(
+            problem_path + dataset + "/" + dataset + str(resample_id) + "_TEST.ts"
+        )
+    else:
+        X_train, y_train = load_ts(problem_path + dataset + "/" + dataset + "_TRAIN.ts")
+        X_test, y_test = load_ts(problem_path + dataset + "/" + dataset + "_TEST.ts")
+        if resample_id != 0:
+            X_train, y_train, X_test, y_test = stratified_resample(
+                X_train, y_train, X_test, y_test, resample_id
+            )
+
     run_classification_experiment(
-        trainX,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
         classifier,
         results_path,
-        trainY,
-        testX,
-        testY,
         cls_name=cls_name,
         dataset=dataset,
         resample_id=resample_id,
         train_file=build_train,
+        test_file=build_test,
     )
-
-
-def set_classifier(cls, resample_id=None):
-    """Construct a classifier.
-
-    Basic way of creating the classifier to build using the default settings. This
-    set up is to help with batch jobs for multiple problems to facilitate easy
-    reproducibility for use with load_and_run_classification_experiment. You can pass a
-    classifier object instead to run_classification_experiment.
-
-    Parameters
-    ----------
-    cls : String
-        String indicating which classifier you want.
-    resample_id : Random seed as an int, default=None
-        Classifier random seed.
-
-    Return
-    ------
-    classifier : A BaseClassifier.
-        The classifier matching the input classifier name.
-    """
-    name = cls.lower()
-    # Dictionary based
-    if name == "boss" or name == "bossensemble":
-        return BOSSEnsemble(random_state=resample_id)
-    elif name == "cboss" or name == "contractableboss":
-        return ContractableBOSS(random_state=resample_id)
-    elif name == "tde" or name == "temporaldictionaryensemble":
-        return TemporalDictionaryEnsemble(random_state=resample_id)
-    elif name == "weasel":
-        return WEASEL(random_state=resample_id)
-    elif name == "muse":
-        return MUSE(random_state=resample_id)
-    # Distance based
-    elif name == "pf" or name == "proximityforest":
-        return ProximityForest(random_state=resample_id)
-    elif name == "pt" or name == "proximitytree":
-        return ProximityTree(random_state=resample_id)
-    elif name == "ps" or name == "proximityStump":
-        return ProximityStump(random_state=resample_id)
-    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(distance="dtwcv")
-    elif name == "dtw" or name == "1nn-dtw":
-        return KNeighborsTimeSeriesClassifier(distance="dtw")
-    elif name == "msm" or name == "1nn-msm":
-        return KNeighborsTimeSeriesClassifier(distance="msm")
-    elif name == "ee" or name == "elasticensemble":
-        return ElasticEnsemble()
-    elif name == "shapedtw":
-        return ShapeDTW()
-    # Feature based: Removed because of soft dependency
-    elif name == "catch22":
-        return Catch22Classifier(
-            random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
-        )
-    elif name == "matrixprofile":
-        return MatrixProfileClassifier(random_state=resample_id)
-    elif name == "signature":
-        return SignatureClassifier(
-            random_state=resample_id,
-            classifier=RandomForestClassifier(n_estimators=500),
-        )
-    elif name == "tsfresh":
-        return TSFreshClassifier(
-            random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
-        )
-    elif name == "tsfresh-r":
-        return TSFreshClassifier(
-            random_state=resample_id,
-            estimator=RandomForestClassifier(n_estimators=500),
-            relevant_feature_extractor=True,
-        )
-    # Hybrid
-    elif name == "hivecotev1":
-        return HIVECOTEV1(random_state=resample_id)
-    # Interval based
-    elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resample_id, n_estimators=500)
-    elif name == "tsf" or name == "timeseriesforestclassifier":
-        return TimeSeriesForestClassifier(random_state=resample_id, n_estimators=500)
-    elif name == "cif" or name == "canonicalintervalforest":
-        return CanonicalIntervalForest(random_state=resample_id, n_estimators=500)
-    elif name == "stsf":
-        return SupervisedTimeSeriesForest(random_state=resample_id, n_estimators=500)
-    elif name == "drcif":
-        return DrCIF(random_state=resample_id, n_estimators=500)
-    # Kernel based
-    elif name == "rocket":
-        return ROCKETClassifier(random_state=resample_id)
-    elif name == "arsenal":
-        return Arsenal(random_state=resample_id)
-    # Shapelet based
-    elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(random_state=resample_id, n_estimators=500)
-    elif name == "mrseql" or name == "mrseqlclassifier":
-        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
-    else:
-        raise Exception("UNKNOWN CLASSIFIER")

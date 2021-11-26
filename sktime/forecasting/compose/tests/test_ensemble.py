@@ -3,19 +3,18 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of EnsembleForecaster functionality."""
 
-__author__ = ["GuzalBulatova"]
+__author__ = ["GuzalBulatova", "RNKuhns"]
+import sys
 
 import numpy as np
 import pandas as pd
 import pytest
-import sys
 
-from scipy.stats import gmean
 from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose._ensemble import VALID_AGG_FUNCS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
@@ -40,7 +39,7 @@ def test_avg_mean(forecasters):
     pd.testing.assert_series_equal(mean_pred, avg_pred)
 
 
-@pytest.mark.parametrize("aggfunc", ["median", "mean", "min", "max", "gmean"])
+@pytest.mark.parametrize("aggfunc", [*VALID_AGG_FUNCS.keys()])
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -55,20 +54,19 @@ def test_aggregation_unweighted(forecasters, aggfunc):
     actual_pred = forecaster.predict()
 
     predictions = []
-    if aggfunc == "gmean":
-        aggfunc = gmean
+    _aggfunc = VALID_AGG_FUNCS[aggfunc]["unweighted"]
     for _, forecaster in forecasters:
         f = forecaster
         f.fit(y)
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
-    predictions = pd.DataFrame(predictions)
-    expected_pred = predictions.apply(func=aggfunc, axis=0)
+    predictions = pd.DataFrame(predictions).T
+    expected_pred = predictions.apply(func=_aggfunc, axis=1)
 
     pd.testing.assert_series_equal(actual_pred, expected_pred)
 
 
-@pytest.mark.parametrize("aggfunc", ["mean", "gmean"])
+@pytest.mark.parametrize("aggfunc", [*VALID_AGG_FUNCS.keys()])
 @pytest.mark.parametrize("weights", [[1.44, 1.2]])
 @pytest.mark.parametrize(
     "forecasters",
@@ -92,14 +90,13 @@ def test_aggregation_weighted(forecasters, aggfunc, weights):
         f.fit(y)
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
-
-    predictions = pd.DataFrame(predictions)
-    if aggfunc == "mean":
-        func = np.average
-    else:
-        func = gmean
-    expected_pred = predictions.apply(func=func, axis=0, weights=weights)
-
+    predictions = pd.DataFrame(predictions).T
+    _aggfunc = VALID_AGG_FUNCS[aggfunc]["weighted"]
+    expected_pred = pd.Series(
+        _aggfunc(predictions, axis=1, weights=np.array(weights)),
+        index=predictions.index,
+    )
+    # expected_pred = predictions.apply(func=_aggfunc, axis=1, weights=weights)
     pd.testing.assert_series_equal(actual_pred, expected_pred)
 
 

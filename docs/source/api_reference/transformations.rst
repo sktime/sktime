@@ -179,6 +179,7 @@ Detrend
     Detrender
     Deseasonalizer
     ConditionalDeseasonalizer
+    STLTransformer
 
 Adapt
 ~~~~~
@@ -202,6 +203,17 @@ Box-Cox
 
     BoxCoxTransformer
     LogTransformer
+
+ClaSP
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.clasp
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClaSPTransformer
 
 Difference
 ~~~~~~~~~~
@@ -271,6 +283,17 @@ Missing value imputation
 
     Imputer
 
+Datetime feature generation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.date
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DateTimeFeatures
+
 Outlier detection
 ~~~~~~~~~~~~~~~~~
 
@@ -305,10 +328,22 @@ Theta
 
     ThetaLinesTransformer
 
+Summary
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.summarize
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SummaryTransformer
+    MeanTransformer
+
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.feauture_selection
+.. currentmodule:: sktime.transformations.series.feature_selection
 
 .. autosummary::
     :toctree: auto_generated/
