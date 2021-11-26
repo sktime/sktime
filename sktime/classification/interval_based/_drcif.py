@@ -152,7 +152,7 @@ class DrCIF(BaseClassifier):
         att_subsample_size=10,
         min_interval=4,
         max_interval=None,
-        base_estimator="DTC",
+        base_estimator="CIT",
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=500,
         save_transformed_data=False,
@@ -506,7 +506,12 @@ class DrCIF(BaseClassifier):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
+        if self.base_estimator == "CIT":
+            transformed_x = np.nan_to_num(
+                transformed_x, False, posinf=np.nan, neginf=np.nan
+            )
+        else:
+            transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
         return [
