@@ -61,7 +61,7 @@ def test_base_classifier_fit():
     assert result is dummy
     # Raise a specific error if y is in a 2D matrix (1,cases)?
     test_y2 = np.array([test_y1])
-    # What if it is in a 2D matrix (cases,1)?
+    # What if y is in a 2D matrix (cases,1)?
     test_y2 = np.array([test_y1]).transpose()
     with pytest.raises(ValueError, match=r"must be 1-dimensional"):
         result = dummy.fit(test_X1, test_y2)
