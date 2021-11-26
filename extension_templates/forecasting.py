@@ -39,6 +39,10 @@ Testing:
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
@@ -71,6 +75,12 @@ class MyForecaster(BaseForecaster):
 
     # todo: fill out estimator tags here
     #  tags are inherited from parent class if they are not set
+    # todo: define the forecaster scitype by setting the tags
+    #  the "forecaster scitype" is determined by the tags
+    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
+    #  when changing scitype:y to multivariate or both:
+    #   y_inner_mtype should be changed to pd.DataFrame
+    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
@@ -79,7 +89,7 @@ class MyForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -113,7 +123,7 @@ class MyForecaster(BaseForecaster):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
@@ -136,6 +146,11 @@ class MyForecaster(BaseForecaster):
 
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
+        #
+        # any model parameters should be written to attributes ending in "_"
+        #  attributes set by the constructor must not be overwritten
+        #  if used, estimators should be cloned to attributes ending in "_"
+        #  the clones, not the originals shoudld be used or fitted if needed
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):

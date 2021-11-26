@@ -7,20 +7,33 @@ Creates univariate (optionally weighted)
 combination of the predictions from underlying forecasts.
 """
 
-__author__ = ["mloning", "GuzalBulatova", "aiwalter"]
+__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
-from sklearn.utils.stats import _weighted_percentile
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.stats import (
+    _weighted_geometric_mean,
+    _weighted_max,
+    _weighted_median,
+    _weighted_min,
+)
 from sktime.utils.validation.forecasting import check_regressor
+
+VALID_AGG_FUNCS = {
+    "mean": {"unweighted": np.mean, "weighted": np.average},
+    "median": {"unweighted": np.median, "weighted": _weighted_median},
+    "min": {"unweighted": np.min, "weighted": _weighted_min},
+    "max": {"unweighted": np.max, "weighted": _weighted_max},
+    "gmean": {"unweighted": gmean, "weighted": _weighted_geometric_mean},
+}
 
 
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -76,7 +89,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=[1,2,3])
     AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -86,6 +99,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -231,7 +245,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
-    >>> forecaster.fit(y=y, X=None, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=[1,2,3])
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -241,6 +255,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
@@ -318,46 +333,6 @@ def _aggregate(y, aggfunc, weights):
 
 def _check_aggfunc(aggfunc, weighted=False):
     _weighted = "weighted" if weighted else "unweighted"
-    valid_aggfuncs = {
-        "mean": {"unweighted": np.mean, "weighted": np.average},
-        "median": {"unweighted": np.median, "weighted": _weighted_median},
-        "min": {"unweighted": np.min, "weighted": _weighted_min},
-        "max": {"unweighted": np.max, "weighted": _weighted_max},
-        "gmean": {"unweighted": gmean, "weighted": gmean},
-    }
-    if aggfunc not in valid_aggfuncs.keys():
+    if aggfunc not in VALID_AGG_FUNCS.keys():
         raise ValueError("Aggregation function %s not recognized." % aggfunc)
-    return valid_aggfuncs[aggfunc][_weighted]
-
-
-def _weighted_median(y, axis=1, weights=None):
-    w_median = np.apply_along_axis(
-        func1d=_weighted_percentile,
-        axis=axis,
-        arr=y.values,
-        sample_weight=weights,
-        percentile=50,
-    )
-    return w_median
-
-
-def _weighted_min(y, axis=1, weights=None):
-    w_min = np.apply_along_axis(
-        func1d=_weighted_percentile,
-        axis=axis,
-        arr=y.values,
-        sample_weight=weights,
-        percentile=0,
-    )
-    return w_min
-
-
-def _weighted_max(y, axis=1, weights=None):
-    w_max = np.apply_along_axis(
-        func1d=_weighted_percentile,
-        axis=axis,
-        arr=y.values,
-        sample_weight=weights,
-        percentile=100,
-    )
-    return w_max
+    return VALID_AGG_FUNCS[aggfunc][_weighted]

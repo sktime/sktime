@@ -26,6 +26,11 @@ MIN_REQUIREMENTS = {
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
     "numba": "0.53",
+    "deprecated": "1.2.13",
+}
+MAX_REQUIREMENTS = {
+    "statsmodels": "0.12.1",
+    "numpy": "1.19.3",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
@@ -40,6 +45,7 @@ EXTRAS_REQUIRE = {
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
         "pyod>=0.8.0",
+        "dtw_python>=1.1.5",
     ],
 }
 
@@ -86,6 +92,10 @@ INSTALL_REQUIRES = [
     *[
         "{}>={}".format(package, version)
         for package, version in MIN_REQUIREMENTS.items()
+    ],
+    *[
+        "{}<={}".format(package, version)
+        for package, version in MAX_REQUIREMENTS.items()
     ],
     "wheel",
 ]

@@ -114,7 +114,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce-index-type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
     def _fit(self, X, Y=None):

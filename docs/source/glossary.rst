@@ -64,7 +64,7 @@ sktime.
 
     Reduction
         Reduction refers to decomposing a given learning task into simpler tasks that can be composed to create a solution to the original task.
-        In ``sktime`` reduction is used to allow one learning task to be adapted as a solution for an alternative task.
+        In sktime reduction is used to allow one learning task to be adapted as a solution for an alternative task.
 
     Variable
         Refers to some measurement of interest. Variables may be cross-sectional (e.g. time-invariant measurements like a patient's place of birth) or
@@ -83,10 +83,28 @@ sktime.
         When data shows a long-term increase or decrease, this is referred to as a trend. Trends can also be non-linear.
 
     Seasonality
-        When a :term: `time series` is affected by seasonal characteristics such as the time of year or the day of the week, it is called a seasonal pattern.
+        When a :term:`time series` is affected by seasonal characteristics such as the time of year or the day of the week, it is called a seasonal pattern.
         The duration of a season is always fixed and known.
 
     Tabular
         Is a setting where each :term:`timepoint` of the :term:`univariate time series` being measured for each instance are treated as features and
         stored as a primitive data type in the DataFrame’s cells. E.g., there are N :term:`instances <instance>` of time series and each has T
         :term:`timepoints <timepoint>`, this would yield a pandas DataFrame with shape (N, T): N rows, T columns.
+
+    Framework
+        A collection of related and reusable software design templates that practitioners can copy and fill in.
+        Frameworks emphasize design reuse.
+        They capture common software design decisions within a given application domain and distill them into reusable design templates.
+        This reduces the design decision they must take, allowing them to focus on application specifics.
+        Not only can practitioners write software faster as a result, but applications will have a similar structure.
+        Frameworks often offer additional functionality like :term:`toolboxes`.
+        Compare with :term:`toolbox` and :term:`application`.
+
+    Toolbox
+        A collection of related and reusable functionality that practitioners can import to write applications.
+        Toolboxes emphasize code reuse.
+        Compare with :term:`framework` and :term:`application`.
+
+    Application
+        A single-purpose piece of code that practitioners write to solve a particular applied problem.
+        Compare with :term:`toolbox` and :term:`framework`.

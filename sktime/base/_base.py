@@ -49,7 +49,6 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
-
 from copy import deepcopy
 
 from sklearn import clone
@@ -132,25 +131,37 @@ class BaseObject(_BaseEstimator):
 
         return deepcopy(collected_tags)
 
-    def get_tag(self, tag_name, tag_value_default=None):
+    def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from estimator class and dynamic tag overrides.
 
         Parameters
         ----------
         tag_name : str
-            Name of tag value.
-        tag_value_default : any type
-            Default/fallback value if tag is not found.
+            Name of tag to be retrieved
+        tag_value_default : any type, optional; default=None
+            Default/fallback value if tag is not found
+        raise_error : bool
+            whether a ValueError is raised when the tag is not found
 
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of the `tag_name` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns `tag_value_default`.
+
+        Raises
+        ------
+        ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
+        ).keys()
         """
         collected_tags = self.get_tags()
 
-        return collected_tags.get(tag_name, tag_value_default)
+        tag_value = collected_tags.get(tag_name, tag_value_default)
+
+        if raise_error and tag_name not in collected_tags.keys():
+            raise ValueError(f"Tag with name {tag_name} could not be found.")
+
+        return tag_value
 
     def set_tags(self, **tag_dict):
         """Set dynamic tags to given values.

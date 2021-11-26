@@ -15,7 +15,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.validation.forecasting import check_alpha, check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -189,6 +189,48 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction intervals for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple intervals will be calculated.
+
+        public method including checks & utility
+        dispatches to core logic in _compute_pred_int
+
+        Parameters
+        ----------
+        y_pred : pd.Series
+            Point predictions.
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
+        """
+        self.check_is_fitted()
+        alphas = check_alpha(alpha)
+        errors = self._compute_pred_err(alphas)
+
+        # compute prediction intervals
+        pred_int = [
+            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
+            for error in errors
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if isinstance(alpha, float):
+            return pred_int[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int
+
     def _compute_pred_err(self, alphas):
         """Get the prediction errors for the forecast."""
         self.check_is_fitted()
@@ -238,5 +280,4 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     alpha = 1 - level
     if two_tailed:
         alpha /= 2
-
     return -norm.ppf(alpha)
