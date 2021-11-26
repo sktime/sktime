@@ -140,9 +140,12 @@ convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Se
 def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
 
     if not isinstance(obj, np.ndarray) and len(obj.shape) < 3:
-        raise TypeError("input must be a np.ndarray of dim 1 or 2")
+        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
-    return pd.Series(obj)
+    if len(obj.shape) == 2 and not obj.shape[1] == 1:
+        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")    
+
+    return pd.Series(obj.flatten())
 
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
