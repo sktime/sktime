@@ -145,7 +145,7 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
         raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
     if len(obj.shape) == 2 and not obj.shape[1] == 1:
-        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")    
+        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
     return pd.Series(obj.flatten())
 
