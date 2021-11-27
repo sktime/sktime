@@ -403,13 +403,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),
     ...     ("forecaster", NaiveForecaster())])
-
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=48,
     ...     step_length=12,
     ...     start_with_window=True,
     ...     fh=fh.to_relative(cutoff=y_train.index[-1]))
-
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=[{
