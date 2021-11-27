@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numba import NumbaPendingDeprecationWarning, njit
+from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import _PanelToTabularTransformer
@@ -204,6 +205,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
+        le = preprocessing.LabelEncoder()
+        y = le.fit_transform(y)
+
         self.n_instances, self.n_dims, self.series_length = X.shape
 
         # if self.n_shapelet_samples is None:
@@ -226,6 +230,8 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         shapelets = [[(-1.0, -1, -1, -1, -1, -1)] for _ in range(self.n_classes)]
         n_shapelets_extracted = 0
 
+        rng = check_random_state(self.random_state) if self._n_jobs == 1 else None
+
         if time_limit > 0:
             while (
                 fit_time < time_limit
@@ -238,6 +244,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                         n_shapelets_extracted + i,
                         shapelets,
                         max_shapelets_per_class,
+                        rng,
                     )
                     for i in range(self._batch_size)
                 )
@@ -275,6 +282,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                         n_shapelets_extracted + i,
                         shapelets,
                         max_shapelets_per_class,
+                        rng,
                     )
                     for i in range(n_shapelets_to_extract)
                 )
@@ -362,17 +370,20 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         return pd.DataFrame(output)
 
-    def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
-        rs = 255 if self.random_state == 0 else self.random_state
-        rs = (
-            None
-            if self.random_state is None
-            else (rs * 37 * (i + 1)) % np.iinfo(np.int32).max
-        )
-        rng = check_random_state(rs)
+    def _extract_random_shapelet(
+        self, X, y, i, shapelets, max_shapelets_per_class, rng
+    ):
+        if rng is None:
+            rs = 255 if self.random_state == 0 else self.random_state
+            rs = (
+                None
+                if self.random_state is None
+                else (rs * 37 * (i + 1)) % np.iinfo(np.int32).max
+            )
+            rng = check_random_state(rs)
 
         inst_idx = i % self.n_instances
-        cls_idx = self._class_dictionary[y[inst_idx]]
+        cls_idx = int(y[inst_idx])
         worst_quality = (
             shapelets[cls_idx][0][0] if shapelets == max_shapelets_per_class else -1
         )
@@ -419,7 +430,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         other_cls_count,
         worst_quality,
     ):
-        orderline = []
+        orderline = []  # todo could optimise this
         this_cls_traversed = 0
         other_cls_traversed = 0
 
@@ -699,9 +710,9 @@ def _binary_entropy(c1, c2):
 def _is_self_similar(s1, s2):
     # not self similar if from different series or dimension
     if s1[4] == s2[4] and s1[3] == s2[3]:
-        if s1[2] >= s2[2] and s1[2] <= s2[2] + s2[1]:
+        if s2[2] <= s1[2] <= s2[2] + s2[1]:
             return True
-        if s2[2] >= s1[2] and s2[2] <= s1[2] + s1[1]:
+        if s1[2] <= s2[2] <= s1[2] + s1[1]:
             return True
 
     return False

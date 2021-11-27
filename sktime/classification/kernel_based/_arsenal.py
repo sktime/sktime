@@ -8,6 +8,7 @@ __author__ = ["MatthewMiddlehurst", "kachayev"]
 __all__ = ["Arsenal"]
 
 import time
+import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -155,6 +156,8 @@ class Arsenal(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        warnings.simplefilter("ignore", category=FutureWarning)
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         time_limit = self.time_limit_in_minutes * 60

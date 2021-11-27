@@ -77,8 +77,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     max_dims : int, default=20
         Max number of dimensions per classifier for multivariate data.
     time_limit_in_minutes : int, default=0
-        Time contract to limit build time in minutes, overriding n_estimators.
-        Default of 0 means n_estimators is used.
+        Time contract to limit build time in minutes, overriding n_parameter_samples.
+        Default of 0 means n_parameter_samples is used.
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
@@ -690,7 +690,12 @@ class IndividualTDE(BaseClassifier):
         if self.n_dims_ > 1:
             self._dims, self._transformers = self._select_dims(X, y)
 
-            words = [defaultdict(int) for _ in range(self.n_instances_)]
+            words = [
+                Dict.empty(
+                    key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                )
+                for _ in range(self.n_instances_)
+            ]
 
             for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(self.n_instances_, 1, self.series_length_)
@@ -699,7 +704,12 @@ class IndividualTDE(BaseClassifier):
 
                 for n in range(self.n_instances_):
                     for word, count in dim_words[n].items():
-                        words[n][word << self._highest_dim_bit | dim] = count
+                        if self.levels > 1:
+                            words[n][
+                                (word[0], word[1] << self._highest_dim_bit | dim)
+                            ] = count
+                        else:
+                            words[n][(word, dim)] = count
 
             self._transformed_data = words
         else:
@@ -716,6 +726,7 @@ class IndividualTDE(BaseClassifier):
                     lower_bounding=False,
                     save_words=False,
                     use_fallback_dft=True,
+                    typed_dict=True,
                     n_jobs=self._threads_to_use,
                 )
             )
@@ -738,7 +749,12 @@ class IndividualTDE(BaseClassifier):
         num_cases = X.shape[0]
 
         if self.n_dims_ > 1:
-            words = [defaultdict(int) for _ in range(num_cases)]
+            words = [
+                Dict.empty(
+                    key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                )
+                for _ in range(num_cases)
+            ]
 
             for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length_)
@@ -747,7 +763,12 @@ class IndividualTDE(BaseClassifier):
 
                 for n in range(num_cases):
                     for word, count in dim_words[n].items():
-                        words[n][word << self._highest_dim_bit | dim] = count
+                        if self.levels > 1:
+                            words[n][
+                                (word[0], word[1] << self._highest_dim_bit | dim)
+                            ] = count
+                        else:
+                            words[n][(word, dim)] = count
 
             test_bags = words
         else:
@@ -800,6 +821,7 @@ class IndividualTDE(BaseClassifier):
                     save_words=False,
                     keep_binning_dft=True,
                     use_fallback_dft=True,
+                    typed_dict=True,
                     n_jobs=self._threads_to_use,
                 )
             )
@@ -897,7 +919,7 @@ def histogram_intersection(first, second):
         )
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, cache=True)
 def _histogram_intersection_dict(first, second):
     sim = 0
     for word, val_a in first.items():

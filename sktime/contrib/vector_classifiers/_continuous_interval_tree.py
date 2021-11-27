@@ -444,14 +444,14 @@ class _TreeNode:
 
         return self
 
-    def predict_proba(self, X, n_classes, class_dictionary):
+    def predict_proba(self, X, n_classes):
         if self.best_split > -1:
             if np.isnan(X[self.best_split]):
-                return self.children[0].predict_proba(X, n_classes, class_dictionary)
+                return self.children[0].predict_proba(X, n_classes)
             elif X[self.best_split] <= self.best_threshold:
-                return self.children[1].predict_proba(X, n_classes, class_dictionary)
+                return self.children[1].predict_proba(X, n_classes)
             else:
-                return self.children[2].predict_proba(X, n_classes, class_dictionary)
+                return self.children[2].predict_proba(X, n_classes)
         else:
             dist = np.zeros(n_classes)
             for i, prob in enumerate(self.leaf_distribution):
@@ -685,22 +685,3 @@ def _drcif_feature(X, interval, dim, att, c22):
             X[:, dim, interval[0] : interval[1]],
             feature=att,
         )
-
-
-if __name__ == "__main__":
-    from sklearn.metrics import accuracy_score
-
-    from sktime.datasets import load_gunpoint
-    from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    X_train = from_nested_to_3d_numpy(X_train)
-    X_train = np.reshape(X_train, (X_train.shape[0], -1))
-    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-    X_test = from_nested_to_3d_numpy(X_test)
-    X_test = np.reshape(X_test, (X_test.shape[0], -1))
-
-    cit = ContinuousIntervalTree(random_state=0)
-    cit.fit(X_train, y_train)
-
-    print(accuracy_score(cit.predict(X_test), y_test))
