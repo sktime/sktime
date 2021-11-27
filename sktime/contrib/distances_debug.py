@@ -22,7 +22,28 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import load_and_run_classification_experiment
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.distances import distance, dtw_distance, euclidean_distance
+from sktime.distances import (
+    distance,
+    dtw_distance,
+    edr_distance,
+    erp_distance,
+    euclidean_distance,
+    lcss_distance,
+    squared_distance,
+    wddtw_distance,
+    wdtw_distance,
+)
+
+DISTANCES = [
+    dtw_distance,
+    euclidean_distance,
+    edr_distance,
+    erp_distance,
+    lcss_distance,
+    squared_distance,
+    wdtw_distance,
+    wddtw_distance,
+]
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
@@ -36,6 +57,26 @@ generated in java.
 
 def _window_sizes():
     """Roadtest the new distances."""
+    x = np.random.random(1000)
+    y = np.random.random(1000)
+    print("First run :")
+    for i in range(len(DISTANCES)):
+        t = time.time()
+        print(
+            "Distance = ",
+            DISTANCES[i](x, y),
+            " takes = ",
+            (time.time() - t),
+        )
+        print("Second run :")
+        t = time.time()
+        print(
+            "Second Distance = ",
+            DISTANCES[i](x, y),
+            " takes = ",
+            (time.time() - t),
+        )
+
     x = np.zeros(10)
     x[1] = 10
     y = np.roll(x, 5)
