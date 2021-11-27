@@ -362,6 +362,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     Examples
     --------
+        Grid search with an ExpandingWindowSplitter and one forecaster:
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
@@ -383,8 +384,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh)
 
-    Advanced model meta-tuning (model selection) together with
-    hyper-parametertuning at same time using sklearn notation
+        Advanced model meta-tuning (model selection) with multiple forecasters
+        together with hyper-parametertuning at same time using sklearn notation:
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
