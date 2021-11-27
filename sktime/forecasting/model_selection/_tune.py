@@ -398,7 +398,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),
     ...     ("forecaster", NaiveForecaster())])
