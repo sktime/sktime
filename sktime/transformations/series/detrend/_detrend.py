@@ -30,14 +30,15 @@ class Detrender(_SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    forecaster : sktime-like forecaster, default=None
-        If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
+    forecaster : sktime forecaster, follows BaseForecaster, default = None.
         The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster).
+        If forecaster is None, PolynomialTrendForecaster(degree=1)
+        is used.
 
     Attributes
     ----------
-    forecaster_ : Fitted sktime-like forecaster
+    forecaster_ : Fitted forecaster
         Forecaster that defines the trend in the series.
 
     See Also
