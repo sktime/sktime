@@ -362,7 +362,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     Examples
     --------
-        Grid search with an ExpandingWindowSplitter and one forecaster:
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
