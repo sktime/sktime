@@ -368,7 +368,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
-
     >>> y = load_airline()
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(
@@ -382,6 +381,54 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     cv=cv)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh)
+
+    Advanced model meta-tuning (model selection) together with
+    hyper-parametertuning at same time using sklearn notation
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer()),
+    ...     ("forecaster", NaiveForecaster())])
+
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=48,
+    ...     step_length=12,
+    ...     start_with_window=True,
+    ...     fh=fh.to_relative(cutoff=y_train.index[-1]))
+
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=pipe,
+    ...     param_grid=[{
+    ...         "forecaster": [NaiveForecaster(sp=12)],
+    ...         "forecaster__strategy": ["drift", "last", "mean"],
+    ...     },
+    ...     {
+    ...         "imputer": ["mean", "max"],
+    ...         "forecaster": [ThetaForecaster(sp=12)],
+    ...     },
+    ...     {
+    ...         "imputer": ["mean", "max"],
+    ...         "forecaster": [ExponentialSmoothing(sp=12)],
+    ...         "forecaster__trend": ["add", "mul"],
+    ...     },
+    ...     ],
+    ...     cv=cv,
+    ...     n_jobs=-1)
+    >>> gscv.fit(y_train)
+    ForecastingGridSearchCV()
     >>> y_pred = gscv.predict(fh)
     """
 
