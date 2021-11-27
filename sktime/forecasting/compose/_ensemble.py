@@ -105,6 +105,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
+        method=None,
         regressor=None,
         test_size=None,
         random_state=None,
@@ -114,6 +115,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
+        if method and regressor:
+            raise ValueError("method and regressor can not be used together!")
+        self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
@@ -135,38 +139,47 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : returns an instance of self.
         """
         _, forecasters = self._check_forecasters()
-        self.regressor_ = check_regressor(
-            regressor=self.regressor, random_state=self.random_state
-        )
-
-        # get training data for meta-model
-        if X is not None:
-            y_train, y_test, X_train, X_test = temporal_train_test_split(
-                y, X, test_size=self.test_size
-            )
-        else:
-            y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
-            X_train, X_test = None, None
-
-        # fit ensemble models
-        fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
-        self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
-        X_meta = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
-
-        # fit meta-model (regressor) on predictions of ensemble models
-        # with y_test as endog/target
-        self.regressor_.fit(X=X_meta, y=y_test)
-
-        # check if regressor is a sklearn.Pipeline
-        if isinstance(self.regressor_, Pipeline):
-            # extract regressor from pipeline to access its attributes
-            self.weights_ = _get_weights(self.regressor_.steps[-1][1])
-        else:
-            self.weights_ = _get_weights(self.regressor_)
 
         # fit forecasters with all data
         self._fit_forecasters(forecasters, y, X, fh)
 
+        if self.method is None:
+            self.regressor_ = check_regressor(
+                regressor=self.regressor, random_state=self.random_state
+            )
+
+            # get training data for meta-model
+            if X is not None:
+                y_train, y_test, X_train, X_test = temporal_train_test_split(
+                    y, X, test_size=self.test_size
+                )
+            else:
+                y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
+                X_train, X_test = None, None
+
+            # fit ensemble models
+            fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
+            self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
+            X_meta = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
+
+            # fit meta-model (regressor) on predictions of ensemble models
+            # with y_test as endog/target
+            self.regressor_.fit(X=X_meta, y=y_test)
+
+            # check if regressor is a sklearn.Pipeline
+            if isinstance(self.regressor_, Pipeline):
+                # extract regressor from pipeline to access its attributes
+                self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+            else:
+                self.weights_ = _get_weights(self.regressor_)
+        elif self.method == "inv_var":
+            # get in-sample forecasts
+            fh_insample = ForecastingHorizon(y.index, is_relative=False)
+            inv_var = np.array([1/np.var(y - fit) for fit in self._predict_forecasters(fh_insample, X)])
+            # standardize the inverse variance
+            self.weights_ = list(inv_var / np.sum(inv_var))
+        else:
+            raise NotImplementedError()
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
