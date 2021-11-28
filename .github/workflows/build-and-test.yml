@@ -48,8 +48,8 @@ jobs:
       matrix:
         os: [windows-2019]
         # os: [ubuntu-20.04, windows-2019, macOS-10.15]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        compiler: clang
+        python-version: [3.7, 3.8, 3.9]
+        # compiler: cl
     steps:
       - uses: actions/checkout@v2
       - name: Check for missing init files
