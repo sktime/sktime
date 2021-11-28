@@ -44,8 +44,8 @@ jobs:
   test-windows:
     needs: code-quality
     runs-on: ${{ matrix.os }}
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-2019]
         python-version: [3.7, 3.8, 3.9]
@@ -102,8 +102,8 @@ jobs:
   test-linux:
     needs: code-quality
     runs-on: ${{ matrix.os }}
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04]
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -137,8 +137,8 @@ jobs:
   test-mac:
     needs: code-quality
     runs-on: ${{ matrix.os }}
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         os: [macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
