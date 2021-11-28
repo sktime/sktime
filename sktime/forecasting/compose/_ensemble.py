@@ -140,9 +140,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         _, forecasters = self._check_forecasters()
 
-        # fit forecasters with all data
-        self._fit_forecasters(forecasters, y, X, fh)
-
         if self.method is None:
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
@@ -172,10 +169,17 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 self.weights_ = _get_weights(self.regressor_.steps[-1][1])
             else:
                 self.weights_ = _get_weights(self.regressor_)
+            self._fit_forecasters(forecasters, y, X, fh)
         elif self.method == "inv_var":
             # get in-sample forecasts
+            self._fit_forecasters(forecasters, y, X, fh)
             fh_insample = ForecastingHorizon(y.index, is_relative=False)
-            inv_var = np.array([1/np.var(y - fit) for fit in self._predict_forecasters(fh_insample, X)])
+            inv_var = np.array(
+                [
+                    1 / np.var(y - fit)
+                    for fit in self._predict_forecasters(fh_insample, X)
+                ]
+            )
             # standardize the inverse variance
             self.weights_ = list(inv_var / np.sum(inv_var))
         else:
