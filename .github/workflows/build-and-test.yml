@@ -157,9 +157,9 @@ jobs:
         run: |
           export CC=/usr/bin/clang++
           export CXX=/usr/bin/clang++
-          export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp"
+          export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp -std=c++11 -lstdc++"
           export CFLAGS="$CFLAGS -I/opt/local/include/libomp -I/opt/local/include"
-          export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp -std=c++11 -lstdc++"
+          export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
           export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
           export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
           export PATH="/usr/local/opt/ccache/libexec:$PATH"
