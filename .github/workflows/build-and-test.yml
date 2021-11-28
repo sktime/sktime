@@ -155,7 +155,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          export CC=/usr/bin/clang
+          export CC=/usr/bin/clang++
           export CXX=/usr/bin/clang++
           export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp"
           export CFLAGS="$CFLAGS -I/opt/local/include/libomp -I/opt/local/include"
