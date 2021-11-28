@@ -156,14 +156,15 @@ jobs:
           brew install libomp
           export CC=/usr/bin/clang
           export CXX=/usr/bin/clang++
-          export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-          export CFLAGS="$CFLAGS -I/opt/local/include/libomp"
+          export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp"
+          export CFLAGS="$CFLAGS -I/opt/local/include/libomp -I/opt/local/include"
           export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
           export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
           export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
           export PATH="/usr/local/opt/ccache/libexec:$PATH"
-          # python setup.py sdist bdist_wheel
-          python -m pip install .[all_extras,dev]
+          python setup.py bdist_wheel
+          pip install --pre --no-index --no-deps --find-links dist/ sktime
+          # python -m pip install .[all_extras,dev]
 
       - name: Run tests
         run: |
