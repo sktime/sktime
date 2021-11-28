@@ -153,6 +153,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          brew install libomp
           export CC=/usr/bin/clang
           export CXX=/usr/bin/clang++
           export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
