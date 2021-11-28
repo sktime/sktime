@@ -420,7 +420,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     ],
     ...     cv=cv,
     ...     n_jobs=-1)
-    >>> gscv.fit(y_train)
+    >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])
     """
