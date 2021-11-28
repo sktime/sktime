@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2019]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
 <<<<<<< HEAD
@@ -163,8 +163,6 @@ jobs:
           export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
           export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
           export PATH="/usr/local/opt/ccache/libexec:$PATH"
-          # python setup.py bdist_wheel
-          # pip install --pre --no-index --no-deps --find-links dist/ sktime
           python -m pip install .[all_extras,dev]
 
       - name: Run tests
