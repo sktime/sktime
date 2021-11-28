@@ -151,7 +151,7 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Build wheel
+      - name: Install sktime and dependencies
         run: |
           export CC=/usr/bin/clang
           export CXX=/usr/bin/clang++
