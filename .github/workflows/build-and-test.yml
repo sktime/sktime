@@ -45,7 +45,6 @@ jobs:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os: [windows-2019]
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -103,7 +102,6 @@ jobs:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os: [ubuntu-20.04]
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -138,7 +136,6 @@ jobs:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os: [macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -166,14 +163,6 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          # export CC=/usr/bin/clang++
-          # export CXX=/usr/bin/clang++
-          # export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp -std=c++11 -lstdc++"
-          # export CFLAGS="$CFLAGS -I/opt/local/include/libomp -I/opt/local/include"
-          # export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
-          # export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
-          # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-          # export PATH="/usr/local/opt/ccache/libexec:$PATH"
           python -m pip install .[all_extras,dev]
 
       - name: Run tests
