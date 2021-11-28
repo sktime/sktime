@@ -3,16 +3,13 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pytest
 
-import numpy as np
-
-from sktime.datatypes._check import check_is
-from sktime.datatypes._examples import get_examples
-from sktime.datatypes import SCITYPE_REGISTER, MTYPE_REGISTER
-
+from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
+from sktime.datatypes._check import check_dict, check_is
 from sktime.datatypes._check import mtype as infer_mtype
-from sktime.datatypes._check import check_dict
+from sktime.datatypes._examples import get_examples
 
 SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 

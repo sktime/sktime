@@ -18,11 +18,11 @@ example_dict = dict()
 
 ###
 
-align = pd.DataFrame({'ind0': [1, 2, 2, 3], 'ind1': [0, 0, 1, 1]})
+align = pd.DataFrame({"ind0": [1, 2, 2, 3], "ind1": [0, 0, 1, 1]})
 
 example_dict[("alignment", "Alignment", 0)] = align
 
 
-align = pd.DataFrame({'ind0': [2, 2.5, 2.5, 100], 'ind1': [-1, -1, 2, 2]})
+align = pd.DataFrame({"ind0": [2, 2.5, 2.5, 100], "ind1": [-1, -1, 2, 2]})
 
 example_dict[("alignment_loc", "Alignment", 0)] = align
