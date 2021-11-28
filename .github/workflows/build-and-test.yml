@@ -25,7 +25,7 @@ jobs:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
 
   run-notebook-examples:
-    # needs: code-quality
+    needs: code-quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -41,17 +41,16 @@ jobs:
         run: build_tools/run_examples.sh
         shell: bash
 
-  run-tests:
-    # needs: code-quality
+  test-windows:
+    needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-2019]
-        # os: [ubuntu-20.04, windows-2019, macOS-10.15]
         python-version: [3.7, 3.8, 3.9]
-        # compiler: cl
     steps:
       - uses: actions/checkout@v2
+<<<<<<< HEAD
       - name: Check for missing init files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
@@ -61,6 +60,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
+=======
+>>>>>>> split test by platforms
 
       - uses: actions/checkout@v2
       - name: Setup conda
@@ -72,11 +73,6 @@ jobs:
       - run: conda --version
       - run: which python
 
-      # - name: Install sktime and dependencies (linux)
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     python -m pip install .[all_extras,dev]
-
       - name: Install sktime and dependencies (windows)
         run: |
           conda install -c anaconda libpython
@@ -84,28 +80,43 @@ jobs:
           conda install -c conda-forge fbprophet
           conda install -c conda-forge scipy
           python -m pip install .[all_extras,dev]
-        # env:
-        #   CC: cl
-        #   CXX: cl
 
       - name: Show dependecies
         run: python -m pip list
 
-      # - name: Build wheels
-      #   uses: pypa/cibuildwheel@v2.2.2
-      #   env:
-      #     CIBW_BUILD: cp39-*
-      #     CIBW_BEFORE_TEST: python -m pip install .[all_extras]
-      #     CIBW_TEST_COMMAND: >
-      #       mkdir -p testdir/ &&
-      #       cp .coveragerc testdir/ &&
-      #       cp setup.cfg testdir/ &&
-      #       cd testdir/ &&
-      #       pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+      - name: Run tests
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          cd testdir/
+          pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+      - name: Display coverage report
+        run: ls -l ./testdir/
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./testdir/coverage.xml
 
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     path: ./wheelhouse/*.whl
+  test-linux-mac:
+    needs: code-quality
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macOS-10.15]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[all_extras,dev]
 
       - name: Run tests
         run: |
