@@ -13,6 +13,10 @@ from sktime.utils._testing.deep_equals import deep_equals
 
 SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 
+# scitypes which have no conversions defined
+# should be listed here to avoid false positive test errors
+SCITYPES_NO_CONVERSIONS = ["Alignment"]
+
 
 @pytest.mark.parametrize("scitype", SCITYPES)
 def test_convert(scitype):
@@ -31,7 +35,12 @@ def test_convert(scitype):
     mtypes = conv_mat.index.values
 
     if len(mtypes) == 0:
-        raise RuntimeError("no mtypes defined for scitype " + scitype)
+        # if we know there are no conversions defined, skip this test
+        # otherwise this must have been reached by mistake/bug
+        if scitype in SCITYPES_NO_CONVERSIONS:
+            return None
+        else:
+            raise RuntimeError("no mtypes defined for scitype " + scitype)
 
     fixtures = dict()
 
