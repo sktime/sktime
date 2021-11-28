@@ -82,6 +82,7 @@ jobs:
           conda install -c anaconda libpython
           conda install -c conda-forge pystan
           conda install -c conda-forge fbprophet
+          conda install -c conda-forge scipy
           python -m pip install .[all_extras,dev]
         # env:
         #   CC: cl
