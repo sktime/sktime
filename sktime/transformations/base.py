@@ -477,12 +477,13 @@ class BaseTransformer(BaseEstimator):
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
             # & reset index to have integers for instances
+            if isinstance(Xt, (pd.DataFrame, pd.Series)):
+                Xt = Xt.reset_index(drop=True)
             Xt = convert_to(
                 Xt,
                 to_type="pd.DataFrame",
                 as_scitype="Series",
             )
-            Xt = Xt.reset_index(drop=True)
         else:
             # output_scitype is "Panel" and no need for conversion
             pass
