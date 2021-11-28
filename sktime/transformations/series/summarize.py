@@ -10,7 +10,6 @@ import pandas as pd
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.utils._maint import deprecated
-from sktime.utils.validation.series import check_series
 
 ALLOWED_SUM_FUNCS = [
     "mean",
