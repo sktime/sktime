@@ -389,15 +389,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.transformations.series.impute import Imputer
     >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y)
-    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),
     ...     ("forecaster", NaiveForecaster())])
@@ -405,7 +401,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     initial_window=48,
     ...     step_length=12,
     ...     start_with_window=True,
-    ...     fh=fh.to_relative(cutoff=y_train.index[-1]))
+    ...     fh=[1,2,3])
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=[{
@@ -425,8 +421,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     cv=cv,
     ...     n_jobs=-1)
     >>> gscv.fit(y_train)
-    ForecastingGridSearchCV()
-    >>> y_pred = gscv.predict(fh)
+    ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
