@@ -16,6 +16,11 @@ from sktime.datatypes._check import check_dict
 
 SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 
+# scitypes where mtype inference is not unique
+# alignment is excluded since mtypes can be ambiguous
+#   (indices could be both loc or iloc when integers)
+SCITYPES_AMBIGUOUS_MTYPE = ["Alignment"]
+
 
 @pytest.mark.parametrize("scitype", SCITYPES)
 def test_check_positive(scitype):
@@ -86,6 +91,8 @@ def test_check_negative(scitype):
     """
     if scitype not in [s[0] for s in SCITYPE_REGISTER]:
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
+    if scitype in SCITYPES_AMBIGUOUS_MTYPE:
+        return None
     mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
 
     if len(mtypes) == 0:
@@ -139,6 +146,8 @@ def test_mtype_infer(scitype):
     """
     if scitype not in [s[0] for s in SCITYPE_REGISTER]:
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
+    if scitype in SCITYPES_AMBIGUOUS_MTYPE:
+        return None
     mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
 
     if len(mtypes) == 0:
