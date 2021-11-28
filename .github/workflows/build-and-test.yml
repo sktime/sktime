@@ -44,6 +44,7 @@ jobs:
   test-windows:
     needs: code-quality
     runs-on: ${{ matrix.os }}
+    fail-fast: false
     strategy:
       matrix:
         os: [windows-2019]
@@ -101,6 +102,7 @@ jobs:
   test-linux:
     needs: code-quality
     runs-on: ${{ matrix.os }}
+    fail-fast: false
     strategy:
       matrix:
         os: [ubuntu-20.04]
@@ -135,6 +137,7 @@ jobs:
   test-mac:
     needs: code-quality
     runs-on: ${{ matrix.os }}
+    fail-fast: false
     strategy:
       matrix:
         os: [macOS-10.15]
@@ -153,9 +156,9 @@ jobs:
           export CC=/usr/bin/clang
           export CXX=/usr/bin/clang++
           export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-          export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-          export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-          export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+          export CFLAGS="$CFLAGS -I/opt/local/include/libomp"
+          export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
+          export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
           export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
           export PATH="/usr/local/opt/ccache/libexec:$PATH"
           # python setup.py sdist bdist_wheel
