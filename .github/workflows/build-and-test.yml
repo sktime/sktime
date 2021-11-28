@@ -98,12 +98,12 @@ jobs:
         with:
           file: ./testdir/coverage.xml
 
-  test-linux-mac:
+  test-linux:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macOS-10.15]
+        os: [ubuntu-20.04]
         python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
@@ -116,6 +116,49 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install .[all_extras,dev]
+
+      - name: Run tests
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          cd testdir/
+          pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+      - name: Display coverage report
+        run: ls -l ./testdir/
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./testdir/coverage.xml
+
+  test-mac:
+    needs: code-quality
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-10.15]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Build wheel
+        run: |
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+          export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+          export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+          export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+          export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+          export PATH="/usr/local/opt/ccache/libexec:$PATH"
+          # python setup.py sdist bdist_wheel
           python -m pip install .[all_extras,dev]
 
       - name: Run tests
