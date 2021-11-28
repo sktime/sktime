@@ -49,6 +49,7 @@ jobs:
         os: [windows-2019]
         # os: [ubuntu-20.04, windows-2019, macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
+        compiler: clang
     steps:
       - uses: actions/checkout@v2
       - name: Check for missing init files
@@ -78,12 +79,13 @@ jobs:
 
       - name: Install sktime and dependencies (windows)
         run: |
+          conda install -c anaconda libpython
           conda install -c conda-forge pystan
           conda install -c conda-forge fbprophet
           python -m pip install .[all_extras,dev]
-        env:
-          CC: cl
-          CXX: cl
+        # env:
+        #   CC: cl
+        #   CXX: cl
 
       - name: Show dependecies
         run: python -m pip list
