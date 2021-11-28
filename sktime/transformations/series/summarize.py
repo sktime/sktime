@@ -176,25 +176,6 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
 
         return summary_value.T
 
-    def transform(self, Z, X=None):
-        """Transform series.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            The series to transform.
-
-        Returns
-        -------
-        summary_value : pd.DataFrame
-            DataFrame where series are instances (rows) and calculated summary
-            values are treated as features (columns).
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        summary_value = self._transform(Z, X=X)
-        return summary_value
-
 
 class MeanTransformer(SummaryTransformer):
     """Calculate mean value of a time series.

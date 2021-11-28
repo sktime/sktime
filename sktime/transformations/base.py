@@ -420,7 +420,7 @@ class BaseTransformer(BaseEstimator):
             # we concatenate those and overwrite the index with that of X
             elif output_scitype == "Primitives":
                 Xt = pd.concat(Xt)
-                Xt.index = X.index
+                Xt = Xt.reset_index(drop=True)
             return Xt
 
         # convert X/y to supported inner type, if necessary
@@ -476,6 +476,8 @@ class BaseTransformer(BaseEstimator):
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
+            # & reset index to have integers for instances
+            Xt = Xt.reset_index(drop=True)
             Xt = convert_to(
                 Xt,
                 to_type="pd.DataFrame",
