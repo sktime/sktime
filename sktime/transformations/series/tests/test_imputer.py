@@ -15,8 +15,14 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 
 y, X = make_forecasting_problem(make_X=True)
 
+X.iloc[3, 0] = np.nan
 X.iloc[3, 1] = np.nan
+X.iloc[0, 1] = np.nan
+X.iloc[-1, 1] = np.nan
+
 y.iloc[3] = np.nan
+y.iloc[0] = np.nan
+y.iloc[-1] = np.nan
 
 
 @pytest.mark.parametrize("Z", [y, X])
