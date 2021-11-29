@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from scipy import sparse
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
-from sklearn.pipeline import _fit_transform_one, _transform_one
 
 from sktime.transformations.base import _PanelToPanelTransformer
 
@@ -57,71 +56,11 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit_transform(self, X, y=None, **fit_params):
-        """Fit all transformations, transform the data and concatenate results.
-
-        Parameters
-        ----------
-        X : pandas DataFrame
-            Input data to be transformed.
-        y : pandas Series, shape (n_samples, ...), optional
-            Targets for supervised learning.
-
-        Returns
-        -------
-        Xt : pandas DataFrame
-            hstack of results of transformations. sum_n_components is the
-            sum of n_components (output dimension) over transformations.
-        """
-        self._validate_transformers()
-        result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, X, y, weight, **fit_params)
-            for name, trans, weight in self._iter()
-        )
-
-        if not result:
-            # All transformations are None
-            return np.zeros((X.shape[0], 0))
-
-        Xs, transformers = zip(*result)
-        self._update_transformer_list(transformers)
-
-        Xs = self._hstack(list(Xs))
-        self._is_fitted = True
-        return Xs
-
     def fit(self, X, y=None, **fit_params):
         """Fit parameters."""
-        super(FeatureUnion, self).fit(X, y, **fit_params)
+        super().fit(X, y, **fit_params)
         self._is_fitted = True
         return self
-
-    def transform(self, X):
-        """Transform X separately by each transformer, concatenate results.
-
-        Parameters
-        ----------
-        X : pandas DataFrame
-            Input data to be transformed.
-
-        Returns
-        -------
-        Xt : pandas DataFrame
-            hstack of results of transformations. sum_n_components is the
-            sum of n_components (output dimension) over transformations.
-        """
-        self.check_is_fitted()
-        Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
-            for name, trans, weight in self._iter()
-        )
-
-        if not Xs:
-            # All transformations are None
-            return np.zeros((X.shape[0], 0))
-
-        else:
-            return self._hstack(list(Xs))
 
     def _hstack(self, Xs):
         """
@@ -133,7 +72,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
 
-        types = set(type(X) for X in Xs)
+        types = {type(X) for X in Xs}
         if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
             return pd.concat(Xs, axis=1)
 
