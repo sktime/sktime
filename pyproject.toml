@@ -65,6 +65,7 @@ all_extras = [
 
 dev = [
     "cython",
+    "pre-commit",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
