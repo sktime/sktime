@@ -39,15 +39,24 @@ VALID_AGG_FUNCS = {
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
-    The AutoEnsembleForecaster uses a meta-model (regressor) to calculate the optimal
-    weights for ensemble aggregation with mean. The regressor has to be sklearn-like
-    and needs to have either an attribute `feature_importances_` or `coef_`, as this
-    is used as weights. Regressor can also be a sklearn.Pipeline.
+    The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
+    using given method or a meta-model (regressor) .
+    The regressor has to be sklearn-like and needs to have either an attribute
+    `feature_importances_` or `coef_`, as this is used as weights.
+    Regressor can also be a sklearn.Pipeline.
 
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+    method : str, optional, default="feature-importance"
+        Strategy used to compute weights. Available choices: `feature-importance`,
+        `inverse-variance`.
+        `feature-importance`: use the `feature_importances_`
+        or `coef_` as optimal weights.
+        `inverse-variance`: use the inverse of forecasting error variance to
+        compute optimal weights, the passed
+        regressor will be omitted.
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -105,7 +114,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
-        method=None,
+        method="feature-importance",
         regressor=None,
         test_size=None,
         random_state=None,
@@ -115,8 +124,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
-        if method and regressor:
-            raise ValueError("method and regressor can not be used together!")
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
@@ -140,24 +147,25 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         _, forecasters = self._check_forecasters()
 
-        if self.method is None:
+        # get training data for meta-model
+        if X is not None:
+            y_train, y_test, X_train, X_test = temporal_train_test_split(
+                y, X, test_size=self.test_size
+            )
+        else:
+            y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
+            X_train, X_test = None, None
+
+        # fit ensemble models
+        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+        self._fit_forecasters(forecasters, y_train, X_train, fh_test)
+
+        if self.method == "feature-importance":
+
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )
-
-            # get training data for meta-model
-            if X is not None:
-                y_train, y_test, X_train, X_test = temporal_train_test_split(
-                    y, X, test_size=self.test_size
-                )
-            else:
-                y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
-                X_train, X_test = None, None
-
-            # fit ensemble models
-            fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
-            self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
-            X_meta = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
+            X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
 
             # fit meta-model (regressor) on predictions of ensemble models
             # with y_test as endog/target
@@ -169,21 +177,26 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 self.weights_ = _get_weights(self.regressor_.steps[-1][1])
             else:
                 self.weights_ = _get_weights(self.regressor_)
-            self._fit_forecasters(forecasters, y, X, fh)
-        elif self.method == "inv_var":
+
+        elif self.method == "inverse-variance":
             # get in-sample forecasts
-            self._fit_forecasters(forecasters, y, X, fh)
-            fh_insample = ForecastingHorizon(y.index, is_relative=False)
+            if self.regressor is not None:
+                Warning(f"regressor will not be used because ${self.method} is set.")
             inv_var = np.array(
                 [
-                    1 / np.var(y - fit)
-                    for fit in self._predict_forecasters(fh_insample, X)
+                    1 / np.var(y_test - y_pred_test)
+                    for y_pred_test in self._predict_forecasters(fh_test, X)
                 ]
             )
             # standardize the inverse variance
             self.weights_ = list(inv_var / np.sum(inv_var))
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                f"Given method {self.method} does not exist, "
+                f"please provide valid method parameter."
+            )
+
+        self._fit_forecasters(forecasters, y, X, fh)
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
