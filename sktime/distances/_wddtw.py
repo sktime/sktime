@@ -94,7 +94,7 @@ class _WddtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        @njit(cache=True, fastmath=True)
+        @njit(cache=True)
         def numba_wddtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,

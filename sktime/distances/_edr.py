@@ -77,7 +77,7 @@ class _EdrDistance(NumbaDistance):
         if epsilon is not None and not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-        @njit(cache=True, fastmath=True)
+        @njit(cache=True)
         def numba_edr_distance(_x: np.ndarray, _y: np.ndarray) -> float:
             if np.array_equal(_x, _y):
                 return 0.0

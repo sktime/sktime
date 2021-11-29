@@ -76,7 +76,7 @@ class _LcssDistance(NumbaDistance):
         if not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-        @njit(cache=True, fastmath=True)
+        @njit(cache=True)
         def numba_lcss_distance(
             _x: np.ndarray,
             _y: np.ndarray,

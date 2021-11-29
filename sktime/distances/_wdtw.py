@@ -80,7 +80,7 @@ class _WdtwDistance(NumbaDistance):
                 f"The value of g must be a float. The current value is {g}"
             )
 
-        @njit(cache=True, fastmath=True)
+        @njit(cache=True)
         def numba_wdtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
