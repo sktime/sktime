@@ -67,6 +67,10 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         self.check_is_fitted()
         return super().transform(X)
 
+    def fit_transform(self, X, y, **fit_params):
+        """Transform X separately by each transformer, concatenate results."""
+        return self.fit(X, y, **fit_params).transform(X)
+
     def _hstack(self, Xs):
         """
         Stacks X horizontally.
