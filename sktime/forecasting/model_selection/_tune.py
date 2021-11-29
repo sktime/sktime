@@ -409,11 +409,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...         "forecaster__strategy": ["drift", "last", "mean"],
     ...     },
     ...     {
-    ...         "imputer": ["mean", "max"],
+    ...         "imputer__method": ["mean", "drift"],
     ...         "forecaster": [ThetaForecaster(sp=12)],
     ...     },
     ...     {
-    ...         "imputer": ["mean", "max"],
+    ...         "imputer__method": ["mean", "last"],
     ...         "forecaster": [ExponentialSmoothing(sp=12)],
     ...         "forecaster__trend": ["add", "mul"],
     ...     },
