@@ -33,7 +33,7 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
     TimeSeriesForestClassifier,
 )
-from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
@@ -132,7 +132,7 @@ def set_classifier(cls, resample_id=None, train_file=False):
         )
     # Kernel based
     elif name == "rocket":
-        return ROCKETClassifier(random_state=resample_id)
+        return RocketClassifier(random_state=resample_id)
     elif name == "arsenal":
         return Arsenal(random_state=resample_id, save_transformed_data=train_file)
     # Shapelet based
