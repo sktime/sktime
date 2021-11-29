@@ -170,20 +170,22 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             else:
                 self.weights_ = _get_weights(self.regressor_)
             self._fit_forecasters(forecasters, y, X, fh)
-        elif self.method == "inv_var":
+        elif self.method == "inverse-variance":
             # get in-sample forecasts
             self._fit_forecasters(forecasters, y, X, fh)
             fh_insample = ForecastingHorizon(y.index, is_relative=False)
             inv_var = np.array(
                 [
-                    1 / np.var(y - fit)
-                    for fit in self._predict_forecasters(fh_insample, X)
+                    1 / np.var(y - y_pred_insample)
+                    for y_pred_insample in self._predict_forecasters(fh_insample, X)
                 ]
             )
             # standardize the inverse variance
             self.weights_ = list(inv_var / np.sum(inv_var))
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                f"Given method {self.method} does not exist, please provide valid method parameter."
+            )
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
