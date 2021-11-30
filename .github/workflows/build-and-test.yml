@@ -76,8 +76,8 @@ jobs:
       - name: Install sktime and dependencies (windows)
         run: |
           conda install -c anaconda libpython
-          conda install -c conda-forge pystan
-          conda install -c conda-forge fbprophet
+          conda install -c conda-forge "pystan>=2.14,<3.0"
+          conda install -c conda-forge "fbprophet>=0.7.1"
           conda install -c conda-forge scipy
           python -m pip install .[all_extras,dev]
 
