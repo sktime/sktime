@@ -22,8 +22,6 @@ environment:
     TWINE_USERNAME: __token__
 
   matrix:
-    - PYTHON_VERSION: "3.7"
-      MINICONDA_VERSION: C:\Miniconda37-x64
     - PYTHON_VERSION: "3.8.10"
       MINICONDA_VERSION: C:\Miniconda38-x64
       # For Python 3.8, we need a different image, check out available pre-installed Python
@@ -50,7 +48,8 @@ install:
   # purpose but is problematic because it tends to cancel builds pushed
   # directly to main instead of just PR builds.
   # credits: JuliaLang developers.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+  - ps:
+      if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
       https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
       Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
       throw "There are newer queued builds for this pull request, failing early." }
@@ -77,14 +76,15 @@ install:
   # to use for sktime
   - cmd: python setup.py build_ext --compiler=msvc
   - cmd: python setup.py bdist_wheel bdist_wininst
-  - ps: ls dist  # list built artifacts
+  - ps: ls dist # list built artifacts
 
   # Install the built wheel package to test it
   - cmd: pip install --pre --no-index --no-deps --find-links dist/ sktime
 
 test_script:
   # If there is a newer build queued for the same PR, cancel this one.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+  - ps:
+      if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
       https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
       Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
       throw "There are newer queued builds for this pull request, failing early." }
