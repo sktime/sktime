@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from scipy import sparse
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
-from sklearn.pipeline import _fit_transform_one
-from sklearn.pipeline import _transform_one
+from sklearn.pipeline import _fit_transform_one, _transform_one
 
 from sktime.transformations.base import _PanelToPanelTransformer
 
@@ -16,14 +14,15 @@ __author__ = ["Markus Löning"]
 
 class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     """Concatenates results of multiple transformer objects.
+
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
     Parameters of the transformations may be set using its name and the
-    parameter
-    name separated by a '__'. A transformer may be replaced entirely by
+    parameter name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
     or removed by setting to 'drop' or ``None``.
+
     Parameters
     ----------
     transformer_list : list of (string, transformer) tuples
@@ -37,6 +36,8 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+    preserve_dataframe : bool
+        Save constructed dataframe.
     """
 
     _required_parameters = ["transformer_list"]
@@ -58,6 +59,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all transformations, transform the data and concatenate results.
+
         Parameters
         ----------
         X : pandas DataFrame
@@ -89,16 +91,19 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         return Xs
 
     def fit(self, X, y=None, **fit_params):
+        """Fit parameters."""
         super(FeatureUnion, self).fit(X, y, **fit_params)
         self._is_fitted = True
         return self
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
+
         Parameters
         ----------
         X : pandas DataFrame
             Input data to be transformed.
+
         Returns
         -------
         Xt : pandas DataFrame
@@ -121,10 +126,10 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     def _hstack(self, Xs):
         """
         Stacks X horizontally.
-        Supports input types (X): list of
-            numpy arrays, sparse arrays and DataFrames
-        """
 
+        Supports input types (X): list of
+            numpy arrays, sparse arrays and DataFrames.
+        """
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
 
