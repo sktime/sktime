@@ -71,9 +71,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `transform`.
         ``-1`` means using all processors.
-    batch_size : int or None, default=None
+    batch_size : int or None, default=200
         Number of shapelet candidates processed before being merged into the set of best
-        shapelets. If none the max of n_instances and max_shapelets is used.
+        shapelets.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -143,7 +143,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         time_limit_in_minutes=0.0,
         contract_max_n_shapelet_samples=np.inf,
         n_jobs=1,
-        batch_size=None,
+        batch_size=100,
         random_state=None,
     ):
         self.n_shapelet_samples = n_shapelet_samples
@@ -215,9 +215,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         if self.max_shapelets is None:
             self._max_shapelets = min(10 * self.n_instances, 1000)
-
-        if self.batch_size is None:
-            self._batch_size = max(self.n_instances, self._max_shapelets)
 
         if self.max_shapelet_length is None:
             self._max_shapelet_length = self.series_length
