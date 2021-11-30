@@ -223,17 +223,11 @@ We use `pytest <https://docs.pytest.org/en/latest/>`__ for unit testing.
 To check if your code passes all tests locally, you need to install the
 development version of sktime and all extra dependencies.
 
-1. Install all extra requirements from the root directory of sktime:
+1. Install the development version of sktime:
 
    .. code:: bash
 
-      pip install -r build_tools/requirements.txt
-
-2. Install the development version of sktime:
-
-   .. code:: bash
-
-      pip install -e .
+      pip install -e .[dev]
 
    This installs an editable `development
    version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
@@ -244,7 +238,7 @@ development version of sktime and all extra dependencies.
    For trouble shooting on different operating systems, please see our detailed
    `installation instructions <https://www.sktime.org/en/latest/installation.html>`__.
 
-3. To run all unit tests, run:
+2. To run all unit tests, run:
 
    .. code:: bash
 
@@ -326,20 +320,17 @@ other packages as soft dependencies when feasible.
 If you add a new dependency or change the version of an existing one,
 you need to update the following files:
 
--  `sktime/setup.py <https://github.com/alan-turing-institute/sktime/blob/main/setup.py>`__
-   for package installation and minimum version requirements,
--  `build_tools/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/requirements.txt>`__
-   for continuous integration and distribution,
+-  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__
+   following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention all dependencies
+   including build time dependencies and optional dependencies are specified in this file.
 -  `docs/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt>`__
    for building the documentation,
--  `.binder/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/.binder/requirements.txt>`__
-   for launching notebooks on Binder.
 
 If a user is missing a soft dependency, we raise a user-friendly error message.
 This is handled through our ``_check_soft_dependencies`` defined
 `here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
 
-We use contiunous integration tests to check if all soft
+We use continuous integration tests to check if all soft
 dependencies are properly isolated to specific modules.
 If you add a new soft dependency, make sure to add it
 `here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__
