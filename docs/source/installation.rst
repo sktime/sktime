@@ -350,16 +350,32 @@ The building command depends on the architecture of the Python interpreter,
 The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
-You will need `Build Tools for Visual Studio 2017
-<https://visualstudio.microsoft.com/downloads/>`_.
+Installing Build Tools for Visual Studio 2022
+"""""""""""""""""""""""""""""""""""""""""""""
+You will need Build Tools for Visual Studio 2022
 
 .. warning::
-	You DO NOT need to install Visual Studio 2019.
-	You only need the "Build Tools for Visual Studio 2019",
-	under "All downloads" -> "Tools for Visual Studio 2019".
+	You DO NOT need to install Visual Studio 2022.
+	You only need the "Build Tools for Visual Studio 2022"
+
+1. Follow the `link <https://visualstudio.microsoft.com/downloads/>`_.
+2. Scrolls down to "Tools for Visual Studio 2022" and click the dropdown,
+3. Download and install "Build Tools for Visual Studio 2022"
+4. Open the Visual Studio installer
+5. Tick "Desktop Development with C++"
+6. In the panel to the write make sure "MSVC v143 VS 2022 C++ x64/x86 build tools (Latest)" is selected
+7. Click install
+
+.. images:: images/visual_installer_selection.png
 
 For 64-bit Python, configure the build environment with:
 
+.. code-block:: bash
+
+    SET DISTUTILS_USE_SDK=1
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+For 32-bit Python, configure the build environment with:
 .. code-block:: bash
 
     SET DISTUTILS_USE_SDK=1
@@ -374,19 +390,29 @@ And build sktime from this environment:
 
     python setup.py install
 
-Replace ``x64`` by ``x86`` to build for 32-bit Python.
-
 Some users have experienced issues when installing NumPy, particularly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
 
+Setting up a Conda environment
+""""""""""""""""""""""""""""""
 If you run into a problem installing the development version and are using Anaconda, try:
 
-1. Install Anaconda
-2. Create new environment: :code:`conda create -n sktime-dev python=3.8`
-3. Activate environment: :code:`conda activate sktime-dev`
-4. Install NumPy (pinned to 1.19.3) from pip: :code:`pip install numpy==1.19.3`
-5. Install requirements: :code:`pip install -r build_tools/requirements.txt`
-6. Follow the instructions above to point to "vcvarsall.bat"
-7. Run :code:`pip install --verbose --no-build-isolation --editable .`
+1. Open up an anaconda terminal
+2. Navigate to your local sktime folder :code:`cd sktime`
+3. Create new environment: :code:`conda create -n sktime-dev python=3.8`
+4. Activate environment: :code:`conda activate sktime-dev`
+5. Install required packages:
+    1. :code:`pip install numpy=1.19.3`
+    2. :code:`pip install cython`
+    3. :code:`pip install -r build_tools/requirements.txt`
+    4. If **fbprophet** fails to install:
+      1. :code:`conda install -c anaconda ephem`
+      2. :code:`conda install -c conda-forge install -c pystan`
+      3. :code:`conda install -c conda-forge install -c fbprophet`
+      4. Verify all requirements are satisfied by running :code:`pip install -r build_tools/requirements.txt` with no errors
+6. Point to :code:`vcvarsall.bat` using instructions above
+7. Build an editable version of sktime :code:`pip install -e .[all_extras]`
+8. Should see message "successfully installed sktime"
+
 
 In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
 
