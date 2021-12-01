@@ -95,6 +95,7 @@ test_script:
   # installed library.
   - ps: mkdir %TEST_DIR%
   - ps: cp setup.cfg %TEST_DIR%
+  - ps: mv sktime/tests %TEST_DIR%
   - ps: cd %TEST_DIR%
   - ps: >-
       if (Test-Path variable:global:CHECK_WARNINGS) {
