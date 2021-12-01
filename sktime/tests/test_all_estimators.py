@@ -348,9 +348,14 @@ def test_fit_returns_self(estimator_instance):
 def test_raises_not_fitted_error(estimator_instance):
     """Check that we raise appropriate error for unfitted estimators."""
     estimator = estimator_instance
+
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
+        # if has fit-in-transform tag (empty fit), no error needs to be raised
+        if method == "transform" and estimator.get_tag("fit-in-transform"):
+            return None
+        # otherwise check if an error is raised
         if hasattr(estimator, method):
             args = _make_args(estimator, method)
             with pytest.raises(NotFittedError, match=r"has not been fitted"):
