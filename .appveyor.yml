@@ -103,7 +103,7 @@ test_script:
           $env:PYTEST_ARGS = ""
       }
   # Run tests
-  - cmd: pytest sktime\tests\test_all_estimators.py --showlocals --durations=0 --timeout=300 %PYTEST_ARGS% --pyargs sktime
+  - cmd: pytest -m "all_estimators" --showlocals --durations=0 --timeout=300 %PYTEST_ARGS%
 
   # Move back to the project folder
   - ps: cd ..
