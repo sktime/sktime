@@ -285,13 +285,13 @@ the ``index.rst`` file.
 
 To build the documentation locally, you need to install a few extra
 dependencies listed in
-`docs/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt>`__.
+`pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__.
 
-1. To install extra requirements from the root directory, run:
+1. To install extra dependencies from the root directory, run:
 
    .. code:: bash
 
-      pip install -r docs/requirements.txt
+      pip install .[docs]
 
 2. To build the website locally, run:
 
@@ -318,13 +318,11 @@ other packages as soft dependencies when feasible.
    use a module that requires a soft dependency.
 
 If you add a new dependency or change the version of an existing one,
-you need to update the following files:
+you need to update the following file:
 
 -  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__
    following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention all dependencies
    including build time dependencies and optional dependencies are specified in this file.
--  `docs/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt>`__
-   for building the documentation,
 
 If a user is missing a soft dependency, we raise a user-friendly error message.
 This is handled through our ``_check_soft_dependencies`` defined
