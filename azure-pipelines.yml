@@ -5,7 +5,6 @@
 # - https://iscinumpy.gitlab.io/post/azure-devops-releases/
 
 variables:
-  REQUIREMENTS: build_tools/requirements.txt
   INCLUDED_VERSIONS: "cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39"
 
 trigger:
