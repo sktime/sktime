@@ -411,7 +411,7 @@ If you run into a problem installing the development version and are using Anaco
       4. Verify all requirements are satisfied by running :code:`pip install -r build_tools/requirements.txt` with no errors
 6. Point to :code:`vcvarsall.bat` using instructions above
 7. Build an editable version of sktime :code:`pip install -e .[all_extras]`
-8. Should see message "successfully installed sktime"
+8. If everything has worked you should see message "successfully installed sktime"
 
 
 In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
