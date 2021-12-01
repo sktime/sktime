@@ -49,7 +49,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    n_shapelet_samples : int, default=100000
+    n_shapelet_samples : int, default=10000
         The number of candidate shapelets to be considered for the final transform.
         Filtered down to <= max_shapelets, keeping the shapelets with the most
         information gain.
@@ -71,7 +71,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `transform`.
         ``-1`` means using all processors.
-    batch_size : int or None, default=200
+    batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
         shapelets.
     random_state : int or None, default=None
@@ -135,7 +135,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
     def __init__(
         self,
-        n_shapelet_samples=100000,
+        n_shapelet_samples=10000,
         max_shapelets=None,
         min_shapelet_length=3,
         max_shapelet_length=None,
