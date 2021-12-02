@@ -25,7 +25,6 @@ jobs:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
 
   static-type-checking:
-    needs: code-quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -39,7 +38,7 @@ jobs:
         run: mypy --config-file setup.cfg sktime/
 
   test-examples:
-    needs: static-type-checking
+    needs: [code-quality, static-type-checking]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -63,7 +62,7 @@ jobs:
         shell: bash
 
   build:
-    needs: code-quality
+    needs: [code-quality, static-type-checking]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
