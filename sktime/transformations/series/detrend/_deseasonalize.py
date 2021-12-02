@@ -44,6 +44,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     See Also
     --------
     ConditionalDeseasonalizer
+    STLTransformer
 
     Notes
     -----
@@ -170,6 +171,24 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         z = check_series(Z, enforce_univariate=True)
         seasonal = self._align_seasonal(z)
         return self._inverse_transform(z, seasonal)
+
+    def update(self, Z, X=None, update_params=False):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, default=False
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        self.check_is_fitted()
+        z = check_series(Z, enforce_univariate=True)
+        self._set_y_index(z)
+        return self
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
@@ -510,19 +529,3 @@ class STLTransformer(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         return self._inverse_transform(z)
-
-    def update(self, Z, X=None, update_params=False):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, default=False
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        self.check_is_fitted()
-        return self
