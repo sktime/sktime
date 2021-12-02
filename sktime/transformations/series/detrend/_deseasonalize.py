@@ -386,17 +386,6 @@ class STLTransformer(_SeriesToSeriesTransformer):
     >>> y = load_airline()
     >>> transformer = STLTransformer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
-    >>>
-    >>> # Creating a forecaster with an STLTransformer:
-    >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> forecaster = TransformedTargetForecaster([
-    ...     ("deseasonalize", STLTransformer(sp=12)),
-    ...     ("forecaster", PolynomialTrendForecaster(degree=1)),
-    ... ])
-    >>> forecaster.fit(y)
-    TransformedTargetForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
