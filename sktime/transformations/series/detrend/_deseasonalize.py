@@ -401,7 +401,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     def __init__(
         self,
-        sp=1,
+        sp=2,
         seasonal=7,
         trend=None,
         low_pass=None,
