@@ -11,9 +11,8 @@ import pandas as pd
 from statsmodels.tsa.seasonal import STL as _STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from sktime.forecasting.base._fh import _check_cutoff, _coerce_to_period
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.datetime import _coerce_duration_to_int, _get_duration, _get_freq
+from sktime.utils.datetime import _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
@@ -73,21 +72,18 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
                 f"`model` must be one of {allowed_models}, " f"but found: {model}"
             )
         self.model = model
-        self._y_index = None
+        self._Z_index = None
         self.seasonal_ = None
         super(Deseasonalizer, self).__init__()
-
-    def _set_y_index(self, y):
-        self._y_index = y.index
 
     def _align_seasonal(self, y):
         """Align seasonal components with y's time index."""
         shift = (
             -_get_duration(
                 y.index[0],
-                self._y_index[0],
+                self._Z_index[0],
                 coerce_to_int=True,
-                unit=_get_freq(self._y_index),
+                unit=_get_freq(self._Z_index),
             )
             % self.sp
         )
@@ -107,7 +103,7 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         """
         self._is_fitted = False
         z = check_series(Z, enforce_univariate=True)
-        self._set_y_index(z)
+        self._Z_index = z.index
         sp = check_sp(self.sp)
 
         # apply seasonal decomposition
@@ -174,24 +170,6 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
         z = check_series(Z, enforce_univariate=True)
         seasonal = self._align_seasonal(z)
         return self._inverse_transform(z, seasonal)
-
-    def update(self, Z, X=None, update_params=False):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, default=False
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        self._set_y_index(z)
-        return self
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
@@ -285,7 +263,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         self : an instance of self
         """
         z = check_series(Z, enforce_univariate=True)
-        self._set_y_index(z)
+        self._Z_index = z.index
         sp = check_sp(self.sp)
 
         # set default condition
@@ -424,53 +402,8 @@ class STLTransformer(_SeriesToSeriesTransformer):
         self.seasonal_jump = seasonal_jump
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
-        self._y_index = None
+        self._Z_index = None
         super(STLTransformer, self).__init__()
-
-    def _set_y_index(self, y):
-        # get the index for the training data to use for seasonal index alignment
-        self._y_index = y.index
-
-    def _set_y_len(self, y):
-        self._y_len = len(y)
-
-    def _to_relative(self, y):
-        absolute = y.index
-        cutoff = self._y_index[0]
-        _check_cutoff(cutoff, absolute)
-
-        if isinstance(absolute, pd.DatetimeIndex):
-            # We cannot use the freq from the the ForecastingHorizon itself (or its
-            # wrapped pd.DatetimeIndex) because it may be none for non-regular
-            # indices, so instead we use the freq of cutoff.
-            freq = _get_freq(cutoff)
-
-            # coerce to pd.Period for reliable arithmetics and computations of
-            # time deltas
-            absolute = _coerce_to_period(absolute, freq)
-            cutoff = _coerce_to_period(cutoff, freq)
-
-        # Compute relative values
-        relative = absolute - cutoff
-
-        # Coerce durations (time deltas) into integer values for given frequency
-        if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-            relative = _coerce_duration_to_int(relative, freq=_get_freq(cutoff))
-
-        return relative
-
-    def _align_seasonal_index(self, y):
-        # align seasonal index. If index is within training data use the index
-        # to align seasonality if index is out of sample (i.e. forecasting)
-        # use following formula: k = sp - index + m*floor((index-1)/sp)
-        # for more details:
-        # https://www.statsmodels.org/stable/examples/notebooks/generated/stl_decomposition.html
-
-        _idx = self._to_relative(y)
-        T = self._y_len
-        h = _idx - T
-        m = self.sp
-        return np.where(h >= 0, T - m + h % m, _idx)
 
     def fit(self, Z, X=None):
         """Fit to data.
@@ -486,8 +419,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
         """
         self._is_fitted = False
         z = check_series(Z, enforce_univariate=True)
-        self._set_y_len(z)
-        self._set_y_index(z)
+        self._Z_index = Z.index
         sp = check_sp(self.sp)
 
         # The statsmodels.tsa.seasonal.STL can only deal with sp >= 2
@@ -516,7 +448,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
         return self
 
     def _transform(self, y):
-        if not self._y_index.equals(y.index):
+        if not self._Z_index.equals(y.index):
             raise NotImplementedError(
                 """
                 STLTransformer is only a descriptive trasnformer and
@@ -526,15 +458,14 @@ class STLTransformer(_SeriesToSeriesTransformer):
         return y - self.seasonal_
 
     def _inverse_transform(self, y):
-        if not self._y_index.equals(y.index):
+        if not self._Z_index.equals(y.index):
             raise NotImplementedError(
                 """
                 STLTransformer is only a descriptive trasnformer and
                 can only inverse_transform data that was given in fit().
                 Please use Deseasonalizer or Detrender."""
             )
-        seasonal_index = self._align_seasonal_index(y)
-        return y + self.seasonal_[seasonal_index]
+        return y + self.seasonal_
 
     def transform(self, Z, X=None):
         """Transform data.
