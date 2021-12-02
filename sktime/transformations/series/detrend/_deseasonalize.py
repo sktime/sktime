@@ -516,9 +516,23 @@ class STLTransformer(_SeriesToSeriesTransformer):
         return self
 
     def _transform(self, y):
+        if not self._y_index.equals(y.index):
+            raise NotImplementedError(
+                """
+                STLTransformer is only a descriptive trasnformer and
+                can only transform data that was given in fit().
+                Please use Deseasonalizer or Detrender."""
+            )
         return y - self.seasonal_
 
     def _inverse_transform(self, y):
+        if not self._y_index.equals(y.index):
+            raise NotImplementedError(
+                """
+                STLTransformer is only a descriptive trasnformer and
+                can only inverse_transform data that was given in fit().
+                Please use Deseasonalizer or Detrender."""
+            )
         seasonal_index = self._align_seasonal_index(y)
         return y + self.seasonal_[seasonal_index]
 
