@@ -103,7 +103,7 @@ test_script:
           $env:PYTEST_ARGS = ""
       }
   # Run tests
-  - cmd: pytest --showlocals --durations=0 --timeout=90 %PYTEST_ARGS% --pyargs sktime
+  - cmd: pytest --showlocals --durations=0 %PYTEST_ARGS% --pyargs sktime
 
   # Move back to the project folder
   - ps: cd ..
