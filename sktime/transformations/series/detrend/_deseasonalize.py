@@ -319,9 +319,9 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     The STLTransformer is a descriptive transformer to remove seasonality
     from a series and is based on statsmodels.STL. It returns deseasonalized
-    data. The all three components trend, seasons and residuals can be accessed
+    data. All three components trend, season and residuals can be accessed
     via attributes trend_, season_ and resid_. STLTransformer can not transform
-    or inverse_transform on data that was not given in fit() previously.
+    or inverse_transform on data that was not given in fit() before.
     This means that for pipelining, the Deseasonalizer or Detrender must be
     used instead of STLTransformer.
 
