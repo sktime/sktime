@@ -101,7 +101,6 @@ def pytest_generate_tests(metafunc):
         )
 
 
-@pytest.mark.all_estimators
 def test_create_test_instance(estimator_class):
     """Check first that create_test_instance logic works."""
     estimator = estimator_class.create_test_instance()
@@ -110,7 +109,6 @@ def test_create_test_instance(estimator_class):
     assert isinstance(estimator, estimator_class)
 
 
-@pytest.mark.all_estimators
 def test_required_params(estimator_class):
     """Check required parameter interface."""
     Estimator = estimator_class
@@ -142,7 +140,7 @@ def test_required_params(estimator_class):
                 f"{in_required_but_not_init}"
             )
 
-@pytest.mark.all_estimators
+
 def test_estimator_tags(estimator_class):
     """Check conventions on estimator tags."""
     Estimator = estimator_class
@@ -168,7 +166,6 @@ def test_estimator_tags(estimator_class):
         )
 
 
-@pytest.mark.all_estimators
 def test_inheritance(estimator_class):
     """Check that estimator inherits from BaseEstimator."""
     Estimator = estimator_class
@@ -190,7 +187,6 @@ def test_inheritance(estimator_class):
         assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 
-@pytest.mark.all_estimators
 def test_has_common_interface(estimator_class):
     """Check estimator implements the common interface."""
     estimator = estimator_class
@@ -211,7 +207,6 @@ def test_has_common_interface(estimator_class):
         assert hasattr(estimator, "predict")
 
 
-@pytest.mark.all_estimators
 def test_get_params(estimator_instance):
     """Check that get_params works correctly."""
     estimator = estimator_instance
@@ -220,7 +215,6 @@ def test_get_params(estimator_instance):
     _check_get_params_invariance(estimator.__class__.__name__, estimator)
 
 
-@pytest.mark.all_estimators
 def test_set_params(estimator_instance):
     """Check that set_params works correctly."""
     estimator = estimator_instance
@@ -229,21 +223,18 @@ def test_set_params(estimator_instance):
     _check_set_params(estimator.__class__.__name__, estimator)
 
 
-@pytest.mark.all_estimators
 def test_clone(estimator_instance):
     """Check we can call clone from scikit-learn."""
     estimator = estimator_instance
     clone(estimator)
 
 
-@pytest.mark.all_estimators
 def test_repr(estimator_instance):
     """Check we can call repr."""
     estimator = estimator_instance
     repr(estimator)
 
 
-@pytest.mark.all_estimators
 def check_constructor(estimator_class):
     """Check that the constructor behaves correctly."""
     estimator = estimator_class.create_test_instance()
@@ -318,7 +309,6 @@ def check_constructor(estimator_class):
                 assert param_value == param.default, param.name
 
 
-@pytest.mark.all_estimators
 def test_fit_updates_state(estimator_instance):
     """Check fit/update state change."""
     # Check that fit updates the is-fitted states
@@ -346,7 +336,6 @@ def test_fit_updates_state(estimator_instance):
         ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
 
-@pytest.mark.all_estimators
 def test_fit_returns_self(estimator_instance):
     """Check that fit returns self."""
     estimator = estimator_instance
@@ -356,7 +345,6 @@ def test_fit_returns_self(estimator_instance):
     ), f"Estimator: {estimator} does not return self when calling fit"
 
 
-@pytest.mark.all_estimators
 def test_raises_not_fitted_error(estimator_instance):
     """Check that we raise appropriate error for unfitted estimators."""
     estimator = estimator_instance
@@ -369,7 +357,6 @@ def test_raises_not_fitted_error(estimator_instance):
                 getattr(estimator, method)(*args)
 
 
-@pytest.mark.all_estimators
 def test_fit_idempotent(estimator_instance):
     """Check that calling fit twice is equivalent to calling it once."""
     estimator = estimator_instance
@@ -401,7 +388,6 @@ def test_fit_idempotent(estimator_instance):
             )
 
 
-@pytest.mark.all_estimators
 def test_fit_does_not_overwrite_hyper_params(estimator_instance):
     """Check that we do not overwrite hyper-parameters in fit."""
     estimator = estimator_instance
@@ -433,7 +419,6 @@ def test_fit_does_not_overwrite_hyper_params(estimator_instance):
         )
 
 
-@pytest.mark.all_estimators
 def test_methods_do_not_change_state(estimator_instance):
     """Check that non-state-changing methods do not change state.
 
@@ -470,7 +455,6 @@ def test_methods_do_not_change_state(estimator_instance):
             ), f"Estimator: {estimator} changes __dict__ during {method}"
 
 
-@pytest.mark.all_estimators
 def test_methods_have_no_side_effects(estimator_instance):
     """Check that calling methods has no side effects on args."""
     estimator = estimator_instance
@@ -497,7 +481,6 @@ def test_methods_have_no_side_effects(estimator_instance):
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
-@pytest.mark.all_estimators
 def test_persistence_via_pickle(estimator_instance):
     """Check that we can pickle all estimators."""
     estimator = estimator_instance
@@ -528,7 +511,6 @@ def test_persistence_via_pickle(estimator_instance):
         )
 
 
-@pytest.mark.all_estimators
 def test_multiprocessing_idempotent(estimator_class):
     """Test that single and multi-process run results are identical.
 
@@ -574,14 +556,12 @@ def test_multiprocessing_idempotent(estimator_class):
                 )
 
 
-@pytest.mark.all_estimators
 def test_valid_estimator_class_tags(estimator_class):
     """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
     for tag in estimator_class.get_class_tags().keys():
         assert tag in VALID_ESTIMATOR_TAGS
 
 
-@pytest.mark.all_estimators
 def test_valid_estimator_tags(estimator_instance):
     """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
     for tag in estimator_instance.get_tags().keys():

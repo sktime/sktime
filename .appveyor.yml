@@ -96,7 +96,6 @@ test_script:
   - ps: mkdir %TEST_DIR%
   - ps: cp setup.cfg %TEST_DIR%
   - ps: mv sktime/tests %TEST_DIR%
-  - ps: cd %TEST_DIR%
   - ps: >-
       if (Test-Path variable:global:CHECK_WARNINGS) {
           $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning -Werror::UserWarning"
@@ -104,7 +103,7 @@ test_script:
           $env:PYTEST_ARGS = ""
       }
   # Run tests
-  - cmd: pytest -m "all_estimators" --showlocals --durations=0 --timeout=90 %PYTEST_ARGS%
+  - cmd: pytest --showlocals --durations=0 --timeout=90 %PYTEST_ARGS% --pyargs sktime
 
   # Move back to the project folder
   - ps: cd ..
