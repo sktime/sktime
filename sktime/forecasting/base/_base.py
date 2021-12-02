@@ -1227,7 +1227,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _predict_interval(self, fh, X, coverage):
+    def _predict_interval(self, fh=fh, X=None, coverage=None):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.

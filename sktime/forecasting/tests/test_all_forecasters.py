@@ -317,13 +317,16 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             with pytest.raises(NotImplementedError, match="prediction intervals"):
                 f.predict(return_pred_int=True, alpha=alpha)
 
+
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
 
     # check if the input is a dataframe
     assert isinstance(pred_quantiles, pd.DataFrame)
 
     # check time index (also checks forecasting horizon is more than one element)
-    _assert_correct_pred_time_index(pred_quantiles.index.levels[0], y_train.index[-1], fh)
+    _assert_correct_pred_time_index(
+        pred_quantiles.index.levels[0], y_train.index[-1], fh
+    )
 
     # multiply variables with all alpha values
     expected = pd.MultiIndex.from_product(y_train.columns, alpha)
@@ -331,14 +334,14 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha
 
     if isinstance(alpha, list):
         # sorts the columns that correspond to alpha values
-        pred_quantiles = pred_quantiles.reindex(columns= pred_quantiles.columns.reindex(sorted(alpha), level = 1)[0])
+        pred_quantiles = pred_quantiles.reindex(
+            columns=pred_quantiles.columns.reindex(sorted(alpha), level=1)[0]
+        )
 
         # check if values are monotonically increasing
         for var in pred_quantiles.columns.levels[0]:
             for index in range(len(pred_quantiles.index)):
                 assert pred_quantiles[var].iloc[index].is_monotonic_increasing
-
-
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -347,19 +350,19 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha
 def test_predict_quantiles(Forecaster, fh, alpha):
     """Check prediction intervals returned by predict.
 
-        Arguments
-        ---------
-        Forecaster: BaseEstimator class descendant, forecaster to test
-        fh: ForecastingHorizon, fh at which to test prediction
-        alpha: float, alpha at which to make prediction intervals
+    Arguments
+    ---------
+    Forecaster: BaseEstimator class descendant, forecaster to test
+    fh: ForecastingHorizon, fh at which to test prediction
+    alpha: float, alpha at which to make prediction intervals
 
-        Raises
-        ------
-        AssertionError - if Forecaster test instance has "capability:pred_int"
-                and pred. int are not returned correctly when asking predict for them
-        AssertionError - if Forecaster test instance does not have "capability:pred_int"
-                and no NotImplementedError is raised when asking predict for pred.int
-        """
+    Raises
+    ------
+    AssertionError - if Forecaster test instance has "capability:pred_int"
+            and pred. int are not returned correctly when asking predict for them
+    AssertionError - if Forecaster test instance does not have "capability:pred_int"
+            and no NotImplementedError is raised when asking predict for pred.int
+    """
     f = _construct_instance(Forecaster)
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
     for n_columns in n_columns_list:

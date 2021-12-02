@@ -162,9 +162,9 @@ class ThetaForecaster(ExponentialSmoothing):
         if self.deseasonalize:
             y_pred = self.deseasonalizer_.inverse_transform(y_pred)
 
-        if return_pred_int:
-            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, pred_int
+        # if return_pred_int:
+        #    pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
+        #    return y_pred, pred_int
 
         return y_pred
 
@@ -220,8 +220,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # compute prediction intervals
         pred_int = [
-            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
-            for error in errors
+            pd.concat((y_pred[0] - error, y_pred[0] + error)) for error in errors
         ]
 
         # for a single alpha, return single pd.DataFrame
@@ -230,6 +229,86 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # otherwise return list of pd.DataFrames
         return pred_int
+
+    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction quantiles for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple quantiles will be calculated.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list of float, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        alphas = []
+        for a in alpha:
+            a = (a - 0.5) * 2
+            alphas.append(a)
+
+        # otherwise return list of pd.DataFrames
+        return self._predict_interval(coverage=alphas)
+
+    def _predict_interval(
+        self,
+        fh=None,
+        X=None,
+        coverage=0.90,
+    ):
+        """Compute/return prediction interval forecasts.
+
+        If coverage is iterable, multiple intervals will be calculated.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : float or list of float, optional (default=0.90)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being quantile fractions for interval low-high.
+                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        alpha = []
+        for c in coverage:
+            alpha.extend([0.5 - c / 2, 0.5 + c / 2])
+
+        y_pred = super(ThetaForecaster, self).predict(
+            fh, X, return_pred_int=False, alpha=alpha
+        )
+
+        return self.compute_pred_int(y_pred, alpha)
 
     def _compute_pred_err(self, alphas):
         """Get the prediction errors for the forecast."""
