@@ -10,6 +10,7 @@ import time
 
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
@@ -105,6 +106,7 @@ def evaluate(
         # fit/update
         start_fit = time.time()
         if i == 0 or strategy == "refit":
+            forecaster = clone(forecaster)
             forecaster.fit(y_train, X_train, fh=fh, **fit_params)
 
         else:  # if strategy == "update":
