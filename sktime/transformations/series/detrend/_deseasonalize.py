@@ -298,13 +298,13 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 class STLTransformer(_SeriesToSeriesTransformer):
     """Remove seasonal components from a time-series using STL.
 
-    The STLTransformer works by first fitting STL to the input time-series. The seasonal
-    component is removed from the input time-series which can be passed to a forecaster
-    (in the below example PolynomialTrendForecaster).
-    The forecaster will be fitted to the seasonally adjusted data.
-    When predicting, a forecast will be generated without considering the seasonality.
-    The seasonallity is then added by using the last year of the seasonal component
-    found by the STLTransformer.
+    The STLTransformer is a descriptive transformer to remove seasonality
+    from a series and is based on statsmodels.STL. It returns deseasonalized
+    data. The all three components trend, seasons and residuals can be accessed
+    via attributes trend_, season_ and resid_. STLTransformer can not transform
+    or inverse_transform on data that was not given in fit() previously.
+    This means that for pipelining, the Deseasonalizer or Detrender must be
+    used instead of STLTransformer.
 
     Parameters
     ----------
@@ -354,6 +354,11 @@ class STLTransformer(_SeriesToSeriesTransformer):
         Seasonal components.
     self.resid_ : pd.Series
         Residuals component.
+
+    See Also
+    --------
+    Detrender
+    Deseasonalizer
 
     Examples
     --------
