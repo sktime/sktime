@@ -104,7 +104,7 @@ test_script:
           $env:PYTEST_ARGS = ""
       }
   # Run tests
-  - cmd: pytest -m "all_estimators" --showlocals --durations=0 --timeout=300 %PYTEST_ARGS%
+  - cmd: pytest -m "all_estimators" --showlocals --durations=0 --timeout=90 %PYTEST_ARGS%
 
   # Move back to the project folder
   - ps: cd ..
