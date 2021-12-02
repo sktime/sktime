@@ -295,6 +295,7 @@ ESTIMATOR_TEST_PARAMS = {
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
+        "n_jobs": 0,
     },
     RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
