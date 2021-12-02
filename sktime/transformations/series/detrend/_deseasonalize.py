@@ -370,8 +370,12 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     Attributes
     ----------
+    self.trend_ : pd.Series
+        Trend component.
     seasonal_ : pd.Series
-        Seasonal components computed in seasonal decomposition.
+        Seasonal components.
+    self.resid_ : pd.Series
+        Residuals component.
 
     Examples
     --------
@@ -486,29 +490,28 @@ class STLTransformer(_SeriesToSeriesTransformer):
         self._set_y_index(z)
         sp = check_sp(self.sp)
 
-        if sp > 1:
-            # apply seasonal decomposition
-            _seasonalizer = _STL(
-                z.values,
-                period=sp,
-                seasonal=self.seasonal,
-                trend=self.trend,
-                low_pass=self.low_pass,
-                seasonal_deg=self.seasonal_deg,
-                trend_deg=self.trend_deg,
-                low_pass_deg=self.low_pass_deg,
-                robust=self.robust,
-                seasonal_jump=self.seasonal_jump,
-                trend_jump=self.trend_jump,
-                low_pass_jump=self.low_pass_jump,
-            ).fit()
-            self.stl_model = _seasonalizer
-            self.seasonal_ = self.stl_model.seasonal
-        else:
-            self.stl_model = None
-            self.seasonal_ = np.zeros_like(z.values)
+        # The statsmodels.tsa.seasonal.STL can only deal with sp >= 2
+        if sp < 2:
+            raise ValueError("sp must be positive integer >= 2")
+        self._stl = _STL(
+            z.values,
+            period=sp,
+            seasonal=self.seasonal,
+            trend=self.trend,
+            low_pass=self.low_pass,
+            seasonal_deg=self.seasonal_deg,
+            trend_deg=self.trend_deg,
+            low_pass_deg=self.low_pass_deg,
+            robust=self.robust,
+            seasonal_jump=self.seasonal_jump,
+            trend_jump=self.trend_jump,
+            low_pass_jump=self.low_pass_jump,
+        ).fit()
 
-        self.seasonal_ = pd.Series(self.seasonal_, index=Z.index)
+        self.seasonal_ = pd.Series(self._stl.seasonal, index=Z.index)
+        self.resid_ = pd.Series(self._stl.resid, index=Z.index)
+        self.trend_ = pd.Series(self._stl.trend, index=Z.index)
+
         self._is_fitted = True
         return self
 
@@ -522,7 +525,9 @@ class STLTransformer(_SeriesToSeriesTransformer):
     def transform(self, Z, X=None):
         """Transform data.
 
-        Returns a transformed version of y.
+        Returns a transformed version yt of y. The seasonal component is removed from y.
+        The trend and residual components can be accessed via
+        the attributes trend_ and resid_ for the fitted data.
 
         Parameters
         ----------
@@ -532,7 +537,6 @@ class STLTransformer(_SeriesToSeriesTransformer):
         Returns
         -------
         yt : pd.Series
-            Transformed time series.
         """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
