@@ -177,7 +177,14 @@ class Arsenal(BaseClassifier):
         try:
             self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         except ValueError:
-            raise ValueError(" ERROR IN ARSENAL: X shape = (", X.shape, ")  X = ", X)
+            raise ValueError(
+                " ERROR IN ARSENAL: X dimensions =",
+                X.ndim,
+                "shape = (" "",
+                X.shape,
+                ")  X = ",
+                X,
+            )
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
