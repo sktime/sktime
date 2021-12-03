@@ -10,7 +10,7 @@ __author__ = [
     "Luis Zugasti",
     "Lovkush Agarwal",
     "Markus Löning",
-    "Arelo Tanoh",
+    "AreloTanoh",
 ]
 
 __all__ = [
