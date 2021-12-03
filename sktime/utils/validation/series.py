@@ -10,8 +10,8 @@ __all__ = [
     "check_equal_time_index",
     "check_consistent_index_type",
 ]
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
@@ -56,6 +56,7 @@ def check_series(
     allow_numpy=True,
     allow_None=True,
     enforce_index_type=None,
+    allow_index_names=False,
     var_name="input",
 ):
     """Validate input data to be a valid mtype for Series.
@@ -76,6 +77,8 @@ def check_series(
         whether no error is raised if Z is None
     enforce_index_type : type, default = None
         type of time index
+    allow_index_names : bool, default = False
+        If False, names of Z.index will be set to None
     var_name : str, default = "input" - variable name printed in error messages
 
     Returns
@@ -138,6 +141,9 @@ def check_series(
             enforce_index_type=enforce_index_type,
             var_name=var_name,
         )
+
+    if not allow_index_names and not isinstance(Z, np.ndarray):
+        Z.index.names = [None for name in Z.index.names]
 
     return Z
 

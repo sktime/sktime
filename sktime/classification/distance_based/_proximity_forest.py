@@ -4,40 +4,29 @@
 A decision tree forest which uses distance measures to partition data.
 """
 
-# linkedin.com/goastler; github.com/goastler
-__author__ = ["George Oastler"]
-__all__ = ["ProximityForest", "_CachedTransformer", "ProximityStump", "ProximityTree"]
+__author__ = ["goastler"]
+__all__ = ["ProximityForest", "ProximityStump", "ProximityTree"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from scipy import stats
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.distances.elastic_cython import erp_distance
-from sktime.distances.elastic_cython import lcss_distance
-from sktime.distances.elastic_cython import msm_distance
-from sktime.distances.elastic_cython import twe_distance
-from sktime.distances.elastic_cython import wdtw_distance
-from sktime.classification.distance_based._proximity_forest_utils import max as _max
-from sktime.classification.distance_based._proximity_forest_utils import (
-    arg_min as _arg_min,
-)
+
 from sktime.classification.base import BaseClassifier
-from sktime.classification.distance_based._proximity_forest_utils import (
-    positive_dataframe_indices,
-    max_instance_length,
-    negative_dataframe_indices,
+from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.distances.elastic_cython import (
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    twe_distance,
+    wdtw_distance,
 )
-from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -120,9 +109,14 @@ class _CachedTransformer(_PanelToPanelTransformer):
 def _derivative_distance(distance_measure, transformer):
     """Take derivative before conducting distance measure.
 
-    :param distance_measure: the distance measure to use
-    :param transformer: the transformer to use
-    :returns: a distance measure function with built in transformation
+    Parameters
+    ----------
+    distance_measure: the distance measure to use
+    transformer: the transformer to use
+
+    Return
+    ------
+    a distance measure function with built in transformation
     """
 
     def distance(instance_a, instance_b, **params):
@@ -462,7 +456,7 @@ def erp_distance_measure_getter(X):
     :returns: distance measure and parameter range dictionary
     """
     stdp = _stdp(X)
-    instance_length = max_instance_length(X)  # todo should this use the max instance
+    instance_length = _max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
@@ -482,7 +476,7 @@ def lcss_distance_measure_getter(X):
     :returns: distance measure and parameter range dictionary
     """
     stdp = _stdp(X)
-    instance_length = max_instance_length(X)  # todo should this use the max instance
+    instance_length = _max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
@@ -773,7 +767,24 @@ class ProximityStump(BaseClassifier):
         get_gain: function to score the quality of a split
         verbosity: logging verbosity
         n_jobs: number of jobs to run in parallel *across threads"
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ProximityStump
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProximityStump()
+    >>> clf.fit(X_train, y_train)
+    ProximityStump(...)
+    >>> y_pred = clf.predict(X_test)
     """
+
+    _tags = {
+        "capability:multithreading": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
+    }
 
     __author__ = "George Oastler (linkedin.com/goastler; github.com/goastler)"
 
@@ -806,7 +817,7 @@ class ProximityStump(BaseClassifier):
         self.random_state = random_state
         self.get_distance_measure = get_distance_measure
         self.distance_measure = distance_measure
-        self.pick_exemplars = get_exemplars
+        self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.verbosity = verbosity
         self.n_jobs = n_jobs
@@ -818,8 +829,8 @@ class ProximityStump(BaseClassifier):
         self.y_branches = None
         self.X = None
         self.y = None
-        self.classes_ = None
         self.entropy = None
+
         super(ProximityStump, self).__init__()
 
     @staticmethod
@@ -859,8 +870,8 @@ class ProximityStump(BaseClassifier):
         exemplar (instance by exemplar)
         """
         check_X(X)
-        if self.n_jobs > 1 or self.n_jobs < 0:
-            parallel = Parallel(self.n_jobs)
+        if self._threads_to_use > 1:
+            parallel = Parallel(self._threads_to_use)
             distances = parallel(
                 delayed(self._distance_to_exemplars_inst)(
                     self.X_exemplar, X.iloc[index, :], self.distance_measure
@@ -877,7 +888,7 @@ class ProximityStump(BaseClassifier):
         distances = np.vstack(np.array(distances))
         return distances
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """
         Build the classifier on the training set (X, y).
 
@@ -893,9 +904,7 @@ class ProximityStump(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=True)
-
-        self.X = positive_dataframe_indices(X)
+        self.X = _positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
         if self.label_encoder is None:
@@ -907,8 +916,8 @@ class ProximityStump(BaseClassifier):
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
             self.distance_measure = self.get_distance_measure(self)
-        self.X_exemplar, self.y_exemplar = self.pick_exemplars(self)
-        self._is_fitted = True
+        self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
+
         return self
 
     def find_closest_exemplar_indices(self, X):
@@ -948,7 +957,35 @@ class ProximityStump(BaseClassifier):
         self.entropy = self.get_gain(self.y, self.y_branches)
         return self
 
-    def predict_proba(self, X):
+    def _predict(self, X):
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it
+            only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances] - predicted class labels
+        """
+        distributions = self._predict_proba(X)
+        predictions = []
+        for instance_index in range(0, X.shape[0]):
+            distribution = distributions[instance_index]
+            prediction = np.argmax(distribution)
+            predictions.append(prediction)
+        y = self.label_encoder.inverse_transform(predictions)
+
+        return y
+
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -966,9 +1003,7 @@ class ProximityStump(BaseClassifier):
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-
-        X = negative_dataframe_indices(X)
+        X = _negative_dataframe_indices(X)
         distances = self.distance_to_exemplars(X)
         ones = np.ones(distances.shape)
         distances = np.add(distances, ones)
@@ -1004,7 +1039,24 @@ class ProximityTree(BaseClassifier):
         y: train data labels
         stump: the stump used to split data at this node
         branches: the partitions of data driven by the stump
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ProximityTree
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProximityTree()
+    >>> clf.fit(X_train, y_train)
+    ProximityTree(...)
+    >>> y_pred = clf.predict(X_test)
     """
+
+    _tags = {
+        "capability:multithreading": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
+    }
 
     def __init__(
         self,
@@ -1063,10 +1115,10 @@ class ProximityTree(BaseClassifier):
         self.branches = None
         self.X = None
         self.y = None
-        self.classes_ = None
+
         super(ProximityTree, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build the classifier on the training set (X, y).
 
         Parameters
@@ -1081,8 +1133,7 @@ class ProximityTree(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=True)
-        self.X = positive_dataframe_indices(X)
+        self.X = _positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
@@ -1113,17 +1164,45 @@ class ProximityTree(BaseClassifier):
                         is_leaf=self.is_leaf,
                         verbosity=self.verbosity,
                         max_depth=self.max_depth,
-                        n_jobs=self.n_jobs,
+                        n_jobs=self._threads_to_use,
                     )
                     sub_tree.label_encoder = self.label_encoder
                     sub_tree.depth = self.depth + 1
                     self.branches[index] = sub_tree
                     sub_X = self.stump.X_branches[index]
                     sub_tree.fit(sub_X, sub_y)
-        self._is_fitted = True
+
         return self
 
-    def predict_proba(self, X):
+    def _predict(self, X):
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it
+            only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances] - predicted class labels
+        """
+        distributions = self._predict_proba(X)
+        predictions = []
+        for instance_index in range(0, X.shape[0]):
+            distribution = distributions[instance_index]
+            prediction = np.argmax(distribution)
+            predictions.append(prediction)
+        y = self.label_encoder.inverse_transform(predictions)
+
+        return y
+
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1141,8 +1220,7 @@ class ProximityTree(BaseClassifier):
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-        X = negative_dataframe_indices(X)
+        X = _negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
         distribution = np.zeros((X.shape[0], n_classes))
@@ -1216,15 +1294,22 @@ class ProximityForest(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/distance_based/proximity/ProximityForest.java
 
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ProximityForest
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProximityForest(n_estimators=5)
+    >>> clf.fit(X_train, y_train)
+    ProximityForest(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multithreading": True,
+        "coerce-X-to-numpy": False,
+        "coerce-X-to-pandas": True,
     }
 
     def __init__(
@@ -1284,7 +1369,7 @@ class ProximityForest(BaseClassifier):
         self.trees = None
         self.X = None
         self.y = None
-        self.classes_ = None
+
         super(ProximityForest, self).__init__()
 
     def _fit_tree(self, X, y, index, random_state):
@@ -1323,7 +1408,7 @@ class ProximityForest(BaseClassifier):
         tree.fit(X, y)
         return tree
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Build the classifier on the training set (X, y).
 
         Parameters
@@ -1339,7 +1424,7 @@ class ProximityForest(BaseClassifier):
         self : object
         """
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=True)
-        self.X = positive_dataframe_indices(X)
+        self.X = _positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
         if self.label_encoder is None:
@@ -1351,8 +1436,8 @@ class ProximityForest(BaseClassifier):
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)
             self.distance_measure = self.get_distance_measure(self)
-        if self.n_jobs > 1 or self.n_jobs < 0:
-            parallel = Parallel(self.n_jobs)
+        if self._threads_to_use > 1:
+            parallel = Parallel(self._threads_to_use)
             self.trees = parallel(
                 delayed(self._fit_tree)(
                     X, y, index, self.random_state.randint(0, self.n_estimators)
@@ -1366,7 +1451,7 @@ class ProximityForest(BaseClassifier):
                 )
                 for index in range(self.n_estimators)
             ]
-        self._is_fitted = True
+
         return self
 
     @staticmethod
@@ -1391,7 +1476,35 @@ class ProximityForest(BaseClassifier):
         """
         return tree.predict_proba(X)
 
-    def predict_proba(self, X):
+    def _predict(self, X):
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it
+            only has one column.
+            If not, an exception is thrown, since this classifier does not
+            yet have
+            multivariate capability.
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances] - predicted class labels
+        """
+        distributions = self._predict_proba(X)
+        predictions = []
+        for instance_index in range(0, X.shape[0]):
+            distribution = distributions[instance_index]
+            prediction = np.argmax(distribution)
+            predictions.append(prediction)
+        y = self.label_encoder.inverse_transform(predictions)
+
+        return y
+
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1409,10 +1522,9 @@ class ProximityForest(BaseClassifier):
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-        X = negative_dataframe_indices(X)
-        if self.n_jobs > 1 or self.n_jobs < 0:
-            parallel = Parallel(self.n_jobs)
+        X = _negative_dataframe_indices(X)
+        if self._threads_to_use > 1:
+            parallel = Parallel(self._threads_to_use)
             distributions = parallel(
                 delayed(self._predict_proba_tree)(X, tree) for tree in self.trees
             )
@@ -1422,3 +1534,183 @@ class ProximityForest(BaseClassifier):
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
         return distributions
+
+
+# start of util functions
+
+# find the index of the best value in the array
+def arg_bests(array, comparator):
+    indices = [0]
+    best = array[0]
+    for index in range(1, len(array)):
+        value = array[index]
+        comparison_result = comparator(value, best)
+        if comparison_result >= 0:
+            if comparison_result > 0:
+                indices = []
+                best = value
+            indices.append(index)
+    return indices
+
+
+# pick values from array at given indices
+def _pick_from_indices(array, indices):
+    picked = []
+    for index in indices:
+        picked.append(array[index])
+    return picked
+
+
+# find best values in array
+def _bests(array, comparator):
+    indices = arg_bests(array, comparator)
+    return _pick_from_indices(array, indices)
+
+
+# find min values in array
+def _mins(array, getter=None):
+    indices = _arg_mins(array, getter)
+    return _pick_from_indices(array, indices)
+
+
+# find max values in array
+def maxs(array, getter=None):
+    indices = _arg_maxs(array, getter)
+    return _pick_from_indices(array, indices)
+
+
+# find min value in array, randomly breaking ties
+def min(array, rand, getter=None):
+    index = _arg_min(array, rand, getter)
+    return array[index]
+
+
+# find index of max value in array, randomly breaking ties
+def _arg_max(array, rand, getter=None):
+    return rand.choice(_arg_maxs(array, getter))
+
+
+# find max value in array, randomly breaking ties
+def _max(array, rand, getter=None):
+    index = _arg_max(array, rand, getter)
+    return array[index]
+
+
+# find best value in array, randomly breaking ties
+def _best(array, comparator, rand):
+    return rand.choice(_bests(array, comparator))
+
+
+# find index of best value in array, randomly breaking ties
+def _arg_best(array, comparator, rand):
+    return rand.choice(arg_bests(array, comparator))
+
+
+# find index of min value in array, randomly breaking ties
+def _arg_min(array, rand, getter=None):
+    return rand.choice(_arg_mins(array, getter))
+
+
+# find indices of best value in array, randomly breaking ties
+def _arg_mins(array, getter=None):
+    return arg_bests(array, _chain(_less_than, getter))
+
+
+# find indices of max value in array, randomly breaking ties
+def _arg_maxs(array, getter=None):
+    return arg_bests(array, _chain(_more_than, getter))
+
+
+# obtain a value before using in func
+def _chain(func, getter=None):
+    if getter is None:
+        return func
+    else:
+        return lambda a, b: func(getter(a), getter(b))
+
+
+# test if a is more than b
+def _more_than(a, b):
+    if a < b:
+        return -1
+    elif a > b:
+        return 1
+    else:
+        return 0
+
+
+# test if a is less than b
+def _less_than(a, b):
+    if a < b:
+        return 1
+    elif a > b:
+        return -1
+    else:
+        return 0
+
+
+def _negative_dataframe_indices(X):
+    if np.any(X.index >= 0) or len(np.unique(X.index)) > 1:
+        X = X.copy(deep=True)
+        X.index = np.arange(-1, -len(X.index) - 1, step=-1)
+    return X
+
+
+def _positive_dataframe_indices(X):
+    if np.any(X.index < 0) or len(np.unique(X.index)) > 1:
+        X = X.copy(deep=True)
+        X.index = np.arange(0, len(X.index))
+    return X
+
+
+def _stdp(X):
+    sum = 0
+    sum_sq = 0
+    num_instances = X.shape[0]
+    num_dimensions = X.shape[1]
+    num_values = 0
+    for instance_index in range(0, num_instances):
+        for dimension_index in range(0, num_dimensions):
+            instance = X.iloc[instance_index, dimension_index]
+            for value in instance:
+                num_values += 1
+                sum += value
+                sum_sq += value ** 2  # todo missing values NaN messes
+                # this up!
+    mean = sum / num_values
+    stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
+    return stdp
+
+
+def _bin_instances_by_class(X, class_labels):
+    bins = {}
+    for class_label in np.unique(class_labels):
+        bins[class_label] = []
+    num_instances = X.shape[0]
+    for instance_index in range(0, num_instances):
+        instance = X.iloc[instance_index, :]
+        class_label = class_labels[instance_index]
+        instances_bin = bins[class_label]
+        instances_bin.append(instance)
+    return bins
+
+
+def _max_instance_dimension_length(X, dimension):
+    num_instances = X.shape[0]
+    max = -1
+    for instance_index in range(0, num_instances):
+        instance = X.iloc[instance_index, dimension]
+        if len(instance) > max:
+            max = len(instance)
+    return max
+
+
+def _max_instance_length(X):
+    # todo use all dimensions / uneven length dataset
+    max_length = len(X.iloc[0, 0])
+    # max = -1
+    # for dimension in range(0, instances.shape[1]):
+    #     length = max_instance_dimension_length(instances, dimension)
+    #     if length > max:
+    #         max = length
+    return max_length

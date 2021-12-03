@@ -26,26 +26,30 @@ import pandas as pd
 import pytest
 
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests._config import TEST_ALPHAS
-from sktime.forecasting.tests._config import TEST_FHS
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
-from sktime.performance_metrics.forecasting import (
-    mean_absolute_percentage_error,
+from sktime.forecasting.model_selection import (
+    SlidingWindowSplitter,
+    temporal_train_test_split,
 )
+from sktime.forecasting.tests._config import (
+    TEST_ALPHAS,
+    TEST_FHS,
+    TEST_OOS_FHS,
+    TEST_STEP_LENGTHS,
+    TEST_WINDOW_LENGTHS,
+    VALID_INDEX_FH_COMBINATIONS,
+)
+from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
-from sktime.utils._testing.forecasting import _get_expected_index_for_update_predict
-from sktime.utils._testing.forecasting import _make_fh
-from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.forecasting import (
+    _assert_correct_pred_time_index,
+    _get_expected_index_for_update_predict,
+    _get_n_columns,
+    _make_fh,
+    make_forecasting_problem,
+)
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils._testing.forecasting import _get_n_columns
 
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
@@ -102,13 +106,11 @@ def test_y_multivariate_raises_error(Forecaster):
     f = _construct_instance(Forecaster)
 
     if f.get_tag("scitype:y") == "univariate":
-
         y = _make_series(n_columns=2)
         with pytest.raises(ValueError, match=r"univariate"):
             f.fit(y, fh=FH0)
 
     if f.get_tag("scitype:y") == "multivariate":
-
         y = _make_series(n_columns=1)
         with pytest.raises(ValueError, match=r"2 or more variables"):
             f.fit(y, fh=FH0)
@@ -287,6 +289,41 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("alpha", TEST_ALPHAS)
+def test_predict_quantiles(Forecaster, fh, alpha):
+    f = _construct_instance(Forecaster)
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
+    for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=fh)
+        if not f._has_predict_quantiles_been_refactored():
+            with pytest.raises(NotImplementedError):
+                f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
+        else:
+            f.predict_quantiles(fh=fh, alpha=alpha)
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("alpha", TEST_ALPHAS)
+def test_predict_interval(Forecaster, fh, alpha):
+    f = _construct_instance(Forecaster)
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
+
+    for n_columns in n_columns_list:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=fh)
+        if not f._has_predict_quantiles_been_refactored():
+            with pytest.raises(NotImplementedError):
+                f.predict_interval(fh=fh, coverage=alpha)
+        else:
+            f.predict_interval(fh=fh, coverage=alpha)
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_score(Forecaster, fh):
     """Check score method."""
     f = _construct_instance(Forecaster)
@@ -335,9 +372,7 @@ def _check_update_predict_predicted_index(
 
     for n_columns in n_columns_list:
         f = _construct_instance(Forecaster)
-        y_train = _make_series(
-            n_columns=n_columns, all_positive=True, index_type="datetime"
-        )
+        y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
         y_train, y_test = temporal_train_test_split(y)
         cv = SlidingWindowSplitter(
             fh,
@@ -381,3 +416,18 @@ def test_update_predict_predicted_index_update_params(
     _check_update_predict_predicted_index(
         Forecaster, fh, window_length, step_length, update_params
     )
+
+
+# test that _y is updated when forecaster is refitted
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test__y_when_refitting(Forecaster):
+    f = _construct_instance(Forecaster)
+    columns = _get_n_columns(f.get_tag("scitype:y"))
+    for n_columns in columns:
+        f = _construct_instance(Forecaster)
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=FH0)
+        f.fit(y_train[3:], fh=FH0)
+        # using np.squeeze to make the test flexible to shape differeces like
+        # (50,) and (50, 1)
+        assert np.all(np.squeeze(f._y) == np.squeeze(y_train[3:]))

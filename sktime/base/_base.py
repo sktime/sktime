@@ -49,7 +49,6 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
-
 from copy import deepcopy
 
 from sklearn import clone
@@ -147,13 +146,13 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of the `tag_name` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns `tag_value_default`.
 
         Raises
         ------
-        ValueError if raise_error is True and tag_name does not exist
-            i.e., if tag_name is not in self.get_tags().keys()
+        ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
+        ).keys()
         """
         collected_tags = self.get_tags()
 
