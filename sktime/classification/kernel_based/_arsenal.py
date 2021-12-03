@@ -180,10 +180,10 @@ class Arsenal(BaseClassifier):
             raise ValueError(
                 " ERROR IN ARSENAL: X dimensions =",
                 X.ndim,
-                "shape = (" "",
+                "shape =",
                 X.shape,
-                ")  X = ",
-                X,
+                "  X[0][0][0] = ",
+                X[0][0][0],
             )
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
