@@ -20,41 +20,40 @@ For our long-term plan, see our :ref:`roadmap`.
 Documentation
 ^^^^^^^^^^^^^
 
-[DOC] Added myself as contributor (:pr:`1602`) :user:`Carlosbogo`
-[DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
-[DOC] additions to forecaster extension template (:pr:`1535`) :user:`fkiraly`
-[DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
-[DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
-[DOC] Add freddyaboulton to core developers list (:pr:`1559`) :user:`freddyaboulton`
+* [DOC] Added myself as contributor (:pr:`1602`) :user:`Carlosbogo`
+* [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
+* [DOC] additions to forecaster extension template (:pr:`1535`) :user:`fkiraly`
+* [DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
+* [DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
+* [DOC] Add freddyaboulton to core developers list (:pr:`1559`) :user:`freddyaboulton`
 
 Governance
 ^^^^^^^^^^
 
-Governance: eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
+* Governance: eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
 
 Performance metrics
 ^^^^^^^^^^^^^^^^^^^
 
-Fix Performance metric bug that affects repr (:pr:`1566`) :user:`RNKuhns`
+* Fix Performance metric bug that affects repr (:pr:`1566`) :user:`RNKuhns`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
-convert 2D to 3D rather than throw exception (:pr:`1604`) :user:`TonyBagnall`
-load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
-Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
-TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
-Interval based classification package refactor (:pr:`1583`) :user:`MatthewMiddlehurst`
-Distance based classification package refactor (:pr:`1584`) :user:`MatthewMiddlehurst`
-Feature based classification package refactor (:pr:`1545`) :user:`MatthewMiddlehurst`
-Deprecate various (:pr:`1548`) :user:`TonyBagnall`
+* Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
+* convert 2D to 3D rather than throw exception (:pr:`1604`) :user:`TonyBagnall`
+* load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
+* Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
+* TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
+* Interval based classification package refactor (:pr:`1583`) :user:`MatthewMiddlehurst`
+* Distance based classification package refactor (:pr:`1584`) :user:`MatthewMiddlehurst`
+* Feature based classification package refactor (:pr:`1545`) :user:`MatthewMiddlehurst`
+* Deprecate various (:pr:`1548`) :user:`TonyBagnall`
 
 Maintenance
 ^^^^^^^^^^^
 
-[MNT] Update release script (:pr:`1562`) :user:`mloning`
-
+* [MNT] Update release script (:pr:`1562`) :user:`mloning`
 
 All contributors: :user:`Carlosbogo`, :user:`MatthewMiddlehurst`, :user:`OliverMatthews`, :user:`RNKuhns`, :user:`TonyBagnall`, :user:`fkiraly`, :user:`freddyaboulton` and :user:`mloning`
 
