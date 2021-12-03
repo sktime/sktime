@@ -52,8 +52,8 @@ class BaseClassifier(BaseEstimator):
     _tags = {
         "convert_X_to_numpy": True,
         "convert_X_to_dataframe": False,
-        "convert_y_to_numpy": False,
-        "convert_y_to_series": True,
+        "convert_y_to_numpy": True,
+        "convert_y_to_series": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
