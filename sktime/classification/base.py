@@ -97,9 +97,11 @@ class BaseClassifier(BaseEstimator):
         start = int(round(time.time() * 1000))
         # Check the data is either numpy arrays or pandas dataframes
         check_classifier_input(X, y)
+        shpy = X.shape
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
         # Check this classifier can handle characteristics
+        shpz = X.shape
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
         shp = X.shape
@@ -124,6 +126,10 @@ class BaseClassifier(BaseEstimator):
             raise ValueError(
                 " Error in _fit: data shape start = ",
                 shpx,
+                " prior get characteristics = ",
+                shpy,
+                " prior to check capabilities = ",
+                shpz,
                 " prior to convert_X = ",
                 shp,
                 " begin convert_X = ",
