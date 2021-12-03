@@ -227,6 +227,7 @@ html_sidebars = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]
 html_js_files = [
     "js/dynamic_table.js",
 ]
@@ -295,6 +296,7 @@ texinfo_documents = [
 def _make_estimator_overview(app):
     """Make estimator overview table."""
     import pandas as pd
+
     from sktime.registry import all_estimators
 
     def _process_author_info(author_info):

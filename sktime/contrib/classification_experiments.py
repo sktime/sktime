@@ -5,7 +5,7 @@ This file is configured for runs of the main method with command line arguments,
 single debugging runs. Results are written in a standard format.
 """
 
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 
 import os
 import sys
@@ -16,12 +16,15 @@ os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import load_and_run_classification_experiment
+from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
-but is not yet as engineered. However, if you generate results using the method
+but isfrom sktime.classification.interval_based import (
+    CanonicalIntervalForest,
+ not yet as engineered. However, if you generate results using the method
 recommended here, they can be directly and automatically compared to the results
 generated in java.
 """
@@ -71,7 +74,17 @@ if __name__ == "__main__":
         classifier = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
-        tf = str(sys.argv[6]) == "True"
+
+        if len(sys.argv) > 6:
+            tf = sys.argv[6].lower() == "true"
+        else:
+            tf = False
+
+        if len(sys.argv) > 7:
+            predefined_resample = sys.argv[7].lower() == "true"
+        else:
+            predefined_resample = False
+
         load_and_run_classification_experiment(
             problem_path=data_dir,
             results_path=results_dir,
@@ -79,21 +92,27 @@ if __name__ == "__main__":
             dataset=dataset,
             resample_id=resample,
             build_train=tf,
+            predefined_resample=predefined_resample,
         )
     else:  # Local run
         print(" Local Run")
         data_dir = "../datasets/data/"
-        results_dir = ""
-        classifier = "CIF"
+        results_dir = "C:/Temp/"
+        cls_name = "CIF"
+        classifier = CanonicalIntervalForest()
         dataset = "UnitTest"
         resample = 0
         tf = False
+        predefined_resample = False
+
         load_and_run_classification_experiment(
             overwrite=True,
             problem_path=data_dir,
             results_path=results_dir,
-            cls_name=classifier,
+            cls_name=cls_name,
+            classifier=classifier,
             dataset=dataset,
             resample_id=resample,
             build_train=tf,
+            predefined_resample=predefined_resample,
         )

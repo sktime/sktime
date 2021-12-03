@@ -140,6 +140,11 @@ class UpdateChangelog(Step):
         self.instruct(f"Update CHANGELOG for version: {context['version']}")
 
 
+class UpdateReadme(Step):
+    def action(self, context):
+        self.instruct(f"Update README for version: {context['version']}")
+
+
 class UpdateVersion(Step):
     def action(self, context):
         self.instruct("Update __init__.py with new version")
@@ -243,6 +248,7 @@ def main():
         MakeClean(),
         UpdateVersion(),
         CheckVersionNumber(),
+        UpdateReadme(),
         UpdateChangelog(),
         MakeDocs(),
         CheckLocalDocs(),

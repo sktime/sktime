@@ -9,20 +9,19 @@ __author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
+import warnings
+
 import numpy as np
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.multiclass import class_distribution
-
-# from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+from sktime.transformations.panel.dictionary_based import SFA
 
 
 class MUSE(BaseClassifier):
@@ -46,30 +45,35 @@ class MUSE(BaseClassifier):
 
     Parameters
     ----------
-    anova: boolean, default = True
+    anova: boolean, default=True
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
-    bigrams: boolean, default = True
+    bigrams: boolean, default=True
         whether to create bigrams of SFA words
-    window_inc: int, default = 4
+    window_inc: int, default=4
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
-     p_threshold: int, default = 0.05 (disabled by default)
+     p_threshold: int, default=0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-    use_first_order_differences: boolean, default = True
+    use_first_order_differences: boolean, default=True
         If set to True will add the first order differences of each dimension
         to the data.
-    random_state: int or None,
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state: int or None, default=None
         Seed for random, integer
 
     Attributes
     ----------
-    word_length:
-    norm_option:
+    n_classes_ : int
+        The number of classes.
+    classes_ : list
+        The classes labels.
 
     See Also
     --------
@@ -90,22 +94,18 @@ class MUSE(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.dictionary_based import MUSE
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> clf = MUSE()
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = MUSE(window_inc=4, use_first_order_differences=False)
     >>> clf.fit(X_train, y_train)
     MUSE(...)
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": True,
-        "capability:contractable": False,
+        "capability:multithreading": True,
         "coerce-X-to-numpy": False,
         "coerce-X-to-pandas": True,
     }
@@ -117,6 +117,7 @@ class MUSE(BaseClassifier):
         window_inc=2,
         p_threshold=0.05,
         use_first_order_differences=True,
+        n_jobs=1,
         random_state=None,
     ):
 
@@ -148,7 +149,7 @@ class MUSE(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.classes_ = []
+        self.n_jobs = n_jobs
 
         super(MUSE, self).__init__()
 
@@ -159,14 +160,15 @@ class MUSE(BaseClassifier):
         ----------
         X : nested pandas DataFrame of shape [n_instances, 1]
             Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
-        self : object
+        self :
+            Reference to self.
         """
         y = np.asarray(y)
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         # add first order differences in each dimension to TS
         if self.use_first_order_differences:
@@ -180,6 +182,12 @@ class MUSE(BaseClassifier):
         self.n_dims = len(self.col_names)
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
         self.highest_bits = np.zeros(self.n_dims)
+
+        if self.n_dims == 1:
+            warnings.warn(
+                "MUSE Warning: Input series is univariate; MUSE is designed for"
+                + " multivariate series. It is recommended WEASEL is used instead."
+            )
 
         self.SFA_transformers = [[] for _ in range(self.n_dims)]
 
@@ -200,9 +208,8 @@ class MUSE(BaseClassifier):
                 raise ValueError(
                     f"Error in MUSE, min_window ="
                     f"{self.min_window} is bigger"
-                    f" than max_window ={self.max_window},"
-                    f" series length is {self.series_length}"
-                    f" try set min_window to be smaller than series length in "
+                    f" than max_window ={self.max_window}."
+                    f" Try set min_window to be smaller than series length in "
                     f"the constructor, but the classifier may not work at "
                     f"all with very short series"
                 )
@@ -213,7 +220,6 @@ class MUSE(BaseClassifier):
             self.highest_bits[ind] = math.ceil(math.log2(self.max_window)) + 1
 
             for window_size in self.window_sizes[ind]:
-
                 transformer = SFA(
                     word_length=rng.choice(self.word_lengths),
                     alphabet_size=self.alphabet_size,
@@ -225,6 +231,7 @@ class MUSE(BaseClassifier):
                     remove_repeat_words=False,
                     lower_bounding=False,
                     save_words=False,
+                    n_jobs=self._threads_to_use,
                 )
 
                 sfa_words = transformer.fit_transform(X_dim, y)
@@ -270,10 +277,12 @@ class MUSE(BaseClassifier):
                 # class_weight="balanced",
                 penalty="l2",
                 random_state=self.random_state,
+                n_jobs=self._threads_to_use,
             ),
         )
 
         self.clf.fit(all_words, y)
+
         return self
 
     def _predict(self, X):
@@ -281,11 +290,13 @@ class MUSE(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------
-        array of shape [n, 1]
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
         bag = self._transform_words(X)
         return self.clf.predict(bag)
@@ -295,11 +306,13 @@ class MUSE(BaseClassifier):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape [n, 1]
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------
-        array of shape [n, self.n_classes]
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)

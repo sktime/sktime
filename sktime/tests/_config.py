@@ -14,12 +14,16 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
+from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.classification.compose import (
     ColumnEnsembleClassifier,
     ComposableTimeSeriesForestClassifier,
 )
 from sktime.classification.dictionary_based import (
+    MUSE,
+    WEASEL,
+    BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
@@ -29,15 +33,16 @@ from sktime.classification.feature_based import (
     SignatureClassifier,
     TSFreshClassifier,
 )
-from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
+    RandomIntervalSpectralEnsemble,
     RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
@@ -73,7 +78,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.forecasting.tbats import TBATS
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -108,6 +112,7 @@ from sktime.transformations.series.acf import (
 )
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.transformations.series.compose import (
     ColumnwiseTransformer,
     OptionalPassthrough,
@@ -120,7 +125,6 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
-    "ShapeDTW",
     "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
@@ -143,9 +147,9 @@ DIST_KERNELS_IGNORE_TESTS = [
 
 EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["check_fit_idempotent"],
-    "HIVECOTEV1": ["check_fit_idempotent", "check_multiprocessing_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
+    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -175,13 +179,9 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
-FORECASTER = ExponentialSmoothing()
-FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
-STEPS_y = [
-    ("transformer", Detrender(ThetaForecaster())),
-    ("forecaster", NaiveForecaster()),
-]
-STEPS_X = [
+FORECASTER = NaiveForecaster()
+FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
+STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
@@ -205,12 +205,12 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS_y},
-    ForecastingPipeline: {"steps": STEPS_X},
+    TransformedTargetForecaster: {"steps": STEPS},
+    ForecastingPipeline: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    Detrender: {"forecaster": FORECASTER},
+    Detrender: {"forecaster": ExponentialSmoothing()},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
@@ -230,7 +230,7 @@ ESTIMATOR_TEST_PARAMS = {
         ]
     },
     FittedParamExtractor: {
-        "forecaster": FORECASTER,
+        "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
     },
     SeriesToPrimitivesRowTransformer: {
@@ -262,7 +262,7 @@ ESTIMATOR_TEST_PARAMS = {
     ShapeletTransformClassifier: {
         "estimator": RotationForest(n_estimators=3),
         "max_shapelets": 5,
-        "n_shapelet_samples": 100,
+        "n_shapelet_samples": 50,
         "batch_size": 20,
     },
     ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
@@ -273,7 +273,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,
-        "n_shapelet_samples": 100,
+        "n_shapelet_samples": 50,
         "batch_size": 20,
     },
     SignatureTransformer: {
@@ -296,16 +296,33 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
     },
-    ROCKETClassifier: {"num_kernels": 100},
+    RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
             "estimator": RotationForest(n_estimators=2),
-            "transform_limit_in_minutes": 0.01,
+            "max_shapelets": 5,
+            "n_shapelet_samples": 20,
+            "batch_size": 10,
         },
         "tsf_params": {"n_estimators": 2},
         "rise_params": {"n_estimators": 2},
         "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},
+    },
+    HIVECOTEV2: {
+        "stc_params": {
+            "estimator": RotationForest(n_estimators=2),
+            "max_shapelets": 5,
+            "n_shapelet_samples": 20,
+            "batch_size": 10,
+        },
+        "drcif_params": {"n_estimators": 2},
+        "arsenal_params": {"num_kernels": 20, "n_estimators": 2},
+        "tde_params": {
+            "n_parameter_samples": 4,
+            "max_ensemble_size": 2,
+            "randomly_selected_params": 2,
+        },
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
@@ -315,11 +332,19 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
+    RandomIntervalSpectralEnsemble: {
+        "n_estimators": 3,
+        "acf_lag": 10,
+        "min_interval": 5,
+    },
     SFA: {"return_pandas_data_series": True},
-    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 5},
+    BOSSEnsemble: {"max_ensemble_size": 3},
+    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
+    WEASEL: {"window_inc": 4},
+    MUSE: {"window_inc": 4, "use_first_order_differences": False},
     TemporalDictionaryEnsemble: {
         "n_parameter_samples": 10,
-        "max_ensemble_size": 5,
+        "max_ensemble_size": 3,
         "randomly_selected_params": 5,
     },
     TSFC: {"n_estimators": 3},
@@ -358,11 +383,13 @@ ESTIMATOR_TEST_PARAMS = {
     AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
+    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
     FeatureSelection: {"method": "all"},
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
+    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
+    ClaSPTransformer: {"window_length": 5},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """Time Series K-Means Clusterer."""
 
-__author__ = ["Christopher Holder", "Tony Bagnall"]
+__author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["TimeSeriesKMeans"]
 
+from sktime.clustering.base import BaseClusterer
 from sktime.clustering.base._typing import (
-    InitAlgo,
     AveragingAlgo,
     AveragingAlgoDict,
+    InitAlgo,
     MetricParameter,
     NumpyArray,
     NumpyOrDF,
     NumpyRandomState,
 )
-from sktime.clustering.base import BaseClusterer
 from sktime.clustering.partitioning._averaging_metrics import (
     BarycenterAveraging,
     MeanAveraging,
@@ -24,7 +24,7 @@ from sktime.clustering.partitioning._lloyds_partitioning import (
 
 
 class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
-    """Time Series K-Means Clusterer
+    """Time Series K-Means Clusterer.
 
     Parameters
     ----------
@@ -91,9 +91,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         self._averaging_algorithm = None
 
     def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseClusterer:
-        """
-        Method that is used to fit the clustering algorithm
-        on the dataset X
+        """Fit the clustering algorithm on the dataset X.
 
         Parameters
         ----------
@@ -112,9 +110,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         return super(TimeSeriesKMeans, self).fit(X)
 
     def predict(self, X: NumpyOrDF) -> NumpyArray:
-        """
-        Method used to perform a prediction from the already
-        trained clustering algorithm
+        """Predict using a trained clustering algorithm.
 
         Parameters
         ----------
@@ -130,8 +126,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         return super(TimeSeriesKMeans, self).predict(X)
 
     def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
-        """
-        Method used to define how the centers are calculated
+        """Calculate how the centres are calculated.
 
         Parameters
         ----------
@@ -153,8 +148,7 @@ class TimeSeriesKMeans(TimeSeriesLloydsPartitioning):
         return average_algorithm.average()
 
     def _check_params(self, X: NumpyArray):
-        """
-        Method used to check the parameters passed
+        """Check the parameters passed.
 
         Parameters
         ----------

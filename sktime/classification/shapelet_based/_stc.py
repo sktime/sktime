@@ -10,13 +10,11 @@ __all__ = ["ShapeletTransformClassifier"]
 
 import numpy as np
 from sklearn.model_selection import cross_val_predict
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -71,15 +69,15 @@ class ShapeletTransformClassifier(BaseClassifier):
     ----------
     n_classes : int
         The number of classes.
-    n_instances : int
-        The number of train cases.
-    n_dims : int
-        The number of dimensions per case.
-    series_length : int
-        The length of each series.
     classes_ : list
         The classes labels.
-    transformed_data : list of shape (n_estimators) of ndarray
+    n_instances_ : int
+        The number of train cases.
+    n_dims_ : int
+        The number of dimensions per case.
+    series_length_ : int
+        The length of each series.
+    transformed_data_ : list of shape (n_estimators) of ndarray
         The transformed dataset for all classifiers. Only saved when
         save_transformed_data is true.
 
@@ -109,9 +107,9 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ShapeletTransformClassifier(
-    ...     estimator=RotationForest(n_estimators=10),
+    ...     estimator=RotationForest(n_estimators=3),
     ...     n_shapelet_samples=500,
-    ...     max_shapelets=10,
+    ...     max_shapelets=20,
     ...     batch_size=100,
     ... )
     >>> clf.fit(X_train, y_train)
@@ -121,10 +119,9 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
         "capability:train_estimate": True,
         "capability:contractable": True,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -155,27 +152,39 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.batch_size = batch_size
         self.n_jobs = n_jobs
 
-        self.n_instances = 0
-        self.n_dims = 0
-        self.series_length = 0
-        self.n_classes = 0
-        self.classes_ = []
-        self.transformed_data = []
+        self.n_instances_ = 0
+        self.n_dims_ = 0
+        self.series_length_ = 0
+        self.transformed_data_ = []
 
         self._transformer = None
         self._estimator = estimator
-        self._n_jobs = n_jobs
         self._transform_limit_in_minutes = 0
         self._classifier_limit_in_minutes = 0
 
         super(ShapeletTransformClassifier, self).__init__()
 
     def _fit(self, X, y):
-        self._n_jobs = check_n_jobs(self.n_jobs)
+        """Fit STC to training data.
 
-        self.n_instances, self.n_dims, self.series_length = X.shape
-        self.n_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
+        self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         if self.time_limit_in_minutes > 0:
             # contracting 2/3 transform (with 1/5 of that taken away for final
@@ -206,33 +215,59 @@ class ShapeletTransformClassifier(BaseClassifier):
             self._estimator.save_transformed_data = self.save_transformed_data
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
-            self._estimator.n_jobs = self._n_jobs
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         m = getattr(self._estimator, "time_limit_in_minutes", None)
-        if callable(m) and self.time_limit_in_minutes > 0:
+        if m is not None and self.time_limit_in_minutes > 0:
             self._estimator.time_limit_in_minutes = self._classifier_limit_in_minutes
 
         X_t = self._transformer.fit_transform(X, y).to_numpy()
 
         if self.save_transformed_data:
-            self.transformed_data = X_t
+            self.transformed_data_ = X_t
 
         self._estimator.fit(X_t, y)
 
+        return self
+
     def _predict(self, X):
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
         X_t = self._transformer.transform(X).to_numpy()
 
         return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
         X_t = self._transformer.transform(X).to_numpy()
 
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(X_t)
         else:
-            dists = np.zeros((X.shape[0], self.n_classes))
+            dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
@@ -244,7 +279,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         n_instances, n_dims = X.shape
 
-        if n_instances != self.n_instances or n_dims != self.n_dims:
+        if n_instances != self.n_instances_ or n_dims != self.n_dims_:
             raise ValueError(
                 "n_instances, n_dims, series_length mismatch. X should be "
                 "the same as the training data used in fit for generating train "
@@ -255,7 +290,7 @@ class ShapeletTransformClassifier(BaseClassifier):
             raise ValueError("Currently only works with saved transform data from fit.")
 
         if isinstance(self.estimator, RotationForest) or self.estimator is None:
-            return self._estimator._get_train_probs(self.transformed_data, y)
+            return self._estimator._get_train_probs(self.transformed_data_, y)
         else:
             m = getattr(self._estimator, "predict_proba", None)
             if not callable(m):
@@ -271,9 +306,9 @@ class ShapeletTransformClassifier(BaseClassifier):
 
             return cross_val_predict(
                 estimator,
-                X=self.transformed_data,
+                X=self.transformed_data_,
                 y=y,
                 cv=cv_size,
                 method="predict_proba",
-                n_jobs=self._n_jobs,
+                n_jobs=self._threads_to_use,
             )
