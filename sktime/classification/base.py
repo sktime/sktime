@@ -140,6 +140,8 @@ class BaseClassifier(BaseEstimator):
                 self.shp3,
                 " end fit",
                 X.shape,
+                " convert tags =",
+                self.tagsSelf,
             )
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
@@ -355,6 +357,10 @@ class BaseClassifier(BaseEstimator):
                 "Tag error: cannot set both convert_X_to_numpy and "
                 "convert_X_to_dataframe to be true."
             )
+        self.tagsSelf = (
+            f"convert to numpy = {convert_to_numpy} convert to p"
+            f" {convert_to_pandas}"
+        )
         self.shp1 = X.shape
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
@@ -368,10 +374,10 @@ class BaseClassifier(BaseEstimator):
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
                 X = from_nested_to_3d_numpy(X)
-            self.shp3 = X.shape
         elif convert_to_pandas:
             if isinstance(X, np.ndarray):
                 X = from_3d_numpy_to_nested(X)
+        self.shp3 = X.shape
         return X
 
     def convert_y(self, y):
