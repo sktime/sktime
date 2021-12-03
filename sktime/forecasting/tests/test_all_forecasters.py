@@ -309,13 +309,14 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
+        y_pred = f.predict(alpha = alpha)
         if f.get_tag("capability:pred_int"):
-            y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
+            pred_ints = f.predict_interval(fh)
             _check_pred_ints(pred_ints, y_train, y_pred, fh)
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                f.predict(return_pred_int=True, alpha=alpha)
+                f.predict(alpha=alpha)
 
 
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
@@ -374,7 +375,7 @@ def test_predict_quantiles(Forecaster, fh, alpha):
                 f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
         else:
             quantiles = f.predict_quantiles(fh=fh, alpha=alpha)
-            _check_predict_quantiles(quantiles, y_train, alpha)
+            _check_predict_quantiles(quantiles, y_train, fh, alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)

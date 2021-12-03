@@ -220,7 +220,8 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # compute prediction intervals
         pred_int = [
-            pd.concat((y_pred[0] - error, y_pred[0] + error)) for error in errors
+            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
+            for error in errors
         ]
 
         # for a single alpha, return single pd.DataFrame
@@ -228,6 +229,7 @@ class ThetaForecaster(ExponentialSmoothing):
             return pred_int[0]
 
         # otherwise return list of pd.DataFrames
+        #return pd.concat(pred_int, axis=1)
         return pred_int
 
     def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
@@ -255,13 +257,27 @@ class ThetaForecaster(ExponentialSmoothing):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        alphas = []
-        for a in alpha:
-            a = (a - 0.5) * 2
-            alphas.append(a)
+        coverage = []
+        for c in alpha:
+            if c > 0.5:
+                c = (c - 0.5) * 2
+            else:
+                c = 1 - c
+            if c not in coverage:
+                coverage.append(c)
+        #pred_int = self._predict_interval(coverage=coverage)
+        y_pred = super(ThetaForecaster, self).predict(
+            fh, X, return_pred_int=False, alpha=coverage
+        )
+        pred_int = self.compute_pred_int(y_pred, coverage)
+        pred_quantiles = pd.DataFrame()
+        for a, df in zip(alpha, pred_int):
+            if a < 0.5:
+                pred_quantiles[a] = df['lower']
+            else:
+                pred_quantiles[a] = df['upper']
 
-        # otherwise return list of pd.DataFrames
-        return self._predict_interval(coverage=alphas)
+        return pred_quantiles
 
     def _predict_interval(
         self,
@@ -300,15 +316,16 @@ class ThetaForecaster(ExponentialSmoothing):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        y_pred = super(ThetaForecaster, self).predict(
+            fh, X, return_pred_int=False, alpha=coverage
+        )
+        pred_int = self.compute_pred_int(y_pred, coverage)
         alpha = []
         for c in coverage:
             alpha.extend([0.5 - c / 2, 0.5 + c / 2])
-
-        y_pred = super(ThetaForecaster, self).predict(
-            fh, X, return_pred_int=False, alpha=alpha
-        )
-
-        return self.compute_pred_int(y_pred, alpha)
+        pred_int = pd.concat(pred_int, axis=1)
+        pred_int.columns = alpha
+        return pred_int
 
     def _compute_pred_err(self, alphas):
         """Get the prediction errors for the forecast."""

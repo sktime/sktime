@@ -241,7 +241,10 @@ class BaseForecaster(BaseEstimator):
             else:
                 # it's already refactored
                 # opposite definition previously vs. now
-                coverage = [1 - a for a in alpha]
+                if isinstance(alpha, list):
+                    coverage = [1 - a for a in alpha]
+                else:
+                    coverage = alpha
                 pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
 
                 if keep_old_return_type:
