@@ -7,9 +7,9 @@ __author__ = ["mloning", "RNKuhns"]
 __all__ = ["SummaryTransformer", "MeanTransformer"]
 
 import pandas as pd
+from deprecated.sphinx import deprecated
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.utils._maint import deprecated
 from sktime.utils.validation.series import check_series
 
 ALLOWED_SUM_FUNCS = [
