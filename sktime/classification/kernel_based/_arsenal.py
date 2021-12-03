@@ -174,8 +174,10 @@ class Arsenal(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self.n_instances_, self.n_dims_, self.series_length_ = X.shape
-
+        try:
+            self.n_instances_, self.n_dims_, self.series_length_ = X.shape
+        except ValueError:
+            raise ValueError(" ERROR IN ARSENAL: X shape = (", X.shape, ")  X = ", X)
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
