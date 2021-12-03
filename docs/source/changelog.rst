@@ -17,6 +17,27 @@ For our long-term plan, see our :ref:`roadmap`.
 [0.9.0] - 2021-12-03
 --------------------
 
+[DOC] Added myself as contributor (#1602) @Carlosbogo
+Fixes #1234 (#1600) @Carlosbogo
+convert 2D to 3D rather than throw exception (#1604) @TonyBagnall
+load from UCR fix (#1610) @TonyBagnall
+Classifier test speed ups (#1599) @MatthewMiddlehurst
+TimeSeriesForest Classifier Fix (#1588) @OliverMatthews
+Interval based classification package refactor (#1583) @MatthewMiddlehurst
+Distance based classification package refactor (#1584) @MatthewMiddlehurst
+Feature based classification package refactor (#1545) @MatthewMiddlehurst
+Deprecate various (#1548) @TonyBagnall
+[DOC] Add missing classes to API reference (#1571) @RNKuhns
+Fix Performance metric bug that affects repr (#1566) @RNKuhns
+[DOC] additions to forecaster extension template (#1535) @fkiraly
+[MNT] Update release script (#1562) @mloning
+[DOC] Add toggle button to make examples easy to copy (#1572) @RNKuhns
+Governance: eligibility and end of tenure clarification (#1573) @fkiraly
+[DOC] Update docs from roadmap planning sessions (#1527) @mloning
+[DOC] Add freddyaboulton to core developers list (#1559) @freddyaboulton
+
+All contributors: @Carlosbogo, @MatthewMiddlehurst, @OliverMatthews, @RNKuhns, @TonyBagnall, @fkiraly, @freddyaboulton and @mloning
+
 
 [0.8.1] - 2021-10-28
 --------------------
