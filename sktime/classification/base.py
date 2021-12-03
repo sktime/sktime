@@ -38,6 +38,7 @@ from sktime.datatypes._panel._convert import (
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import (
     check_classifier_input,
+    check_X_y,
     get_data_characteristics,
 )
 
@@ -101,7 +102,15 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self.convert_X(X)
+        # X = self.convert_X(X)
+        X = check_X_y(
+            X,
+            y,
+            coerce_to_numpy=False,
+            coerce_to_pandas=False,
+            enforce_univariate=False,
+        )
+
         y = self.convert_y(y)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
