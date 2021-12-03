@@ -93,6 +93,7 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        shpx = X.shape
         start = int(round(time.time() * 1000))
         # Check the data is either numpy arrays or pandas dataframes
         check_classifier_input(X, y)
@@ -122,6 +123,8 @@ class BaseClassifier(BaseEstimator):
         except ValueError:
             raise ValueError(
                 " Error in _fit: data shape start = ",
+                shpx,
+                " prior to convert_X = ",
                 shp,
                 " begin convert_X = ",
                 self.shp1,
