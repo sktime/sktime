@@ -140,8 +140,12 @@ class BaseClassifier(BaseEstimator):
                 self.shp3,
                 " end fit",
                 X.shape,
-                " convert tags =",
-                self.tagsSelf,
+                " convert tags first =",
+                self.tagsSelf1,
+                " convert tags second =",
+                self.tagsSelf2,
+                " convert tags third =",
+                self.tagsSelf3,
             )
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
@@ -352,13 +356,17 @@ class BaseClassifier(BaseEstimator):
         """
         convert_to_numpy = self.get_tag("convert_X_to_numpy")
         convert_to_pandas = self.get_tag("convert_X_to_dataframe")
+        self.tagsSelf1 = (
+            f"AFTER Extract convert to numpy = {convert_to_numpy} convert to p"
+            f" {convert_to_pandas}"
+        )
         if convert_to_numpy and convert_to_pandas:
             raise ValueError(
                 "Tag error: cannot set both convert_X_to_numpy and "
                 "convert_X_to_dataframe to be true."
             )
-        self.tagsSelf = (
-            f"convert to numpy = {convert_to_numpy} convert to p"
+        self.tagsSelf2 = (
+            f"AFTER TEST convert to numpy = {convert_to_numpy} convert to p"
             f" {convert_to_pandas}"
         )
         self.shp1 = X.shape
@@ -370,6 +378,10 @@ class BaseClassifier(BaseEstimator):
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
         self.shp2 = X.shape
+        self.tagsSelf2 = (
+            f"AFTER ISINSTANCE convert to numpy = {convert_to_numpy} convert to p"
+            f" {convert_to_pandas}"
+        )
 
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
