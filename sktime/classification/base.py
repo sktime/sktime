@@ -354,7 +354,7 @@ class BaseClassifier(BaseEstimator):
         X : pd.DataFrame or np.array
             Checked and possibly converted input data
         """
-        convert_to_numpy = self.get_tag("convert_X_to_numpy")
+        convert_to_numpy = self.get_tag("convert_X_to_numpy", tag_value_default=False)
         convert_to_pandas = self.get_tag("convert_X_to_dataframe")
         self.tagsSelf1 = (
             f"AFTER Extract convert to numpy = {convert_to_numpy} convert to p"
