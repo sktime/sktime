@@ -155,7 +155,7 @@ For a static install of ``sktime`` from source, navigate to the local clone's ro
 
     pip install .
 
-Alternatively, the ``.`` may be replaced with a full or relative path to the root directlry.
+Alternatively, the ``.`` may be replaced with a full or relative path to the root directory.
 
 For a developer install that updates the package each time the local source code is changed, install ``sktime`` in editable mode, via:
 
@@ -313,7 +313,7 @@ and then:
 
     pip3 install numpy scipy cython
 
-When precompiled wheels are not avalaible for your architecture, you can
+When precompiled wheels are not available for your architecture, you can
 install the system versions:
 
 .. code-block:: bash
@@ -376,7 +376,7 @@ And build sktime from this environment:
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
-Some users have experienced issues when installing NumPy, particuarly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
+Some users have experienced issues when installing NumPy, particularly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
 
 If you run into a problem installing the development version and are using Anaconda, try:
 

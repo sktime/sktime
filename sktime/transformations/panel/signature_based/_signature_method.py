@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+
+import numpy as np
 from sklearn.pipeline import Pipeline
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
-)
-from sktime.transformations.panel.signature_based._checks import (
-    _handle_sktime_signatures,
 )
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
@@ -40,6 +39,11 @@ class SignatureTransformer(_PanelToTabularTransformer):
     signature_method: sklearn.Pipeline, A sklearn pipeline object that contains
         all the steps to extract the signature features.
     """
+
+    _tags = {
+        "X_inner_mtype": "numpy3D",
+        "fit-in-transform": False,
+    }
 
     def __init__(
         self,
@@ -85,40 +89,11 @@ class SignatureTransformer(_PanelToTabularTransformer):
             ]
         )
 
-    @_handle_sktime_signatures(check_fitted=False)
-    def fit(self, data, labels=None):
-        """Fit to data, then transform it.
-
-        Parameters
-        ----------
-        data: pd.Dataframe or np.ndarray (3d array)
-            Data to transform.
-        labels: np.ndarray (1d array) or pd.series or list
-            Labels for the data.
-
-        Returns
-        -------
-        pd.Dataframe or np.ndarray or pd.series
-        Transformed data.
-        """
-        self.signature_method.fit(data, labels)
-        self._is_fitted = True
+    def _fit(self, X, y=None):
+        X = np.transpose(X, [0, 2, 1])
+        self.signature_method.fit(X)
         return self
 
-    @_handle_sktime_signatures(check_fitted=True)
-    def transform(self, data, labels=None):
-        """Transform the class from the signature method.
-
-        Parameters
-        ----------
-        data: pd.Dataframe or np.ndarray (3d array)
-            Data to transform.
-        labels: np.ndarray (1d array) or pd.series or list
-            Labels for the data.
-
-        Returns
-        -------
-        pd.Dataframe or np.ndarray or pd.series
-            Transformed data.
-        """
-        return self.signature_method.transform(data)
+    def _transform(self, X, y=None):
+        X = np.transpose(X, [0, 2, 1])
+        return self.signature_method.transform(X)
