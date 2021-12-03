@@ -10,8 +10,12 @@ All notable changes to this project will be documented in this file. We keep tra
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `Twitter <https://twitter.com/sktime_toolbox>`_.
 
-For planned changes and upcoming releases, see our :ref:`roadmap`.
+For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones>`_.
+For our long-term plan, see our :ref:`roadmap`.
 
+
+[0.9.0] - 2021-12-03
+--------------------
 
 
 [0.8.1] - 2021-10-28
