@@ -378,7 +378,7 @@ class BaseClassifier(BaseEstimator):
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
         self.shp2 = X.shape
-        self.tagsSelf2 = (
+        self.tagsSelf3 = (
             f"AFTER ISINSTANCE convert to numpy = {convert_to_numpy} convert to p"
             f" {convert_to_pandas}"
         )
