@@ -101,9 +101,8 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        shp1 = X.shape
+        shp = X.shape
         X = self.convert_X(X)
-        shp2 = X.shape
         y = self.convert_y(y)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -118,18 +117,19 @@ class BaseClassifier(BaseEstimator):
         self.n_classes_ = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
-        shp3 = X.shape
         try:
             self._fit(X, y)
         except ValueError:
             raise ValueError(
                 " Error in _fit: data shape start = ",
-                shp1,
-                " after conver_X = ",
-                shp2,
-                " prior to _fit = ",
-                shp3,
-                " and after _fit ",
+                shp,
+                " begin convert_X = ",
+                self.shp1,
+                " middle convert_X = ",
+                self.shp2,
+                " end convert_X",
+                self.shp3,
+                " end fit",
                 X.shape,
             )
         self.fit_time_ = int(round(time.time() * 1000)) - start
@@ -346,6 +346,7 @@ class BaseClassifier(BaseEstimator):
                 "Tag error: cannot set both convert_X_to_numpy and "
                 "convert_X_to_dataframe to be true."
             )
+        self.shp1 = X.shape
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
             # Temporary fix to insist on 3D numpy. For univariate problems,
@@ -353,6 +354,7 @@ class BaseClassifier(BaseEstimator):
             # done here, but touches a lot of files, so will get this to work first.
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
+        self.shp2 = X.shape
 
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
@@ -360,6 +362,7 @@ class BaseClassifier(BaseEstimator):
         elif convert_to_pandas:
             if isinstance(X, np.ndarray):
                 X = from_3d_numpy_to_nested(X)
+        self.shp3 = X.shape
         return X
 
     def convert_y(self, y):
