@@ -214,10 +214,13 @@ class MeanTransformer(SummaryTransformer):
     """
 
     @deprecated(
-        """Please use `SummaryTransformer` from
-        `sktime.transformation.series.summarize` instead.
-        MeanTransformer will be removed in release 0.10.
-        """
+        version="0.9.0",
+        reason=(
+            "MeanTransformer will be removed in release v0.10.0. Please use "
+            "`SummaryTransformer` from `sktime.transformation.series.summarize` "
+            "instead."
+        ),
+        category=FutureWarning,
     )
     def __init__(self):
         super().__init__(summary_function="mean", quantiles=None)
