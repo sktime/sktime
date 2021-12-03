@@ -309,7 +309,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-        y_pred = f.predict(alpha = alpha)
+        y_pred = f.predict(alpha=alpha)
         if f.get_tag("capability:pred_int"):
             pred_ints = f.predict_interval(fh)
             _check_pred_ints(pred_ints, y_train, y_pred, fh)
@@ -325,12 +325,14 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha
     assert isinstance(pred_quantiles, pd.DataFrame)
 
     # check time index (also checks forecasting horizon is more than one element)
-    _assert_correct_pred_time_index(
-        pred_quantiles.index.levels[0], y_train.index[-1], fh
-    )
-
-    # multiply variables with all alpha values
-    expected = pd.MultiIndex.from_product(y_train.columns, alpha)
+    _assert_correct_pred_time_index(pred_quantiles.index, y_train.index[-1], fh)
+    # Forecasters where name of variables do not exist
+    # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
+    if isinstance(y_train, pd.Series):
+        expected = pd.MultiIndex.from_product([["Quantiles"], [alpha]])
+    else:
+        # multiply variables with all alpha values
+        expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
     assert all(expected == pred_quantiles.columns.to_flat_index())
 
     if isinstance(alpha, list):

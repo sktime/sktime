@@ -227,9 +227,6 @@ class ThetaForecaster(ExponentialSmoothing):
         # for a single alpha, return single pd.DataFrame
         if isinstance(alpha, float):
             return pred_int[0]
-
-        # otherwise return list of pd.DataFrames
-        #return pd.concat(pred_int, axis=1)
         return pred_int
 
     def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
@@ -265,7 +262,6 @@ class ThetaForecaster(ExponentialSmoothing):
                 c = 1 - c
             if c not in coverage:
                 coverage.append(c)
-        #pred_int = self._predict_interval(coverage=coverage)
         y_pred = super(ThetaForecaster, self).predict(
             fh, X, return_pred_int=False, alpha=coverage
         )
@@ -273,10 +269,12 @@ class ThetaForecaster(ExponentialSmoothing):
         pred_quantiles = pd.DataFrame()
         for a, df in zip(alpha, pred_int):
             if a < 0.5:
-                pred_quantiles[a] = df['lower']
+                pred_quantiles[a] = df["lower"]
             else:
-                pred_quantiles[a] = df['upper']
-
+                pred_quantiles[a] = df["upper"]
+        arrays = [len(alpha) * ["Quantiles"], alpha]
+        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
+        pred_quantiles.columns = index
         return pred_quantiles
 
     def _predict_interval(
@@ -324,7 +322,9 @@ class ThetaForecaster(ExponentialSmoothing):
         for c in coverage:
             alpha.extend([0.5 - c / 2, 0.5 + c / 2])
         pred_int = pd.concat(pred_int, axis=1)
-        pred_int.columns = alpha
+        arrays = [len(alpha) * ["Intervals"], alpha]
+        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
+        pred_int.columns = index
         return pred_int
 
     def _compute_pred_err(self, alphas):
