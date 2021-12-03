@@ -154,9 +154,9 @@ def test_convert_input():
     test_y1 = np.random.randint(0, 1, size=(cases))
     test_y2 = pd.Series(test_y1)
     tempY = tester.convert_y(test_y1)
-    assert isinstance(tempY, pd.Series)
+    assert isinstance(tempY, np.ndarray)
     tempY = tester.convert_y(test_y2)
-    assert isinstance(tempY, pd.Series)
+    assert isinstance(tempY, np.ndarray)
 
 
 def _create_example_dataframe(cases=5, dimensions=1, length=10):
