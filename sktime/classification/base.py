@@ -101,8 +101,9 @@ class BaseClassifier(BaseEstimator):
         # Check this classifier can handle characteristics
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        shp = X.shape
+        shp1 = X.shape
         X = self.convert_X(X)
+        shp2 = X.shape
         y = self.convert_y(y)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -117,11 +118,19 @@ class BaseClassifier(BaseEstimator):
         self.n_classes_ = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
+        shp3 = X.shape
         try:
             self._fit(X, y)
         except ValueError:
             raise ValueError(
-                " Error in _fit: data shape originally ", shp, " and after ", X.shape
+                " Error in _fit: data shape start = ",
+                shp1,
+                " after conver_X = ",
+                shp2,
+                " prior to _fit = ",
+                shp3,
+                " and after _fit ",
+                X.shape,
             )
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
