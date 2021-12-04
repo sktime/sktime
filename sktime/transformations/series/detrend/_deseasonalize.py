@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformations to deseasonalize a timeseries."""
 
-__author__ = ["mloning", "eyalshafran"]
+__author__ = ["mloning", "eyalshafran", "aiwalter"]
 __all__ = ["Deseasonalizer", "ConditionalDeseasonalizer", "STLTransformer"]
 
 import numpy as np
@@ -367,11 +367,11 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     Attributes
     ----------
-    self.trend_ : pd.Series
+    trend_ : pd.Series
         Trend component.
     seasonal_ : pd.Series
         Seasonal components.
-    self.resid_ : pd.Series
+    resid_ : pd.Series
         Residuals component.
 
     See Also
