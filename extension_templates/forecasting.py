@@ -32,8 +32,16 @@ State:
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
 
+Testing:
+    get default parameters for test instance(s) - get_test_params()
+    create a test instance of estimator class   - create_test_instance()
+
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -66,16 +74,22 @@ class MyForecaster(BaseForecaster):
     """
 
     # todo: fill out estimator tags here
-    #  delete the tags that you *didn't* change - these defaults are inherited
+    #  tags are inherited from parent class if they are not set
+    # todo: define the forecaster scitype by setting the tags
+    #  the "forecaster scitype" is determined by the tags
+    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
+    #  when changing scitype:y to multivariate or both:
+    #   y_inner_mtype should be changed to pd.DataFrame
+    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "univariate-only": True,  # does estimator use the exogeneous X?
+        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce-index-type": None,  # index type that needs to be enforced in X/y
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -101,6 +115,16 @@ class MyForecaster(BaseForecaster):
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
 
+        # todo: if tags of estimator depend on component tags, set these here
+        #  only needed if estimator is a composite
+        #  tags set in the constructor apply to the object and override the class
+        #
+        # example 1: conditional setting of a tag
+        # if est.foo == 42:
+        #   self.set_tags(handles-missing-data=True)
+        # example 2: cloning tags from component
+        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -122,6 +146,11 @@ class MyForecaster(BaseForecaster):
 
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
+        #
+        # any model parameters should be written to attributes ending in "_"
+        #  attributes set by the constructor must not be overwritten
+        #  if used, estimators should be cloned to attributes ending in "_"
+        #  the clones, not the originals shoudld be used or fitted if needed
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -265,3 +294,31 @@ class MyForecaster(BaseForecaster):
         fitted_params : dict
         """
         # implement here
+
+    # todo: return default parameters, so that a test instance can be created
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params

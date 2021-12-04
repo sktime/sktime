@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Testing converters."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -19,15 +20,15 @@ from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_multi_index,
     from_multi_index_to_nested,
     from_nested_to_multi_index,
-    are_columns_nested,
-    is_nested_dataframe,
 )
+from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_are_columns_nested(n_instances, n_columns, n_timepoints):
+    """Test are_columns_nested for correctness."""
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
     zero_df = pd.DataFrame(np.zeros_like(nested))
     nested_heterogenous1 = pd.concat([zero_df, nested], axis=1)
@@ -45,6 +46,7 @@ def test_are_columns_nested(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_nested_to_3d_numpy(n_instances, n_columns, n_timepoints):
+    """Test from_nested_to_3d_numpy for correctness."""
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
     array = from_nested_to_3d_numpy(nested)
 
@@ -60,6 +62,7 @@ def test_from_nested_to_3d_numpy(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_3d_numpy_to_nested(n_instances, n_columns, n_timepoints):
+    """Test from_3d_numpy_to_nested for correctness."""
     array = np.random.normal(size=(n_instances, n_columns, n_timepoints))
     nested = from_3d_numpy_to_nested(array)
 
@@ -76,6 +79,7 @@ def test_from_3d_numpy_to_nested(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_nested_to_2d_array(n_instances, n_columns, n_timepoints):
+    """Test from_nested_to_2d_array for correctness."""
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
 
     array = from_nested_to_2d_array(nested)
@@ -87,6 +91,7 @@ def test_from_nested_to_2d_array(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_3d_numpy_to_2d_array(n_instances, n_columns, n_timepoints):
+    """Test from_3d_numpy_to_2d_array for correctness."""
     array = np.random.normal(size=(n_instances, n_columns, n_timepoints))
     array_2d = from_3d_numpy_to_2d_array(array)
 
@@ -97,6 +102,7 @@ def test_from_3d_numpy_to_2d_array(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_multi_index_to_3d_numpy(n_instances, n_columns, n_timepoints):
+    """Test from_multi_index_to_3d_numpy for correctness."""
     mi_df = make_multi_index_dataframe(
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
@@ -113,6 +119,7 @@ def test_from_multi_index_to_3d_numpy(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_3d_numpy_to_multi_index(n_instances, n_columns, n_timepoints):
+    """Test from_3d_numpy_to_multi_index for correctness."""
     array = np.random.normal(size=(n_instances, n_columns, n_timepoints))
 
     mi_df = from_3d_numpy_to_multi_index(
@@ -137,6 +144,7 @@ def test_from_3d_numpy_to_multi_index(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_multi_index_to_nested(n_instances, n_columns, n_timepoints):
+    """Test from_multi_index_to_nested for correctness."""
     mi_df = make_multi_index_dataframe(
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
@@ -153,6 +161,7 @@ def test_from_multi_index_to_nested(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_nested_to_multi_index(n_instances, n_columns, n_timepoints):
+    """Test from_nested_to_multi_index for correctness."""
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
     mi_df = from_nested_to_multi_index(
         nested, instance_index="case_id", time_index="reading_id"
@@ -169,6 +178,7 @@ def test_from_nested_to_multi_index(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
+    """Test is_nested_dataframe for correctness."""
     array = np.random.normal(size=(n_instances, n_columns, n_timepoints))
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
     zero_df = pd.DataFrame(np.zeros_like(nested))
@@ -188,6 +198,7 @@ def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_2d_array_to_nested(n_instances, n_columns, n_timepoints):
+    """Test from_2d_array_to_nested for correctness."""
     rng = np.random.default_rng()
     X_2d = rng.standard_normal((n_instances, n_timepoints))
     nested_df = from_2d_array_to_nested(X_2d)
@@ -200,6 +211,7 @@ def test_from_2d_array_to_nested(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_long_to_nested(n_instances, n_columns, n_timepoints):
+    """Test from_long_to_nested for correctness."""
     X_long = generate_example_long_table(
         num_cases=n_instances, series_len=n_timepoints, num_dims=n_columns
     )
@@ -213,6 +225,7 @@ def test_from_long_to_nested(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_nested_to_long(n_instances, n_columns, n_timepoints):
+    """Test from_nested_to_long for correctness."""
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
     X_long = from_nested_to_long(
         nested,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Unit tests of ThetaLinesTransformer functionality."""
 
 __author__ = ["Guzal Bulatova"]
 __all__ = []

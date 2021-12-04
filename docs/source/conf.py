@@ -126,6 +126,9 @@ add_function_parentheses = False
 # the corresponding warning that this override happens.
 suppress_warnings = ["myst.mathjax"]
 
+# Link to GitHub repo for github_issues extension
+issues_github_path = "alan-turing-institute/sktime"
+
 
 def linkcode_resolve(domain, info):
     """Return URL to source code corresponding.
@@ -224,6 +227,7 @@ html_sidebars = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]
 html_js_files = [
     "js/dynamic_table.js",
 ]
@@ -292,6 +296,7 @@ texinfo_documents = [
 def _make_estimator_overview(app):
     """Make estimator overview table."""
     import pandas as pd
+
     from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
@@ -349,7 +354,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference/modules'
+            '<a href="https://www.sktime.org/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'
@@ -423,6 +428,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
 
 # -- Options for _todo extension ----------------------------------------------

@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Prophet forecaster by wrapping fbprophet."""
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["Prophet"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -14,11 +14,11 @@ _check_soft_dependencies("fbprophet")
 
 
 class Prophet(_ProphetAdapter):
-    """Prophet forecaster by wrapping fbprophet.
+    """Prophet forecaster by wrapping Facebook's prophet algorithm [1]_.
 
     Parameters
     ----------
-    freq: String of DatetimeIndex frequency. Refer [1]_ for possible values:
+    freq: String of DatetimeIndex frequency. Refer [2]_ for possible values:
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
@@ -97,9 +97,8 @@ class Prophet(_ProphetAdapter):
 
     References
     ----------
-    .. [1] timeseries-offset-aliases : https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
-    .. [2] https://facebook.github.io/prophet
-    .. [3] https://github.com/facebook/prophet
+    .. [1] https://facebook.github.io/prophet
+    .. [2] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
     Examples
     --------

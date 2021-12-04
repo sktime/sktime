@@ -8,6 +8,7 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 
 from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
@@ -26,15 +27,21 @@ __all__ = [
     "load_uschange",
     "load_UCR_UEA_dataset",
     "load_PBS_dataset",
+    "load_gun_point_segmentation",
+    "load_electric_devices_segmentation",
+    "load_macroeconomic",
 ]
 
 __author__ = [
-    "Markus Löning",
-    "Sajay Ganesh",
-    "@big-o",
-    "Sebastiaan Koel",
-    "Emilia Rose",
-    "Tony Bagnall",
+    "mloning",
+    "sajaysurya",
+    "big-o",
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "yairbeer",
+    "patrickZIB",
+    "aiwalter",
 ]
 
 DIRNAME = "data"
@@ -115,7 +122,7 @@ def _list_downloaded_datasets(extract_path):
     return datasets
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
+def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -175,6 +182,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         try:
             _download_and_extract(
                 url,
+                extract_path=extract_path,
             )
         except zipfile.BadZipFile as e:
             raise ValueError(
@@ -200,6 +208,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
+        y = pd.Series.to_numpy(y, dtype=np.str)
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -394,8 +403,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     default it loads both.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a
-        single dataframe with columns for
-        features and the target.
+        single dataframe with columns for features and the target.
 
     Returns
     -------
@@ -407,7 +415,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     Notes
     -----
     Dimensionality:     multivariate, 12
-    Series length:      29
+    Series length:      7-29
     Train cases:        270
     Test cases:         370
     Number of classes:  9
@@ -415,10 +423,8 @@ def load_japanese_vowels(split=None, return_X_y=False):
     A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
     the vowels 'a' and 'e'. A '12-degree
     linear prediction analysis' is applied to the raw recordings to
-    obtain time-series with 12 dimensions, a
-    originally a length between 7 and 29. In this dataset, instances
-    have been padded to the longest length,
-    29. The classification task is to predict the speaker. Therefore,
+    obtain time-series with 12 dimensions and series lengths between 7 and 29.
+    The classification task is to predict the speaker. Therefore,
     each instance is a transformed utterance,
     12*29 values with a single class label attached, [1...9]. The given
     training set is comprised of 30
@@ -552,7 +558,7 @@ def load_basic_motions(split=None, return_X_y=False):
 
     Notes
     -----
-    Dimensionality:     univariate
+    Dimensionality:     multivariate, 6
     Series length:      100
     Train cases:        40
     Test cases:         40
@@ -800,6 +806,82 @@ def load_uschange(y_name="Consumption"):
     return y, X
 
 
+def load_gun_point_segmentation():
+    """Load the GunPoint time series segmentation problem and returns X.
+
+    We group TS of the UCR GunPoint dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "GunPoint"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([900])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
+
+
+def load_electric_devices_segmentation():
+    """Load the Electric Devices segmentation problem and returns X.
+
+    We group TS of the UCR Electric Devices dataset by class label and concatenate
+    all TS to create segments with repeating temporal patterns and
+    characteristics. The location at which different classes were
+    concatenated are marked as change points.
+
+    We resample the resulting TS to control the TS resolution.
+    The window sizes for these datasets are hand-selected to capture
+    temporal patterns but are approximate and limited to the values
+    [10,20,50,100] to avoid over-fitting.
+
+    -----------
+
+    Returns
+    -------
+        X : pd.Series
+            Single time series for segmentation
+        period_length : int
+            The annotated period length by a human expert
+        change_points : numpy array
+            The change points annotated within the dataset
+    -----------
+    """
+    dir = "segmentation"
+    name = "ElectricDevices"
+    fname = name + ".csv"
+
+    period_length = int(10)
+    change_points = np.int32([1090, 4436, 5712, 7923])
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+
+    return ts, period_length, change_points
+
+
 def load_PBS_dataset():
     """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
 
@@ -837,4 +919,44 @@ def load_PBS_dataset():
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of scripts"
+    return y
+
+
+def load_macroeconomic():
+    """
+    Load the US Macroeconomic Data [1].
+
+    Returns
+    -------
+    y : pd.DataFrame
+     Time series
+
+    Notes
+    -----
+    US Macroeconomic Data for 1959Q1 - 2009Q3.
+
+    Dimensionality:     multivariate, 14
+    Series length:      203
+    Frequency:          Quarterly
+    Number of cases:    1
+
+    This data is kindly wrapped via `statsmodels.datasets.macrodata`.
+
+    References
+    ----------
+    ..[1] Wrapped via statsmodels:
+          https://www.statsmodels.org/dev/datasets/generated/macrodata.html
+    ..[2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
+          Bank of St. Louis; http://research.stlouisfed.org/fred2/;
+          accessed December 15, 2009.
+    ..[3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
+          http://www.bls.gov/data/; accessed December 15, 2009.
+    """
+    y = sm.datasets.macrodata.load_pandas().data
+    y["year"] = y["year"].astype(int).astype(str)
+    y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)
+    y["time"] = y["year"] + "-" + y["quarter"]
+    y.index = pd.PeriodIndex(data=y["time"], freq="Q", name="Period")
+    y = y.drop(columns=["year", "quarter", "time"])
+    y.name = "US Macroeconomic Data"
     return y

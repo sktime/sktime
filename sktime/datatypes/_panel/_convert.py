@@ -7,8 +7,8 @@ __all__ = [
     "convert_dict",
 ]
 
+from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
-
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -19,9 +19,9 @@ from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 convert_dict = dict()
 
 
-def convert_identity(what, store=None):
+def convert_identity(obj, store=None):
 
-    return what
+    return obj
 
 
 # assign identity function to type conversion to self
@@ -140,9 +140,9 @@ def from_3d_numpy_to_2d_array(X):
     return array_2d
 
 
-def from_3d_numpy_to_2d_array_adp(what, store=None):
+def from_3d_numpy_to_2d_array_adp(obj, store=None):
 
-    return from_3d_numpy_to_2d_array(what)
+    return from_3d_numpy_to_2d_array(obj)
 
 
 convert_dict[("numpy3D", "numpyflat", "Panel")] = from_3d_numpy_to_2d_array_adp
@@ -233,14 +233,14 @@ def from_nested_to_2d_array(X, return_numpy=False):
     return Xt
 
 
-def from_nested_to_pdwide(what, store=None):
+def from_nested_to_pdwide(obj, store=None):
 
-    return from_nested_to_2d_array(X=what, return_numpy=False)
+    return from_nested_to_2d_array(X=obj, return_numpy=False)
 
 
-def from_nested_to_2d_np_array(what, store=None):
+def from_nested_to_2d_np_array(obj, store=None):
 
-    return from_nested_to_2d_array(X=what, return_numpy=True)
+    return from_nested_to_2d_array(X=obj, return_numpy=True)
 
 
 convert_dict[("nested_univ", "pd-wide", "Panel")] = from_nested_to_pdwide
@@ -303,9 +303,9 @@ def from_2d_array_to_nested(
     return Xt
 
 
-def from_pd_wide_to_nested(what, store=None):
+def from_pd_wide_to_nested(obj, store=None):
 
-    return from_2d_array_to_nested(X=what)
+    return from_2d_array_to_nested(X=obj)
 
 
 convert_dict[("pd-wide", "nested_univ", "Panel")] = from_pd_wide_to_nested
@@ -457,10 +457,10 @@ def from_nested_to_long(
     return long_df
 
 
-def from_nested_to_long_adp(what, store=None):
+def from_nested_to_long_adp(obj, store=None):
 
     return from_nested_to_long(
-        X=what,
+        X=obj,
         instance_column_name="case_id",
         time_column_name="reading_id",
         dimension_column_name="dim_id",
@@ -569,9 +569,9 @@ def from_long_to_nested(
     return X_nested
 
 
-def from_long_to_nested_adp(what, store=None):
+def from_long_to_nested_adp(obj, store=None):
 
-    return from_long_to_nested(X_long=what)
+    return from_long_to_nested(X_long=obj)
 
 
 convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
@@ -626,10 +626,10 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     return X_3d
 
 
-def from_multi_index_to_3d_numpy_adp(what, store=None):
+def from_multi_index_to_3d_numpy_adp(obj, store=None):
 
     return from_multi_index_to_3d_numpy(
-        X=what, instance_index="instances", time_index="timepoints"
+        X=obj, instance_index="instances", time_index="timepoints"
     )
 
 
@@ -699,9 +699,9 @@ def from_3d_numpy_to_multi_index(
     return X_mi
 
 
-def from_3d_numpy_to_multi_index_adp(what, store=None):
+def from_3d_numpy_to_multi_index_adp(obj, store=None):
 
-    return from_3d_numpy_to_multi_index(X=what)
+    return from_3d_numpy_to_multi_index(X=obj)
 
 
 convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_index_adp
@@ -723,7 +723,6 @@ def from_multi_index_to_nested(
     cells_as_numpy : bool, default = False
         If True, then nested cells contain NumPy array
         If False, then nested cells contain pandas Series
-
 
     Returns
     -------
@@ -766,9 +765,11 @@ def from_multi_index_to_nested(
     return x_nested
 
 
-def from_multi_index_to_nested_adp(what, store=None):
+def from_multi_index_to_nested_adp(obj, store=None):
 
-    return from_multi_index_to_nested(X=what, instance_index_name="instances")
+    return from_multi_index_to_nested(
+        multi_ind_dataframe=obj, instance_index="instances"
+    )
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
@@ -825,10 +826,15 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
     instances = []
     for instance_idx in instance_idxs:
+        iidx = instance_idx
         instance = [
-            _val if isinstance(_val, pd.Series) else pd.Series(_val, name=_lab)
-            for _lab, _val in X.loc[instance_idx, :].iteritems()  # noqa
+            pd.DataFrame(i[1], columns=[i[0]])
+            for i in X.loc[iidx, :].iteritems()  # noqa
         ]
+        # instance = [
+        #     _val if isinstance(_val, (pd.Series) else pd.Series(_val, name=_lab)
+        #     for _lab, _val in X.loc[instance_idx, :].iteritems()  # noqa
+        # ]
         # instance = [
         #     X.loc[instance_idx, _label]
         #     if isinstance(X.loc[instance_idx, _label], pd.Series)
@@ -856,10 +862,10 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     return X_mi
 
 
-def from_nested_to_multi_index_adp(what, store=None):
+def from_nested_to_multi_index_adp(obj, store=None):
 
     return from_nested_to_multi_index(
-        X=what, instance_index_name="instances", time_index="timepoints"
+        X=obj, instance_index="instances", time_index="timepoints"
     )
 
 
@@ -923,9 +929,9 @@ def from_nested_to_3d_numpy(X):
     return X_3d
 
 
-def from_nested_to_3d_numpy_adp(what, store=None):
+def from_nested_to_3d_numpy_adp(obj, store=None):
 
-    return from_nested_to_3d_numpy(X=what)
+    return from_nested_to_3d_numpy(X=obj)
 
 
 convert_dict[("nested_univ", "numpy3D", "Panel")] = from_nested_to_3d_numpy_adp
@@ -978,41 +984,88 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     return df
 
 
-def from_3d_numpy_to_nested_adp(what, store=None):
+def from_3d_numpy_to_nested_adp(obj, store=None):
 
-    return from_3d_numpy_to_nested(X=what)
+    return from_3d_numpy_to_nested(X=obj)
 
 
 convert_dict[("numpy3D", "nested_univ", "Panel")] = from_3d_numpy_to_nested_adp
 
 
-def is_nested_dataframe(X):
-    """Check whether the input is a nested DataFrame.
+def from_dflist_to_multiindex(obj, store=None):
 
-    To allow for a mixture of nested and primitive columns types the
-    the considers whether any column is a nested np.ndarray or pd.Series.
+    n = len(obj)
 
-    Column is consider nested if any cells in column have a nested structure.
+    mi = pd.concat(obj, axis=0, keys=range(n), names=["instances", "timepoints"])
 
-    Parameters
-    ----------
-    X: Input that is checked to determine if it is a nested DataFrame.
+    return mi
 
-    Returns
-    -------
-    bool: Whether the input is a nested DataFrame
-    """
-    # return isinstance(X, pd.DataFrame) and isinstance(
-    #     X.iloc[0, 0], (np.ndarray, pd.Series)
-    # )
-    is_dataframe = isinstance(X, pd.DataFrame)
 
-    # If not a DataFrame we know is_nested_dataframe is False
-    if not is_dataframe:
-        return is_dataframe
+convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 
-    # Otherwise we'll see if any column has a nested structure in first row
-    else:
-        is_nested = are_columns_nested(X).any()
 
-        return is_dataframe and is_nested
+def from_multiindex_to_dflist(obj, store=None):
+
+    instance_index = obj.index.levels[0]
+    n = len(instance_index)
+
+    Xlist = [obj.loc[i].rename_axis(None) for i in range(n)]
+
+    return Xlist
+
+
+convert_dict[("pd-multiindex", "df-list", "Panel")] = from_multiindex_to_dflist
+
+
+def from_dflist_to_numpy3D(obj, store=None):
+
+    if not isinstance(obj, list):
+        raise TypeError("obj must be a list of pd.DataFrame")
+
+    n = len(obj[0])
+    cols = set(obj[0].columns)
+
+    for i in range(len(obj)):
+        if not n == len(obj[i]) or not set(obj[i].columns) == cols:
+            raise ValueError("elements of obj must have same length and columns")
+
+    nparr = np.array([X.to_numpy().transpose() for X in obj])
+
+    return nparr
+
+
+convert_dict[("df-list", "numpy3D", "Panel")] = from_dflist_to_numpy3D
+
+
+def from_numpy3D_to_dflist(obj, store=None):
+
+    if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
+        raise TypeError("obj must be a 3D numpy.ndarray")
+
+    cols = _make_column_names(obj.shape[1])
+    Xlist = [pd.DataFrame(obj[i].T, columns=cols) for i in range(len(obj))]
+
+    return Xlist
+
+
+convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
+
+
+def from_nested_to_df_list_adp(obj, store=None):
+
+    # this is not already implemented, so chain two conversions
+    obj = from_nested_to_multi_index_adp(obj, store=store)
+    return from_multiindex_to_dflist(obj, store=store)
+
+
+convert_dict[("nested_univ", "df-list", "Panel")] = from_nested_to_df_list_adp
+
+
+def from_df_list_to_nested_adp(obj, store=None):
+
+    # this is not already implemented, so chain two conversions
+    obj = from_dflist_to_multiindex(obj, store=store)
+    return from_multi_index_to_nested_adp(obj, store=store)
+
+
+convert_dict[("df-list", "nested_univ", "Panel")] = from_df_list_to_nested_adp

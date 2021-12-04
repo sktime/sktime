@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
-compute.py
-=======================
-Class for signature computation over windows.
-"""
+"""Class for signature computation over windows."""
 import numpy as np
+
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.panel.signature_based._window import _window_getter
 from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_path,
     _rescale_signature,
 )
+from sktime.transformations.panel.signature_based._window import _window_getter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
@@ -18,11 +15,13 @@ import esig  # noqa: E402
 
 
 class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
-    """Performs the signature transform over given windows.
+    """Perform the signature transform over given windows.
+
     Given data of shape [N, L, C] and specification of a window method from the
     signatures window module, this class will compute the signatures over
     each window (for the given signature options) and concatenate the results
     into a tensor of shape [N, num_sig_features * num_windows].
+
     Parameters
     ----------
     num_intervals: int, dimension of the transformed data (default 8)
@@ -55,7 +54,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, data):
+    def transform(self, data, y=None):
         # Input checks
         self.check_is_fitted()
 
