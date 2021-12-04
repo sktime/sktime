@@ -86,7 +86,6 @@ from sktime.registry import (
     TRANSFORMER_MIXIN_LIST,
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
-from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.panel.compose import (
     ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
