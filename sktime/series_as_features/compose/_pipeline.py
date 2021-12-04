@@ -94,3 +94,29 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
 
         else:
             return np.hstack(Xs)
+
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for FeatureUnion."""
+        from sklearn.preprocessing import StandardScaler
+
+        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
+
+        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+
+        TRANSFORMERS = [
+            (
+                "transformer1",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+            (
+                "transformer2",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+        ]
+
+        return {"transformers": TRANSFORMERS}
