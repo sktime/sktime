@@ -26,6 +26,10 @@ class STLForecaster(BaseForecaster):
 
     Parameters
     ----------
+    sp : int, optional
+        Seasonal period for defaulting forecasters and/or STLTransformer,
+        by default None. Can only be used if at least on the forecasters
+        or the stl is None.
     trend_forecaster : sktime forecaster, optional
         Forecaster to be fitted on trend_ component of the
         STLTransformer, by default None. If None, then
@@ -40,11 +44,7 @@ class STLForecaster(BaseForecaster):
         a NaiveForecaster(strategy="mean") is used.
     stl : sktime.STLTransformer, optional
         Transformer to decompose series into trend, seasonal and
-        residual components, by default None
-    sp : int, optional
-        Seasonal period for defaulting forecasters and/or STLTransformer,
-        by default None. Can only be used if at least on the forecasters
-        or the stl is None.
+        residual components, by default None.
 
     Attributes
     ----------
@@ -54,6 +54,12 @@ class STLForecaster(BaseForecaster):
         Seasonal components.
     resid_ : pd.Series
         Residuals component.
+    trend_forecaster_ : sktime forecaster
+        Fitted trend forecaster.
+    seasonal_forecaster_ : sktime forecaster
+        Fitted seasonal forecaster.
+    resid_forecaster_ : sktime forecaster
+        Fitted residual forecaster.
 
     Examples
     --------
@@ -89,17 +95,17 @@ class STLForecaster(BaseForecaster):
 
     def __init__(
         self,
+        sp=None,
         trend_forecaster=None,
         seasonal_forecaster=None,
         resid_forecaster=None,
         stl=None,
-        sp=None,
     ):
+        self.sp = sp
         self.trend_forecaster = trend_forecaster
         self.seasonal_forecaster = seasonal_forecaster
         self.resid_forecaster = resid_forecaster
         self.stl = stl
-        self.sp = sp
         super(STLForecaster, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
