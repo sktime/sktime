@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Tests."""
+"""Tests for data types module."""
