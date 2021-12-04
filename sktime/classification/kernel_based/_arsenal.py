@@ -111,6 +111,8 @@ class Arsenal(BaseClassifier):
     """
 
     _tags = {
+        "convert_X_to_numpy": True,
+        "convert_X_to_dataframe": False,
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
