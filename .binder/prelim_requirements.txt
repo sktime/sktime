@@ -11,6 +11,6 @@ numba==0.53
 numpy==1.19.3
 pystan==2.19.1.1
 seaborn
-stumpy>=1.5.1
+stumpy>=1.5.1,<=1.9.2
 tbats>=1.1.0
 tsfresh>=0.17.0
