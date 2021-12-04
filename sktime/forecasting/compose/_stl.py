@@ -55,6 +55,16 @@ class STLForecaster(BaseForecaster):
     resid_ : pd.Series
         Residuals component.
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import STLForecaster
+    >>> y = load_airline()
+    >>> forecaster = STLForecaster(sp=12)
+    >>> forecaster.fit(y)
+    STLForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+
     See Also
     --------
     STLTransformer
