@@ -50,18 +50,6 @@ class STLForecaster(BaseForecaster):
         self.stl = stl
         self.sp = sp
         super(STLForecaster, self).__init__()
-        # check if any forecaster requires fh in fit():
-        forecasters = [
-            f
-            for f in [self.seasonal_forecaster, trend_forecaster, resid_forecaster]
-            if f is not None
-        ]
-        if forecasters != []:
-            forecaster_requires_fh_in_fit = (
-                forecaster.get_tag("requires-fh-in-fit") for forecaster in forecasters
-            )
-            at_least_one_requires_fh = any(forecaster_requires_fh_in_fit)
-            self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh})
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -115,7 +103,7 @@ class STLForecaster(BaseForecaster):
             else clone(self.seasonal_forecaster)
         )
         self.trend_forecaster_ = (
-            NaiveForecaster(sp=_sp_forecaster, strategy="drift")
+            NaiveForecaster(strategy="drift")
             if self.trend_forecaster is None
             else clone(self.trend_forecaster)
         )
