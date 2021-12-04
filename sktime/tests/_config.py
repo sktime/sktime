@@ -37,11 +37,12 @@ from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
+    RandomIntervalSpectralEnsemble,
     RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
@@ -124,7 +125,6 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
-    "ShapeDTW",
     "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
@@ -149,6 +149,7 @@ EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["check_fit_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
+    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -295,7 +296,7 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
     },
-    ROCKETClassifier: {"num_kernels": 100},
+    RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
@@ -331,6 +332,11 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
+    RandomIntervalSpectralEnsemble: {
+        "n_estimators": 3,
+        "acf_lag": 10,
+        "min_interval": 5,
+    },
     SFA: {"return_pandas_data_series": True},
     BOSSEnsemble: {"max_ensemble_size": 3},
     ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},

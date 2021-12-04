@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
+
+import numpy as np
 from sklearn.pipeline import Pipeline
+
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.panel.signature_based._compute import (
-    _WindowSignatureTransform,
-)
 from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
-from sktime.transformations.panel.signature_based._checks import (
-    _handle_sktime_signatures,
+from sktime.transformations.panel.signature_based._compute import (
+    _WindowSignatureTransform,
 )
 
 
@@ -40,6 +40,11 @@ class SignatureTransformer(_PanelToTabularTransformer):
         all the steps to extract the signature features.
     """
 
+    _tags = {
+        "X_inner_mtype": "numpy3D",
+        "fit-in-transform": False,
+    }
+
     def __init__(
         self,
         augmentation_list=("basepoint", "addtime"),
@@ -63,14 +68,8 @@ class SignatureTransformer(_PanelToTabularTransformer):
 
         self.setup_feature_pipeline()
 
-    def _assertions(self):
-        """Some assertions to run on initialisation."""
-        assert not all(
-            [self.sig_tfm == "logsignature", self.rescaling == "post"]
-        ), "Cannot have post rescaling with the logsignature."
-
     def setup_feature_pipeline(self):
-        """Sets up the signature method as an sklearn pipeline."""
+        """Set up the signature method as an sklearn pipeline."""
         augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
         transform_step = _WindowSignatureTransform(
             window_name=self.window_name,
@@ -90,12 +89,11 @@ class SignatureTransformer(_PanelToTabularTransformer):
             ]
         )
 
-    @_handle_sktime_signatures(check_fitted=False)
-    def fit(self, data, labels=None):
-        self.signature_method.fit(data, labels)
-        self._is_fitted = True
+    def _fit(self, X, y=None):
+        X = np.transpose(X, [0, 2, 1])
+        self.signature_method.fit(X)
         return self
 
-    @_handle_sktime_signatures(check_fitted=True)
-    def transform(self, data, labels=None):
-        return self.signature_method.transform(data)
+    def _transform(self, X, y=None):
+        X = np.transpose(X, [0, 2, 1])
+        return self.signature_method.transform(X)

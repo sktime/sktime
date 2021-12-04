@@ -37,7 +37,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-
 from sktime.utils.validation.series import check_series
 
 
@@ -154,7 +153,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
-        pass
+        return self
 
 
 def _pairwise_panel_x_check(X):
@@ -310,4 +309,4 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
-        pass
+        return self

@@ -11,8 +11,10 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_random_state
 
+from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
 from sktime.clustering.base.base import BaseClusterer
@@ -22,6 +24,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import (
+    BaseTransformer,
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
     _SeriesToPrimitivesTransformer,
@@ -52,6 +55,52 @@ def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
     # return the instance of the class with default parameters
     return Estimator.create_test_instance()
+
+
+def _list_required_methods(estimator):
+    """Return list of required method names (beyond BaseEstimator ones)."""
+    # all BaseEstimator children must implement these
+    MUST_HAVE_FOR_ESTIMATORS = [
+        "fit",
+        "check_is_fitted",
+        "is_fitted",  # read-only property
+        "set_params",
+        "get_params",
+    ]
+    # prediction/forecasting base classes that must have predict
+    BASE_CLASSES_THAT_MUST_HAVE_PREDICT = (
+        BaseClusterer,
+        BaseRegressor,
+        BaseForecaster,
+    )
+    # transformation base classes that must have transform
+    BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM = (
+        BaseTransformer,
+        BasePairwiseTransformer,
+        BasePairwiseTransformerPanel,
+    )
+
+    required_methods = []
+
+    if isinstance(estimator, BaseEstimator):
+        required_methods += MUST_HAVE_FOR_ESTIMATORS
+
+    if isinstance(estimator, BASE_CLASSES_THAT_MUST_HAVE_PREDICT):
+        required_methods += ["predict"]
+
+    if isinstance(estimator, BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM):
+        required_methods += ["transform"]
+
+    if isinstance(estimator, BaseAligner):
+        required_methods += [
+            "get_alignment",
+            "get_alignment_loc",
+            "get_aligned",
+            "get_distance",
+            "get_distance_matrix",
+        ]
+
+    return required_methods
 
 
 def _make_args(estimator, method, **kwargs):
@@ -108,6 +157,9 @@ def _make_fit_args(estimator, **kwargs):
         return None, None
     elif isinstance(estimator, BasePairwiseTransformerPanel):
         return None, None
+    elif isinstance(estimator, BaseAligner):
+        X = [_make_series(n_columns=2, **kwargs), _make_series(n_columns=2, **kwargs)]
+        return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
 

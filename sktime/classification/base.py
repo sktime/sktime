@@ -63,7 +63,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         X : 2D np.array (univariate, equal length series) of shape = [n_instances,
-        series_length]
+            series_length]
             or 3D np.array (any number of dimensions, equal length series) of shape =
             [n_instances,n_dimensions,series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series (any
@@ -112,7 +112,7 @@ class BaseClassifier(BaseEstimator):
 
         return self
 
-    def predict(self, X) -> np.array:
+    def predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -142,7 +142,7 @@ class BaseClassifier(BaseEstimator):
 
         return self._predict(X)
 
-    def predict_proba(self, X) -> np.array:
+    def predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -221,7 +221,7 @@ class BaseClassifier(BaseEstimator):
             "_fit is a protected abstract method, it must be implemented."
         )
 
-    def _predict(self, X) -> np.array:
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
