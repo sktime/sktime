@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from scipy import sparse
+from sklearn import clone
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
 
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -39,16 +40,22 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         Save constructed dataframe.
     """
 
-    _required_parameters = ["transformer_list"]
+    _required_parameters = ["transformers"]
 
     def __init__(
         self,
-        transformer_list,
+        transformers,
         n_jobs=None,
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+
+        self.transformers = transformers
         self.preserve_dataframe = preserve_dataframe
+
+        transformer_list = []
+        for x in transformers:
+            transformer_list += [(x[0], clone(x[1]))]
         super(FeatureUnion, self).__init__(
             transformer_list, n_jobs=n_jobs, transformer_weights=transformer_weights
         )
