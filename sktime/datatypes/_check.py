@@ -27,6 +27,7 @@ __all__ = [
 from typing import List, Union
 
 import numpy as np
+from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._panel import check_dict_Panel
@@ -46,6 +47,62 @@ def _check_scitype_valid(scitype: str = None):
 
     if scitype is not None and scitype not in valid_scitypes:
         raise TypeError(scitype + " is not a supported scitype")
+
+
+#  TODO: remove in v0.11.0
+@deprecated(
+    version="v0.10.0",
+    reason=(
+        "check_is has been deprecated and will be removed in v0.11.0."
+        "Please use check_is_mtype instead."
+    ),
+    category=FutureWarning,
+)
+def check_is(
+    obj,
+    mtype: Union[str, List[str]],
+    scitype: str = None,
+    return_metadata=False,
+    var_name="obj",
+):
+    """Check object for compliance with mtype specification, return metadata.
+
+    Parameters
+    ----------
+    obj - object to check
+    mtype: str or list of str, mtype to check obj as
+    scitype: str, optional, scitype to check obj as; default = inferred from mtype
+        if inferred from mtype, list elements of mtype need not have same scitype
+    return_metadata - bool, optional, default=False
+        if False, returns only "valid" return
+        if True, returns all three return objects
+    var_name: str, optional, default="obj" - name of input in error messages
+
+    Returns
+    -------
+    valid: bool - whether obj is a valid object of mtype/scitype
+    msg: str or list of str - error messages if object is not valid, otherwise None
+            str if mtype is str; list of len(mtype) with message per mtype if list
+            returned only if return_metadata is True
+    metadata: dict - metadata about obj if valid, otherwise None
+            returned only if return_metadata is True
+        fields:
+            "is_univariate": bool, True iff series has one variable
+            "is_equally_spaced": bool, True iff series index is equally spaced
+            "mtype": str, mtype of obj if inferred
+
+    Raises
+    ------
+    TypeError if no checks defined for mtype/scitype combination
+    ValueError if mtype input argument is not of expected type
+    """
+    return check_is_mtype(
+        obj=obj,
+        mtype=mtype,
+        scitype=scitype,
+        return_metadata=return_metadata,
+        var_name=var_name,
+    )
 
 
 def check_is_mtype(
