@@ -429,6 +429,7 @@ intersphinx_mapping = {
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
+    "pmdarima": ("https://alkaline-ml.com/pmdarima/index.html", None),
 }
 
 # -- Options for _todo extension ----------------------------------------------
