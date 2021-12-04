@@ -6,6 +6,8 @@
 __author__ = ["mloning"]
 
 import numpy as np
+import pandas as pd
+from pmdarima.preprocessing import FourierFeaturizer as _FourierFeaturizer
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.forecasting import check_sp
@@ -42,15 +44,16 @@ class FourierFeatures(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": True,  # can the transformer handle multivariate X?
-        "handles-missing-data": True,  # can estimator handle missing data?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "scitype:instancewise": True,
+        "univariate-only": True,
+        "handles-missing-data": True,
+        "X_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        # "X_inner_mtype": "pd.Series",
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "fit-in-transform": False,
         "transform-returns-same-time-index": True,
-        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
+        "skip-inverse-transform": True,
     }
 
     def __init__(self, sp, n_terms=None):
@@ -65,21 +68,21 @@ class FourierFeatures(BaseTransformer):
         Parameters
         ----------
         X : Series
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
         y : Series, default=None
-            Additional data, e.g., labels for tarnsformation
 
         Returns
         -------
         self: a fitted instance of the estimator
         """
+        # Check parameters.
         check_sp(self.sp, allow_none=False)
-
         if self.n_terms is None:
             self.n_terms_ = self.sp // 2
         else:
             self.n_terms_ = _check_n_terms(self.n_terms)
+
+        # Instantiate transformer from pmdarima.
+        self._transformer = _FourierFeaturizer(m=self.sp, k=self.n_terms_)
         return self
 
     def _transform(self, X, y=None):
@@ -88,17 +91,17 @@ class FourierFeatures(BaseTransformer):
         Parameters
         ----------
         X : Series
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
         y : Series, default=None
-            Additional data, e.g., labels for transformation
 
         Returns
         -------
         Series
             Transformed X.
         """
-        pass
+        # Apply transformer from pmdarima.
+        _, Xt = self._transformer.fit_transform(X)
+        Xt.index = X.index
+        return pd.concat([X, Xt], axis=1)
 
 
 def _check_n_terms(n_terms):
