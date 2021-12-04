@@ -10,7 +10,7 @@ from sktime.utils.validation.series import check_series
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
-__author__ = ["Martin Walter", "Svea Meyer"]
+__author__ = ["aiwalter", "SveaMeyer13"]
 __all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
 
 
@@ -80,6 +80,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         self.passthrough = passthrough
         self._is_fitted = False
         super(OptionalPassthrough, self).__init__()
+        self.clone_tags(transformer)
 
     def fit(self, Z, X=None):
         """Fit the model.
@@ -146,27 +147,34 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
 
 class ColumnwiseTransformer(_SeriesToSeriesTransformer):
-    """
-    Apply a transformer columnwise to multivariate series.
+    """Apply a transformer columnwise to multivariate series.
+
+    Overview: input multivariate time series and the transformer passed
+    in `transformer` parameter is applied to specified `columns`, each
+    column is handled as a univariate series. The resulting transformed
+    data has the same shape as input data.
 
     Parameters
     ----------
     transformer : Estimator
-        scikit-learn-like or sktime-like transformer to fit and apply to series
+        scikit-learn-like or sktime-like transformer to fit and apply to series.
     columns : list of str or None
             Names of columns that are supposed to be transformed.
-            If it is None all columne are transformed.
+            If None, all columns are transformed.
 
     Attributes
     ----------
     transformers_ : dict of {str : transformer}
-        Maps columns to transformers
+        Maps columns to transformers.
     columns_ : list of str
         Names of columns that are supposed to be transformed.
 
+    See Also
+    --------
+    OptionalPassthrough
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.transformations.series.compose import ColumnwiseTransformer
@@ -184,8 +192,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         super(ColumnwiseTransformer, self).__init__()
 
     def fit(self, Z, X=None):
-        """
-        Fit data.
+        """Fit data.
 
         Iterates over columns (series) and applies
         the fit function of the transformer.
@@ -267,12 +274,11 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
     @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
-        """
-        Inverse-transform data.
+        """Inverse transform data.
 
         Returns an inverse-transformed version of Z by iterating over specified
         columns and applying the univariate series transformer to them.
-        Only works if self.transformer has an inverse-transform method.
+        Only works if `self.transformer` has an `inverse_transform` method.
 
         Parameters
         ----------
@@ -306,18 +312,17 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
     @if_delegate_has_method(delegate="transformer")
     def update(self, Z, X=None, update_params=True):
-        """
-        Update Parameters.
+        """Update parameters.
 
         Update the parameters of the estimator with new data
         by iterating over specified columns.
-        Only works if self.transformer has an update method.
+        Only works if `self.transformer` has an `update` method.
 
         Parameters
         ----------
         Z : pd.Series
-            New time series
-        update_params : bool, optional (default=True)
+            New time series.
+        update_params : bool, optional, default=True
 
         Returns
         -------

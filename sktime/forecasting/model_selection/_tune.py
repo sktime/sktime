@@ -3,16 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection import check_cv
+from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
@@ -26,9 +23,10 @@ from sktime.utils.validation.forecasting import check_scoring
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
+        "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(
@@ -43,6 +41,7 @@ class BaseGridSearch(BaseForecaster):
         verbose=0,
         return_n_best_forecasters=1,
     ):
+
         self.forecaster = forecaster
         self.cv = cv
         self.strategy = strategy
@@ -53,6 +52,18 @@ class BaseGridSearch(BaseForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            "scitype:y",
+            "ignores-exogeneous-X",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+        ]
+        self.clone_tags(forecaster, tags_to_clone)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
@@ -62,61 +73,12 @@ class BaseGridSearch(BaseForecaster):
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict(
-        self,
-        y,
-        cv=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        """Call update_predict on forecaster with the best parameters."""
-        self.check_is_fitted("update_predict")
-
-        return self.best_forecaster_._update_predict(
-            y,
-            cv=cv,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict_single(
-        self,
-        y,
-        fh=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        """Call predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("update_predict_single")
-        return self.best_forecaster_._update_predict_single(
-            y,
-            fh=fh,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
         return self.best_forecaster_._predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        """Call compute_pred_int on the forecaster with the best found parameters."""
-        self.check_is_fitted("compute_pred_int")
-        return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -228,6 +190,7 @@ class BaseGridSearch(BaseForecaster):
         self : returns an instance of self.
         """
         cv = check_cv(self.cv)
+
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
@@ -335,7 +298,7 @@ class BaseGridSearch(BaseForecaster):
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
-    """Performs grid-search cross-validation to find optimal model parameters.
+    """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
@@ -450,8 +413,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-        self.clone_tags(forecaster, "capability:pred_int")
-
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
@@ -459,7 +420,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
-    """Performs randomized-search cross-validation to find optimal model parameters.
+    """Perform randomized-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
     cross-validation is used to find the optimal parameter
@@ -558,8 +519,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-
-        self.clone_tags(forecaster, "capability:pred_int")
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions."""

@@ -32,6 +32,9 @@ results/
 
 MANIFEST
 
+#downloaded datasets
+sktime/datasets/data/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -157,3 +160,4 @@ sktime/contrib/nothing_to_see_here.py
 sktime/distances/elastic_cython.html
 *.html
 sktime/contrib/distance_based/old_time_series_neighbors.py
+sktime/contrib/debug.py

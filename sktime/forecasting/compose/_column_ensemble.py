@@ -1,28 +1,31 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""copyright: sktime developers, BSD-3-Clause License (see LICENSE file)."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implements forecaster for applying different univariates by column."""
 
 __author__ = ["GuzalBulatova", "mloning"]
 __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
 
+    Applies different univariate forecasters by column.
+
     Parameters
     ----------
-    forecasters : list of tuples (str, estimator, int or str)
-        With name as str, estimator as sktime-like estimator,
-        index as str or int
+    forecasters: forecaster, or list of tuples (str, estimator, int or str)
+        if tuples, with name = str, estimator is forecaster, index as str or int
+
+    If forecaster, clones of forecaster are applied to all columns.
+    If list of tuples, forecaster in tuple is applied to column with the int/str index
 
     Examples
     --------
@@ -32,8 +35,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
     >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
-    >>> forecasters = [("trend", PolynomialTrendForecaster(), 0),\
-                        ("ses", ExponentialSmoothing(trend='add'), 1)]
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster(), 0),
+    ...     ("ses", ExponentialSmoothing(trend='add'), 1),
+    ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ColumnEnsembleForecaster(...)
@@ -43,7 +48,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
-        "univariate-only": False,
+        "ignores-exogeneous-X": False,
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -52,12 +57,17 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(self, forecasters):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
-        forecaster_requires_fh_in_fit = (
-            forecaster.get_tag("requires-fh-in-fit")
-            for _, forecaster, _ in self.forecasters
-        )
-        at_least_one_requires_fh_in_fit = any(forecaster_requires_fh_in_fit)
-        self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh_in_fit})
+
+        # set requires-fh-in-fit depending on forecasters
+        if isinstance(forecasters, BaseForecaster):
+            self.clone_tags(forecasters, "requires-fh-in-fit")
+        else:
+            forecaster_requires_fh_in_fit = (
+                forecaster.get_tag("requires-fh-in-fit")
+                for _, forecaster, _ in self.forecasters
+            )
+            at_least_one_requires_fh = any(forecaster_requires_fh_in_fit)
+            self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh})
 
     @property
     def _forecasters(self):
@@ -68,14 +78,25 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         via _HeterogenousMetaEstimator._get_params which expects
         lists of tuples of len 2.
         """
-        return [(name, forecasters) for name, forecasters, _ in self.forecasters]
+        forecasters = self.forecasters
+        if isinstance(forecasters, BaseForecaster):
+            return [("forecasters", forecasters)]
+        else:
+            return [(name, forecaster) for name, forecaster, _ in self.forecasters]
 
     @_forecasters.setter
     def _forecasters(self, value):
-        self.forecasters = [
-            (name, forecasters, columns)
-            for ((name, forecasters), (_, _, columns)) in zip(value, self.forecasters)
-        ]
+        if len(value) == 1 and isinstance(value, BaseForecaster):
+            self.forecasters = value
+        elif len(value) == 1 and isinstance(value, list):
+            self.forecasters = value[0][1]
+        else:
+            self.forecasters = [
+                (name, forecaster, columns)
+                for ((name, forecaster), (_, _, columns)) in zip(
+                    value, self.forecasters
+                )
+            ]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -93,12 +114,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        self._check_forecasters(y)
+        forecasters = self._check_forecasters(y)
 
         self.forecasters_ = []
         self.y_columns = list(y.columns)
 
-        for (name, forecaster, index) in self.forecasters:
+        for (name, forecaster, index) in forecasters:
             forecaster_ = clone(forecaster)
 
             forecaster_.fit(y.iloc[:, index], X, fh)
@@ -111,7 +132,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.DataFrame
         X : pd.DataFrame
         update_params : bool, optional, default=True
 
@@ -162,6 +183,14 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _check_forecasters(self, y):
+
+        # if a single estimator is passed, replicate across columns
+        if isinstance(self.forecasters, BaseForecaster):
+            ycols = [str(col) for col in y.columns]
+            colrange = range(len(ycols))
+            forecaster_list = [clone(self.forecasters) for _ in colrange]
+            return list(zip(ycols, forecaster_list, colrange))
+
         if (
             self.forecasters is None
             or len(self.forecasters) == 0
@@ -191,4 +220,4 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             raise ValueError(
                 "One estimator per column required. Found %s" % len(indices)
             )
-        return names, forecasters, indices
+        return self.forecasters

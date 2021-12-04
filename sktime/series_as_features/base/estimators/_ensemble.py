@@ -7,30 +7,25 @@ __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
-from warnings import catch_warnings
-from warnings import simplefilter
-from warnings import warn
+from warnings import catch_warnings, simplefilter, warn
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
-from sklearn.ensemble._forest import BaseForest
-from sklearn.ensemble._forest import MAX_INT
-from sklearn.ensemble._forest import _generate_sample_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sklearn.exceptions import DataConversionWarning
-from sklearn.utils import check_array
-from sklearn.utils import check_random_state
-from sklearn.utils import compute_sample_weight
-
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
+from sklearn.ensemble._forest import (
+    MAX_INT,
+    BaseForest,
+    _generate_sample_indices,
+    _get_n_samples_bootstrap,
 )
+from sklearn.exceptions import DataConversionWarning
+from sklearn.utils import check_array, check_random_state, compute_sample_weight
+
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -164,7 +159,7 @@ class BaseTimeSeriesForest(BaseForest):
 
         # Remap output
         self.n_columns = X.shape[1]
-        self.n_features_ = X.shape[1] if X.ndim == 2 else 1
+        self.n_features = X.shape[1] if X.ndim == 2 else 1
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -295,7 +290,7 @@ class BaseTimeSeriesForest(BaseForest):
         return X
 
     @property
-    def feature_importances_(self):
+    def feature_importances_(self, normalise_time_points=False):
         """Compute feature importances for time series forest."""
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
@@ -332,6 +327,8 @@ class BaseTimeSeriesForest(BaseForest):
 
         # preallocate array for feature importances
         fis = np.zeros((n_timepoints, n_features))
+        if normalise_time_points:
+            fis_count = np.zeros((n_timepoints, n_features))
 
         for i in range(n_estimators):
             # select tree
@@ -360,10 +357,18 @@ class BaseTimeSeriesForest(BaseForest):
 
                     # add feature importance for all time points of interval
                     fis[interval_time_points, k] += fi[column_index]
+                    if normalise_time_points:
+                        fis_count[interval_time_points, k] += 1
 
         # normalise by number of estimators and number of intervals
         fis = fis / n_estimators / n_intervals
 
         # format output
         fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+
+        if normalise_time_points:
+            fis_count = fis_count / n_estimators / n_intervals
+            fis_count = pd.DataFrame(fis_count, columns=feature_names, index=time_index)
+            fis /= fis_count
+
         return fis

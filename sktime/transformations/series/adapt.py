@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adaptor for applying Scikit-learn-like transformers to time series."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["TabularToSeriesAdaptor"]
 
 import pandas as pd
@@ -33,16 +33,21 @@ def _from_2d_numpy_to_series(x, index=None):
 
 
 class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
-    """Adapt scikit-learn-like tabular transformations to series setting.
+    """Adapt scikit-learn-like  transformations to time series setting.
 
-    This is useful for applying scikit-learn transformations to series,
-    but only works with transformations that do not require multiple
-    instances for fitting.
+    This is useful for applying scikit-learn :term:`tabular` transformations
+    to :term:`series <Time series>`, but only works with transformations that
+    do not require multiple :term:`instances <instance>` for fitting.
 
     Parameters
     ----------
     transformer : Estimator
-        scikit-learn-like transformer to fit and apply to series
+        scikit-learn-like transformer to fit and apply to series.
+
+    Attributes
+    ----------
+    transformer_ : Estimator
+        Transformer fitted to data.
 
     Examples
     --------
@@ -55,7 +60,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["transformer"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": False}
 
     def __init__(self, transformer):
         self.transformer = transformer
@@ -63,7 +68,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
         super(TabularToSeriesAdaptor, self).__init__()
 
     def fit(self, Z, X=None):
-        """Fit.
+        """Fit data.
 
         Parameters
         ----------
@@ -72,7 +77,7 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
 
         Returns
         -------
-        self
+        self : an instance of self
         """
         Z = check_series(Z)
         self.transformer_ = clone(self.transformer)

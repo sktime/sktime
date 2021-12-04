@@ -3,14 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
-__author__ = ["Markus Löning", "Martin Walter"]
+__author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
@@ -74,18 +73,21 @@ class _Pipeline(
         """Return the length of the Pipeline."""
         return len(self.steps)
 
-    def _get_inverse_transform(self, y):
+    def _get_inverse_transform(self, y, X=None):
         """Iterate over transformers.
 
         Inverse transform y (used for y_pred and pred_int)
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
+            Target series
+        X : pd.Series, pd.DataFrame
+            Exogenous series.
 
         Returns
         -------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
             Inverse transformed y
         """
         for _, _, transformer in self._iter_transformers(reverse=True):
@@ -93,7 +95,7 @@ class _Pipeline(
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             skip_trafo = transformer.get_tag("skip-inverse-transform", False)
             if not skip_trafo:
-                y = transformer.inverse_transform(y)
+                y = transformer.inverse_transform(y, X)
         return y
 
     @property
@@ -166,7 +168,9 @@ class ForecastingPipeline(_Pipeline):
 
     _required_parameters = ["steps"]
     _tags = {
-        "univariate-only": False,
+        "scitype:y": "both",
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -175,13 +179,15 @@ class ForecastingPipeline(_Pipeline):
         self.steps = steps
         self.steps_ = self._check_steps()
         super(ForecastingPipeline, self).__init__()
+        _, forecaster = self.steps[-1]
+        self.clone_tags(forecaster)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.Series, pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
@@ -192,15 +198,12 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        # Some transformers can not deal with X=None, therefore X is mandatory
-        self._set_y_X(y, X)
-
         # If X is not given, just passthrough the data without transformation
         if self._X is not None:
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = clone(transformer)
-                X = t.fit_transform(X)
+                X = t.fit_transform(X=X, y=y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
@@ -237,7 +240,7 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                X = transformer.transform(X)
+                X = transformer.transform(Z=X)
 
         return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
@@ -315,7 +318,10 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     _required_parameters = ["steps"]
     _tags = {
-        "univariate-only": True,
+        "scitype:y": "both",
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "ignores-exogeneous-X": True,
+        "univariate-only": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -324,6 +330,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.steps = steps
         self.steps_ = self._check_steps()
         super(TransformedTargetForecaster, self).__init__()
+        _, forecaster = self.steps[-1]
+        self.clone_tags(forecaster)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -341,8 +349,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y, X)
-
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
@@ -382,14 +388,14 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
                 fh, X, return_pred_int=return_pred_int, alpha=alpha
             )
             # inverse transform pred_int
-            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"])
-            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"])
+            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"], X)
+            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"], X)
         else:
             y_pred = forecaster.predict(
                 fh, X, return_pred_int=return_pred_int, alpha=alpha
             )
         # inverse transform y_pred
-        y_pred = self._get_inverse_transform(y_pred)
+        y_pred = self._get_inverse_transform(y_pred, X)
         if return_pred_int:
             return y_pred, pred_int
         else:
@@ -434,7 +440,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             Transformed version of input series `Z`.
         """
         self.check_is_fitted()
-        zt = check_series(Z, enforce_univariate=True)
+        zt = check_series(Z)
         for _, _, transformer in self._iter_transformers():
             zt = transformer.transform(zt, X)
         return zt
@@ -455,8 +461,5 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             The reconstructed timeseries after the transformation has been reversed.
         """
         self.check_is_fitted()
-        zt = check_series(Z, enforce_univariate=True)
-        for _, _, transformer in self._iter_transformers(reverse=True):
-            if not transformer.get_tag("skip-inverse-transform", False):
-                zt = transformer.inverse_transform(zt, X)
-        return zt
+        Z = check_series(Z)
+        return self._get_inverse_transform(Z, X)

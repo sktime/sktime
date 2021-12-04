@@ -3,9 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
+import inspect
 import numpy as np
 import pandas as pd
 
@@ -18,7 +19,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
-        "univariate-only": True,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -80,7 +81,11 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        y_pred = self._fitted_forecaster.predict(start, end)
+
+        if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
+            y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
+        else:
+            y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon

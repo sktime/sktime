@@ -39,21 +39,32 @@ check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for 
 
 """
 
-__author__ = ["fkiraly", "Viktor Dremov"]
+__author__ = ["fkiraly", "victordremov"]
 
 import pandas as pd
 
-
 ESTIMATOR_TAG_REGISTER = [
     (
-        "univariate-only",  # todo: rename to "scitype:handles_exogeneous"
+        "ignores-exogeneous-X",
         "forecaster",
         "bool",
-        "does forecaster use exogeneous data (X)?",
+        "does forecaster ignore exogeneous data (X)?",
+    ),
+    (
+        "univariate-only",
+        "transformer",
+        "bool",
+        "can transformer handle multivariate series? True = no",
     ),
     (
         "fit-in-transform",
         "transformer",
+        "bool",
+        "does fit contain no logic and can be skipped? yes/no",
+    ),
+    (
+        "fit-in-predict",
+        "estimator",
         "bool",
         "does fit contain no logic and can be skipped? yes/no",
     ),
@@ -83,13 +94,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X-y-must-have-same-index",
-        ["forecaster", "classifier", "regressor"],
+        ["forecaster", "regressor"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
     (
-        "enforce-index-type",
-        ["forecaster", "classifier", "regressor"],
+        "enforce_index_type",
+        ["forecaster", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
     ),
@@ -101,7 +112,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "symmetric",
-        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
@@ -113,15 +124,61 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "y_inner_mtype",
-        "forecaster",
-        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        ["forecaster", "transformer"],
+        (
+            "list",
+            [
+                "pd.Series",
+                "pd.DataFrame",
+                "np.array",
+                "nested_univ",
+                "pd-multiindex",
+                "numpy3D",
+                "df-list",
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (
         "X_inner_mtype",
-        "forecaster",
-        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        ["forecaster", "transformer"],
+        (
+            "list",
+            [
+                "pd.Series",
+                "pd.DataFrame",
+                "np.array",
+                "nested_univ",
+                "pd-multiindex",
+                "numpy3D",
+                "df-list",
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
+    ),
+    (
+        "scitype:transform-input",
+        "transformer",
+        ("list", ["Series", "Panel"]),
+        "what is the scitype of the transformer input X",
+    ),
+    (
+        "scitype:transform-output",
+        "transformer",
+        ("list", ["Series", "Primitives", "Panel"]),
+        "what is the scitype of the transformer output, the transformed X",
+    ),
+    (
+        "scitype:instancewise",
+        "transformer",
+        "bool",
+        "does the transformer transform instances independently?",
+    ),
+    (
+        "scitype:transform-labels",
+        "transformer",
+        ("list", ["None", "Series", "Primitives", "Panel"]),
+        "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
         "capability:pred_int",
@@ -133,13 +190,13 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:multivariate",
         "classifier",
         "bool",
-        "can classifier classify time series with 2 or more variables?",
+        "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
         "classifier",
         "bool",
-        "can classifier handle unequal length time series?",
+        "can the classifier handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
@@ -162,6 +219,18 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "contract time setting, i.e. does the estimator support limiting max fit time?",
     ),
+    (
+        "capability:multithreading",
+        "classifier",
+        "bool",
+        "can the classifier set n_jobs to use multiple threads?",
+    ),
+    (
+        "coerce-X-to-pandas",
+        ["classifier", "transformer"],
+        "bool",
+        "should X be coerced to a nested pandas DataFrame?",
+    ),
     # (
     #     "handles-panel",
     #     "annotator",
@@ -180,10 +249,27 @@ ESTIMATOR_TAG_REGISTER = [
     #     "str",
     #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
     # ),
+    (
+        "capability:multiple-alignment",
+        "aligner",
+        "bool",
+        "is aligner capable of aligning multiple series (True) or only two (False)?",
+    ),
+    (
+        "capability:distance",
+        "aligner",
+        "bool",
+        "does aligner return overall distance between aligned series?",
+    ),
+    (
+        "capability:distance-matrix",
+        "aligner",
+        "bool",
+        "does aligner return pairwise distance matrix between aligned series?",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
-
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
 
 

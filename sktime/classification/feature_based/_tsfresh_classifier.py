@@ -4,12 +4,11 @@
 Pipeline classifier using the TSFresh transformer and an estimator.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["TSFreshClassifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
@@ -17,7 +16,6 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -49,9 +47,9 @@ class TSFreshClassifier(BaseClassifier):
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         Number of classes. Extracted from the data.
-    classes_ : ndarray of shape (n_classes)
+    classes_ : ndarray of shape (n_classes_)
         Holds the label for each class.
 
     See Also
@@ -68,22 +66,22 @@ class TSFreshClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.feature_based import TSFreshClassifier
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> clf = TSFreshClassifier()
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = TSFreshClassifier(
+    ...     default_fc_parameters="minimal",
+    ...     estimator=RandomForestClassifier(n_estimators=10),
+    ... )
     >>> clf.fit(X_train, y_train)
     TSFreshClassifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -107,38 +105,39 @@ class TSFreshClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes = 0
-        self.classes_ = []
 
         super(TSFreshClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """Fit an estimator using transformed data from the Catch22 transformer.
+    def _fit(self, X, y):
+        """Fit a pipeline on cases (X,y), where y is the target variable.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_dims]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
-        self : object
-        """
-        X, y = check_X_y(X, y)
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.n_classes = np.unique(y).shape[0]
+        self :
+            Reference to self.
 
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
         self._transformer = (
             TSFreshRelevantFeatureExtractor(
                 default_fc_parameters=self.default_fc_parameters,
-                n_jobs=self.n_jobs,
+                n_jobs=self._threads_to_use,
                 chunksize=self.chunksize,
             )
             if self.relevant_feature_extractor
             else TSFreshFeatureExtractor(
                 default_fc_parameters=self.default_fc_parameters,
-                n_jobs=self.n_jobs,
+                n_jobs=self._threads_to_use,
                 chunksize=self.chunksize,
             )
         )
@@ -155,53 +154,48 @@ class TSFreshClassifier(BaseClassifier):
                 self._transformer.disable_progressbar = True
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
-            self._estimator.n_jobs = self.n_jobs
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
-        """Predict class values of n_instances in X.
+    def _predict(self, X):
+        """Predict class values of n instances in X.
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
 
         Returns
         -------
-        preds : np.ndarray of shape (n, 1)
-            Predicted class.
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         return self._estimator.predict(self._transformer.transform(X))
 
-    def predict_proba(self, X):
-        """Predict class probabilities for n_instances in X.
+    def _predict_proba(self, X):
+        """Predict class probabilities for n instances in X.
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
 
         Returns
         -------
-        predicted_probs : array of shape (n_instances, n_classes)
-            Predicted probability of each class.
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
-            dists = np.zeros((X.shape[0], self.n_classes))
+            dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
+                dists[i, self._class_dictionary[preds[i]]] = 1
             return dists

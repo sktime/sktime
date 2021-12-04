@@ -1,9 +1,9 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# License: copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
-"""Implements Theta-lines transformation for use with automatic theta forecasting."""
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
+"""Implements Theta-lines transformation for use with Theta forecasting."""
 
-__author__ = ["Guzal Bulatova", "Markus Löning"]
+__author__ = ["GuzalBulatova", "mloning"]
 __all__ = ["ThetaLinesTransformer"]
 
 import numpy as np
@@ -18,13 +18,37 @@ from sktime.utils.validation.series import check_series
 class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     """Decompose the original data into two or more Theta-lines.
 
+    Implementation of decomposition for Theta-method [1]_ as described in [2]_.
+
+    Overview: Input :term:`univariate series <Univariate time series>` of length
+    "n" and ThetaLinesTransformer modifies the local curvature of the time series
+    using Theta-coefficient values passed through the parameter `theta`.
+
+    Each Theta-coefficient is applied directly to the second differences of the input
+    series. The resulting transformed series (Theta-lines) are returned as a
+    pd.DataFrame of shape `len(input series) * len(theta)`.
+
+    Parameters
+    ----------
+    theta : sequence of float, default=(0,2)
+        Theta-coefficients to use in transformation.
+
     Notes
     -----
-    Implements decomposition as described in [1]_.
+    Depending on the value of the Theta-coefficient, Theta-lines either augment the
+    long-term trend (0 < Theta < 1) or the the short-term behaviour (Theta > 1).
+
+    Special cases:
+        - Theta == 0 : deflates input data to linear trend
+        - Theta == 1 : returns data unchanged
+        - Theta < 0 : transforms time series and mirrors it along the linear trend.
 
     References
     ----------
-    .. [1] E.Spiliotis et al., "Generalizing the Theta method for
+    .. [1] V.Assimakopoulos et al., "The theta model: a decomposition approach
+       to forecasting", International Journal of Forecasting, vol. 16, pp. 521-530,
+       2000.
+    .. [2] E.Spiliotis et al., "Generalizing the Theta method for
        automatic forecasting ", European Journal of Operational
        Research, vol. 284, pp. 550-558, 2020.
 

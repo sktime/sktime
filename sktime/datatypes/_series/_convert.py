@@ -25,9 +25,6 @@ Raises
 ------
 ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
-
----
-
 """
 
 __author__ = ["fkiraly"]
@@ -36,7 +33,6 @@ __all__ = ["convert_dict"]
 
 import numpy as np
 import pandas as pd
-
 
 ##############################################################
 # methods to convert one machine type to another machine type
@@ -81,12 +77,15 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
         raise TypeError("input is not a pd.DataFrame")
 
     if len(obj.columns) != 1:
-        raise ValueError("pd.DataFrame must be pd.DataFrame with one column")
+        raise ValueError("input must be univariate pd.DataFrame, with one column")
 
     if isinstance(store, dict):
         store["columns"] = obj.columns[[0]]
 
-    return obj[obj.columns[0]]
+    y = obj[obj.columns[0]]
+    y.name = None
+
+    return y
 
 
 convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
@@ -119,8 +118,11 @@ convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Serie
 
 def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
 
-    if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
-        raise TypeError("input must be a np.ndarray of dim 2")
+    if not isinstance(obj, np.ndarray) and len(obj.shape) > 2:
+        raise TypeError("input must be a np.ndarray of dim 1 or 2")
+
+    if len(obj.shape) == 1:
+        obj = np.reshape(obj, (-1, 1))
 
     if (
         isinstance(store, dict)

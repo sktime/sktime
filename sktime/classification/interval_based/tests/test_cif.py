@@ -1,62 +1,37 @@
 # -*- coding: utf-8 -*-
+"""CanonicalIntervalForest test code."""
 import numpy as np
 from numpy import testing
 
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
+from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.datasets import load_basic_motions, load_unit_test
 
 
-def test_cif_on_gunpoint():
-    # load gunpoint data
-    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(10)
+def test_cif_on_unit_test_data():
+    """Test of CanonicalIntervalForest on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
-    cif.fit(X_train.iloc[indices], y_train[indices])
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
+    cif.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = cif.predict_proba(X_test.iloc[indices])
-    testing.assert_array_equal(probas, cif_gunpoint_probas)
-
-
-def test_cif_on_power_demand():
-    # load power demand data
-    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(100)
-
-    # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
-    cif.fit(X_train, y_train)
-
-    score = cif.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.92
-
-
-def test_cif_cit_on_power_demand():
-    # load power demand data
-    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(100)
-
-    # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, base_estimator="CIT", random_state=0)
-    cif.fit(X_train, y_train)
-
-    score = cif.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.92
+    testing.assert_array_equal(probas, cif_unit_test_probas)
 
 
 def test_cif_on_basic_motions():
+    """Test of CanonicalIntervalForest on basic motions data."""
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).permutation(20)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=20, random_state=0)
+    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
     cif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -64,131 +39,111 @@ def test_cif_on_basic_motions():
     testing.assert_array_equal(probas, cif_basic_motions_probas)
 
 
-cif_gunpoint_probas = np.array(
+cif_unit_test_probas = np.array(
     [
         [
-            0.05,
-            0.95,
+            0.0,
+            1.0,
         ],
         [
-            0.5,
-            0.5,
+            0.9,
+            0.1,
         ],
         [
-            0.65,
-            0.35,
+            0.1,
+            0.9,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.7,
+            0.3,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
         ],
         [
             0.3,
             0.7,
         ],
         [
-            0.05,
-            0.95,
+            0.9,
+            0.1,
         ],
         [
-            0.75,
-            0.25,
-        ],
-        [
-            0.05,
-            0.95,
-        ],
-        [
-            0.65,
-            0.35,
-        ],
-        [
-            0.75,
-            0.25,
-        ],
-        [
-            0.15,
-            0.85,
+            0.9,
+            0.1,
         ],
     ]
 )
 cif_basic_motions_probas = np.array(
     [
         [
-            1.0,
+            0.0,
+            0.0,
+            0.3,
+            0.7,
+        ],
+        [
+            0.5,
+            0.4,
+            0.1,
             0.0,
         ],
         [
             0.0,
-            1.0,
+            0.0,
+            0.8,
+            0.2,
         ],
         [
-            1.0,
+            0.1,
+            0.9,
+            0.0,
             0.0,
         ],
         [
             0.0,
-            1.0,
-        ],
-        [
-            1.0,
             0.0,
-        ],
-        [
-            1.0,
-            0.0,
+            0.3,
+            0.7,
         ],
         [
             0.0,
-            1.0,
+            0.0,
+            0.4,
+            0.6,
         ],
         [
-            1.0,
+            0.3,
+            0.6,
             0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.0,
-            1.0,
+            0.1,
         ],
         [
             0.0,
-            1.0,
+            0.1,
+            0.5,
+            0.4,
         ],
         [
-            0.95,
-            0.05,
-        ],
-        [
+            0.2,
+            0.8,
             0.0,
-            1.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
             0.0,
         ],
         [
-            1.0,
+            0.2,
+            0.7,
             0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.95,
-            0.05,
-        ],
-        [
-            1.0,
-            0.0,
+            0.1,
         ],
     ]
 )
@@ -206,21 +161,21 @@ cif_basic_motions_probas = np.array(
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(10)
+#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
+#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
+#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 #
-#     cif_u = CanonicalIntervalForest(n_estimators=20, random_state=0)
+#     cif_u = CanonicalIntervalForest(n_estimators=10, random_state=0)
 #
-#     cif_u.fit(X_train.iloc[indices], y_train[indices])
+#     cif_u.fit(X_train, y_train)
 #     probas = cif_u.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
 #
 #     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).permutation(20)
+#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 #
-#     cif_m = CanonicalIntervalForest(n_estimators=20, random_state=0)
+#     cif_m = CanonicalIntervalForest(n_estimators=10, random_state=0)
 #
 #     cif_m.fit(X_train.iloc[indices], y_train[indices])
 #     probas = cif_m.predict_proba(X_test.iloc[indices])

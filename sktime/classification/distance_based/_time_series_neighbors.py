@@ -19,7 +19,7 @@ param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["Jason Lines", "TonyBagnall"]
+__author__ = ["jasonlines", "TonyBagnall"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 import warnings
@@ -30,14 +30,14 @@ from joblib import effective_n_jobs
 from scipy import stats
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
-from sklearn.neighbors._base import _check_weights
-from sklearn.neighbors._base import _get_weights
+from sklearn.neighbors._base import _check_weights, _get_weights
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
+
+from sktime.classification.base import BaseClassifier
 from sktime.distances.elastic import euclidean_distance
 from sktime.distances.elastic_cython import (
     ddtw_distance,
@@ -49,11 +49,8 @@ from sktime.distances.elastic_cython import (
     wddtw_distance,
     wdtw_distance,
 )
-
-from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
@@ -106,13 +103,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     >>> y_pred = classifier.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
     }
 
     def __init__(
@@ -198,7 +190,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         X, y = check_X_y(
             X,
             y,
-            enforce_univariate=not self.capabilities["multivariate"],
+            enforce_univariate=not self._tags["capability:multivariate"],
             coerce_to_numpy=True,
         )
         # Transpose to work correctly with distance functions
@@ -300,7 +292,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self.check_is_fitted()
         X = check_X(
             X,
-            enforce_univariate=not self.capabilities["multivariate"],
+            enforce_univariate=not self._tags["capability:multivariate"],
             coerce_to_numpy=True,
         )
         # Transpose to work correctly with distance functions

@@ -10,27 +10,30 @@ the lower the better.
 
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
-    relative_loss,
-    mean_asymmetric_error,
-    mean_absolute_scaled_error,
-    median_absolute_scaled_error,
-    mean_squared_scaled_error,
-    median_squared_scaled_error,
-    mean_absolute_error,
-    mean_squared_error,
-    median_absolute_error,
-    median_squared_error,
-    mean_absolute_percentage_error,
-    median_absolute_percentage_error,
-    mean_squared_percentage_error,
-    median_squared_percentage_error,
-    mean_relative_absolute_error,
-    median_relative_absolute_error,
+    geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    geometric_mean_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_absolute_scaled_error,
+    mean_asymmetric_error,
+    mean_linex_error,
+    mean_relative_absolute_error,
+    mean_squared_error,
+    mean_squared_percentage_error,
+    mean_squared_scaled_error,
+    median_absolute_error,
+    median_absolute_percentage_error,
+    median_absolute_scaled_error,
+    median_relative_absolute_error,
+    median_squared_error,
+    median_squared_percentage_error,
+    median_squared_scaled_error,
+    relative_loss,
 )
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
+__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -41,6 +44,8 @@ __all__ = [
     "MeanSquaredError",
     "MedianAbsoluteError",
     "MedianSquaredError",
+    "GeometricMeanAbsoluteError",
+    "GeometricMeanSquaredError",
     "MeanAbsolutePercentageError",
     "MedianAbsolutePercentageError",
     "MeanSquaredPercentageError",
@@ -50,6 +55,7 @@ __all__ = [
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
     "MeanAsymmetricError",
+    "MeanLinexError",
     "RelativeLoss",
 ]
 
@@ -100,7 +106,7 @@ class _BaseForecastingErrorMetric(BaseMetric):
         loss : float
             Calculated loss metric.
         """
-        return self._func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
+        return self.func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
 
 
 class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
@@ -145,7 +151,7 @@ class _PercentageErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -185,7 +191,7 @@ class _SquaredErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -227,7 +233,7 @@ class _SquaredPercentageErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -260,14 +266,42 @@ class _AsymmetricErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
             asymmetric_threshold=self.asymmetric_threshold,
             left_error_function=self.left_error_function,
             right_error_function=self.right_error_function,
+            left_error_penalty=self.left_error_penalty,
+            right_error_penalty=self.right_error_penalty,
             **kwargs,
+        )
+
+
+class _LinexErrorMixin:
+    def __call__(self, y_true, y_pred, **kwargs):
+        """Calculate metric value using underlying metric function.
+
+        Parameters
+        ----------
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+                (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
+                (n_timepoints, n_outputs), default = None
+            Optional keyword argument to pass training data.
+
+        Returns
+        -------
+        loss : float
+            Calculated loss metric.
+        """
+        return self.func(
+            y_true, y_pred, a=self.a, b=self.b, multioutput=self.multioutput, **kwargs
         )
 
 
@@ -294,7 +328,7 @@ class _RelativeLossMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -375,10 +409,28 @@ class _AsymmetricForecastingErrorMetric(
         asymmetric_threshold=0,
         left_error_function="squared",
         right_error_function="absolute",
+        left_error_penalty=1.0,
+        right_error_penalty=1.0,
     ):
         self.asymmetric_threshold = asymmetric_threshold
         self.left_error_function = left_error_function
         self.right_error_function = right_error_function
+        self.left_error_penalty = left_error_penalty
+        self.right_error_penalty = right_error_penalty
+        super().__init__(func=func, name=name, multioutput=multioutput)
+
+
+class _LinexForecastingErrorMetric(_LinexErrorMixin, _BaseForecastingErrorMetric):
+    def __init__(
+        self,
+        func,
+        name=None,
+        multioutput="uniform_average",
+        a=1.0,
+        b=1.0,
+    ):
+        self.a = a
+        self.b = b
         super().__init__(func=func, name=name, multioutput=multioutput)
 
 
@@ -412,14 +464,11 @@ def make_forecasting_scorer(
     func
         Function to convert to a forecasting scorer class.
         Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
-
     name : str, default=None
         Name to use for the forecasting scorer loss class.
-
     greater_is_better : bool, default=False
         If True then maximizing the metric is better.
         If False then minimizing the metric is better.
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -433,9 +482,9 @@ def make_forecasting_scorer(
         Metric class that can be used as forecasting scorer.
     """
     if greater_is_better:
-        return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
-    else:
         return _BaseForecastingScoreMetric(func, name=name, multioutput=multioutput)
+    else:
+        return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
 
 
 class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
@@ -459,7 +508,6 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     ----------
     sp : int, default = 1
         Seasonal periodicity of the data
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -471,15 +519,12 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     sp : int
         Stores seasonal periodicity of data.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -488,6 +533,18 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     MedianAbsoluteScaledError
     MeanSquaredScaledError
     MedianSquaredScaledError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+    for intermittent demand", Foresight, Issue 4.
+
+    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+    "The M4 Competition: 100,000 time series and 61 forecasting methods",
+    International Journal of Forecasting, Volume 3.
 
     Examples
     --------
@@ -510,18 +567,6 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     >>> mase = MeanAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mase(y_true, y_pred, y_train=y_train)
     0.21935483870967742
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-
-    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-    for intermittent demand", Foresight, Issue 4.
-
-    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-    "The M4 Competition: 100,000 time series and 61 forecasting methods",
-    International Journal of Forecasting, Volume 3.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1):
@@ -554,7 +599,6 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     ----------
     sp : int, default = 1
         Seasonal periodicity of data.
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -566,15 +610,12 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     sp : int
         Stores seasonal periodicity of data.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -583,6 +624,18 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     MeanAbsoluteScaledError
     MeanSquaredScaledError
     MedianSquaredScaledError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
+    for intermittent demand", Foresight, Issue 4.
+
+    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
+    "The M4 Competition: 100,000 time series and 61 forecasting methods",
+    International Journal of Forecasting, Volume 3.
 
     Examples
     --------
@@ -605,18 +658,6 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     >>> mdase = MedianAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mdase( y_true, y_pred, y_train=y_train)
     0.21935483870967742
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-
-    Hyndman, R. J. (2006). "Another look at forecast accuracy metrics
-    for intermittent demand", Foresight, Issue 4.
-
-    Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
-    "The M4 Competition: 100,000 time series and 61 forecasting methods",
-    International Journal of Forecasting, Volume 3.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1):
@@ -648,10 +689,8 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     ----------
     sp : int, default = 1
         Seasonal periodicity of data.
-
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -663,18 +702,14 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     sp : int
         Stores seasonal periodicity of data.
-
     square_root : bool
         Stores whether to take the square root of the metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -683,6 +718,14 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     MeanAbsoluteScaledError
     MedianAbsoluteScaledError
     MedianSquaredScaledError
+
+    References
+    ----------
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -705,14 +748,6 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
     0.17451891814894502
-
-    References
-    ----------
-    M5 Competition Guidelines.
-    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1, square_root=False):
@@ -750,10 +785,8 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     ----------
     sp : int
         Seasonal periodicity of data.
-
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -765,18 +798,14 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     sp : int
         Seasonal periodicity of data.
-
     square_root : bool
         Stores whether to take the square root of the metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -785,6 +814,14 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     MeanAbsoluteScaledError
     MedianAbsoluteScaledError
     MedianSquaredScaledError
+
+    References
+    ----------
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -807,14 +844,6 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     >>> rmdsse = MedianSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
     0.16914781383660782
-
-    References
-    ----------
-    M5 Competition Guidelines.
-    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", sp=1, square_root=False):
@@ -851,12 +880,10 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -865,6 +892,11 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     MedianAbsoluteError
     MeanSquaredError
     MedianSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -885,11 +917,6 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     >>> mae = MeanAbsoluteError(multioutput=[0.3, 0.7])
     >>> mae(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average"):
@@ -924,12 +951,10 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -938,6 +963,11 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     MeanAbsoluteError
     MeanSquaredError
     MedianSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -958,11 +988,6 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     >>> mdae = MedianAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdae(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average"):
@@ -987,7 +1012,6 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     ----------
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -999,15 +1023,12 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     square_root : bool
         Stores whether to take the square root of the
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1016,6 +1037,11 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     MeanAbsoluteError
     MedianAbsoluteError
     MedianSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1045,11 +1071,6 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmse(y_true, y_pred)
     0.8936491673103708
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", square_root=False):
@@ -1084,7 +1105,6 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     ----------
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1096,15 +1116,12 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     square_root : bool
         Stores whether to take the square root of the metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1113,6 +1130,11 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     MeanAbsoluteError
     MedianAbsoluteError
     MeanSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1144,11 +1166,6 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     >>> rmdse = MedianSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdse(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", square_root=False):
@@ -1159,6 +1176,192 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
             name=name,
             multioutput=multioutput,
             square_root=square_root,
+        )
+
+
+class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
+    """Geometric mean absolute error (GMAE).
+
+    GMAE output is non-negative floating point. The best value is approximately
+    zero, rather than zero.
+
+    Like MAE and MdAE, GMAE is measured in the same units as the input data.
+    Because GMAE takes the absolute value of the forecast error rather than
+    squaring it, MAE penalizes large errors to a lesser degree than squared error
+    varients like MSE, RMSE or GMSE or RGMSE.
+
+    Parameters
+    ----------
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Attributes
+    ----------
+    name : str
+        The name of the loss metric
+    greater_is_better : bool
+        Stores whether the metric is optimized by minimization or maximization.
+        If False, minimizing the metric is optimal.
+        If True, maximizing the metric is optimal.
+    multioutput : str
+        Stores how the metric should aggregate multioutput data.
+
+    See Also
+    --------
+    mean_absolute_error
+    median_absolute_error
+    mean_squared_error
+    median_squared_error
+    geometric_mean_squared_error
+
+    Notes
+    -----
+    The geometric mean uses the product of values in its calculation. The presence
+    of a zero value will result in the result being zero, even if all the other
+    values of large. To partially account for this in the case where elements
+    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    values are replaced in the calculation with a small value. This results in
+    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    being close to but not exactly zero.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import GeometricMeanAbsoluteError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> gmae = GeometricMeanAbsoluteError()
+    >>> gmae(y_true, y_pred)
+    0.000529527232030127
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> gmae(y_true, y_pred)
+    0.5000024031086919
+    >>> gmae = GeometricMeanAbsoluteError(multioutput='raw_values')
+    >>> gmae(y_true, y_pred)
+    array([4.80621738e-06, 1.00000000e+00])
+    >>> gmae = GeometricMeanAbsoluteError(multioutput=[0.3, 0.7])
+    >>> gmae(y_true, y_pred)
+    0.7000014418652152
+    """
+
+    def __init__(self, multioutput="uniform_average"):
+        name = "GeometricMeanAbsoluteError"
+        func = geometric_mean_absolute_error
+        super(GeometricMeanAbsoluteError, self).__init__(
+            func=func, name=name, multioutput=multioutput
+        )
+
+
+class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
+    """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
+
+    If `square_root` is False then calculates GMSE and if `square_root` is True
+    then RGMSE is calculated. Both GMSE and RGMSE return non-negative floating
+    point. The best value is approximately zero, rather than zero.
+
+    Like MSE and MdSE, GMSE is measured in squared units of the input data. RMdSE is
+    on the same scale as the input data like RMSE and RdMSE. Because GMSE and RGMSE
+    square the forecast error rather than taking the absolute value, they
+    penalize large errors more than GMAE.
+
+    Parameters
+    ----------
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+        If True, returns root geometric mean squared error (RGMSE)
+        If False, returns geometric mean squared error (GMSE)
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Attributes
+    ----------
+    name : str
+        The name of the loss metric
+    greater_is_better : bool
+        Stores whether the metric is optimized by minimization or maximization.
+        If False, minimizing the metric is optimal.
+        If True, maximizing the metric is optimal.
+    square_root : bool
+        Stores whether to take the square root of the metric
+    multioutput : str
+        Stores how the metric should aggregate multioutput data.
+
+    See Also
+    --------
+    mean_absolute_error
+    median_absolute_error
+    mean_squared_error
+    median_squared_error
+    geometric_mean_absolute_error
+
+    Notes
+    -----
+    The geometric mean uses the product of values in its calculation. The presence
+    of a zero value will result in the result being zero, even if all the other
+    values of large. To partially account for this in the case where elements
+    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    values are replaced in the calculation with a small value. This results in
+    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    being close to but not exactly zero.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> gmse = GeometricMeanSquaredError()
+    >>> gmse(y_true, y_pred)
+    2.80399089461488e-07
+    >>> rgmse = GeometricMeanSquaredError(square_root=True)
+    >>> rgmse(y_true, y_pred)
+    0.000529527232030127
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> gmse = GeometricMeanSquaredError()
+    >>> gmse(y_true, y_pred)
+    0.5000000000115499
+    >>> rgmse = GeometricMeanSquaredError(square_root=True)
+    >>> rgmse(y_true, y_pred)
+    0.5000024031086919
+    >>> gmse = GeometricMeanSquaredError(multioutput='raw_values')
+    >>> gmse(y_true, y_pred)
+    array([2.30997255e-11, 1.00000000e+00])
+    >>> rgmse = GeometricMeanSquaredError(multioutput='raw_values', square_root=True)
+    >>> rgmse(y_true, y_pred)
+    array([4.80621738e-06, 1.00000000e+00])
+    >>> gmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
+    >>> gmse(y_true, y_pred)
+    0.7000000000069299
+    >>> rgmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
+    >>> rgmse(y_true, y_pred)
+    0.7000014418652152
+    """
+
+    def __init__(self, multioutput="uniform_average", square_root=False):
+        name = "GeometricMeanSquaredError"
+        func = geometric_mean_squared_error
+        super(GeometricMeanSquaredError, self).__init__(
+            func=func, name=name, multioutput=multioutput, square_root=square_root
         )
 
 
@@ -1181,7 +1384,6 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     ----------
     symmetric : bool, default = True
         Whether to calculate the symmetric version of the percentage metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1193,15 +1395,12 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     symmetric : bool
         Stores whether to calculate the symmetric version of the percentage metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1210,6 +1409,11 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1242,11 +1446,6 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7])
     >>> smape(y_true, y_pred)
     0.5668686868686869
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", symmetric=True):
@@ -1283,7 +1482,6 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     ----------
     symmetric : bool, default = True
         Whether to calculate the symmetric version of the percentage metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1295,15 +1493,12 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     symmetric : bool
         Stores whether to calculate the symmetric version of the percentage metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1312,6 +1507,11 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     MeanAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1344,11 +1544,6 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7])
     >>> smdape(y_true, y_pred)
     0.5066666666666666
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(self, multioutput="uniform_average", symmetric=True):
@@ -1384,10 +1579,8 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     ----------
     symmetric : bool, default = True
         Whether to calculate the symmetric version of the percentage metric
-
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1399,18 +1592,14 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     symmetric : bool
         Stores whether to calculate the symmetric version of the percentage metric
-
     square_root : bool
         Stores whether to take the square root of the metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1419,6 +1608,11 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     MeanAbsolutePercentageError
     MedianAbsolutePercentageError
     MedianSquaredPercentageError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1453,11 +1647,6 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     symmetric=False, square_root=True)
     >>> smspe(y_true, y_pred)
     0.7504665536595034
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(
@@ -1500,10 +1689,8 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     ----------
     symmetric : bool, default = True
         Whether to calculate the symmetric version of the percentage metric
-
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1515,18 +1702,14 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     symmetric : bool
         Stores whether to calculate the symmetric version of the percentage metric
-
     square_root : bool
         Stores whether to take the square root of the metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1535,6 +1718,11 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     MeanAbsolutePercentageError
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1569,11 +1757,6 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     symmetric=False, square_root=True)
     >>> smdspe(y_true, y_pred)
     0.7428571428571428
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(
@@ -1613,12 +1796,10 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1627,6 +1808,11 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     MedianRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1649,11 +1835,6 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     >>> mrae = MeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     1.0111111111111108
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -1691,12 +1872,10 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1705,6 +1884,11 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     MeanRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1727,11 +1911,6 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
     >>> mdrae = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.7499999999999999
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -1770,12 +1949,10 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1784,6 +1961,11 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1807,11 +1989,6 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
     >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.7810066018326863
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -1845,7 +2022,6 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     ----------
     square_root : bool, default = False
         Whether to take the square root of the metric
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1857,15 +2033,12 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
     square_root : bool
         Stores whether to take the square root of the metric
-
     multioutput : str
         Stores how the metric should aggregate multioutput data.
 
@@ -1874,6 +2047,11 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1897,11 +2075,6 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
     >>> gmrse = GeometricMeanRelativeSquaredError(multioutput=[0.3, 0.7])
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.8713854839582426
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     _tags = {
@@ -1922,23 +2095,28 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
 
 
 class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
-    """Calculate asymmetric loss function.
+    """Calculate mean of asymmetric loss function.
+
+    Output is non-negative floating point. The best value is 0.0.
 
     Error values that are less than the asymmetric threshold have
     `left_error_function` applied. Error values greater than or equal to
     asymmetric threshold  have `right_error_function` applied.
 
-    Many forecasting loss functions assume that over- and under-
-    predictions should receive an equal penalty. However, this may not align
-    with the actual cost faced by users' of the forecasts. Asymmetric loss
-    functions are useful when the cost of under- and over- prediction are not
-    the same.
+    Many forecasting loss functions (like those discussed in [1]_) assume that
+    over- and under- predictions should receive an equal penalty. However, this
+    may not align with the actual cost faced by users' of the forecasts.
+    Asymmetric loss functions are useful when the cost of under- and over-
+    prediction are not the same.
 
     Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
     and `right_error_function` to 'absolute` results in a greater penalty
     applied to over-predictions (y_true - y_pred < 0). The opposite is true
     for `left_error_function` set to 'absolute' and `right_error_function`
     set to 'squared`.
+
+    The left_error_penalty and right_error_penalty can be used to add differing
+    multiplicative penalties to over-predictions and under-predictions.
 
     Parameters
     ----------
@@ -1947,14 +2125,17 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
         that are less than the asymmetric threshold have `left_error_function`
         applied. Error values greater than or equal to asymmetric threshold
         have `right_error_function` applied.
-
-    left_error_function : str, {'squared', 'absolute'}
+    left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
-
-    right_error_function : str, {'squared', 'absolute'}
+    right_error_function : {'squared', 'absolute'}, default='absolute'
         Loss penalty to apply to error values greater than or equal to the
         asymmetric threshold.
-
+    left_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values less than
+        the asymetric threshold.
+    right_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values greater
+        than the asymmetric threshold.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -1966,24 +2147,38 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
     ----------
     name : str
         The name of the loss metric
-
     greater_is_better : bool
         Stores whether the metric is optimized by minimization or maximization.
         If False, minimizing the metric is optimal.
         If True, maximizing the metric is optimal.
-
-    asymmetric_threshold : numeric
+    asymmetric_threshold : float
         Stores threshold to use applying asymmetric loss to errors
-
-    left_error_function : str
-        Stores loss penalty to apply to error values less than the asymmetric threshold.
-
-    right_error_function : str
-        Stores loss penalty to apply to error values greater than or equal to
-        the asymmetric threshold.
-
+    left_error_function: str
+        Stores loss penalty to apply to error values less than the asymmetric
+        threshold.
+    right_error_function: str
+        Stores loss penalty to apply to error values greater than or equal to the
+        asymmetric threshold.
     multioutput : str
         Stores how the metric should aggregate multioutput data.
+
+    See Also
+    --------
+    mean_linex_error
+
+    Notes
+    -----
+    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    choosing different values for `left_error_penalty` and `right_error_penalty`
+    results in the "lin-lin" error function discussed in [2]_.
+
+    References
+    ----------
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    .. [2] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+       Thomson, South-Western: Ohio, US.
 
     Examples
     --------
@@ -1991,36 +2186,28 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
     >>> from sktime.performance_metrics.forecasting import MeanAsymmetricError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> masymmetric = MeanAsymmetricError()
-    >>> masymmetric(y_true, y_pred)
+    >>> asymmetric_error = MeanAsymmetricError()
+    >>> asymmetric_error(y_true, y_pred)
     0.5
-    >>> masymmetric = MeanAsymmetricError(left_error_function='absolute', \
+    >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
-    >>> masymmetric(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)
     0.4625
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> masymmetric = MeanAsymmetricError()
-    >>> masymmetric(y_true, y_pred)
+    >>> asymmetric_error = MeanAsymmetricError()
+    >>> asymmetric_error(y_true, y_pred)
     0.75
-    >>> masymmetric = MeanAsymmetricError(left_error_function='absolute', \
+    >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
-    >>> masymmetric(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)
     0.7083333333333334
-    >>> masymmetric = MeanAsymmetricError(multioutput='raw_values')
-    >>> masymmetric(y_true, y_pred)
+    >>> asymmetric_error = MeanAsymmetricError(multioutput='raw_values')
+    >>> asymmetric_error(y_true, y_pred)
     array([0.5, 1. ])
-    >>> masymmetric = MeanAsymmetricError(multioutput=[0.3, 0.7])
-    >>> masymmetric(y_true, y_pred)
+    >>> asymmetric_error = MeanAsymmetricError(multioutput=[0.3, 0.7])
+    >>> asymmetric_error(y_true, y_pred)
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-
-    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
-    Thomson, South-Western: Ohio, US.
     """
 
     def __init__(
@@ -2029,6 +2216,8 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
         asymmetric_threshold=0,
         left_error_function="squared",
         right_error_function="absolute",
+        left_error_penalty=1.0,
+        right_error_penalty=1.0,
     ):
         name = "MeanAsymmetricError"
         func = mean_asymmetric_error
@@ -2039,7 +2228,112 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
             asymmetric_threshold=asymmetric_threshold,
             left_error_function=left_error_function,
             right_error_function=right_error_function,
+            left_error_penalty=left_error_penalty,
+            right_error_penalty=right_error_penalty,
         )
+
+
+class MeanLinexError(_LinexForecastingErrorMetric):
+    """Calculate mean linex error.
+
+    Output is non-negative floating point. The best value is 0.0.
+
+    Many forecasting loss functions (like those discussed in [1]_) assume that
+    over- and under- predictions should receive an equal penalty. However, this
+    may not align with the actual cost faced by users' of the forecasts.
+    Asymmetric loss functions are useful when the cost of under- and over-
+    prediction are not the same.
+
+    The linex error function accounts for this by penalizing errors on one side
+    of a threshold approximately linearly, while penalizing errors on the other
+    side approximately exponentially. If `a` > 0 then negative errors
+    (over-predictions) are penalized approximately linearly and positive errors
+    (under-predictions) are penalized approximately exponentially. If `a` < 0
+    the reverse is true.
+
+    Parameters
+    ----------
+    a : int or float
+        Controls whether over- or under- predictions receive an approximately
+        linear or exponential penalty. If `a` > 0 then negative errors
+        (over-predictions) are penalized approximately linearly and positive errors
+        (under-predictions) are penalized approximately exponentially. If `a` < 0
+        the reverse is true.
+    b : int or float
+        Multiplicative penalty to apply to calculated errors.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Attributes
+    ----------
+    name : str
+        The name of the loss metric
+    greater_is_better : bool
+        Stores whether the metric is optimized by minimization or maximization.
+        If False, minimizing the metric is optimal.
+        If True, maximizing the metric is optimal.
+    a : bool
+        Stores the coefficient that controls whether over- or under- predictions
+        receive an approximately linear or exponential penalty.
+    b : str
+        Stores multiplicative penalty applied to errors.
+
+    See Also
+    --------
+    mean_asymmetric_error
+
+    Notes
+    -----
+    Calculated as b * (np.exp(a * error) - a * error - 1), where a != 0 and b > 0
+    according to formula in [2]_.
+
+    References
+    ----------
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    .. [1] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+       Thomson, South-Western: Ohio, US.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanLinexError
+    >>> linex_error = MeanLinexError()
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> linex_error(y_true, y_pred)
+    0.19802627763937575
+    >>> linex_error = MeanLinexError(b=2)
+    >>> linex_error(y_true, y_pred)
+    0.3960525552787515
+    >>> linex_error = MeanLinexError(a=-1)
+    >>> linex_error(y_true, y_pred)
+    0.2391800623225643
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> linex_error = MeanLinexError()
+    >>> linex_error(y_true, y_pred)
+    0.2700398392309829
+    >>> linex_error = MeanLinexError(a=-1)
+    >>> linex_error(y_true, y_pred)
+    0.49660966225813563
+    >>> linex_error = MeanLinexError(multioutput='raw_values')
+    >>> linex_error(y_true, y_pred)
+    array([0.17220024, 0.36787944])
+    >>> linex_error = MeanLinexError(multioutput=[0.3, 0.7])
+    >>> linex_error(y_true, y_pred)
+    0.30917568000716666
+    """
+
+    def __init__(self, a=1.0, b=1.0, multioutput="uniform_average"):
+        name = "MeanLinexError"
+        func = mean_linex_error
+        super().__init__(func=func, name=name, multioutput=multioutput, a=a, b=b)
 
 
 class RelativeLoss(_RelativeLossForecastingErrorMetric):
@@ -2071,7 +2365,6 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     ----------
     relative_loss_function : function
         Function to use in calculation relative loss.
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -2094,6 +2387,11 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
 
     multioutput : str
         Stores how the metric should aggregate multioutput data.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -2121,11 +2419,6 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.927272727272727
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
 
     def __init__(
