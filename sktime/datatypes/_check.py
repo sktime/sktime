@@ -4,7 +4,7 @@
 
 Exports
 -------
-check_is(obj, mtype: str, scitype: str)
+check_is_mtype(obj, mtype: str, scitype: str)
     checks whether obj is mtype for scitype
     returns boolean yes/no and metadata
 
@@ -19,7 +19,7 @@ mtype(obj, as_scitype: str = None)
 __author__ = ["fkiraly"]
 
 __all__ = [
-    "check_is",
+    "check_is_mtype",
     "check_raise",
     "mtype",
 ]
@@ -48,7 +48,7 @@ def _check_scitype_valid(scitype: str = None):
         raise TypeError(scitype + " is not a supported scitype")
 
 
-def check_is(
+def check_is_mtype(
     obj,
     mtype: Union[str, List[str]],
     scitype: str = None,
@@ -131,11 +131,11 @@ def check_is(
         elif return_metadata:
             msg.append(res[1])
 
-    # there are three options on the result of check_is:
+    # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
     if len(found_mtype) > 1:
         raise TypeError(
-            f"Error in check_is, more than one mtype identified: {found_mtype}"
+            f"Error in check_is_mtype, more than one mtype identified: {found_mtype}"
         )
     # b. one mtype is found - then return that mtype
     elif len(found_mtype) == 1:
@@ -168,7 +168,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     Returns
     -------
     valid: bool - True if obj complies with the specification
-            same as when return argument of check_is is True
+            same as when return argument of check_is_mtype is True
             otherwise raises an error
 
     Raises
@@ -178,7 +178,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     ValueError if mtype input argument is not of expected type
     """
     obj_long_name_for_avoiding_linter_clash = obj
-    valid, msg, _ = check_is(
+    valid, msg, _ = check_is_mtype(
         obj=obj_long_name_for_avoiding_linter_clash,
         mtype=mtype,
         scitype=scitype,
@@ -223,10 +223,16 @@ def mtype(obj, as_scitype: str = None):
     else:
         mtypes = np.array([x[0] for x in check_dict.keys() if x[1] == as_scitype])
 
-    res = [mtype for mtype in mtypes if check_is(obj, mtype=mtype, scitype=as_scitype)]
+    res = [
+        mtype
+        for mtype in mtypes
+        if check_is_mtype(obj, mtype=mtype, scitype=as_scitype)
+    ]
 
     if len(res) > 1:
-        raise TypeError(f"Error in check_is, more than one mtype identified: {res}")
+        raise TypeError(
+            f"Error in check_is_mtype, more than one mtype identified: {res}"
+        )
 
     if len(res) < 1:
         raise TypeError("No valid mtype could be identified")
