@@ -18,13 +18,51 @@ from sktime.transformations.series.detrend import STLTransformer
 class STLForecaster(BaseForecaster):
     """STLForecaster.
 
+    The STLForecaster is using an STLTransformer to decompose the given
+    series y into the three components trend, season and residuals. Then,
+    the trend_forecaster, seasonal_forecaster and resid_forecaster are fitted
+    on the components individually to forecast them also individually. The
+    final forecast is then the sum of the three component forecasts.
+
     Parameters
     ----------
-    seasonal_forecaster : sktime forecaster
-    trend_forecaster : sktime forecaster
-    resid_forecaster : sktime forecaster
-    stl : sktime.STLTransformer
-        Transformer used to extract season, trend and resid components.
+    trend_forecaster : sktime forecaster, optional
+        Forecaster to be fitted on trend_ component of the
+        STLTransformer, by default None. If None, then
+        a NaiveForecaster(strategy="drift") is used.
+    seasonal_forecaster : sktime forecaster, optional
+        Forecaster to be fitted on seasonal_ component of the
+        STLTransformer, by default None. If None, then
+        a NaiveForecaster(strategy="last") is used.
+    resid_forecaster : sktime forecaster, optional
+        Forecaster to be fitted on resid_ component of the
+        STLTransformer, by default None. If None, then
+        a NaiveForecaster(strategy="mean") is used.
+    stl : sktime.STLTransformer, optional
+        Transformer to decompose series into trend, seasonal and
+        residual components, by default None
+    sp : int, optional
+        Seasonal period for defaulting forecasters and/or STLTransformer,
+        by default None. Can only be used if at least on the forecasters
+        or the stl is None.
+
+    Attributes
+    ----------
+    trend_ : pd.Series
+        Trend component.
+    seasonal_ : pd.Series
+        Seasonal components.
+    resid_ : pd.Series
+        Residuals component.
+
+    See Also
+    --------
+    STLTransformer
+
+    References
+    ----------
+    # noqa: E501
+    [1] https://www.statsmodels.org/dev/generated/statsmodels.tsa.forecasting.stl.STLForecast.html
     """
 
     _tags = {
@@ -38,14 +76,14 @@ class STLForecaster(BaseForecaster):
 
     def __init__(
         self,
-        seasonal_forecaster=None,
         trend_forecaster=None,
+        seasonal_forecaster=None,
         resid_forecaster=None,
         stl=None,
         sp=None,
     ):
-        self.seasonal_forecaster = seasonal_forecaster
         self.trend_forecaster = trend_forecaster
+        self.seasonal_forecaster = seasonal_forecaster
         self.resid_forecaster = resid_forecaster
         self.stl = stl
         self.sp = sp
@@ -66,6 +104,11 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        # check STLTransformer
+        if self.stl is not None:
+            if not isinstance(self.stl, STLTransformer):
+                raise ValueError("stl must be an sktime.STLTransformer or None.")
+        # check sp
         if (
             None
             not in [

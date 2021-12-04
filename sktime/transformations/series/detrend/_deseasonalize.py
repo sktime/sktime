@@ -378,6 +378,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
     --------
     Detrender
     Deseasonalizer
+    STLForecaster
 
     Examples
     --------
