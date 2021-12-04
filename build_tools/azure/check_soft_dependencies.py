@@ -30,6 +30,7 @@ SOFT_DEPENDENCIES = {
     "sktime.transformations.series.matrix_profile": ["stumpy"],
     "sktime.transformations.panel.signature_based": ["esig"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
+    "sktime.alignment.dtw_python": ["dtw"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 
