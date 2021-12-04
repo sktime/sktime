@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
+"""MiniRocket test code."""
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
+
 from sktime.datasets import load_gunpoint
 from sktime.transformations.panel.rocket import MiniRocket
 
 
 def test_minirocket_on_gunpoint():
-
+    """Test of MiniRocket on gun point."""
     # load training data
     X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
 
