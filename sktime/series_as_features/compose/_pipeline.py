@@ -53,18 +53,24 @@ class FeatureUnion(_PanelToPanelTransformer):
         self.preserve_dataframe = preserve_dataframe
         self.transformer_list = transformer_list
 
-        transformer_list_ = []
-        for x in transformer_list:
-            transformer_list_ += [(x[0], clone(x[1]))]
-
-        self.wrapped_FU = _FeatureUnion(
-            transformer_list_, n_jobs=n_jobs, transformer_weights=transformer_weights
-        )
-
         super(FeatureUnion, self).__init__()
 
     def fit(self, X, y=None, **fit_params):
         """Fit parameters."""
+
+        n_jobs = self.n_jobs
+        transformer_weights = self.transformer_weights
+        transformer_list = self.transformer_list
+
+        transformer_list_ = []
+        for x in transformer_list:
+            transformer_list_ += [(x[0], clone(x[1]))]
+        self.transformer_list_ = transformer_list_
+        transformer_list_ = self.transformer_list_
+
+        self.wrapped_FU = _FeatureUnion(
+            transformer_list_, n_jobs=n_jobs, transformer_weights=transformer_weights
+        )
         self.wrapped_FU.fit(X, y, **fit_params)
         self._is_fitted = True
         return self
