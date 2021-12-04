@@ -21,42 +21,50 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     """Time series forest regressor.
 
     A time series forest is an ensemble of decision trees built on random intervals.
-    Overview: Input n series length m.
-    For each tree
-        - sample sqrt(m) intervals,
-        - find mean, std and slope for each interval, concatenate to form new
-        data set,
-        - build decision tree on new data set.
+
+    Overview: For input data with n series of length m, for each tree:
+
+    - sample sqrt(m) intervals,
+    - find mean, std and slope for each interval, concatenate to form new data set,
+    - build decision tree on new data set.
+
     Ensemble the trees with averaged probability estimates.
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
     refinement described in [1]_. This is an intentionally stripped down, non
-    configurable version for use as a hive-cote component.
+    configurable version for use as a HIVE-COTE component.
 
     Parameters
     ----------
-    n_estimators    : int, ensemble size, default=200
-    min_interval    : int, minimum width of an interval, default=3
-    n_jobs          : int, default=1
+    n_estimators : int, default=200
+        Number of estimators.
+    min_interval : int, default=3
+        Minimum width of an interval.
+    n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    random_state    : int, default=None
+    random_state : int, default=None
 
     Attributes
     ----------
-    n_classes    : int
+    n_classes : int
+        Number of classes.
     n_intervals  : int
-    classes_    : List of classes for a given problem
+        Number of intervals.
+    classes_    : list
+        List of classes for a given problem.
+
+    See Also
+    --------
+    TimeSeriesForestClassifier
 
     References
     ----------
-    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
-    classification and feature extraction",Information Sciences, 239, 2013
-    Java implementation
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/
-    java/tsml/classifiers/interval_based/TSF.java
-    Arxiv version of the paper: https://arxiv.org/abs/1302.2277
+    ..[1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+          classification and feature extraction", Information Sciences, 239, 2013
+    ..[2] Java implementation https://github.com/uea-machine-learning/tsml
+    ..[3] Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
 
     _base_estimator = DecisionTreeRegressor()
@@ -71,8 +79,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
 
         Returns
         -------
-        y_pred : np.array
-            Predictions
+        np.ndarray
+            Predictions.
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
