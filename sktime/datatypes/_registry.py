@@ -63,11 +63,12 @@ def mtype_to_scitype(mtype: str):
 
     Parameters
     ----------
-    mtype: str, mtype to find scitype of
+    mtype: str, mtype to find scitype of; or, None
 
     Returns
     -------
     scitype: str, unique scitype belonging to mtype
+            or, None if mtype is None
 
     Raises
     ------
@@ -75,6 +76,9 @@ def mtype_to_scitype(mtype: str):
         (this should not happen in general)
     ValueError, if there is no scitype with that mtype
     """
+    if mtype is None or mtype == "None":
+        return None
+
     scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
 
     if len(scitype) > 1:
