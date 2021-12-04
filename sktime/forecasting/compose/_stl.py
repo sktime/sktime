@@ -60,6 +60,8 @@ class STLForecaster(BaseForecaster):
         Fitted seasonal forecaster.
     resid_forecaster_ : sktime forecaster
         Fitted residual forecaster.
+    stl_ : STLTransformer
+        Fitted STLTransformer.
 
     Examples
     --------
