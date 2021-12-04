@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from scipy import sparse
+from sklearn import clone
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
 
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -11,7 +11,7 @@ __all__ = ["FeatureUnion"]
 __author__ = ["Markus Löning"]
 
 
-class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
+class FeatureUnion(_PanelToPanelTransformer):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -48,24 +48,31 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
         self.preserve_dataframe = preserve_dataframe
-        super(FeatureUnion, self).__init__(
-            transformer_list, n_jobs=n_jobs, transformer_weights=transformer_weights
+        self.transformer_list = transformer_list
+
+        transformer_list_ = []
+        for x in transformer_list:
+            transformer_list_ += [(x[0], clone(x[1]))]
+
+        self.wrapped_FU = _FeatureUnion(
+            transformer_list_, n_jobs=n_jobs, transformer_weights=transformer_weights
         )
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        super(FeatureUnion, self).__init__()
 
     def fit(self, X, y=None, **fit_params):
         """Fit parameters."""
-        super().fit(X, y, **fit_params)
+        self.wrapped_FU.fit(X, y, **fit_params)
         self._is_fitted = True
         return self
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results."""
         self.check_is_fitted()
-        return super().transform(X)
+        return self.wrapped_FU.transform(X)
 
     def fit_transform(self, X, y, **fit_params):
         """Transform X separately by each transformer, concatenate results."""
@@ -87,3 +94,29 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
 
         else:
             return np.hstack(Xs)
+
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for FeatureUnion."""
+        from sklearn.preprocessing import StandardScaler
+
+        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
+
+        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+
+        TRANSFORMERS = [
+            (
+                "transformer1",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+            (
+                "transformer2",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+        ]
+
+        return {"transformer_list": TRANSFORMERS}
