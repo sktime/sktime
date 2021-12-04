@@ -18,7 +18,7 @@ When to deprecate code
 Our releases follow `semantic versioning <https://semver.org>`_.
 A version number denotes <major>.<minor>.<patch> versions.
 
-Our current deprecation policy is that we we remove functionality after one minor release.
+Our current deprecation policy is that we remove functionality after one minor release.
 For example, if some functionality has been deprecated in v0.9.0, it will be removed in v0.10.0.
 
 How to deprecate code
@@ -26,19 +26,19 @@ How to deprecate code
 
 Our deprecation process is as follows:
 
-* Raise a `FutureWarning <https://docs.python.org/3/library/exceptions.html#FutureWarning>`_. The warning message should give the version number when the functionality will be changed and describe the new usage.
+* Raise a :code:`FutureWarning`. The warning message should give the version number when the functionality will be changed and describe the new usage.
 * Add the following to-do comment to code that can be removed: :code:`TODO: remove in <version-number>`. For example, :code:`TODO: remove in v0.10.0`.
 * Remove all deprecated functionality as part of the release process, searching for the to-do comments.
 
 To deprecate functionality, we use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package.
 The package provides depreciation helper functions such as the :code:`deprecated` decorator.
 When importing it from :code:`deprecated.sphinx`, it automatically adds a deprecation message to the docstring.
-You can deprecate functions, methods or classes.
+You can decorate functions, methods or classes.
 
 Examples
 --------
 
-In the examples below, the :code:`deprecated` decorator will raise a FutureWarning saying that the functionality has been deprecated since version 0.9.0 and will be remove in version 0.10.0.
+In the examples below, the :code:`deprecated` decorator will raise a :code:`FutureWarning`` saying that the functionality has been deprecated since version 0.9.0 and will be remove in version 0.10.0.
 
 Functions
 ~~~~~~~~~
