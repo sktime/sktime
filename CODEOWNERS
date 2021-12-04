@@ -43,6 +43,7 @@ sktime/forecasting/compose/_column_ensemble.py @GuzalBulatova
 sktime/forecasting/compose/_multiplexer.py @koralturkk @aiwalter
 sktime/forecasting/compose/_pipeline.py @aiwalter
 sktime/forecasting/compose/_ensemble.py @aiwalter
+sktime/forecasting/compose/_stl.py @aiwalter
 
 sktime/forecasting/online_learning/ @magittan
 
