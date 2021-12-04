@@ -226,6 +226,17 @@ Difference
 
     Differencer
 
+Fourier
+~~~~~~
+
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierFeatures
+
 Auto-correlation
 ~~~~~~~~~~~~~~~~
 
