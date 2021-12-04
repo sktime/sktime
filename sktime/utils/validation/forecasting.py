@@ -19,13 +19,11 @@ __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_equal_time_index
-from sktime.utils.validation.series import check_series
+from sktime.utils.validation.series import check_equal_time_index, check_series
 
 
 def check_y_X(
@@ -197,21 +195,27 @@ def check_step_length(step_length):
     return step_length
 
 
-def check_sp(sp, enforce_list=False):
+def check_sp(sp, enforce_list=False, allow_none=True):
     """Validate seasonal periodicity.
 
     Parameters
     ----------
     sp : int or [int/float]
         Seasonal periodicity
-    emforce_list : bool, optional (default=False)
+    enforce_list : bool, optional (default=False)
         If true, convert sp to list if not list.
+    allow_none : bool, default=True
+        If True, None values for sp are accepted. If False
+        None values raise an error.
 
     Returns
     -------
     sp : int or [int/float]
         Validated seasonal periodicity
     """
+    if not allow_none and sp is None:
+        raise ValueError("sp must be given but found: None")
+
     if sp is not None:
         if enforce_list and is_int(sp) and sp >= 1:
             sp = [sp]

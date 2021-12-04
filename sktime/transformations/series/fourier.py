@@ -74,7 +74,7 @@ class FourierFeatures(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        check_sp(self.sp)
+        check_sp(self.sp, allow_none=False)
 
         if self.n_terms is None:
             self.n_terms_ = self.sp // 2
