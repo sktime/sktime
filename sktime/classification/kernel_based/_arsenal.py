@@ -177,9 +177,8 @@ class Arsenal(BaseClassifier):
         if len(X.shape) == 2:
             raise ValueError(
                 f"X is of type{type(X)} base classifier tags ="
-                f" {BaseClassifier._tags}  get tags  ="
-                f" {BaseClassifier.get_tags()} Tags for Arsenal = {self._tags} get "
-                f"get tags for Arsenal ={BaseClassifier.get_tags()}"
+                f" {BaseClassifier._tags}  Arsenal get tags  ="
+                f" {BaseClassifier.get_tags(self)} Tags for Arsenal = {self._tags}"
             )
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         time_limit = self.time_limit_in_minutes * 60
