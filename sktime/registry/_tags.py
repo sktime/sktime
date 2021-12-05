@@ -130,7 +130,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "symmetric",
-        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
