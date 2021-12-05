@@ -308,7 +308,6 @@ def check_is_scitype(
     Parameters
     ----------
     obj - object to check
-    mtype: str or list of str, mtype to check obj as
     scitype: str or list of str, scitype to check obj as
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
