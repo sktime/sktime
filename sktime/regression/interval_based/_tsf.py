@@ -50,9 +50,9 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     ----------
     n_classes : int
         Number of classes.
-    n_intervals  : int
+    n_intervals : int
         Number of intervals.
-    classes_    : list
+    classes_ : list
         List of classes for a given problem.
 
     See Also
@@ -61,10 +61,10 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
 
     References
     ----------
-    ..[1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
-          classification and feature extraction", Information Sciences, 239, 2013
-    ..[2] Java implementation https://github.com/uea-machine-learning/tsml
-    ..[3] Arxiv version of the paper: https://arxiv.org/abs/1302.2277
+    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+       classification and feature extraction", Information Sciences, 239, 2013
+    .. [2] Java implementation https://github.com/uea-machine-learning/tsml
+    .. [3] Arxiv paper: https://arxiv.org/abs/1302.2277
     """
 
     _base_estimator = DecisionTreeRegressor()
