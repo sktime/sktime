@@ -57,7 +57,7 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is, convert_to, mtype, mtype_to_scitype
+from sktime.datatypes import check_is_mtype, convert_to, mtype, mtype_to_scitype
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
@@ -119,7 +119,6 @@ class BaseTransformer(BaseEstimator):
     ]
 
     def __init__(self):
-        self._is_fitted = False
         super(BaseTransformer, self).__init__()
 
     def fit(self, X, y=None, Z=None):
@@ -141,7 +140,7 @@ class BaseTransformer(BaseEstimator):
                     nested pd.DataFrame, or pd.DataFrame in long/wide format
                 subject to sktime mtype format specifications, for further details see
                     examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
             alias Z will be deprecated in version 0.10.0
@@ -162,7 +161,7 @@ class BaseTransformer(BaseEstimator):
         # input checks and minor coercions on X, y
         ###########################################
 
-        valid, msg, metadata = check_is(
+        valid, msg, metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
@@ -197,9 +196,10 @@ class BaseTransformer(BaseEstimator):
         # there are three cases to treat:
         # 1. if the internal _fit supports X's scitype, move on to mtype conversion
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        # 3. internal only has Series but X is Panel:  loop over instances
-        #     currently this is enabled by conversion to df-list mtype
-        #     and this does not support y (unclear what should happen here)
+        # 3. internal only has Series but X is Panel: auto-vectorization over instances
+        #     currently, this is enabled by conversion to df-list mtype
+        #     auto-vectorization is not supported if y is passed
+        #       individual estimators that vectorize over y must implement individually
 
         # 1. nothing to do - simply don't enter any of the ifs below
 
@@ -225,7 +225,9 @@ class BaseTransformer(BaseEstimator):
         X_mtype = mtype(X)
         X_scitype = mtype_to_scitype(X_mtype)
 
-        assert X_scitype in X_inner_scitypes, "conversion of X to X_inner unsuccessful"
+        # for debugging, exception if the conversion fails (this should never happen)
+        if X_scitype not in X_inner_scitypes:
+            raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
 
         # convert X/y to supported inner type, if necessary
         ###################################################
@@ -279,7 +281,7 @@ class BaseTransformer(BaseEstimator):
                     nested pd.DataFrame, or pd.DataFrame in long/wide format
                 subject to sktime mtype format specifications, for further details see
                     examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
             alias Z will be deprecated in version 0.10.0
@@ -298,6 +300,21 @@ class BaseTransformer(BaseEstimator):
             | `Series` | `Panel`      | `Panel`                |
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
+
+        Explicitly, with examples:
+            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
+                then the return is a single `Series` of the same mtype
+                Example: detrending a single series
+            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
+                then the return is `Panel` with same number of instances as `X`
+                    (the transformer is applied to each input Series instance)
+                Example: all series in the panel are detrended individually
+            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
+                then the return is `pd.DataFrame` with as many rows as instances in `X`
+                Example: i-th row of the return has mean and variance of the i-th series
+            if `X` is `Series` and `transform-output` is `Panel`
+                then the return is a `Panel` object of type `pd-multiindex`
+                Example: i-th instance of the output is the i-th window running over `X`
         """
         X = _handle_alias(X, Z)
 
@@ -310,7 +327,7 @@ class BaseTransformer(BaseEstimator):
         # input checks and minor coercions on X, y
         ###########################################
 
-        valid, msg, metadata = check_is(
+        valid, msg, metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
@@ -403,8 +420,7 @@ class BaseTransformer(BaseEstimator):
             # we concatenate those and overwrite the index with that of X
             elif output_scitype == "Primitives":
                 Xt = pd.concat(Xt)
-                # Xt.index = X.index
-                Xt.index = pd.Index([i for i in range(len(Xt))])
+                Xt.index = X.index
             return Xt
 
         # convert X/y to supported inner type, if necessary
@@ -449,7 +465,7 @@ class BaseTransformer(BaseEstimator):
         ###########################################
 
         # if we converted Series to "one-instance-Panel", revert that
-        if X_was_Series:
+        if X_was_Series and output_scitype == "Series":
             Xt = convert_Panel_to_Series(Xt)
 
         if output_scitype == "Series":
@@ -493,7 +509,7 @@ class BaseTransformer(BaseEstimator):
                     nested pd.DataFrame, or pd.DataFrame in long/wide format
                 subject to sktime mtype format specifications, for further details see
                     examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
             alias Z will be deprecated in version 0.10.0
@@ -511,6 +527,21 @@ class BaseTransformer(BaseEstimator):
             | `Series` | `Panel`      | `Panel`                |
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
+
+        Explicitly, with examples:
+            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
+                then the return is a single `Series` of the same mtype
+                Example: detrending a single series
+            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
+                then the return is `Panel` with same number of instances as `X`
+                    (the transformer is applied to each input Series instance)
+                Example: all series in the panel are detrended individually
+            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
+                then the return is `pd.DataFrame` with as many rows as instances in `X`
+                Example: i-th row of the return has mean and variance of the i-th series
+            if `X` is `Series` and `transform-output` is `Panel`
+                then the return is a `Panel` object of type `pd-multiindex`
+                Example: i-th instance of the output is the i-th window running over `X`
         """
         X = _handle_alias(X, Z)
         # Non-optimized default implementation; override when a better
@@ -534,7 +565,7 @@ class BaseTransformer(BaseEstimator):
         X : Series or Panel of mtype X_inner_mtype
             if X_inner_mtype is list, _fit must support all types in it
             Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, optional, default=None
+        y : Series or Panel of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for tarnsformation
 
         Returns
@@ -554,7 +585,7 @@ class BaseTransformer(BaseEstimator):
         X : Series or Panel of mtype X_inner_mtype
             if X_inner_mtype is list, _transform must support all types in it
             Data to be transformed
-        y : Series or Panel, optional (default=None)
+        y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
 
         Returns

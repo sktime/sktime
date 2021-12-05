@@ -112,7 +112,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "symmetric",
-        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
@@ -249,6 +249,24 @@ ESTIMATOR_TAG_REGISTER = [
     #     "str",
     #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
     # ),
+    (
+        "capability:multiple-alignment",
+        "aligner",
+        "bool",
+        "is aligner capable of aligning multiple series (True) or only two (False)?",
+    ),
+    (
+        "capability:distance",
+        "aligner",
+        "bool",
+        "does aligner return overall distance between aligned series?",
+    ),
+    (
+        "capability:distance-matrix",
+        "aligner",
+        "bool",
+        "does aligner return pairwise distance matrix between aligned series?",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)

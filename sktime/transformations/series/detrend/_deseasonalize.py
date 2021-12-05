@@ -320,18 +320,9 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 class STLTransformer(_SeriesToSeriesTransformer):
     """Remove seasonal components from a time-series using STL.
 
-    The STLTransformer is designed to work in a pipeline to create an STL Forecaster.
-
-    For example:
-    stlforecaster = TransformedTargetForecaster([
-        ("deseasonalize", STLTransformer(sp=12),
-        ("forecast", PolynomialTrendForecaster(degree=1))]
-    )
-    stlforecaster.fit(y)
-
     The STLTransformer works by first fitting STL to the input time-series. The seasonal
-    component is removed from the input time-series which is passed on to a forecaster
-    (in the above example PolynomialTrendForecaster).
+    component is removed from the input time-series which can be passed to a forecaster
+    (in the below example PolynomialTrendForecaster).
     The forecaster will be fitted to the seasonally adjusted data.
     When predicting, a forecast will be generated without considering the seasonality.
     The seasonallity is then added by using the last year of the seasonal component
@@ -379,17 +370,27 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     Attributes
     ----------
-    seasonal_ : array of length sp
+    seasonal_ : pd.Series
         Seasonal components computed in seasonal decomposition.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.transformations.series.detrend import STLTransformer
     >>> y = load_airline()
     >>> transformer = STLTransformer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
+    >>>
+    >>> # Creating a forecaster with an STLTransformer:
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> forecaster = TransformedTargetForecaster([
+    ...     ("deseasonalize", STLTransformer(sp=12)),
+    ...     ("forecaster", PolynomialTrendForecaster(degree=1)),
+    ... ])
+    >>> forecaster.fit(y)
+    TransformedTargetForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
@@ -507,6 +508,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
             self.stl_model = None
             self.seasonal_ = np.zeros_like(z.values)
 
+        self.seasonal_ = pd.Series(self.seasonal_, index=Z.index)
         self._is_fitted = True
         return self
 

@@ -122,7 +122,7 @@ def _list_downloaded_datasets(extract_path):
     return datasets
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
+def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -208,6 +208,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
+        y = pd.Series.to_numpy(y, dtype=np.str)
     else:
         raise ValueError("Invalid `split` value =", split)
 

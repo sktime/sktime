@@ -3,23 +3,25 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pytest
 
-import numpy as np
-
-from sktime.datatypes._check import check_is
-from sktime.datatypes._examples import get_examples
-from sktime.datatypes import SCITYPE_REGISTER, MTYPE_REGISTER
-
+from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
+from sktime.datatypes._check import check_dict, check_is_mtype
 from sktime.datatypes._check import mtype as infer_mtype
-from sktime.datatypes._check import check_dict
+from sktime.datatypes._examples import get_examples
 
 SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
+
+# scitypes where mtype inference is not unique
+# alignment is excluded since mtypes can be ambiguous
+#   (indices could be both loc or iloc when integers)
+SCITYPES_AMBIGUOUS_MTYPE = ["Alignment"]
 
 
 @pytest.mark.parametrize("scitype", SCITYPES)
 def test_check_positive(scitype):
-    """Tests that check_is correctly confirms the mtype of examples.
+    """Tests that check_is_mtype correctly confirms the mtype of examples.
 
     Parameters
     ----------
@@ -63,16 +65,21 @@ def test_check_positive(scitype):
 
             # check fixtures that exist against checks that exist
             if fixture is not None and check_is_defined:
-                check_result = check_is(fixture, mtype, scitype, return_metadata=True)
+                check_result = check_is_mtype(
+                    fixture, mtype, scitype, return_metadata=True
+                )
                 if not check_result[0]:
-                    msg = f"check_is returns False on {mtype} fixture {i}, message: "
+                    msg = (
+                        f"check_is_mtype returns False on {mtype} "
+                        f"fixture {i}, message: "
+                    )
                     msg = msg + check_result[1]
                 assert check_result[0], msg
 
 
 @pytest.mark.parametrize("scitype", SCITYPES)
 def test_check_negative(scitype):
-    """Tests that check_is correctly identifies wrong mtypes of examples.
+    """Tests that check_is_mtype correctly identifies wrong mtypes of examples.
 
     Parameters
     ----------
@@ -86,6 +93,8 @@ def test_check_negative(scitype):
     """
     if scitype not in [s[0] for s in SCITYPE_REGISTER]:
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
+    if scitype in SCITYPES_AMBIGUOUS_MTYPE:
+        return None
     mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
 
     if len(mtypes) == 0:
@@ -118,9 +127,10 @@ def test_check_negative(scitype):
 
                 # check fixtures that exist against checks that exist
                 if fixture_wrong_type is not None and check_is_defined:
-                    assert not check_is(
-                        fixture_wrong_type, mtype, scitype
-                    ), f"check_is {mtype} returns True on {wrong_mtype} fixture {i}"
+                    assert not check_is_mtype(fixture_wrong_type, mtype, scitype), (
+                        f"check_is_mtype {mtype} returns True "
+                        f"on {wrong_mtype} fixture {i}"
+                    )
 
 
 @pytest.mark.parametrize("scitype", SCITYPES)
@@ -139,6 +149,8 @@ def test_mtype_infer(scitype):
     """
     if scitype not in [s[0] for s in SCITYPE_REGISTER]:
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
+    if scitype in SCITYPES_AMBIGUOUS_MTYPE:
+        return None
     mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
 
     if len(mtypes) == 0:
