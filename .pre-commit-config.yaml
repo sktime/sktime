@@ -15,33 +15,33 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.8.0
+    rev: 5.10.1
     hooks:
       - id: isort
         name: isort
 
   - repo: https://github.com/psf/black
-    rev: 21.5b1
+    rev: 21.11b1
     hooks:
       - id: black
         language_version: python3
         # args: [--line-length 79]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 3.9.2
+    rev: 4.0.1
     hooks:
       - id: flake8
         exclude: docs/conf.py
         additional_dependencies: [flake8-bugbear, flake8-print]
 
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.46"
+    rev: "0.47"
     hooks:
       - id: check-manifest
         stages: [manual]
 
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 0.13.0
+    rev: 1.2.2
     hooks:
       - id: nbqa-black
         args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
@@ -59,8 +59,10 @@ repos:
       - id: pydocstyle
         args: ["--config=setup.cfg"]
 
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.7.2
+  # We use the Python version instead of the original version which seems to require Docker
+  # https://github.com/koalaman/shellcheck-precommit
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.8.0.1
     hooks:
       - id: shellcheck
         name: shellcheck
