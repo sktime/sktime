@@ -54,7 +54,7 @@ class TSFreshClassifier(BaseClassifier):
 
     See Also
     --------
-    TSFreshFeatureExtractor, TSFreshRelevantFeatureExtractor
+    TSFreshFeatureExtractor, RotationForest
 
     References
     ----------
@@ -72,7 +72,6 @@ class TSFreshClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TSFreshClassifier(
     ...     default_fc_parameters="minimal",
-    ...     relevant_feature_extractor=False,
     ...     estimator=RandomForestClassifier(n_estimators=10),
     ... )
     >>> clf.fit(X_train, y_train)
@@ -87,18 +86,11 @@ class TSFreshClassifier(BaseClassifier):
 
     def __init__(
         self,
-        default_fc_parameters="efficient",
-        relevant_feature_extractor=True,
-        estimator=None,
         verbose=0,
         n_jobs=1,
         chunksize=None,
         random_state=None,
     ):
-        self.default_fc_parameters = default_fc_parameters
-        self.relevant_feature_extractor = relevant_feature_extractor
-        self.estimator = estimator
-
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.chunksize = chunksize
