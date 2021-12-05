@@ -195,7 +195,7 @@ def _pairwise_panel_x_check(X, var_name="X"):
     elif X_scitype != "Panel":
         raise RuntimeError("Unexpected error in check_is_scitype, check validity")
 
-    X_coerced = convert_to(X, to_type="list-of-df", as_scitype="Panel")
+    X_coerced = convert_to(X, to_type="df-list", as_scitype="Panel")
 
     return X_coerced
 
