@@ -122,8 +122,10 @@ class BaseClassifier(BaseEstimator):
             self._class_dictionary[classVal] = index
         try:
             self._fit(X, y)
-        except ValueError:
+        except ValueError as v:
             raise ValueError(
+                "Error thrown from classifier =",
+                v,
                 " Error in _fit: data shape start = ",
                 shpx,
                 " prior get characteristics = ",
