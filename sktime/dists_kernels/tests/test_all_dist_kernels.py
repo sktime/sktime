@@ -4,7 +4,9 @@
 import numpy as np
 import pytest
 
+from sktime.datatypes import convert_to
 from sktime.registry import all_estimators
+from sktime.utils._testing.series import _make_series
 from sktime.utils._testing.panel import make_transformer_problem
 
 PAIRWISE_TRANSFORMERS = all_estimators(
@@ -16,38 +18,30 @@ PAIRWISE_TRANSFORMERS_PANEL = all_estimators(
 
 EXPECTED_SHAPE = (4, 5)
 
-X1_tab = make_transformer_problem(
-    n_instances=4,
+X1_tab = _make_series(
     n_columns=4,
-    n_timepoints=5,
+    n_timepoints=4,
     random_state=1,
     return_numpy=True,
-    panel=False,
 )
-X2_tab = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
+X2_tab = _make_series(
+    n_columns=4,
     n_timepoints=5,
     random_state=2,
     return_numpy=True,
-    panel=False,
 )
 
-X1_tab_df = make_transformer_problem(
-    n_instances=4,
+X1_tab_df = _make_series(
     n_columns=4,
-    n_timepoints=5,
+    n_timepoints=4,
     random_state=1,
     return_numpy=False,
-    panel=False,
 )
-X2_tab_df = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
+X2_tab_df = _make_series(
+    n_columns=4,
     n_timepoints=5,
     random_state=2,
-    return_numpy=True,
-    panel=False,
+    return_numpy=False,
 )
 
 VALID_INPUTS_TABULAR = [(X1_tab, X2_tab), (X1_tab_df, X2_tab_df)]
@@ -60,27 +54,20 @@ def test_pairwise_transformers_tabular(x, y, pairwise_transformer):
     _general_pairwise_transformer_tests(x, y, pairwise_transformer)
 
 
-X1_num_pan = make_transformer_problem(
-    n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=True
-)
-X2_num_pan = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=True
-)
-
 X1_list_df = make_transformer_problem(
     n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=False
 )
 X2_list_df = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=False
+    n_instances=5, n_columns=4, n_timepoints=5, random_state=2, return_numpy=False
 )
 
-X1_num_df = np.array(X1_list_df)
-X2_num_df = np.array(X2_list_df)
+X1_num_pan = convert_to(X1_list_df, to_type="numpy3D")
+X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
+
 
 VALID_INPUTS_PANEL = [
     (X1_num_pan, X2_num_pan),
     (X1_list_df, X2_list_df),
-    (X1_num_df, X2_num_df),
 ]
 
 
@@ -93,6 +80,8 @@ def test_pairwise_transformers_panel(x, y, pairwise_transformer):
 
 def _general_pairwise_transformer_tests(x, y, pairwise_transformer):
     # test return matrix
+    print(x)
+    print(y)
     transformer = pairwise_transformer.create_test_instance()
     transformation = transformer.transform(x, y)
 
@@ -112,10 +101,6 @@ def _general_pairwise_transformer_tests(x, y, pairwise_transformer):
 
     transformer = pairwise_transformer.create_test_instance()
     transformation = transformer.transform(x)
-    _x_equals_x2_test(transformation, x, transformer)
-
-    transformer = pairwise_transformer.create_test_instance()
-    transformation = transformer.transform(x, x)
     _x_equals_x2_test(transformation, x, transformer)
 
 
