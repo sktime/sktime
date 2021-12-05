@@ -124,7 +124,7 @@ def _check_y(y):
     if isinstance(y, (pd.Series, pd.DataFrame)):
         y_index = y.index
     elif isinstance(y, np.ndarray):
-        y_index = pd.Index(y)
+        y_index = pd.Index(y.flatten())
     elif isinstance(y, pd.Index):
         y_index = y
     else:
