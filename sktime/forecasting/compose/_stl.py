@@ -19,7 +19,7 @@ class STLForecaster(BaseForecaster):
     """STLForecaster.
 
     The STLForecaster is using an STLTransformer to decompose the given
-    series y into the three components trend, season and residuals. Then,
+    series y into the three components trend, season and residuals [1]_. Then,
     the trend_forecaster, seasonal_forecaster and resid_forecaster are fitted
     on the components individually to forecast them also individually. The
     final forecast is then the sum of the three component forecasts.
@@ -44,14 +44,14 @@ class STLForecaster(BaseForecaster):
         a NaiveForecaster(strategy="mean") is used.
     stl : sktime.STLTransformer, optional
         Transformer to decompose series into trend, seasonal and
-        residual components, by default None.
+        residual component, by default None.
 
     Attributes
     ----------
     trend_ : pd.Series
         Trend component.
     seasonal_ : pd.Series
-        Seasonal components.
+        Seasonal component.
     resid_ : pd.Series
         Residuals component.
     trend_forecaster_ : sktime forecaster
@@ -79,11 +79,9 @@ class STLForecaster(BaseForecaster):
 
     References
     ----------
-    # noqa: E501
     .. [1] R. B. Cleveland, W. S. Cleveland, J.E. McRae, and I. Terpenning (1990)
        STL: A Seasonal-Trend Decomposition Procedure Based on LOESS.
        Journal of Official Statistics, 6, 3-73.
-    .. [2] https://www.statsmodels.org/dev/generated/statsmodels.tsa.forecasting.stl.STLForecast.html
     """
 
     _tags = {
