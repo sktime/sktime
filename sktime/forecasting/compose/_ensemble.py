@@ -52,11 +52,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
 
-        - ``feature-importance``: use the ``feature_importances_`` or ``coef_`` from
-        given ``regressor`` as optimal weights.
-        - ``inverse-variance``: use the inverse variance of the forecasting error
-        (based on the internal train-test-split) to compute optimal weights,
-        a given ``regressor`` will be omitted.
+        - feature-importance:
+            use the ``feature_importances_`` or ``coef_`` from
+            given ``regressor`` as optimal weights.
+        - inverse-variance:
+            use the inverse variance of the forecasting error
+            (based on the internal train-test-split) to compute optimal
+            weights, a given ``regressor`` will be omitted.
 
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
