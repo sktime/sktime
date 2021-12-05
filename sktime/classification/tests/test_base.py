@@ -157,6 +157,8 @@ def test_convert_input():
     assert isinstance(tempY, np.ndarray)
     tempY = tester.convert_y(test_y2)
     assert isinstance(tempY, np.ndarray)
+    tester._tags["convert_X_to_numpy"] = True
+    tester._tags["convert_X_to_dataframe"] = False
 
 
 def _create_example_dataframe(cases=5, dimensions=1, length=10):
