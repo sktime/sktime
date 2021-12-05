@@ -33,7 +33,7 @@ from sktime.classification.feature_based import (
     RandomIntervalClassifier,
     SignatureClassifier,
     SummaryClassifier,
-    TSFreshClassifier,
+    TSFreshClassifier, FreshPRINCE,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
@@ -297,6 +297,10 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
+        "default_fc_parameters": "minimal",
+    },
+    FreshPRINCE: {
+        "n_estimators": 3,
         "default_fc_parameters": "minimal",
     },
     RandomIntervals: {

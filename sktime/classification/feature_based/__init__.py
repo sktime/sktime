@@ -7,9 +7,11 @@ __all__ = [
     "SignatureClassifier",
     "SummaryClassifier",
     "TSFreshClassifier",
+    "FreshPRINCE",
 ]
 
 from sktime.classification.feature_based._catch22_classifier import Catch22Classifier
+from sktime.classification.feature_based._fresh_prince import FreshPRINCE
 from sktime.classification.feature_based._matrix_profile_classifier import (
     MatrixProfileClassifier,
 )

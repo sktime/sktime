@@ -5,20 +5,18 @@ Pipeline classifier using the TSFresh transformer and an estimator.
 """
 
 __author__ = ["MatthewMiddlehurst"]
-__all__ = ["TSFreshClassifier"]
+__all__ = ["FreshPRINCE"]
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.tsfresh import (
-    TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor,
-)
+from sktime.classification.feature_based._tsfresh_classifier import TSFreshClassifier
+from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 
 
-class TSFreshClassifier(BaseClassifier):
+
+class FreshPRINCE(BaseClassifier):
     """Time Series Feature Extraction based on Scalable Hypothesis Tests classifier.
 
     This classifier simply transforms the input data using the TSFresh [1]
@@ -26,14 +24,11 @@ class TSFreshClassifier(BaseClassifier):
 
     Parameters
     ----------
-    default_fc_parameters : str, default="efficient"
+    default_fc_parameters : str, default="comprehensive"
         Set of TSFresh features to be extracted, options are "minimal", "efficient" or
         "comprehensive".
-    relevant_feature_extractor : bool, default=False
-        Remove irrelevant features using the FRESH algorithm.
-    estimator : sklearn classifier, default=None
-        An sklearn estimator to be built using the transformed data. Defaults to a
-        Random Forest with 200 trees.
+    n_estimators : int, default=200
+
     verbose : int, default=0
         level of output printed to the console (for information only)
     n_jobs : int, default=1
@@ -54,7 +49,7 @@ class TSFreshClassifier(BaseClassifier):
 
     See Also
     --------
-    TSFreshFeatureExtractor, RotationForest
+    TSFreshFeatureExtractor, TSFreshClassifier, RotationForest
 
     References
     ----------
@@ -82,24 +77,31 @@ class TSFreshClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:train_estimate": True,
     }
 
     def __init__(
         self,
+        default_fc_parameters="comprehensive",
+        n_estimators=200,
         verbose=0,
         n_jobs=1,
         chunksize=None,
         random_state=None,
     ):
+        self.default_fc_parameters = default_fc_parameters
+        self.n_estimators = n_estimators
+
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.chunksize = chunksize
         self.random_state = random_state
 
-        self._transformer = None
+        self.n_instances = 0
+        self.n_dims = 0
         self._estimator = None
 
-        super(TSFreshClassifier, self).__init__()
+        super(FreshPRINCE, self).__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.
@@ -121,37 +123,15 @@ class TSFreshClassifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = (
-            TSFreshRelevantFeatureExtractor(
-                default_fc_parameters=self.default_fc_parameters,
-                n_jobs=self._threads_to_use,
-                chunksize=self.chunksize,
-            )
-            if self.relevant_feature_extractor
-            else TSFreshFeatureExtractor(
-                default_fc_parameters=self.default_fc_parameters,
-                n_jobs=self._threads_to_use,
-                chunksize=self.chunksize,
-            )
-        )
-        self._estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
-            if self.estimator is None
-            else self.estimator,
-            self.random_state,
+        self._estimator = TSFreshClassifier(
+            default_fc_parameters=self.default_fc_parameters,
+            estimator=RotationForest(n_estimators=self.n_estimators),
+            n_jobs=self._threads_to_use,
+            chunksize=self.chunksize,
+            verbose=self.verbose,
         )
 
-        if self.verbose < 2:
-            self._transformer.show_warnings = False
-            if self.verbose < 1:
-                self._transformer.disable_progressbar = True
-
-        m = getattr(self._estimator, "n_jobs", None)
-        if m is not None:
-            self._estimator.n_jobs = self._threads_to_use
-
-        X_t = self._transformer.fit_transform(X, y)
-        self._estimator.fit(X_t, y)
+        self._estimator.fit(X, y)
 
         return self
 
@@ -168,7 +148,7 @@ class TSFreshClassifier(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        return self._estimator.predict(self._transformer.transform(X))
+        return self._estimator.predict(X)
 
     def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
@@ -183,12 +163,44 @@ class TSFreshClassifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        m = getattr(self._estimator, "predict_proba", None)
-        if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+        return self._estimator.predict_proba(X)
+
+    def _get_train_probs(self, X, y):
+        self.check_is_fitted()
+        X, y = check_X_y(X, y, coerce_to_pandas=True)
+
+        n_instances, n_dims = X.shape
+
+        if n_instances != self.n_instances_ or n_dims != self.n_dims_:
+            raise ValueError(
+                "n_instances, n_dims, series_length mismatch. X should be "
+                "the same as the training data used in fit for generating train "
+                "probabilities."
+            )
+
+        if not self.save_transformed_data:
+            raise ValueError("Currently only works with saved transform data from fit.")
+
+        if isinstance(self.estimator, RotationForest) or self.estimator is None:
+            return self._estimator._get_train_probs(self.transformed_data_, y)
         else:
-            dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
-            for i in range(0, X.shape[0]):
-                dists[i, self._class_dictionary[preds[i]]] = 1
-            return dists
+            m = getattr(self._estimator, "predict_proba", None)
+            if not callable(m):
+                raise ValueError("Estimator must have a predict_proba method.")
+
+            cv_size = 10
+            _, counts = np.unique(y, return_counts=True)
+            min_class = np.min(counts)
+            if min_class < cv_size:
+                cv_size = min_class
+
+            estimator = _clone_estimator(self.estimator, self.random_state)
+
+            return cross_val_predict(
+                estimator,
+                X=self.transformed_data_,
+                y=y,
+                cv=cv_size,
+                method="predict_proba",
+                n_jobs=self._threads_to_use,
+            )
