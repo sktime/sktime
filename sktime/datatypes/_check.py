@@ -105,6 +105,35 @@ def check_is(
     )
 
 
+def _coerce_list_of_str(obj, var_name="obj"):
+    """Check whether object is string or list of string.
+
+    Parameters
+    ----------
+    obj - object to check
+    var_name: str, optional, default="obj" - name of input in error messages
+
+    Returns
+    -------
+    list of str
+        equal to obj if was a list; equal to [obj] if obj was a str
+        note: if obj was a list, return is not a copy, but identical
+
+    Raises
+    ------
+    TypeError if obj is not a str or list of str
+    """
+    if isinstance(obj, str):
+        obj = [obj]
+    elif isinstance(obj, list):
+        if not np.all([isinstance(x, str) for x in obj]):
+            raise TypeError(f"{var_name} must be a string or list of strings")
+    else:
+        raise TypeError(f"{var_name} must be a string or list of strings")
+
+    return obj
+
+
 def check_is_mtype(
     obj,
     mtype: Union[str, List[str]],
@@ -151,13 +180,7 @@ def check_is_mtype(
         else:
             return valid
 
-    if isinstance(mtype, str):
-        mtype = [mtype]
-    elif isinstance(mtype, list):
-        if not np.all([isinstance(x, str) for x in mtype]):
-            raise TypeError("mtype must be a string or list of strings")
-    else:
-        raise TypeError("mtype must be a string or list of strings")
+    mtype = _coerce_list_of_str(mtype, var_name="mtype")
 
     valid_keys = check_dict.keys()
 
@@ -336,13 +359,7 @@ def check_is_scitype(
         else:
             return valid
 
-    if isinstance(scitype, str):
-        scitype = [scitype]
-    elif isinstance(scitype, list):
-        if not np.all([isinstance(x, str) for x in scitype]):
-            raise ValueError("scitype must be a string or list of strings")
-    else:
-        raise ValueError("mtype must be a string or list of strings")
+    scitype = _coerce_list_of_str(scitype, var_name="scitype")
 
     for x in scitype:
         _check_scitype_valid(x)
