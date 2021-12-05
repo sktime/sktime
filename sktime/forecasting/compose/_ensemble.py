@@ -42,7 +42,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
     using given method or a meta-model (regressor) .
     The regressor has to be sklearn-like and needs to have either an attribute
-    `feature_importances_` or `coef_`, as this is used as weights.
+    ``feature_importances_`` or ``coef_``, as this is used as weights.
     Regressor can also be a sklearn.Pipeline.
 
     Parameters
@@ -82,8 +82,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     regressor_ : sklearn-like regressor
         Fitted regressor.
     weights_ : np.array
-        The weights based on either regressor.feature_importances_ or
-        regressor.coef_ values.
+        The weights based on either ``regressor.feature_importances_`` or
+        ``regressor.coef_`` values.
 
     See Also
     --------
