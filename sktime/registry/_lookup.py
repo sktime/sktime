@@ -58,10 +58,11 @@ def all_estimators(
     ----------
     estimator_types: string, list of string, optional (default=None)
         Which kind of estimators should be returned.
-        - If None, no filter is applied and all estimators are returned.
-        - Possible values are 'classifier', 'regressor', 'transformer' and
-        'forecaster' to get estimators only of these specific types, or a list of
-        these to get the estimators that fit at least one of the types.
+        if None, no filter is applied and all estimators are returned.
+        if str or list of str, strings define scitypes specified in search
+                only estimators that are of (at least) one of the scitypes are returned
+            possible str values are entries of registry.BASE_CLASS_SCITYPE_LIST
+                for instance 'classifier', 'regressor', 'transformer', 'forecaster'
     return_names: bool, optional (default=True)
         If True, return estimators as list of (name, estimator class) tuples.
         If False, return list of estimators classes.
