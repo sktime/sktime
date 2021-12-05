@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Testes for tabular-to-panel distance aggregation/reduction."""
 import numpy as np
 from sktime.datatypes import convert_to
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.registry import all_estimators
+from sktime.utils._testing.panel import make_transformer_problem
+
 
 PAIRWISE_TRANSFORMERS_TAB = all_estimators(
     estimator_types="transformer-pairwise", return_names=False
@@ -36,6 +38,7 @@ X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
 
 
 def test_aggr():
+    """Test that AggrDist produces expected pre-computed result on fixtures."""
     # test 3d numpy
     _run_aggr_dist_test(X1_num_pan, X2_num_pan)
 

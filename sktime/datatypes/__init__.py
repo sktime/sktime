@@ -4,7 +4,11 @@
 __author__ = ["fkiraly"]
 
 from sktime.datatypes._check import (
-    check_is, check_is_mtype, check_is_scitype, check_raise, mtype
+    check_is,
+    check_is_mtype,
+    check_is_scitype,
+    check_raise,
+    mtype,
 )
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._examples import get_examples

@@ -353,6 +353,7 @@ def check_is_scitype(
     ------
     TypeError if scitype input argument is not of expected type
     """
+
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata

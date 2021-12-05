@@ -6,8 +6,8 @@ import pytest
 
 from sktime.datatypes import convert_to
 from sktime.registry import all_estimators
-from sktime.utils._testing.series import _make_series
 from sktime.utils._testing.panel import make_transformer_problem
+from sktime.utils._testing.series import _make_series
 
 PAIRWISE_TRANSFORMERS = all_estimators(
     estimator_types="transformer-pairwise", return_names=False
@@ -80,8 +80,6 @@ def test_pairwise_transformers_panel(x, y, pairwise_transformer):
 
 def _general_pairwise_transformer_tests(x, y, pairwise_transformer):
     # test return matrix
-    print(x)
-    print(y)
     transformer = pairwise_transformer.create_test_instance()
     transformation = transformer.transform(x, y)
 
