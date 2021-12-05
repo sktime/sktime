@@ -111,8 +111,6 @@ class Arsenal(BaseClassifier):
     """
 
     _tags = {
-        "convert_X_to_numpy": True,
-        "convert_X_to_dataframe": False,
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
@@ -176,6 +174,13 @@ class Arsenal(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        if len(X.shape) == 2:
+            raise ValueError(
+                f"X is of type{type(X)} base classifier tags ="
+                f" {BaseClassifier._tags}  get tags  ="
+                f" {BaseClassifier.get_tags()} Tags for Arsenal = {self._tags} get "
+                f"get tags for Arsenal ={BaseClassifier.get_tags()}"
+            )
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
