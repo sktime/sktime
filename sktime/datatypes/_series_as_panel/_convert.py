@@ -21,7 +21,8 @@ def convert_Series_to_Panel(obj, store=None):
     """Convert series to a single-series panel.
 
     Assumes input is conformant with one of the three Series mtypes.
-    This method does not perform full mtype checks, use mtype or check_is for checks.
+    This method does not perform full mtype checks, use mtype or check_is_mtype for
+    checks.
 
     Parameters
     ----------
@@ -54,7 +55,8 @@ def convert_Panel_to_Series(obj, store=None):
     """Convert single-series panel to a series.
 
     Assumes input is conformant with one of three main panel mtypes.
-    This method does not perform full mtype checks, use mtype or check_is for checks.
+    This method does not perform full mtype checks, use mtype or check_is_mtype for
+    checks.
 
     Parameters
     ----------
