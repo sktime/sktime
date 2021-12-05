@@ -1079,7 +1079,8 @@
       "contributions": [
         "code",
         "doc",
-        "test"
+        "test",
+        "bug"
       ]
     },
     {
