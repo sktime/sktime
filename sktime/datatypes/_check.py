@@ -353,7 +353,7 @@ def check_is_scitype(
     keys = [x for x in valid_keys if x[1] in scitype]
 
     # storing the msg retursn
-    msg =[]
+    msg = []
     found_mtype = []
     found_scitype = []
 
