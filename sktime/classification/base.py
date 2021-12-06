@@ -26,23 +26,21 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
 )
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import (
-    check_classifier_input,
-    get_data_characteristics,
-)
 
 
-class BaseClassifier(BaseEstimator):
+class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -95,14 +93,14 @@ class BaseClassifier(BaseEstimator):
         """
         start = int(round(time.time() * 1000))
         # Check the data is either numpy arrays or pandas dataframes
-        check_classifier_input(X, y)
+        _check_classifier_input(X, y)
         # Query the data for characteristics
-        missing, multivariate, unequal = get_data_characteristics(X)
+        missing, multivariate, unequal = _get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        self.check_capabilities(missing, multivariate, unequal)
+        self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self.convert_X(X)
-        y = self.convert_y(y)
+        X = self._convert_X(X)
+        y = self._convert_y(y)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
             try:
@@ -141,13 +139,13 @@ class BaseClassifier(BaseEstimator):
         self.check_is_fitted()
 
         # Check the data is either numpy arrays or pandas dataframes
-        check_classifier_input(X)
+        _check_classifier_input(X)
         # Query the data for characteristics
-        missing, multivariate, unequal = get_data_characteristics(X)
+        missing, multivariate, unequal = _get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        self.check_capabilities(missing, multivariate, unequal)
+        self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self.convert_X(X)
+        X = self._convert_X(X)
 
         return self._predict(X)
 
@@ -172,13 +170,13 @@ class BaseClassifier(BaseEstimator):
 
         # Check the data is either numpy arrays or pandas dataframes
         # TODO: add parameters for min instances and min length
-        check_classifier_input(X)
+        _check_classifier_input(X)
         # Query the data for characteristics
-        missing, multivariate, unequal = get_data_characteristics(X)
+        missing, multivariate, unequal = _get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        self.check_capabilities(missing, multivariate, unequal)
+        self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self.convert_X(X)
+        X = self._convert_X(X)
 
         return self._predict_proba(X)
 
@@ -203,6 +201,7 @@ class BaseClassifier(BaseEstimator):
 
         return accuracy_score(y, self.predict(X), normalize=True)
 
+    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -226,10 +225,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError(
-            "_fit is a protected abstract method, it must be implemented."
-        )
+        ...
 
+    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -246,9 +244,7 @@ class BaseClassifier(BaseEstimator):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        raise NotImplementedError(
-            "_predict is a protected abstract method, it must be implemented."
-        )
+        ...
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
@@ -276,7 +272,7 @@ class BaseClassifier(BaseEstimator):
 
         return dists
 
-    def check_capabilities(self, missing, multivariate, unequal):
+    def _check_capabilities(self, missing, multivariate, unequal):
         """Check wether this classifier can handle the data characteristics.
 
         Attributes
@@ -311,7 +307,7 @@ class BaseClassifier(BaseEstimator):
                 "unequal length series"
             )
 
-    def convert_X(self, X):
+    def _convert_X(self, X):
         """Convert equal length series from DataFrame to numpy array or vice versa.
 
         Parameters
@@ -347,7 +343,7 @@ class BaseClassifier(BaseEstimator):
                 X = from_3d_numpy_to_nested(X)
         return X
 
-    def convert_y(self, y):
+    def _convert_y(self, y):
         """Convert y into a pd.Series or an np.array, depending on convert tags.
 
         y is the target variable.
@@ -368,3 +364,202 @@ class BaseClassifier(BaseEstimator):
             if self.get_tag("convert_y_to_series"):
                 y = pd.Series(y)
         return y
+
+
+def _check_classifier_input(
+    X,
+    y=None,
+    enforce_min_instances=1,
+    enforce_min_series_length=1,
+):
+    """Check wether input X and y are valid formats with minimum data.
+
+    Raises a ValueError if the input is not valid.
+
+    Arguments
+    ---------
+    X : check whether a pd.DataFrame or np.ndarray
+    y : check whether a pd.Series or np.array
+    enforce_min_instances : int, optional (default=1)
+        check there are a minimum number of instances.
+    enforce_min_series_length : int, optional (default=1)
+        Enforce minimum series length for input ndarray (i.e. fixed length problems)
+
+    Raises
+    ------
+    ValueError
+        If y or X is invalid input data type, or there is not enough data
+    """
+    # Check X
+    if not isinstance(X, (pd.DataFrame, np.ndarray)):
+        raise ValueError(
+            f"X must be either a pd.DataFrame or a np.ndarray, "
+            f"but found type: {type(X)}"
+        )
+    n_cases = X.shape[0]
+    if isinstance(X, np.ndarray):
+        if not (X.ndim == 2 or X.ndim == 3):
+            raise ValueError(
+                f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
+                f"but found to be: {X.ndim}"
+            )
+        if X.ndim == 2 and X.shape[1] < enforce_min_series_length:
+            raise ValueError(
+                f"Series length below the minimum, equal length series are length"
+                f" {X.shape[1]}"
+                f"but the minimum is  {enforce_min_series_length}"
+            )
+        if X.ndim == 3 and X.shape[2] < enforce_min_series_length:
+            raise ValueError(
+                f"Series length below the minimum, equal length series are length"
+                f" {X.shape[2]}"
+                f"but the minimum is  {enforce_min_series_length}"
+            )
+    else:
+        if X.shape[1] == 0:
+            raise ValueError("x is a pd.DataFrame with no data (num columns == 0).")
+    if n_cases < enforce_min_instances:
+        raise ValueError(
+            f"Minimum number of cases required is {enforce_min_instances} but X "
+            f"has : {n_cases}"
+        )
+    if isinstance(X, pd.DataFrame):
+        if not is_nested_dataframe(X):
+            raise ValueError(
+                "If passed as a pd.DataFrame, X must be a nested "
+                "pd.DataFrame, with pd.Series or np.arrays inside cells."
+            )
+    # Check y if passed
+    if y is not None:
+        # Check y valid input
+        if not isinstance(y, (pd.Series, np.ndarray)):
+            raise ValueError(
+                f"y must be a np.array or a pd.Series, but found type: {type(y)}"
+            )
+        # Check matching number of labels
+        n_labels = y.shape[0]
+        if n_cases != n_labels:
+            raise ValueError(
+                f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
+                f"{n_labels}"
+            )
+        if isinstance(y, np.ndarray):
+            if y.ndim > 1:
+                raise ValueError(
+                    f"y must be 1-dimensional but is in fact " f"{y.ndim} dimensional"
+                )
+
+
+def _get_data_characteristics(X):
+    """Query the data to find its characteristics for classifier capability check.
+
+    This is for checking array input where we assume series are equal length.
+    classifiers can take either ndarray or pandas input, and the checks are different
+    for each. For ndarrays, it checks:
+        a) whether x contains missing values;
+        b) whether x is multivariate.
+    for pandas it checks
+        a) whether x contains unequal length series;
+        a) whether x contains missing values;
+        b) whether x is multivariate.
+
+    Parameters
+    ----------
+    X : pd.pandas containing pd.Series or np.ndarray of either 2 or 3 dimensions.
+
+    Returns
+    -------
+    three boolean data characteristics: missing, multivariate and unequal
+    """
+    if isinstance(X, np.ndarray):
+        missing = _has_nans(X)
+        if X.ndim == 3 and X.shape[1] > 1:
+            multivariate = True
+        else:
+            multivariate = False
+        return missing, multivariate, False
+    else:
+        missing = _nested_dataframe_has_nans(X)
+        cols = len(X.columns)
+        if cols > 1:
+            multivariate = True
+        else:
+            multivariate = False
+        unequal = _nested_dataframe_has_unequal(X)
+        return missing, multivariate, unequal
+
+
+def _nested_dataframe_has_unequal(X: pd.DataFrame) -> bool:
+    """Check whether an input nested DataFrame of Series has unequal length series.
+
+    Parameters
+    ----------
+    X : pd.DataFrame where each cell is a pd.Series
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    rows = len(X)
+    cols = len(X.columns)
+    s = X.iloc[0, 0]
+    length = len(s)
+
+    for i in range(0, rows):
+        for j in range(0, cols):
+            s = X.iloc[i, j]
+            temp = len(s)
+            if temp != length:
+                return True
+    return False
+
+
+def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
+    """Check whether an input pandas of Series has nans.
+
+    Parameters
+    ----------
+    X : pd.DataFrame where each cell is a pd.Series
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    cases = len(X)
+    dimensions = len(X.columns)
+    for i in range(0, cases):
+        for j in range(0, dimensions):
+            s = X.iloc[i, j]
+            for k in range(0, s.size):
+                if pd.isna(s[k]):
+                    return True
+    return False
+
+
+# @njit(cache=True)
+def _has_nans(x: np.ndarray) -> bool:
+    """Check whether an input numpy array has nans.
+
+    Parameters
+    ----------
+    X : np.ndarray of either 2 or 3 dimensions.
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    # 2D
+    if x.ndim == 2:
+        for i in range(0, x.shape[0]):
+            for j in range(0, x.shape[1]):
+                if np.isnan(x[i][j]):
+                    return True
+    elif x.ndim == 3:
+        for i in range(0, x.shape[0]):
+            for j in range(0, x.shape[1]):
+                for k in range(0, x.shape[2]):
+                    if np.isnan(x[i][j][k]):
+                        return True
+    else:
+        raise ValueError(f"Expected array of two or three dimensions, got {x.ndim}")
+    return False
