@@ -397,15 +397,20 @@ class BaseTransformer(BaseEstimator):
                 )
             X = convert_to(X, to_type="df-list", as_scitype="Panel")
 
-            # these are the transformers-per-instanced, fitted in fit
-            transformers = self.transformers_
-            if len(transformers) != len(X):
-                raise RuntimeError(
-                    "found different number of instances in transform than in fit"
-                )
-            else:
+            # depending on whether fitting happens, apply fitted or unfitted instances
+            if not self.get_tag("fit-in-transform"):
+                # these are the transformers-per-instanced, fitted in fit
+                transformers = self.transformers_
+                if len(transformers) != len(X):
+                    raise RuntimeError(
+                        "found different number of instances in transform than in fit"
+                    )
+
                 Xt = [transformers[i].transform(X[i]) for i in range(len(X))]
-            # now we have a list of transformed instances
+                # now we have a list of transformed instances
+            else:
+                # if no fitting happens, just apply transform multiple times
+                Xt = [self.transform(X[i]) for i in range(len(X))]
 
             # if the output is Series, Xt is a Panel and we convert back
             if output_scitype == "Series":
