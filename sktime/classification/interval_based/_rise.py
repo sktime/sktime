@@ -3,7 +3,7 @@
 
 # TODO move or remove RandomIntervalSpectralForest in v0.10.0
 This classifier has been refactored to have the correct name. The incorrectly named
-algorithm will be depreciated.
+algorithm will be deprecated.
 """
 
 __author__ = ["TonyBagnall", "Yi-Xuan Xu"]
@@ -509,7 +509,6 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         self : object
         """
         X = X.squeeze(1)
-
         n_instances, self.series_length = X.shape
         self.min_interval_, self.max_interval_ = self.min_interval, self.max_interval
         if self.max_interval_ not in range(1, self.series_length):

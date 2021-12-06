@@ -93,18 +93,14 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        shpx = X.shape
         start = int(round(time.time() * 1000))
         # Check the data is either numpy arrays or pandas dataframes
         check_classifier_input(X, y)
-        shpy = X.shape
         # Query the data for characteristics
         missing, multivariate, unequal = get_data_characteristics(X)
         # Check this classifier can handle characteristics
-        shpz = X.shape
         self.check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        shp = X.shape
         X = self.convert_X(X)
         y = self.convert_y(y)
         multithread = self.get_tag("capability:multithreading")
@@ -120,35 +116,7 @@ class BaseClassifier(BaseEstimator):
         self.n_classes_ = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
-        try:
-            self._fit(X, y)
-        except ValueError as v:
-            raise ValueError(
-                "Error thrown from classifier =",
-                v,
-                " Error in _fit: data shape start = ",
-                shpx,
-                " prior get characteristics = ",
-                shpy,
-                " prior to check capabilities = ",
-                shpz,
-                " prior to convert_X = ",
-                shp,
-                " begin convert_X = ",
-                self.shp1,
-                " middle convert_X = ",
-                self.shp2,
-                " end convert_X",
-                self.shp3,
-                " end fit",
-                X.shape,
-                " convert tags first =",
-                self.tagsSelf1,
-                " convert tags second =",
-                self.tagsSelf2,
-                " convert tags third =",
-                self.tagsSelf3,
-            )
+        self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
         self._is_fitted = True
