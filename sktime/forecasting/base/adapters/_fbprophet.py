@@ -42,6 +42,8 @@ class _ProphetAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        if X:
+            X = X.copy()
         self._instantiate_model()
         self._check_changepoints()
         y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
@@ -101,6 +103,8 @@ class _ProphetAdapter(BaseForecaster):
         Exception
             Error when merging data
         """
+        if X:
+            X = X.copy()
         self._update_X(X, enforce_index_type=pd.DatetimeIndex)
 
         fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
