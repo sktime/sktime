@@ -471,10 +471,10 @@ class BaseTransformer(BaseEstimator):
         if output_scitype == "Series":
             # if the transformer outputs multivariate series,
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
-            check_res = check_is_mtype(
+            _, _, metadata = check_is_mtype(
                 ["pd.DataFrame", "pd.Series", "np.ndarray"], return_metadata=True
             )
-            if not check_res[2]["is_univariate"] and X_input_mtype == "pd.Series":
+            if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
                 X_output_mtype = "pd.DataFrame"
             else:
                 X_output_mtype = X_input_mtype
