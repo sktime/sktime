@@ -12,9 +12,11 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._convert import (
+    from_3d_numpy_to_nested,
+    from_nested_to_3d_numpy,
+)
 
 VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
@@ -70,9 +72,11 @@ def check_X(
     # check first if we have the right number of dimensions, otherwise we
     # may not be able to get the shape of the second dimension below
     if isinstance(X, np.ndarray):
-        if not X.ndim == 3:
+        if X.ndim == 2:
+            X = X.reshape(X.shape[0], 1, X.shape[1])
+        elif X.ndim == 1 or X.ndim > 3:
             raise ValueError(
-                f"If passed as a np.array, X must be a 3-dimensional "
+                f"If passed as a np.array, X must be a 2 or 3-dimensional "
                 f"array, but found shape: {X.shape}"
             )
         if coerce_to_pandas:

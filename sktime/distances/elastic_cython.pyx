@@ -1,20 +1,35 @@
 # cython: language_level=3, boundscheck=False, wraparound=False, initializedcheck=False, nonecheck=False,
-
-# believe it or not, the below variable is required for cython to compile properly. A global python variable hooks
-# into a c global variable. Without this functions do not compile properly!
+# TODO remove in v0.10.0
+# the functionality in this file is depreciated and to be replaced with a version
+# based on numba.
+# believe it or not, the below variable is required for cython to compile properly. A
+# global python variable hooks into a c global variable. Without this functions do
+# not compile properly!
+# the functionality in this file is depreciated and to be replaced with a version
+# based on numba.
 STUFF = "Hi"  # https://stackoverflow.com/questions/8024805/cython-compiled-c-extension-importerror-dynamic-module-does-not-define-init-fu
 
 import numpy as np
+
 cimport numpy as np
 
 np.import_array()
 
 from libc.float cimport DBL_MAX
-from libc.math cimport exp, sqrt, fabs
+from libc.math cimport exp, fabs, sqrt
 
-cdef inline double min_c(double a, double b): return a if a <= b else b
-cdef inline int max_c_int(int a, int b): return a if a >= b else b
-cdef inline int min_c_int(int a, int b): return a if a <= b else b
+from warnings import warn
+
+
+cdef inline double min_c(double a, double b):
+    """min c docstring."""
+    return a if a <= b else b
+cdef inline int max_c_int(int a, int b):
+    """max c int docstring."""
+    return a if a >= b else b
+cdef inline int min_c_int(int a, int b):
+    """min c int docstring."""
+    return a if a <= b else b
 
 # TO-DO: convert DDTW and WDDTW to use slope-based derivatives rather than np.diff
 
@@ -36,7 +51,23 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
 # the w argument corresponds to the length of the warping window in percentage of
 # the smallest length of the time series min(x,y) - if negative then no warping window
 # this function assumes that x is shorter than y
-def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
+def dtw_distance(
+        np.ndarray[double, ndim=2] x,
+        np.ndarray[double, ndim=2] y,
+        double w = -1):
+    """Cython version of DTW distance.
+
+    Arguments
+    ---------
+    x : np.array
+    y : np.array
+    w : weight
+
+    Returns
+    -------
+    float
+    """
+    warn("Cython DTW is deprecated from V0.10")
     # make sure x is shorter than y
     # if not permute
     cdef np.ndarray[double, ndim=2] X = x
@@ -66,8 +97,8 @@ def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , do
     D[0,1:] = DBL_MAX
     D[1:,0] = DBL_MAX
 
-    D[1:,1:] = np.square(X[:,np.newaxis]-Y).sum(axis=2).astype(np.float64) # inspired by https://stackoverflow.com/a/27948463/9234713
-
+    # inspired by https://stackoverflow.com/a/27948463/9234713
+    D[1:,1:] = np.square(X[:,np.newaxis]-Y).sum(axis=2).astype(np.float64)
 
     for i in range(1,r):
         jstart = max_c_int(1 , i-band)
@@ -87,9 +118,9 @@ def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , do
 
     return D[lx,ly]
 
-
 def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0.05):
 
+    warn("Cython WDTW is deprecated from V0.10")
     # make sure x is shorter than y
     # if not permute
     cdef np.ndarray[double, ndim=2] X = x
@@ -145,17 +176,18 @@ def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , d
 # note - this implementation is more convenient for general use but it is more efficient
 # for standalone use to transform the data once, then use DTW on the transformed data
 def ddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
+    warn("Cython DDTW is deprecated from V0.10")
     return dtw_distance(np.diff(x.T).T,np.diff(y.T).T,w)
 
 
 # note - this implementation is more convenient for use in ensembles, etc., but it is more efficient
 # for standalone use to transform the data once, then use WDTW on the transformed data
 def wddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double g = 0):
+    warn("Cython WDDTW is deprecated from V0.10")
     return wdtw_distance(np.diff(x.T).T,np.diff(y.T).T,g)
 
-
 def msm_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double c = 1, int dim_to_use = 0):
-
+    warn("Cython MSM is deprecated from V0.10")
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
     cdef np.ndarray[double, ndim=2] temp
@@ -207,6 +239,7 @@ cdef _msm_calc_cost(double new_point, double x, double y, double c):
 def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int delta
 = 3, double epsilon = 0.05,
                   int dim_to_use = 0):
+    warn("Cython LCSS is deprecated from V0.10")
 
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
@@ -248,6 +281,7 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
 #cython: boundscheck=False, wraparound=False, nonecheck=False
 def twe_distance(np.ndarray[double, ndim=2] ta, np.ndarray[double, ndim=2] tb, double penalty = 1,
                  double stiffness = 1):
+    warn("Cython TWE is deprecated from V0.10")
     cdef int dim = ta.shape[1] - 1
     cdef double dist, disti1, distj1
     cdef np.ndarray[double, ndim=1] tsa = np.zeros([len(ta) + 1], dtype=np.double)
@@ -362,6 +396,7 @@ def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, dou
         You should have received a copy of the GNU Affero General Public License
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
+    warn("Cython ERP is deprecated from V0.10")
     cdef np.ndarray[double, ndim=2] first = x
     cdef np.ndarray[double, ndim=2] second = y
     cdef np.ndarray[double, ndim=2] t

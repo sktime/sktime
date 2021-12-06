@@ -57,12 +57,12 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
     curves = cif._temporal_importance_curves(
         normalise_time_points=normalise_time_points
     )
-    curves = curves.reshape((25 * cif.n_dims, cif.series_length))
+    curves = curves.reshape((25 * cif.n_dims_, cif.series_length_))
     features = catch22.feature_names + ["Mean", "Standard Deviation", "Slope"]
     curve_names = []
     for feature in features:
-        for i in range(cif.n_dims):
-            name = feature if cif.n_dims == 1 else feature + " Dim " + str(i)
+        for i in range(cif.n_dims_):
+            name = feature if cif.n_dims_ == 1 else feature + " Dim " + str(i)
             curve_names.append(name)
     return plot_curves(
         curves,

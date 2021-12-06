@@ -10,7 +10,7 @@ __all__ = [
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["Markus Löning", "Kutay Koralturk"]
+__author__ = ["mloning", "kkoralturk"]
 
 import inspect
 import numbers
@@ -23,11 +23,12 @@ from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.utils.validation import check_window_length
-from sktime.utils.validation.forecasting import check_cutoffs
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_step_length
-from sktime.utils.validation.series import check_equal_time_index
-from sktime.utils.validation.series import check_time_index
+from sktime.utils.validation.forecasting import (
+    check_cutoffs,
+    check_fh,
+    check_step_length,
+)
+from sktime.utils.validation.series import check_equal_time_index, check_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -97,11 +98,39 @@ def _repr(self):
 
 
 def _check_y(y):
-    """Check input to `split` function."""
+    """Coerce input to `split` function.
+
+    Parameters
+    ----------
+    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+        coerced and checked version of input y
+
+    Returns
+    -------
+    check_time_index(y_index), where y_index is as follows:
+        if y is pd.Series, pd.DataFrame, y_index = y.index
+        if y is pd.Index, y_index = y itself
+        if y is np.ndarray, y_index =  pd.Index(y)
+
+    Raises
+    ------
+    TypeError
+        if y is not of one of the expected types
+    NotImplementedError
+        if y_index is not a supported sktime index type
+    ValueError
+        if y_index is not monotonous
+    """
     if isinstance(y, (pd.Series, pd.DataFrame)):
         y_index = y.index
-    if isinstance(y, np.ndarray):
-        y_index = pd.Index(y)
+    elif isinstance(y, np.ndarray):
+        y_index = pd.Index(y.flatten())
+    elif isinstance(y, pd.Index):
+        y_index = y
+    else:
+        raise TypeError(
+            "Input to _check_y must be pd.Series, pd.DataFrame, np.ndarray, or pd.Index"
+        )
     return check_time_index(y_index)
 
 

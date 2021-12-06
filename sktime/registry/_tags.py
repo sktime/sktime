@@ -112,7 +112,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "symmetric",
-        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
@@ -124,15 +124,61 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "y_inner_mtype",
-        "forecaster",
-        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        ["forecaster", "transformer"],
+        (
+            "list",
+            [
+                "pd.Series",
+                "pd.DataFrame",
+                "np.array",
+                "nested_univ",
+                "pd-multiindex",
+                "numpy3D",
+                "df-list",
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (
         "X_inner_mtype",
-        "forecaster",
-        ("list", ["pd.Series", "pd.DataFrame", "np.array"]),
+        ["forecaster", "transformer"],
+        (
+            "list",
+            [
+                "pd.Series",
+                "pd.DataFrame",
+                "np.array",
+                "nested_univ",
+                "pd-multiindex",
+                "numpy3D",
+                "df-list",
+            ],
+        ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
+    ),
+    (
+        "scitype:transform-input",
+        "transformer",
+        ("list", ["Series", "Panel"]),
+        "what is the scitype of the transformer input X",
+    ),
+    (
+        "scitype:transform-output",
+        "transformer",
+        ("list", ["Series", "Primitives", "Panel"]),
+        "what is the scitype of the transformer output, the transformed X",
+    ),
+    (
+        "scitype:instancewise",
+        "transformer",
+        "bool",
+        "does the transformer transform instances independently?",
+    ),
+    (
+        "scitype:transform-labels",
+        "transformer",
+        ("list", ["None", "Series", "Primitives", "Panel"]),
+        "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
         "capability:pred_int",
@@ -203,10 +249,27 @@ ESTIMATOR_TAG_REGISTER = [
     #     "str",
     #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
     # ),
+    (
+        "capability:multiple-alignment",
+        "aligner",
+        "bool",
+        "is aligner capable of aligning multiple series (True) or only two (False)?",
+    ),
+    (
+        "capability:distance",
+        "aligner",
+        "bool",
+        "does aligner return overall distance between aligned series?",
+    ),
+    (
+        "capability:distance-matrix",
+        "aligner",
+        "bool",
+        "does aligner return pairwise distance matrix between aligned series?",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
-
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
 
 
