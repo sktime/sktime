@@ -57,7 +57,7 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is, convert_to, mtype, mtype_to_scitype
+from sktime.datatypes import check_is_mtype, convert_to, mtype, mtype_to_scitype
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
@@ -161,7 +161,7 @@ class BaseTransformer(BaseEstimator):
         # input checks and minor coercions on X, y
         ###########################################
 
-        valid, msg, metadata = check_is(
+        valid, msg, metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
@@ -327,7 +327,7 @@ class BaseTransformer(BaseEstimator):
         # input checks and minor coercions on X, y
         ###########################################
 
-        valid, msg, metadata = check_is(
+        valid, msg, metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:

@@ -95,7 +95,7 @@ def _validate_bounding(
 
     sakoe_chiba = LowerBounding.SAKOE_CHIBA
     _validate_bounding_result(
-        sakoe_chiba.create_bounding_matrix(x, y),
+        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=2),
         x,
         y,
     )
@@ -120,7 +120,7 @@ def _validate_bounding(
     itakura_parallelogram = LowerBounding.ITAKURA_PARALLELOGRAM
 
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=2.0),
         x,
         y,
         is_gradient_bounding=True,
@@ -234,4 +234,9 @@ def test_incorrect_parameters() -> None:
     with pytest.raises(ValueError):  # Try pass float to sakoe
         sakoe_chiba.create_bounding_matrix(
             numpy_x, numpy_y, sakoe_chiba_window_radius=4.0
+        )
+
+    with pytest.raises(ValueError):  # Try pass both window and gradient
+        sakoe_chiba.create_bounding_matrix(
+            numpy_x, numpy_y, sakoe_chiba_window_radius=4.0, itakura_max_slope=10.0
         )
