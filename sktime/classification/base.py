@@ -44,6 +44,7 @@ class BaseClassifier(BaseEstimator):
 
     The base classifier specifies the methods and method signatures that all
     classifiers have to implement.
+    #TODO: Make _fit and _predict abstract
     """
 
     _tags = {
