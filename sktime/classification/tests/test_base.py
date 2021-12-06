@@ -78,7 +78,8 @@ def test_check_capabilities():
     """Test the checking of capabilities.
 
     There are eight different combinations to be tested with a classifier that can
-    handle it and that cannot.
+    handle it and that cannot. I need to rewrite this to stop setting the tags
+    directly.
     """
     handles_none = _DummyClassifier()
 
