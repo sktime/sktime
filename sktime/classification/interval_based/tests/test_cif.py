@@ -2,6 +2,7 @@
 """CanonicalIntervalForest test code."""
 import numpy as np
 from numpy import testing
+from sklearn.metrics import accuracy_score
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_basic_motions, load_unit_test
@@ -21,6 +22,23 @@ def test_cif_on_unit_test_data():
     # assert probabilities are the same
     probas = cif.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, cif_unit_test_probas)
+
+
+def test_cit_on_unit_test_data():
+    """Test of CanonicalIntervalForest on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+
+    # train CIF continuous interval tree
+    cif = CanonicalIntervalForest(n_estimators=10, base_estimator="CIT", random_state=0)
+    cif.fit(X_train, y_train)
+
+    # assert probabilities are the same
+    probas = cif.predict_proba(X_test.iloc[indices])
+    preds = cif.classes_[np.argmax(probas, axis=1)]
+    assert accuracy_score(y_train[indices], preds) >= 0.8
 
 
 def test_cif_on_basic_motions():
