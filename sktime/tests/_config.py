@@ -61,6 +61,7 @@ from sktime.forecasting.compose import (
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
     MultiplexForecaster,
+    NetworkPipelineForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
     StackingForecaster,
@@ -92,6 +93,7 @@ from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
+from sktime.transformations.panel.dataset_manipulation import Selector
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.reduce import Tabularizer
@@ -384,6 +386,25 @@ ESTIMATOR_TEST_PARAMS = {
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
+    NetworkPipelineForecaster: {
+        "steps": [
+            (
+                "imputer",
+                Imputer(method="drift"),
+                {"fit": {"Z": "original_y"}, "predict": None, "update": None},
+            ),
+            (
+                "forecaster",
+                NaiveForecaster(strategy="mean"),
+                {
+                    "fit": {"y": "imputer", "fh": "original_fh"},
+                    "predict": {"fh": "original_fh"},
+                    "update": {"y": "original_y"},
+                },
+            ),
+        ]
+    },
+    Selector: {"columns": 0},
     FeatureSelection: {"method": "all"},
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
@@ -391,7 +412,6 @@ ESTIMATOR_TEST_PARAMS = {
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
     ClaSPTransformer: {"window_length": 5},
 }
-
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
 # common tests for estimators with the same tags.
