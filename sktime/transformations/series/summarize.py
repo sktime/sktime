@@ -132,6 +132,7 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
 
     _tags = {
         "fit-in-transform": True,
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
     }
 
     def __init__(
