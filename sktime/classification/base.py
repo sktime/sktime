@@ -26,7 +26,6 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
-from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -40,7 +39,7 @@ from sktime.datatypes._panel._convert import (
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseClassifier(BaseEstimator, ABC):
+class BaseClassifier(BaseEstimator):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -201,7 +200,6 @@ class BaseClassifier(BaseEstimator, ABC):
 
         return accuracy_score(y, self.predict(X), normalize=True)
 
-    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -225,9 +223,10 @@ class BaseClassifier(BaseEstimator, ABC):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        ...
+        raise NotImplementedError(
+            "_fit is a protected abstract method, it must be implemented."
+        )
 
-    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -244,7 +243,9 @@ class BaseClassifier(BaseEstimator, ABC):
         -------
         y : array-like, shape =  [n_instances] - predicted class labels
         """
-        ...
+        raise NotImplementedError(
+            "_predict is a protected abstract method, it must be implemented."
+        )
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
