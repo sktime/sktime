@@ -109,6 +109,9 @@ def test_check_capabilities():
     handles_all.check_capabilities(False, True, False)
     handles_all.check_capabilities(False, False, True)
     handles_all.check_capabilities(False, False, False)
+    handles_all._tags["capability:multivariate"] = False
+    handles_all._tags["capability:unequal_length"] = False
+    handles_all._tags["capability:missing_values"] = False
 
 
 def test_convert_input():
