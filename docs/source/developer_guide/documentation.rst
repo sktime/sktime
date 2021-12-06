@@ -1,7 +1,7 @@
 .. _developer_guide_documentation:
 
 =============
-Documentation
+Developing Documentation
 =============
 
 Providing instructive documentation is a key part of ``sktime's`` mission. In order to meet this,
@@ -15,8 +15,11 @@ These include:
 
 More detailed information on ``sktime's`` documentation format is provided below.
 
+.. contents::
+   :local:
+
 Docstring Conventions
-=====================
+---------------------
 
 sktime uses the numpydoc_ Sphinx extension and follows
 `NumPy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
@@ -171,3 +174,40 @@ MeanAbsoluteScaledError_
 .. _BOSSEnsemble: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
 .. _ContractableBOSS: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
 .. _MeanAbsoluteScaledError: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
+
+.. _sphinx: https://www.sphinx-doc.org/
+.. _readthedocs: https://readthedocs.org/projects/sktime/
+
+Documentation Build
+-------------------
+We use `sphinx`_ to build our documentation and `readthedocs`_ to host it.
+You can find our latest documentation `here <https://www.sktime.org/en/latest/>`_.
+
+The source files can be found
+in `docs/source/ <https://github.com/alan-turing-institute/sktime/tree/main/docs/source>`_.
+The main configuration file for sphinx is
+`conf.py <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/conf.py>`__
+and the main page is
+`index.rst <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/index.rst>`__.
+To add new pages, you need to add a new ``.rst`` file and include it in
+the ``index.rst`` file.
+
+To build the documentation locally, you need to install a few extra
+dependencies listed in
+`docs/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt>`__.
+
+1. To install extra requirements from the root directory, run:
+
+   .. code:: bash
+
+      pip install -r docs/requirements.txt
+
+2. To build the website locally, run:
+
+   .. code:: bash
+
+      make docs
+
+You can find the generated files in the ``sktime/docs/_build/`` folder.
+To view the website, open ``sktime/docs/_build/html/index.html`` with
+your preferred web browser.

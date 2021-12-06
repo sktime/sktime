@@ -12,6 +12,9 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 
 We appreciate community contributions towards compatibility with python 3.9, or other operating systems.
 
+.. contents::
+   :local:
+
 Release versions
 ----------------
 

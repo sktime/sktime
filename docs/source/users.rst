@@ -6,7 +6,6 @@ Documentation
 .. toctree::
    :maxdepth: 1
 
-   installation
    tutorials
    user_guide
    estimator_overview
