@@ -27,10 +27,10 @@ How to deprecate code
 Our deprecation process is as follows:
 
 * Raise a :code:`FutureWarning`. The warning message should give the version number when the functionality will be changed and describe the new usage.
-* Add the following to-do comment to code that can be removed: :code:`TODO: remove in <version-number>`. For example, :code:`TODO: remove in v0.10.0`.
+* Add the following to-do comment to code that can be removed: :code:`TODO: remove in <version-number>`. For example, :code:`TODO: remove in v0.10.0`. The to-do comment should describe precisely which steps need to be taken for deprecation (e.g. removal of arguments, removal of functions or blocks of code). If changes need to be applied across multiple places, place multiple to-do comments.
 * Remove all deprecated functionality as part of the release process, searching for the to-do comments.
 
-To deprecate functionality, we use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package.
+To raise the warning, we use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package.
 The package provides depreciation helper functions such as the :code:`deprecated` decorator.
 When importing it from :code:`deprecated.sphinx`, it automatically adds a deprecation message to the docstring.
 You can decorate functions, methods or classes.
@@ -46,7 +46,8 @@ Functions
 .. code-block::
 
     from deprecated.sphinx import deprecated
-
+    
+    # TODO: remove in v0.10.0
     @deprecated(version="0.9.0", reason="my_old_function will be removed in v0.10.0", category=FutureWarning)
     def my_old_function(x, y):
         return x + y
@@ -59,7 +60,8 @@ Methods
     from deprecated.sphinx import deprecated
 
     class MyClass:
-
+    
+        # TODO: remove in v0.10.0
         @deprecated(version="0.9.0", reason="my_old_method will be removed in v0.10.0", category=FutureWarning)
         def my_old_method(self, x, y):
             return x + y
@@ -70,7 +72,8 @@ Classes
 .. code-block::
 
     from deprecated.sphinx import deprecated
-
+    
+    # TODO: remove in v0.10.0
     @deprecated(version="0.9.0", reason="MyOldClass will be removed in v0.10.0", category=FutureWarning)
     class MyOldClass:
         pass
