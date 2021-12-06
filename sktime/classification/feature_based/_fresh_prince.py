@@ -8,12 +8,13 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["FreshPRINCE"]
 
 import numpy as np
+from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.feature_based._tsfresh_classifier import TSFreshClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-
+from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 
 
 class FreshPRINCE(BaseClassifier):
