@@ -326,32 +326,18 @@ class BaseClassifier(BaseEstimator):
         """
         convert_to_numpy = self.get_tag("convert_X_to_numpy")
         convert_to_pandas = self.get_tag("convert_X_to_dataframe")
-        self.tagsSelf1 = (
-            f"AFTER Extract convert to numpy = {convert_to_numpy} convert to p"
-            f" {convert_to_pandas}"
-        )
         if convert_to_numpy and convert_to_pandas:
             raise ValueError(
                 "Tag error: cannot set both convert_X_to_numpy and "
                 "convert_X_to_dataframe to be true."
             )
-        self.tagsSelf2 = (
-            f"AFTER TEST convert to numpy = {convert_to_numpy} convert to p"
-            f" {convert_to_pandas}"
-        )
-        self.shp1 = X.shape
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
             # Temporary fix to insist on 3D numpy. For univariate problems,
-            # most classifiers simply convert back to 2D. This squashing should be
+            # most classifiers simply convert back to 2D. This squeezing should be
             # done here, but touches a lot of files, so will get this to work first.
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
-        self.shp2 = X.shape
-        self.tagsSelf3 = (
-            f"AFTER ISINSTANCE convert to numpy = {convert_to_numpy} convert to p"
-            f" {convert_to_pandas}"
-        )
 
         if convert_to_numpy:
             if isinstance(X, pd.DataFrame):
@@ -359,7 +345,6 @@ class BaseClassifier(BaseEstimator):
         elif convert_to_pandas:
             if isinstance(X, np.ndarray):
                 X = from_3d_numpy_to_nested(X)
-        self.shp3 = X.shape
         return X
 
     def convert_y(self, y):
