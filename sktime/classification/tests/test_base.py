@@ -26,6 +26,49 @@ class _DummyClassifier(BaseClassifier):
         return self
 
 
+class _DummyHandlesAllInput(BaseClassifier):
+    """Dummy classifier for testing base class fit/predict/predict_proba."""
+
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": True,
+        "capability:missing_values": True,
+    }
+
+    def _fit(self, X, y):
+        """Fit dummy."""
+        return self
+
+    def _predict(self, X):
+        """Predict dummy."""
+        return self
+
+    def _predict_proba(self):
+        """Predict proba dummy."""
+        return self
+
+
+class _DummyConvertPandas(BaseClassifier):
+    """Dummy classifier for testing base class fit/predict/predict_proba."""
+
+    _tags = {
+        "convert_X_to_numpy": False,
+        "convert_X_to_dataframe": True,
+    }
+
+    def _fit(self, X, y):
+        """Fit dummy."""
+        return self
+
+    def _predict(self, X):
+        """Predict dummy."""
+        return self
+
+    def _predict_proba(self):
+        """Predict proba dummy."""
+        return self
+
+
 multivariate_message = r"X must be univariate, this classifier cannot deal with"
 missing_message = r"The data has missing values"
 unequal_message = r"The data has unequal length series"
@@ -96,10 +139,7 @@ def test_check_capabilities():
     with pytest.raises(ValueError, match=unequal_message):
         handles_none.check_capabilities(False, False, True)
 
-    handles_all = _DummyClassifier()
-    handles_all._tags["capability:multivariate"] = True
-    handles_all._tags["capability:unequal_length"] = True
-    handles_all._tags["capability:missing_values"] = True
+    handles_all = _DummyHandlesAllInput()
     handles_all.check_capabilities(False, False, False)
     handles_all.check_capabilities(False, False, False)
     handles_all.check_capabilities(True, True, True)
@@ -110,9 +150,6 @@ def test_check_capabilities():
     handles_all.check_capabilities(False, True, False)
     handles_all.check_capabilities(False, False, True)
     handles_all.check_capabilities(False, False, False)
-    handles_all._tags["capability:multivariate"] = False
-    handles_all._tags["capability:unequal_length"] = False
-    handles_all._tags["capability:missing_values"] = False
 
 
 def test_convert_input():
@@ -144,10 +181,8 @@ def test_convert_input():
     assert tempX.shape[0] == cases and tempX.shape[1] == 1 and tempX.shape[2] == length
     tempX = tester.convert_X(test_X4)
     assert tempX.shape[0] == cases and tempX.shape[1] == 3 and tempX.shape[2] == length
-    tester._tags["convert_X_to_numpy"] = False
-    tester._tags["convert_X_to_dataframe"] = True
+    tester = _DummyConvertPandas()
     tempX = tester.convert_X(test_X1)
-    assert isinstance(tempX, pd.DataFrame)
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == cases
     assert tempX.shape[1] == 1
@@ -161,8 +196,6 @@ def test_convert_input():
     assert isinstance(tempY, np.ndarray)
     tempY = tester.convert_y(test_y2)
     assert isinstance(tempY, np.ndarray)
-    tester._tags["convert_X_to_numpy"] = True
-    tester._tags["convert_X_to_dataframe"] = False
 
 
 def _create_example_dataframe(cases=5, dimensions=1, length=10):
