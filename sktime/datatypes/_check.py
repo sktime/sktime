@@ -105,6 +105,35 @@ def check_is(
     )
 
 
+def _coerce_list_of_str(obj, var_name="obj"):
+    """Check whether object is string or list of string.
+
+    Parameters
+    ----------
+    obj - object to check
+    var_name: str, optional, default="obj" - name of input in error messages
+
+    Returns
+    -------
+    list of str
+        equal to obj if was a list; equal to [obj] if obj was a str
+        note: if obj was a list, return is not a copy, but identical
+
+    Raises
+    ------
+    TypeError if obj is not a str or list of str
+    """
+    if isinstance(obj, str):
+        obj = [obj]
+    elif isinstance(obj, list):
+        if not np.all([isinstance(x, str) for x in obj]):
+            raise TypeError(f"{var_name} must be a string or list of strings")
+    else:
+        raise TypeError(f"{var_name} must be a string or list of strings")
+
+    return obj
+
+
 def check_is_mtype(
     obj,
     mtype: Union[str, List[str]],
@@ -141,7 +170,7 @@ def check_is_mtype(
     Raises
     ------
     TypeError if no checks defined for mtype/scitype combination
-    ValueError if mtype input argument is not of expected type
+    TypeError if mtype input argument is not of expected type
     """
     _check_scitype_valid(scitype)
 
@@ -151,13 +180,7 @@ def check_is_mtype(
         else:
             return valid
 
-    if isinstance(mtype, str):
-        mtype = [mtype]
-    elif isinstance(mtype, list):
-        if not np.all([isinstance(x, str) for x in mtype]):
-            raise ValueError("list must be a string or list of strings")
-    else:
-        raise ValueError("mtype must be a string or list of strings")
+    mtype = _coerce_list_of_str(mtype, var_name="mtype")
 
     valid_keys = check_dict.keys()
 
@@ -295,3 +318,98 @@ def mtype(obj, as_scitype: str = None):
         raise TypeError("No valid mtype could be identified")
 
     return res[0]
+
+
+def check_is_scitype(
+    obj,
+    scitype: Union[str, List[str]],
+    return_metadata=False,
+    var_name="obj",
+):
+    """Check object for compliance with mtype specification, return metadata.
+
+    Parameters
+    ----------
+    obj - object to check
+    scitype: str or list of str, scitype to check obj as
+    return_metadata - bool, optional, default=False
+        if False, returns only "valid" return
+        if True, returns all three return objects
+    var_name: str, optional, default="obj" - name of input in error messages
+
+    Returns
+    -------
+    valid: bool - whether obj is a valid object of mtype/scitype
+    msg: str or list of str - error messages if object is not valid, otherwise None
+            str if mtype is str; list of len(mtype) with message per mtype if list
+            returned only if return_metadata is True
+    metadata: dict - metadata about obj if valid, otherwise None
+            returned only if return_metadata is True
+        fields:
+            "mtype": str, mtype of obj if inferred
+            "scitype": str, scitype of obj if inferred
+
+    Raises
+    ------
+    TypeError if scitype input argument is not of expected type
+    """
+
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        else:
+            return valid
+
+    scitype = _coerce_list_of_str(scitype, var_name="scitype")
+
+    for x in scitype:
+        _check_scitype_valid(x)
+
+    valid_keys = check_dict.keys()
+
+    # find all the mtype keys corresponding to the scitypes
+    keys = [x for x in valid_keys if x[1] in scitype]
+
+    # storing the msg retursn
+    msg = []
+    found_mtype = []
+    found_scitype = []
+
+    for key in keys:
+        res = check_dict[key](obj, return_metadata=return_metadata, var_name=var_name)
+
+        if return_metadata:
+            check_passed = res[0]
+        else:
+            check_passed = res
+
+        if check_passed:
+            final_result = res
+            found_mtype.append([0])
+            found_scitype.append(key[1])
+        elif return_metadata:
+            msg.append(res[1])
+
+    # there are three options on the result of check_is_mtype:
+    # a. two or more mtypes are found - this is unexpected and an error with checks
+    if len(found_mtype) > 1:
+        raise TypeError(
+            f"Error in check_is_mtype, more than one mtype identified: {found_mtype}"
+        )
+    # b. one mtype is found - then return that mtype
+    elif len(found_mtype) == 1:
+        if return_metadata:
+            # add the mtype return to the metadata
+            final_result[2]["mtype"] = found_mtype[0]
+            # add the scitype return to the metadata
+            final_result[2]["scitype"] = found_scitype[0]
+            # final_result already has right shape and dependency on return_metadata
+            return final_result
+        else:
+            return True
+    # c. no mtype is found - then return False and all error messages if requested
+    else:
+        if len(msg) == 1:
+            msg = msg[0]
+
+        return ret(False, msg, None, return_metadata)
