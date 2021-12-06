@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Prophet forecaster by wrapping fbprophet."""
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["Prophet"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -14,75 +14,91 @@ _check_soft_dependencies("fbprophet")
 
 
 class Prophet(_ProphetAdapter):
-    """Prophet forecaster by wrapping fbprophet.
+    """Prophet forecaster by wrapping Facebook's prophet algorithm [1]_.
 
     Parameters
     ----------
-    freq: String of DatetimeIndex frequency. See here for possible values:
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
-        #timeseries-offset-aliases
-    add_seasonality: Dict or List of Dicts with args for Prophet.add_seasonality().
-        Dict or each Dict in List can have the following keys/values:
-            name: string name of the seasonality component.
-            period: float number of days in one period.
-            fourier_order: int number of Fourier components to use.
-            prior_scale: optional float prior scale for this component.
-            mode: optional 'additive' or 'multiplicative'
-            condition_name: string name of the seasonality condition.
-    add_country_holidays: Dict with args for Prophet.add_country_holidays().
+    freq: String of DatetimeIndex frequency. Refer [2]_ for possible values:
+    add_seasonality: dict or None, default=None
+        Dict with args for Prophet.add_seasonality().
+        Dict can have the following keys/values:
+            * name: string name of the seasonality component.
+            * period: float number of days in one period.
+            * fourier_order: int number of Fourier components to use.
+            * prior_scale: optional float prior scale for this component.
+            * mode: optional 'additive' or 'multiplicative'
+            * condition_name: string name of the seasonality condition.
+    add_country_holidays: dict or None, default=None
+        Dict with args for Prophet.add_country_holidays().
         Dict can have the following keys/values:
             country_name: Name of the country, like 'UnitedStates' or 'US'
-    growth: String 'linear' or 'logistic' to specify a linear or logistic
+    growth: str, default="linear"
+        String 'linear' or 'logistic' to specify a linear or logistic
         trend.
-    changepoints: List of dates at which to include potential changepoints. If
+    changepoints: list or None, default=None
+        List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
-    n_changepoints: Number of potential changepoints to include. Not used
+    n_changepoints: int, default=25
+        Number of potential changepoints to include. Not used
         if input `changepoints` is supplied. If `changepoints` is not supplied,
         then n_changepoints potential changepoints are selected uniformly from
         the first `changepoint_range` proportion of the history.
-    changepoint_range: Proportion of history in which trend changepoints will
+    changepoint_range: float, default=0.8
+        Proportion of history in which trend changepoints will
         be estimated. Defaults to 0.8 for the first 80%. Not used if
         `changepoints` is specified.
-    yearly_seasonality: Fit yearly seasonality.
+    yearly_seasonality: str or bool or int, default="auto"
+        Fit yearly seasonality.
         Can be 'auto', True, False, or a number of Fourier terms to generate.
-    weekly_seasonality: Fit weekly seasonality.
+    weekly_seasonality: str or bool or int, default="auto"
+        Fit weekly seasonality.
         Can be 'auto', True, False, or a number of Fourier terms to generate.
-    daily_seasonality: Fit daily seasonality.
+    daily_seasonality: str or bool or int, default="auto"
+        Fit daily seasonality.
         Can be 'auto', True, False, or a number of Fourier terms to generate.
-    holidays: pd.DataFrame with columns holiday (string) and ds (date type)
+    holidays: pd.DataFrame or None, default=None
+        pd.DataFrame with columns holiday (string) and ds (date type)
         and optionally columns lower_window and upper_window which specify a
         range of days around the date to be included as holidays.
         lower_window=-2 will include 2 days prior to the date as holidays. Also
         optionally can have a column prior_scale specifying the prior scale for
         that holiday.
-    seasonality_mode: 'additive' (default) or 'multiplicative'.
-    seasonality_prior_scale: Parameter modulating the strength of the
-        seasonality model. Larger values allow the model to fit larger seasonal
+    seasonality_mode: str, default='additive'
+        Take one of 'additive' or 'multiplicative'.
+    seasonality_prior_scale: float, default=10.0
+        Parameter modulating the strength of the seasonality model.
+        Larger values allow the model to fit larger seasonal
         fluctuations, smaller values dampen the seasonality. Can be specified
         for individual seasonalities using add_seasonality.
-    holidays_prior_scale: Parameter modulating the strength of the holiday
+    holidays_prior_scale: float, default=10.0
+        Parameter modulating the strength of the holiday
         components model, unless overridden in the holidays input.
-    changepoint_prior_scale: Parameter modulating the flexibility of the
+    changepoint_prior_scale: float, default=0.05
+        Parameter modulating the flexibility of the
         automatic changepoint selection. Large values will allow many
         changepoints, small values will allow few changepoints.
-    mcmc_samples: Integer, if greater than 0, will do full Bayesian inference
+    mcmc_samples: int, default=0
+        If greater than 0, will do full Bayesian inference
         with the specified number of MCMC samples. If 0, will do MAP
         estimation.
-    alpha: Float, width of the uncertainty intervals provided
+    alpha: float, default=0.05
+        Width of the uncertainty intervals provided
         for the forecast. If mcmc_samples=0, this will be only the uncertainty
         in the trend using the MAP estimate of the extrapolated generative
         model. If mcmc.samples>0, this will be integrated over all model
         parameters, which will include uncertainty in seasonality.
-    uncertainty_samples: Number of simulated draws used to estimate
-        uncertainty intervals. Settings this value to 0 or False will disable
+    uncertainty_samples: int, default=1000
+        Number of simulated draws used to estimate uncertainty intervals.
+        Settings this value to 0 or False will disable
         uncertainty estimation and speed up the calculation.
-    stan_backend: str as defined in StanBackendEnum default: None - will try to
-        iterate over all available backends and find the working one
+    stan_backend: str or None, default=None
+        str as defined in StanBackendEnum. If None, will try to
+        iterate over all available backends and find the working one.
 
     References
     ----------
-    https://facebook.github.io/prophet
-    https://github.com/facebook/prophet
+    .. [1] https://facebook.github.io/prophet
+    .. [2] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
     Examples
     --------

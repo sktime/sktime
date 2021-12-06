@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 import pandas as pd
 
 # todo: need to wait for datatypes PR to merge
-# from sktime.datatypes import check_is
+# from sktime.datatypes import check_is_mtype
 
 
 def reindex_iloc(df, inds, copy=True):
@@ -67,8 +67,8 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=T
     convert_align_to_align_loc(align_df, X)
     """
     # todo: need to wait for datatypes PR to merge
-    # from sktime.datatypes import check_is
-    # check_is(align, "align-frame", var_name=df_name)
+    # from sktime.datatypes import check_is_mtype
+    # check_is_mtype(align, "align-frame", var_name=df_name)
 
     if not isinstance(X, list):
         raise ValueError(f"{df_name} must be a list of pandas.DataFrame")
