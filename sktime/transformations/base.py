@@ -318,11 +318,8 @@ class BaseTransformer(BaseEstimator):
         """
         X = _handle_alias(X, Z)
 
-        # check whether is fitted, unless fit-in-transform is true
-        if self.get_tag("fit-in-transform"):
-            self.fit(X=X, y=y, Z=Z)
-        else:
-            self.check_is_fitted()
+        # check whether is fitted
+        self.check_is_fitted()
 
         # input checks and minor coercions on X, y
         ###########################################
@@ -400,17 +397,20 @@ class BaseTransformer(BaseEstimator):
                 )
             X = convert_to(X, to_type="df-list", as_scitype="Panel")
 
-            if self.get_tag("fit-in-transform"):
-                Xt = [clone(self).transform(Xi) for Xi in X]
-            else:
+            # depending on whether fitting happens, apply fitted or unfitted instances
+            if not self.get_tag("fit-in-transform"):
+                # these are the transformers-per-instanced, fitted in fit
                 transformers = self.transformers_
                 if len(transformers) != len(X):
                     raise RuntimeError(
                         "found different number of instances in transform than in fit"
                     )
-                else:
-                    Xt = [transformers[i].transform(X[i]) for i in range(len(X))]
-            # now we have a list of transformed instances
+
+                Xt = [transformers[i].transform(X[i]) for i in range(len(X))]
+                # now we have a list of transformed instances
+            else:
+                # if no fitting happens, just apply transform multiple times
+                Xt = [self.transform(X[i]) for i in range(len(X))]
 
             # if the output is Series, Xt is a Panel and we convert back
             if output_scitype == "Series":
@@ -420,7 +420,7 @@ class BaseTransformer(BaseEstimator):
             # we concatenate those and overwrite the index with that of X
             elif output_scitype == "Primitives":
                 Xt = pd.concat(Xt)
-                Xt.index = X.index
+                Xt = Xt.reset_index(drop=True)
             return Xt
 
         # convert X/y to supported inner type, if necessary
@@ -485,6 +485,9 @@ class BaseTransformer(BaseEstimator):
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
+            # & reset index to have integers for instances
+            if isinstance(Xt, (pd.DataFrame, pd.Series)):
+                Xt = Xt.reset_index(drop=True)
             Xt = convert_to(
                 Xt,
                 to_type="pd.DataFrame",
