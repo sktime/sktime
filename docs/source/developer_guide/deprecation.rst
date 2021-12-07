@@ -40,7 +40,7 @@ You can decorate functions, methods or classes.
 Examples
 --------
 
-In the examples below, the :code:`deprecated` decorator will raise a :code:`FutureWarning`` saying that the functionality has been deprecated since version 0.9.0 and will be remove in version 0.11.0.
+In the examples below, the :code:`deprecated` decorator will raise a :code:`FutureWarning` saying that the functionality has been deprecated since version 0.8.0 and will be removed in version 0.10.0.
 
 Functions
 ~~~~~~~~~
