@@ -469,9 +469,18 @@ class BaseTransformer(BaseEstimator):
             Xt = convert_Panel_to_Series(Xt)
 
         if output_scitype == "Series":
+            # if the transformer outputs multivariate series,
+            #   we cannot convert back to pd.Series, do pd.DataFrame instead then
+            _, _, metadata = check_is_mtype(
+                Xt, ["pd.DataFrame", "pd.Series", "np.ndarray"], return_metadata=True
+            )
+            if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                X_output_mtype = "pd.DataFrame"
+            else:
+                X_output_mtype = X_input_mtype
             Xt = convert_to(
                 Xt,
-                to_type=X_input_mtype,
+                to_type=X_output_mtype,
                 as_scitype=X_input_scitype,
             )
         elif output_scitype == "Primitives":
