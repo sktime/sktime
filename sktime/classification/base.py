@@ -284,7 +284,7 @@ class BaseClassifier(BaseEstimator):
         return dists
 
     def _check_capabilities(self, missing, multivariate, unequal):
-        """Check wether this classifier can handle the data characteristics.
+        """Check whether this classifier can handle the data characteristics.
 
         Attributes
         ----------
@@ -383,7 +383,7 @@ def _check_classifier_input(
     enforce_min_instances=1,
     enforce_min_series_length=1,
 ):
-    """Check wether input X and y are valid formats with minimum data.
+    """Check whether input X and y are valid formats with minimum data.
 
     Raises a ValueError if the input is not valid.
 
