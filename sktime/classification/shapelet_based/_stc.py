@@ -275,17 +275,13 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def _get_train_probs(self, X, y):
         self.check_is_fitted()
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, coerce_to_pandas=True)
 
-        n_instances, n_dims, series_length = X.shape
+        n_instances, n_dims = X.shape
 
-        if (
-            n_instances != self.n_instances_
-            or n_dims != self.n_dims_
-            or series_length != self.series_length_
-        ):
+        if n_instances != self.n_instances_ or n_dims != self.n_dims_:
             raise ValueError(
-                "n_instances, n_dims, series_length mismatch. X should be "
+                "n_instances, n_dims mismatch. X should be "
                 "the same as the training data used in fit for generating train "
                 "probabilities."
             )
