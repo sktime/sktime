@@ -4,27 +4,28 @@
 Deprecation
 ===========
 
-.. note::
-
-    For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
-    For our long-term plan, see our :ref:`roadmap`.
-
 Before we can make changes to sktime's user interface, we need to make sure that users have time to make the necessary adjustments in their code.
 For this reason, we first need to deprecate functionality and change it only in a next release.
+
+.. note::
+
+    For upcoming changes and next releases, see our `Milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
+    For our long-term plan, see our :ref:`roadmap`.
 
 When to deprecate code
 ======================
 
-Our releases follow `semantic versioning <https://semver.org>`_.
-A version number denotes <major>.<minor>.<patch> versions.
+sktime `releases <https://github.com/alan-turing-institute/sktime/releases>`_ follow `semantic versioning <https://semver.org>`_.
+A release number denote <major>.<minor>.<patch> versions.
 
-Our current deprecation policy is that we remove functionality after one minor release.
-For example, if some functionality has been deprecated in v0.9.0, it will be removed in v0.10.0.
+Our current deprecation policy is that we remove functionality after one minor release cycle.
+For example, if some functionality has been deprecated in v0.9.0 or any patch of that minor version, we will raise a warning throughout minor version v0.10.* and all of its patches.
+The functionality will then be removed in v0.11.0.
 
 How to deprecate code
 =====================
 
-Our deprecation process is as follows:
+The deprecation process is as follows:
 
 * Raise a :code:`FutureWarning`. The warning message should give the version number when the functionality will be changed and describe the new usage.
 * Add the following to-do comment to code that can be removed: :code:`TODO: remove in <version-number>`. For example, :code:`TODO: remove in v0.10.0`.
