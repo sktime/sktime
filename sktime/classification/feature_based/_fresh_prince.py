@@ -1,27 +1,26 @@
 # -*- coding: utf-8 -*-
-"""TSFresh Classifier.
+"""FreshPRINCE Classifier.
 
-Pipeline classifier using the TSFresh transformer and an estimator.
+Pipeline classifier using the full set of TSFresh features and a RotationForest
+classifier.
 """
 
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["FreshPRINCE"]
 
-import numpy as np
-from sklearn.pipeline import Pipeline
 
-from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.feature_based._tsfresh_classifier import TSFreshClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+from sktime.utils.validation.panel import check_X_y
 
 
 class FreshPRINCE(BaseClassifier):
-    """Time Series Feature Extraction based on Scalable Hypothesis Tests classifier.
+    """Fresh Pipeline with RotatIoN forest Classifier.
 
     This classifier simply transforms the input data using the TSFresh [1]
-    transformer and builds a provided estimator using the transformed data.
+    transformer with comprehensive features and builds a RotationForest estimator using
+    the transformed data.
 
     Parameters
     ----------
@@ -29,7 +28,7 @@ class FreshPRINCE(BaseClassifier):
         Set of TSFresh features to be extracted, options are "minimal", "efficient" or
         "comprehensive".
     n_estimators : int, default=200
-
+        Number of estimators for the RotationForest ensemble.
     verbose : int, default=0
         level of output printed to the console (for information only)
     n_jobs : int, default=1
@@ -61,17 +60,17 @@ class FreshPRINCE(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.feature_based import TSFreshClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.classification.feature_based import FreshPRINCE
+    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TSFreshClassifier(
+    >>> clf = FreshPRINCE(
     ...     default_fc_parameters="minimal",
-    ...     estimator=RandomForestClassifier(n_estimators=10),
+    ...     estimator=RotationForest(n_estimators=10),
     ... )
     >>> clf.fit(X_train, y_train)
-    TSFreshClassifier(...)
+    FreshPRINCE(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -168,11 +167,15 @@ class FreshPRINCE(BaseClassifier):
 
     def _get_train_probs(self, X, y):
         self.check_is_fitted()
-        X, y = check_X_y(X, y, coerce_to_pandas=True)
+        X, y = check_X_y(X, y)
 
-        n_instances, n_dims = X.shape
+        n_instances, n_dims, series_length = X.shape
 
-        if n_instances != self.n_instances_ or n_dims != self.n_dims_:
+        if (
+            n_instances != self.n_instances_
+            or n_dims != self.n_dims_
+            or series_length != self.series_length_
+        ):
             raise ValueError(
                 "n_instances, n_dims, series_length mismatch. X should be "
                 "the same as the training data used in fit for generating train "
@@ -182,26 +185,4 @@ class FreshPRINCE(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        if isinstance(self.estimator, RotationForest) or self.estimator is None:
-            return self._estimator._get_train_probs(self.transformed_data_, y)
-        else:
-            m = getattr(self._estimator, "predict_proba", None)
-            if not callable(m):
-                raise ValueError("Estimator must have a predict_proba method.")
-
-            cv_size = 10
-            _, counts = np.unique(y, return_counts=True)
-            min_class = np.min(counts)
-            if min_class < cv_size:
-                cv_size = min_class
-
-            estimator = _clone_estimator(self.estimator, self.random_state)
-
-            return cross_val_predict(
-                estimator,
-                X=self.transformed_data_,
-                y=y,
-                cv=cv_size,
-                method="predict_proba",
-                n_jobs=self._threads_to_use,
-            )
+        return self._estimator._get_train_probs(self.transformed_data_, y)

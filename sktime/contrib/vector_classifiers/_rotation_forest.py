@@ -337,9 +337,8 @@ class RotationForest(BaseEstimator):
 
         if n_instances != self.n_instances or n_atts != self.n_atts:
             raise ValueError(
-                "n_instances, n_dims, series_length mismatch. X should be "
-                "the same as the training data used in fit for generating train "
-                "probabilities."
+                "n_instances, n_atts mismatch. X should be the same as the training "
+                "data used in fit for generating train probabilities."
             )
 
         if not self.save_transformed_data:

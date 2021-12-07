@@ -9,10 +9,11 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["RandomIntervalClassifier"]
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
+from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.random_intervals import RandomIntervals
 
 
@@ -51,13 +52,13 @@ class RandomIntervalClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.feature_based import RandomIntervalClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = RandomIntervalClassifier(
     ...     n_intervals=5,
-    ...     estimator=RandomForestClassifier(n_estimators=10),
+    ...     estimator=RotationForest(n_estimators=10),
     ... )
     >>> clf.fit(X_train, y_train)
     RandomIntervalClassifier(...)
@@ -109,17 +110,21 @@ class RandomIntervalClassifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        interval_transformers = (
+            Catch22(outlier_norm=True)
+            if self.interval_transformers is None
+            else self.interval_transformers
+        )
+
         self._transformer = RandomIntervals(
             n_intervals=self.n_intervals,
-            transformers=self.interval_transformers,
+            transformers=interval_transformers,
             random_state=self.random_state,
             n_jobs=self._threads_to_use,
         )
 
         self._estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
-            if self.estimator is None
-            else self.estimator,
+            RotationForest() if self.estimator is None else self.estimator,
             self.random_state,
         )
 
