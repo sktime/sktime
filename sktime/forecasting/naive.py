@@ -15,7 +15,7 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 
 # import ColumnEnsembleForecaster directly from private file in order to
 # avoid cyclic import
-from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
+from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 

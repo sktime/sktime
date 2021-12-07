@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
