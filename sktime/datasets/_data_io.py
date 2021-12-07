@@ -163,7 +163,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     return _load_dataset(name, split, return_X_y, extract_path)
 
 
-def _load_dataset(name, split, return_X_y, extract_path=None):
+def _load_dataset(name, split, return_X_y=True, extract_path=None):
     """Load time series classification datasets (helper function)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
@@ -220,7 +220,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
-def load_gunpoint(split=None, return_X_y=False):
+def load_gunpoint(split=None, return_X_y=True):
     """
     Load the GunPoint time series classification problem and returns X and y.
 
@@ -273,7 +273,7 @@ def load_gunpoint(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_osuleaf(split=None, return_X_y=False):
+def load_osuleaf(split=None, return_X_y=True):
     """
     Load the OSULeaf time series classification problem and returns X and y.
 
@@ -316,7 +316,7 @@ def load_osuleaf(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_italy_power_demand(split=None, return_X_y=False):
+def load_italy_power_demand(split=None, return_X_y=True):
     """
     Load ItalyPowerDemand time series classification problem.
 
@@ -356,7 +356,7 @@ def load_italy_power_demand(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_unit_test(split=None, return_X_y=False):
+def load_unit_test(split=None, return_X_y=True):
     """
     Load UnitTest time series classification problem.
 
@@ -392,7 +392,7 @@ def load_unit_test(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_japanese_vowels(split=None, return_X_y=False):
+def load_japanese_vowels(split=None, return_X_y=True):
     """
     Load the JapaneseVowels time series classification problem.
 
@@ -442,7 +442,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=False):
+def load_arrow_head(split=None, return_X_y=True):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
@@ -490,7 +490,7 @@ def load_arrow_head(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_acsf1(split=None, return_X_y=False):
+def load_acsf1(split=None, return_X_y=True):
     """
     Load dataset on power consumption of typical appliances.
 
@@ -535,7 +535,7 @@ def load_acsf1(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=False):
+def load_basic_motions(split=None, return_X_y=True):
     """
     Load the  BasicMotions time series classification problem and returns X and y.
 
