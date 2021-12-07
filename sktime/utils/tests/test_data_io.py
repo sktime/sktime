@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
+"""Move with the restructure over to datasets."""
+
 import os
 import tempfile
-import pytest
+
 import numpy as np
 import pandas as pd
-from sktime.utils.data_io import TsFileParseException
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
-from sktime.utils.data_io import load_from_long_to_dataframe
-from sktime.utils.data_io import LongFormatDataParseException
-from sktime.utils.data_io import generate_example_long_table
+import pytest
+
+from sktime.datasets import load_from_tsfile_to_dataframe
+from sktime.utils.data_io import (
+    LongFormatDataParseException,
+    TsFileParseException,
+    generate_example_long_table,
+    load_from_long_to_dataframe,
+)
 
 
 def test_load_from_tsfile_to_dataframe():
     """Test the load_from_tsfile_to_dataframe() function."""
-
     # Test that an empty file is classed an invalid
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
@@ -976,6 +980,7 @@ def test_load_from_tsfile_to_dataframe():
 
 
 def test_load_from_long_to_dataframe(tmpdir):
+    """Test loading long to dataframe."""
     # create and save a example long-format file to csv
     test_dataframe = generate_example_long_table()
     dataframe_path = tmpdir.join("data.csv")
@@ -986,6 +991,7 @@ def test_load_from_long_to_dataframe(tmpdir):
 
 
 def test_load_from_long_incorrect_format(tmpdir):
+    """Test loading incorrect long to dataframe."""
     with pytest.raises(LongFormatDataParseException):
         dataframe = generate_example_long_table()
         dataframe.drop(dataframe.columns[[3]], axis=1, inplace=True)
