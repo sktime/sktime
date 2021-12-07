@@ -348,6 +348,7 @@ def test_fit_returns_self(estimator_instance):
 def test_raises_not_fitted_error(estimator_instance):
     """Check that we raise appropriate error for unfitted estimators."""
     estimator = estimator_instance
+
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
