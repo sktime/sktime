@@ -14,23 +14,69 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-[0.9.0] - 2021-12-03
+[0.9.0] - 2021-12-08
 --------------------
+
+Highlights
+~~~~~~~~~~
+
+* Transformers base interface refactor - default vectorization to panel data (:pr:`1365`) :user:`fkiraly`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* time series classifiers now accept 2D `np.ndarray` by conversion to 3D rather than throwing exception (:pr:`1604`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Base interface refactor (:pr:`1365`):
+
+* `fit`, `transform`, `fit_transform` now accept both `Series` and `Panel` as argument
+* if `Panel` is passed to a series transformer, it is applied to all instances
+* all transformers use `X` as their primary argument
+* `Z` aliases `X` until 0.10.0 in series transformers, will then be deprecated
+* see new transformer extension template
+* these changes will gradually be rolled out to all transformers through 0.9.X versions
+
+
+New deprecations for 0.10.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* series transformers will no longer accept a `Z` argument (:pr:`1365`)
+* MrSEQL time series classifier (:pr:`1548`) :user:`TonyBagnall`
+
+Added
+~~~~~
 
 Documentation
 ^^^^^^^^^^^^^
 
-* [DOC] Added myself as contributor (:pr:`1602`) :user:`Carlosbogo`
-* [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
 * [DOC] additions to forecaster extension template (:pr:`1535`) :user:`fkiraly`
+* [DOC] Added new contributors (:pr:`1602` :pr:`1559`) :user:`Carlosbogo` :user:`freddyaboulton`
+* [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
 * [DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
 * [DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
-* [DOC] Add freddyaboulton to core developers list (:pr:`1559`) :user:`freddyaboulton`
+
 
 Governance
 ^^^^^^^^^^
 
-* Governance: eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
+* eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* TSC refactor: Interval based classification package(:pr:`1583`) :user:`MatthewMiddlehurst`
+* TSC refactor: Distance based classification package (:pr:`1584`) :user:`MatthewMiddlehurst`
+* TSC refactor: Feature based classification package (:pr:`1545`) :user:`MatthewMiddlehurst`
+* Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
+
+Fixed
+~~~~~
 
 Performance metrics
 ^^^^^^^^^^^^^^^^^^^
@@ -40,22 +86,25 @@ Performance metrics
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
-* convert 2D to 3D rather than throw exception (:pr:`1604`) :user:`TonyBagnall`
-* load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
-* Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
+* [BUG] Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
+* [BUG] load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
 * TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
-* Interval based classification package refactor (:pr:`1583`) :user:`MatthewMiddlehurst`
-* Distance based classification package refactor (:pr:`1584`) :user:`MatthewMiddlehurst`
-* Feature based classification package refactor (:pr:`1545`) :user:`MatthewMiddlehurst`
-* Deprecate various (:pr:`1548`) :user:`TonyBagnall`
 
 Maintenance
 ^^^^^^^^^^^
 
 * [MNT] Update release script (:pr:`1562`) :user:`mloning`
 
-All contributors: :user:`Carlosbogo`, :user:`MatthewMiddlehurst`, :user:`OliverMatthews`, :user:`RNKuhns`, :user:`TonyBagnall`, :user:`fkiraly`, :user:`freddyaboulton` and :user:`mloning`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Carlosbogo`, :user:`MatthewMiddlehurst`, :user:`OliverMatthews`, :user:`RNKuhns`, :user:`TonyBagnall`, :user:`fkiraly`, :user:`freddyaboulton` and :user:`mloning`
+
+Full changelog
+~~~~~~~~~~~~~~
+https://github.com/alan-turing-institute/sktime/compare/v0.8.1...v0.9.0
+
 
 
 [0.8.1] - 2021-10-28
