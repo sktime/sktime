@@ -386,44 +386,44 @@ In the ``anaconda prompt`` terminal:
 
 2. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
 
-.. warning::
-    If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this
+   .. warning::
+       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this
 
 3. Activate the environment: :code:`conda activate sktime-dev`
 
 4. Install required packages:
 
-    1. :code:`pip install numpy=1.19.3`
-    2. :code:`pip install cython`
-    3. :code:`pip install -r build_tools/requirements.txt`
+   1. :code:`pip install numpy=1.19.3`
+   2. :code:`pip install cython`
+   3. :code:`pip install -r build_tools/requirements.txt`
 
-If **fbprophet** fails to install try running:
+   If **fbprophet** fails to install try running:
 
-    1. :code:`conda install -c conda-forge install -c pystan`
-    2. :code:`conda install -c conda-forge install -c fbprophet`
-    3. Verify all requirements are satisfied by running :code:`pip install -r build_tools/requirements.txt` with no errors.
+   1. :code:`conda install -c conda-forge install -c pystan`
+   2. :code:`conda install -c conda-forge install -c fbprophet`
+   3. Verify all requirements are satisfied by running :code:`pip install -r build_tools/requirements.txt` with no errors.
 
-If you fail to satisfy all the requirements see the troubleshooting section.
+   If you fail to satisfy all the requirements see the troubleshooting section.
 
 5. Configure the build environment:
 
-The aim is to point to the "vcvarsall.bat" file.
+   The aim is to point to the "vcvarsall.bat" file.
 
-For 64-bit python, use:
+   For 64-bit python, use:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+       SET DISTUTILS_USE_SDK=1
+       "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-For 32-bit Python, use:
+   For 32-bit Python, use:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86
+       SET DISTUTILS_USE_SDK=1
+       "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86
 
-Please be aware that the path above might be different from user to user.
+   Please be aware that the path above might be different from user to user.
 
 6. Build an editable version of sktime :code:`pip install -e .[all_extras]`
 7. If everything has worked you should see message "successfully installed sktime"
