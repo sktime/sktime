@@ -10,8 +10,52 @@ All notable changes to this project will be documented in this file. We keep tra
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `Twitter <https://twitter.com/sktime_toolbox>`_.
 
-For planned changes and upcoming releases, see our :ref:`roadmap`.
+For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
+For our long-term plan, see our :ref:`roadmap`.
 
+
+[0.9.0] - 2021-12-03
+--------------------
+
+Documentation
+^^^^^^^^^^^^^
+
+* [DOC] Added myself as contributor (:pr:`1602`) :user:`Carlosbogo`
+* [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
+* [DOC] additions to forecaster extension template (:pr:`1535`) :user:`fkiraly`
+* [DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
+* [DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
+* [DOC] Add freddyaboulton to core developers list (:pr:`1559`) :user:`freddyaboulton`
+
+Governance
+^^^^^^^^^^
+
+* Governance: eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
+
+Performance metrics
+^^^^^^^^^^^^^^^^^^^
+
+* Fix Performance metric bug that affects repr (:pr:`1566`) :user:`RNKuhns`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
+* convert 2D to 3D rather than throw exception (:pr:`1604`) :user:`TonyBagnall`
+* load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
+* Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
+* TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
+* Interval based classification package refactor (:pr:`1583`) :user:`MatthewMiddlehurst`
+* Distance based classification package refactor (:pr:`1584`) :user:`MatthewMiddlehurst`
+* Feature based classification package refactor (:pr:`1545`) :user:`MatthewMiddlehurst`
+* Deprecate various (:pr:`1548`) :user:`TonyBagnall`
+
+Maintenance
+^^^^^^^^^^^
+
+* [MNT] Update release script (:pr:`1562`) :user:`mloning`
+
+All contributors: :user:`Carlosbogo`, :user:`MatthewMiddlehurst`, :user:`OliverMatthews`, :user:`RNKuhns`, :user:`TonyBagnall`, :user:`fkiraly`, :user:`freddyaboulton` and :user:`mloning`
 
 
 [0.8.1] - 2021-10-28
@@ -61,7 +105,7 @@ Forecasting
 * prediction intervals for statsmodels interface :code:`_StatsModelsAdapter` (:pr:`1489`) :user:`eyalshafran`
 * geometric mean based forecasting metrics  (:pr:`1472`, :pr:`837`) :user:`RNKuhns`
 
-* new multivariate forecasting dataset, statsmodels macroeconomic data (:pr:`1553`) :user:`aiwalter` :user:`@SinghShreya05`
+* new multivariate forecasting dataset, statsmodels macroeconomic data (:pr:`1553`) :user:`aiwalter` :user:`SinghShreya05`
 
 
 Time series classification
@@ -145,7 +189,7 @@ Fixed
 * [DOC] Remove license info from docstrings (:pr:`1437`) :user:`ronnie-llamado`
 
 
-All contributors: :user:`Aparna-Sakshi`, :user:`BINAYKUMAR943`, :user:`IlyasMoutawwakil`, :user:`MatthewMiddlehurst`, :user:`Piyush1729`, :user:`RNKuhns`, :user:`RavenRudi`, :user:`SveaMeyer13`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`bobbys-dev`, :user:`boukepostma`, :user:`danbartl`, :user:`eyalshafran`, :user:`fkiraly`, :user:`freddyaboulton`, :user:`kejsitake`, :user:`mloning`, :user:`myprogrammerpersonality`, :user:`patrickzib`, :user:`ronnie-llamado`, :user:`xiaobenbenecho`, :user:`@SinghShreya05`, and :user:`yairbeer`
+All contributors: :user:`Aparna-Sakshi`, :user:`BINAYKUMAR943`, :user:`IlyasMoutawwakil`, :user:`MatthewMiddlehurst`, :user:`Piyush1729`, :user:`RNKuhns`, :user:`RavenRudi`, :user:`SveaMeyer13`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`bobbys-dev`, :user:`boukepostma`, :user:`danbartl`, :user:`eyalshafran`, :user:`fkiraly`, :user:`freddyaboulton`, :user:`kejsitake`, :user:`mloning`, :user:`myprogrammerpersonality`, :user:`patrickzib`, :user:`ronnie-llamado`, :user:`xiaobenbenecho`, :user:`SinghShreya05`, and :user:`yairbeer`
 
 
 
