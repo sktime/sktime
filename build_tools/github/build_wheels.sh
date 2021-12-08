@@ -26,7 +26,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp -std=c++11 -lstdc++"
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp -lstdc++"
     export CFLAGS="$CFLAGS -I/opt/local/include/libomp"
     export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
