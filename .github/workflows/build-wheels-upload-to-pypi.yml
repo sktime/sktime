@@ -33,6 +33,7 @@ jobs:
       - name: Build wheels
         env:
           CIBW_BUILD_VERBOSITY: 1
+          CIBW_SKIP: pp*
         # run: python -m cibuildwheel --output-dir wheelhouse
         run: bash build_tools/github/build_wheels.sh
 
