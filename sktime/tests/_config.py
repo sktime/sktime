@@ -128,6 +128,8 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
+from sktime.transformations.series.summarize import SummaryTransformer
+
 EXCLUDE_ESTIMATORS = [
     "ElasticEnsemble",
     "ProximityForest",
@@ -310,9 +312,13 @@ ESTIMATOR_TEST_PARAMS = {
     RandomIntervalClassifier: {
         "n_intervals": 3,
         "estimator": RandomForestClassifier(n_estimators=3),
+        "interval_transformers": SummaryTransformer(
+            summary_function=("mean", "min", "max"),
+        ),
     },
     SummaryClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
+        "summary_functions": ("mean", "min", "max"),
     },
     RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},

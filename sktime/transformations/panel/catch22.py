@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-""" catch22 features
-A transformer for the catch22 features
+"""catch22 features.
+
+A transformer for the catch22 features.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["Catch22"]
 
 import math
@@ -14,38 +15,20 @@ from joblib import Parallel, delayed
 from numba import njit
 from numba.typed import List
 
-from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
 
 
 class Catch22(_PanelToTabularTransformer):
-    """Canonical Time-series Characteristics (catch22)
-
-    @article{lubba2019catch22,
-        title={catch22: CAnonical Time-series CHaracteristics},
-        author={Lubba, Carl H and Sethi, Sarab S and Knaute, Philip and
-                Schultz, Simon R and Fulcher, Ben D and Jones, Nick S},
-        journal={Data Mining and Knowledge Discovery},
-        volume={33},
-        number={6},
-        pages={1821--1852},
-        year={2019},
-        publisher={Springer}
-    }
+    """Canonical Time-series Characteristics (catch22).
 
     Overview: Input n series with d dimensions of length m
-    Transforms series into the 22 catch22 features extracted from the hctsa
+    Transforms series into the 22 catch22 [1]_ features extracted from the hctsa [2]_
     toolbox.
 
-    Fulcher, B. D., & Jones, N. S. (2017). hctsa: A computational framework
-    for automated time-series phenotyping using massive feature extraction.
-    Cell systems, 5(5), 527-531.
-
-    Fulcher, B. D., Little, M. A., & Jones, N. S. (2013). Highly comparative
-    time-series analysis: the empirical structure of time series and their
-    methods. Journal of the Royal Society Interface, 10(83), 20130048.
-
+    Notes
+    -----
     Original catch22 package implementations:
     https://github.com/chlubba/catch22
 
@@ -53,30 +36,40 @@ class Catch22(_PanelToTabularTransformer):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/transformers/Catch22.java
 
+    References
+    ----------
+    .. [1] Lubba, C. H., Sethi, S. S., Knaute, P., Schultz, S. R., Fulcher, B. D., &
+    Jones, N. S. (2019). catch22: Canonical time-series characteristics. Data Mining
+    and Knowledge Discovery, 33(6), 1821-1852.
+    .. [2] Fulcher, B. D., Little, M. A., & Jones, N. S. (2013). Highly comparative
+    time-series analysis: the empirical structure of time series and their methods.
+    Journal of the Royal Society Interface, 10(83), 20130048.
     """
 
     def __init__(
         self,
         outlier_norm=False,
+        replace_nans=False,
         n_jobs=1,
     ):
         self.outlier_norm = outlier_norm
+        self.replace_nans = replace_nans
 
         self.n_jobs = n_jobs
 
         super(Catch22, self).__init__()
 
     def transform(self, X, y=None):
-        """transforms data into the catch22 features
+        """Transform data into the catch22 features.
 
         Parameters
         ----------
-        X : pandas DataFrame or 3d numpy array, input time series
-        y : array_like, target values (optional, ignored)
+        X : pandas DataFrame or 3d numpy array, input time series.
+        y : array_like, target values (optional, ignored).
 
         Returns
         -------
-        Pandas dataframe containing 22 features for each input series
+        Pandas dataframe containing 22 features for each input series.
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
@@ -89,6 +82,9 @@ class Catch22(_PanelToTabularTransformer):
             )
             for i in range(n_instances)
         )
+
+        if self.replace_nans:
+            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
         return pd.DataFrame(c22_list)
 
@@ -109,43 +105,43 @@ class Catch22(_PanelToTabularTransformer):
         acfz = _ac_first_zero(ac)
 
         c22 = np.zeros(22)
-        c22[0] = Catch22.DN_HistogramMode_5(series, smin, smax)
-        c22[1] = Catch22.DN_HistogramMode_10(series, smin, smax)
-        c22[2] = Catch22.SB_BinaryStats_diff_longstretch0(series, smean)
-        c22[3] = Catch22.DN_OutlierInclude_p_001_mdrmd(outlier_series)
-        c22[4] = Catch22.DN_OutlierInclude_n_001_mdrmd(outlier_series)
-        c22[5] = Catch22.CO_f1ecac(ac)
-        c22[6] = Catch22.CO_FirstMin_ac(ac)
-        c22[7] = Catch22.SP_Summaries_welch_rect_area_5_1(series, fft)
-        c22[8] = Catch22.SP_Summaries_welch_rect_centroid(series, fft)
-        c22[9] = Catch22.FC_LocalSimple_mean3_stderr(series)
-        c22[10] = Catch22.CO_trev_1_num(series)
-        c22[11] = Catch22.CO_HistogramAMI_even_2_5(series, smin, smax)
-        c22[12] = Catch22.IN_AutoMutualInfoStats_40_gaussian_fmmi(ac)
-        c22[13] = Catch22.MD_hrv_classic_pnn40(series)
-        c22[14] = Catch22.SB_BinaryStats_mean_longstretch1(series)
-        c22[15] = Catch22.SB_MotifThree_quantile_hh(series)
-        c22[16] = Catch22.FC_LocalSimple_mean1_tauresrat(series, acfz)
-        c22[17] = Catch22.CO_Embed2_Dist_tau_d_expfit_meandiff(series, acfz)
-        c22[18] = Catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(series)
-        c22[19] = Catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(series)
-        c22[20] = Catch22.SB_TransitionMatrix_3ac_sumdiagcov(series, acfz)
-        c22[21] = Catch22.PD_PeriodicityWang_th0_01(series)
+        c22[0] = Catch22._DN_HistogramMode_5(series, smin, smax)
+        c22[1] = Catch22._DN_HistogramMode_10(series, smin, smax)
+        c22[2] = Catch22._SB_BinaryStats_diff_longstretch0(series, smean)
+        c22[3] = Catch22._DN_OutlierInclude_p_001_mdrmd(outlier_series)
+        c22[4] = Catch22._DN_OutlierInclude_n_001_mdrmd(outlier_series)
+        c22[5] = Catch22._CO_f1ecac(ac)
+        c22[6] = Catch22._CO_FirstMin_ac(ac)
+        c22[7] = Catch22._SP_Summaries_welch_rect_area_5_1(series, fft)
+        c22[8] = Catch22._SP_Summaries_welch_rect_centroid(series, fft)
+        c22[9] = Catch22._FC_LocalSimple_mean3_stderr(series)
+        c22[10] = Catch22._CO_trev_1_num(series)
+        c22[11] = Catch22._CO_HistogramAMI_even_2_5(series, smin, smax)
+        c22[12] = Catch22._IN_AutoMutualInfoStats_40_gaussian_fmmi(ac)
+        c22[13] = Catch22._MD_hrv_classic_pnn40(series)
+        c22[14] = Catch22._SB_BinaryStats_mean_longstretch1(series)
+        c22[15] = Catch22._SB_MotifThree_quantile_hh(series)
+        c22[16] = Catch22._FC_LocalSimple_mean1_tauresrat(series, acfz)
+        c22[17] = Catch22._CO_Embed2_Dist_tau_d_expfit_meandiff(series, acfz)
+        c22[18] = Catch22._SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(series)
+        c22[19] = Catch22._SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(series)
+        c22[20] = Catch22._SB_TransitionMatrix_3ac_sumdiagcov(series, acfz)
+        c22[21] = Catch22._PD_PeriodicityWang_th0_01(series)
 
         return c22
 
-    def _transform_single_feature(self, X, feature):
-        """transforms data into a specified catch22 feature
+    def transform_single_feature(self, X, feature):
+        """Transform data into a specified catch22 feature.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series
+        X : pandas DataFrame, input time series.
         feature : int, catch22 feature id or String, catch22 feature
                   name.
 
         Returns
         -------
-        Numpy array containing a catch22 feature for each input series
+        Numpy array containing a catch22 feature for each input series.
         """
         if isinstance(feature, (int, np.integer)) or isinstance(
             feature, (float, np.float)
@@ -173,6 +169,9 @@ class Catch22(_PanelToTabularTransformer):
             )
             for i in range(n_instances)
         )
+
+        if self.replace_nans:
+            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
         return np.asarray(c22_list)
 
@@ -214,19 +213,19 @@ class Catch22(_PanelToTabularTransformer):
         return features[feature](*args)
 
     @staticmethod
-    def DN_HistogramMode_5(X, smin, smax):
-        # Mode of z-scored distribution (5-bin histogram)
+    def _DN_HistogramMode_5(X, smin, smax):
+        # Mode of z-scored distribution (5-bin histogram).
         return _histogram_mode(X, 5, smin, smax)
 
     @staticmethod
-    def DN_HistogramMode_10(X, smin, smax):
-        # Mode of z-scored distribution (10-bin histogram)
+    def _DN_HistogramMode_10(X, smin, smax):
+        # Mode of z-scored distribution (10-bin histogram).
         return _histogram_mode(X, 10, smin, smax)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def SB_BinaryStats_diff_longstretch0(X, smean):
-        # Longest period of consecutive values above the mean
+    def _SB_BinaryStats_diff_longstretch0(X, smean):
+        # Longest period of consecutive values above the mean.
         mean_binary = np.zeros(len(X))
         for i in range(len(X)):
             if X[i] - smean > 0:
@@ -235,20 +234,20 @@ class Catch22(_PanelToTabularTransformer):
         return _long_stretch(mean_binary, 1)
 
     @staticmethod
-    def DN_OutlierInclude_p_001_mdrmd(X):
-        # Time intervals between successive extreme events above the mean
+    def _DN_OutlierInclude_p_001_mdrmd(X):
+        # Time intervals between successive extreme events above the mean.
         return _outlier_include(X)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def DN_OutlierInclude_n_001_mdrmd(X):
-        # Time intervals between successive extreme events below the mean
+    def _DN_OutlierInclude_n_001_mdrmd(X):
+        # Time intervals between successive extreme events below the mean.
         return _outlier_include(-X)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def CO_f1ecac(X_ac):
-        # First 1/e crossing of autocorrelation function
+    def _CO_f1ecac(X_ac):
+        # First 1/e crossing of autocorrelation function.
         threshold = 0.36787944117144233  # 1 / np.exp(1)
         for i in range(1, len(X_ac)):
             if (X_ac[i - 1] - threshold) * (X_ac[i] - threshold) < 0:
@@ -257,27 +256,27 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def CO_FirstMin_ac(X_ac):
-        # First minimum of autocorrelation function
+    def _CO_FirstMin_ac(X_ac):
+        # First minimum of autocorrelation function.
         for i in range(1, len(X_ac) - 1):
             if X_ac[i] < X_ac[i - 1] and X_ac[i] < X_ac[i + 1]:
                 return i
         return len(X_ac)
 
     @staticmethod
-    def SP_Summaries_welch_rect_area_5_1(X, X_fft):
-        # Total power in lowest fifth of frequencies in the Fourier power spectrum
+    def _SP_Summaries_welch_rect_area_5_1(X, X_fft):
+        # Total power in lowest fifth of frequencies in the Fourier power spectrum.
         return _summaries_welch_rect(X, False, X_fft)
 
     @staticmethod
-    def SP_Summaries_welch_rect_centroid(X, X_fft):
-        # Centroid of the Fourier power spectrum
+    def _SP_Summaries_welch_rect_centroid(X, X_fft):
+        # Centroid of the Fourier power spectrum.
         return _summaries_welch_rect(X, True, X_fft)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def FC_LocalSimple_mean3_stderr(X):
-        # Mean error from a rolling 3-sample mean forecasting
+    def _FC_LocalSimple_mean3_stderr(X):
+        # Mean error from a rolling 3-sample mean forecasting.
         if len(X) - 3 < 3:
             return 0
         res = _local_simple_mean(X, 3)
@@ -285,8 +284,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def CO_trev_1_num(X):
-        # Time-reversibility statistic, ((x_t+1 − x_t)^3)_t
+    def _CO_trev_1_num(X):
+        # Time-reversibility statistic, ((x_t+1 − x_t)^3)_t.
         y = np.zeros(len(X) - 1)
         for i in range(len(y)):
             y[i] = np.power(X[i + 1] - X[i], 3)
@@ -294,8 +293,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def CO_HistogramAMI_even_2_5(X, smin, smax):
-        # Automutual information, m = 2, τ = 5
+    def _CO_HistogramAMI_even_2_5(X, smin, smax):
+        # Automutual information, m = 2, τ = 5.
         new_min = smin - 0.1
         new_max = smax + 0.1
         bin_width = (new_max - new_min) / 5
@@ -324,8 +323,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def IN_AutoMutualInfoStats_40_gaussian_fmmi(X_ac):
-        # First minimum of the automutual information function
+    def _IN_AutoMutualInfoStats_40_gaussian_fmmi(X_ac):
+        # First minimum of the automutual information function.
         tau = int(min(40, np.ceil(len(X_ac) / 2)))
 
         diffs = np.zeros(tau - 1)
@@ -343,8 +342,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def MD_hrv_classic_pnn40(X):
-        # Proportion of successive differences exceeding 0.04σ (Mietus 2002)
+    def _MD_hrv_classic_pnn40(X):
+        # Proportion of successive differences exceeding 0.04σ (Mietus 2002).
         diffs = np.zeros(len(X) - 1)
         for i in range(len(diffs)):
             diffs[i] = np.abs(X[i + 1] - X[i]) * 1000
@@ -358,8 +357,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def SB_BinaryStats_mean_longstretch1(X):
-        # Longest period of successive incremental decreases
+    def _SB_BinaryStats_mean_longstretch1(X):
+        # Longest period of successive incremental decreases.
         diff_binary = np.zeros(len(X) - 1)
         for i in range(len(diff_binary)):
             if X[i + 1] - X[i] >= 0:
@@ -369,9 +368,9 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def SB_MotifThree_quantile_hh(X):
+    def _SB_MotifThree_quantile_hh(X):
         # Shannon entropy of two successive letters in equiprobable 3-letter
-        # symbolization
+        # symbolization.
         indicies = np.argsort(X)
         p = List()
         bins = np.zeros(len(X))
@@ -412,8 +411,8 @@ class Catch22(_PanelToTabularTransformer):
         return -nsum
 
     @staticmethod
-    def FC_LocalSimple_mean1_tauresrat(X, acfz):
-        # Change in correlation length after iterative differencing
+    def _FC_LocalSimple_mean1_tauresrat(X, acfz):
+        # Change in correlation length after iterative differencing.
         if len(X) < 2:
             return 0
         res = _local_simple_mean(X, 1)
@@ -427,8 +426,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def CO_Embed2_Dist_tau_d_expfit_meandiff(X, acfz):
-        # Exponential fit to successive distances in 2-d embedding space
+    def _CO_Embed2_Dist_tau_d_expfit_meandiff(X, acfz):
+        # Exponential fit to successive distances in 2-d embedding space.
         tau = acfz
         if tau > len(X) / 10:
             tau = int(len(X) / 10)
@@ -479,9 +478,9 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(X):
+    def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(X):
         # Proportion of slower timescale fluctuations that scale with DFA (50%
-        # sampling)
+        # sampling).
         cs = np.zeros(int(len(X) / 2))
         cs[0] = X[0]
         for i in range(1, len(cs)):
@@ -491,9 +490,9 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(X):
+    def _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(X):
         # Proportion of slower timescale fluctuations that scale with linearly rescaled
-        # range fits
+        # range fits.
         cs = np.zeros(len(X))
         cs[0] = X[0]
         for i in range(1, len(X)):
@@ -503,8 +502,9 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def SB_TransitionMatrix_3ac_sumdiagcov(X, acfz):
-        # Trace of covariance of transition matrix between symbols in 3-letter alphabet
+    def _SB_TransitionMatrix_3ac_sumdiagcov(X, acfz):
+        # Trace of covariance of transition matrix between symbols in 3-letter
+        # alphabet.
         ds = np.zeros(int((len(X) - 1) / acfz + 1))
         for i in range(len(ds)):
             ds[i] = X[i * acfz]
@@ -546,8 +546,8 @@ class Catch22(_PanelToTabularTransformer):
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def PD_PeriodicityWang_th0_01(X):
-        # Periodicity measure of (Wang et al. 2007)
+    def _PD_PeriodicityWang_th0_01(X):
+        # Periodicity measure of (Wang et al. 2007).
         y_spline = _spline_fit(X)
 
         y_sub = np.zeros(len(X))
@@ -1101,26 +1101,26 @@ feature_names = [
 ]
 
 features = [
-    Catch22.DN_HistogramMode_5,
-    Catch22.DN_HistogramMode_10,
-    Catch22.SB_BinaryStats_diff_longstretch0,
-    Catch22.DN_OutlierInclude_p_001_mdrmd,
-    Catch22.DN_OutlierInclude_n_001_mdrmd,
-    Catch22.CO_f1ecac,
-    Catch22.CO_FirstMin_ac,
-    Catch22.SP_Summaries_welch_rect_area_5_1,
-    Catch22.SP_Summaries_welch_rect_centroid,
-    Catch22.FC_LocalSimple_mean3_stderr,
-    Catch22.CO_trev_1_num,
-    Catch22.CO_HistogramAMI_even_2_5,
-    Catch22.IN_AutoMutualInfoStats_40_gaussian_fmmi,
-    Catch22.MD_hrv_classic_pnn40,
-    Catch22.SB_BinaryStats_mean_longstretch1,
-    Catch22.SB_MotifThree_quantile_hh,
-    Catch22.FC_LocalSimple_mean1_tauresrat,
-    Catch22.CO_Embed2_Dist_tau_d_expfit_meandiff,
-    Catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    Catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
-    Catch22.SB_TransitionMatrix_3ac_sumdiagcov,
-    Catch22.PD_PeriodicityWang_th0_01,
+    Catch22._DN_HistogramMode_5,
+    Catch22._DN_HistogramMode_10,
+    Catch22._SB_BinaryStats_diff_longstretch0,
+    Catch22._DN_OutlierInclude_p_001_mdrmd,
+    Catch22._DN_OutlierInclude_n_001_mdrmd,
+    Catch22._CO_f1ecac,
+    Catch22._CO_FirstMin_ac,
+    Catch22._SP_Summaries_welch_rect_area_5_1,
+    Catch22._SP_Summaries_welch_rect_centroid,
+    Catch22._FC_LocalSimple_mean3_stderr,
+    Catch22._CO_trev_1_num,
+    Catch22._CO_HistogramAMI_even_2_5,
+    Catch22._IN_AutoMutualInfoStats_40_gaussian_fmmi,
+    Catch22._MD_hrv_classic_pnn40,
+    Catch22._SB_BinaryStats_mean_longstretch1,
+    Catch22._SB_MotifThree_quantile_hh,
+    Catch22._FC_LocalSimple_mean1_tauresrat,
+    Catch22._CO_Embed2_Dist_tau_d_expfit_meandiff,
+    Catch22._SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
+    Catch22._SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    Catch22._SB_TransitionMatrix_3ac_sumdiagcov,
+    Catch22._PD_PeriodicityWang_th0_01,
 ]

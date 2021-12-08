@@ -113,7 +113,7 @@ class RandomIntervalClassifier(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         interval_transformers = (
-            Catch22(outlier_norm=True)
+            Catch22(outlier_norm=True, replace_nans=True)
             if self.interval_transformers is None
             else self.interval_transformers
         )

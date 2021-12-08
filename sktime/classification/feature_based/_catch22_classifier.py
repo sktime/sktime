@@ -26,6 +26,8 @@ class Catch22Classifier(BaseClassifier):
     outlier_norm : bool, default=False
         Normalise each series during the two outlier catch22 features, which can take a
         while to process for large values
+    replace_nans : bool, default=True
+        Replace NaN or inf values from the catch22 transform with 0.
     estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
@@ -83,11 +85,13 @@ class Catch22Classifier(BaseClassifier):
     def __init__(
         self,
         outlier_norm=False,
+        replace_nans=True,
         estimator=None,
         n_jobs=1,
         random_state=None,
     ):
         self.outlier_norm = outlier_norm
+        self.replace_nans = replace_nans
         self.estimator = estimator
 
         self.n_jobs = n_jobs
@@ -132,7 +136,10 @@ class Catch22Classifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+
+        if self.replace_nans:
+            X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+
         self._estimator.fit(X_t, y)
 
         return self
@@ -151,7 +158,10 @@ class Catch22Classifier(BaseClassifier):
             Predicted class labels.
         """
         X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+
+        if self.replace_nans:
+            X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+
         return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
@@ -168,7 +178,9 @@ class Catch22Classifier(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+
+        if self.replace_nans:
+            X_t = np.nan_to_num(X_t, False, 0, 0, 0)
 
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
