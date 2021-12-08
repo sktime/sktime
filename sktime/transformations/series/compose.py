@@ -4,14 +4,14 @@
 """Meta-transformers for building composite transformers."""
 
 import pandas as pd
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
+
 __author__ = ["aiwalter", "SveaMeyer13"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featureizer"]
 
 
 class OptionalPassthrough(_SeriesToSeriesTransformer):
@@ -357,3 +357,97 @@ def _check_is_pdseries(z):
         z = z.to_frame()
         is_series = True
     return z, is_series
+
+
+class Featureizer(_SeriesToSeriesTransformer):
+    """Create new exogenous features based on a given transformer.
+
+    Parameters
+    ----------
+    transformer: _SeriesToSeriesTransformer
+
+    Attributes
+    ----------
+        transformer_
+    """
+
+    _tags = {
+        "fit-in-transform": False,
+        "transform-returns-same-time-index": True,
+        "skip-inverse-transform": True,
+        "univariate-only": True,
+    }
+
+    def __init__(
+        self,
+        transformer,
+        steps,
+        temporal_feature=False,
+        suffix=None,
+    ):
+        self.transformer = transformer
+        self.steps = steps
+        self.temporal_feature = temporal_feature
+        self.suffix = suffix
+
+        super(Featureizer, self).__init__()
+
+    def fit(self, Z, X=None):
+        """Fit the transformation on input series Z.
+
+        Parameters
+        ----------
+        Z : pd.DataFrame
+            A time series to apply the transformation on.
+        X : pd.pd.Series, default=None
+            Featureizer needs the target series y given as X in order to
+            return Z with the newly added feature.
+
+        Returns
+        -------
+        self
+        """
+        Z = check_series(Z, enforce_multivariate=True)
+        X = check_series(X, enforce_univariate=True)
+        # shift data according to steps to forecast
+        self._fit_index = Z.index
+        # self._X_fit = X.iloc[self.steps:]
+        self._X_transform = X.iloc[: -self.steps]
+        if not isinstance(self.transformer, _SeriesToSeriesTransformer):
+            raise TypeError(
+                f"""Given transformer must be a _SeriesToSeriesTransformer
+                but found type {type(self.transformer)}."""
+            )
+        self.transformer_ = clone(self.transformer)
+        # swap Z and X
+        self.transformer_.fit(Z=X, X=Z)
+        if self.suffix is None:
+            self.suffix = "_" + self.transformer.__class__.__name__.lower()
+        self._is_fitted = True
+        return self
+
+    def transform(self, Z, X=None):
+        """Return transformed version of input series `Z`.
+
+        Parameters
+        ----------
+        Z : pd.Series, pd.DataFrame
+            A time series to apply the transformation on.
+        X : pd.DataFrame, default=None
+            Exogenous data is ignored in transform.
+
+        Returns
+        -------
+        Zt : pd.Series or pd.DataFrame
+            Transformed version of input series `Z`.
+        """
+        self.check_is_fitted()
+        Z = check_series(Z, enforce_multivariate=True)
+        X = check_series(X, enforce_univariate=True)
+        Zt = Z.copy()
+        if Z.index.equals(self._fit_index):
+            X_t = X
+        else:
+            X_t = self._X_transform
+        Zt[self.suffix] = self.transformer_.transform(Z=X_t)
+        return Zt
