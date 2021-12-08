@@ -9,10 +9,11 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 from holidays import HolidayBase
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from holidays import CountryHoliday
 
 
-class HolidayFeatures(BaseTransformer):
+class HolidayFeatures(_SeriesToSeriesTransformer):
     """Holiday features.
 
     Parameters
@@ -39,6 +40,7 @@ class HolidayFeatures(BaseTransformer):
     .. [1] https://pypi.org/project/holidays/
     """
 
+    _required_parameters = ["calendar"]
     _tags = {
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
@@ -87,9 +89,8 @@ class HolidayFeatures(BaseTransformer):
         Series
             Input series with generated holiday features.
         """
-        index = Z.index
         holidays = _generate_holidays(
-            index,
+            X.index,
             calendar=self.calendar,
             holiday_windows=self.holiday_windows,
             include_bridge_days=self.include_bridge_days,
@@ -97,7 +98,21 @@ class HolidayFeatures(BaseTransformer):
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
         )
-        return pd.concat([Z, holidays], axis=1)
+        return pd.concat([X, holidays], axis=1)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"calendar": CountryHoliday(country="FR")}
 
 
 def _generate_holidays(
@@ -143,6 +158,10 @@ def _generate_holidays(
     ----------
     .. [1] https://pypi.org/project/holidays/
     """
+    # Note that we currently handle bridge days and windows around holidays
+    # as part of the holiday generation, it may be better placed in
+    # a separate calendar module.
+
     # Input checks.
     if not isinstance(index, pd.DatetimeIndex):
         raise ValueError(
@@ -150,7 +169,8 @@ def _generate_holidays(
         )
     if not isinstance(calendar, HolidayBase):
         raise ValueError(
-            f"calendar must be of type HolidayBase from the `holidays` package, but found: {type(index)}."
+            "calendar must be of type HolidayBase from the `holidays` package, "
+            " but found: {type(index)}."
         )
     if not isinstance(return_dummies, bool):
         raise ValueError(
@@ -170,7 +190,8 @@ def _generate_holidays(
         )
     if not (return_dummies or return_categorical or return_indicator):
         raise ValueError(
-            "One of `return_dummies`, `return_categorical` and `return_indicator` must be set to True."
+            "One of `return_dummies`, `return_categorical` and `return_indicator` "
+            "must be set to True."
         )
     if holiday_windows is not None:
         _check_holiday_windows(holiday_windows)
@@ -189,7 +210,8 @@ def _generate_holidays(
         name = calendar[date]
         holidays_by_name[name].append(date)
 
-    # Invert dictionary.
+    # Invert dictionary so that we can later map holidays to
+    # dates in the time index.
     holidays_by_date = {}
     for name, dates in holidays_by_name.items():
         for date in dates:

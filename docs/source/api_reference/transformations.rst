@@ -283,8 +283,8 @@ Missing value imputation
 
     Imputer
 
-Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~
+Datetime feature
+~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -293,6 +293,17 @@ Datetime feature generation
     :template: class.rst
 
     DateTimeFeatures
+
+Holiday features
+~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.holidays
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HolidayFeatures
 
 Outlier detection
 ~~~~~~~~~~~~~~~~~
