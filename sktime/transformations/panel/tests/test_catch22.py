@@ -37,7 +37,7 @@ def test_catch22_single_feature_on_unit_test():
     # assert transformed data is the same
     data = []
     for i in range(22):
-        data.append(c22._transform_single_feature(X_train.iloc[indices], i))
+        data.append(c22.transform_single_feature(X_train.iloc[indices], i))
     testing.assert_array_almost_equal(
         np.nan_to_num(data, False, 0, 0, 0), catch22_single_feature_unit_test_data
     )
