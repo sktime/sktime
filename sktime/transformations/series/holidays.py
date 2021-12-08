@@ -35,6 +35,20 @@ class HolidayFeatures(_SeriesToSeriesTransformer):
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> values = np.random.normal(size=365)
+    >>> index = pd.date_range("2000-01-01", periods=365, freq="D")
+    >>> X = pd.DataFrame(values, index=index)
+    >>> transformer = HolidayFeatures(
+    ...    calendar=CALENDAR,
+    ...    return_dummies=False,
+    ...    return_categorical=True,
+    ...    holiday_windows={"Noël": (1, 3), "Jour de l'an": (1, 0)})
+    >>> yt = transformer.fit_transform(X)
+
     References
     ----------
     .. [1] https://pypi.org/project/holidays/
