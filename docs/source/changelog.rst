@@ -46,8 +46,10 @@ Base interface refactor (:pr:`1365`, :pr:`1663`, :pr:`1706`):
 
 * `fit`, `transform`, `fit_transform` now accept both `Series` and `Panel` as argument
 * if `Panel` is passed to a series transformer, it is applied to all instances
-* all transformers use `X` as their primary argument
-* `Z` aliases `X` until 0.10.0 in series transformers, will then be deprecated
+* all transformers now use `X` as their first argument, `y` as their second argument. This is enforced by the new base interface.
+* This was inconsistent previously between types of transformers: the series-to-series transformers were using `Z` as first argument, `X` as second argument.
+* `Z` (former first argument) aliases `X` until 0.10.0 in series transformers, will then be deprecated
+* `X` (former second argument) was not used in those transformers where it changed to `Z`
 * see new transformer extension template
 * these changes will gradually be rolled out to all transformers through 0.9.X versions
 
