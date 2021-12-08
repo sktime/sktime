@@ -30,7 +30,7 @@ class FreshPRINCE(BaseClassifier):
     n_estimators : int, default=200
         Number of estimators for the RotationForest ensemble.
     verbose : int, default=0
-        level of output printed to the console (for information only)
+        Level of output printed to the console (for information only)
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.

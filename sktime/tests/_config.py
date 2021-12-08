@@ -29,11 +29,12 @@ from sktime.classification.dictionary_based import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
+    FreshPRINCE,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
     SignatureClassifier,
     SummaryClassifier,
-    TSFreshClassifier, FreshPRINCE,
+    TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (

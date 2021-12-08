@@ -18,20 +18,22 @@ from sktime.transformations.panel.random_intervals import RandomIntervals
 
 
 class RandomIntervalClassifier(BaseClassifier):
-    """Random interval classifier.
+    """Random Interval Classifier.
 
     This classifier simply transforms the input data using the RandomIntervals
     transformer and builds a provided estimator using the transformed data.
 
     Parameters
     ----------
-    n_intervals=100,
-
-    transformers=None,
-
+    n_intervals : int, default=100,
+        The number of intervals of random length, position and dimension to be
+        extracted.
+    interval_transformers : transformer or list of transformers, default=None,
+        Transformer(s) used to extract features from each interval. If None, defaults to
+        the Catch22 transformer.
     estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
-        Random Forest with 200 trees.
+        Rotation Forest with 200 trees.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -72,7 +74,7 @@ class RandomIntervalClassifier(BaseClassifier):
 
     def __init__(
         self,
-        n_intervals=None,
+        n_intervals=100,
         interval_transformers=None,
         estimator=None,
         n_jobs=1,

@@ -23,10 +23,14 @@ class SummaryClassifier(BaseClassifier):
 
     Parameters
     ----------
-    summary_functions=("mean", "std", "min", "max"),
-
-    summary_quantiles=(0.25, 0.5, 0.75),
-
+    summary_functions : str, list, tuple, default=("mean", "std", "min", "max")
+        Either a string, or list or tuple of strings indicating the pandas
+        summary functions that are used to summarize each column of the dataset.
+        Must be one of ("mean", "min", "max", "median", "sum", "skew", "kurt",
+        "var", "std", "mad", "sem", "nunique", "count").
+    summary_quantiles : str, list, tuple or None, default=(0.25, 0.5, 0.75)
+        Optional list of series quantiles to calculate. If None, no quantiles
+        are calculated.
     estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
@@ -82,6 +86,7 @@ class SummaryClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
+        self._transform_atts = 0
 
         super(SummaryClassifier, self).__init__()
 
@@ -122,6 +127,11 @@ class SummaryClassifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
+
+        if X_t.shape[0] > len(y):
+            X_t = X_t.to_numpy().reshape((len(y), -1))
+            self._transform_atts = X_t.shape[1]
+
         self._estimator.fit(X_t, y)
 
         return self
@@ -139,7 +149,12 @@ class SummaryClassifier(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+
+        if X_t.shape[1] < self._transform_atts:
+            X_t = X_t.to_numpy().reshape((-1, self._transform_atts))
+
+        return self._estimator.predict()
 
     def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
@@ -154,12 +169,17 @@ class SummaryClassifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        X_t = self._transformer.transform(X)
+
+        if X_t.shape[1] < self._transform_atts:
+            X_t = X_t.to_numpy().reshape((-1, self._transform_atts))
+
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            return self._estimator.predict_proba(X_t)
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists

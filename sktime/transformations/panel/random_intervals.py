@@ -4,7 +4,7 @@
 A transformer for the extraction of features on randomly selected intervals.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["RandomIntervals"]
 
 import numpy as np
@@ -22,8 +22,28 @@ class RandomIntervals(_PanelToTabularTransformer):
 
     Overview:
 
-    random intervals and clones transformers in fit
-    transforms all intervals using all transformers and concatenates in transform
+    Extracts intervals with random length, position and dimension from the series in
+    fit.
+    Transforms each interval subseries using the given transformer(s) and concatenates
+    them into a feature vector in transform.
+
+    Currently, the transform is re-fit for every interval in transform. As such, it may
+    not be suitable for some supervised transformers in its current state.
+
+    Parameters
+    ----------
+    n_intervals : int, default=100,
+        The number of intervals of random length, position and dimension to be
+        extracted.
+    transformers : transformer or list of transformers, default=None,
+        Transformer(s) used to extract features from each interval. If None, defaults to
+        the SummaryTransformer using
+        [mean, median, min, max, std, 25% quantile, 75% quantile]
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random, integer.
     """
 
     def __init__(
@@ -68,19 +88,19 @@ class RandomIntervals(_PanelToTabularTransformer):
         if not isinstance(self._transformers, list):
             self._transformers = [self._transformers]
 
+        li = []
         for i in range(len(self._transformers)):
-            li = []
             li.append(
                 _clone_estimator(
                     self._transformers[i],
                     self.random_state,
                 )
             )
-            self._transformers = li
 
-            m = getattr(self._transformers[i], "n_jobs", None)
+            m = getattr(li[i], "n_jobs", None)
             if m is not None:
-                self._transformers[i].n_jobs = self.n_jobs
+                li[i].n_jobs = self.n_jobs
+        self._transformers = li
 
         rng = check_random_state(self.random_state)
         self._dims = rng.choice(n_dims, self.n_intervals, replace=True)

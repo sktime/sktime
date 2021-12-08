@@ -72,7 +72,6 @@ class TSFreshClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TSFreshClassifier(
     ...     default_fc_parameters="minimal",
-    ...     relevant_feature_extractor=False,
     ...     estimator=RandomForestClassifier(n_estimators=10),
     ... )
     >>> clf.fit(X_train, y_train)
