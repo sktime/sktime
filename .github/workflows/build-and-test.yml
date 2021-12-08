@@ -23,6 +23,9 @@ jobs:
       - uses: pre-commit/action@v2.0.0
         with:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
+      - name: Check for missing init files
+        run: build_tools/fail_on_missing_init_files.sh
+        shell: bash
 
   run-notebook-examples:
     needs: code-quality
@@ -50,18 +53,12 @@ jobs:
         python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
-<<<<<<< HEAD
-      - name: Check for missing init files
-        run: build_tools/fail_on_missing_init_files.sh
-        shell: bash
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-=======
->>>>>>> split test by platforms
 
       - uses: actions/checkout@v2
       - name: Setup conda
