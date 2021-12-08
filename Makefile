@@ -40,8 +40,8 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./cover
 	rm -rf coverage.xml
 	rm -f MANIFEST
-	rm -f ./$(PACKAGE)/*.so
 	rm -rf ./wheelhouse/*
+	find . -type f -iname "*.so" -delete
 	find . -type f -iname '*.pyc' -delete
 	find . -type d -name '__pycache__' -empty -delete
 
