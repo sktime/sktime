@@ -67,13 +67,18 @@ def _create_all_test_instances(cls):
     """
     objs = []
     param_list = cls.get_test_params()
+    if not isinstance(param_list, (dict, list)):
+        raise RuntimeError(
+            f"Error in {cls.__name__}.get_test_params, "
+            "return must be param dict for class, or list thereof"
+        )    
     if isinstance(param_list, dict):
         param_list = [param_list]
     for params in param_list:
         if not isinstance(params, dict):
             raise RuntimeError(
                 f"Error in {cls.__name__}.get_test_params, "
-                "return must be param dict for cls"
+                "return must be param dict for class, or list thereof"
             )
         objs += [cls(**params)]
 
