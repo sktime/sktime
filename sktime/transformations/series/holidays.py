@@ -43,11 +43,12 @@ class HolidayFeatures(_SeriesToSeriesTransformer):
     --------
     >>> import numpy as np
     >>> import pandas as pd
+    >>> from holidays import CountryHoliday
     >>> values = np.random.normal(size=365)
     >>> index = pd.date_range("2000-01-01", periods=365, freq="D")
     >>> X = pd.DataFrame(values, index=index)
     >>> transformer = HolidayFeatures(
-    ...    calendar=CALENDAR,
+    ...    calendar=CountryHoliday(country="FR"),
     ...    return_dummies=False,
     ...    return_categorical=True,
     ...    holiday_windows={"Noël": (1, 3), "Jour de l'an": (1, 0)})
