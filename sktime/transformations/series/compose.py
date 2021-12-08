@@ -6,9 +6,11 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.impute import Imputer
 from sktime.utils.validation.series import check_series
 
@@ -458,3 +460,8 @@ class Featureizer(_SeriesToSeriesTransformer):
         Xt[col] = self.transformer_.transform(y_t).values
         Xt[col] = self.imputer_.transform(Xt[col])
         return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator."""
+        return {"transformer": TabularToSeriesAdaptor(MinMaxScaler()), "shift": 2}
