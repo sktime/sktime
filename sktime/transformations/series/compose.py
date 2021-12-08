@@ -370,6 +370,7 @@ class Featureizer(_SeriesToSeriesTransformer):
     Attributes
     ----------
         transformer_
+        imputer_
     """
 
     _tags = {
