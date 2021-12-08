@@ -57,14 +57,12 @@ from sktime.forecasting.compose import (
     DirRecTabularRegressionForecaster,
     DirRecTimeSeriesRegressionForecaster,
     EnsembleForecaster,
-    ForecastingPipeline,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
     MultiplexForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
     StackingForecaster,
-    TransformedTargetForecaster,
 )
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
@@ -205,8 +203,6 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS},
-    ForecastingPipeline: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
