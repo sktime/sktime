@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, windows-2019, macOS-10.15]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        # python-version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
@@ -31,6 +31,18 @@ jobs:
 
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel
+
+      - name: Set env vars
+        if: ${{ matrix.os }} == 'macOS-10.15'
+        run: |
+          echo "CC=/usr/bin/clang++" >> $GITHUB_ENV
+          echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=$CPPFLAGS -Xclang -fopenmp -std=c++11 -lstdc++" >> $GITHUB_ENV
+          echo "CFLAGS=$CFLAGS -I/opt/local/include/libomp -I/opt/local/include" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -I/opt/local/include/libomp" >> $GITHUB_ENV
+          echo "LDFLAGS=$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp" >> $GITHUB_ENV
+          echo "PATH=/usr/local/opt/ccache/libexec:$PATH" >> $GITHUB_ENV
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
