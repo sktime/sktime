@@ -2,6 +2,8 @@
 
 """Holiday functionality."""
 
+__author__ = ["mloning"]
+
 import datetime
 from collections import defaultdict
 from typing import Dict
@@ -10,7 +12,9 @@ import numpy as np
 import pandas as pd
 from holidays import HolidayBase
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from holidays import CountryHoliday
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("holidays")
 
 
 class HolidayFeatures(_SeriesToSeriesTransformer):
@@ -126,6 +130,8 @@ class HolidayFeatures(_SeriesToSeriesTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from holidays import CountryHoliday
+
         return {"calendar": CountryHoliday(country="FR")}
 
 

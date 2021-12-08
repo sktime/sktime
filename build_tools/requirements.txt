@@ -19,3 +19,4 @@ stumpy>=1.5.1,<=1.9.2
 tbats>=1.1.0
 tsfresh>=0.17.0
 wheel
+holidays>=0.11
