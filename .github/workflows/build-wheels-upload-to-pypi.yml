@@ -1,8 +1,14 @@
 name: Build and Push to PyPI
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  # release:
+  #   types: [published]
 
 
 jobs:
