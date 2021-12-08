@@ -4,6 +4,7 @@ dtw_python>=1.1.5
 esig==0.9.7
 fbprophet>=0.7.1
 hcrystalball>=0.1.9
+holidays>=0.11
 numba==0.53
 numpy==1.19.3
 pandas==1.1.5
@@ -19,4 +20,3 @@ stumpy>=1.5.1,<=1.9.2
 tbats>=1.1.0
 tsfresh>=0.17.0
 wheel
-holidays>=0.11

@@ -4,6 +4,7 @@ deprecated>=1.2.13
 dtw_python>=1.1.5
 esig==0.9.7
 hcrystalball>=0.1.9
+holidays>=0.11
 LunarCalendar >= 0.0.9
 matplotlib
 notebook
@@ -14,4 +15,3 @@ seaborn
 stumpy>=1.5.1,<=1.9.2
 tbats>=1.1.0
 tsfresh>=0.17.0
-holidays>=0.11

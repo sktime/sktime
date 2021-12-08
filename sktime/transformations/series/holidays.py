@@ -11,6 +11,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 from holidays import HolidayBase
+
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
