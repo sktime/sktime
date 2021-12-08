@@ -8,10 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_from_tsfile_to_dataframe
+from sktime.datasets import TsFileParseException, load_from_tsfile_to_dataframe
 from sktime.utils.data_io import (
     LongFormatDataParseException,
-    TsFileParseException,
     generate_example_long_table,
     load_from_long_to_dataframe,
 )
