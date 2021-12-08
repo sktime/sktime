@@ -203,7 +203,7 @@ class ForecastingPipeline(_Pipeline):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = clone(transformer)
-                X = t.fit_transform(X=X, y=y)
+                X = t.fit_transform(X, y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
@@ -240,7 +240,7 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                X = transformer.transform(Z=X)
+                X = transformer.transform(X)
 
         return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
