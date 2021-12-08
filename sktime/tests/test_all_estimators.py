@@ -71,7 +71,7 @@ def _create_all_test_instances(cls):
         raise RuntimeError(
             f"Error in {cls.__name__}.get_test_params, "
             "return must be param dict for class, or list thereof"
-        )    
+        )
     if isinstance(param_list, dict):
         param_list = [param_list]
     for params in param_list:
