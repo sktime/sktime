@@ -82,7 +82,7 @@ Documentation
 * [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
 * [DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
 * [DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
-* [DOC] STLTransformer docstring and attribute (:pr:`1611`) :user:`aiwalter` 
+* [DOC] STLTransformer docstring and attribute (:pr:`1611`) :user:`aiwalter`
 * [DOC] typos in user documentation (:pr:`1671`) :user:`marcio55afr`
 * [DOC] Add links to estimator overview to README (:pr:`1691`) :user:`mloning`
 * [DOC] Update Time series forest regression docstring (:pr:`800`) :user:`thayeylolu`
@@ -134,7 +134,7 @@ Maintenance
 ^^^^^^^^^^^
 
 * [MNT] Update release script (:pr:`1562`) :user:`mloning`
-* [MNT] Delete release-drafter.yml (:pr:`1561`) :user:`mloning` 
+* [MNT] Delete release-drafter.yml (:pr:`1561`) :user:`mloning`
 * [MNT] Fail CI on missing init files (:pr:`1699`) :user:`mloning`
 
 
