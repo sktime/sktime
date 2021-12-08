@@ -1,4 +1,4 @@
-name: Build and Push to PyPI
+name: Build Wheels and Push to PyPI
 
 on:
   push:
