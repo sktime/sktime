@@ -90,14 +90,22 @@ def pytest_generate_tests(metafunc):
         estimator_classes_to_test = [
             est for est in ALL_ESTIMATORS if not is_excluded(est)
         ]
-        estimator_class_names = [est.__name__ for est in estimator_classes_to_test]
         # create instances from the classes
-        estimator_instances_to_test = [
-            est.create_test_instance() for est in estimator_classes_to_test
-        ]
+        estimator_instances_to_test = []
+        estimator_instance_names = []
+        # retrieve all estimator parameters if multiple, construct instances
+        for est in estimator_classes_to_test:
+            param_list = est.get_test_params()
+            if isinstance(param_list, dict):
+                param_list = param_list
+            for i, params in enumerate(param_list):
+                estimator_instances_to_test += [est(**params)]
+                estimator_instance_names += [est.__name__ + "-" + str(i)]
         # parameterize test with the list of instances
         metafunc.parametrize(
-            "estimator_instance", estimator_instances_to_test, ids=estimator_class_names
+            "estimator_instance",
+            estimator_instances_to_test,
+            ids=estimator_instance_names,
         )
 
 
