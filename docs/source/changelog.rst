@@ -88,7 +88,7 @@ Time series classification
 
 * [BUG] Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
 * [BUG] load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
-* TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
+* [BUG] TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
 
 Maintenance
 ^^^^^^^^^^^
@@ -99,12 +99,26 @@ Maintenance
 Contributors
 ~~~~~~~~~~~~
 
-:user:`Carlosbogo`, :user:`MatthewMiddlehurst`, :user:`OliverMatthews`, :user:`RNKuhns`, :user:`TonyBagnall`, :user:`fkiraly`, :user:`freddyaboulton` and :user:`mloning`
+:user:`AngelPone`
+:user:`Carlosbogo`,
+:user:`chernika158`
+:user:`fstinner`
+:user:`fkiraly`,
+:user:`freddyaboulton`,
+:user:`lmmentel`,
+:user:`MatthewMiddlehurst`,
+:user:`marcio55afr`,
+:user:`MrPr3ntice`,
+:user:`mloning`,
+:user:`OliverMatthews`,
+:user:`RNKuhns`,
+:user:`TonyBagnall`,
+
+## New Contributors
 
 Full changelog
 ~~~~~~~~~~~~~~
 https://github.com/alan-turing-institute/sktime/compare/v0.8.1...v0.9.0
-
 
 
 [0.8.1] - 2021-10-28
