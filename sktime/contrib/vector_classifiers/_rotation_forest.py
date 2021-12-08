@@ -178,6 +178,8 @@ class RotationForest(BaseEstimator):
                 "RotationForest is not a time series classifier. "
                 "A 2d numpy array is required."
             )
+
+        X = np.nan_to_num(X, False, 0, 0, 0)
         X, y = check_X_y(X, y)
 
         self._n_jobs = check_n_jobs(self.n_jobs)
@@ -196,7 +198,6 @@ class RotationForest(BaseEstimator):
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
 
         # replace missing values with 0 and remove useless attributes
-        X = np.nan_to_num(X, False, 0, 0, 0)
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
         X = X[:, self._useful_atts]
 

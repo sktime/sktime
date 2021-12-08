@@ -154,7 +154,7 @@ class SummaryClassifier(BaseClassifier):
         if X_t.shape[1] < self._transform_atts:
             X_t = X_t.to_numpy().reshape((-1, self._transform_atts))
 
-        return self._estimator.predict()
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
