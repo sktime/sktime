@@ -17,72 +17,43 @@ For our long-term plan, see our :ref:`roadmap`.
 [0.9.0] - 2021-12-08
 --------------------
 
-* Add freddyaboulton to core developers list by :user:`freddyaboulton` in https://github.com/alan-turing-institute/sktime/pull/1559
-* Update docs from roadmap planning sessions by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1527
-* Governance: eligibility and end of tenure clarification by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1573
-* Add toggle button to make examples easy to copy by :user:`RNKuhns` in https://github.com/alan-turing-institute/sktime/pull/1572
-* Update release script by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1562
-* [DOC] additions to forecaster extension template by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1535
-* Fix Performance metric bug that affects repr by :user:`RNKuhns` in https://github.com/alan-turing-institute/sktime/pull/1566
-* Add missing classes to API reference by :user:`RNKuhns` in https://github.com/alan-turing-institute/sktime/pull/1571
-* Deprecate various by :user:`TonyBagnall` in https://github.com/alan-turing-institute/sktime/pull/1548
-* Feature based classification package refactor by :user:`MatthewMiddlehurst` in https://github.com/alan-turing-institute/sktime/pull/1545
-* Distance based classification package refactor by :user:`MatthewMiddlehurst` in https://github.com/alan-turing-institute/sktime/pull/1584
-* Interval based classification package refactor  by :user:`MatthewMiddlehurst` in https://github.com/alan-turing-institute/sktime/pull/1583
-* TimeSeriesForest Classifier Fix by :user:`OliverMatthews` in https://github.com/alan-turing-institute/sktime/pull/1588
-* Classifier test speed ups by :user:`MatthewMiddlehurst` in https://github.com/alan-turing-institute/sktime/pull/1599
-* load from UCR fix by :user:`TonyBagnall` in https://github.com/alan-turing-institute/sktime/pull/1610
-* convert 2D to 3D rather than throw exception by :user:`TonyBagnall` in https://github.com/alan-turing-institute/sktime/pull/1604
-* Fixes :issue:`1234` by :user:`Carlosbogo` in https://github.com/alan-turing-institute/sktime/pull/1600
-* Added myself as contributor by :user:`Carlosbogo` in https://github.com/alan-turing-institute/sktime/pull/1602
-* Delete release-drafter.yml by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1561
-* Fix STLTransformer docstring and attribute by :user:`aiwalter` in https://github.com/alan-turing-institute/sktime/pull/1611
-* [BUG] fixing bug for `_split` (accidental removal of `pandas.Index` support) by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1582
-* Ets strictly pos mul models by :user:`chernika158` in https://github.com/alan-turing-institute/sktime/pull/1615
-* Experiments tidy by :user:`TonyBagnall` in https://github.com/alan-turing-institute/sktime/pull/1619
-* Dynamic time warping - aligners and distances by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1264
-* Numba numpy by :user:`TonyBagnall` in https://github.com/alan-turing-institute/sktime/pull/1623
-* Updated classification base class typing. by :user:`chrisholder` in https://github.com/alan-turing-institute/sktime/pull/1633
-* Integrate multi rocket by :user:`fstinner` in https://github.com/alan-turing-institute/sktime/pull/1567
-* Numba distance module by :user:`chrisholder` in https://github.com/alan-turing-institute/sktime/pull/1574
-* Update installation.rst by :user:`MrPr3ntice` in https://github.com/alan-turing-institute/sktime/pull/1636
-* fix parameter mismatch in ShapeDTW by :user:`TonyBagnall` in https://github.com/alan-turing-institute/sktime/pull/1638
-* fix issue with update_y_X when we refit forecaster by :user:`ltsaprounis` in https://github.com/alan-turing-institute/sktime/pull/1595
-* Transformers refactor by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1365
-* Windows installation guide for sktime development with Anaconda and PyCharm by :user:`jasonlines` in https://github.com/alan-turing-institute/sktime/pull/1640
-* Refactor the `_diff_transform` function to be compatible with pandas 1.3.4 by :user:`lmmentel` in https://github.com/alan-turing-institute/sktime/pull/1644
-* Fix `test_wilcoxon` compatibility between pandas versions by :user:`lmmentel` in https://github.com/alan-turing-institute/sktime/pull/1653
-* AutoARIMA access fitted order and seasonal order under get_fitted_params by :user:`AngelPone` in https://github.com/alan-turing-institute/sktime/pull/1641
-* [DOC] fix docstring in Feature Union by :user:`AreloTanoh` in https://github.com/alan-turing-institute/sktime/pull/1470
-* MiniRocket and MultiRocket as options for RocketClassifier by :user:`MatthewMiddlehurst` in https://github.com/alan-turing-institute/sktime/pull/1637
-* Distance metric refinement by :user:`chrisholder` in https://github.com/alan-turing-institute/sktime/pull/1664
-* Fix `FeatureUnion` test failure by :user:`lmmentel` in https://github.com/alan-turing-institute/sktime/pull/1665
-* Misstyping by :user:`marcio55afr` in https://github.com/alan-turing-institute/sktime/pull/1671
-* Add clone in evaluate by :user:`ltsaprounis` in https://github.com/alan-turing-institute/sktime/pull/1670
-* Fix appveyor by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1669
-* [BUG] Fixes to registry look-up, test suite for registry look-up by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1648
-* Fix Imputer. Added Imputer tests by :user:`aiwalter` in https://github.com/alan-turing-institute/sktime/pull/1666
-* [BUG] Bugfix alignment tests by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1661
-* Fix ColumnwiseTransformer example by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1681
-* Replace time.time with time.perf_counter by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1680
-* Add links to estimator overview to README by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1691
-* Rename check_is to check_is_mtype by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1692
-* [BUG] Fix `convert` and `_split` for Numpy 1D input by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1650
-* [DOC] Update Prophet and ETS docstrings by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1698
-* [FIX] Add missing init files by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1695
-* Added meta-tuning example to docstring of ForecastingGridSearchCV by :user:`aiwalter` in https://github.com/alan-turing-institute/sktime/pull/1656
-* [DOC] Update Time series forest regression docstring by :user:`thayeylolu` in https://github.com/alan-turing-institute/sktime/pull/800
-* check_is_scitype, cleaning up dists_kernels input checks/conversions by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1704
-* [MNT] Fail CI on missing init files by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1699
-* Fixes prophet bug concerning the internal change of exogenous X by :user:`kejsitake` in https://github.com/alan-turing-institute/sktime/pull/1711
+* Ets strictly pos mul models by :user:`chernika158` in :pr:`1615`
+
+* Numba numpy by :user:`TonyBagnall` in :pr:`1623`
+* Updated classification base class typing. by :user:`chrisholder` in :pr:`1633`
+* Integrate multi rocket by :user:`fstinner` in :pr:`1567`
+* fix parameter mismatch in ShapeDTW by :user:`TonyBagnall` in :pr:`1638`
+* fix issue with update_y_X when we refit forecaster by :user:`ltsaprounis` in :pr:`1595`
+* Fix `test_wilcoxon` compatibility between pandas versions by :user:`lmmentel` in :pr:`1653`
+* [DOC] fix docstring in Feature Union by :user:`AreloTanoh` in :pr:`1470`
+* MiniRocket and MultiRocket as options for RocketClassifier by :user:`MatthewMiddlehurst` in :pr:`1637`
+* Distance metric refinement by :user:`chrisholder` in :pr:`1664`
+
+* Replace time.time with time.perf_counter by :user:`mloning` in :pr:`1680`
+
+* [DOC] Update Prophet and ETS docstrings by :user:`mloning` in :pr:`1698`
+* [FIX] Add missing init files by :user:`mloning` in :pr:`1695`
+* Added meta-tuning example to docstring of ForecastingGridSearchCV by :user:`aiwalter` in :pr:`1656`
+* [DOC] Update Time series forest regression docstring by :user:`thayeylolu` in :pr:`800`
+* check_is_scitype, cleaning up dists_kernels input checks/conversions by :user:`fkiraly` in :pr:`1704`
+* [MNT] Fail CI on missing init files by :user:`mloning` in :pr:`1699`
 
 Highlights
 ~~~~~~~~~~
 
+* frequently requested: AutoARIMA `get_fitted_params` access for fitted order and seasonal order (:pr:`1641`) :user:`AngelPone`
+* Numba distance module - efficient time series distances (:pr:`1574`) :user:`chrisholder`
 * Transformers base interface refactor - default vectorization to panel data :user:`fkiraly`
+* new experimental module: Time series alignment, dynamic time warping (:pr:`1264`) :user:`fkiraly`
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `check_is` renamed to `check_is_mtype`, `check_is` to be deprecated in 0.10.0 (:pr:`1692`) :user:`mloning`
+
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,7 +63,7 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
-Base interface refactor (:pr:`1365`, :pr:`1663`):
+Base interface refactor (:pr:`1365`, :pr:`1663`, :pr:`1706`):
 
 * `fit`, `transform`, `fit_transform` now accept both `Series` and `Panel` as argument
 * if `Panel` is passed to a series transformer, it is applied to all instances
@@ -105,8 +76,20 @@ Base interface refactor (:pr:`1365`, :pr:`1663`):
 New deprecations for 0.10.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`)
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `check_is` renamed to `check_is_mtype`, `check_is` to be deprecated in 0.10.0 (:pr:`1692`) :user:`mloning`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * MrSEQL time series classifier (:pr:`1548`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`)
 
 Added
 ~~~~~
@@ -114,11 +97,16 @@ Added
 Documentation
 ^^^^^^^^^^^^^
 
+* [DOC] Windows installation guide for sktime development with Anaconda and PyCharm by (:pr:`1640`) :user:`jasonlines`
+* [DOC] Update installation.rst (:pr:`1636`) :user:`MrPr3ntice`
 * [DOC] additions to forecaster extension template (:pr:`1535`) :user:`fkiraly`
-* [DOC] Added new contributors (:pr:`1602` :pr:`1559`) :user:`Carlosbogo` :user:`freddyaboulton`
 * [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
 * [DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
 * [DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
+* [DOC] STLTransformer docstring and attribute (:pr:`1611`) :user:`aiwalter` 
+* [DOC] typos in user documentation (:pr:`1671`) :user:`marcio55afr`
+* [DOC] Add links to estimator overview to README (:pr:`1691`) :user:`mloning`
+* [DOC] Added new contributors (:pr:`1602` :pr:`1559`) :user:`Carlosbogo` :user:`freddyaboulton`
 
 
 Governance
@@ -126,21 +114,49 @@ Governance
 
 * eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
 
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] new module: time series alignment; alignment distances (:pr:`1264`) :user:`fkiraly`
+
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] Numba distance module - efficient time series distances (:pr:`1574`) :user:`chrisholder`
+* [ENH] Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
+* [ENH] Experiments tidy-up by (:pr:`1619`) :user:`TonyBagnall`
 * TSC refactor: Interval based classification package(:pr:`1583`) :user:`MatthewMiddlehurst`
 * TSC refactor: Distance based classification package (:pr:`1584`) :user:`MatthewMiddlehurst`
 * TSC refactor: Feature based classification package (:pr:`1545`) :user:`MatthewMiddlehurst`
-* Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
 
 Fixed
 ~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Facebook prophet side effects on exogenous data X (:pr:`1711`) :user:`kejsitake`
+* [BUG] fixing bug for `_split`, accidental removal of `pandas.Index` support (:pr:`1582`) :user:`fkiraly`
+* [BUG] Fix `convert` and `_split` for Numpy 1D input (:pr:`1650`) :user:`fkiraly`
+* [BUG] missing clone in `evaluate` by (:pr:`1670`) :user:`ltsaprounis`
+
 
 Performance metrics
 ^^^^^^^^^^^^^^^^^^^
 
 * Fix Performance metric bug that affects repr (:pr:`1566`) :user:`RNKuhns`
+
+Estimator registry
+^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fixes to registry look-up, test suite for registry look-up (:pr:`1648`) :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] missing alignment fixtures (:pr:`1661`) :user:`fkiraly`
+
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -149,11 +165,21 @@ Time series classification
 * [BUG] load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
 * [BUG] TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
 
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] Fix Imputer. Added Imputer tests (:pr:`1666`) :user:`aiwalter`
+* [BUG] Fix `ColumnwiseTransformer` example (:pr:`1681`) :user:`mloning`
+* [BUG] Fix `FeatureUnion` test failure (:pr:`1665`) :user:`lmmentel`
+* [BUG] Refactor the `_diff_transform` function to be compatible with pandas 1.3.4 (:pr:`1644`) :user:`lmmentel`
+
+
 Maintenance
 ^^^^^^^^^^^
 
 * [MNT] Update release script (:pr:`1562`) :user:`mloning`
-
+* [MNT] Delete release-drafter.yml (:pr:`1561`) :user:`mloning` 
+* [MNT] Fix appveyor (:pr:`1669`) :user:`mloning`
 
 Contributors
 ~~~~~~~~~~~~
@@ -166,6 +192,7 @@ Contributors
 :user:`fstinner`,
 :user:`fkiraly`,
 :user:`freddyaboulton`,
+:user:`kejsitake`,
 :user:`lmmentel`,
 :user:`ltsaprounis`,
 :user:`MatthewMiddlehurst`,
