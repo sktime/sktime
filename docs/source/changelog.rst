@@ -75,14 +75,11 @@ For our long-term plan, see our :ref:`roadmap`.
 * check_is_scitype, cleaning up dists_kernels input checks/conversions by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1704
 * [MNT] Fail CI on missing init files by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1699
 * Fixes prophet bug concerning the internal change of exogenous X by :user:`kejsitake` in https://github.com/alan-turing-institute/sktime/pull/1711
-* [ENH] transformer base class to allow multivariate output if input is always univariate by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1706
-* transformers refactor: summarizer and base class by :user:`fkiraly` in https://github.com/alan-turing-institute/sktime/pull/1663
-* Release v0.9.0 by :user:`mloning` in https://github.com/alan-turing-institute/sktime/pull/1682
 
 Highlights
 ~~~~~~~~~~
 
-* Transformers base interface refactor - default vectorization to panel data (:pr:`1365`) :user:`fkiraly`
+* Transformers base interface refactor - default vectorization to panel data :user:`fkiraly`
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -95,7 +92,7 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
-Base interface refactor (:pr:`1365`):
+Base interface refactor (:pr:`1365`, :pr:`1663`):
 
 * `fit`, `transform`, `fit_transform` now accept both `Series` and `Panel` as argument
 * if `Panel` is passed to a series transformer, it is applied to all instances
@@ -161,13 +158,16 @@ Maintenance
 Contributors
 ~~~~~~~~~~~~
 
-:user:`AngelPone`
+:user:`aiwalter`,
+:user:`AngelPone`,
 :user:`Carlosbogo`,
-:user:`chernika158`
-:user:`fstinner`
+:user:`chernika158`,
+:user:`chrisholder`,
+:user:`fstinner`,
 :user:`fkiraly`,
 :user:`freddyaboulton`,
 :user:`lmmentel`,
+:user:`ltsaprounis`,
 :user:`MatthewMiddlehurst`,
 :user:`marcio55afr`,
 :user:`MrPr3ntice`,
