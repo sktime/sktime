@@ -49,6 +49,43 @@ ALL_ESTIMATORS = all_estimators(
 )
 
 
+def _create_all_test_instances(cls):
+    """Create list of all test instances.
+
+    Parameters
+    ----------
+    cls : sktime class inheriting from BaseObject
+
+    Returns
+    -------
+    objs : list of instances of cls
+        i-th instance is cls(**cls.get_test_params()[i])
+    names : list of str, same length as objs
+        i-th element is name of i-th instance of obj in tests
+        convention is {cls.__name__}-{i} if more than one instance
+        otherwise {cls.__name__}
+    """
+    objs = []
+    param_list = cls.get_test_params()
+    if isinstance(param_list, dict):
+        param_list = [param_list]
+    for params in param_list:
+        if not isinstance(params, dict):
+            raise RuntimeError(
+                f"Error in {cls.__name__}.get_test_params, "
+                "return must be param dict for cls"
+            )
+        objs += [cls(**params)]
+
+        num_instances = len(param_list)
+        if num_instances > 1:
+            names = [cls.__name__ + "-" + str(i) for i in range(num_instances)]
+        else:
+            names = [cls.__name__]
+
+    return objs, names
+
+
 def pytest_generate_tests(metafunc):
     """Test parameterization routine for pytest.
 
@@ -95,12 +132,10 @@ def pytest_generate_tests(metafunc):
         estimator_instance_names = []
         # retrieve all estimator parameters if multiple, construct instances
         for est in estimator_classes_to_test:
-            param_list = est.get_test_params()
-            if isinstance(param_list, dict):
-                param_list = param_list
-            for i, params in enumerate(param_list):
-                estimator_instances_to_test += [est(**params)]
-                estimator_instance_names += [est.__name__ + "-" + str(i)]
+            all_instances_of_est, instance_names = _create_all_test_instances(est)
+            estimator_instances_to_test += all_instances_of_est
+            estimator_instance_names += instance_names
+
         # parameterize test with the list of instances
         metafunc.parametrize(
             "estimator_instance",
