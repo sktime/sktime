@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Meta-transformers for building composite transformers."""
 
+import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -378,18 +379,10 @@ class Featureizer(_SeriesToSeriesTransformer):
         "X_inner_mtype": ["pd.Series", "pd.DataFrame"],
     }
 
-    def __init__(
-        self,
-        transformer,
-        steps,
-        temporal_feature=False,
-        suffix=None,
-    ):
+    def __init__(self, transformer, shift, suffix="featureized"):
         self.transformer = transformer
-        self.steps = steps
-        self.temporal_feature = temporal_feature
+        self.shift = shift
         self.suffix = suffix
-
         super(Featureizer, self).__init__()
 
     def _fit(self, X, y=None):
@@ -412,10 +405,9 @@ class Featureizer(_SeriesToSeriesTransformer):
         """
         X = check_series(X, enforce_multivariate=True)
         y = check_series(y, enforce_univariate=True)
-        # shift data according to steps to forecast
+        # store y in self to use it in transform for outsample transformation
         self._fit_index = X.index
-        # self._y_fit = y.iloc[self.steps:]
-        self._y_transform = y.iloc[: -self.steps]
+        self._y = y.copy()
         if not isinstance(self.transformer, _SeriesToSeriesTransformer):
             raise TypeError(
                 f"""Given transformer must be a _SeriesToSeriesTransformer
@@ -423,9 +415,7 @@ class Featureizer(_SeriesToSeriesTransformer):
             )
         self.transformer_ = clone(self.transformer)
         # swap X, y
-        self.transformer_.fit(y, X)
-        if self.suffix is None:
-            self.suffix = "_" + self.transformer.__class__.__name__.lower()
+        self.transformer_.fit(y)
         self._is_fitted = True
         return self
 
@@ -450,9 +440,16 @@ class Featureizer(_SeriesToSeriesTransformer):
         X = check_series(X, enforce_multivariate=True)
         y = check_series(y, enforce_univariate=True)
         Xt = X.copy()
-        if X.index.equals(self._fit_index):
-            y_t = y
+        if X.index.equals(self._y.index):
+            y_t = self._y.copy()
+            # shift values by shift into the future
+            y_t.iloc[self.shift :] = y.iloc[: -self.shift]
+            # replace last values with NaN
+            y_t.iloc[: self.shift] = np.nan
         else:
-            y_t = self._y_transform
-        Xt[self.suffix] = self.transformer_.transform(y_t)
+            if len(X) != self.shift:
+                raise ValueError("Given lenght of X must be equal to shift value.")
+            y_t = self._y.iloc[-self.shift :]
+            col = self._y.name + "_" + self.suffix if self._y.name else self.suffix
+        Xt[col] = self.transformer_.transform(y_t).values
         return Xt
