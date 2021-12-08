@@ -365,11 +365,11 @@ You will need Build Tools for Visual Studio 2022
 	You only need the "Build Tools for Visual Studio 2022"
 
 1. Follow the `link <https://visualstudio.microsoft.com/downloads/>`_.
-2. Scrolls down to "Tools for Visual Studio 2022" and click the dropdown,
-3. Download and install "Build Tools for Visual Studio 2022"
+2. Scrolls down to ``Tools for Visual Studio 2022`` and click the dropdown,
+3. Download and install ``Build Tools for Visual Studio 2022``
 4. Open the Visual Studio installer
-5. Tick "Desktop Development with C++"
-6. In the panel to the write make sure "MSVC v143 VS 2022 C++ x64/x86 build tools (Latest)" is selected
+5. Tick ``Desktop Development with C++``
+6. In the panel to the write make sure ``MSVC v143 VS 2022 C++ x64/x86 build tools (Latest)`` is selected
 7. Click install
 
 .. images:: images/visual_installer_selection.png
@@ -392,10 +392,13 @@ In the ``anaconda prompt`` terminal:
 3. Activate the environment: :code:`conda activate sktime-dev`
 
 4. Install required packages:
+
     1. :code:`pip install numpy=1.19.3`
     2. :code:`pip install cython`
     3. :code:`pip install -r build_tools/requirements.txt`
+
 If **fbprophet** fails to install try running:
+
     1. :code:`conda install -c conda-forge install -c pystan`
     2. :code:`conda install -c conda-forge install -c fbprophet`
     3. Verify all requirements are satisfied by running :code:`pip install -r build_tools/requirements.txt` with no errors.
@@ -407,6 +410,7 @@ If you fail to satisfy all the requirements see the troubleshooting section.
 The aim is to point to the "vcvarsall.bat" file.
 
 For 64-bit python, use:
+
 .. code-block:: bash
 
     SET DISTUTILS_USE_SDK=1
@@ -433,9 +437,9 @@ Troubleshooting
 First try starting again with a clean environment and see if the error still occurs.
 Some users may encounter issues with specific packages not installing correctly, this can often be fixed by installing the failing package manually. Some common packages where errors are encountered and how to install them:
 
-- ``ephem``: :code:`pip install ephem`
-- ``brotlipy``: :code:`conda install brotlipy`
-- ``esig``: :code:`pip install esig`
+- ephem: :code:`pip install ephem`
+- brotlipy: :code:`conda install brotlipy`
+- esig: :code:`pip install esig`
 
 If you are still receiving errors, try asking for help on `gitter <https://gitter.im/sktime/community>`_.
 
