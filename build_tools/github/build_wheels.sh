@@ -24,7 +24,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     fi
     sudo tar -C / -xvjf libomp.tbz2 opt
 
-    export CC=/usr/bin/clang
+    export CC=/usr/bin/clang++
     export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp -std=c++11 -lstdc++"
     export CFLAGS="$CFLAGS -I/opt/local/include/libomp"
