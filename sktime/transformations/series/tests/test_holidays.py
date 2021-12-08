@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from holidays import CountryHoliday
 
-from src.transformations import HolidayFeatures
+from sktime.transformations.series.holidays import HolidayFeatures
 
 
 @pytest.fixture
