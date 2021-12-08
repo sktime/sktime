@@ -46,7 +46,7 @@ Base interface refactor (:pr:`1365`):
 New deprecations for 0.10.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* series transformers will no longer accept a `Z` argument (:pr:`1365`)
+* series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`)
 * MrSEQL time series classifier (:pr:`1548`) :user:`TonyBagnall`
 
 Added
