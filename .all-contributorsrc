@@ -997,6 +997,15 @@
       ]
     },
     {
+      "login": "chernika158",
+      "name": "Galina Chernikova",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43787741?s=400&v=4",
+      "profile": "https://github.com/chernika158",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "GuzalBulatova",
       "name": "Guzal Bulatova",
       "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
@@ -1374,7 +1383,36 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "Carlosbogo",
+      "name": "Carlos Borrajo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84228424?v=4",
+      "profile": "https://github.com/Carlosbogo",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+	{
+      "login": "fstinner",
+      "name": "Florian Stinner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11679462?v=4",
+      "profile": "https://github.com/fstinner",
+      "contributions": [
+        "code",
+		"test"
+      ]
+    },
+	{
+      "login": "ChangWeiTan",
+      "name": "Chang Wei Tan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/570744?v=4",
+      "profile": "https://github.com/ChangWeiTan",
+      "contributions": [
+        "code"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

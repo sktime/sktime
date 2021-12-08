@@ -8,16 +8,13 @@ __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
 import pandas as pd
-from scipy import optimize
-from scipy import special
-from scipy import stats
-from scipy.special import boxcox
-from scipy.special import inv_boxcox
-from scipy.stats import boxcox_llf
-from scipy.stats import distributions
-from scipy.stats import variation
-from scipy.stats.morestats import _boxcox_conf_interval
-from scipy.stats.morestats import _calc_uniform_order_statistic_medians
+from scipy import optimize, special, stats
+from scipy.special import boxcox, inv_boxcox
+from scipy.stats import boxcox_llf, distributions, variation
+from scipy.stats.morestats import (
+    _boxcox_conf_interval,
+    _calc_uniform_order_statistic_medians,
+)
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation import is_int
@@ -99,7 +96,12 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+        "X_inner_mtype": "pd.Series",
+        "fit-in-transform": False,
+    }
 
     def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds
@@ -108,7 +110,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         self.sp = sp
         super(BoxCoxTransformer, self).__init__()
 
-    def fit(self, Z, X=None):
+    def _fit(self, Z, X=None):
         """Fit data.
 
         Parameters
@@ -128,10 +130,9 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         else:
             self.lambda_ = _guerrero(z, self.sp, self.bounds)
 
-        self._is_fitted = True
         return self
 
-    def transform(self, Z, X=None):
+    def _transform(self, Z, X=None):
         """Transform data.
 
         Parameters
@@ -146,7 +147,6 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         Zt : pd.Series
             Transformed series.
         """
-        self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
         zt = boxcox(z.to_numpy(), self.lambda_)
         return pd.Series(zt, index=z.index)

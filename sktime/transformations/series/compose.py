@@ -178,10 +178,9 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.transformations.series.compose import ColumnwiseTransformer
-
-    >>> y, X = load_longley()
+    >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
-    >>> yt = transformer.fit_transform(X)
+    >>> Xt = transformer.fit_transform(X)
     """
 
     _required_parameters = ["transformer"]
@@ -375,7 +374,8 @@ class Featureizer(_SeriesToSeriesTransformer):
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
-        "univariate-only": True,
+        "univariate-only": False,
+        "X_inner_mtype": ["pd.Series", "pd.DataFrame"],
     }
 
     def __init__(
@@ -392,62 +392,67 @@ class Featureizer(_SeriesToSeriesTransformer):
 
         super(Featureizer, self).__init__()
 
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series Z.
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
+
+        core logic
 
         Parameters
         ----------
-        Z : pd.DataFrame
-            A time series to apply the transformation on.
-        X : pd.pd.Series, default=None
-            Featureizer needs the target series y given as X in order to
-            return Z with the newly added feature.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for tarnsformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
-        Z = check_series(Z, enforce_multivariate=True)
-        X = check_series(X, enforce_univariate=True)
+        X = check_series(X, enforce_multivariate=True)
+        y = check_series(y, enforce_univariate=True)
         # shift data according to steps to forecast
-        self._fit_index = Z.index
-        # self._X_fit = X.iloc[self.steps:]
-        self._X_transform = X.iloc[: -self.steps]
+        self._fit_index = X.index
+        # self._y_fit = y.iloc[self.steps:]
+        self._y_transform = y.iloc[: -self.steps]
         if not isinstance(self.transformer, _SeriesToSeriesTransformer):
             raise TypeError(
                 f"""Given transformer must be a _SeriesToSeriesTransformer
                 but found type {type(self.transformer)}."""
             )
         self.transformer_ = clone(self.transformer)
-        # swap Z and X
-        self.transformer_.fit(Z=X, X=Z)
+        # swap X, y
+        self.transformer_.fit(y, X)
         if self.suffix is None:
             self.suffix = "_" + self.transformer.__class__.__name__.lower()
         self._is_fitted = True
         return self
 
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        core logic
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
-            A time series to apply the transformation on.
-        X : pd.DataFrame, default=None
-            Exogenous data is ignored in transform.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
+        transformed version of X
         """
         self.check_is_fitted()
-        Z = check_series(Z, enforce_multivariate=True)
-        X = check_series(X, enforce_univariate=True)
-        Zt = Z.copy()
-        if Z.index.equals(self._fit_index):
-            X_t = X
+        X = check_series(X, enforce_multivariate=True)
+        y = check_series(y, enforce_univariate=True)
+        Xt = X.copy()
+        if X.index.equals(self._fit_index):
+            y_t = y
         else:
-            X_t = self._X_transform
-        Zt[self.suffix] = self.transformer_.transform(Z=X_t)
-        return Zt
+            y_t = self._y_transform
+        Xt[self.suffix] = self.transformer_.transform(y_t)
+        return Xt
