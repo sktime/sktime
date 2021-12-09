@@ -676,7 +676,7 @@ class Evaluator:
         clique = clique[n > 1, :]
         n = np.size(clique, 0)
 
-        for i in range(np.int(np.ceil(n_strategies / 2))):
+        for i in range(int(np.ceil(n_strategies / 2))):
             plt.plot(
                 [
                     (n_strategies - r[i]) / (n_strategies - 1),
@@ -707,7 +707,7 @@ class Evaluator:
             )
 
         # labels displayed on the left
-        for i in range(np.int(np.ceil(n_strategies / 2)), n_strategies):
+        for i in range(int(np.ceil(n_strategies / 2)), n_strategies):
             plt.plot(
                 [
                     (n_strategies - r[i]) / (n_strategies - 1),

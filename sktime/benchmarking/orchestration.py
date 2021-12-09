@@ -259,7 +259,7 @@ class Orchestrator:
             #     n_predictions = len(y_pred)
             #     y_proba = (n_predictions, n_classes)
             #     y_proba = np.zeros(y_proba)
-            #     y_proba[:, np.array(y_pred, dtype=np.int)] = 1
+            #     y_proba[:, np.array(y_pred, dtype=int)] = 1
 
         else:
             return None

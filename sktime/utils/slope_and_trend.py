@@ -70,7 +70,7 @@ def _slope(y, axis=0):
         y = y.reshape(-1, 1)
 
     # Generate time index with correct shape for broadcasting
-    shape = np.ones(y.ndim, dtype=np.int)
+    shape = np.ones(y.ndim, dtype=int)
     shape[axis] *= -1
     x = np.arange(y.shape[axis]).reshape(shape) + 1
 

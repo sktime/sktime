@@ -10,7 +10,7 @@ from sktime.clustering.tests._clustering_tests import generate_univaritate_serie
 
 def test_barycenter_averaging():
     rng = np.random.RandomState(0)
-    X = generate_univaritate_series(n=100, size=5, rng=rng, dtype=np.int)
+    X = generate_univaritate_series(n=100, size=5, rng=rng, dtype=int)
 
     BCA = BarycenterAveraging(X)
     BCA.average()
@@ -18,7 +18,7 @@ def test_barycenter_averaging():
 
 def test_mean_averaging():
     rng = np.random.RandomState(1)
-    X = generate_univaritate_series(n=100, size=5, rng=rng, dtype=np.int)
+    X = generate_univaritate_series(n=100, size=5, rng=rng, dtype=int)
 
     mean = MeanAveraging(X)
     average = mean.average()

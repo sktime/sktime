@@ -490,5 +490,5 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
         )
 
     # make sure n_intervals is an integer and there is at least one interval
-    n_intervals_ = np.maximum(1, np.int(n_intervals_))
+    n_intervals_ = np.maximum(1, int(n_intervals_))
     return n_intervals_

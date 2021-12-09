@@ -143,7 +143,7 @@ def test_check_fh_values_input_conversion_to_pandas_index(arg):
 TIMEPOINTS = [
     pd.Period("2000", freq="M"),
     pd.Timestamp("2000-01-01", freq="D"),
-    np.int(1),
+    int(1),
     3,
 ]
 
