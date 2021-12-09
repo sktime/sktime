@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Slope and trend utilities."""
 __all__ = [
     "_slope",
     "_fit_trend",
@@ -10,7 +11,7 @@ from sklearn.utils import check_array
 
 
 def _fit_trend(x, order=0):
-    """Fit linear regression with polynomial terms of given order
+    """Fit linear regression with polynomial terms of given order.
 
         x : array_like, shape=[n_samples, n_obs]
         Time series data, each sample is fitted separately
@@ -26,7 +27,7 @@ def _fit_trend(x, order=0):
         (linear), three columns mean order 2 (quadratic), etc
 
     See Also
-    -------
+    --------
     add_trend
     remove_trend
     """
@@ -52,7 +53,8 @@ def _fit_trend(x, order=0):
 
 
 def _slope(y, axis=0):
-    """Find the slope for each series of y
+    """Find the slope for each series of y.
+
     Parameters
     ----------
     y: np.ndarray
@@ -61,7 +63,7 @@ def _slope(y, axis=0):
         Axis along which to compute slope
 
     Returns
-    ----------
+    -------
     slope : np.ndarray
         Time series slope
     """

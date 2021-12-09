@@ -8,8 +8,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.stats import ranksums
-from scipy.stats import ttest_ind
+from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
