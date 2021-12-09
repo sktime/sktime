@@ -350,7 +350,7 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
 def test_predict_quantiles(Forecaster, fh, alpha):
-    """Check prediction intervals returned by predict.
+    """Check prediction quantiles returned by predict.
 
     Arguments
     ---------
@@ -418,6 +418,21 @@ def _check_predict_intervals(pred_intervals: list, y_train: pd.Series, fh, cover
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
 def test_predict_intervals(Forecaster, fh, alpha):
+    """Check prediction intervals returned by predict.
+
+    Arguments
+    ---------
+    Forecaster: BaseEstimator class descendant, forecaster to test
+    fh: ForecastingHorizon, fh at which to test prediction
+    alpha: float, alpha at which to make prediction intervals
+
+    Raises
+    ------
+    AssertionError - if Forecaster test instance has "capability:pred_int"
+            and pred. int are not returned correctly when asking predict for them
+    AssertionError - if Forecaster test instance does not have "capability:pred_int"
+            and no NotImplementedError is raised when asking predict for pred.int
+    """
     f = _construct_instance(Forecaster)
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
