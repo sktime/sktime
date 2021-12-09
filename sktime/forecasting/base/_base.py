@@ -250,6 +250,10 @@ class BaseForecaster(BaseEstimator):
                 if keep_old_return_type:
                     pred_int = _convert_new_to_old_pred_int(pred_int, alpha)
 
+            y_pred = self._predict(
+                self.fh,
+                X=X_inner,
+            )
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
                 y_pred,
@@ -1415,8 +1419,8 @@ def _convert_new_to_old_pred_int(pred_int_new, alpha):
     pred_int_old_format = [
         pd.DataFrame(
             {
-                "lower": pred_int_new[name, a / 2],
-                "upper": pred_int_new[name, 1 - (a / 2)],
+                "lower": pred_int_new[(name, 0.5 - (a / 2))],
+                "upper": pred_int_new[(name, 0.5 + (a / 2))],
             }
         )
         for a in alpha
