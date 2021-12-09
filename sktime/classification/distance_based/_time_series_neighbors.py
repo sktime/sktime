@@ -361,6 +361,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             result = np.vstack(result)
 
+        # REMOVE BEFORE MERGING - this prints out the closest distance to each of the test data (for debugging)
+        print(dist)
+
         if not query_is_train:
             return result
         else:

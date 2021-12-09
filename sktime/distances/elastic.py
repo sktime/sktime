@@ -5,7 +5,7 @@ __author__ = "Jason Lines"
 
 
 def euclidean_distance(x, y):
-    return ed(x, y)
+    return np.sqrt(ed(x, y))
 
 
 def euclidean(x, y):

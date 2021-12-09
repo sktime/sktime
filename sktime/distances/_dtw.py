@@ -25,8 +25,7 @@ class _DtwDistance(NumbaDistance):
         y: np.ndarray,
         window: int = None,
         itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        **kwargs: Any
+        bounding_matrix: np.ndarray = None
     ) -> DistanceCallable:
         """Create a no_python compiled dtw distance callable.
 
@@ -74,6 +73,7 @@ class _DtwDistance(NumbaDistance):
             _y: np.ndarray,
         ) -> float:
             cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+            # print(cost_matrix[-1, -1])
             return cost_matrix[-1, -1]
 
         return numba_dtw_distance
