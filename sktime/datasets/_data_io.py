@@ -9,7 +9,10 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-from datatypes._panel import from_nested_to_2d_np_array, from_nested_to_3d_numpy
+from datatypes._panel._convert import (
+    from_nested_to_2d_np_array,
+    from_nested_to_3d_numpy,
+)
 
 __all__ = [
     "load_airline",
