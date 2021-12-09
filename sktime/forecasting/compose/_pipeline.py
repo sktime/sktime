@@ -145,6 +145,7 @@ class _Pipeline(
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sklearn.preprocessing import StandardScaler
+
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -300,6 +301,7 @@ class ForecastingPipeline(_Pipeline):
         forecaster.update(y=y, X=X, update_params=update_params)
         self.steps_[-1] = (name, forecaster)
         return self
+
 
 # removed transform and inverse_transform as long as y can only be a pd.Series
 # def transform(self, Z, X=None):
