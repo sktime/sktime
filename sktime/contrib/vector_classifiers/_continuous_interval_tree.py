@@ -652,7 +652,7 @@ def _cif_feature(X, interval, dim, att, c22):
         # slope
         return _slope(X[:, dim, interval[0] : interval[1]], axis=1)
     else:
-        return c22._transform_single_feature(
+        return c22.transform_single_feature(
             X[:, dim, interval[0] : interval[1]],
             feature=att,
         )
@@ -681,7 +681,7 @@ def _drcif_feature(X, interval, dim, att, c22):
         # max
         return np.max(X[:, dim, interval[0] : interval[1]], axis=1)
     else:
-        return c22._transform_single_feature(
+        return c22.transform_single_feature(
             X[:, dim, interval[0] : interval[1]],
             feature=att,
         )
