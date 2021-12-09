@@ -9,6 +9,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from datatypes._panel import from_nested_to_2d_np_array, from_nested_to_3d_numpy
 
 __all__ = [
     "load_airline",
@@ -90,7 +91,6 @@ def load_from_tsfile(
     line_num = 0
     num_dimensions = 0
     num_cases = 0
-    series_length = 0
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         for line in file:
             line = line.strip().lower()
@@ -188,15 +188,16 @@ def load_from_tsfile(
     if line_num:
         # Create a DataFrame from the data parsed above if the series are unequal or
         # include timestamps
-        if unequal_length is True or timestamps is True:
+        if unequal_length or timestamps:
             data = pd.DataFrame(dtype=np.float32)
             for dim in range(0, num_dimensions):
                 data["dim_" + str(dim)] = instance_list[dim]
-        elif univariate is True:  # otherwise put univariate in a 2D numpy.
-            data = np.ndarray(num_cases, series_length)
-        else:  # multivariate in a 3D numpy.
-            data = np.ndarray(num_cases, num_dimensions, series_length)
-        # Check if we have and if we should return any associated class labels
+        if not timestamps and not unequal_length:
+            if univariate:  # otherwise put univariate in a 2D numpy.
+                data = from_nested_to_2d_np_array(data)
+            else:  # multivariate in a 3D numpy.
+                data = from_nested_to_3d_numpy(data)
+            # Check if we have and if we should return any associated class labels
         # separately
         if return_y and not class_labels:
             raise TsFileParseException(
