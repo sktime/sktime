@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for ForecastingHorizon object."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 
 def _assert_index_equal(a, b):
-    """Helper function to compare forecasting horizons"""
+    """Compare forecasting horizons."""
     assert isinstance(a, pd.Index)
     assert isinstance(b, pd.Index)
     assert a.equals(b)
@@ -39,6 +40,7 @@ def _assert_index_equal(a, b):
 )
 @pytest.mark.parametrize("steps", TEST_FHS)
 def test_fh(index_type, fh_type, is_relative, steps):
+    """Testing ForecastingHorizon conversions."""
     # generate data
     y = make_forecasting_problem(index_type=index_type)
     assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
@@ -94,6 +96,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
 
 def test_fh_method_delegation():
+    """Test ForecastinHorizon delegated methods."""
     fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)
@@ -111,6 +114,7 @@ BAD_INPUT_ARGS = (
 
 @pytest.mark.parametrize("arg", BAD_INPUT_ARGS)
 def test_check_fh_values_bad_input_types(arg):
+    """Negative test for bad ForecastingHorizon arguments."""
     with raises(TypeError):
         ForecastingHorizon(arg)
 
@@ -123,6 +127,7 @@ DUPLICATE_INPUT_ARGS = (
 
 @pytest.mark.parametrize("arg", DUPLICATE_INPUT_ARGS)
 def test_check_fh_values_duplicate_input_values(arg):
+    """Negative test for ForecastingHorizon input arguments."""
     with raises(ValueError):
         ForecastingHorizon(arg)
 
@@ -139,6 +144,7 @@ GOOD_INPUT_ARGS = (
 
 @pytest.mark.parametrize("arg", GOOD_INPUT_ARGS)
 def test_check_fh_values_input_conversion_to_pandas_index(arg):
+    """Test conversion to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
     assert type(output) in VALID_INDEX_TYPES
 
@@ -154,6 +160,7 @@ TIMEPOINTS = [
 @pytest.mark.parametrize("timepoint", TIMEPOINTS)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
 def test_shift(timepoint, by):
+    """Test shifting of ForecastingHorizon."""
     ret = _shift(timepoint, by=by)
 
     # check output type, pandas index types inherit from each other,
@@ -178,6 +185,7 @@ DURATIONS = [
 
 @pytest.mark.parametrize("duration", DURATIONS)
 def test_coerce_duration_to_int(duration):
+    """Test coercion of duration to int."""
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
@@ -194,6 +202,7 @@ def test_coerce_duration_to_int(duration):
 @pytest.mark.parametrize("n_timepoints", [3, 5])
 @pytest.mark.parametrize("index_type", INDEX_TYPE_LOOKUP.keys())
 def test_get_duration(n_timepoints, index_type):
+    """Test getting of duration."""
     index = _make_index(n_timepoints, index_type)
     duration = _get_duration(index)
     # check output type is duration type

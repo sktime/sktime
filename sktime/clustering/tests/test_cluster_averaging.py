@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Tests for cluster averaging."""
 import numpy as np
 
 from sktime.clustering.partitioning._averaging_metrics import (
@@ -9,6 +10,7 @@ from sktime.clustering.tests._clustering_tests import generate_univaritate_serie
 
 
 def test_barycenter_averaging():
+    """Test barycenter averaging."""
     rng = np.random.RandomState(0)
     X = generate_univaritate_series(n=100, size=5, rng=rng, dtype=int)
 
@@ -17,6 +19,7 @@ def test_barycenter_averaging():
 
 
 def test_mean_averaging():
+    """Test mean averaging."""
     rng = np.random.RandomState(1)
     X = generate_univaritate_series(n=100, size=5, rng=rng, dtype=int)
 
