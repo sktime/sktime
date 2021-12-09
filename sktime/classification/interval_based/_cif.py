@@ -162,9 +162,9 @@ class CanonicalIntervalForest(BaseClassifier):
     def _fit(self, X, y):
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
-        if self.base_estimator == "DTC":
+        if self.base_estimator.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator == "CIT":
+        elif self.base_estimator.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator

@@ -210,9 +210,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         self.n_instances, self.n_dims, self.series_length = X.shape
 
-        # if self.n_shapelet_samples is None:
-        #     self._n_shapelet_samples = ??? todo find good default
-
         if self.max_shapelets is None:
             self._max_shapelets = min(10 * self.n_instances, 1000)
 
@@ -427,7 +424,8 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         other_cls_count,
         worst_quality,
     ):
-        orderline = []  # todo could optimise this
+        # todo optimise this more, we spend 99% of time here
+        orderline = []
         this_cls_traversed = 0
         other_cls_traversed = 0
 

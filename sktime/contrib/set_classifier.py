@@ -138,7 +138,26 @@ def set_classifier(cls, resample_id=None, train_file=False):
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
-            random_state=resample_id, save_transformed_data=train_file
+            transform_limit_in_minutes=120, random_state=resample_id, save_transformed_data=train_file
+        )
+
+    elif name == "stc-10k":
+        return ShapeletTransformClassifier(
+            random_state=resample_id, save_transformed_data=train_file, n_shapelet_samples=10000
+        )
+    elif name == "multi-arsenal":
+        return Arsenal(random_state=resample_id,
+                       save_transformed_data=train_file,
+                       rocket_transform="multirocket",
+                       )
+    elif name == "mini-arsenal":
+        return Arsenal(random_state=resample_id,
+                       save_transformed_data=train_file,
+                       rocket_transform="minirocket",
+                       )
+    elif name == "drcif-dtc":
+        return DrCIF(
+            random_state=resample_id, base_estimator="dtc", n_estimators=500, save_transformed_data=train_file
         )
     else:
         raise Exception("UNKNOWN CLASSIFIER")
