@@ -75,7 +75,7 @@ jobs:
           conda install -c anaconda libpython
           conda install -c conda-forge "pystan>=2.14,<3.0"
           conda install -c conda-forge "fbprophet>=0.7.1"
-          conda install -c conda-forge scipy
+          conda install -c conda-forge scipy cython
           python -m pip install .[all_extras,dev]
 
       - name: Show dependecies
