@@ -310,13 +310,12 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
         y_pred = f.predict(alpha=alpha)
-        if f.get_tag("capability:pred_int"):
-            pred_ints = f.predict_interval(fh)
-            _check_pred_ints(pred_ints, y_train, y_pred, fh)
-
+        if not f._has_predict_quantiles_been_refactored():
+            with pytest.raises(NotImplementedError):
+                pred_ints = f.predict_interval(fh)
+                _check_pred_ints(pred_ints, y_train, y_pred, fh)
         else:
-            with pytest.raises(NotImplementedError, match="prediction intervals"):
-                f.predict(alpha=alpha)
+            f.predict(alpha=alpha)
 
 
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
