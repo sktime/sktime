@@ -99,6 +99,7 @@ jobs:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04]
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -133,6 +134,7 @@ jobs:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
