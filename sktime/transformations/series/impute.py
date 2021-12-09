@@ -9,14 +9,13 @@ __all__ = ["Imputer"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
-from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.forecasting.base import ForecastingHorizon
 
 
 class Imputer(_SeriesToSeriesTransformer):
@@ -111,7 +110,7 @@ class Imputer(_SeriesToSeriesTransformer):
         if not _has_missing_values(Z):
             return Z
 
-        elif self.method == "random":
+        if self.method == "random":
             if isinstance(Z, pd.DataFrame):
                 for col in Z:
                     Z[col] = Z[col].apply(
@@ -203,15 +202,16 @@ def _impute_with_forecaster(forecaster, Z):
         series = [Z[column] for column in Z]
 
     for z in series:
-        # define fh based on index of missing values
-        na_index = z.index[z.isna()]
-        fh = ForecastingHorizon(values=na_index, is_relative=False)
+        if _has_missing_values(z):
+            # define fh based on index of missing values
+            na_index = z.index[z.isna()]
+            fh = ForecastingHorizon(values=na_index, is_relative=False)
 
-        # fill NaN before fitting with ffill and backfill (heuristic)
-        forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
+            # fill NaN before fitting with ffill and backfill (heuristic)
+            forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
 
-        # replace missing values with predicted values
-        z[na_index] = forecaster.predict()
+            # replace missing values with predicted values
+            z[na_index] = forecaster.predict()
     return Z
 
 
