@@ -140,7 +140,7 @@ class ContinuousIntervalTree(BaseEstimator):
         self.root = _TreeNode(random_state=rng)
 
         thresholds = np.linspace(np.min(X, axis=0), np.max(X, axis=0), self.thresholds)
-        distribution_cls, distribution = unique_count(y)
+        distribution_cls, distribution = _unique_count(y)
         e = _entropy(distribution, distribution.sum())
 
         self.root.build_tree(
@@ -568,11 +568,11 @@ class _TreeNode:
     @njit(fastmath=True, cache=True)
     def information_gain(X, y, attribute, threshold, parent_entropy):
         missing = np.isnan(X[:, attribute])
-        dist_missing_cls, dist_missing = unique_count(y[missing])
+        dist_missing_cls, dist_missing = _unique_count(y[missing])
         left = X[:, attribute] <= threshold
-        dist_left_cls, dist_left = unique_count(y[left])
+        dist_left_cls, dist_left = _unique_count(y[left])
         right = X[:, attribute] > threshold
-        dist_right_cls, dist_right = unique_count(y[right])
+        dist_right_cls, dist_right = _unique_count(y[right])
 
         sum_missing = 0
         for v in dist_missing:
@@ -612,7 +612,7 @@ class _TreeNode:
 
 
 @njit(fastmath=True, cache=True)
-def unique_count(x):
+def _unique_count(x):
     if len(x) > 0:
         x = np.sort(x)
         unique = np.zeros(len(x))
