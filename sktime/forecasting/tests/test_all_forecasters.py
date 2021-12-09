@@ -323,7 +323,6 @@ def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha
 
     # check if the input is a dataframe
     assert isinstance(pred_quantiles, pd.DataFrame)
-
     # check time index (also checks forecasting horizon is more than one element)
     _assert_correct_pred_time_index(pred_quantiles.index, y_train.index[-1], fh)
     # Forecasters where name of variables do not exist
@@ -380,11 +379,46 @@ def test_predict_quantiles(Forecaster, fh, alpha):
             _check_predict_quantiles(quantiles, y_train, fh, alpha)
 
 
+def _check_predict_intervals(pred_intervals: list, y_train: pd.Series, fh, coverage):
+
+    # check if the input is a dataframe
+    assert isinstance(pred_intervals, pd.DataFrame)
+
+    # check time index (also checks forecasting horizon is more than one element)
+    _assert_correct_pred_time_index(pred_intervals.index, y_train.index[-1], fh)
+    # convert the coverage in a list of alphas
+    alpha = []
+    if not isinstance(coverage, list):
+        alpha.extend([0.5 - coverage / 2, 0.5 + coverage / 2])
+    else:
+        for c in coverage:
+            alpha.extend([0.5 - c / 2, 0.5 + c / 2])
+    # Forecasters where name of variables do not exist
+    # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
+    if isinstance(y_train, pd.Series):
+        expected = pd.MultiIndex.from_product([["Intervals"], alpha])
+    else:
+        # multiply variables with all alpha values
+        expected = pd.MultiIndex.from_product([y_train.columns, alpha])
+    assert all(expected == pred_intervals.columns.to_flat_index())
+
+    if isinstance(alpha, list):
+        # sorts the columns that correspond to alpha values
+        pred_intervals = pred_intervals.reindex(
+            columns=pred_intervals.columns.reindex(sorted(alpha), level=1)[0]
+        )
+
+        # check if values are monotonically increasing
+        for var in pred_intervals.columns.levels[0]:
+            for index in range(len(pred_intervals.index)):
+                assert pred_intervals[var].iloc[index].is_monotonic_increasing
+
+
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-def test_predict_interval(Forecaster, fh, alpha):
-    f = Forecaster.create_test_instance()
+def test_predict_intervals(Forecaster, fh, alpha):
+    f = _construct_instance(Forecaster)
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
@@ -395,7 +429,8 @@ def test_predict_interval(Forecaster, fh, alpha):
             with pytest.raises(NotImplementedError):
                 f.predict_interval(fh=fh, coverage=alpha)
         else:
-            f.predict_interval(fh=fh, coverage=alpha)
+            intervals = f.predict_interval(fh=fh, coverage=alpha)
+            _check_predict_intervals(intervals, y_train, fh, alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
