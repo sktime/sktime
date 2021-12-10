@@ -19,7 +19,7 @@ from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _cif_feature,
+    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 
@@ -283,7 +283,7 @@ class CanonicalIntervalForest(BaseClassifier):
                 intervals[j][0] = intervals[j][1] - length
 
             for a in range(0, self._att_subsample_size):
-                transformed_x[self._att_subsample_size * j + a] = _cif_feature(
+                transformed_x[self._att_subsample_size * j + a] = _drcif_feature(
                     X, intervals[j], dims[j], atts[a], c22, case_id=j
                 )
 
@@ -312,7 +312,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
             for j in range(0, self._n_intervals):
                 for a in range(0, self._att_subsample_size):
-                    transformed_x[self._att_subsample_size * j + a] = _cif_feature(
+                    transformed_x[self._att_subsample_size * j + a] = _drcif_feature(
                         X, intervals[j], dims[j], atts[a], c22, case_id=j
                     )
 

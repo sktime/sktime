@@ -21,6 +21,7 @@ from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.utils.numba.general import z_normalise_series
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X, check_X_y
 
@@ -306,7 +307,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                 s[3],
                 s[4],
                 self.classes_[s[5]],
-                _z_norm(X[s[4], s[3], s[2] : s[2] + s[1]]),
+                z_normalise_series(X[s[4], s[3], s[2] : s[2] + s[1]]),
             )
             for class_shapelets in shapelets
             for s in class_shapelets
@@ -389,7 +390,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         position = rng.randint(0, self.series_length - length)
         dim = rng.randint(0, self.n_dims)
 
-        shapelet = _z_norm(X[inst_idx, dim, position : position + length])
+        shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
         sorted_indicies = sorted(range(length), reverse=True, key=lambda i: sabs[i])
 
@@ -519,17 +520,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                     to_keep[n] = False
 
         return to_keep
-
-
-@njit(fastmath=True, cache=True)
-def _z_norm(shapelet):
-    std = np.std(shapelet)
-    if std > 0:
-        shapelet = (shapelet - np.mean(shapelet)) / std
-    else:
-        shapelet = np.zeros(len(shapelet))
-
-    return shapelet
 
 
 @njit(fastmath=True, cache=True)
