@@ -64,7 +64,7 @@ from sktime.datatypes._series_as_panel import (
 )
 
 # single/multiple primitives
-Primitive = Union[np.integer, int, np.float, float, str]
+Primitive = Union[np.integer, int, float, str]
 Primitives = np.ndarray
 
 # tabular/cross-sectional data
