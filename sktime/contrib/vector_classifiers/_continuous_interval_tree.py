@@ -641,7 +641,7 @@ def _entropy(x, s):
     return e
 
 
-def _cif_feature(X, interval, dim, att, c22):
+def _cif_feature(X, interval, dim, att, c22, case_id=None):
     if att == 22:
         # mean
         return np.mean(X[:, dim, interval[0] : interval[1]], axis=1)
@@ -654,11 +654,12 @@ def _cif_feature(X, interval, dim, att, c22):
     else:
         return c22.transform_single_feature(
             X[:, dim, interval[0] : interval[1]],
-            feature=att,
+            att,
+            case_id=case_id
         )
 
 
-def _drcif_feature(X, interval, dim, att, c22):
+def _drcif_feature(X, interval, dim, att, c22, case_id=None):
     if att == 22:
         # mean
         return np.mean(X[:, dim, interval[0] : interval[1]], axis=1)
@@ -683,5 +684,6 @@ def _drcif_feature(X, interval, dim, att, c22):
     else:
         return c22.transform_single_feature(
             X[:, dim, interval[0] : interval[1]],
-            feature=att,
+            att,
+            case_id=case_id,
         )

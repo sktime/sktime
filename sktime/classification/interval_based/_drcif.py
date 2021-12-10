@@ -497,7 +497,7 @@ class DrCIF(BaseClassifier):
 
                 for a in range(0, self._att_subsample_size):
                     transformed_x[p] = _drcif_feature(
-                        T[r], intervals[j], dims[j], atts[a], c22
+                        T[r], intervals[j], dims[j], atts[a], c22, case_id=j
                     )
                     p += 1
 
@@ -544,7 +544,7 @@ class DrCIF(BaseClassifier):
                 for _ in range(0, self._n_intervals[r]):
                     for a in range(0, self._att_subsample_size):
                         transformed_x[p] = _drcif_feature(
-                            T[r], intervals[j], dims[j], atts[a], c22
+                            T[r], intervals[j], dims[j], atts[a], c22, case_id=j
                         )
                         p += 1
                     j += 1

@@ -284,7 +284,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
             for a in range(0, self._att_subsample_size):
                 transformed_x[self._att_subsample_size * j + a] = _cif_feature(
-                    X, intervals[j], dims[j], atts[a], c22
+                    X, intervals[j], dims[j], atts[a], c22, case_id=j
                 )
 
         tree = _clone_estimator(self._base_estimator, random_state=rs)
@@ -313,7 +313,7 @@ class CanonicalIntervalForest(BaseClassifier):
             for j in range(0, self._n_intervals):
                 for a in range(0, self._att_subsample_size):
                     transformed_x[self._att_subsample_size * j + a] = _cif_feature(
-                        X, intervals[j], dims[j], atts[a], c22
+                        X, intervals[j], dims[j], atts[a], c22, case_id=j
                     )
 
             transformed_x = transformed_x.T
