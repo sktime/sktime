@@ -145,7 +145,7 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
     fh_class = INDEX_TYPE_LOOKUP[fh_type]
 
     if isinstance(steps, (int, np.integer)):
-        steps = np.array([steps], dtype=np.int)
+        steps = np.array([steps], dtype=int)
 
     if is_relative:
         return ForecastingHorizon(fh_class(steps), is_relative=is_relative)
