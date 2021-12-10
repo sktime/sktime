@@ -38,18 +38,9 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
 
 from sktime.classification.base import BaseClassifier
-from sktime.distances.elastic import euclidean_distance
-from sktime.distances.elastic_cython import (
-    ddtw_distance,
-    dtw_distance,
-    erp_distance,
-    lcss_distance,
-    msm_distance,
-    twe_distance,
-    wddtw_distance,
-    wdtw_distance,
-)
-from sktime.distances.mpdist import mpdist
+
+# New imports using Numba
+from sktime.distances import distance_factory
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
@@ -119,50 +110,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self.distance = distance
         self.distance_params = distance_params
 
-        if distance == "euclidean":  # Euclidean will default to the base class distance
-            distance = euclidean_distance
-        elif distance == "dtw":
-            distance = dtw_distance
-        elif distance == "dtwcv":  # special case to force loocv grid search
-            # cv in training
-            if distance_params is not None:
-                warnings.warn(
-                    "Warning: measure parameters have been specified for "
-                    "dtwcv. "
-                    "These will be ignored and parameter values will be "
-                    "found using LOOCV."
-                )
-            distance = dtw_distance
-            self._cv_for_params = True
-            self._param_matrix = {
-                "distance_params": [{"w": x / 100} for x in range(0, 100)]
-            }
-        elif distance == "ddtw":
-            distance = ddtw_distance
-        elif distance == "wdtw":
-            distance = wdtw_distance
-        elif distance == "wddtw":
-            distance = wddtw_distance
-        elif distance == "lcss":
-            distance = lcss_distance
-        elif distance == "erp":
-            distance = erp_distance
-        elif distance == "msm":
-            distance = msm_distance
-        elif distance == "twe":
-            distance = twe_distance
-        elif distance == "mpdist":
-            distance = mpdist
-            # When mpdist is used, the subsequence length (parameter m) must be set
-            # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-            # metric='mpdist', metric_params={'m':30})
-        else:
-            if type(distance) is str:
-                raise ValueError(
-                    "Unrecognised distance measure: " + distance + ". Allowed values "
-                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
-                    "please pass a callable distance measure into the constuctor"
-                )
+        if isinstance(self.distance, str):
+            distance = distance_factory(metric=self.distance)
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
@@ -195,6 +144,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         )
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
+
+        if isinstance(self.distance, str):
+            self.metric = distance_factory(X[0], X[0], metric=self.distance, window=10)
 
         y = np.asarray(y)
         check_classification_targets(y)
