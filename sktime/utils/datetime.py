@@ -51,7 +51,7 @@ def _coerce_duration_to_int(duration, freq=None):
             if isinstance(duration, pd.Timedelta):
                 return int(duration / pd.Timedelta(count, unit))
             if isinstance(duration, pd.TimedeltaIndex):
-                return (duration / pd.Timedelta(count, unit)).astype(np.int)
+                return (duration / pd.Timedelta(count, unit)).astype(int)
         except ValueError:
             raise ValueError(
                 "Index type not supported. Please consider using pd.PeriodIndex."
