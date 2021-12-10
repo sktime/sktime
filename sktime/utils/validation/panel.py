@@ -10,8 +10,6 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-
-# from numba import njit
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.datatypes._panel._check import is_nested_dataframe
