@@ -32,6 +32,7 @@ __all__ = [
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
     "load_macroeconomic",
+    "load_from_tsfile",
 ]
 
 __author__ = [
@@ -94,6 +95,7 @@ def load_from_tsfile(
     line_num = 0
     num_dimensions = 0
     num_cases = 0
+    # equal_length = True
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         for line in file:
             line = line.strip().lower()
@@ -124,12 +126,12 @@ def load_from_tsfile(
                             f"invalid univariate value in file "
                             f"{full_file_path_and_name}"
                         )
-                elif line.startswith("@unequal"):
+                elif line.startswith("@equallength"):
                     tokens = line.split(" ")
                     if tokens[1] == "true":
-                        unequal_length = True
+                        equal_length = True
                     elif tokens[1] == "false":
-                        unequal_length = False
+                        equal_length = False
                     else:
                         raise TsFileParseException(
                             f"invalid unequal value in file "
@@ -137,6 +139,7 @@ def load_from_tsfile(
                         )
                 elif line.startswith("@classlabel"):
                     tokens = line.split(" ")
+                    token_len = len(tokens)
                     if tokens[1] == "true":
                         class_labels = True
                     elif tokens[1] == "false":
@@ -151,7 +154,7 @@ def load_from_tsfile(
                             f"if the classlabel tag is true "
                             f"then class values must be "
                             f"supplied in file"
-                            f" {full_file_path_and_name}"
+                            f" {full_file_path_and_name} but read {tokens}"
                         )
                     # not currently used
                     # class_label_list = [token.strip() for token in tokens[2:]]
@@ -189,13 +192,12 @@ def load_from_tsfile(
             line_num += 1
     # Check that the file was not empty
     if line_num:
-        # Create a DataFrame from the data parsed above if the series are unequal or
-        # include timestamps
-        if unequal_length or timestamps:
-            data = pd.DataFrame(dtype=np.float32)
-            for dim in range(0, num_dimensions):
-                data["dim_" + str(dim)] = instance_list[dim]
-        if not timestamps and not unequal_length:
+        # Create a DataFrame from the data parsed
+        data = pd.DataFrame(dtype=np.float32)
+        for dim in range(0, num_dimensions):
+            data["dim_" + str(dim)] = instance_list[dim]
+        # convert to numpy if we can.
+        if not timestamps and equal_length:
             if univariate:  # otherwise put univariate in a 2D numpy.
                 data = from_nested_to_2d_np_array(data)
             else:  # multivariate in a 3D numpy.

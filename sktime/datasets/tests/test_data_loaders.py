@@ -12,7 +12,7 @@ import pytest
 
 from sktime.datasets import (
     TsFileParseException,
-    load_from_ts,
+    load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_uschange,
 )
@@ -75,25 +75,25 @@ def test_data_loaders(dataset):
 def test_load_from_tsfile():
     """Test the load_from_tsfile on three scenarios with shipped datasets."""
     problem = "UnitTest"
-    file_path = MODULE + "/" + DIRNAME + "/" + problem + "_TRAIN.ts"
+    file_path = MODULE + "/" + DIRNAME + "/" + problem + "/" + problem + "_TRAIN.ts"
     # Test 1: load univariate equal length (UnitTest), should return 2D array and 1D
     # array, test first and last data
     # Test 2: Load a problem without y values (UnitTest),  test first and last data.
-    X, y = load_from_ts(full_file_path_and_name=file_path)
-    X2 = load_from_ts(full_file_path_and_name=file_path, return_y=False)
-    assert X is np.ndarray
-    assert X.ndims == 2 and X2.ndims == 2
-    assert X.shape == (1, 1)
+    X, y = load_from_tsfile(full_file_path_and_name=file_path)
+    X2 = load_from_tsfile(full_file_path_and_name=file_path, return_y=False)
+    assert isinstance(X, np.ndarray)
+    assert X.ndim == 2 and X2.ndim == 2
+    assert X.shape == (20, 24)
     assert X[0][0] == 573.0
     # Test 3: load multivare equal length (BasicMotion), should return 2D array and 1D
     # array, test first and last data.
-    problem = "BasicMotion"
-    file_path = MODULE + "/" + DIRNAME + "/" + problem + "_TRAIN.ts"
-    X, y = load_from_ts(full_file_path_and_name=file_path)
+    problem = "BasicMotions"
+    file_path = MODULE + "/" + DIRNAME + "/" + problem + "/" + problem + "_TRAIN.ts"
+    X, y = load_from_tsfile(full_file_path_and_name=file_path)
     # Test 4: load univariate unequal length, should return a one column dataframe,
     # test first and last.
     problem = "JapaneseVowels"
-    file_path = MODULE + "/" + DIRNAME + "/" + problem + "_TRAIN.ts"
+    file_path = MODULE + "/" + DIRNAME + "/" + problem + "/" + problem + "_TRAIN.ts"
 
 
 def test_load_from_tsfile_to_dataframe():
