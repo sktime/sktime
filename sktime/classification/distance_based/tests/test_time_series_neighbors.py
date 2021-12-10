@@ -9,9 +9,9 @@ distance_functions = [
     "euclidean",
     "dtw",
     "wdtw",
-    "msm",
-    "erp",
-    "lcss",
+    # "msm",
+    # "erp",
+    # "lcss",
 ]
 
 # expected correct on test set using default parameters. Verified in tsml
