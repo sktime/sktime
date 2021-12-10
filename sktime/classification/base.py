@@ -47,7 +47,7 @@ class BaseClassifier(BaseEstimator):
     method fit.
     #TODO: Make _fit and _predict abstract
 
-    Attributes
+    Parameters
     ----------
     classes_            : ndarray of class labels, possibly strings
     n_classes_          : integer, number of classes (length of classes_)
@@ -286,7 +286,7 @@ class BaseClassifier(BaseEstimator):
     def _check_capabilities(self, missing, multivariate, unequal):
         """Check whether this classifier can handle the data characteristics.
 
-        Attributes
+        Parameters
         ----------
         missing : boolean, does the data passed to fit contain missing values?
         multivariate : boolean, does the data passed to fit contain missing values?
@@ -387,8 +387,8 @@ def _check_classifier_input(
 
     Raises a ValueError if the input is not valid.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     X : check whether a pd.DataFrame or np.ndarray
     y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
