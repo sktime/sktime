@@ -192,7 +192,7 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
 
-    # check whether there any nans; only if requested
+    # check whether there any nans; compute only if requested
     if return_metadata:
         metadata["has_nans"] = np.isnan(obj).any()
 

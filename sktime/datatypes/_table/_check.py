@@ -29,6 +29,7 @@ metadata: dict - metadata about obj if valid, otherwise None
     fields:
         "is_univariate": bool, True iff table has one variable
         "is_empty": bool, True iff table has no variables or no instances
+        "has_nans": bool, True iff the panel contains NaN values
 """
 
 __author__ = ["fkiraly"]
@@ -61,6 +62,11 @@ def check_pdDataFrame_Table(obj, return_metadata=False, var_name="obj"):
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     metadata["is_univariate"] = len(obj.columns) < 2
 
+    # check whether there are any nans
+    #   compute only if needed
+    if return_metadata:
+        metadata["has_nans"] = obj.isna().values.any()
+
     # check that no dtype is object
     if "object" in obj.dtypes.values:
         msg = f"{var_name} should not have column of 'object' dtype"
@@ -80,14 +86,17 @@ def check_numpy1D_Table(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
 
-    if len(obj.shape) == 1:
-        # we now know obj is a 1D np.ndarray
-        metadata["is_empty"] = len(obj) < 1
-        # 1D numpy arrays are considered univariate
-        metadata["is_univariate"] = True
-    else:
+    if len(obj.shape) != 1:
         msg = f"{var_name} must be 1D numpy.ndarray, but found {len(obj.shape)}D"
         return _ret(False, msg, None, return_metadata)
+
+    # we now know obj is a 1D np.ndarray
+    metadata["is_empty"] = len(obj) < 1
+    # 1D numpy arrays are considered univariate
+    metadata["is_univariate"] = True
+    # check whether there any nans; compute only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -103,13 +112,16 @@ def check_numpy2D_Table(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
 
-    if len(obj.shape) == 2:
-        # we now know obj is a 2D np.ndarray
-        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
-        metadata["is_univariate"] = obj.shape[1] < 2
-    else:
+    if len(obj.shape) != 2:
         msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return _ret(False, msg, None, return_metadata)
+
+    # we now know obj is a 2D np.ndarray
+    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+    metadata["is_univariate"] = obj.shape[1] < 2
+    # check whether there any nans; compute only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
