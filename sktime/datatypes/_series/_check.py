@@ -93,9 +93,11 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced, compute only if needed
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
     if return_metadata:
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
+        metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -148,9 +150,11 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced, compute only if needed
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
     if return_metadata:
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
+        metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -186,6 +190,10 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
 
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
+
+    # check whether there any nans; only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
 
     return ret(True, None, metadata, return_metadata)
 

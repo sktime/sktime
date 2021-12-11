@@ -31,6 +31,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_equally_spaced": bool, True iff all series indices are equally spaced
         "is_empty": bool, True iff one or more of the series in the panel are empty
         "is_one_series": bool, True iff there is only one series in the panel
+        "has_nans": bool, True iff the panel contains NaN values
 """
 
 __author__ = ["fkiraly"]
@@ -82,6 +83,7 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
     metadata["is_one_series"] = len(obj) == 1
+    metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
 
     return ret(True, None, metadata, return_metadata)
 
@@ -111,6 +113,10 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
     metadata["is_one_series"] = obj.shape[0] == 1
+
+    # check whether there any nans; only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -174,6 +180,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
     metadata["is_one_series"] = len(inst_inds) == 1
+    metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -246,6 +253,7 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     # metadata["is_equally_spaced"] = todo
     # metadata["is_empty"] = todo
     metadata["is_one_series"] = len(obj) == 1
+    # metadata["has_nan"] = todo
 
     return ret(True, None, metadata, return_metadata)
 
