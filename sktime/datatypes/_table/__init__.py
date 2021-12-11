@@ -3,12 +3,10 @@
 
 from sktime.datatypes._table._check import check_dict as check_dict_Table
 from sktime.datatypes._table._convert import convert_dict as convert_dict_Table
-
 from sktime.datatypes._table._examples import example_dict as example_dict_Table
 from sktime.datatypes._table._examples import (
     example_dict_lossy as example_dict_lossy_Table,
 )
-
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
 
 __all__ = [
