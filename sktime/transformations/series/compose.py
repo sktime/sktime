@@ -11,7 +11,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.impute import Imputer
 from sktime.utils.validation.series import check_series
 
 __author__ = ["aiwalter", "SveaMeyer13"]
@@ -371,8 +370,8 @@ class Featureizer(_SeriesToSeriesTransformer):
 
     Attributes
     ----------
-        transformer_
-        imputer_
+    transformer_ : _SeriesToSeriesTransformer
+        Fitted transformer.
     """
 
     _tags = {
@@ -383,11 +382,10 @@ class Featureizer(_SeriesToSeriesTransformer):
         "X_inner_mtype": ["pd.Series", "pd.DataFrame"],
     }
 
-    def __init__(self, transformer, fh, suffix="featureized", imputer=None):
+    def __init__(self, transformer, fh, suffix=None):
         self.transformer = transformer
         self.fh = fh
         self.suffix = suffix
-        self.imputer = imputer
         super(Featureizer, self).__init__()
 
     def _fit(self, X, y=None):
@@ -414,13 +412,16 @@ class Featureizer(_SeriesToSeriesTransformer):
         self._y = y.copy()
         if not isinstance(self.transformer, _SeriesToSeriesTransformer):
             raise TypeError("Given transformer must be a _SeriesToSeriesTransformer")
-        self.imputer_ = Imputer() if self.imputer is None else clone(self.imputer)
-        if not isinstance(self.imputer_, _SeriesToSeriesTransformer):
-            raise TypeError("imputer must be a _SeriesToSeriesTransformer")
+
         self.transformer_ = clone(self.transformer)
         # swap X, y
         self.transformer_.fit(y)
-        self.imputer_.fit(self.transformer_.transform(y))
+        # set suffix from transformer class name if None
+        self.suffix_ = (
+            self.suffix
+            if self.suffix is not None
+            else self.transformer.__class__.__name__.lower()
+        )
         self._is_fitted = True
         return self
 
@@ -472,8 +473,11 @@ class Featureizer(_SeriesToSeriesTransformer):
                 raise ValueError("Given len of X must be equal to len of fh.")
             y_t = self._y.iloc[-shift:]
         col = self._y.name + "_" + self.suffix if self._y.name else self.suffix
+        if col in X.columns:
+            raise AttributeError(
+                f"Name {col} is already in X.columns, please give a suffix param."
+            )
         Xt[col] = self.transformer_.transform(y_t).values
-        Xt[col] = self.imputer_.transform(Xt[col])
         return Xt
 
     @classmethod
