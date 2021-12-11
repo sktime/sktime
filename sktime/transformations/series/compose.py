@@ -9,6 +9,7 @@ from sklearn.base import clone
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.metaestimators import if_delegate_has_method
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils.validation.series import check_series
@@ -483,4 +484,7 @@ class Featureizer(_SeriesToSeriesTransformer):
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator."""
-        return {"transformer": TabularToSeriesAdaptor(MinMaxScaler()), "shift": 2}
+        return {
+            "transformer": TabularToSeriesAdaptor(MinMaxScaler()),
+            "fh": ForecastingHorizon([1, 2], is_relative=True),
+        }
