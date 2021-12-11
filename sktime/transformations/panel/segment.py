@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Interval and window segmenter transformers."""
 import math
 
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
+from sktime.datatypes._panel._convert import (
+    _concat_nested_arrays,
+    _get_column_names,
+    _get_time_index,
+)
 from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.datatypes._panel._convert import _concat_nested_arrays
-from sktime.datatypes._panel._convert import _get_column_names
-from sktime.datatypes._panel._convert import _get_time_index
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.panel import check_X
 
@@ -77,7 +80,8 @@ class IntervalSegmenter(_PanelToPanelTransformer):
         return self
 
     def transform(self, X, y=None):
-        """
+        """Transform input series.
+
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
         during `fit`.
@@ -93,7 +97,6 @@ class IntervalSegmenter(_PanelToPanelTransformer):
           Transformed pandas DataFrame with same number of rows and one
           column for each generated interval.
         """
-
         # Check inputs.
         self.check_is_fitted()
 
@@ -122,7 +125,9 @@ class IntervalSegmenter(_PanelToPanelTransformer):
 
 
 class RandomIntervalSegmenter(IntervalSegmenter):
-    """Transformer that segments time-series into random intervals with
+    """Random interval segmenter transformer.
+
+    Transformer that segments time-series into random intervals with
     random starting points and lengths. Some
     intervals may overlap and may be duplicates.
 
@@ -228,7 +233,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
 
 def _rand_intervals_rand_n(x, random_state=None):
-    """
+    """Sample a random number of intervals.
+
     Compute a random number of intervals from index (x) with
     random starting points and lengths. Intervals are unique, but may
     overlap.
@@ -266,7 +272,8 @@ def _rand_intervals_rand_n(x, random_state=None):
 def _rand_intervals_fixed_n(
     x, n_intervals, min_length=1, max_length=None, random_state=None
 ):
-    """
+    """Sample a fixed number of intervals.
+
     Compute a fixed number (n) of intervals from index (x) with
     random starting points and lengths. Intervals may overlap and may
     not be unique.
@@ -293,7 +300,8 @@ def _rand_intervals_fixed_n(
 
 
 class SlidingWindowSegmenter(_PanelToPanelTransformer):
-    """
+    """Sliding window segmenter transformer.
+
     This class is to transform a univariate series into a
     multivariate one by extracting sets of subsequences.
     It does this by firstly padding the time series on either end
@@ -331,8 +339,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
         super(SlidingWindowSegmenter, self).__init__()
 
     def transform(self, X, y=None):
-        """
-        Function to perform the transformation on the time series data.
+        """Transform time series.
 
         Parameters
         ----------
@@ -379,8 +386,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
         return df.transpose()
 
     def _extract_subsequences(self, instance, n_timepoints):
-        """
-        Function to extract a set of subsequences from a list of instances.
+        """Extract a set of subsequences from a list of instances.
 
         Adopted from -
         https://stackoverflow.com/questions/4923617/efficient-numpy-2d-array-
@@ -392,9 +398,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
         return np.lib.stride_tricks.as_strided(instance, shape=shape, strides=strides)
 
     def _check_parameters(self, n_timepoints):
-        """
-        Function for checking the values of parameters inserted
-        into SlidingWindowSegmenter.
+        """Check the values of parameters for interval segmenter.
 
         Throws
         ------
@@ -416,9 +420,8 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
 
 
 def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
-    """
-    Get number of intervals from number of time points for various allowed
-    input arguments.
+    """Get number of intervals from number of time points.
+
     Helpful to compute number of intervals relative to time series length,
     e.g. using floats or functions.
 
@@ -490,5 +493,5 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
         )
 
     # make sure n_intervals is an integer and there is at least one interval
-    n_intervals_ = np.maximum(1, np.int(n_intervals_))
+    n_intervals_ = np.maximum(1, int(n_intervals_))
     return n_intervals_
