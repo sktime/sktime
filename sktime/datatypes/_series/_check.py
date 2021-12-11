@@ -30,6 +30,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_univariate": bool, True iff series has one variable
         "is_equally_spaced": bool, True iff series index is equally spaced
         "is_empty": bool, True iff series has no variables or no instances
+        "has_nans": bool, True iff the series contains NaN values
 """
 
 __author__ = ["fkiraly"]
