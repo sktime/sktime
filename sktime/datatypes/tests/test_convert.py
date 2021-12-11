@@ -44,13 +44,8 @@ def test_convert(scitype):
     fixtures = dict()
 
     for mtype in mtypes:
-        # if we don't do this we get into a clash between linters
-        mtype_long_variable_name_to_avoid_linter_clash = mtype
-        fixtures[mtype] = get_examples(
-            mtype=mtype_long_variable_name_to_avoid_linter_clash,
-            as_scitype=scitype,
-            return_lossy=True,
-        )
+        examples = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=True)
+        fixtures[mtype] = examples
 
     if len(fixtures[mtypes[0]]) == 0:
         raise RuntimeError("no fixtures defined for scitype " + scitype)

@@ -69,8 +69,9 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._series import convert_dict_Series
-
 from sktime.datatypes._panel import convert_dict_Panel
+from sktime.datatypes._table import convert_dict_Table
+
 
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._registry import mtype_to_scitype
@@ -79,6 +80,7 @@ from sktime.datatypes._registry import mtype_to_scitype
 convert_dict = dict()
 convert_dict.update(convert_dict_Series)
 convert_dict.update(convert_dict_Panel)
+convert_dict.update(convert_dict_Table)
 
 
 def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=None):
