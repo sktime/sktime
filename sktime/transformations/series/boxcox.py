@@ -100,6 +100,7 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "X_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "fit-in-transform": False,
     }
 
