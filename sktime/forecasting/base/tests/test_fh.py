@@ -218,9 +218,10 @@ def test_get_duration(n_timepoints, index_type):
 
 
 @pytest.mark.parametrize("index_type", INDEX_TYPE_LOOKUP.keys())
-def test_is_complete(index_type):
+@pytest.mark.parametrize("n_timepoints", [1, 5])
+def test_is_complete(n_timepoints, index_type):
     """Test is_complete attribute."""
-    index = _make_index(5, index_type)
+    index = _make_index(n_timepoints, index_type)
     fh = ForecastingHorizon(index, is_relative=False)
     assert fh.is_complete
     index = index[[1, 3]]
