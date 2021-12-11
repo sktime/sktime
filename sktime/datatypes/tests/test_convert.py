@@ -63,7 +63,6 @@ def pytest_generate_tests(metafunc):
     to_mtype : str - mtype of conversion target ("to") to test, belongs to scitype
     fixture_index : int - index of fixture tuple use for conversion
     """
-
     # we assume all four arguments are present in the test below
     keys = _generate_fixture_tuples()
 
