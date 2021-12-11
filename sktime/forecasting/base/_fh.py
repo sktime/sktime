@@ -11,8 +11,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.datetime import _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
@@ -209,6 +208,28 @@ class ForecastingHorizon:
         is_relative : bool
         """
         return self._is_relative
+
+    @property
+    def is_complete(self):
+        """Whether forecasting horizon is complete or if it has gaps in the dates/time stamps.
+
+        Returns
+        -------
+        is_complete : bool
+        """
+        idx = self._values
+        if isinstance(idx, pd.DatetimeIndex):
+            return pd.date_range(idx[0], idx[-1]).equals(idx)
+        elif isinstance(idx, pd.PeriodIndex):
+            return pd.period_range(idx[0], idx[-1]).equals(idx)
+        elif (
+            isinstance(idx, pd.Int64Index)
+            or isinstance(idx, pd.RangeIndex)
+            or self.is_relative
+        ):
+            int_values = self._values.values
+            int_complete = np.arange(int_values[0], int_values[-1] + 1)
+            return True if np.array_equal(int_complete, int_values) else False
 
     def to_pandas(self):
         """Return forecasting horizon's underlying values as pd.Index.

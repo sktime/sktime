@@ -383,9 +383,9 @@ class Featureizer(_SeriesToSeriesTransformer):
         "X_inner_mtype": ["pd.Series", "pd.DataFrame"],
     }
 
-    def __init__(self, transformer, shift, suffix="featureized", imputer=None):
+    def __init__(self, transformer, fh, suffix="featureized", imputer=None):
         self.transformer = transformer
-        self.shift = shift  # to be replaced by fh
+        self.fh = fh
         self.suffix = suffix
         self.imputer = imputer
         super(Featureizer, self).__init__()
@@ -445,17 +445,32 @@ class Featureizer(_SeriesToSeriesTransformer):
         X = check_series(X, enforce_multivariate=True)
         y = check_series(y, enforce_univariate=True)
         Xt = X.copy()
-        # todo: check here properly if fh and self._y is continuous
+        # check that fh is complete
+        if not self.fh.is_complete:
+            raise ValueError(
+                "Given fh is not complete (has gaps). Please give a complete fh."
+            )
+        # check relative fh starts with 1 (no gap between cutoff and first point of fh)
+        if self.fh.is_relative:
+            if self.fh._values.values[0] != 1:
+                raise ValueError("fh must start with 1 and should not have any gaps.")
+        # check that for ablosulte index/fh that there is no gap between cutoff and fh
+        else:
+            if not self._y.index[-1] == self.fh._values.shift(-1)[0]:
+                raise ValueError(
+                    "fh must start with next time point ater cutoff, no gap allowed."
+                )
+        shift = len(self.fh._values)
         if X.index.equals(self._y.index):
             y_t = self._y.copy()
-            # shift values by shift into the future
-            y_t.iloc[self.shift :] = y.iloc[: -self.shift]
+            # shift values by fh into the future
+            y_t.iloc[shift:] = y.iloc[:-shift]
             # replace last values with NaN
-            y_t.iloc[: self.shift] = np.nan
+            y_t.iloc[:shift] = np.nan
         else:
-            if len(X) != self.shift:
-                raise ValueError("Given lenght of X must be equal to shift value.")
-            y_t = self._y.iloc[-self.shift :]
+            if len(X) != shift:
+                raise ValueError("Given len of X must be equal to len of fh.")
+            y_t = self._y.iloc[-shift:]
         col = self._y.name + "_" + self.suffix if self._y.name else self.suffix
         Xt[col] = self.transformer_.transform(y_t).values
         Xt[col] = self.imputer_.transform(Xt[col])
