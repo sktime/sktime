@@ -3,8 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-import pytest
-
 from sktime.datatypes import SCITYPE_REGISTER
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
