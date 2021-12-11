@@ -455,7 +455,9 @@ class Featureizer(_SeriesToSeriesTransformer):
         # check relative fh starts with 1 (no gap between cutoff and first point of fh)
         if self.fh.is_relative:
             if self.fh._values.values[0] != 1:
-                raise ValueError("fh must start with 1 and should not have any gaps.")
+                raise ValueError(
+                    "Relative fh must start with 1 and should not have any gaps."
+                )
         # check that for ablosulte index/fh that there is no gap between cutoff and fh
         else:
             if not self._y.index[-1] == self.fh._values.shift(-1)[0]:
