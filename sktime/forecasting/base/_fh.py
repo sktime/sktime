@@ -135,6 +135,9 @@ class ForecastingHorizon:
         - if None, the flag is determined automatically:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
+    is_complete : bool
+        Whether forecasting horizon is complete or if it has gaps
+        in the dates/time stamps.
     """
 
     def __new__(cls, values=None, is_relative=None):
