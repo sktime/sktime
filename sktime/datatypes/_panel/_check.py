@@ -253,7 +253,7 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     # metadata["is_equally_spaced"] = todo
     # metadata["is_empty"] = todo
     metadata["is_one_series"] = len(obj) == 1
-    # metadata["has_nan"] = todo
+    # metadata["has_nans"] = todo
 
     return ret(True, None, metadata, return_metadata)
 
