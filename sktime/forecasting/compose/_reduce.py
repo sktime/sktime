@@ -22,19 +22,15 @@ __all__ = [
     "MultioutputTabularRegressionForecaster",
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
-    "ReducedForecaster",
-    "ReducedRegressionForecaster",
 ]
 
 import numpy as np
-from sklearn.base import RegressorMixin
-from sklearn.base import clone
+from sklearn.base import RegressorMixin, clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.utils._maint import deprecated
 from sktime.utils.validation import check_window_length
 
 
@@ -713,79 +709,6 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     """
 
     _estimator_scitype = "time-series-regressor"
-
-
-@deprecated("Please use `make_reduction` from `sktime.forecasting.compose` instead.")
-def ReducedForecaster(
-    estimator, scitype="infer", strategy="recursive", window_length=10, step_length=1
-):
-    """Reduction from forecasting to tabular or time series regression.
-
-    During fitting, a sliding-window approach is used to first transform the
-    time series into tabular or panel data, which is then used to fit a tabular or
-    time-series regression estimator. During prediction, the last available data is
-    used as input to the fitted regression estimator to generate forecasts.
-
-    Parameters
-    ----------
-    estimator : Estimator
-        A estimator of type given by parameter scitype
-    scitype : str {"infer", "tabular-regressor", "time-series-regressor"}
-        Scitype of estimator.
-    strategy : str {"recursive", "direct", "multioutput"}, optional
-        Strategy to generate predictions
-    window_length : int, optional (default=10)
-    step_length : int, optional (default=1)
-
-    References
-    ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
-    2013).
-      Machine Learning Strategies for Time Series Forecasting.
-    """
-    if step_length != 1:
-        raise ValueError(
-            "`step_length` values different from 1 are no longer supported."
-        )
-    return make_reduction(
-        estimator, strategy=strategy, window_length=window_length, scitype=scitype
-    )
-
-
-@deprecated("Please use `make_reduction` from `sktime.forecasting.compose` instead.")
-def ReducedRegressionForecaster(
-    estimator, scitype, strategy="recursive", window_length=10, step_length=1
-):
-    """Reduction from forecasting to tabular or time series regression.
-
-    During fitting, a sliding-window approach is used to first transform the
-    time series into tabular or panel data, which is then used to fit a tabular or
-    time-series regression estimator. During prediction, the last available data is
-    used as input to the fitted regression estimator to generate forecasts.
-
-    Parameters
-    ----------
-    estimator : a estimator of type given by parameter scitype
-    scitype : str {"infer", "tabular-regressor", "time-series-regressor"}
-        Scitype of estimator.
-    strategy : str {"recursive", "direct", "multioutput"}, optional
-        Strategy to generate predictions
-    window_length : int, optional (default=10)
-    step_length : int, optional (default=1)
-
-    References
-    ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (
-    2013).
-      Machine Learning Strategies for Time Series Forecasting.
-    """
-    if step_length != 1:
-        raise ValueError(
-            "`step_length` values different from 1 are no longer " "supported."
-        )
-    return make_reduction(
-        estimator, strategy=strategy, window_length=window_length, scitype=scitype
-    )
 
 
 def make_reduction(

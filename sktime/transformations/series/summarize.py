@@ -7,9 +7,9 @@ __author__ = ["mloning", "RNKuhns"]
 __all__ = ["SummaryTransformer", "MeanTransformer"]
 
 import pandas as pd
+from deprecated.sphinx import deprecated
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.utils._maint import deprecated
 
 ALLOWED_SUM_FUNCS = [
     "mean",
@@ -195,10 +195,13 @@ class MeanTransformer(SummaryTransformer):
     """
 
     @deprecated(
-        """Please use `SummaryTransformer` from
-        `sktime.transformation.series.summarize` instead.
-        MeanTransformer will be removed in release 0.10.
-        """
+        version="0.9.0",
+        reason=(
+            "MeanTransformer will be removed in release v0.10.0. Please use "
+            "`SummaryTransformer` from `sktime.transformation.series.summarize` "
+            "instead."
+        ),
+        category=FutureWarning,
     )
     def __init__(self):
         super().__init__(summary_function="mean", quantiles=None)
