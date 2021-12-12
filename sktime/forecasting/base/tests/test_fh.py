@@ -224,6 +224,7 @@ def test_is_complete(n_timepoints, index_type):
     index = _make_index(n_timepoints, index_type)
     fh = ForecastingHorizon(index, is_relative=False)
     assert fh.is_complete
-    index = index[[1, 3]]
-    fh = ForecastingHorizon(index, is_relative=False)
-    assert not fh.is_complete
+    if n_timepoints != 1:
+        index = index[[1, 3]]
+        fh = ForecastingHorizon(index, is_relative=False)
+        assert not fh.is_complete

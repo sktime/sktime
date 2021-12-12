@@ -381,6 +381,7 @@ class Featureizer(_SeriesToSeriesTransformer):
         "skip-inverse-transform": True,
         "univariate-only": False,
         "X_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
     }
 
     def __init__(self, transformer, fh, suffix=None):
