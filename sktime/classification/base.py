@@ -110,6 +110,11 @@ class BaseClassifier(BaseEstimator):
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X)
         y = self._convert_y(y)
+
+        # input checks and minor coercions on X, y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+
         multithread = self.get_tag("capability:multithreading")
         if multithread:
             try:
@@ -317,6 +322,100 @@ class BaseClassifier(BaseEstimator):
                 "The data has unequal length series, this classifier cannot handle "
                 "unequal length series"
             )
+
+
+    def _check_X_y(self, X=None, y=None):
+        """Check and coerce X/y for fit/predict/update functions.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
+            Time series to check.
+        X : pd.DataFrame, or 2D np.array, optional (default=None)
+            Exogeneous time series.
+
+        Returns
+        -------
+        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
+            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            None if y was None
+        X_inner : Series compatible with self.get_tag("X_inner_mtype") format
+            converted/coerced version of y, mtype determined by "X_inner_mtype" tag
+            None if X was None
+
+        Raises
+        ------
+        TypeError if y or X is not one of the permissible Series mtypes
+        TypeError if y is not compatible with self.get_tag("scitype:y")
+            if tag value is "univariate", y must be univariate
+            if tag value is "multivariate", y must be bi- or higher-variate
+            if tag vaule is "both", y can be either
+        TypeError if self.get_tag("X-y-must-have-same-index") is True
+            and the index set of X is not a super-set of the index set of y
+
+        Writes to self
+        --------------
+        _y_mtype_last_seen : str, mtype of y
+        _converter_store_y : dict, metadata from conversion for back-conversion
+        """
+        # input checks and minor coercions on X, y
+        ###########################################
+
+        enforce_univariate = self.get_tag("scitype:y") == "univariate"
+        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
+        enforce_index_type = self.get_tag("enforce_index_type")
+
+        # checking y
+        if y is not None:
+            check_y_args = {
+                "enforce_univariate": enforce_univariate,
+                "enforce_multivariate": enforce_multivariate,
+                "enforce_index_type": enforce_index_type,
+                "allow_None": False,
+                "allow_empty": True,
+            }
+
+            y = check_series(y, **check_y_args, var_name="y")
+
+            self._y_mtype_last_seen = mtype(y)
+        # end checking y
+
+        # checking X
+        if X is not None:
+            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+            if self.get_tag("X-y-must-have-same-index"):
+                check_equal_time_index(X, y)
+        # end checking X
+
+        # convert X & y to supported inner type, if necessary
+        #####################################################
+
+        # retrieve supported mtypes
+
+        # convert X and y to a supported internal mtype
+        #  it X/y mtype is already supported, no conversion takes place
+        #  if X/y is None, then no conversion takes place (returns None)
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+            store=self._converter_store_y,
+        )
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+        )
+
+        return X_inner, y_inner
+
+    def _check_X(self, X=None):
+        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
+        return self._check_X_y(X=X)[0]
+
 
     def _convert_X(self, X):
         """Convert equal length series from DataFrame to numpy array or vice versa.
