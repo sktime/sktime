@@ -55,10 +55,10 @@ example_dict[("np.ndarray", "Series", 0)] = arr
 example_dict_lossy[("np.ndarray", "Series", 0)] = True
 
 example_dict_metadata[("Series", 0)] = {
-  "is_univariate": True,
-  "is_equally_spaced": True,
-  "is_empty": False,
-  "has_nans": False,
+    "is_univariate": True,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
 }
 
 ###
@@ -78,10 +78,10 @@ example_dict[("np.ndarray", "Series", 1)] = arr
 example_dict_lossy[("np.ndarray", "Series", 1)] = True
 
 example_dict_metadata[("Series", 1)] = {
-  "is_univariate": False,
-  "is_equally_spaced": True,
-  "is_empty": False,
-  "has_nans": False,
+    "is_univariate": False,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
 }
 
 ###
@@ -101,8 +101,8 @@ example_dict[("np.ndarray", "Series", 2)] = arr
 example_dict_lossy[("np.ndarray", "Series", 2)] = True
 
 example_dict_metadata[("Series", 2)] = {
-  "is_univariate": False,
-  "is_equally_spaced": True,
-  "is_empty": False,
-  "has_nans": False,
+    "is_univariate": False,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
 }

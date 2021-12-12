@@ -143,9 +143,7 @@ def test_check_positive(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist
     if fixture is not None and check_is_defined:
-        check_result = check_is_mtype(
-            fixture, mtype, scitype, return_metadata=True
-        )
+        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
         if not check_result[0]:
             msg = (
                 f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
@@ -180,10 +178,7 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist
     if fixture is not None and check_is_defined and metadata_provided:
-        check_result = check_is_mtype(
-            fixture, mtype, scitype, return_metadata=True
-        )
-
+        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
         metadata = check_result[2]
 
         # remove mtype key if exists, since comparison is on scitype level

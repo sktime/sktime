@@ -24,18 +24,18 @@ __all__ = [
 from sktime.datatypes._alignment import example_dict_Alignment
 from sktime.datatypes._panel import (
     example_dict_lossy_Panel,
-    example_dict_Panel,
     example_dict_metadata_Panel,
+    example_dict_Panel,
 )
 from sktime.datatypes._series import (
     example_dict_lossy_Series,
-    example_dict_Series,
     example_dict_metadata_Series,
+    example_dict_Series,
 )
 from sktime.datatypes._table import (
     example_dict_lossy_Table,
-    example_dict_Table,
     example_dict_metadata_Table,
+    example_dict_Table,
 )
 
 # pool example_dict-s
@@ -60,7 +60,7 @@ def get_examples(
     mtype: str,
     as_scitype: str,
     return_lossy: bool = False,
-    return_metadata: bool = False
+    return_metadata: bool = False,
 ):
     """Retrieve a dict of examples for mtype `mtype`, scitype `as_scitype`.
 

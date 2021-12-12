@@ -77,11 +77,11 @@ example_dict[("nested_univ", "Panel", 0)] = X
 example_dict_lossy[("nested_univ", "Panel", 0)] = False
 
 example_dict_metadata[("Panel", 0)] = {
-  "is_univariate": False,
-  "is_one_series": False,
-  "is_equally_spaced": True,
-  "is_empty": False,
-  "has_nans": False,
+    "is_univariate": False,
+    "is_one_series": False,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
 }
 
 ###
@@ -128,11 +128,11 @@ example_dict[("nested_univ", "Panel", 1)] = X
 example_dict_lossy[("nested_univ", "Panel", 1)] = False
 
 example_dict_metadata[("Panel", 1)] = {
-  "is_univariate": True,
-  "is_one_series": False,
-  "is_equally_spaced": True,
-  "is_empty": False,
-  "has_nans": False,
+    "is_univariate": True,
+    "is_one_series": False,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
 }
 
 ###
@@ -167,17 +167,15 @@ example_dict_lossy[("pd-multiindex", "Panel", 2)] = False
 
 cols = [f"var_{i}" for i in range(1)]
 X = pd.DataFrame(columns=cols, index=[0])
-X["var_0"] = pd.Series(
-    [pd.Series([4, 5, 6])]
-)
+X["var_0"] = pd.Series([pd.Series([4, 5, 6])])
 
 example_dict[("nested_univ", "Panel", 2)] = X
 example_dict_lossy[("nested_univ", "Panel", 2)] = False
 
 example_dict_metadata[("Panel", 2)] = {
-  "is_univariate": True,
-  "is_one_series": True,
-  "is_equally_spaced": True,
-  "is_empty": False,
-  "has_nans": False,
+    "is_univariate": True,
+    "is_one_series": True,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
 }

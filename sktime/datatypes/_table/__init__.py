@@ -19,5 +19,5 @@ __all__ = [
     "MTYPE_REGISTER_TABLE",
     "example_dict_Table",
     "example_dict_lossy_Table",
-    "example_dict_metadata_Table"
+    "example_dict_metadata_Table",
 ]
