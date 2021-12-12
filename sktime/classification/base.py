@@ -175,13 +175,14 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
-        series_length]
-            or 3D np.array (any number of dimensions, equal length series) of shape =
-            [n_instances,n_dimensions,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
-            number of dimensions, equal or unequal length series)
-        y : array-like, shape =  [n_instances] - actual class labels
+        X : Panel, any of the supported formats (default=None)
+                usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
+                if 3D numpy, of shape [n_instances, n_dimensions, series_length]
+            additionally, can be 2D numpy array of shape [n_instances, series_length]
+            panel of time series to train classifier on
+        y : Table, univariate, any of the supported formats (default=None)
+                usually, 1D np.array of shape = [n_instances]
+            class labels for the series in X
 
         Returns
         -------
