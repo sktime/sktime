@@ -166,7 +166,7 @@ example_dict[("pd-multiindex", "Panel", 2)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 2)] = False
 
 cols = [f"var_{i}" for i in range(1)]
-X = pd.DataFrame(columns=cols, index=[0, 1, 2])
+X = pd.DataFrame(columns=cols, index=[0])
 X["var_0"] = pd.Series(
     [pd.Series([4, 5, 6])]
 )
