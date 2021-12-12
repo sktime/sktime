@@ -283,7 +283,7 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
     ----------
     obj : object to infer type of - any type, should comply with and mtype spec
         if as_scitype is provided, this needs to be mtype belonging to scitype
-    as_scitype : str, or list of str, optional, default=None
+    as_scitype : str, list of str, or None, optional, default=None
         name of scitype(s) the object "obj" is considered as, finds mtype for that
         if None (default), does not assume a specific as_scitype and tests all mtypes
             generally, as_scitype should be provided for maximum efficiency
