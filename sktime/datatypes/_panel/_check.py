@@ -32,6 +32,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_empty": bool, True iff one or more of the series in the panel are empty
         "is_one_series": bool, True iff there is only one series in the panel
         "has_nans": bool, True iff the panel contains NaN values
+        "n_instances": int, number of instances in the panel
 """
 
 __author__ = ["fkiraly", "tonybagnall"]
@@ -82,8 +83,9 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
         [res[2]["is_equally_spaced"] for res in check_res]
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
-    metadata["is_one_series"] = len(obj) == 1
     metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
+    metadata["is_one_series"] = n == 1
+    metadata["n_instances"] = n
 
     return ret(True, None, metadata, return_metadata)
 
@@ -112,6 +114,7 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = obj.shape[1] < 2
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
+    metadata["n_instances"] = obj.shape[0]
     metadata["is_one_series"] = obj.shape[0] == 1
 
     # check whether there any nans; only if requested
@@ -179,6 +182,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
         [res[2]["is_equally_spaced"] for res in check_res]
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
 
@@ -299,6 +303,7 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = obj.shape[1] < 2
     # todo: this is temporary override, proper is_empty logic needs to be added
     metadata["is_empty"] = False
+    metadata["n_instances"] = len(obj)
     metadata["is_one_series"] = len(obj) == 1
     if return_metadata:
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
