@@ -82,6 +82,7 @@ example_dict_metadata[("Panel", 0)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_instances": 3,
 }
 
 ###
@@ -133,6 +134,7 @@ example_dict_metadata[("Panel", 1)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_instances": 3,
 }
 
 ###
@@ -178,4 +180,5 @@ example_dict_metadata[("Panel", 2)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_instances": 1,
 }
