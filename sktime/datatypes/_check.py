@@ -54,6 +54,13 @@ def _check_scitype_valid(scitype: str = None):
         raise TypeError(scitype + " is not a supported scitype")
 
 
+def _ret(valid, msg, metadata, return_metadata):
+    if return_metadata:
+        return valid, msg, metadata
+    else:
+        return valid
+
+
 #  TODO: remove in v0.11.0
 @deprecated(
     version="v0.10.0",
@@ -177,12 +184,6 @@ def check_is_mtype(
     TypeError if no checks defined for mtype/scitype combination
     TypeError if mtype input argument is not of expected type
     """
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     mtype = _coerce_list_of_str(mtype, var_name="mtype")
 
     valid_keys = check_dict.keys()
@@ -235,7 +236,7 @@ def check_is_mtype(
         if len(msg) == 1:
             msg = msg[0]
 
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
 
 def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
@@ -300,14 +301,10 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
     if obj is None:
         return None
 
-    if isinstance(as_scitype, str):
-        as_scitype = [as_scitype]
-
-    if isinstance(as_scitype, list):
+    if as_scitype is not None:
+        as_scitype = _coerce_list_of_str(as_scitype, var_name="as_scitype")
         for scitype in as_scitype:
             _check_scitype_valid(scitype)
-    elif as_scitype is not None:
-        raise TypeError("as_scitype must be str or list of str")
 
     if as_scitype is None:
         m_plus_scitypes = [(x[0], x[1]) for x in check_dict.keys()]
@@ -366,13 +363,6 @@ def check_is_scitype(
     ------
     TypeError if scitype input argument is not of expected type
     """
-
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     scitype = _coerce_list_of_str(scitype, var_name="scitype")
 
     for x in scitype:
@@ -425,4 +415,4 @@ def check_is_scitype(
         if len(msg) == 1:
             msg = msg[0]
 
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
