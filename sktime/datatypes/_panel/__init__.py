@@ -8,6 +8,9 @@ from sktime.datatypes._panel._examples import example_dict as example_dict_Panel
 from sktime.datatypes._panel._examples import (
     example_dict_lossy as example_dict_lossy_Panel,
 )
+from sktime.datatypes._panel._examples import (
+    example_dict_metadata as example_dict_metadata_Panel,
+)
 
 # from sktime.datatypes._panel._mtypes import infer_mtype_dict as infer_mtype_dict_Panel
 
@@ -19,4 +22,5 @@ __all__ = [
     "MTYPE_REGISTER_PANEL",
     "example_dict_Panel",
     "example_dict_lossy_Panel",
+    "example_dict_metadata_Panel",
 ]

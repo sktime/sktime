@@ -3,6 +3,8 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
+
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import check_dict, check_is_mtype
 from sktime.datatypes._check import mtype as infer_mtype
@@ -75,13 +77,10 @@ def _generate_scitype_mtype_fixtureindex_combinations():
 
     sci_mtype_index_tuples = []
 
-    for tuple in sci_mtype_tuples:
-        mtype = tuple[0]
-        scitype = tuple[1]
+    for tuple_j in sci_mtype_tuples:
+        scitype = tuple_j[0]
+        mtype = tuple_j[1]
         n_fixtures = len(get_examples(mtype=mtype, as_scitype=scitype))
-
-        if n_fixtures == 0:
-            raise RuntimeError("no fixtures defined for scitype " + scitype)
 
         for i in range(n_fixtures):
             sci_mtype_index_tuples += [(scitype, mtype, i)]
@@ -149,11 +148,55 @@ def test_check_positive(scitype, mtype, fixture_index):
         )
         if not check_result[0]:
             msg = (
-                f"check_is_mtype returns False on {mtype} "
+                f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
                 f"fixture {fixture_index}, message: "
             )
             msg = msg + check_result[1]
         assert check_result[0], msg
+
+
+def test_check_metadata_inference(scitype, mtype, fixture_index):
+    """Tests that check_is_mtype correctly infers metadata of examples.
+
+    Parameters
+    ----------
+    scitype : str - name of scitype for which mtype conversions are tested
+
+    Raises
+    ------
+    RuntimeError if scitype is not defined or has no mtypes or examples
+    AssertionError if example metadata is not correctly inferred
+    error if check itself raises an error
+    """
+    # retrieve fixture for checking
+    fixture, _, expected_metadata = get_examples(
+        mtype=mtype, as_scitype=scitype, return_metadata=True
+    ).get(fixture_index)
+
+    # todo: possibly remove this once all checks are defined
+    check_is_defined = (mtype, scitype) in check_dict.keys()
+    # if the examples have no metadata to them, don't test
+    metadata_provided = expected_metadata is not None
+
+    # check fixtures that exist against checks that exist
+    if fixture is not None and check_is_defined and metadata_provided:
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True
+        )
+
+        metadata = check_result[2]
+
+        # remove mtype key if exists, since comparison is on scitype level
+        if "mtype" in metadata:
+            del metadata["mtype"]
+
+        msg = (
+            f"check_is_mtype returns wrong metadata on scitype {scitype}, "
+            f"mtype {mtype}, fixture {fixture_index}. "
+            f"returned: {metadata}; expected: {expected_metadata}"
+        )
+
+        assert metadata == expected_metadata, msg
 
 
 def test_check_negative(scitype, mtype):
@@ -179,7 +222,7 @@ def test_check_negative(scitype, mtype):
     for other_mtype in mtypes:
         fixtures[other_mtype] = get_examples(mtype=other_mtype, as_scitype=scitype)
 
-    n_fixtures = len(fixtures)
+    n_fixtures = np.max([len(fixtures[mtype]) for mtype in mtypes])
 
     if n_fixtures == 0:
         raise RuntimeError("no fixtures defined for scitype " + scitype)
