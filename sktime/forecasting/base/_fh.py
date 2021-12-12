@@ -232,7 +232,7 @@ class ForecastingHorizon:
         ):
             int_values = self._values.values
             int_complete = np.arange(int_values[0], int_values[-1] + 1)
-            return True if np.array_equal(int_complete, int_values) else False
+            return np.array_equal(int_complete, int_values)
 
     def to_pandas(self):
         """Return forecasting horizon's underlying values as pd.Index.
