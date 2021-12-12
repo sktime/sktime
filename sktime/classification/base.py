@@ -173,16 +173,18 @@ class BaseClassifier(BaseEstimator):
     def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
 
+        Uses accuracy_score for scoring predictions on X against ground truth y
+
         Parameters
         ----------
         X : Panel, any of the supported formats (default=None)
                 usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
                 if 3D numpy, of shape [n_instances, n_dimensions, series_length]
             additionally, can be 2D numpy array of shape [n_instances, series_length]
-            panel of time series to train classifier on
+            panel of time series to predict labels from
         y : Table, univariate, any of the supported formats (default=None)
                 usually, 1D np.array of shape = [n_instances]
-            class labels for the series in X
+            ground truth class labels for the series in X
 
         Returns
         -------
