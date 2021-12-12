@@ -296,8 +296,9 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
             return ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = True
-    # metadata["is_empty"] = todo
+    metadata["is_univariate"] = obj.shape[1] < 2
+    # todo: this is temporary override, proper is_empty logic needs to be added
+    metadata["is_empty"] = False
     metadata["is_one_series"] = len(obj) == 1
     if return_metadata:
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
