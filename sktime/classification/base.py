@@ -28,14 +28,9 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 import time
 
 import numpy as np
-import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.datatypes._panel._convert import (
-    from_3d_numpy_to_nested,
-    from_nested_to_3d_numpy,
-)
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
 
 
@@ -57,10 +52,9 @@ class BaseClassifier(BaseEstimator):
     """
 
     _tags = {
-        "convert_X_to_numpy": True,
-        "convert_X_to_dataframe": False,
-        "convert_y_to_numpy": True,
-        "convert_y_to_series": False,
+        "X_inner_mtype": "numpy3D",  # which types do _fit/_predict, support for X?
+        "y_inner_mtype": "numpy1D",  # which types do _fit/_predict, support for y?
+        # note: y_inner_mtype is always assumped to be numpy1D for now
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -82,13 +76,14 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
-            series_length]
-            or 3D np.array (any number of dimensions, equal length series) of shape =
-            [n_instances,n_dimensions,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
-            number of dimensions, equal or unequal length series)
-        y : 1D np.array of shape =  [n_instances] - the class labels.
+        X : Panel, any of the supported formats (default=None)
+                usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
+                if 3D numpy, of shape [n_instances, n_dimensions, series_length]
+            additionally, can be 2D numpy array of shape [n_instances, series_length]
+            panel of time series to train classifier on
+        y : Table, univariate, any of the supported formats (default=None)
+                usually, 1D np.array of shape = [n_instances]
+            class labels for the series in X
 
         Returns
         -------
@@ -101,19 +96,9 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         start = int(round(time.time() * 1000))
-        # Check the data is either numpy arrays or pandas dataframes
-        _check_classifier_input(X, y)
-        # Query the data for characteristics
-        missing, multivariate, unequal = _get_data_characteristics(X)
-        # Check this classifier can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
-        y = self._convert_y(y)
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
-
 
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -124,12 +109,16 @@ class BaseClassifier(BaseEstimator):
                     "self.n_jobs must be set if capability:multithreading is True"
                 )
 
+        # for this we assume that y_inner_mtype is always numpy
+        # this paragraph needs be changed if we want to support pd.DataFrame internally
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
-        self._fit(X, y)
+
+        self._fit(X_inner, y_inner)
         self.fit_time_ = int(round(time.time() * 1000)) - start
+
         # this should happen last
         self._is_fitted = True
         return self
@@ -139,12 +128,11 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
-        series_length]
-            or 3D np.array (any number of dimensions, equal length series) of shape =
-            [n_instances,n_dimensions,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
-            number of dimensions, equal or unequal length series)
+        X : Panel, any of the supported formats (default=None)
+                usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
+                if 3D numpy, of shape [n_instances, n_dimensions, series_length]
+            additionally, can be 2D numpy array of shape [n_instances, series_length]
+            panel of time series to classify
 
         Returns
         -------
@@ -152,47 +140,35 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
 
-        # Check the data is either numpy arrays or pandas dataframes
-        _check_classifier_input(X)
-        # Query the data for characteristics
-        missing, multivariate, unequal = _get_data_characteristics(X)
-        # Check this classifier can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        # input checks and minor coercions on X, y
+        X_inner = self._check_X(X=X)
 
-        return self._predict(X)
+        return self._predict(X_inner)
 
     def predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
         ----------
-        X : 2D np.array (univariate, equal length series) of shape = [n_instances,
-        series_length]
-            or 3D np.array (any number of dimensions, equal length series) of shape =
-            [n_instances,n_dimensions,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series (any
-            number of dimensions, equal or unequal length series)
+        X : Panel, any of the supported formats (default=None)
+                usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
+                if 3D numpy, of shape [n_instances, n_dimensions, series_length]
+            additionally, can be 2D numpy array of shape [n_instances, series_length]
+            panel of time series to classify
 
         Returns
         -------
-        y : 2D array of shape =  [n_instances, n_classes] - estimated class
-        probabilities
+        y : array-like, shape =  [n_instances, n_classes]
+            estimated probabilities of class membership
+            (i,j)-the element is predictive probability
+                of i-th instance of X to be contained in class j
         """
         self.check_is_fitted()
 
-        # Check the data is either numpy arrays or pandas dataframes
-        # TODO: add parameters for min instances and min length
-        _check_classifier_input(X)
-        # Query the data for characteristics
-        missing, multivariate, unequal = _get_data_characteristics(X)
-        # Check this classifier can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        # input checks and minor coercions on X, y
+        X_inner = self._check_X(X=X)
 
-        return self._predict_proba(X)
+        return self._predict_proba(X_inner)
 
     def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
@@ -222,11 +198,12 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
+        X : Panel of mtype X_inner_mtype
+            usually: 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
-        y : array-like, shape = [n_instances] - the class labels
+        y : Table of mtype y_iner_mtype
+            usually: array-like, shape = [n_instances] - the class labels
 
         Returns
         -------
@@ -249,9 +226,9 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
+        X : Panel of mtype X_inner_mtype
+            usually: 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
 
         Returns
@@ -271,15 +248,17 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
+        X : Panel of mtype X_inner_mtype
+            usually: 3D np.array, array-like or sparse matrix
                 of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
-        of class membership.
+        y : array-like, shape =  [n_instances, n_classes]
+            estimated probabilities of class membership
+            (i,j)-the element is predictive probability
+                of i-th instance of X to be contained in class j
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
@@ -323,25 +302,25 @@ class BaseClassifier(BaseEstimator):
                 "unequal length series"
             )
 
-
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
-            Time series to check.
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series.
+        X : Panel, any of the supported formats (default=None)
+                usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
+            panel of time series to classify
+        y : Table, univariate, any of the supported formats (default=None)
+            class labels for the series in X
 
         Returns
         -------
-        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
-            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
-            None if y was None
         X_inner : Series compatible with self.get_tag("X_inner_mtype") format
             converted/coerced version of y, mtype determined by "X_inner_mtype" tag
             None if X was None
+        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
+            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            None if y was None
 
         Raises
         ------
@@ -352,49 +331,65 @@ class BaseClassifier(BaseEstimator):
             if tag vaule is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
-
-        Writes to self
-        --------------
-        _y_mtype_last_seen : str, mtype of y
-        _converter_store_y : dict, metadata from conversion for back-conversion
         """
-        # input checks and minor coercions on X, y
-        ###########################################
+        # check inputs X/y to be compatible with classifier specification
+        #################################################################
 
-        enforce_univariate = self.get_tag("scitype:y") == "univariate"
-        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
-        enforce_index_type = self.get_tag("enforce_index_type")
+        # is X of Panel scitype?
+        X_valid, _, X_metadata = check_is_scitype(
+            X, scitype="Panel", return_metadata=True
+        )
+        if not X_valid:
+            raise TypeError(
+                "X is not of a supported Panel mtype. "
+                "Use datatypes.check_is_mtype to check conformance with specification."
+            )
 
-        # checking y
-        if y is not None:
-            check_y_args = {
-                "enforce_univariate": enforce_univariate,
-                "enforce_multivariate": enforce_multivariate,
-                "enforce_index_type": enforce_index_type,
-                "allow_None": False,
-                "allow_empty": True,
-            }
+        # is y of Table scitype and univariate?
+        y_valid, _, y_metadata = check_is_scitype(
+            y, scitype="Table", return_metadata=True
+        )
+        if not y_valid:
+            raise TypeError(
+                "X is not of a supported Panel mtype. "
+                "Use datatypes.check_is_mtype to check conformance with specification."
+            )
+        if not y_metadata["is_univariate"]:
+            raise ValueError("label container y must be univariate")
 
-            y = check_series(y, **check_y_args, var_name="y")
+        # do X/y have the same number of instances, and at least 1 instance?
+        n_instances = X_metadata["n_instances"]
+        n_labels = y_metadata["n_instances"]
 
-            self._y_mtype_last_seen = mtype(y)
-        # end checking y
+        if n_instances != n_labels:
+            raise ValueError(
+                f"Mismatch in number of cases. "
+                f"Number instances in X = {n_instances}, but"
+                f"number labels in y = {n_labels}"
+            )
 
-        # checking X
-        if X is not None:
-            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-            if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
-        # end checking X
+        if n_instances == 0:
+            raise ValueError("Found zero instances in X, there should be at least 1.")
+
+        # Can this classifier can handle data characteristics?
+        self._check_capabilities(
+            X_metadata["has_nans"],
+            not X_metadata["is_univariate"],
+            not X_metadata["is_equally_spaced"],
+        )
 
         # convert X & y to supported inner type, if necessary
         #####################################################
 
-        # retrieve supported mtypes
-
         # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Series",  # we are dealing with series
+        )
         y_inner_mtype = self.get_tag("y_inner_mtype")
         y_inner = convert_to(
             y,
@@ -403,273 +398,8 @@ class BaseClassifier(BaseEstimator):
             store=self._converter_store_y,
         )
 
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-        )
-
         return X_inner, y_inner
 
     def _check_X(self, X=None):
         """Shorthand for _check_X_y with one argument X, see _check_X_y."""
         return self._check_X_y(X=X)[0]
-
-
-    def _convert_X(self, X):
-        """Convert equal length series from DataFrame to numpy array or vice versa.
-
-        Parameters
-        ----------
-        self : this classifier
-        X : pd.DataFrame or np.ndarray. Input attribute data
-
-        Returns
-        -------
-        X : pd.DataFrame or np.array
-            Checked and possibly converted input data
-        """
-        convert_to_numpy = self.get_tag("convert_X_to_numpy")
-        convert_to_pandas = self.get_tag("convert_X_to_dataframe")
-        if convert_to_numpy and convert_to_pandas:
-            raise ValueError(
-                "Tag error: cannot set both convert_X_to_numpy and "
-                "convert_X_to_dataframe to be true."
-            )
-        # convert pd.DataFrame
-        if isinstance(X, np.ndarray):
-            # Temporary fix to insist on 3D numpy. For univariate problems,
-            # most classifiers simply convert back to 2D. This squeezing should be
-            # done here, but touches a lot of files, so will get this to work first.
-            if X.ndim == 2:
-                X = X.reshape(X.shape[0], 1, X.shape[1])
-
-        if convert_to_numpy:
-            if isinstance(X, pd.DataFrame):
-                X = from_nested_to_3d_numpy(X)
-        elif convert_to_pandas:
-            if isinstance(X, np.ndarray):
-                X = from_3d_numpy_to_nested(X)
-        return X
-
-    def _convert_y(self, y):
-        """Convert y into a pd.Series or an np.array, depending on convert tags.
-
-        y is the target variable.
-
-        Parameters
-        ----------
-        self : this classifier
-        y : np.array or pd.Series.
-
-        Returns
-        -------
-        y: pd.Series or np.ndarray
-        """
-        if isinstance(y, pd.Series):
-            if self.get_tag("convert_y_to_numpy"):
-                y = pd.Series.to_numpy(y)
-        elif isinstance(y, np.ndarray):
-            if self.get_tag("convert_y_to_series"):
-                y = pd.Series(y)
-        return y
-
-
-def _check_classifier_input(
-    X,
-    y=None,
-    enforce_min_instances=1,
-    enforce_min_series_length=1,
-):
-    """Check whether input X and y are valid formats with minimum data.
-
-    Raises a ValueError if the input is not valid.
-
-    Parameters
-    ----------
-    X : check whether a pd.DataFrame or np.ndarray
-    y : check whether a pd.Series or np.array
-    enforce_min_instances : int, optional (default=1)
-        check there are a minimum number of instances.
-    enforce_min_series_length : int, optional (default=1)
-        Enforce minimum series length for input ndarray (i.e. fixed length problems)
-
-    Raises
-    ------
-    ValueError
-        If y or X is invalid input data type, or there is not enough data
-    """
-    # Check X
-    if not isinstance(X, (pd.DataFrame, np.ndarray)):
-        raise ValueError(
-            f"X must be either a pd.DataFrame or a np.ndarray, "
-            f"but found type: {type(X)}"
-        )
-    n_cases = X.shape[0]
-    if isinstance(X, np.ndarray):
-        if not (X.ndim == 2 or X.ndim == 3):
-            raise ValueError(
-                f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
-                f"but found to be: {X.ndim}"
-            )
-        if X.ndim == 2 and X.shape[1] < enforce_min_series_length:
-            raise ValueError(
-                f"Series length below the minimum, equal length series are length"
-                f" {X.shape[1]}"
-                f"but the minimum is  {enforce_min_series_length}"
-            )
-        if X.ndim == 3 and X.shape[2] < enforce_min_series_length:
-            raise ValueError(
-                f"Series length below the minimum, equal length series are length"
-                f" {X.shape[2]}"
-                f"but the minimum is  {enforce_min_series_length}"
-            )
-    else:
-        if X.shape[1] == 0:
-            raise ValueError("x is a pd.DataFrame with no data (num columns == 0).")
-    if n_cases < enforce_min_instances:
-        raise ValueError(
-            f"Minimum number of cases required is {enforce_min_instances} but X "
-            f"has : {n_cases}"
-        )
-    if isinstance(X, pd.DataFrame):
-        if not is_nested_dataframe(X):
-            raise ValueError(
-                "If passed as a pd.DataFrame, X must be a nested "
-                "pd.DataFrame, with pd.Series or np.arrays inside cells."
-            )
-    # Check y if passed
-    if y is not None:
-        # Check y valid input
-        if not isinstance(y, (pd.Series, np.ndarray)):
-            raise ValueError(
-                f"y must be a np.array or a pd.Series, but found type: {type(y)}"
-            )
-        # Check matching number of labels
-        n_labels = y.shape[0]
-        if n_cases != n_labels:
-            raise ValueError(
-                f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
-                f"{n_labels}"
-            )
-        if isinstance(y, np.ndarray):
-            if y.ndim > 1:
-                raise ValueError(
-                    f"y must be 1-dimensional but is in fact " f"{y.ndim} dimensional"
-                )
-
-
-def _get_data_characteristics(X):
-    """Query the data to find its characteristics for classifier capability check.
-
-    This is for checking array input where we assume series are equal length.
-    classifiers can take either ndarray or pandas input, and the checks are different
-    for each. For ndarrays, it checks:
-        a) whether x contains missing values;
-        b) whether x is multivariate.
-    for pandas it checks
-        a) whether x contains unequal length series;
-        a) whether x contains missing values;
-        b) whether x is multivariate.
-
-    Parameters
-    ----------
-    X : pd.pandas containing pd.Series or np.ndarray of either 2 or 3 dimensions.
-
-    Returns
-    -------
-    three boolean data characteristics: missing, multivariate and unequal
-    """
-    if isinstance(X, np.ndarray):
-        missing = _has_nans(X)
-        if X.ndim == 3 and X.shape[1] > 1:
-            multivariate = True
-        else:
-            multivariate = False
-        return missing, multivariate, False
-    else:
-        missing = _nested_dataframe_has_nans(X)
-        cols = len(X.columns)
-        if cols > 1:
-            multivariate = True
-        else:
-            multivariate = False
-        unequal = _nested_dataframe_has_unequal(X)
-        return missing, multivariate, unequal
-
-
-def _nested_dataframe_has_unequal(X: pd.DataFrame) -> bool:
-    """Check whether an input nested DataFrame of Series has unequal length series.
-
-    Parameters
-    ----------
-    X : pd.DataFrame where each cell is a pd.Series
-
-    Returns
-    -------
-    True if x contains any NaNs, False otherwise.
-    """
-    rows = len(X)
-    cols = len(X.columns)
-    s = X.iloc[0, 0]
-    length = len(s)
-
-    for i in range(0, rows):
-        for j in range(0, cols):
-            s = X.iloc[i, j]
-            temp = len(s)
-            if temp != length:
-                return True
-    return False
-
-
-def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
-    """Check whether an input pandas of Series has nans.
-
-    Parameters
-    ----------
-    X : pd.DataFrame where each cell is a pd.Series
-
-    Returns
-    -------
-    True if x contains any NaNs, False otherwise.
-    """
-    cases = len(X)
-    dimensions = len(X.columns)
-    for i in range(0, cases):
-        for j in range(0, dimensions):
-            s = X.iloc[i, j]
-            for k in range(0, s.size):
-                if pd.isna(s[k]):
-                    return True
-    return False
-
-
-# @njit(cache=True)
-def _has_nans(x: np.ndarray) -> bool:
-    """Check whether an input numpy array has nans.
-
-    Parameters
-    ----------
-    X : np.ndarray of either 2 or 3 dimensions.
-
-    Returns
-    -------
-    True if x contains any NaNs, False otherwise.
-    """
-    # 2D
-    if x.ndim == 2:
-        for i in range(0, x.shape[0]):
-            for j in range(0, x.shape[1]):
-                if np.isnan(x[i][j]):
-                    return True
-    elif x.ndim == 3:
-        for i in range(0, x.shape[0]):
-            for j in range(0, x.shape[1]):
-                for k in range(0, x.shape[2]):
-                    if np.isnan(x[i][j][k]):
-                        return True
-    else:
-        raise ValueError(f"Expected array of two or three dimensions, got {x.ndim}")
-    return False
