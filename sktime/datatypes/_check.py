@@ -306,7 +306,7 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
     if isinstance(as_scitype, list):
         for scitype in as_scitype:
             _check_scitype_valid(scitype)
-    else:
+    elif as_scitype is not None:
         raise TypeError("as_scitype must be str or list of str")
 
     if as_scitype is None:
