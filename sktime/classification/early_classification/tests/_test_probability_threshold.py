@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """ProbabilityThresholdEarlyClassifier test code."""
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.early_classification import (
     ProbabilityThresholdEarlyClassifier,
 )
-from sktime.classification.feature_based import Catch22Classifier
+from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
@@ -21,11 +20,9 @@ def test_prob_threshold_on_unit_test_data():
     # train probability threshold
     pt = ProbabilityThresholdEarlyClassifier(
         random_state=0,
-        classification_points=[6, 12, 18, 24],
+        classification_points=[6, 16, 24],
         probability_threshold=1,
-        estimator=Catch22Classifier(
-            estimator=RandomForestClassifier(n_estimators=10), outlier_norm=True
-        ),
+        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
     )
     pt.fit(X_train, y_train)
 

@@ -41,7 +41,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         to deem a prediction as safe.
     estimator: sktime classifier, default=None
         An sktime estimator to be built using the transformed data. Defaults to a
-        Catch22Classifier.
+        CanonicalIntervalForest.
     classification_points : List or None, default=None
         List of integer time series thresholds to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
@@ -66,16 +66,13 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     >>> from sktime.classification.early_classification import (
     ...     ProbabilityThresholdEarlyClassifier
     ... )
-    >>> from sktime.classification.feature_based import Catch22Classifier
-    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ProbabilityThresholdEarlyClassifier(
-    ...     classification_points=[6, 12, 18, 24],
-    ...     estimator=Catch22Classifier(
-    ...         estimator=RandomForestClassifier(n_estimators=10), outlier_norm=True
-    ...     ),
+    ...     classification_points=[6, 16, 24],
+    ...     estimator=TimeSeriesForestClassifier(n_estimators=10)
     ... )
     >>> clf.fit(X_train, y_train)
     ProbabilityThresholdEarlyClassifier(...)
