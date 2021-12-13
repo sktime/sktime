@@ -69,6 +69,7 @@ class BaseClassifier(BaseEstimator):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._converter_store_y = dict()
         super(BaseClassifier, self).__init__()
 
     def fit(self, X, y):
@@ -391,13 +392,13 @@ class BaseClassifier(BaseEstimator):
         X_inner = convert_to(
             X,
             to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
+            as_scitype="Panel",  # we are dealing with panel data
         )
         y_inner_mtype = self.get_tag("y_inner_mtype")
         y_inner = convert_to(
             y,
             to_type=y_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
+            as_scitype="Table",  # we are dealing with a vector of labels
             store=self._converter_store_y,
         )
 
