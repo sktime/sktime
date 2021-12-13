@@ -23,11 +23,9 @@ __all__ = [
     "load_macroeconomic",
     "load_from_tsfile",
     "load_from_tsfile_to_dataframe",
-    "TsFileParseException",
     "load_asphalt_obstacle",
 ]
 from sktime.datasets._data_io import (
-    TsFileParseException,
     load_acsf1,
     load_airline,
     load_arrow_head,

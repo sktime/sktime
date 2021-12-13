@@ -63,7 +63,7 @@ def load_from_tsfile(
     replace_missing_vals_with="NaN",
     return_y=True,
 ):
-    """Load data int X and optionally y.
+    """Load time series data into X and (optionally) y.
 
     Data from a .ts file into a an 2D (univariate) or 3D (multivariate) if equal
     length or Pandas DataFrame if unequal length.
