@@ -283,7 +283,6 @@ class BaseClassifier(BaseEstimator):
         Raises
         ------
         ValueError if the capabilities in self._tags do not handle the data.
-
         """
         allow_multivariate = self.get_tag("capability:multivariate")
         allow_missing = self.get_tag("capability:missing_values")
@@ -319,26 +318,86 @@ class BaseClassifier(BaseEstimator):
 
         Returns
         -------
-        X_inner : Series compatible with self.get_tag("X_inner_mtype") format
+        X_inner : Panel compatible with self.get_tag("X_inner_mtype") format
             converted/coerced version of y, mtype determined by "X_inner_mtype" tag
             None if X was None
-        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
+        y_inner : Table compatible with self.get_tag("y_inner_mtype") format
             converted/coerced version of y, mtype determined by "y_inner_mtype" tag
             None if y was None
 
         Raises
         ------
-        TypeError if y or X is not one of the permissible Series mtypes
-        TypeError if y is not compatible with self.get_tag("scitype:y")
-            if tag value is "univariate", y must be univariate
-            if tag value is "multivariate", y must be bi- or higher-variate
-            if tag vaule is "both", y can be either
-        TypeError if self.get_tag("X-y-must-have-same-index") is True
-            and the index set of X is not a super-set of the index set of y
+        TypeError if X or y is not one of the permissible mtypes
+        ValueError if X and y do not have the same number of instances, and at least 1
+        ValueError if the capabilities in self._tags cannot handle X and y
         """
         # check inputs X/y to be compatible with classifier specification
-        #################################################################
+        self._check_classifier_input(X=X, y=y)
 
+        # convert X & y to supported inner type, if necessary
+        X_inner, y_inner = self._convert_X_y(X=X, y=y)
+
+        return X_inner, y_inner
+
+    def _check_X(self, X=None):
+        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
+        return self._check_X_y(X=X)[0]
+
+    def _convert_X_y(self, X, y=None):
+        """Convert X and y to internally required types.
+
+        Parameters
+        ----------
+        X : Panel, any of the supported formats (default=None)
+                usually 3D numpy array, pd-multiindex, or nested pd.DataFrame
+            panel of time series to classify
+        y : Table, univariate, any of the supported formats (default=None)
+            class labels for the series in X
+
+        Returns
+        -------
+        X_inner : Panel compatible with self.get_tag("X_inner_mtype") format
+            converted/coerced version of y, mtype determined by "X_inner_mtype" tag
+            None if X was None
+        y_inner : Table compatible with self.get_tag("y_inner_mtype") format
+            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            None if y was None
+        """
+        # convert X and y to a supported internal mtype
+        #  it X/y mtype is already supported, no conversion takes place
+        #  if X/y is None, then no conversion takes place (returns None)
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype="Panel",  # we are dealing with panel data
+        )
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        y_inner = convert_to(
+            y,
+            to_type=y_inner_mtype,
+            as_scitype="Table",  # we are dealing with a vector of labels
+            store=self._converter_store_y,
+        )
+
+        return X_inner, y_inner
+
+    def _check_classifier_input(self, X, y=None):
+        """Check whether input X and y are valid formats with minimum data.
+
+        Raises a ValueError if the input is not valid.
+
+        Parameters
+        ----------
+        X : any object (will be checked)
+        y : any object (will be checked), optional, default=None
+
+        Raises
+        ------
+        TypeError if X or y is not one of the permissible mtypes
+        ValueError if X and y do not have the same number of instances, and at least 1
+        ValueError if the capabilities in self._tags cannot handle X and y
+        """
         # is X of Panel scitype?
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=True
@@ -355,7 +414,7 @@ class BaseClassifier(BaseEstimator):
         )
         if not y_valid:
             raise TypeError(
-                "X is not of a supported Panel mtype. "
+                "y is not of a supported Table mtype. "
                 "Use datatypes.check_is_mtype to check conformance with specification."
             )
         if not y_metadata["is_univariate"]:
@@ -381,29 +440,3 @@ class BaseClassifier(BaseEstimator):
             not X_metadata["is_univariate"],
             not X_metadata["is_equally_spaced"],
         )
-
-        # convert X & y to supported inner type, if necessary
-        #####################################################
-
-        # convert X and y to a supported internal mtype
-        #  it X/y mtype is already supported, no conversion takes place
-        #  if X/y is None, then no conversion takes place (returns None)
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Panel",  # we are dealing with panel data
-        )
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype="Table",  # we are dealing with a vector of labels
-            store=self._converter_store_y,
-        )
-
-        return X_inner, y_inner
-
-    def _check_X(self, X=None):
-        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
-        return self._check_X_y(X=X)[0]
