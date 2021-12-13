@@ -24,12 +24,14 @@ __all__ = [
     "load_from_tsfile",
     "load_from_tsfile_to_dataframe",
     "TsFileParseException",
+    "load_asphalt_obstacle",
 ]
 from sktime.datasets._data_io import (
     TsFileParseException,
     load_acsf1,
     load_airline,
     load_arrow_head,
+    load_asphalt_obstacle,
     load_basic_motions,
     load_electric_devices_segmentation,
     load_from_tsfile,

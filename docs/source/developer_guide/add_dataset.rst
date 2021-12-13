@@ -10,4 +10,3 @@ Follow these steps to add a new dataset to sktime:
 *  Add :code:`load_<dataset-name>(...)` function in file :code:`sktime/datasets/_data_io.py`
 *  Add :code:`<dataset-name>` to the list :code:`__all__ = [...]` in file :code:`sktime/datasets/__init__.py`
 *  Add :code:`<dataset-name>` as argument to method :code:`included_datasets = (...` in file :code:`sktime/sktime/datasets/setup.py`
-*  Add :code:`<dataset-name>` to the list of included problems in file :code:`sktime/sktime/datasets/setup.py`
