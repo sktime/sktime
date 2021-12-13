@@ -3,8 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-import pytest
-
 from sktime.datatypes import SCITYPE_REGISTER
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
@@ -17,79 +15,108 @@ SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 SCITYPES_NO_CONVERSIONS = ["Alignment"]
 
 
-@pytest.mark.parametrize("scitype", SCITYPES)
-def test_convert(scitype):
+def _generate_fixture_tuples():
+    """Return fixture tuples for pytest_generate_tests."""
+    # collect fixture tuples here
+    fixture_tuples = []
+
+    for scitype in SCITYPES:
+
+        # if we know there are no conversions defined, skip this scitype
+        if scitype in SCITYPES_NO_CONVERSIONS:
+            continue
+
+        conv_mat = _conversions_defined(scitype)
+        mtypes = conv_mat.index.values
+
+        if len(mtypes) == 0:
+            # if there are no mtypes, this must have been reached by mistake/bug
+            raise RuntimeError("no mtypes defined for scitype " + scitype)
+
+        # by convention, number of examples is the same for all mtypes of the scitype
+        examples = get_examples(mtype=mtypes[0], as_scitype=scitype, return_lossy=True)
+        n_fixtures = len(examples)
+
+        # there must be fixtures for each scitype, otherwise there is a bug in the tests
+        if n_fixtures == 0:
+            raise RuntimeError("no fixtures defined for scitype " + scitype)
+
+        for to_type in mtypes:
+            for from_type in mtypes:
+                for i in range(n_fixtures):
+                    # only add if conversion is implemented
+                    if conv_mat[to_type][from_type]:
+                        fixture_tuples += [(scitype, from_type, to_type, i)]
+
+    return fixture_tuples
+
+
+def pytest_generate_tests(metafunc):
+    """Test parameterization routine for pytest.
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitypes
+    from_mtype : str - mtype of "from" conversion to test, belongs to scitype
+    to_mtype : str - mtype of conversion target ("to") to test, belongs to scitype
+    fixture_index : int - index of fixture tuple use for conversion
+    """
+    # we assume all four arguments are present in the test below
+    keys = _generate_fixture_tuples()
+
+    ids = []
+    for tuple in keys:
+        ids += [f"{tuple[0]}-from:{tuple[1]}-to:{tuple[2]}-fixture:{tuple[3]}"]
+
+    # parameterize test with from-mtpes
+    metafunc.parametrize("scitype,from_mtype,to_mtype,fixture_index", keys, ids=ids)
+
+
+def test_convert(scitype, from_mtype, to_mtype, fixture_index):
     """Tests that conversions for scitype agree with from/to example fixtures.
 
     Parameters
     ----------
-    scitype : str - name of scitype for which mtype conversions are tested
+    scitype : str - scitypes
+    from_mtype : str - mtype of "from" conversion to test, belongs to scitype
+    to_mtype : str - mtype of conversion target ("to") to test, belongs to scitype
+    from_fixture : int - index of fixture tuple use for conversion
 
     Raises
     ------
     AssertionError if a converted object does not match fixture
     error if conversion itself raises an error
     """
-    conv_mat = _conversions_defined(scitype)
-    mtypes = conv_mat.index.values
+    # retrieve from/to fixture for conversion
+    from_fixture = get_examples(
+        mtype=from_mtype, as_scitype=scitype, return_lossy=True
+    ).get(fixture_index)
 
-    if len(mtypes) == 0:
-        # if we know there are no conversions defined, skip this test
-        # otherwise this must have been reached by mistake/bug
-        if scitype in SCITYPES_NO_CONVERSIONS:
-            return None
-        else:
-            raise RuntimeError("no mtypes defined for scitype " + scitype)
+    to_fixture = get_examples(
+        mtype=to_mtype, as_scitype=scitype, return_lossy=True
+    ).get(fixture_index)
 
-    fixtures = dict()
+    # retrieve indicators whether conversion makes sense
+    # to-fixture is in example dict and is not None
+    cond1 = to_fixture is not None and to_fixture[0] is not None
+    # from-fixture is in example dict and is not None
+    cond2 = from_fixture is not None and from_fixture[0] is not None
+    # from-fixture is not None and not lossy
+    cond3 = cond2 and from_fixture[1] is not None and not from_fixture[1]
 
-    for mtype in mtypes:
-        # if we don't do this we get into a clash between linters
-        mtype_long_variable_name_to_avoid_linter_clash = mtype
-        fixtures[mtype] = get_examples(
-            mtype=mtype_long_variable_name_to_avoid_linter_clash,
+    msg = f"conversion {from_mtype} to {to_mtype} failed for fixture {fixture_index}"
+
+    # test that converted from-fixture equals to-fixture
+    if cond1 and cond2 and cond3:
+
+        converted_fixture_i = convert(
+            obj=from_fixture[0],
+            from_type=from_mtype,
+            to_type=to_mtype,
             as_scitype=scitype,
-            return_lossy=True,
         )
 
-    if len(fixtures[mtypes[0]]) == 0:
-        raise RuntimeError("no fixtures defined for scitype " + scitype)
-
-    # by convention, all fixtures are mirrored across all mtypes
-    #  so len(fixtures[mtypes[i]]) does not depend on i
-    n_fixtures = len(fixtures[mtypes[0]])
-
-    for i in range(n_fixtures):
-        for from_type in mtypes:
-            for to_type in mtypes:
-
-                # retrieve from/to fixture for conversion
-                to_fixture = fixtures[to_type].get(i)
-                from_fixture = fixtures[from_type].get(i)
-
-                # retrieve indicators whether conversion makes sense
-                # to-fixture is in example dict and is not None
-                cond1 = to_fixture is not None and to_fixture[0] is not None
-                # from-fixture is in example dict and is not None
-                cond2 = from_fixture is not None and from_fixture[0] is not None
-                # from-fixture is not None and not lossy
-                cond3 = cond2 and from_fixture[1] is not None and not from_fixture[1]
-                # conversion is implemented
-                cond4 = conv_mat[to_type][from_type]
-
-                msg = f"conversion {from_type} to {to_type} failed for fixture {i}"
-
-                # test that converted from-fixture equals to-fixture
-                if cond1 and cond2 and cond3 and cond4:
-
-                    converted_fixture_i = convert(
-                        obj=from_fixture[0],
-                        from_type=from_type,
-                        to_type=to_type,
-                        as_scitype=scitype,
-                    )
-
-                    assert deep_equals(
-                        converted_fixture_i,
-                        to_fixture[0],
-                    ), msg
+        assert deep_equals(
+            converted_fixture_i,
+            to_fixture[0],
+        ), msg

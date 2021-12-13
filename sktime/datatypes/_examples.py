@@ -24,16 +24,19 @@ __all__ = [
 from sktime.datatypes._alignment import example_dict_Alignment
 from sktime.datatypes._panel import example_dict_lossy_Panel, example_dict_Panel
 from sktime.datatypes._series import example_dict_lossy_Series, example_dict_Series
+from sktime.datatypes._table import example_dict_lossy_Table, example_dict_Table
 
 # pool example_dict-s
 example_dict = dict()
 example_dict.update(example_dict_Alignment)
 example_dict.update(example_dict_Series)
 example_dict.update(example_dict_Panel)
+example_dict.update(example_dict_Table)
 
 example_dict_lossy = dict()
 example_dict_lossy.update(example_dict_lossy_Series)
 example_dict_lossy.update(example_dict_lossy_Panel)
+example_dict_lossy.update(example_dict_lossy_Table)
 
 
 def get_examples(mtype: str, as_scitype: str, return_lossy: bool = False):
