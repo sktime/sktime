@@ -1275,6 +1275,31 @@ def load_unit_test(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
+def load_asphalt_obstacle(split=None, return_X_y=True):
+    """
+    Load UnitTest time series classification problem.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+    """
+    name = "AsphaltObstacle"
+    return _load_dataset(name, split, return_X_y)
+
+
 def load_japanese_vowels(split=None, return_X_y=True):
     """
     Load the JapaneseVowels time series classification problem.
