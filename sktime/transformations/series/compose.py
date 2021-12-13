@@ -380,10 +380,10 @@ class Featureizer(_SeriesToSeriesTransformer):
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
         "univariate-only": False,
-        "X_inner_mtype": ["pd.DataFrame"],
-        "y_inner_mtype": ["pd.Series"],
-        "scitype:y": "univariate",
-        "scitype:X": "multivariate",
+        "y_inner_mtype": ["pd.DataFrame"],
+        "X_inner_mtype": ["pd.Series"],
+        "scitype:X": "univariate",
+        "scitype:y": "multivariate",
     }
 
     def __init__(self, transformer, fh, suffix=None):
