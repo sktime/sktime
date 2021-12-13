@@ -175,9 +175,9 @@ class BaseTransformer(BaseEstimator):
         # retrieve mtypes/scitypes of all objects
         #########################################
 
-        X_input_mtype = mtype(X)
+        X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_input_scitype = mtype_to_scitype(X_input_mtype)
-        y_input_mtype = mtype(y)
+        y_input_mtype = mtype(y, as_scitype=["Series", "Panel"])
         y_input_scitype = mtype_to_scitype(y_input_mtype)
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
@@ -222,7 +222,7 @@ class BaseTransformer(BaseEstimator):
             self._is_fitted = True
             return self
 
-        X_mtype = mtype(X)
+        X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
 
         # for debugging, exception if the conversion fails (this should never happen)
@@ -338,9 +338,9 @@ class BaseTransformer(BaseEstimator):
         # retrieve mtypes/scitypes of all objects
         #########################################
 
-        X_input_mtype = mtype(X)
+        X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_input_scitype = mtype_to_scitype(X_input_mtype)
-        y_input_mtype = mtype(y)
+        y_input_mtype = mtype(y, as_scitype=["Series", "Panel"])
         y_input_scitype = mtype_to_scitype(y_input_mtype)
 
         output_scitype = self.get_tag("scitype:transform-output")
@@ -428,7 +428,7 @@ class BaseTransformer(BaseEstimator):
 
         # variables for the scitype of the current X (possibly converted)
         #     y wasn't converted so we can use y_input_scitype
-        X_mtype = mtype(X)
+        X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
 
         # subset to the mtypes that are of the same scitype as X/y

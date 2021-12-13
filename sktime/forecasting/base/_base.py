@@ -732,7 +732,7 @@ class BaseForecaster(BaseEstimator):
 
             y = check_series(y, **check_y_args, var_name="y")
 
-            self._y_mtype_last_seen = mtype(y)
+            self._y_mtype_last_seen = mtype(y, as_scitype="Series")
         # end checking y
 
         # checking X
