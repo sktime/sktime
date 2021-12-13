@@ -1277,8 +1277,7 @@ def load_unit_test(split=None, return_X_y=True):
 
 
 def load_asphalt_obstacle(split=None, return_X_y=True):
-    """
-    Load AsphaltObstacle time series classification problem.
+    """Load AsphaltObstacle time series classification problem.
 
     An example of an unequal length univariate classification problem.
 
@@ -1304,8 +1303,7 @@ def load_asphalt_obstacle(split=None, return_X_y=True):
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
-    """
-    Load the JapaneseVowels time series classification problem.
+    """Load the JapaneseVowels time series classification problem.
 
     An example of an unequal length multivariate classification problem.
 
