@@ -22,13 +22,14 @@ overall, conversions from non-lossy representations to any other ones
     should yield the element exactly, identidally (given same index)
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 example_dict = dict()
 example_dict_lossy = dict()
 
 ###
+# example 0: univariate
 
 s = pd.Series([1, 4, 0.5, -3], dtype=np.float64, name="a")
 
@@ -46,6 +47,7 @@ example_dict[("np.ndarray", "Series", 0)] = arr
 example_dict_lossy[("np.ndarray", "Series", 0)] = True
 
 ###
+# example 1: multivariate
 
 example_dict[("pd.Series", "Series", 1)] = None
 example_dict_lossy[("pd.Series", "Series", 1)] = None
@@ -59,3 +61,19 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
 
 example_dict[("np.ndarray", "Series", 1)] = arr
 example_dict_lossy[("np.ndarray", "Series", 1)] = True
+
+###
+# example 2: multivariate, positive
+
+example_dict[("pd.Series", "Series", 2)] = None
+example_dict_lossy[("pd.Series", "Series", 2)] = None
+
+df = pd.DataFrame({"a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]})
+
+example_dict[("pd.DataFrame", "Series", 2)] = df
+example_dict_lossy[("pd.DataFrame", "Series", 2)] = False
+
+arr = np.array([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]])
+
+example_dict[("np.ndarray", "Series", 2)] = arr
+example_dict_lossy[("np.ndarray", "Series", 2)] = True
