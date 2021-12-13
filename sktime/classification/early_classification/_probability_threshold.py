@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Probability Threshold Early Classifier."""
+"""Probability Threshold Early Classifier.
+
+An early classifier using a prediction probability threshold with a time series
+classifier.
+"""
 
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["ProbabilityThresholdEarlyClassifier"]
@@ -13,14 +17,75 @@ from sklearn.utils import check_random_state
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.utils.validation.panel import check_X
 
 
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
-    """Probability Threshold Early Classifier."""
+    """Probability Threshold Early Classifier.
+
+    An early classifier which uses a threshold of prediction probability to determine
+    whether an early prediction is safe or not.
+
+    Overview:
+        Build n classifiers, where n is the number of classification_points.
+        While a prediction is still deemed unsafe:
+            Make a prediction using the series length at classification point i.
+            Decide whether the predcition is safe or not using decide_prediction_safety.
+
+    Parameters
+    ----------
+    probability_threshold : float, default=0.85
+        The class prediction probability required to deem a prediction as safe.
+    consecutive_predictions : int, default=1
+        The number of consecutive predictions for a class above the threshold required
+        to deem a prediction as safe.
+    estimator: sktime classifier, default=None
+        An sktime estimator to be built using the transformed data. Defaults to a
+        Catch22Classifier.
+    classification_points : List or None, default=None
+        List of integer time series thresholds to build classifiers and allow
+        predictions at. Early predictions must have a series length that matches a value
+        in the _classification_points List. Duplicate values will be removed, and the
+        full series length will be appeneded if not present.
+        If None, will use 20 thresholds linearly spaces from 0 to the series length.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
+
+    Attributes
+    ----------
+    n_classes_ : int
+        The number of classes.
+    classes_ : list
+        The unique class labels.
+
+    Examples
+    --------
+    >>> from sktime.classification.early_classification import (
+    ...     ProbabilityThresholdEarlyClassifier
+    ... )
+    >>> from sktime.classification.feature_based import Catch22Classifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = ProbabilityThresholdEarlyClassifier(
+    ...     classification_points=[6, 12, 18, 24],
+    ...     estimator=Catch22Classifier(
+    ...         estimator=RandomForestClassifier(n_estimators=10), outlier_norm=True
+    ...     ),
+    ... )
+    >>> clf.fit(X_train, y_train)
+    ProbabilityThresholdEarlyClassifier(...)
+    >>> y_pred = clf.predict(X_test)
+    """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:early_prediction": True,
     }
 
     def __init__(
@@ -106,7 +171,34 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             return dists
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
-        """Decide on the safety of an early classification."""
+        """Decide on the safety of an early classification.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series) of shape =
+            [n_instances,n_dimensions,series_length] or pd.DataFrame with each column a
+            dimension, each cell a pd.Series (any number of dimensions, equal or unequal
+            length series).
+            The prediction time series data.
+        X_probabilities : 2D numpy array of shape = [n_instances,n_classes].
+            The predicted probabilities for X.
+        state_info : List or None
+            A List containing the state info for each decision in X. contains
+            information for future decisions on the data. Inputs should be None for the
+            first decision made, the returned List new_state_info for subsequent
+            decisions.
+
+        Returns
+        -------
+        decisions : List
+            A List of booleans, containing the decision of whether a prediction is safe
+            to use or not.
+        new_state_info : List
+            A List containing the state info for each decision in X, contains
+            information for future decisions on the data.
+        """
+        X = check_X(X, coerce_to_numpy=True)
+
         n_instances, _, series_length = X.shape
         idx = self._classification_point_dictionary.get(series_length, -1)
 
@@ -184,5 +276,9 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         )
 
         estimator.fit(X[:, :, : self._classification_points[i]], y)
+
+        m = getattr(estimator, "n_jobs", None)
+        if m is not None:
+            estimator.n_jobs = self._threads_to_use
 
         return estimator
