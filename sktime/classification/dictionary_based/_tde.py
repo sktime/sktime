@@ -82,6 +82,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets.
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -162,6 +165,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         max_dims=20,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
+        typed_dict=True,
         save_train_predictions=False,
         n_jobs=1,
         random_state=None,
@@ -179,8 +183,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
+        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
-
         self.random_state = random_state
         self.n_jobs = n_jobs
 
@@ -317,6 +321,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 bigrams=use_bigrams,
                 dim_threshold=self.dim_threshold,
                 max_dims=self.max_dims,
+                typed_dict=self.typed_dict,
                 n_jobs=self._threads_to_use,
                 random_state=self.random_state,
             )
@@ -566,6 +571,9 @@ class IndividualTDE(BaseClassifier):
     max_dims : int, default=20
         Maximum number of dimensions words are extracted from. Only applicable for
         multivariate data.
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -630,6 +638,7 @@ class IndividualTDE(BaseClassifier):
         bigrams=True,
         dim_threshold=0.85,
         max_dims=20,
+        typed_dict=True,
         n_jobs=1,
         random_state=None,
     ):
@@ -645,6 +654,7 @@ class IndividualTDE(BaseClassifier):
         self.dim_threshold = dim_threshold
         self.max_dims = max_dims
 
+        self.typed_dict = typed_dict
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -690,12 +700,16 @@ class IndividualTDE(BaseClassifier):
         if self.n_dims_ > 1:
             self._dims, self._transformers = self._select_dims(X, y)
 
-            words = [
-                Dict.empty(
-                    key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
-                )
-                for _ in range(self.n_instances_)
-            ]
+            words = (
+                [
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    for _ in range(self.n_instances_)
+                ]
+                if self.typed_dict
+                else [defaultdict(int) for _ in range(self.n_instances_)]
+            )
 
             for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(self.n_instances_, 1, self.series_length_)
@@ -703,13 +717,17 @@ class IndividualTDE(BaseClassifier):
                 dim_words = dim_words[0]
 
                 for n in range(self.n_instances_):
-                    for word, count in dim_words[n].items():
-                        if self.levels > 1:
-                            words[n][
-                                (word[0], word[1] << self._highest_dim_bit | dim)
-                            ] = count
-                        else:
-                            words[n][(word, dim)] = count
+                    if self.typed_dict:
+                        for word, count in dim_words[n].items():
+                            if self.levels > 1:
+                                words[n][
+                                    (word[0], word[1] << self._highest_dim_bit | dim)
+                                ] = count
+                            else:
+                                words[n][(word, dim)] = count
+                    else:
+                        for word, count in dim_words[n].items():
+                            words[n][word << self._highest_dim_bit | dim] = count
 
             self._transformed_data = words
         else:
@@ -726,7 +744,7 @@ class IndividualTDE(BaseClassifier):
                     lower_bounding=False,
                     save_words=False,
                     use_fallback_dft=True,
-                    typed_dict=True,
+                    typed_dict=self.typed_dict,
                     n_jobs=self._threads_to_use,
                 )
             )
@@ -749,12 +767,16 @@ class IndividualTDE(BaseClassifier):
         num_cases = X.shape[0]
 
         if self.n_dims_ > 1:
-            words = [
-                Dict.empty(
-                    key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
-                )
-                for _ in range(num_cases)
-            ]
+            words = (
+                [
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    for _ in range(num_cases)
+                ]
+                if self.typed_dict
+                else [defaultdict(int) for _ in range(num_cases)]
+            )
 
             for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length_)
@@ -762,13 +784,17 @@ class IndividualTDE(BaseClassifier):
                 dim_words = dim_words[0]
 
                 for n in range(num_cases):
-                    for word, count in dim_words[n].items():
-                        if self.levels > 1:
-                            words[n][
-                                (word[0], word[1] << self._highest_dim_bit | dim)
-                            ] = count
-                        else:
-                            words[n][(word, dim)] = count
+                    if self.typed_dict:
+                        for word, count in dim_words[n].items():
+                            if self.levels > 1:
+                                words[n][
+                                    (word[0], word[1] << self._highest_dim_bit | dim)
+                                ] = count
+                            else:
+                                words[n][(word, dim)] = count
+                    else:
+                        for word, count in dim_words[n].items():
+                            words[n][word << self._highest_dim_bit | dim] = count
 
             test_bags = words
         else:
@@ -821,7 +847,7 @@ class IndividualTDE(BaseClassifier):
                     save_words=False,
                     keep_binning_dft=True,
                     use_fallback_dft=True,
-                    typed_dict=True,
+                    typed_dict=self.typed_dict,
                     n_jobs=self._threads_to_use,
                 )
             )
