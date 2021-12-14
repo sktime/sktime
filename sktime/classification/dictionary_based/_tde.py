@@ -687,7 +687,7 @@ class IndividualTDE(BaseClassifier):
         return state
 
     def __setstate__(self, state):
-        """Save current state using input pickling, required for typed Dict objects."""
+        """Set current state using input pickling, required for typed Dict objects."""
         self.__dict__.update(state)
         if self.typed_dict:
             nl = [None] * len(self._transformed_data)
