@@ -2,9 +2,9 @@
 """HIVE-COTE v2 test code."""
 import numpy as np
 from numpy import testing
+from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.hybrid import HIVECOTEV2
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
@@ -19,10 +19,9 @@ def test_hivecote_v2_on_unit_test_data():
     hc2 = HIVECOTEV2(
         random_state=0,
         stc_params={
-            "estimator": RotationForest(n_estimators=3),
+            "estimator": RandomForestClassifier(n_estimators=3),
             "n_shapelet_samples": 500,
             "max_shapelets": 20,
-            "batch_size": 100,
         },
         drcif_params={"n_estimators": 10},
         arsenal_params={"num_kernels": 100, "n_estimators": 5},
@@ -79,10 +78,9 @@ def test_hivecote_v2_on_basic_motions():
     hc2 = HIVECOTEV2(
         random_state=0,
         stc_params={
-            "estimator": RotationForest(n_estimators=3),
+            "estimator": RandomForestClassifier(n_estimators=3),
             "n_shapelet_samples": 500,
             "max_shapelets": 20,
-            "batch_size": 100,
         },
         drcif_params={"n_estimators": 10},
         arsenal_params={"num_kernels": 100, "n_estimators": 5},
@@ -104,44 +102,44 @@ def test_hivecote_v2_on_basic_motions():
 hivecote_v2_unit_test_probas = np.array(
     [
         [
-            0.15029100580102842,
-            0.8497089941989715,
+            0.13781021446256755,
+            0.8621897855374324,
         ],
         [
-            0.8979197370897057,
-            0.10208026291029436,
+            0.8327183709230067,
+            0.1672816290769933,
         ],
         [
-            0.02410537144536704,
-            0.9758946285546329,
+            0.022103560960819325,
+            0.9778964390391807,
         ],
         [
-            0.8622633828925127,
-            0.13773661710748725,
+            0.8737016054835566,
+            0.12629839451644334,
         ],
         [
-            0.7221219503428462,
-            0.2778780496571538,
+            0.7451981014193845,
+            0.2548018985806156,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            0.7703326932335803,
-            0.2296673067664197,
+            0.7894052233410231,
+            0.21059477665897688,
         ],
         [
-            0.24300585396918709,
-            0.7569941460308129,
+            0.1768284876865546,
+            0.8231715123134454,
         ],
         [
-            0.7292763937385132,
-            0.2707236062614868,
+            0.797755557662911,
+            0.20224444233708905,
         ],
         [
-            0.7703326932335803,
-            0.2296673067664197,
+            0.6420481502688942,
+            0.3579518497311057,
         ],
     ]
 )
@@ -154,57 +152,57 @@ hivecote_v2_basic_motions_probas = np.array(
             1.0,
         ],
         [
-            0.8521477383024575,
-            0.02493038764697154,
-            0.04986077529394308,
-            0.07306109875662808,
+            0.7940682270013237,
+            0.0963273999932546,
+            0.04445879999688674,
+            0.06514557300853482,
         ],
         [
-            0.07178405432539303,
+            0.13810488507439375,
             0.0,
-            0.8052940716240359,
-            0.12292187405057114,
+            0.7522907419201846,
+            0.10960437300542158,
         ],
         [
-            0.11012950661790163,
-            0.8898704933820984,
+            0.17042539998806586,
+            0.7554766000171228,
+            0.07409799999481124,
             0.0,
-            0.0,
         ],
         [
             0.0,
-            0.14612219751325614,
+            0.13029114601706968,
             0.0,
-            0.8538778024867439,
+            0.8697088539829304,
         ],
         [
-            0.11566065824209311,
-            0.07306109875662807,
-            0.024930387646971537,
-            0.7863478553543073,
+            0.06514557300853484,
+            0.06514557300853484,
+            0.09632739999325461,
+            0.7733814539896757,
         ],
         [
-            0.9324700528675633,
+            0.8295746000119341,
             0.0,
+            0.07409799999481124,
+            0.09632739999325461,
+        ],
+        [
+            0.03205300324364694,
+            0.10315542599678769,
+            0.8203327708344312,
+            0.044458799925134254,
+        ],
+        [
+            0.21488419998495262,
+            0.7110178000202361,
             0.0,
-            0.06752994713243658,
+            0.07409799999481124,
         ],
         [
-            0.035947609742638574,
-            0.11568934643598923,
-            0.7985022686176774,
-            0.049860775203694634,
-        ],
-        [
-            0.11739072242637963,
-            0.7974101586026903,
-            0.04259955948546504,
-            0.04259955948546504,
-        ],
-        [
-            0.024930387646971537,
-            0.9324700528675633,
-            0.04259955948546504,
+            0.09632739999325461,
+            0.9036726000067453,
+            0.0,
             0.0,
         ],
     ]
@@ -229,7 +227,7 @@ hivecote_v2_basic_motions_probas = np.array(
 #     hc2_u = HIVECOTEV2(
 #         random_state=0,
 #         stc_params={
-#             "estimator": RotationForest(n_estimators=3),
+#             "estimator": RandomForestClassifier(n_estimators=3),
 #             "n_shapelet_samples": 500,
 #             "max_shapelets": 20,
 #             "batch_size": 100,
@@ -254,7 +252,7 @@ hivecote_v2_basic_motions_probas = np.array(
 #     hc2_m = HIVECOTEV2(
 #         random_state=0,
 #         stc_params={
-#             "estimator": RotationForest(n_estimators=3),
+#             "estimator": RandomForestClassifier(n_estimators=3),
 #             "n_shapelet_samples": 500,
 #             "max_shapelets": 20,
 #             "batch_size": 100,

@@ -64,7 +64,9 @@ class ContractableBOSS(BaseClassifier):
         set.
     typed_dict : bool, default=True
         Use a numba TypedDict to store word counts. May increase memory usage, but will
-        be faster for larger datasets.
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.

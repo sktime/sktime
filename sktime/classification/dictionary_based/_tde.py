@@ -83,8 +83,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
     typed_dict : bool, default=True
-        Use a numba TypedDict to store word counts. May increase memory usage, but will
-        be faster for larger datasets.
+        Use a numba typed Dict to store word counts. May increase memory usage, but will
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -673,16 +675,17 @@ class IndividualTDE(BaseClassifier):
 
         super(IndividualTDE, self).__init__()
 
+    # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):
         """Return state as dictionary for pickling, required for typed Dict objects."""
         state = self.__dict__.copy()
         if self.typed_dict:
             nl = [None] * len(self._transformed_data)
-            for i, nd in enumerate(state["_transformed_data"]):
-                pd = dict()
-                for key, val in nd.items():
-                    pd[key] = val
-                nl[i] = pd
+            for i, ndict in enumerate(state["_transformed_data"]):
+                pdict = dict()
+                for key, val in ndict.items():
+                    pdict[key] = val
+                nl[i] = pdict
             state["_transformed_data"] = nl
         return state
 
@@ -691,17 +694,17 @@ class IndividualTDE(BaseClassifier):
         self.__dict__.update(state)
         if self.typed_dict:
             nl = [None] * len(self._transformed_data)
-            for i, pd in enumerate(self._transformed_data):
-                nd = (
+            for i, pdict in enumerate(self._transformed_data):
+                ndict = (
                     Dict.empty(
                         key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
                     )
                     if self.levels > 1 or self.n_dims_ > 1
                     else Dict.empty(key_type=types.int64, value_type=types.uint32)
                 )
-                for key, val in pd.items():
-                    nd[key] = val
-                nl[i] = nd
+                for key, val in pdict.items():
+                    ndict[key] = val
+                nl[i] = ndict
             self._transformed_data = nl
 
     def _fit(self, X, y):
