@@ -673,6 +673,37 @@ class IndividualTDE(BaseClassifier):
 
         super(IndividualTDE, self).__init__()
 
+    def __getstate__(self):
+        """Return state as dictionary for pickling, required for typed Dict objects."""
+        state = self.__dict__.copy()
+        if self.typed_dict:
+            nl = [None] * len(self._transformed_data)
+            for i, nd in enumerate(state["_transformed_data"]):
+                pd = dict()
+                for key, val in nd.items():
+                    pd[key] = val
+                nl[i] = pd
+            state["_transformed_data"] = nl
+        return state
+
+    def __setstate__(self, state):
+        """Save current state using input pickling, required for typed Dict objects."""
+        self.__dict__.update(state)
+        if self.typed_dict:
+            nl = [None] * len(self._transformed_data)
+            for i, pd in enumerate(self._transformed_data):
+                nd = (
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    if self.levels > 1 or self.n_dims_ > 1
+                    else Dict.empty(key_type=types.int64, value_type=types.uint32)
+                )
+                for key, val in pd.items():
+                    nd[key] = val
+                nl[i] = nd
+            self._transformed_data = nl
+
     def _fit(self, X, y):
         """Fit a single base TDE classifier on n_instances cases (X,y).
 
