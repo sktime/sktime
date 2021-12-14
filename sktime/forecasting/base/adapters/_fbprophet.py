@@ -63,6 +63,7 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add regressor (multivariate)
         if X is not None:
+            X = X.copy()
             df, X = _merge_X(df, X)
             for col in X.columns:
                 self._forecaster.add_regressor(col)
@@ -110,6 +111,7 @@ class _ProphetAdapter(BaseForecaster):
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
+            X = X.copy()
             df, X = _merge_X(df, X)
 
         # don't compute confidence intervals if not asked for
