@@ -8,15 +8,16 @@ __all__ = ["ThetaNewForecaster"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.forecasting.compose._ensemble import _aggregate
+from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.theta import ThetaLinesTransformer
-from sktime.forecasting.compose._ensemble import _aggregate
 
 
 class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
+    """Modular theta method for forecasting."""
 
     _tags = {
         "scitype:y": "univariate",
