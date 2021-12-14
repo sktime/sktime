@@ -27,6 +27,7 @@ import pandas as pd
 
 example_dict = dict()
 example_dict_lossy = dict()
+example_dict_metadata = dict()
 
 ###
 # example 0: univariate
@@ -46,6 +47,11 @@ arr = np.array([1, 4, 0.5, -3])
 example_dict[("numpy1D", "Table", 0)] = arr
 example_dict_lossy[("numpy1D", "Table", 0)] = True
 
+example_dict_metadata[("Table", 0)] = {
+    "is_univariate": True,
+    "is_empty": False,
+    "has_nans": False,
+}
 
 ###
 # example 1: multivariate
@@ -62,3 +68,9 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
 
 example_dict[("numpy2D", "Table", 1)] = arr
 example_dict_lossy[("numpy2D", "Table", 1)] = True
+
+example_dict_metadata[("Table", 1)] = {
+    "is_univariate": False,
+    "is_empty": False,
+    "has_nans": False,
+}
