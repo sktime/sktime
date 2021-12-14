@@ -16,6 +16,7 @@ import inspect
 import numbers
 import warnings
 from inspect import signature
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -176,6 +177,15 @@ def _check_window_lengths(y, fh, window_length, initial_window):
                 f"with the length of `y`. Found `initial_window`={initial_window},"
                 f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
             )
+
+
+def _check_time_unit(time_unit):
+    if isinstance(time_unit, pd.Timedelta):
+        return time_unit
+    elif isinstance(time_unit, int):
+        return time_unit
+    else:
+        raise ValueError("time_unit should be either one of: None, int, pd.Timedelta")
 
 
 class BaseSplitter:
@@ -574,9 +584,14 @@ class SingleWindowSplitter(BaseSplitter):
         Forecasting horizon
     window_length : int
         Window length
+    time_unit : int or pd.Timedelta
+        Time unit
     """
 
-    def __init__(self, fh, window_length=None):
+    def __init__(
+        self, fh, window_length: int = None, time_unit: Union[int, pd.Timedelta] = 1
+    ):
+        self.time_unit = time_unit
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y):
@@ -585,7 +600,8 @@ class SingleWindowSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
 
         end = _get_end(y, fh) - 1
-        start = 0 if window_length is None else end - window_length
+        time_unit = _check_time_unit(self.time_unit)
+        start = 0 if window_length is None else end - window_length * time_unit
         train = np.arange(start, end)
         test = end + fh.to_numpy() - 1
         yield train, test
