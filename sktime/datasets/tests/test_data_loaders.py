@@ -11,7 +11,6 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import (
-    TsFileParseException,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_uschange,
@@ -112,9 +111,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -136,9 +133,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -161,9 +156,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -187,9 +180,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -397,9 +388,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -425,9 +414,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -648,9 +635,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -677,9 +662,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -708,9 +691,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)

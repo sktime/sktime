@@ -52,12 +52,6 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-class TsFileParseException(Exception):
-    """Should be raised when parsing a .ts file and the format is incorrect."""
-
-    pass
-
-
 def load_from_tsfile(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
@@ -111,7 +105,7 @@ def load_from_tsfile(
                     elif tokens[1] == "false":
                         timestamps = False
                     else:
-                        raise TsFileParseException(
+                        raise IOError(
                             f"invalid timestamps value in file "
                             f"{full_file_path_and_name}"
                         )
@@ -123,7 +117,7 @@ def load_from_tsfile(
                     elif tokens[1] == "false":
                         univariate = False
                     else:
-                        raise TsFileParseException(
+                        raise IOError(
                             f"invalid univariate value in file "
                             f"{full_file_path_and_name}"
                         )
@@ -134,7 +128,7 @@ def load_from_tsfile(
                     elif tokens[1] == "false":
                         equal_length = False
                     else:
-                        raise TsFileParseException(
+                        raise IOError(
                             f"invalid unequal value in file "
                             f"{full_file_path_and_name}"
                         )
@@ -146,12 +140,12 @@ def load_from_tsfile(
                     elif tokens[1] == "false":
                         class_labels = False
                     else:
-                        raise TsFileParseException(
+                        raise IOError(
                             "invalid classLabel value in file "
                             f"{full_file_path_and_name}"
                         )
                     if token_len == 2 and class_labels:
-                        raise TsFileParseException(
+                        raise IOError(
                             f"if the classlabel tag is true "
                             f"then class values must be "
                             f"supplied in file"
@@ -206,7 +200,7 @@ def load_from_tsfile(
             # Check if we have and if we should return any associated class labels
         # separately
         if return_y and not class_labels:
-            raise TsFileParseException(
+            raise IOError(
                 f"class labels have been requested, but they "
                 f"are not present in the file "
                 f"{full_file_path_and_name}"
@@ -217,7 +211,7 @@ def load_from_tsfile(
             return data
 
     else:
-        raise TsFileParseException("empty file")
+        raise IOError("empty file")
 
 
 def load_from_tsfile_to_dataframe(
@@ -283,15 +277,13 @@ def load_from_tsfile_to_dataframe(
                 if line.startswith("@problemname"):
                     # Check that the data has not started
                     if data_started:
-                        raise TsFileParseException("metadata must come before data")
+                        raise IOError("metadata must come before data")
                     # Check that the associated value is valid
                     tokens = line.split(" ")
                     token_len = len(tokens)
 
                     if token_len == 1:
-                        raise TsFileParseException(
-                            "problemname tag requires an associated value"
-                        )
+                        raise IOError("problemname tag requires an associated value")
 
                     # problem_name = line[len("@problemname") + 1:]
                     has_problem_name_tag = True
@@ -302,7 +294,7 @@ def load_from_tsfile_to_dataframe(
                     # Check that the data has not started
 
                     if data_started:
-                        raise TsFileParseException("metadata must come before data")
+                        raise IOError("metadata must come before data")
 
                     # Check that the associated value is valid
 
@@ -310,7 +302,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
 
                     if token_len != 2:
-                        raise TsFileParseException(
+                        raise IOError(
                             "timestamps tag requires an associated Boolean " "value"
                         )
 
@@ -321,7 +313,7 @@ def load_from_tsfile_to_dataframe(
                         timestamps = False
 
                     else:
-                        raise TsFileParseException("invalid timestamps value")
+                        raise IOError("invalid timestamps value")
 
                     has_timestamps_tag = True
                     metadata_started = True
@@ -331,7 +323,7 @@ def load_from_tsfile_to_dataframe(
                     # Check that the data has not started
 
                     if data_started:
-                        raise TsFileParseException("metadata must come before data")
+                        raise IOError("metadata must come before data")
 
                     # Check that the associated value is valid
 
@@ -339,7 +331,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
 
                     if token_len != 2:
-                        raise TsFileParseException(
+                        raise IOError(
                             "univariate tag requires an associated Boolean  " "value"
                         )
 
@@ -352,7 +344,7 @@ def load_from_tsfile_to_dataframe(
                         pass
 
                     else:
-                        raise TsFileParseException("invalid univariate value")
+                        raise IOError("invalid univariate value")
 
                     has_univariate_tag = True
                     metadata_started = True
@@ -362,7 +354,7 @@ def load_from_tsfile_to_dataframe(
                     # Check that the data has not started
 
                     if data_started:
-                        raise TsFileParseException("metadata must come before data")
+                        raise IOError("metadata must come before data")
 
                     # Check that the associated value is valid
 
@@ -370,7 +362,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
 
                     if token_len == 1:
-                        raise TsFileParseException(
+                        raise IOError(
                             "classlabel tag requires an associated Boolean  " "value"
                         )
 
@@ -381,12 +373,12 @@ def load_from_tsfile_to_dataframe(
                         class_labels = False
 
                     else:
-                        raise TsFileParseException("invalid classLabel value")
+                        raise IOError("invalid classLabel value")
 
                     # Check if we have any associated class values
 
                     if token_len == 2 and class_labels:
-                        raise TsFileParseException(
+                        raise IOError(
                             "if the classlabel tag is true then class values "
                             "must be supplied"
                         )
@@ -400,12 +392,10 @@ def load_from_tsfile_to_dataframe(
                 elif line.startswith("@data"):
 
                     if line != "@data":
-                        raise TsFileParseException(
-                            "data tag should not have an associated value"
-                        )
+                        raise IOError("data tag should not have an associated value")
 
                     if data_started and not metadata_started:
-                        raise TsFileParseException("metadata must come before data")
+                        raise IOError("metadata must come before data")
 
                     else:
                         has_data_tag = True
@@ -425,7 +415,7 @@ def load_from_tsfile_to_dataframe(
                         or not has_class_labels_tag
                         or not has_data_tag
                     ):
-                        raise TsFileParseException(
+                        raise IOError(
                             "a full set of metadata has not been provided "
                             "before the data"
                         )
@@ -492,7 +482,7 @@ def load_from_tsfile_to_dataframe(
                                         class_val = line[char_num:].strip()
 
                                         if class_val not in class_label_list:
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "the class value '"
                                                 + class_val
                                                 + "' on line "
@@ -516,7 +506,7 @@ def load_from_tsfile_to_dataframe(
                                         # the next tuple
 
                                         if line[char_num] != "(" and not class_labels:
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -542,7 +532,7 @@ def load_from_tsfile_to_dataframe(
                                             char_num >= line_len
                                             or line[char_num] != ")"
                                         ):
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -588,7 +578,7 @@ def load_from_tsfile_to_dataframe(
                                         last_comma_index = tuple_data.rfind(",")
 
                                         if last_comma_index == -1:
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -602,7 +592,7 @@ def load_from_tsfile_to_dataframe(
                                             value = float(value)
 
                                         except ValueError:
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -641,7 +631,7 @@ def load_from_tsfile_to_dataframe(
                                             not timestamp_is_timestamp
                                             and not timestamp_is_int
                                         ):
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -657,7 +647,7 @@ def load_from_tsfile_to_dataframe(
                                             and previous_timestamp_was_int
                                             and not timestamp_is_int
                                         ):
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -672,7 +662,7 @@ def load_from_tsfile_to_dataframe(
                                             and prev_timestamp_was_timestamp
                                             and not timestamp_is_timestamp
                                         ):
-                                            raise TsFileParseException(
+                                            raise IOError(
                                                 "dimension "
                                                 + str(this_line_num_dim + 1)
                                                 + " on line "
@@ -731,7 +721,7 @@ def load_from_tsfile_to_dataframe(
                                             values_for_dimension = []
 
                             elif has_another_value:
-                                raise TsFileParseException(
+                                raise IOError(
                                     "dimension " + str(this_line_num_dim + 1) + " on "
                                     "line "
                                     + str(line_num + 1)
@@ -741,7 +731,7 @@ def load_from_tsfile_to_dataframe(
                                 )
 
                             elif has_another_dimension and class_labels:
-                                raise TsFileParseException(
+                                raise IOError(
                                     "dimension " + str(this_line_num_dim + 1) + " on "
                                     "line "
                                     + str(line_num + 1)
@@ -768,7 +758,7 @@ def load_from_tsfile_to_dataframe(
                                     num_dimensions = this_line_num_dim
 
                                 if num_dimensions != this_line_num_dim:
-                                    raise TsFileParseException(
+                                    raise IOError(
                                         "line "
                                         + str(line_num + 1)
                                         + " does not have the "
@@ -782,7 +772,7 @@ def load_from_tsfile_to_dataframe(
                         # and if not, store that processed above
 
                         if has_another_value:
-                            raise TsFileParseException(
+                            raise IOError(
                                 "dimension "
                                 + str(this_line_num_dim + 1)
                                 + " on line "
@@ -793,7 +783,7 @@ def load_from_tsfile_to_dataframe(
                             )
 
                         elif has_another_dimension and class_labels:
-                            raise TsFileParseException(
+                            raise IOError(
                                 "dimension "
                                 + str(this_line_num_dim + 1)
                                 + " on line "
@@ -819,7 +809,7 @@ def load_from_tsfile_to_dataframe(
                             not has_another_value
                             and num_dimensions != this_line_num_dim
                         ):
-                            raise TsFileParseException(
+                            raise IOError(
                                 "line " + str(line_num + 1) + " does not have the same "
                                 "number of dimensions as the "
                                 "previous line of data"
@@ -830,9 +820,7 @@ def load_from_tsfile_to_dataframe(
                         # metadata
 
                         if class_labels and len(class_val_list) == 0:
-                            raise TsFileParseException(
-                                "the cases have no associated class values"
-                            )
+                            raise IOError("the cases have no associated class values")
 
                     else:
                         dimensions = line.split(":")
@@ -863,7 +851,7 @@ def load_from_tsfile_to_dataframe(
                         # even if they are empty
 
                         if this_line_num_dim != num_dimensions:
-                            raise TsFileParseException(
+                            raise IOError(
                                 "inconsistent number of dimensions. "
                                 "Expecting "
                                 + str(num_dimensions)
@@ -901,13 +889,13 @@ def load_from_tsfile_to_dataframe(
             and has_class_labels_tag
             and has_data_tag
         ):
-            raise TsFileParseException("metadata incomplete")
+            raise IOError("metadata incomplete")
 
         elif metadata_started and not data_started:
-            raise TsFileParseException("file contained metadata but no data")
+            raise IOError("file contained metadata but no data")
 
         elif metadata_started and data_started and len(instance_list) == 0:
-            raise TsFileParseException("file contained metadata but no data")
+            raise IOError("file contained metadata but no data")
 
         # Create a DataFrame from the data parsed above
 
@@ -929,7 +917,7 @@ def load_from_tsfile_to_dataframe(
             return data
 
     else:
-        raise TsFileParseException("empty file")
+        raise IOError("empty file")
 
 
 # time series classification data sets
