@@ -3,11 +3,13 @@
 
 __author__ = ["Sebastiaan Koel", "Emilia Rose"]
 __all__ = []
+import os
 
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_uschange
+from sktime.datasets import load_from_tsfile, load_uschange
+from sktime.datasets._data_io import DIRNAME, MODULE
 
 _CHECKS = {
     "uschange": {
@@ -61,3 +63,24 @@ def test_data_loaders(dataset):
             assert X[col].dtype == dt
 
         assert len(X) == checks["len_X"]
+
+
+def test_load_from_tsfile():
+    """Test the classification problem loader."""
+    name = "UnitTest"
+    fname = name + "_TRAIN.ts"
+    abspath = os.path.join(MODULE, DIRNAME, name, fname)
+    trainX, testy = load_from_tsfile(full_file_path_and_name=abspath)
+    # assert X, y are numpy array with 2 and 1 dimensions, y is same length as X and
+    # last value is correct
+    assert trainX.ndim == 2
+    name = "BasicMotions"
+    fname = name + "_TRAIN.ts"
+    abspath = os.path.join(MODULE, DIRNAME, name, fname)
+    trainX, testy = load_from_tsfile(full_file_path_and_name=abspath)
+    # assert X, y are numpy array with 3 and 1 dimensions, y is same length as X and
+    name = "AsphaltObstacles"
+    fname = name + "_" + "_TRAIN.ts"
+    abspath = os.path.join(MODULE, DIRNAME, name, fname)
+    trainX, testy = load_from_tsfile(full_file_path_and_name=abspath)
+    # assert X, y are numpy array with 3 and 1 dimensions, y is same length as X and
