@@ -31,7 +31,7 @@ from scipy import stats
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
-from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights, _get_weights
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
@@ -53,7 +53,7 @@ from sktime.distances.mpdist import mpdist
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
-class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
+class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """KNN Time Series Classifier.
 
     An adapted version of the scikit-learn KNeighborsClassifier to work with
@@ -164,10 +164,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                     "please pass a callable distance measure into the constuctor"
                 )
 
-        super(KNeighborsTimeSeriesClassifier, self).__init__(
+        self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
             algorithm="brute",
-            metric=distance,
+            metric="precomputed",
             metric_params=distance_params,
             **kwargs
         )
@@ -176,7 +176,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
         Parameters
@@ -187,82 +187,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
         """
-        X, y = check_X_y(
-            X,
-            y,
-            enforce_univariate=not self._tags["capability:multivariate"],
-            coerce_to_numpy=True,
-        )
-        # Transpose to work correctly with distance functions
-        X = X.transpose((0, 2, 1))
+        # store full data as indexed X
+        self._X = X
 
-        y = np.asarray(y)
-        check_classification_targets(y)
-        # if internal cv is desired, the relevant flag forces a grid search
-        # to evaluate the possible values,
-        # find the best, and then set this classifier's params to match
-        if self._cv_for_params:
-            grid = GridSearchCV(
-                estimator=KNeighborsTimeSeriesClassifier(
-                    distance=self.metric, n_neighbors=1
-                ),
-                param_grid=self._param_matrix,
-                cv=LeaveOneOut(),
-                scoring="accuracy",
-            )
-            grid.fit(X, y)
-            self.distance_params = grid.best_params_["distance_params"]
+        dist_mat = self.distance(X)
 
-        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            if y.ndim != 1:
-                warnings.warn(
-                    "IN TS-KNN: A column-vector y was passed when a 1d array "
-                    "was expected. Please change the shape of y to "
-                    "(n_samples, ), for example using ravel().",
-                    DataConversionWarning,
-                    stacklevel=2,
-                )
+        self.knn_estimator_.fit(dist_mat, y)
 
-            self.outputs_2d_ = False
-            y = y.reshape((-1, 1))
-        else:
-            self.outputs_2d_ = True
-
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
-
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
-
-        if hasattr(check_array, "__wrapped__"):
-            temp = check_array.__wrapped__.__code__
-            check_array.__wrapped__.__code__ = _check_array_ts.__code__
-        else:
-            temp = check_array.__code__
-            check_array.__code__ = _check_array_ts.__code__
-        #  this not fx = self._fit(X, self_y) in order to maintain backward
-        # compatibility with scikit learn 0.23, where _fit does not take an arg y
-        fx = self._fit(X)
-
-        if hasattr(check_array, "__wrapped__"):
-            check_array.__wrapped__.__code__ = temp
-        else:
-            check_array.__code__ = temp
-
-        self._is_fitted = True
-        return fx
-
-    def _more_tags(self):
-        """Remove the need to pass y with _fit.
-
-        Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
-        so we can call fx = self._fit(X) and maintain backward compatibility.
-        """
-        return {"requires_y": False}
+        return self
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Find the K-neighbors of a point.
@@ -289,106 +221,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         ind : array
             Indices of the nearest points in the population matrix.
         """
-        self.check_is_fitted()
-        X = check_X(
-            X,
-            enforce_univariate=not self._tags["capability:multivariate"],
-            coerce_to_numpy=True,
-        )
-        # Transpose to work correctly with distance functions
-        X = X.transpose((0, 2, 1))
+        # self._X should be the stored _X
+        dist_mat = self.distance(X, self._X)
 
-        if n_neighbors is None:
-            n_neighbors = self.n_neighbors
-        elif n_neighbors <= 0:
-            raise ValueError("Expected n_neighbors > 0. Got %d" % n_neighbors)
-        else:
-            if not np.issubdtype(type(n_neighbors), np.integer):
-                raise TypeError(
-                    "n_neighbors does not take %s value, "
-                    "enter integer value" % type(n_neighbors)
-                )
+        neigh_ind = self.knn_estimator_.kneighbors(dist_mat, n_neighbors=n_neighbors, return_distance=return_distance)
 
-        if X is not None:
-            query_is_train = False
-            X = check_array(X, accept_sparse="csr", allow_nd=True)
-        else:
-            query_is_train = True
-            X = self._fit_X
-            # Include an extra neighbor to account for the sample itself being
-            # returned, which is removed later
-            n_neighbors += 1
+        return neigh_ind
 
-        train_size = self._fit_X.shape[0]
-        if n_neighbors > train_size:
-            raise ValueError(
-                "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" % (train_size, n_neighbors)
-            )
-        n_samples = X.shape[0]
-        sample_range = np.arange(n_samples)[:, None]
-
-        n_jobs = effective_n_jobs(self.n_jobs)
-        if self._fit_method == "brute":
-
-            reduce_func = partial(
-                self._kneighbors_reduce_func,
-                n_neighbors=n_neighbors,
-                return_distance=return_distance,
-            )
-
-            # for efficiency, use squared euclidean distances
-            kwds = (
-                {"squared": True}
-                if self.effective_metric_ == "euclidean"
-                else self.effective_metric_params_
-            )
-
-            result = pairwise_distances_chunked(
-                X,
-                self._fit_X,
-                reduce_func=reduce_func,
-                metric=self.effective_metric_,
-                n_jobs=n_jobs,
-                **kwds
-            )
-        else:
-            raise ValueError("internal: _fit_method not recognized")
-
-        if return_distance:
-            dist, neigh_ind = zip(*result)
-            result = np.vstack(dist), np.vstack(neigh_ind)
-        else:
-            result = np.vstack(result)
-
-        if not query_is_train:
-            return result
-        else:
-            # If the query data is the same as the indexed data, we would like
-            # to ignore the first nearest neighbor of every sample, i.e
-            # the sample itself.
-            if return_distance:
-                dist, neigh_ind = result
-            else:
-                neigh_ind = result
-
-            sample_mask = neigh_ind != sample_range
-
-            # Corner case: When the number of duplicates are more
-            # than the number of neighbors, the first NN will not
-            # be the sample, but a duplicate.
-            # In that case mask the first duplicate.
-            dup_gr_nbrs = np.all(sample_mask, axis=1)
-            sample_mask[:, 0][dup_gr_nbrs] = False
-
-            neigh_ind = np.reshape(neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
-
-            if return_distance:
-                dist = np.reshape(dist[sample_mask], (n_samples, n_neighbors - 1))
-                return dist, neigh_ind
-            return neigh_ind
-
-    def predict(self, X):
+    def _predict(self, X):
         """Predict the class labels for the provided data.
 
         Parameters
@@ -401,116 +241,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        self.check_is_fitted()
+        # self._X should be the stored _X
+        dist_mat = self.distance(X, self._X)
 
-        if hasattr(check_array, "__wrapped__"):
-            temp = check_array.__wrapped__.__code__
-            check_array.__wrapped__.__code__ = _check_array_ts.__code__
-        else:
-            temp = check_array.__code__
-            check_array.__code__ = _check_array_ts.__code__
+        y_pred = self.knn_estimator_.predict(dist_mat)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-
-        n_outputs = len(classes_)
-        n_samples = X.shape[0]
-        weights = _get_weights(neigh_dist, self.weights)
-
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            if weights is None:
-                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
-            else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
-
-            mode = np.asarray(mode.ravel(), dtype=np.intp)
-            y_pred[:, k] = classes_k.take(mode)
-
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
-
-        if hasattr(check_array, "__wrapped__"):
-            check_array.__wrapped__.__code__ = temp
-        else:
-            check_array.__code__ = temp
         return y_pred
-
-    def predict_proba(self, X):
-        """Return probability estimates for the test data X.
-
-        Parameters
-        ----------
-        X : sktime-format pandas dataframe or array-like, shape (n_query,
-        n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            Test samples.
-
-        Returns
-        -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            of such arrays if n_outputs > 1.
-            The class probabilities of the input samples. Classes are ordered
-            by lexicographic order.
-        """
-        self.check_is_fitted()
-
-        if hasattr(check_array, "__wrapped__"):
-            temp = check_array.__wrapped__.__code__
-            check_array.__wrapped__.__code__ = _check_array_ts.__code__
-        else:
-            temp = check_array.__code__
-            check_array.__code__ = _check_array_ts.__code__
-
-        X = check_array(X, accept_sparse="csr")
-
-        neigh_dist, neigh_ind = self.kneighbors(X)
-
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-
-        n_samples = X.shape[0]
-
-        weights = _get_weights(neigh_dist, self.weights)
-        if weights is None:
-            weights = np.ones_like(neigh_ind)
-
-        all_rows = np.arange(X.shape[0])
-        probabilities = []
-        for k, classes_k in enumerate(classes_):
-            pred_labels = _y[:, k][neigh_ind]
-            proba_k = np.zeros((n_samples, classes_k.size))
-
-            # a simple ':' index doesn't work right
-            for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
-                proba_k[all_rows, idx] += weights[:, i]
-
-            # normalize 'votes' into real [0,1] probabilities
-            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba_k /= normalizer
-
-            probabilities.append(proba_k)
-
-        if not self.outputs_2d_:
-            probabilities = probabilities[0]
-
-        if hasattr(check_array, "__wrapped__"):
-            check_array.__wrapped__.__code__ = temp
-        else:
-            check_array.__code__ = temp
-        return probabilities
-
-
-# overwrite sklearn internal checks, this is really hacky
-# we now need to replace: check_array.__wrapped__.__code__ since it's
-# wrapped by a future warning decorator
-def _check_array_ts(array, *args, **kwargs):
-    return array
