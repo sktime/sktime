@@ -38,8 +38,13 @@ from sktime.datatypes._alignment._registry import (
 )
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
 from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
+from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
 
-MTYPE_REGISTER = MTYPE_REGISTER_SERIES + MTYPE_REGISTER_PANEL + MTYPE_REGISTER_ALIGNMENT
+MTYPE_REGISTER = []
+MTYPE_REGISTER += MTYPE_REGISTER_SERIES
+MTYPE_REGISTER += MTYPE_REGISTER_PANEL
+MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
+MTYPE_REGISTER += MTYPE_REGISTER_TABLE
 
 
 __all__ = [
@@ -47,6 +52,7 @@ __all__ = [
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
     "MTYPE_LIST_ALIGNMENT",
+    "MTYPE_LIST_TABLE",
     "SCITYPE_REGISTER",
 ]
 
@@ -55,6 +61,7 @@ SCITYPE_REGISTER = [
     ("Series", "uni- or multivariate time series"),
     ("Panel", "panel of uni- or multivariate time series"),
     ("Alignment", "series or sequence alignment"),
+    ("Table", "data table with primitive column types"),
 ]
 
 
