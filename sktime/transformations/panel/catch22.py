@@ -189,10 +189,15 @@ class Catch22(_PanelToTabularTransformer):
                 self._ac = [None] * n_instances
                 self._acfz = [None] * n_instances
             else:
-                if n_instances != self._st_n_instances or series_length != self._st_series_length:
-                    raise ValueError("Catch22: case_is the same, but n_instances and "
-                                     "series_length do not match last seen for single "
-                                     "feature transform.")
+                if (
+                    n_instances != self._st_n_instances
+                    or series_length != self._st_series_length
+                ):
+                    raise ValueError(
+                        "Catch22: case_is the same, but n_instances and "
+                        "series_length do not match last seen for single "
+                        "feature transform."
+                    )
 
         c22_list = Parallel(n_jobs=self.n_jobs)(
             delayed(self._transform_case_single)(
@@ -260,7 +265,9 @@ class Catch22(_PanelToTabularTransformer):
                     if self._outlier_series[inst_idx] is None:
                         std = np.std(series)
                         if std > 0:
-                            self._outlier_series[inst_idx] = (series - np.mean(series)) / std
+                            self._outlier_series[inst_idx] = (
+                                series - np.mean(series)
+                            ) / std
                         else:
                             self._outlier_series[inst_idx] = series
                     series = self._outlier_series[inst_idx]
@@ -270,14 +277,18 @@ class Catch22(_PanelToTabularTransformer):
                     self._smean[inst_idx] = np.mean(series)
                 if self._fft[inst_idx] is None:
                     nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-                    self._fft[inst_idx] = np.fft.fft(series - self._smean[inst_idx], n=nfft)
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
                 args = [series, self._fft[inst_idx]]
             elif feature == 5 or feature == 6 or feature == 12:
                 if self._smean[inst_idx] is None:
                     self._smean[inst_idx] = np.mean(series)
                 if self._fft[inst_idx] is None:
                     nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-                    self._fft[inst_idx] = np.fft.fft(series - self._smean[inst_idx], n=nfft)
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
                 if self._ac[inst_idx] is None:
                     self._ac[inst_idx] = _autocorr(series, self._fft[inst_idx])
                 args = [self._ac[inst_idx]]
@@ -286,7 +297,9 @@ class Catch22(_PanelToTabularTransformer):
                     self._smean[inst_idx] = np.mean(series)
                 if self._fft[inst_idx] is None:
                     nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-                    self._fft[inst_idx] = np.fft.fft(series - self._smean[inst_idx], n=nfft)
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
                 if self._ac[inst_idx] is None:
                     self._ac[inst_idx] = _autocorr(series, self._fft[inst_idx])
                 if self._acfz[inst_idx] is None:
