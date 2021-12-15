@@ -179,12 +179,22 @@ def _check_window_lengths(y, fh, window_length, initial_window):
             )
 
     if initial_window is not None:
-        if initial_window + fh_max > n_timepoints:
-            raise ValueError(
-                f"The `initial_window` and the forecasting horizon are incompatible "
-                f"with the length of `y`. Found `initial_window`={initial_window},"
-                f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
-            )
+        if is_timedelta(x=initial_window):
+            if y.get_loc(min(y[-1], y[0] + initial_window)) + fh_max > n_timepoints:
+                raise ValueError(
+                    f"The `initial_window` and the forecasting horizon are "
+                    f"incompatible "
+                    f"with the length of `y`. Found `initial_window`={initial_window}, "
+                    f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
+                )
+        else:
+            if initial_window + fh_max > n_timepoints:
+                raise ValueError(
+                    f"The `initial_window` and the forecasting horizon are "
+                    f"incompatible "
+                    f"with the length of `y`. Found `initial_window`={initial_window}, "
+                    f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
+                )
 
 
 class BaseSplitter:
@@ -358,12 +368,23 @@ class BaseWindowSplitter(BaseSplitter):
 
             # For in-sample forecasting horizons, the first split must ensure that
             # in-sample test set is still within the data.
-            if not fh.is_all_out_of_sample() and abs(fh[0]) >= self.initial_window:
-                initial_start = abs(fh[0]) - self.initial_window + 1
+            if is_timedelta(x=self.initial_window):
+                if not fh.is_all_out_of_sample() and abs(fh[0]) >= y.get_loc(
+                    y[0] + self.initial_window
+                ):
+                    initial_start = abs(fh[0]) - self.initial_window + 1
+                else:
+                    initial_start = 0
             else:
-                initial_start = 0
+                if not fh.is_all_out_of_sample() and abs(fh[0]) >= self.initial_window:
+                    initial_start = abs(fh[0]) - self.initial_window + 1
+                else:
+                    initial_start = 0
 
-            initial_end = initial_start + initial_window
+            if is_timedelta(x=initial_window):
+                initial_end = y.get_loc(y[initial_start] + initial_window)
+            else:
+                initial_end = initial_start + initial_window
             train = np.arange(initial_start, initial_end)
             test = initial_end + fh.to_numpy() - 1
             yield train, test
@@ -399,7 +420,10 @@ class BaseWindowSplitter(BaseSplitter):
                 else:
                     step_length = 1
 
-                start += self.initial_window + step_length
+                if is_timedelta(x=self.initial_window):
+                    start = y.get_loc(y[start] + self.initial_window) + step_length
+                else:
+                    start += self.initial_window + step_length
             else:
                 if is_timedelta(x=self.window_length):
                     start = y.get_loc(y[start] + self.window_length)
@@ -453,7 +477,10 @@ class BaseWindowSplitter(BaseSplitter):
         step_length = check_step_length(self.step_length)
 
         if hasattr(self, "initial_window") and self.initial_window is not None:
-            start = self.initial_window
+            if is_timedelta(x=self.initial_window):
+                start = y.get_loc(y[0] + self.initial_window)
+            else:
+                start = self.initial_window
         else:
             start = self._get_start(y=y, fh=fh)
 
@@ -591,8 +618,29 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     @staticmethod
     def _split_windows(start, end, step_length, window_length, y, fh):
         """Generate expanding windows."""
+        # for split_point in range(start, end, step_length):
+        #     train = np.arange(start - window_length, split_point)
+        #     test = split_point + fh - 1
+        #     yield train, test
         for split_point in range(start, end, step_length):
-            train = np.arange(start - window_length, split_point)
+            if is_timedelta(x=window_length):
+                if start < len(y):
+                    train = np.arange(
+                        y.get_loc(
+                            max(y[min(start, len(y) - 1)] - window_length, min(y))
+                        ),
+                        split_point,
+                    )
+                else:
+                    train = np.arange(
+                        y.get_loc(
+                            max(y[min(start, len(y) - 1)] - window_length, min(y))
+                        )
+                        + 1,
+                        split_point,
+                    )
+            else:
+                train = np.arange(start - window_length, split_point)
             test = split_point + fh - 1
             yield train, test
 

@@ -22,6 +22,7 @@ from sktime.forecasting.model_selection import (
 )
 from sktime.forecasting.tests._config import (
     TEST_FHS,
+    TEST_INITIAL_WINDOW,
     TEST_OOS_FHS,
     TEST_STEP_LENGTHS,
     TEST_WINDOW_LENGTHS,
@@ -191,7 +192,7 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-@pytest.mark.parametrize("initial_window", [7, 10])
+@pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
 ):
@@ -205,13 +206,22 @@ def test_sliding_window_splitter_with_initial_window(
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert train_windows[0].shape[0] == initial_window
-    assert np.vstack(train_windows[1:]).shape == (n_splits - 1, window_length)
+    if is_timedelta(x=initial_window):
+        assert train_windows[0].shape[0] == initial_window.days
+    else:
+        assert train_windows[0].shape[0] == initial_window
+    if is_timedelta(x=window_length):
+        assert np.vstack(train_windows[1:]).shape == (n_splits - 1, window_length.days)
+    else:
+        assert np.vstack(train_windows[1:]).shape == (n_splits - 1, window_length)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
 
 def _get_n_incomplete_windows(window_length, step_length):
-    return int(np.ceil(window_length / step_length))
+    if is_timedelta(x=window_length):
+        return int(np.ceil(window_length.days / step_length))
+    else:
+        return int(np.ceil(window_length / step_length))
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -234,7 +244,16 @@ def test_sliding_window_splitter_start_with_empty_window(
 
     n_incomplete = _get_n_incomplete_windows(window_length, step_length)
     train_windows = train_windows[n_incomplete:]
-    assert np.vstack(train_windows).shape == (n_splits - n_incomplete, window_length)
+    if is_timedelta(x=window_length):
+        assert np.vstack(train_windows).shape == (
+            n_splits - n_incomplete,
+            window_length.days,
+        )
+    else:
+        assert np.vstack(train_windows).shape == (
+            n_splits - n_incomplete,
+            window_length,
+        )
 
 
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
@@ -310,7 +329,10 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-    assert train_windows[0].shape[0] == initial_window
+    if is_timedelta(x=initial_window):
+        assert train_windows[0].shape[0] == initial_window.days
+    else:
+        assert train_windows[0].shape[0] == initial_window
     _check_expanding_windows(train_windows)
 
 
