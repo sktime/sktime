@@ -128,7 +128,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     def fit(self, X, y):
         """Override fit is required to sort out the multiple inheritance."""
-        BaseClassifier.fit(self, X, y)
+        return BaseClassifier.fit(self, X, y)
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
@@ -347,7 +347,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     def predict(self, X):
         """Predict wrapper."""
-        BaseClassifier.predict(self, X)
+        return BaseClassifier.predict(self, X)
 
     def _predict(self, X):
         """Predict the class labels for the provided data.
@@ -403,7 +403,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     def predict_proba(self, X):
         """Predict proba wrapper."""
-        BaseClassifier._predict_proba(self, X)
+        return BaseClassifier._predict_proba(self, X)
 
     def _predict_proba(self, X):
         """Return probability estimates for the test data X.
