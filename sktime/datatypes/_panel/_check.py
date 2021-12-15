@@ -31,9 +31,11 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_equally_spaced": bool, True iff all series indices are equally spaced
         "is_empty": bool, True iff one or more of the series in the panel are empty
         "is_one_series": bool, True iff there is only one series in the panel
+        "has_nans": bool, True iff the panel contains NaN values
+        "n_instances": int, number of instances in the panel
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "tonybagnall"]
 
 __all__ = ["check_dict"]
 
@@ -81,7 +83,9 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
         [res[2]["is_equally_spaced"] for res in check_res]
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
-    metadata["is_one_series"] = len(obj) == 1
+    metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
+    metadata["is_one_series"] = n == 1
+    metadata["n_instances"] = n
 
     return ret(True, None, metadata, return_metadata)
 
@@ -110,7 +114,12 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = obj.shape[1] < 2
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
+    metadata["n_instances"] = obj.shape[0]
     metadata["is_one_series"] = obj.shape[0] == 1
+
+    # check whether there any nans; only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -173,7 +182,9 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
         [res[2]["is_equally_spaced"] for res in check_res]
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
+    metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -205,6 +216,53 @@ def are_columns_nested(X):
     """
     any_nested = _nested_cell_mask(X).any().values
     return any_nested
+
+
+def _nested_dataframe_has_unequal(X: pd.DataFrame) -> bool:
+    """Check whether an input nested DataFrame of Series has unequal length series.
+
+    Parameters
+    ----------
+    X : pd.DataFrame where each cell is a pd.Series
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    rows = len(X)
+    cols = len(X.columns)
+    s = X.iloc[0, 0]
+    length = len(s)
+
+    for i in range(0, rows):
+        for j in range(0, cols):
+            s = X.iloc[i, j]
+            temp = len(s)
+            if temp != length:
+                return True
+    return False
+
+
+def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
+    """Check whether an input pandas of Series has nans.
+
+    Parameters
+    ----------
+    X : pd.DataFrame where each cell is a pd.Series
+
+    Returns
+    -------
+    True if x contains any NaNs, False otherwise.
+    """
+    cases = len(X)
+    dimensions = len(X.columns)
+    for i in range(0, cases):
+        for j in range(0, dimensions):
+            s = X.iloc[i, j]
+            for k in range(0, s.size):
+                if pd.isna(s[k]):
+                    return True
+    return False
 
 
 def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
@@ -242,10 +300,14 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
             return ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = True
-    # metadata["is_equally_spaced"] = todo
-    # metadata["is_empty"] = todo
+    metadata["is_univariate"] = obj.shape[1] < 2
+    # todo: this is temporary override, proper is_empty logic needs to be added
+    metadata["is_empty"] = False
+    metadata["n_instances"] = len(obj)
     metadata["is_one_series"] = len(obj) == 1
+    if return_metadata:
+        metadata["has_nans"] = _nested_dataframe_has_nans(obj)
+        metadata["is_equally_spaced"] = not _nested_dataframe_has_unequal(obj)
 
     return ret(True, None, metadata, return_metadata)
 

@@ -24,6 +24,10 @@ def deep_equals(x, y):
         pd.Series, pd.DataFrame, np.ndarray
         lists, tuples, or dicts of a valid type (recursive)
 
+    Important note:
+        this function will return "not equal" if types of x,y are different
+        for instant, bool and numpy.bool are *not* considered equal
+
     Parameters
     ----------
     x: object
