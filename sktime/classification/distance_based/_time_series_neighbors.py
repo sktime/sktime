@@ -19,7 +19,7 @@ param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["jasonlines", "TonyBagnall"]
+__author__ = ["jasonlines", "TonyBagnall", "chrisholder"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 from functools import partial
