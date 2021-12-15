@@ -120,12 +120,17 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             metric_params=distance_params,
             **kwargs
         )
+        BaseClassifier.__init__(self)
         self.weights = _check_weights(weights)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
     def fit(self, X, y):
+        """Override fit is required to sort out the multiple inheritance."""
+        BaseClassifier.fit(self, X, y)
+
+    def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
         Parameters
@@ -198,7 +203,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = _check_array_ts.__code__
         #  this not fx = self._fit(X, self_y) in order to maintain backward
         # compatibility with scikit learn 0.23, where _fit does not take an arg y
-        fx = self._fit(X)
+        fx = super()._fit(X)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
