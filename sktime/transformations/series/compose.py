@@ -380,10 +380,10 @@ class Featureizer(_SeriesToSeriesTransformer):
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
         "univariate-only": False,
-        "y_inner_mtype": ["pd.DataFrame"],
-        "X_inner_mtype": ["pd.Series"],
-        "scitype:X": "univariate",
-        "scitype:y": "multivariate",
+        "X_inner_mtype": ["pd.DataFrame"],
+        "y_inner_mtype": ["pd.Series"],
+        "scitype:y": "univariate",
+        "scitype:X": "multivariate",
     }
 
     def __init__(self, transformer, fh, suffix=None):
@@ -421,11 +421,7 @@ class Featureizer(_SeriesToSeriesTransformer):
         # swap X, y
         self.transformer_.fit(y)
         # set suffix from transformer class name if None
-        self.suffix_ = (
-            self.suffix
-            if self.suffix is not None
-            else self.transformer.__class__.__name__.lower()
-        )
+        self.suffix_ = self.suffix if self.suffix is not None else "featureized"
         self._is_fitted = True
         return self
 
@@ -478,7 +474,7 @@ class Featureizer(_SeriesToSeriesTransformer):
             if len(X) != shift:
                 raise ValueError("Given len of X must be equal to len of fh.")
             y_t = self._y.iloc[-shift:]
-        col = self._y.name + "_" + self.suffix if self._y.name else self.suffix
+        col = self._y.name + "_" + self.suffix_ if self._y.name else self.suffix_
         if col in X.columns:
             raise AttributeError(
                 f"Name {col} is already in X.columns, please give a suffix param."
