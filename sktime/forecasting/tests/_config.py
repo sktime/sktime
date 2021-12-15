@@ -24,7 +24,6 @@ from sktime.utils._testing.series import _make_series
 
 # We here define the parameter values for unit testing.
 TEST_WINDOW_LENGTHS = [1, 5]
-TEST_TIME_UNITS = [1, 3]
 TEST_STEP_LENGTHS = [1, 5]
 TEST_OOS_FHS = [1, np.array([2, 5])]  # out-of-sample
 TEST_INS_FHS = [
