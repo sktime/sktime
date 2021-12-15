@@ -163,12 +163,20 @@ def _check_window_lengths(y, fh, window_length, initial_window):
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
-    if window_length + fh_max > n_timepoints:
-        raise ValueError(
-            f"The `window_length` and the forecasting horizon are incompatible with "
-            f"the length of `y`. Found `window_length`={window_length}, `max(fh)`="
-            f"{fh_max}, but len(y)={n_timepoints}."
-        )
+    if is_timedelta(x=window_length):
+        if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
+            raise ValueError(
+                f"The `window_length` and the forecasting horizon are incompatible "
+                f"with the length of `y`. Found `window_length`={window_length}, "
+                f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
+            )
+    else:
+        if window_length + fh_max > n_timepoints:
+            raise ValueError(
+                f"The `window_length` and the forecasting horizon are incompatible "
+                f"with the length of `y`. Found `window_length`={window_length}, "
+                f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
+            )
 
     if initial_window is not None:
         if initial_window + fh_max > n_timepoints:
@@ -360,20 +368,20 @@ class BaseWindowSplitter(BaseSplitter):
             test = initial_end + fh.to_numpy() - 1
             yield train, test
 
-        start = self._get_start(fh)
+        start = self._get_start(y=y, fh=fh)
         end = _get_end(y, fh)
 
         for train, test in self._split_windows(
-            start, end, step_length, window_length, fh.to_numpy()
+            start, end, step_length, window_length, y, fh.to_numpy()
         ):
             yield train, test
 
     @staticmethod
-    def _split_windows(start, end, step_length, window_length, fh):
+    def _split_windows(start, end, step_length, window_length, y, fh):
         """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
 
-    def _get_start(self, fh):
+    def _get_start(self, y, fh):
         """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
@@ -393,7 +401,10 @@ class BaseWindowSplitter(BaseSplitter):
 
                 start += self.initial_window + step_length
             else:
-                start += self.window_length
+                if is_timedelta(x=self.window_length):
+                    start = y.get_loc(y[start] + self.window_length)
+                else:
+                    start += self.window_length
 
         # For in-sample forecasting horizons, the first split must ensure that
         # in-sample test set is still within the data.
@@ -444,7 +455,7 @@ class BaseWindowSplitter(BaseSplitter):
         if hasattr(self, "initial_window") and self.initial_window is not None:
             start = self.initial_window
         else:
-            start = self._get_start(fh)
+            start = self._get_start(y=y, fh=fh)
 
         end = _get_end(y, fh)
 
@@ -502,10 +513,27 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         )
 
     @staticmethod
-    def _split_windows(start, end, step_length, window_length, fh):
+    def _split_windows(start, end, step_length, window_length, y, fh):
         """Generate sliding windows."""
         for split_point in range(start, end, step_length):
-            train = np.arange(split_point - window_length, split_point)
+            if is_timedelta(x=window_length):
+                if split_point < len(y):
+                    train = np.arange(
+                        y.get_loc(
+                            max(y[min(split_point, len(y) - 1)] - window_length, min(y))
+                        ),
+                        split_point,
+                    )
+                else:
+                    train = np.arange(
+                        y.get_loc(
+                            max(y[min(split_point, len(y) - 1)] - window_length, min(y))
+                        )
+                        + 1,
+                        split_point,
+                    )
+            else:
+                train = np.arange(split_point - window_length, split_point)
             test = split_point + fh - 1
             yield train, test
 
@@ -561,7 +589,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         )
 
     @staticmethod
-    def _split_windows(start, end, step_length, window_length, fh):
+    def _split_windows(start, end, step_length, window_length, y, fh):
         """Generate expanding windows."""
         for split_point in range(start, end, step_length):
             train = np.arange(start - window_length, split_point)

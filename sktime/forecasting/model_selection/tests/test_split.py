@@ -180,7 +180,10 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert np.vstack(train_windows).shape == (n_splits, window_length)
+    if is_timedelta(x=window_length):
+        assert np.vstack(train_windows).shape == (n_splits, window_length.days)
+    else:
+        assert np.vstack(train_windows).shape == (n_splits, window_length)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
 
