@@ -1,24 +1,35 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Validation functions."""
+
 __all__ = ["is_int", "is_float", "check_n_jobs", "check_window_length"]
 __author__ = ["Markus Löning", "Taiwo Owoseni"]
 
 import os
+from datetime import timedelta
 
 import numpy as np
+import pandas as pd
 
 
-def is_int(x):
-    """Check if x is of integer type, but not boolean"""
+def is_int(x) -> bool:
+    """Check if x is of integer type, but not boolean."""
     # boolean are subclasses of integers in Python, so explicitly exclude them
     return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
 
 
-def is_float(x):
-    """Check if x is of float type"""
+def is_float(x) -> bool:
+    """Check if x is of float type."""
     return isinstance(x, (float, np.floating))
 
 
-def check_n_jobs(n_jobs):
+def is_timedelta(x) -> bool:
+    """Check if x is of timedelta type."""
+    return isinstance(x, (pd.Timedelta, timedelta, np.timedelta64))
+
+
+def check_n_jobs(n_jobs) -> int:
     """Check `n_jobs` parameter according to the scikit-learn convention.
 
     Parameters
@@ -44,8 +55,8 @@ def check_n_jobs(n_jobs):
 
 
 def check_window_length(window_length, n_timepoints=None, name="window_length"):
-    """Validate window length"""
-    """
+    """Validate window length.
+
     Parameters
     ----------
     window_length: positive int, positive float in (0, 1), or None
@@ -79,6 +90,9 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
 
         # Compute fraction relative to `n_timepoints`.
         return int(np.ceil(window_length * n_timepoints))
+
+    elif is_timedelta(window_length) and window_length > timedelta(0):
+        return window_length
 
     else:
         raise ValueError(
