@@ -272,7 +272,7 @@ class CutoffSplitter(BaseSplitter):
         cutoff points, positive and integer-index like, usable with pandas
         .iloc[] indexing
     fh : int, list or np.array
-    window_length : int
+    window_length : int or timedelta
     """
 
     def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
@@ -291,9 +291,14 @@ class CutoffSplitter(BaseSplitter):
         if np.max(cutoffs) + np.max(fh) > y.shape[0]:
             raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length, n_timepoints)
-
         for cutoff in cutoffs:
-            training_window = np.arange(cutoff - window_length, cutoff) + 1
+            if is_timedelta(x=window_length):
+                training_window = (
+                    np.arange(y.get_loc(max(y[0], y[cutoff] - window_length)), cutoff)
+                    + 1
+                )
+            else:
+                training_window = np.arange(cutoff - window_length, cutoff) + 1
             test_window = cutoff + fh
             yield training_window, test_window
 
