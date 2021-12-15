@@ -383,7 +383,7 @@ class Featureizer(_SeriesToSeriesTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         "y_inner_mtype": ["pd.Series"],
         "scitype:y": "univariate",
-        "scitype:X": "multivariate",
+        # "scitype:X": "multivariate",
     }
 
     def __init__(self, transformer, fh, suffix=None):
