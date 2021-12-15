@@ -30,7 +30,7 @@ from sktime.forecasting.tests._config import (
 )
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation import is_int
+from sktime.utils.validation import is_int, is_timedelta
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
@@ -124,7 +124,10 @@ def test_single_window_splitter(y, fh, window_length):
     test_window = test_windows[0]
 
     assert n_splits == 1
-    assert train_window.shape[0] == window_length
+    if is_timedelta(x=window_length):
+        assert train_window.shape[0] == window_length.days
+    else:
+        assert train_window.shape[0] == window_length
     assert test_window.shape[0] == len(check_fh(fh))
 
     np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))

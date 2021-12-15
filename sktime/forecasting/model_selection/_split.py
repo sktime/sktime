@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement dataset splitting for model evaluation and seleciton."""
+"""Implement dataset splitting for model evaluation and selection."""
 
 __all__ = [
     "ExpandingWindowSplitter",
@@ -16,13 +16,14 @@ import inspect
 import numbers
 import warnings
 from inspect import signature
+from typing import Union
 
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.utils.validation import check_window_length
+from sktime.utils.validation import check_window_length, is_timedelta
 from sktime.utils.validation.forecasting import (
     check_cutoffs,
     check_fh,
@@ -97,7 +98,7 @@ def _repr(self):
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
 
 
-def _check_y(y):
+def _check_y(y: Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]) -> pd.Index:
     """Coerce input to `split` function.
 
     Parameters
@@ -131,7 +132,7 @@ def _check_y(y):
         raise TypeError(
             "Input to _check_y must be pd.Series, pd.DataFrame, np.ndarray, or pd.Index"
         )
-    return check_time_index(y_index)
+    return check_time_index(index=y_index)
 
 
 def _check_fh(fh):
@@ -585,7 +586,12 @@ class SingleWindowSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
 
         end = _get_end(y, fh) - 1
-        start = 0 if window_length is None else end - window_length
+        if window_length is None:
+            start = 0
+        elif is_timedelta(x=window_length):
+            start = y.get_loc(y[end - 1] - window_length) + 1
+        else:
+            start = end - window_length
         train = np.arange(start, end)
         test = end + fh.to_numpy() - 1
         yield train, test
