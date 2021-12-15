@@ -40,8 +40,44 @@ from sktime.classification.base import BaseClassifier
 from sktime.distances import distance_factory
 
 
-class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
-    """KNN Time Series Classifier.
+class KNeighborsTimeSeriesClassifier(BaseClassifier):
+    """KNN Time Series Classifier wrapper."""
+
+    _tags = {
+        "capability:multivariate": True,
+    }
+
+    def __init__(
+        self,
+        n_neighbors=1,
+        weights="uniform",
+        distance="dtw",
+        distance_params=None,
+        **kwargs
+    ):
+        self.n_neighbors = n_neighbors
+        self.weights = weights
+        self.distance = (distance,)
+        self.distance_params = (distance_params,)
+        self.classifier = _KNeighborsTimeSeriesClassifier(
+            n_neighbors=self.n_neighbors,
+            weights=self.weights,
+            distance=self.distance,
+            distance_params=self.distance_params,
+        )
+
+    def _fit(self, X, y):
+        return self.classifier.fit(self.classsifier, X, y)
+
+    def _predict(self, X, y):
+        return self.classifier.predict(self.classsifier, X, y)
+
+    def _predict_proba(self, X, y):
+        return self.classifier.predict_proba(self.classsifier, X, y)
+
+
+class _KNeighborsTimeSeriesClassifier(_KNeighborsClassifier):
+    """KNN Time Series Classifier in scikit format.
 
     An adapted version of the scikit-learn KNeighborsClassifier to work with
     time series data.
@@ -90,10 +126,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     >>> y_pred = classifier.predict(X_test)
     """
 
-    _tags = {
-        "capability:multivariate": True,
-    }
-
     def __init__(
         self,
         n_neighbors=1,
@@ -122,10 +154,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Override fit is required to sort out the multiple inheritance."""
-        return BaseClassifier.fit(self, X, y)
-
-    def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
         Parameters
@@ -306,10 +334,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             return neigh_ind
 
     def predict(self, X):
-        """Predict wrapper."""
-        return BaseClassifier.predict(self, X)
-
-    def _predict(self, X):
         """Predict the class labels for the provided data.
 
         Parameters
@@ -362,10 +386,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         return y_pred
 
     def predict_proba(self, X):
-        """Predict proba wrapper."""
-        return BaseClassifier._predict_proba(self, X)
-
-    def _predict_proba(self, X):
         """Return probability estimates for the test data X.
 
         Parameters
