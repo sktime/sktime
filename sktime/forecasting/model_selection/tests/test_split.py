@@ -24,7 +24,6 @@ from sktime.forecasting.tests._config import (
     TEST_FHS,
     TEST_OOS_FHS,
     TEST_STEP_LENGTHS,
-    TEST_TIME_UNITS,
     TEST_WINDOW_LENGTHS,
     TEST_YS,
     VALID_INDEX_FH_COMBINATIONS,
@@ -116,17 +115,16 @@ def _check_cv(cv, y, allow_empty_window=False):
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("time_unit", TEST_TIME_UNITS)
-def test_single_window_splitter(y, fh, window_length, time_unit):
+def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
-    cv = SingleWindowSplitter(fh=fh, window_length=window_length, time_unit=time_unit)
+    cv = SingleWindowSplitter(fh=fh, window_length=window_length)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
     train_window = train_windows[0]
     test_window = test_windows[0]
 
     assert n_splits == 1
-    assert train_window.shape[0] == window_length * time_unit
+    assert train_window.shape[0] == window_length
     assert test_window.shape[0] == len(check_fh(fh))
 
     np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
