@@ -346,6 +346,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             return neigh_ind
 
     def predict(self, X):
+        """Predict wrapper."""
+        BaseClassifier.predict(self, X)
+
+    def _predict(self, X):
         """Predict the class labels for the provided data.
 
         Parameters
@@ -398,6 +402,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         return y_pred
 
     def predict_proba(self, X):
+        """Predict proba wrapper."""
+        BaseClassifier._predict_proba(self, X)
+
+    def _predict_proba(self, X):
         """Return probability estimates for the test data X.
 
         Parameters
