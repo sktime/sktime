@@ -22,15 +22,12 @@ param_names=None)
 __author__ = ["jasonlines", "TonyBagnall"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
-import warnings
 from functools import partial
 
 import numpy as np
 from joblib import effective_n_jobs
 from scipy import stats
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights, _get_weights
 from sklearn.utils.extmath import weighted_mode
@@ -41,7 +38,6 @@ from sktime.classification.base import BaseClassifier
 
 # New imports using Numba
 from sktime.distances import distance_factory
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
@@ -106,7 +102,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         distance_params=None,
         **kwargs
     ):
-        self._cv_for_params = False
         self.distance = distance
         self.distance_params = distance_params
 
@@ -141,12 +136,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
         """
-        X, y = check_X_y(
-            X,
-            y,
-            enforce_univariate=not self._tags["capability:multivariate"],
-            coerce_to_numpy=True,
-        )
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
 
@@ -155,31 +144,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         y = np.asarray(y)
         check_classification_targets(y)
-        # if internal cv is desired, the relevant flag forces a grid search
-        # to evaluate the possible values,
-        # find the best, and then set this classifier's params to match
-        if self._cv_for_params:
-            grid = GridSearchCV(
-                estimator=KNeighborsTimeSeriesClassifier(
-                    distance=self.metric, n_neighbors=1
-                ),
-                param_grid=self._param_matrix,
-                cv=LeaveOneOut(),
-                scoring="accuracy",
-            )
-            grid.fit(X, y)
-            self.distance_params = grid.best_params_["distance_params"]
-
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            if y.ndim != 1:
-                warnings.warn(
-                    "IN TS-KNN: A column-vector y was passed when a 1d array "
-                    "was expected. Please change the shape of y to "
-                    "(n_samples, ), for example using ravel().",
-                    DataConversionWarning,
-                    stacklevel=2,
-                )
-
             self.outputs_2d_ = False
             y = y.reshape((-1, 1))
         else:
@@ -201,7 +166,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
-        #  this not fx = self._fit(X, self_y) in order to maintain backward
+        #  this is not fx = self._fit(X, y) in order to maintain backward
         # compatibility with scikit learn 0.23, where _fit does not take an arg y
         fx = super()._fit(X)
 
@@ -247,11 +212,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(
-            X,
-            enforce_univariate=not self._tags["capability:multivariate"],
-            coerce_to_numpy=True,
-        )
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
 
