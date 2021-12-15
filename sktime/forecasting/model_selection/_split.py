@@ -618,10 +618,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     @staticmethod
     def _split_windows(start, end, step_length, window_length, y, fh):
         """Generate expanding windows."""
-        # for split_point in range(start, end, step_length):
-        #     train = np.arange(start - window_length, split_point)
-        #     test = split_point + fh - 1
-        #     yield train, test
         for split_point in range(start, end, step_length):
             if is_timedelta(x=window_length):
                 if start < len(y):
