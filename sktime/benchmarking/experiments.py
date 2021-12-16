@@ -286,7 +286,7 @@ def run_classification_experiment(
         )
 
     classifier_train_probs = (
-        train_file and getattr(classifier, "time_limit_in_minutes", None) is not None
+        train_file and callable(getattr(classifier, "_get_train_probs", None))
     )
     build_time = -1
 
@@ -345,7 +345,7 @@ def run_classification_experiment(
 
     if train_file:
         start = int(round(time.time() * 1000))
-        if classifier_train_probs:  # Normally Can only do this if test has been built
+        if classifier_train_probs:  # Normally can only do this if test has been built
             train_probs = classifier._get_train_probs(X_train, y_train)
         else:
             cv_size = 10
@@ -355,7 +355,7 @@ def run_classification_experiment(
                 cv_size = min_class
 
             train_probs = cross_val_predict(
-                classifier, X=X_train, y=y_train, cv=cv_size, method="predict_proba"
+                classifier, X_train, y=y_train, cv=cv_size, method="predict_proba"
             )
         train_time = int(round(time.time() * 1000)) - start
 
