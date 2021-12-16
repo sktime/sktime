@@ -285,8 +285,8 @@ def run_classification_experiment(
             "At least one must be output."
         )
 
-    classifier_train_probs = (
-        train_file and callable(getattr(classifier, "_get_train_probs", None))
+    classifier_train_probs = train_file and callable(
+        getattr(classifier, "_get_train_probs", None)
     )
     build_time = -1
 
