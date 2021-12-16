@@ -8,12 +8,12 @@ __author__ = ["MatthewMiddlehurst", "kachayev"]
 __all__ = ["Arsenal"]
 
 import time
-import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
@@ -175,8 +175,6 @@ class Arsenal(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        warnings.simplefilter("ignore", category=FutureWarning)
-
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         time_limit = self.time_limit_in_minutes * 60
@@ -266,7 +264,7 @@ class Arsenal(BaseClassifier):
         self.weights_ = []
         self._weight_sum = 0
         for rocket_pipeline in self.estimators_:
-            weight = rocket_pipeline.steps[1][1].best_score_
+            weight = rocket_pipeline.steps[2][1].best_score_
             self.weights_.append(weight)
             self._weight_sum += weight
 
@@ -346,13 +344,13 @@ class Arsenal(BaseClassifier):
             )
             for i in range(self.n_estimators)
         )
-        y_probas, oobs = zip(*p)
+        y_probas, weights, oobs = zip(*p)
 
         results = np.sum(y_probas, axis=0)
         divisors = np.zeros(n_instances)
         for n, oob in enumerate(oobs):
             for inst in oob:
-                divisors[inst] += self.weights_[n]
+                divisors[inst] += weights[n]
 
         for i in range(n_instances):
             results[i] = (
@@ -365,10 +363,12 @@ class Arsenal(BaseClassifier):
 
     def _fit_estimator(self, rocket, X, y):
         transformed_x = rocket.fit_transform(X)
-        ridge = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-        ridge.fit(transformed_x, y)
+        scaler = StandardScaler(with_mean=False)
+        scaler.fit(transformed_x, y)
+        ridge = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
+        ridge.fit(scaler.transform(transformed_x), y)
         return [
-            make_pipeline(rocket, ridge),
+            make_pipeline(rocket, scaler, ridge),
             transformed_x if self.save_transformed_data else None,
         ]
 
@@ -388,12 +388,17 @@ class Arsenal(BaseClassifier):
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
-        clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        clf = make_pipeline(
+            StandardScaler(with_mean=False),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
+        )
         clf.fit(self.transformed_data_[idx].iloc[subsample], y[subsample])
         preds = clf.predict(self.transformed_data_[idx].iloc[oob])
 
+        weight = clf.steps[1][1].best_score_
+
         results = np.zeros((self.n_instances_, self.n_classes_))
         for n, pred in enumerate(preds):
-            results[oob[n]][self._class_dictionary[pred]] += self.weights_[idx]
+            results[oob[n]][self._class_dictionary[pred]] += weight
 
-        return results, oob
+        return results, weight, oob

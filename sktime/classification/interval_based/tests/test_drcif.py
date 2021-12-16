@@ -124,8 +124,8 @@ drcif_basic_motions_probas = np.array(
         [
             0.0,
             0.0,
-            0.9,
-            0.1,
+            1.0,
+            0.0,
         ],
         [
             0.1,
@@ -148,8 +148,8 @@ drcif_basic_motions_probas = np.array(
         [
             0.7,
             0.1,
-            0.1,
-            0.1,
+            0.0,
+            0.2,
         ],
         [
             0.0,
