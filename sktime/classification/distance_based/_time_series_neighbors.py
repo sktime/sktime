@@ -363,17 +363,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     def predict_proba(self, X):
         """Predict proba wrapper."""
-        return BaseClassifier._predict_proba(self, X)
+        return BaseClassifier.predict_proba(self, X)
 
     def _predict_proba(self, X):
         """Return probability estimates for the test data X.
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe or array-like, shape (n_query,
-        n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            Test samples.
+        X : 3D numpy array dimensions (n,d,m) or (n_query, n_indexed) if metric ==
+        'precomputed' Test samples.
 
         Returns
         -------
