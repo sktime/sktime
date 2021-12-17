@@ -8,11 +8,17 @@ Base class template for forecaster scitype.
 Scitype defining methods:
     fitting            - fit(y, X=None, fh=None)
     forecasting        - predict(fh=None, X=None)
+    updating           - update(y, X=None, update_params=True)
+
+Convenience methods:
     fit&forecast       - fit_predict(y, X=None, fh=None)
+    update&forecast    - update_predict(cv=None, X=None, update_params=True)
+    forecast residuals - predict_residuals(y, X=None, fh=None)
+    forecast scores    - score(y, X=None, fh=None)
+
+Optional, special capability methods (check capability tags if available):
     forecast intervals - predict_interval(fh=None, X=None, coverage=0.90)
     forecast quantiles - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
-    updating           - update(y, X=None, update_params=True)
-    update&forecast    - update_predict(cv=None, X=None, update_params=True)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -630,6 +636,48 @@ class BaseForecaster(BaseEstimator):
             return_pred_int=return_pred_int,
             alpha=alpha,
         )
+
+    def predict_residuals(self, y, X=None, fh=None):
+        """Return residuals of time series forecasts.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Time series with ground truth observations, to compute residuals to.
+            Must have same type, dimension, and indices as expected return of predict.
+        X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
+            Exogeneous time series to predict from
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+        fh : int, list, np.ndarray or ForecastingHorizon
+            Forecasting horizon
+
+        Returns
+        -------
+        y_res : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Forecast residuals at fh, with same index as fh
+            y_pred has same type as y passed in fit (most recently)
+        """
+        y_pred = self.predict(fh=fh, X=X)
+
+        if not type(y_pred) == type(y):
+            raise TypeError(
+                "y must have same type, dims, index as expected predict return"
+                f"expected type {type(y_pred)} but found {type(y)}"
+            )
+
+        y_res = y - y_pred
+
+        return y_res
 
     def score(self, y, X=None, fh=None):
         """Scores forecast against ground truth, using MAPE.
