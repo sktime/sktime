@@ -217,35 +217,6 @@ class CleanCommand(Clean):
 
 cmdclass = {"clean": CleanCommand}
 
-# custom build_ext command to set OpenMP compile flags depending on os and
-# compiler
-# build_ext has to be imported after setuptools
-# try:
-#     from numpy.distutils.command.build_ext import build_ext  # noqa
-
-#     class build_ext_subclass(build_ext):
-#         """Build extension subclass."""
-
-#         def build_extensions(self):
-#             """Build extensions."""
-#             # from sktime._build_utils.openmp_helpers import get_openmp_flag
-
-#             if not os.getenv("SKTIME_NO_OPENMP"):
-#                 openmp_flag = get_openmp_flag(self.compiler)
-
-#                 for e in self.extensions:
-#                     e.extra_compile_args += openmp_flag
-#                     e.extra_link_args += openmp_flag
-
-#             build_ext.build_extensions(self)
-
-#     cmdclass["build_ext"] = build_ext_subclass
-
-# except ImportError:
-#     # Numpy should not be a dependency just to be able to introspect
-#     # that python 3.6 is required.
-#     pass
-
 
 def configuration(parent_package="", top_path=None):
     """Configure."""
@@ -340,31 +311,7 @@ def setup_package():
         zip_safe=False,
     )
 
-    # For these actions, NumPy is not required
-    # They are required to succeed without Numpy for example when
-    # pip is used to install sktime when Numpy is not yet
-    # present in the system.
-    # if len(sys.argv) == 1 or (
-    #     len(sys.argv) >= 2
-    #     and (
-    #         "--help" in sys.argv[1:]
-    #         or sys.argv[1] in ("--help-commands", "egg_info", "--version", "clean")
-    #     )
-    # ):
-    #     try:
-    #         from setuptools import setup
-    #     except ImportError:
-    #         from distutils.core import setup
-
-    #     metadata["version"] = pyproject["project"]["version"]
-
-    # else:
-    #     from numpy.distutils.core import setup
-
-    #     metadata["configuration"] = configuration
     from setuptools import setup
-
-    # from numpy.distutils.core import setup
 
     setup(**metadata)
 
