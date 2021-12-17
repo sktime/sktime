@@ -174,10 +174,29 @@ def check_is_mtype(
             returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
+        Keys populated depend on (assumed, otherwise identified) scitype of obj.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+            "scitype": str, scitype of obj (assumed or inferred)
+        For scitype "Series":
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
-            "mtype": str, mtype of obj if inferred
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+        For scitype "Alignment":
+            currently none
 
     Raises
     ------
@@ -355,10 +374,29 @@ def check_is_scitype(
             returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
-            "mtype": str, mtype of obj if inferred
-            "scitype": str, scitype of obj if inferred
-
+        Fields depend on scitpe.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+            "scitype": str, scitype of obj (assumed or inferred)
+        For scitype "Series":
+            "is_univariate": bool, True iff series has one variable
+            "is_equally_spaced": bool, True iff series index is equally spaced
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+        For scitype "Alignment":
+            currently none
     Raises
     ------
     TypeError if scitype input argument is not of expected type
