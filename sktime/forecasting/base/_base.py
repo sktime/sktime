@@ -671,8 +671,8 @@ class BaseForecaster(BaseEstimator):
 
         if not type(y_pred) == type(y):
             raise TypeError(
-                "y must have same type, dims, index as expected predict return"
-                f"expected type {type(y_pred)} but found {type(y)}"
+                "y must have same type, dims, index as expected predict return. "
+                f"expected type {type(y_pred)}, but found {type(y)}"
             )
 
         y_res = y - y_pred
