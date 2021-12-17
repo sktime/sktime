@@ -178,8 +178,10 @@ def check_is_mtype(
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
+        valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
+        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
@@ -284,8 +286,10 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
+        valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
+        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
     var_name: str, optional, default="input" - name of input in error messages
 
     Returns
@@ -326,11 +330,13 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
         name of scitype(s) the object "obj" is considered as, finds mtype for that
         if None (default), does not assume a specific as_scitype and tests all mtypes
             generally, as_scitype should be provided for maximum efficiency
+        valid scitype type strings are in datatypes.SCITYPE_REGISTER (1st column)
 
     Returns
     -------
     str - the inferred mtype of "obj", a valid mtype string
-        or None, if obj is None
+            or None, if obj is None
+        mtype strings with explanation are in datatypes.MTYPE_REGISTER
 
     Raises
     ------
@@ -380,6 +386,7 @@ def check_is_scitype(
     ----------
     obj - object to check
     scitype: str or list of str, scitype to check obj as
+        valid mtype strings are in datatypes.SCITYPE_REGISTER
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
@@ -396,7 +403,9 @@ def check_is_scitype(
         Fields depend on scitpe.
         Always returned:
             "mtype": str, mtype of obj (assumed or inferred)
+                mtype strings with explanation are in datatypes.MTYPE_REGISTER
             "scitype": str, scitype of obj (assumed or inferred)
+                scitype strings with explanation are in datatypes.SCITYPE_REGISTER
         For scitype "Series":
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
