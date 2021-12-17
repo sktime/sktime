@@ -125,7 +125,7 @@ class BaseClassifier(BaseEstimator):
         return self
 
     def predict(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X.
+        """Predicts labels for time series in X.
 
         Parameters
         ----------
