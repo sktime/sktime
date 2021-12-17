@@ -229,7 +229,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             self.outputs_2d_ = True
 
         self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
+        self._y = np.empty(y.shape, dtype=int)
         for k in range(self._y.shape[1]):
             classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes)

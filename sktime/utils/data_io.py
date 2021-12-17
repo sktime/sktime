@@ -977,9 +977,9 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     rows_per_case = series_len * num_dims
     total_rows = num_cases * series_len * num_dims
 
-    case_ids = np.empty(total_rows, dtype=np.int)
-    idxs = np.empty(total_rows, dtype=np.int)
-    dims = np.empty(total_rows, dtype=np.int)
+    case_ids = np.empty(total_rows, dtype=int)
+    idxs = np.empty(total_rows, dtype=int)
+    dims = np.empty(total_rows, dtype=int)
     vals = np.random.rand(total_rows)
 
     for i in range(total_rows):

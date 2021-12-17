@@ -104,19 +104,19 @@ def evaluate(
         fh = ForecastingHorizon(y_test.index, is_relative=False)
 
         # fit/update
-        start_fit = time.time()
+        start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
             forecaster = clone(forecaster)
             forecaster.fit(y_train, X_train, fh=fh, **fit_params)
 
         else:  # if strategy == "update":
             forecaster.update(y_train, X_train)
-        fit_time = time.time() - start_fit
+        fit_time = time.perf_counter() - start_fit
 
         # predict
-        start_pred = time.time()
+        start_pred = time.perf_counter()
         y_pred = forecaster.predict(fh, X=X_test)
-        pred_time = time.time() - start_pred
+        pred_time = time.perf_counter() - start_pred
 
         # score
         score = scoring(y_test, y_pred, y_train=y_train)
