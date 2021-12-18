@@ -31,7 +31,7 @@ from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._panel import check_dict_Panel
-from sktime.datatypes._registry import mtype_to_scitype, SCITYPE_LIST
+from sktime.datatypes._registry import SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
@@ -323,10 +323,11 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         raise TypeError(msg)
 
 
-def mtype(obj,
-          as_scitype: Union[str, List[str]] = None,
-          exclude_mtypes=AMBIGUOUS_MTYPES,
-          ):
+def mtype(
+    obj,
+    as_scitype: Union[str, List[str]] = None,
+    exclude_mtypes=AMBIGUOUS_MTYPES,
+):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
@@ -364,9 +365,7 @@ def mtype(obj,
     ]
 
     if as_scitype is not None:
-        m_plus_scitypes = [
-            (x[0], x[1]) for x in m_plus_scitypes if x[1] in as_scitype
-        ]
+        m_plus_scitypes = [(x[0], x[1]) for x in m_plus_scitypes if x[1] in as_scitype]
 
     res = [
         m_plus_scitype[0]
