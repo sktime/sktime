@@ -29,6 +29,7 @@ metadata: dict - metadata about obj if valid, otherwise None
     fields:
         "is_univariate": bool, True iff all series in panel have one variable
         "is_equally_spaced": bool, True iff all series indices are equally spaced
+        "is_equal_length": bool, True iff all series in panel are of equal length
         "is_empty": bool, True iff one or more of the series in the panel are empty
         "is_one_series": bool, True iff there is only one series in the panel
         "has_nans": bool, True iff the panel contains NaN values
@@ -46,6 +47,23 @@ from sktime.datatypes._series._check import check_pdDataFrame_Series
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
+
+
+def _list_all_equal(obj):
+    """Check whether elements of list are all equal.
+
+    Parameters
+    ----------
+    obj: list - assumed, not checked
+
+    Returns
+    -------
+    bool, True if elements of obj are all equal
+    """
+    if len(obj) < 2:
+        return True
+
+    return np.all([s == obj[0] for s in obj])
 
 
 check_dict = dict()
@@ -82,6 +100,7 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_equally_spaced"] = np.all(
         [res[2]["is_equally_spaced"] for res in check_res]
     )
+    metadata["is_equal_length"] = _list_all_equal([len(s) for s in obj])
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
     metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
     metadata["is_one_series"] = n == 1
@@ -112,8 +131,10 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     metadata = dict()
     metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1 or obj.shape[2] < 1
     metadata["is_univariate"] = obj.shape[1] < 2
-    # np.arrays are considered equally spaced by assumption
+    # np.arrays are considered equally spaced and equal length by assumption
     metadata["is_equally_spaced"] = True
+    metadata["is_equal_length"] = True
+
     metadata["n_instances"] = obj.shape[0]
     metadata["is_one_series"] = obj.shape[0] == 1
 
@@ -185,6 +206,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
+    metadata["is_equal_length"] = _list_all_equal([len(obj.loc[i]) for i in inst_inds])
 
     return ret(True, None, metadata, return_metadata)
 
@@ -301,13 +323,16 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
     metadata["is_univariate"] = obj.shape[1] < 2
-    # todo: this is temporary override, proper is_empty logic needs to be added
-    metadata["is_empty"] = False
     metadata["n_instances"] = len(obj)
     metadata["is_one_series"] = len(obj) == 1
     if return_metadata:
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
-        metadata["is_equally_spaced"] = not _nested_dataframe_has_unequal(obj)
+        metadata["is_equal_length"] = not _nested_dataframe_has_unequal(obj)
+
+    # todo: this is temporary override, proper is_empty logic needs to be added
+    metadata["is_empty"] = False
+    metadata["is_equally_spaced"] = True
+    # end hacks
 
     return ret(True, None, metadata, return_metadata)
 
