@@ -4,7 +4,7 @@
 Interval based TSF classifier, extracts basic summary features from random intervals.
 """
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
+__author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
 import numpy as np
