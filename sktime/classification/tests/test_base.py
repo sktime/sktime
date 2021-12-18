@@ -158,8 +158,6 @@ def test_check_capabilities():
 def test_convert_input():
     """Test the conversions from dataframe to numpy.
 
-    "convert_X_to_numpy": True,
-    "convert_X_to_dataframe": False,
     1. Pass a 2D numpy X, get a 3D numpy X
     2. Pass a 3D numpy X, get a 3D numpy X
     3. Pass a pandas numpy X, equal length, get a 3D numpy X

@@ -100,7 +100,6 @@ class BaseClassifier(BaseEstimator):
         self.metadata_ = _check_classifier_input(X, y)
         missing = self.metadata_["has_nans"]
         multivariate = not self.metadata_["is_univariate"]
-        # This is incorrect needs to change
         unequal = not self.metadata_["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
