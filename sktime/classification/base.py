@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes import check_is_scitype
 from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
@@ -101,11 +101,11 @@ class BaseClassifier(BaseEstimator):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = _internal_convert(X, y)
-
-        # Check the data is either numpy arrays or pandas dataframes
-        _check_classifier_input(X, y)
-        # Query the data for characteristics
-        missing, multivariate, unequal = _get_data_characteristics(X)
+        self.metadata_ = _check_classifier_input(X, y)
+        missing = self.metadata_["has_nans"]
+        multivariate = not self.metadata_["is_univariate"]
+        # This is incorrect needs to change
+        unequal = not self.metadata_["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
@@ -147,15 +147,16 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
         X = _internal_convert(X)
-        # Check the data is either numpy arrays or pandas dataframes
-        _check_classifier_input(X)
-        # Query the data for characteristics
-        missing, multivariate, unequal = _get_data_characteristics(X)
+        X = _internal_convert(X)
+        self.metadata_ = _check_classifier_input(X)
+        missing = self.metadata_["has_nans"]
+        multivariate = not self.metadata_["is_univariate"]
+        # This is incorrect needs to change
+        unequal = not self.metadata_["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X)
-
         return self._predict(X)
 
     def predict_proba(self, X) -> np.ndarray:
@@ -177,9 +178,11 @@ class BaseClassifier(BaseEstimator):
         """
         self.check_is_fitted()
         X = _internal_convert(X)
-        _check_classifier_input(X)
-        # Query the data for characteristics
-        missing, multivariate, unequal = _get_data_characteristics(X)
+        self.metadata_ = _check_classifier_input(X)
+        missing = self.metadata_["has_nans"]
+        multivariate = not self.metadata_["is_univariate"]
+        # This is incorrect needs to change
+        unequal = not self.metadata_["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
@@ -347,7 +350,6 @@ def _check_classifier_input(
     X,
     y=None,
     enforce_min_instances=1,
-    enforce_min_series_length=1,
 ):
     """Check whether input X and y are valid formats with minimum data.
 
@@ -359,53 +361,27 @@ def _check_classifier_input(
     y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
         check there are a minimum number of instances.
-    enforce_min_series_length : int, optional (default=1)
-        Enforce minimum series length for input ndarray (i.e. fixed length problems)
 
     Raises
     ------
     ValueError
         If y or X is invalid input data type, or there is not enough data
     """
-    # Check X
-    if not isinstance(X, (pd.DataFrame, np.ndarray)):
-        raise ValueError(
-            f"X must be either a pd.DataFrame or a np.ndarray, "
-            f"but found type: {type(X)}"
+    # Check X is valid input type and recover the data characteristics
+    X_valid, _, X_metadata = check_is_scitype(X, scitype="Panel", return_metadata=True)
+    if not X_valid:
+        raise TypeError(
+            f"X is not of a supported input data type."
+            f"X must be either a 3D numpy array or a pandas dataframe noyt a {type(X)}"
+            f"Use datatypes.check_is_mtype to check conformance with specification."
         )
     n_cases = X.shape[0]
-    if isinstance(X, np.ndarray):
-        if not (X.ndim == 2 or X.ndim == 3):
-            raise ValueError(
-                f"x is an np.ndarray, which means it must be 2 or 3 dimensional"
-                f"but found to be: {X.ndim}"
-            )
-        if X.ndim == 2 and X.shape[1] < enforce_min_series_length:
-            raise ValueError(
-                f"Series length below the minimum, equal length series are length"
-                f" {X.shape[1]}"
-                f"but the minimum is  {enforce_min_series_length}"
-            )
-        if X.ndim == 3 and X.shape[2] < enforce_min_series_length:
-            raise ValueError(
-                f"Series length below the minimum, equal length series are length"
-                f" {X.shape[2]}"
-                f"but the minimum is  {enforce_min_series_length}"
-            )
-    else:
-        if X.shape[1] == 0:
-            raise ValueError("x is a pd.DataFrame with no data (num columns == 0).")
     if n_cases < enforce_min_instances:
         raise ValueError(
             f"Minimum number of cases required is {enforce_min_instances} but X "
             f"has : {n_cases}"
         )
-    if isinstance(X, pd.DataFrame):
-        if not is_nested_dataframe(X):
-            raise ValueError(
-                "If passed as a pd.DataFrame, X must be a nested "
-                "pd.DataFrame, with pd.Series or np.arrays inside cells."
-            )
+
     # Check y if passed
     if y is not None:
         # Check y valid input
@@ -425,121 +401,7 @@ def _check_classifier_input(
                 raise ValueError(
                     f"y must be 1-dimensional but is in fact " f"{y.ndim} dimensional"
                 )
-
-
-def _get_data_characteristics(X):
-    """Query the data to find its characteristics for classifier capability check.
-
-    This is for checking array input where we assume series are equal length.
-    classifiers can take either ndarray or pandas input, and the checks are different
-    for each. For ndarrays, it checks:
-        a) whether x contains missing values;
-        b) whether x is multivariate.
-    for pandas it checks
-        a) whether x contains unequal length series;
-        a) whether x contains missing values;
-        b) whether x is multivariate.
-
-    Parameters
-    ----------
-    X : pd.pandas containing pd.Series or np.ndarray of either 2 or 3 dimensions.
-
-    Returns
-    -------
-    three boolean data characteristics: missing, multivariate and unequal
-    """
-    if isinstance(X, np.ndarray):
-        missing = _has_nans(X)
-        if X.ndim == 3 and X.shape[1] > 1:
-            multivariate = True
-        else:
-            multivariate = False
-        return missing, multivariate, False
-    else:
-        missing = _nested_dataframe_has_nans(X)
-        cols = len(X.columns)
-        if cols > 1:
-            multivariate = True
-        else:
-            multivariate = False
-        unequal = _nested_dataframe_has_unequal(X)
-        return missing, multivariate, unequal
-
-
-def _nested_dataframe_has_unequal(X: pd.DataFrame) -> bool:
-    """Check whether an input nested DataFrame of Series has unequal length series.
-
-    Parameters
-    ----------
-    X : pd.DataFrame where each cell is a pd.Series
-
-    Returns
-    -------
-    True if x contains any NaNs, False otherwise.
-    """
-    rows = len(X)
-    cols = len(X.columns)
-    s = X.iloc[0, 0]
-    length = len(s)
-
-    for i in range(0, rows):
-        for j in range(0, cols):
-            s = X.iloc[i, j]
-            temp = len(s)
-            if temp != length:
-                return True
-    return False
-
-
-def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
-    """Check whether an input pandas of Series has nans.
-
-    Parameters
-    ----------
-    X : pd.DataFrame where each cell is a pd.Series
-
-    Returns
-    -------
-    True if x contains any NaNs, False otherwise.
-    """
-    cases = len(X)
-    dimensions = len(X.columns)
-    for i in range(0, cases):
-        for j in range(0, dimensions):
-            s = X.iloc[i, j]
-            for k in range(0, s.size):
-                if pd.isna(s[k]):
-                    return True
-    return False
-
-
-# @njit(cache=True)
-def _has_nans(x: np.ndarray) -> bool:
-    """Check whether an input numpy array has nans.
-
-    Parameters
-    ----------
-    X : np.ndarray of either 2 or 3 dimensions.
-
-    Returns
-    -------
-    True if x contains any NaNs, False otherwise.
-    """
-    # 2D
-    if x.ndim == 2:
-        for i in range(0, x.shape[0]):
-            for j in range(0, x.shape[1]):
-                if np.isnan(x[i][j]):
-                    return True
-    elif x.ndim == 3:
-        for i in range(0, x.shape[0]):
-            for j in range(0, x.shape[1]):
-                for k in range(0, x.shape[2]):
-                    if np.isnan(x[i][j][k]):
-                        return True
-    else:
-        raise ValueError(f"Expected array of two or three dimensions, got {x.ndim}")
-    return False
+    return X_metadata
 
 
 def _internal_convert(X, y=None):
