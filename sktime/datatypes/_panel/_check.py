@@ -89,7 +89,7 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_one_series"] = n == 1
     metadata["n_instances"] = n
 
-    return ret(True, None, metadata, return_metadata)
+    return _ret(True, None, metadata, return_metadata)
 
 
 check_dict[("df-list", "Panel")] = check_dflist_Panel
@@ -118,7 +118,7 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     if return_metadata:
         metadata["has_nans"] = np.isnan(obj).any()
 
-    return ret(True, None, metadata, return_metadata)
+    return _ret(True, None, metadata, return_metadata)
 
 
 check_dict[("numpy3D", "Panel")] = check_numpy3D_Panel
