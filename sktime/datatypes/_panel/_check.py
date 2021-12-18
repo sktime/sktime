@@ -339,8 +339,9 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
     metadata = dict()
     metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
     metadata["is_univariate"] = True
-    # np.arrays are considered equally spaced by assumption
+    # np.arrays are considered equally spaced, equal length, by assumption
     metadata["is_equally_spaced"] = True
+    metadata["is_equal_length"] = True
     metadata["n_instances"] = obj.shape[0]
     metadata["is_one_series"] = obj.shape[0] == 1
 
