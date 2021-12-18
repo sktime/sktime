@@ -529,7 +529,8 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
         return ret
 
-    def get_test_params(self):
+    @classmethod
+    def get_test_params(cls):
         """Return testing parameter settings for the estimator.
 
         Returns
