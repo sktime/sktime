@@ -379,6 +379,10 @@ class STLTransformer(_SeriesToSeriesTransformer):
     Detrender
     Deseasonalizer
 
+    References
+    ----------
+    .. [1] https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.STL.html
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
