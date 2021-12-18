@@ -669,10 +669,17 @@ class BaseForecaster(BaseEstimator):
             Forecast residuals at fh, with same index as fh
             y_pred has same type as y passed in fit (most recently)
         """
+        # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
-            fh = y.index
 
+        # we want residuals, so fh must be the index of y
+        if isinstance(y, (pd.DataFrame, pd.Series)):
+            fh = y.index
+        elif isinstance(y, np.ndarray):
+            fh = range(y.shape[0])
+        else:
+            raise TypeError("y must be a supported Series mtype")
         self._set_fh(fh)
 
         y_pred = self.predict(fh=self.fh, X=X)
