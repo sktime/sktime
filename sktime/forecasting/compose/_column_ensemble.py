@@ -21,11 +21,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     Parameters
     ----------
-    forecasters: forecaster, or list of tuples (str, estimator, int or str)
+    forecasters : sktime forecaster, or list of tuples (str, estimator, int or str)
         if tuples, with name = str, estimator is forecaster, index as str or int
 
-    If forecaster, clones of forecaster are applied to all columns.
-    If list of tuples, forecaster in tuple is applied to column with the int/str index
+        If forecaster, clones of forecaster are applied to all columns.
+        If list of tuples, forecaster in tuple is applied to column with int/str index
 
     Examples
     --------
