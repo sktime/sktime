@@ -295,7 +295,6 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     -------
     bool: Whether the input is a nested DataFrame
     """
-
     # If not a DataFrame we know is_nested_dataframe is False
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
