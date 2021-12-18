@@ -58,8 +58,6 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
-        "convert_y_to_numpy": True,
-        "convert_y_to_series": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
