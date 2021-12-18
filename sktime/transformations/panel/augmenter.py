@@ -18,7 +18,6 @@ __all__ = [
 import sys
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -26,6 +25,7 @@ from scipy.stats._distn_infrastructure import rv_frozen as random_Variable
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.transformations.base import BaseTransformer
 
 
@@ -499,6 +499,9 @@ def plot_augmentation_example(
     -------
     matplotlib.figure.Figure: A figure with a [n_variables, 2] subplot-grid.
     """
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
     n_vars = X.shape[1]  # get number of variables of X
     # pick (stratified regarding categorical y) examples from the original input
     # data
