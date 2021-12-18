@@ -105,30 +105,6 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "convert_X_to_dataframe",
-        "classifier",
-        "bool",
-        "should X be converted to a nested pandas DataFrame?",
-    ),
-    (
-        "convert_y_to_series",
-        "classifier",
-        "bool",
-        "should y be converted to pandas Series?",
-    ),
-    (
-        "convert_X_to_numpy",
-        "classifier",
-        "bool",
-        "should X be converted to numpy array?",
-    ),
-    (
-        "convert_y_to_numpy",
-        "classifier",
-        "bool",
-        "should y be converted to numpy array?",
-    ),
-    (
         "symmetric",
         ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",

@@ -10,7 +10,7 @@ Defining methods:
     predicting      - predict(self, X)
                     - predict_proba(self, X)
 
-Inspection methods:
+Inherited inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
 
@@ -397,14 +397,14 @@ def _check_classifier_input(
 
 
 def _internal_convert(X, y=None):
-    """Convert X and y if necessary.
+    """Convert X and y if necessary as a user convenience.
 
     Convert X to a 3D numpy array if already a 2D and convert y into an 1D numpy
     array if passed as a Series.
 
     Parameters
     ----------
-    y : np.array or pd.Series.
+    y : np.ndarray or pd.Series.
 
     Returns
     -------
