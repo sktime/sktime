@@ -348,47 +348,100 @@ The building command depends on the architecture of the Python interpreter,
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
 The above commands assume that you have the Python installation folder in your
-PATH environment variable.
+PATH environment variable. If you are unsure how to do this see `here <https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html#GUID-DD6F9982-60D5-48F6-8270-A27EC53807D0>`_.
+You will need to add your python installation to the path variable. To find the filepath to your python installation you can run the following code in python:
 
-You will need `Build Tools for Visual Studio 2017
-<https://visualstudio.microsoft.com/downloads/>`_.
+.. code-block:: python
+    import sys
+
+    print(sys.exec_prefix)
+
+Installing Build Tools for Visual Studio 2022
+"""""""""""""""""""""""""""""""""""""""""""""
+You will need Build Tools for Visual Studio 2022
 
 .. warning::
-	You DO NOT need to install Visual Studio 2019.
-	You only need the "Build Tools for Visual Studio 2019",
-	under "All downloads" -> "Tools for Visual Studio 2019".
+	You DO NOT need to install Visual Studio 2022.
+	You only need the "Build Tools for Visual Studio 2022"
 
-For 64-bit Python, configure the build environment with:
+1. Follow the `link <https://visualstudio.microsoft.com/downloads/>`_.
+2. Scrolls down to ``Tools for Visual Studio 2022`` and click the dropdown,
+3. Download and install ``Build Tools for Visual Studio 2022``
+4. Open the Visual Studio installer
+5. Tick ``Desktop Development with C++``
+6. In the panel to the write make sure ``MSVC v143 VS 2022 C++ x64/x86 build tools (Latest)`` is selected
+7. Click install
 
-.. code-block:: bash
+.. images:: images/visual_installer_selection.png
 
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-Please be aware that the path above might be different from user to user.
-The aim is to point to the "vcvarsall.bat" file.
+Setting up a development environment
+""""""""""""""""""""""""""""""""""""
+You now need to set up a new python virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similiar for ``venv`` or other virtual environment managers.
 
-And build sktime from this environment:
+In the ``anaconda prompt`` terminal:
 
-.. code-block:: bash
+1. Navigate to your local sktime folder :code:`cd sktime`
 
-    python setup.py install
+2. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
 
-Replace ``x64`` by ``x86`` to build for 32-bit Python.
+   .. warning::
+       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this
+
+3. Activate the environment: :code:`conda activate sktime-dev`
+
+4. Install required packages:
+
+   1. :code:`pip install numpy=1.19.3`
+   2. :code:`pip install cython`
+   3. :code:`pip install -r build_tools/requirements.txt`
+
+   If **fbprophet** fails to install try running:
+
+   1. :code:`conda install -c conda-forge install -c pystan`
+   2. :code:`conda install -c conda-forge install -c fbprophet`
+   3. Verify all requirements are satisfied by running :code:`pip install -r build_tools/requirements.txt` with no errors.
+
+   If you fail to satisfy all the requirements see the troubleshooting section.
+
+5. Configure the build environment:
+
+   The aim is to point to the "vcvarsall.bat" file.
+
+   For 64-bit python, use:
+
+   .. code-block:: bash
+
+       SET DISTUTILS_USE_SDK=1
+       "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+   For 32-bit Python, use:
+
+   .. code-block:: bash
+
+       SET DISTUTILS_USE_SDK=1
+       "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86
+
+   Please be aware that the path above might be different from user to user.
+
+6. Build an editable version of sktime :code:`pip install -e .[all_extras]`
+7. If everything has worked you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4. Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
 
-If you run into a problem installing the development version and are using Anaconda, try:
-
-1. Install Anaconda
-2. Create new environment: :code:`conda create -n sktime-dev python=3.8`
-3. Activate environment: :code:`conda activate sktime-dev`
-4. Install NumPy (pinned to 1.19.3) from pip: :code:`pip install numpy==1.19.3`
-5. Install requirements: :code:`pip install -r build_tools/requirements.txt`
-6. Follow the instructions above to point to "vcvarsall.bat"
-7. Run :code:`pip install --verbose --no-build-isolation --editable .`
-
 In step 5, you may optionally install the packages in build_tools/requirements.txt that are available from Anaconda's default channels or `Conda-Forge <https://anaconda.org/conda-forge>`_ via Conda. Any remaining packages can be added via pip.
+
+Troubleshooting
+"""""""""""""""
+First try starting again with a clean environment and see if the error still occurs.
+Some users may encounter issues with specific packages not installing correctly, this can often be fixed by installing the failing package manually. Some common packages where errors are encountered and how to install them:
+
+- ephem: :code:`pip install ephem`
+- brotlipy: :code:`conda install brotlipy`
+- esig: :code:`pip install esig`
+
+If you are still receiving errors, try asking for help on `gitter <https://gitter.im/sktime/community>`_.
 
 .. note::
 

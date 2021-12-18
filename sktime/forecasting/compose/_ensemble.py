@@ -39,15 +39,27 @@ VALID_AGG_FUNCS = {
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
-    The AutoEnsembleForecaster uses a meta-model (regressor) to calculate the optimal
-    weights for ensemble aggregation with mean. The regressor has to be sklearn-like
-    and needs to have either an attribute `feature_importances_` or `coef_`, as this
-    is used as weights. Regressor can also be a sklearn.Pipeline.
+    The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
+    using given method or a meta-model (regressor) .
+    The regressor has to be sklearn-like and needs to have either an attribute
+    ``feature_importances_`` or ``coef_``, as this is used as weights.
+    Regressor can also be a sklearn.Pipeline.
 
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+    method : str, optional, default="feature-importance"
+        Strategy used to compute weights. Available choices:
+
+        - feature-importance:
+            use the ``feature_importances_`` or ``coef_`` from
+            given ``regressor`` as optimal weights.
+        - inverse-variance:
+            use the inverse variance of the forecasting error
+            (based on the internal train-test-split) to compute optimal
+            weights, a given ``regressor`` will be omitted.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -70,8 +82,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     regressor_ : sklearn-like regressor
         Fitted regressor.
     weights_ : np.array
-        The weights based on either regressor.feature_importances_ or
-        regressor.coef_ values.
+        The weights based on either ``regressor.feature_importances_`` or
+        ``regressor.coef_`` values.
 
     See Also
     --------
@@ -105,6 +117,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
+        method="feature-importance",
         regressor=None,
         test_size=None,
         random_state=None,
@@ -114,6 +127,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
+        self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
@@ -135,9 +149,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : returns an instance of self.
         """
         _, forecasters = self._check_forecasters()
-        self.regressor_ = check_regressor(
-            regressor=self.regressor, random_state=self.random_state
-        )
 
         # get training data for meta-model
         if X is not None:
@@ -149,24 +160,46 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_train, X_test = None, None
 
         # fit ensemble models
-        fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
-        self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
-        X_meta = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
+        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+        self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
-        # fit meta-model (regressor) on predictions of ensemble models
-        # with y_test as endog/target
-        self.regressor_.fit(X=X_meta, y=y_test)
+        if self.method == "feature-importance":
 
-        # check if regressor is a sklearn.Pipeline
-        if isinstance(self.regressor_, Pipeline):
-            # extract regressor from pipeline to access its attributes
-            self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+            self.regressor_ = check_regressor(
+                regressor=self.regressor, random_state=self.random_state
+            )
+            X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
+
+            # fit meta-model (regressor) on predictions of ensemble models
+            # with y_test as endog/target
+            self.regressor_.fit(X=X_meta, y=y_test)
+
+            # check if regressor is a sklearn.Pipeline
+            if isinstance(self.regressor_, Pipeline):
+                # extract regressor from pipeline to access its attributes
+                self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+            else:
+                self.weights_ = _get_weights(self.regressor_)
+
+        elif self.method == "inverse-variance":
+            # get in-sample forecasts
+            if self.regressor is not None:
+                Warning(f"regressor will not be used because ${self.method} is set.")
+            inv_var = np.array(
+                [
+                    1 / np.var(y_test - y_pred_test)
+                    for y_pred_test in self._predict_forecasters(fh_test, X)
+                ]
+            )
+            # standardize the inverse variance
+            self.weights_ = list(inv_var / np.sum(inv_var))
         else:
-            self.weights_ = _get_weights(self.regressor_)
+            raise NotImplementedError(
+                f"Given method {self.method} does not exist, "
+                f"please provide valid method parameter."
+            )
 
-        # fit forecasters with all data
         self._fit_forecasters(forecasters, y, X, fh)
-
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
