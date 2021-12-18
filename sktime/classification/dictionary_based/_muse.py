@@ -62,6 +62,9 @@ class MUSE(BaseClassifier):
     use_first_order_differences: boolean, default=True
         If set to True will add the first order differences of each dimension
         to the data.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -103,8 +106,7 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "coerce-X-to-numpy": False,
-        "coerce-X-to-pandas": True,
+        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
     }
 
     def __init__(

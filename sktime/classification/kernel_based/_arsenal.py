@@ -17,7 +17,13 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.rocket import Rocket
+from sktime.transformations.panel.rocket import (
+    MiniRocket,
+    MiniRocketMultivariate,
+    MultiRocket,
+    MultiRocketMultivariate,
+    Rocket,
+)
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -35,6 +41,13 @@ class Arsenal(BaseClassifier):
         Number of kernels for each ROCKET transform.
     n_estimators : int, default=25
         Number of estimators to build for the ensemble.
+    rocket_transform : str, default="rocket"
+        The type of Rocket transformer to use.
+        Valid inputs = ["rocket","minirocket","multirocket"]
+    max_dilations_per_kernel : int, default=32
+        MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
+    n_features_per_kernel : int, default=4
+        MultiRocket only. The number of features per kernel.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -108,6 +121,9 @@ class Arsenal(BaseClassifier):
         self,
         num_kernels=2000,
         n_estimators=25,
+        rocket_transform="rocket",
+        max_dilations_per_kernel=32,
+        n_features_per_kernel=4,
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=100,
         save_transformed_data=False,
@@ -116,6 +132,9 @@ class Arsenal(BaseClassifier):
     ):
         self.num_kernels = num_kernels
         self.n_estimators = n_estimators
+        self.rocket_transform = rocket_transform
+        self.max_dilations_per_kernel = max_dilations_per_kernel
+        self.n_features_per_kernel = n_features_per_kernel
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_estimators = contract_max_n_estimators
@@ -156,12 +175,38 @@ class Arsenal(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
-
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
 
-        base_rocket = Rocket(num_kernels=self.num_kernels)
+        if self.rocket_transform == "rocket":
+            base_rocket = Rocket(num_kernels=self.num_kernels)
+        elif self.rocket_transform == "minirocket":
+            if self.n_dims_ > 1:
+                base_rocket = MiniRocketMultivariate(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                )
+            else:
+                base_rocket = MiniRocket(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                )
+        elif self.rocket_transform == "multirocket":
+            if self.n_dims_ > 1:
+                base_rocket = MultiRocketMultivariate(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    n_features_per_kernel=self.n_features_per_kernel,
+                )
+            else:
+                base_rocket = MultiRocket(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    n_features_per_kernel=self.n_features_per_kernel,
+                )
+        else:
+            raise ValueError(f"Invalid Rocket transformer: {self.rocket_transform}")
 
         if time_limit > 0:
             self.n_estimators = 0

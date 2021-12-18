@@ -229,8 +229,8 @@ class RotationForest(BaseEstimator):
                 estimators, pcas, groups, transformed_data = zip(*fit)
 
                 self.estimators_ += estimators
-                self._pcas = pcas
-                self._groups = groups
+                self._pcas += pcas
+                self._groups += groups
                 self.transformed_data += transformed_data
 
                 self._n_estimators += self._n_jobs
@@ -494,7 +494,7 @@ class RotationForest(BaseEstimator):
             group_size_count[current_size] -= 1
 
             n = self.min_group + current_size
-            groups.append(np.zeros(n, dtype=np.int))
+            groups.append(np.zeros(n, dtype=int))
             for k in range(0, n):
                 if current_attribute < permutation.shape[0]:
                     groups[i][k] = permutation[current_attribute]

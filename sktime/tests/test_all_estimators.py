@@ -40,6 +40,7 @@ from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
     _get_args,
+    _list_required_methods,
     _make_args,
 )
 
@@ -193,19 +194,13 @@ def test_has_common_interface(estimator_class):
     # Check class for type of attribute
     assert isinstance(estimator.is_fitted, property)
 
-    # Check for attributes
-    common_attrs = [
-        "fit",
-        "check_is_fitted",
-        "is_fitted",  # read-only property
-        "set_params",
-        "get_params",
-    ]
-    for attr in common_attrs:
+    required_methods = _list_required_methods(estimator_class)
+
+    for attr in required_methods:
         assert hasattr(
             estimator, attr
         ), f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
-    assert hasattr(estimator, "predict") or hasattr(estimator, "transform")
+
     if hasattr(estimator, "inverse_transform"):
         assert hasattr(estimator, "transform")
     if hasattr(estimator, "predict_proba"):
@@ -353,6 +348,7 @@ def test_fit_returns_self(estimator_instance):
 def test_raises_not_fitted_error(estimator_instance):
     """Check that we raise appropriate error for unfitted estimators."""
     estimator = estimator_instance
+
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
@@ -455,9 +451,13 @@ def test_methods_do_not_change_state(estimator_instance):
                 # so predict will actually change the state of these annotators.
                 continue
 
-            assert (
-                estimator.__dict__ == dict_before
-            ), f"Estimator: {estimator} changes __dict__ during {method}"
+            assert estimator.__dict__ == dict_before, (
+                f"Estimator: {estimator} changes __dict__ during {method} \n before ="
+                f"\n********************************************\n "
+                f"{dict_before}  \n after "
+                f"=\n*****************************************\n "
+                f" {estimator.__dict__}"
+            )
 
 
 def test_methods_have_no_side_effects(estimator_instance):

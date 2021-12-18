@@ -26,9 +26,11 @@ MIN_REQUIREMENTS = {
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
     "numba": "0.53",
+    "deprecated": "1.2.13",
 }
 MAX_REQUIREMENTS = {
     "statsmodels": "0.12.1",
+    "numpy": "1.19.3",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
@@ -39,10 +41,11 @@ EXTRAS_REQUIRE = {
         "seaborn>=0.11.0",
         "tsfresh>=0.17.0",
         "hcrystalball>=0.1.9",
-        "stumpy>=1.5.1",
+        "stumpy>=1.5.1,<=1.9.2",
         "tbats>=1.1.0",
         "fbprophet>=0.7.1",
         "pyod>=0.8.0",
+        "dtw_python>=1.1.5",
     ],
 }
 

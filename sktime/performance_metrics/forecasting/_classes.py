@@ -106,7 +106,7 @@ class _BaseForecastingErrorMetric(BaseMetric):
         loss : float
             Calculated loss metric.
         """
-        return self._func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
+        return self.func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
 
 
 class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
@@ -151,7 +151,7 @@ class _PercentageErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -191,7 +191,7 @@ class _SquaredErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -233,7 +233,7 @@ class _SquaredPercentageErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -266,7 +266,7 @@ class _AsymmetricErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
@@ -300,7 +300,7 @@ class _LinexErrorMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true, y_pred, a=self.a, b=self.b, multioutput=self.multioutput, **kwargs
         )
 
@@ -328,7 +328,7 @@ class _RelativeLossMixin:
         loss : float
             Calculated loss metric.
         """
-        return self._func(
+        return self.func(
             y_true,
             y_pred,
             multioutput=self.multioutput,
