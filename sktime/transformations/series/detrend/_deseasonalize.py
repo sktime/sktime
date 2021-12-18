@@ -521,7 +521,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
                     "transformed": transformed,
                     "seasonal": seasonal,
                     "trend": trend,
-                    "resid": resid
+                    "resid": resid,
                 }
             )
         else:
