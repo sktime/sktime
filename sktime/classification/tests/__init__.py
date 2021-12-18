@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Classifier Base."""
+"""Classifier Tests."""
