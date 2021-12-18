@@ -1069,3 +1069,71 @@ def from_df_list_to_nested_adp(obj, store=None):
 
 
 convert_dict[("df-list", "nested_univ", "Panel")] = from_df_list_to_nested_adp
+
+
+def from_numpy3D_to_numpyflat(obj, store=None):
+
+    if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
+        raise TypeError("obj must be a 3D numpy.ndarray")
+
+    shape = obj.shape
+
+    # store second dimension shape/length if we want to restore
+    if isinstance(store, dict):
+        store["numpy_second_dim"] = shape[1]
+
+    obj_in_2D = obj.reshape(shape[0], shape[1]*shape[2])
+
+    return obj_in_2D
+
+
+convert_dict[("numpy3D", "numpyflat", "Panel")] = from_numpy3D_to_numpyflat
+
+
+def from_numpyflat_to_numpy3D(obj, store=None):
+
+    if not isinstance(obj, np.ndarray) or len(obj.shape) != 2:
+        raise TypeError("obj must be a 2D numpy.ndarray")
+
+    shape = obj.shape
+
+    # if store has old 2nd dimension, try to restore, otherwise assume 1
+    if (
+        isinstance(store, dict)
+        and "numpy_second_dim" in store.keys()
+        and isinstance(store["numpy_second_dim"], int)
+        and shape[1] % store["numpy_second_dim"] == 0
+    ):
+        shape_1 = store["numpy_second_dim"]
+        target_shape = (shape[0], shape_1, shape[1]/shape_1)
+    else:
+        target_shape = (shape[0], 1, shape[1])
+
+    obj_in_3D = obj.reshape(target_shape)
+
+    return obj_in_3D
+
+
+convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3D
+
+
+# obtain other conversions from/to numpyflat via concatenation to numpy3D
+def _concat(fun1, fun2):
+    def concat_fun(obj, store=None):
+        obj1 = fun1(obj, store=store)
+        obj2 = fun2(obj1, store=store)
+        return obj2
+    return concat_fun
+
+
+for tp in set(MTYPE_LIST_PANEL).difference(["numpyflat", "numpy3D"]):
+    if ("numpy3D", tp, "Panel") in convert_dict.keys():
+        convert_dict[("numpyflat", tp, "Panel")] = _concat(
+            convert_dict[("numpyflat", "numpy3D", "Panel")],
+            convert_dict[("numpy3D", tp, "Panel")],
+        )
+    if (tp, "numpy3D", "Panel") in convert_dict.keys():
+        convert_dict[(tp, "numpyflat", "Panel")] = _concat(
+            convert_dict[(tp, "numpy3D", "Panel")],
+            convert_dict[("numpy3D", "numpyflat", "Panel")],
+        )
