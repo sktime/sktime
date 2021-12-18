@@ -526,7 +526,6 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
         return_metadata=True,
         exclude_mtypes=exclude_mtypes,
     )
-    print(metadata)
     scitype = metadata["scitype"]
 
     return scitype
