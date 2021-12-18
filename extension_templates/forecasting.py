@@ -27,14 +27,8 @@ Optional implements:
     updating        - _update(self, y, X=None, update_params=True):
     fitted parameter inspection - get_fitted_params()
 
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
-
-Testing:
+Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -131,13 +125,23 @@ class MyForecaster(BaseForecaster):
 
             core logic
 
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
 
         Returns
         -------
