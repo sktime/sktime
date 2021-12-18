@@ -100,6 +100,10 @@ class BaseClassifier(BaseEstimator):
         ending in "_" and sets is_fitted flag to True.
         """
         start = int(round(time.time() * 1000))
+        # convenience conversions to allow user flexibility:
+        # if X is 2D array, convert to 3D, if y is Series, convert to numpy
+        X, y = _internal_convert(X, y)
+
         # Check the data is either numpy arrays or pandas dataframes
         _check_classifier_input(X, y)
         # Query the data for characteristics
@@ -108,7 +112,6 @@ class BaseClassifier(BaseEstimator):
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X)
-        y = self._convert_y(y)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
             try:
@@ -145,7 +148,7 @@ class BaseClassifier(BaseEstimator):
         y : 1D np.array of shape =  [n_instances] - predicted class labels
         """
         self.check_is_fitted()
-
+        X = _internal_convert(X)
         # Check the data is either numpy arrays or pandas dataframes
         _check_classifier_input(X)
         # Query the data for characteristics
@@ -175,9 +178,7 @@ class BaseClassifier(BaseEstimator):
         probabilities
         """
         self.check_is_fitted()
-
-        # Check the data is either numpy arrays or pandas dataframes
-        # TODO: add parameters for min instances and min length
+        X = _internal_convert(X)
         _check_classifier_input(X)
         # Query the data for characteristics
         missing, multivariate, unequal = _get_data_characteristics(X)
@@ -332,12 +333,6 @@ class BaseClassifier(BaseEstimator):
         """
         inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
-        if isinstance(X, np.ndarray):
-            # Temporary fix to insist on 3D numpy. For univariate problems,
-            # most classifiers simply convert back to 2D. This squeezing should be
-            # done here, but touches a lot of files, so will get this to work first.
-            if X.ndim == 2:
-                X = X.reshape(X.shape[0], 1, X.shape[1])
 
         if inner_type == "numpy3D":
             if isinstance(X, pd.DataFrame):
@@ -348,28 +343,6 @@ class BaseClassifier(BaseEstimator):
         else:
             raise TypeError(f"Inner type{inner_type} no allowed in Classifier")
         return X
-
-    def _convert_y(self, y):
-        """Convert y into a pd.Series or an np.array, depending on convert tags.
-
-        y is the target variable.
-
-        Parameters
-        ----------
-        self : this classifier
-        y : np.array or pd.Series.
-
-        Returns
-        -------
-        y: pd.Series or np.ndarray
-        """
-        if isinstance(y, pd.Series):
-            if self.get_tag("convert_y_to_numpy"):
-                y = pd.Series.to_numpy(y)
-        elif isinstance(y, np.ndarray):
-            if self.get_tag("convert_y_to_series"):
-                y = pd.Series(y)
-        return y
 
 
 def _check_classifier_input(
@@ -569,3 +542,32 @@ def _has_nans(x: np.ndarray) -> bool:
     else:
         raise ValueError(f"Expected array of two or three dimensions, got {x.ndim}")
     return False
+
+
+def _internal_convert(X, y=None):
+    """Convert X and y if necessary.
+
+    Convert X to a 3D numpy array if already a 2D and convert y into an 1D numpy
+    array if passed as a Series.
+
+    Parameters
+    ----------
+    y : np.array or pd.Series.
+
+    Returns
+    -------
+    X: pd.DataFrame or 3D numpy array
+    y: np.ndarray
+    """
+    if isinstance(X, np.ndarray):
+        # Temporary fix to insist on 3D numpy. For univariate problems,
+        # most classifiers simply convert back to 2D. This squeezing should be
+        # done here, but touches a lot of files, so will get this to work first.
+        if X.ndim == 2:
+            X = X.reshape(X.shape[0], 1, X.shape[1])
+    if y is not None and isinstance(y, pd.Series):
+        # y should be a numpy array, although we allow Series for user convenience
+        y = pd.Series.to_numpy(y)
+    if y is None:
+        return X
+    return X, y

@@ -782,8 +782,7 @@ class ProximityStump(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
-        "convert_X_to_numpy": False,
-        "convert_X_to_dataframe": True,
+        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
     }
 
     __author__ = "George Oastler (linkedin.com/goastler; github.com/goastler)"
@@ -1054,8 +1053,7 @@ class ProximityTree(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
-        "convert_X_to_numpy": False,
-        "convert_X_to_dataframe": True,
+        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
     }
 
     def __init__(
@@ -1307,9 +1305,8 @@ class ProximityForest(BaseClassifier):
     """
 
     _tags = {
+        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
         "capability:multithreading": True,
-        "convert_X_to_numpy": False,
-        "convert_X_to_dataframe": True,
     }
 
     def __init__(

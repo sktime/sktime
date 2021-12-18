@@ -12,6 +12,7 @@ from sktime.classification.base import (
     _check_classifier_input,
     _get_data_characteristics,
     _has_nans,
+    _internal_convert,
     _nested_dataframe_has_nans,
     _nested_dataframe_has_unequal,
 )
@@ -174,8 +175,6 @@ def test_convert_input():
     test_X1 = np.random.uniform(-1, 1, size=(cases, length))
     test_X2 = np.random.uniform(-1, 1, size=(cases, 2, length))
     tester = _DummyClassifier()
-    tempX = tester._convert_X(test_X1)
-    assert tempX.shape[0] == cases and tempX.shape[1] == 1 and tempX.shape[2] == length
     tempX = tester._convert_X(test_X2)
     assert tempX.shape[0] == cases and tempX.shape[1] == 2 and tempX.shape[2] == length
     instance_list = []
@@ -188,20 +187,16 @@ def test_convert_input():
     tempX = tester._convert_X(test_X4)
     assert tempX.shape[0] == cases and tempX.shape[1] == 3 and tempX.shape[2] == length
     tester = _DummyConvertPandas()
-    tempX = tester._convert_X(test_X1)
-    assert isinstance(tempX, pd.DataFrame)
-    assert tempX.shape[0] == cases
-    assert tempX.shape[1] == 1
     tempX = tester._convert_X(test_X2)
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == cases
     assert tempX.shape[1] == 2
     test_y1 = np.random.randint(0, 1, size=(cases))
-    test_y2 = pd.Series(test_y1)
-    tempY = tester._convert_y(test_y1)
+    test_y1 = pd.Series(test_y1)
+    tempX, tempY = _internal_convert(test_X1, test_y1)
     assert isinstance(tempY, np.ndarray)
-    tempY = tester._convert_y(test_y2)
-    assert isinstance(tempY, np.ndarray)
+    assert isinstance(tempX, np.ndarray)
+    assert tempX.ndim == 3
 
 
 def _create_example_dataframe(cases=5, dimensions=1, length=10):
