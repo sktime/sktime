@@ -310,12 +310,11 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
         y_pred = f.predict(alpha=alpha)
-        if not f._has_predict_quantiles_been_refactored():
-            with pytest.raises(NotImplementedError):
-                pred_ints = f.predict_interval(fh)
-                _check_pred_ints(pred_ints, y_train, y_pred, fh)
-        else:
-            f.predict(alpha=alpha)
+        try:
+            pred_ints = f.predict_interval(fh)
+            _check_pred_ints(pred_ints, y_train, y_pred, fh)
+        except NotImplementedError:
+            pass
 
 
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
@@ -369,47 +368,11 @@ def test_predict_quantiles(Forecaster, fh, alpha):
         f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-        if not f._has_predict_quantiles_been_refactored():
-            with pytest.raises(NotImplementedError):
-                f.predict_quantiles(fh=fh, alpha=TEST_ALPHAS)
-        else:
+        try:
             quantiles = f.predict_quantiles(fh=fh, alpha=alpha)
             _check_predict_quantiles(quantiles, y_train, fh, alpha)
-
-
-def _check_predict_intervals(pred_intervals: list, y_train: pd.Series, fh, coverage):
-
-    # check if the input is a dataframe
-    assert isinstance(pred_intervals, pd.DataFrame)
-
-    # check time index (also checks forecasting horizon is more than one element)
-    _assert_correct_pred_time_index(pred_intervals.index, y_train.index[-1], fh)
-    # convert the coverage in a list of alphas
-    alpha = []
-    if not isinstance(coverage, list):
-        alpha.extend([0.5 - coverage / 2, 0.5 + coverage / 2])
-    else:
-        for c in coverage:
-            alpha.extend([0.5 - c / 2, 0.5 + c / 2])
-    # Forecasters where name of variables do not exist
-    # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
-    if isinstance(y_train, pd.Series):
-        expected = pd.MultiIndex.from_product([["Intervals"], alpha])
-    else:
-        # multiply variables with all alpha values
-        expected = pd.MultiIndex.from_product([y_train.columns, alpha])
-    assert all(expected == pred_intervals.columns.to_flat_index())
-
-    if isinstance(alpha, list):
-        # sorts the columns that correspond to alpha values
-        pred_intervals = pred_intervals.reindex(
-            columns=pred_intervals.columns.reindex(sorted(alpha), level=1)[0]
-        )
-
-        # check if values are monotonically increasing
-        for var in pred_intervals.columns.levels[0]:
-            for index in range(len(pred_intervals.index)):
-                assert pred_intervals[var].iloc[index].is_monotonic_increasing
+        except NotImplementedError:
+            pass
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
