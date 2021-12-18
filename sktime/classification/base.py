@@ -31,11 +31,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_scitype
-from sktime.datatypes._panel._convert import (
-    from_3d_numpy_to_nested,
-    from_nested_to_3d_numpy,
-)
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
 
 
@@ -334,15 +330,11 @@ class BaseClassifier(BaseEstimator):
         """
         inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
-
-        if inner_type == "numpy3D":
-            if isinstance(X, pd.DataFrame):
-                X = from_nested_to_3d_numpy(X)
-        elif inner_type == "nested_univ":
-            if isinstance(X, np.ndarray):
-                X = from_3d_numpy_to_nested(X)
-        else:
-            raise TypeError(f"Inner type{inner_type} no allowed in Classifier")
+        X = convert_to(
+            X,
+            to_type=inner_type,
+            as_scitype="Panel",
+        )
         return X
 
 
