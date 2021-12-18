@@ -317,7 +317,9 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             pass
 
 
-def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
+def _check_predict_quantiles(
+    pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
+):
     # check if the input is a dataframe
     assert isinstance(pred_quantiles, pd.DataFrame)
     # check time index (also checks forecasting horizon is more than one element)
