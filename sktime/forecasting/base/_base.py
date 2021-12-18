@@ -637,7 +637,7 @@ class BaseForecaster(BaseEstimator):
             alpha=alpha,
         )
 
-    def predict_residuals(self, y, X=None, fh=None):
+    def predict_residuals(self, y=None, X=None, fh=None):
         """Return residuals of time series forecasts.
 
         State required:
@@ -652,9 +652,11 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y : pd.Series, pd.DataFrame, np.ndarray (1D or 2D), or None
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
+            if None, the y seen so far (self._y) are used, in particular:
+                if preceded by a single fit call, then in-sample residuals are produced
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogeneous time series to predict from
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
@@ -667,7 +669,13 @@ class BaseForecaster(BaseEstimator):
             Forecast residuals at fh, with same index as fh
             y_pred has same type as y passed in fit (most recently)
         """
-        y_pred = self.predict(fh=fh, X=X)
+        if y is None:
+            y = self._y
+            fh = y.index
+
+        self._set_fh(fh)
+
+        y_pred = self.predict(fh=self.fh, X=X)
 
         if not type(y_pred) == type(y):
             raise TypeError(
