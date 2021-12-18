@@ -254,82 +254,8 @@ class ThetaForecaster(ExponentialSmoothing):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        coverage = []
-        for c in alpha:
-            if c > 0.5:
-                c = (c - 0.5) * 2
-            else:
-                c = 1 - c
-            if c not in coverage:
-                coverage.append(c)
-        y_pred = super(ThetaForecaster, self).predict(
-            fh, X, return_pred_int=False, alpha=coverage
-        )
-        pred_int = self.compute_pred_int(y_pred, coverage)
-        pred_quantiles = pd.DataFrame()
-        for a, df in zip(alpha, pred_int):
-            if a < 0.5:
-                pred_quantiles[a] = df["lower"]
-            else:
-                pred_quantiles[a] = df["upper"]
-        arrays = [len(alpha) * ["Quantiles"], alpha]
-        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
-        pred_quantiles.columns = index
-        return pred_quantiles
-
-    def _predict_interval(
-        self,
-        fh=None,
-        X=None,
-        coverage=0.90,
-    ):
-        """Compute/return prediction interval forecasts.
-
-        If coverage is iterable, multiple intervals will be calculated.
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_".
-            self.cutoff, self._is_fitted
-
-        Writes to self:
-            Stores fh to self.fh if fh is passed and has not been passed previously.
-
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        coverage : float or list of float, optional (default=0.90)
-
-        Returns
-        -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being quantile fractions for interval low-high.
-                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        y_pred = super(ThetaForecaster, self).predict(
-            fh, X, return_pred_int=False, alpha=coverage
-        )
-        pred_int = self.compute_pred_int(y_pred, coverage)
-        alpha = []
-        for c in coverage:
-            alpha.extend([0.5 - c / 2, 0.5 + c / 2])
-        pred_int = pd.concat(pred_int, axis=1)
-        arrays = [len(alpha) * ["Intervals"], alpha]
-        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
-        pred_int.columns = index
-        return pred_int
-
-    def _compute_pred_err(self, alphas):
-        """Get the prediction errors for the forecast."""
         self.check_is_fitted()
+        alpha = check_alpha(alpha)
 
         n_timepoints = len(self._y)
 
@@ -339,12 +265,24 @@ class ThetaForecaster(ExponentialSmoothing):
         )
 
         errors = []
-        for alpha in alphas:
-            z = _zscore(1 - alpha)
+        for a in alpha:
+            z = _zscore(1 - a)
             error = z * sem
             errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
 
-        return errors
+        y_pred = super(ThetaForecaster, self).predict(fh, X)
+
+        pred_quantiles = pd.DataFrame()
+        for a, error in zip(alpha, errors):
+            if a < 0.5:
+                pred_quantiles[a] = y_pred - error
+            else:
+                pred_quantiles[a] = y_pred + error
+
+        arrays = [len(alpha) * ["Quantiles"], alpha]
+        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
+        pred_quantiles.columns = index
+        return pred_quantiles
 
     def _update(self, y, X=None, update_params=True):
         super(ThetaForecaster, self)._update(

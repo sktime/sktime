@@ -319,7 +319,6 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 
 
 def _check_predict_quantiles(pred_quantiles: list, y_train: pd.Series, fh, alpha):
-
     # check if the input is a dataframe
     assert isinstance(pred_quantiles, pd.DataFrame)
     # check time index (also checks forecasting horizon is more than one element)
@@ -411,40 +410,6 @@ def _check_predict_intervals(pred_intervals: list, y_train: pd.Series, fh, cover
         for var in pred_intervals.columns.levels[0]:
             for index in range(len(pred_intervals.index)):
                 assert pred_intervals[var].iloc[index].is_monotonic_increasing
-
-
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("alpha", TEST_ALPHAS)
-def test_predict_intervals(Forecaster, fh, alpha):
-    """Check prediction intervals returned by predict.
-
-    Arguments
-    ---------
-    Forecaster: BaseEstimator class descendant, forecaster to test
-    fh: ForecastingHorizon, fh at which to test prediction
-    alpha: float, alpha at which to make prediction intervals
-
-    Raises
-    ------
-    AssertionError - if Forecaster test instance has "capability:pred_int"
-            and pred. int are not returned correctly when asking predict for them
-    AssertionError - if Forecaster test instance does not have "capability:pred_int"
-            and no NotImplementedError is raised when asking predict for pred.int
-    """
-    f = _construct_instance(Forecaster)
-    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
-
-    for n_columns in n_columns_list:
-        f = Forecaster.create_test_instance()
-        y_train = _make_series(n_columns=n_columns)
-        f.fit(y_train, fh=fh)
-        if not f._has_predict_quantiles_been_refactored():
-            with pytest.raises(NotImplementedError):
-                f.predict_interval(fh=fh, coverage=alpha)
-        else:
-            intervals = f.predict_interval(fh=fh, coverage=alpha)
-            _check_predict_intervals(intervals, y_train, fh, alpha)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
