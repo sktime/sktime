@@ -474,9 +474,9 @@ class STLTransformer(_SeriesToSeriesTransformer):
                 low_pass_jump=self.low_pass_jump,
             ).fit()
 
-            ret_obj = self._make_return_object(new_stl)
+            ret_obj = self._make_return_object(X, new_stl)
         else:
-            ret_obj = self._make_return_object(self.stl_)
+            ret_obj = self._make_return_object(X, self.stl_)
 
         return ret_obj
 
@@ -487,7 +487,8 @@ class STLTransformer(_SeriesToSeriesTransformer):
                 STLTransformer can only inverse_transform indices seen in fit().
                 Use Deseasonalizer or Detrender directly to deal with other indices."""
             )
-        return y + self.seasonal_ + self.trend_
+        return y + self.seasonal_
+        #return y + self.seasonal_ + self.trend_
 
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
