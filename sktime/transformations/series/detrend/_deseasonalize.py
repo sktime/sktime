@@ -321,15 +321,16 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     The STLTransformer is a descriptive transformer to remove seasonality
     from a series and is based on statsmodels.STL. It returns deseasonalized
-    data. All three components trend, season and residuals can be accessed
-    via attributes trend_, season_ and resid_. STLTransformer can not transform
-    or inverse_transform on data that was not given in fit() before.
+    data. Components are returned in addition if return_components=True
+    STLTransformer can not inverse_transform on indices not seen in fit().
     This means that for pipelining, the Deseasonalizer or Detrender must be
     used instead of STLTransformer.
 
+    Important note: the returned series has seasonality removed, but not trend.
+
     Parameters
     ----------
-    sp : int, default=1
+    sp : int, default=2
         Seasonal periodicity.
     seasonal : int, default=7
         Length of the seasonal smoother. Must be an odd integer, and should
@@ -421,6 +422,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
         self.seasonal_jump = seasonal_jump
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
+        self.return_components = return_components
         self._Z_index = None
         super(STLTransformer, self).__init__()
 
@@ -504,7 +506,9 @@ class STLTransformer(_SeriesToSeriesTransformer):
 
     def _make_return_object(self, X, stl):
 
-        transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
+        # deseasonalize only
+        transformed = pd.Series(X.values - stl.seasonal, index=X.index)
+        # transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
 
         if self.return_components:
 
@@ -524,3 +528,22 @@ class STLTransformer(_SeriesToSeriesTransformer):
             ret = transformed
 
         return ret
+
+    def get_test_params(self):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # test case 1: all default parmameters
+        params1 = {}
+
+        # test case 2: return all components
+        params2 = {"return_components": True}
+
+        return [params1, params2]
