@@ -1082,7 +1082,7 @@ def from_numpy3D_to_numpyflat(obj, store=None):
     if isinstance(store, dict):
         store["numpy_second_dim"] = shape[1]
 
-    obj_in_2D = obj.reshape(shape[0], shape[1]*shape[2])
+    obj_in_2D = obj.reshape(shape[0], shape[1] * shape[2])
 
     return obj_in_2D
 
@@ -1123,6 +1123,7 @@ def _concat(fun1, fun2):
         obj1 = fun1(obj, store=store)
         obj2 = fun2(obj1, store=store)
         return obj2
+
     return concat_fun
 
 

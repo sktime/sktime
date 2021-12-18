@@ -100,10 +100,7 @@ X = np.array(
 example_dict[("numpy3D", "Panel", 1)] = X
 example_dict_lossy[("numpy3D", "Panel", 1)] = False
 
-X = np.array(
-    [[4, 5, 6], [4, 55, 6], [42, 5, 6]], 
-    dtype=np.int64
-)
+X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 1)] = X
 example_dict_lossy[("numpyflat", "Panel", 1)] = False
@@ -161,10 +158,7 @@ X = np.array(
 example_dict[("numpy3D", "Panel", 2)] = X
 example_dict_lossy[("numpy3D", "Panel", 2)] = False
 
-X = np.array(
-    [[4, 5, 6]], 
-    dtype=np.int64
-)
+X = np.array([[4, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 2)] = X
 example_dict_lossy[("numpyflat", "Panel", 2)] = False
