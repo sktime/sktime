@@ -3,28 +3,30 @@
 """Panel transformers for time series augmentation."""
 
 __author__ = ["MrPr3ntice", "MFehsenfeld", "iljamaurer"]
-__all__ = ["SeqAugPipeline",
-           "plot_augmentation_examples",
-           "get_rand_input_params",
-           "WhiteNoiseAugmenter",
-           "ReverseAugmenter",
-           "InvertAugmenter",
-           "ScaleAugmenter",
-           "OffsetAugmenter",
-           "DriftAugmenter"]
+__all__ = [
+    "SeqAugPipeline",
+    "plot_augmentation_example",
+    "get_rand_input_params",
+    "WhiteNoiseAugmenter",
+    "ReverseAugmenter",
+    "InvertAugmenter",
+    "ScaleAugmenter",
+    "OffsetAugmenter",
+    "DriftAugmenter",
+]
 
 import sys
-import warnings
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from scipy.stats._distn_infrastructure import rv_frozen as random_Variable
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
-from scipy.stats._distn_infrastructure import rv_frozen as random_Variable
-from datetime import datetime
+
 from sktime.transformations.base import BaseTransformer
-from sktime.datatypes import get_examples
 
 
 class _BasePanelAugmenter(BaseTransformer):
@@ -98,15 +100,17 @@ class _BasePanelAugmenter(BaseTransformer):
         "skip-inverse-transform": True,
     }
 
-    def __init__(self,
-                 p: float = 1.0,
-                 param=None,
-                 use_relative_fit=False,
-                 relative_fit_stat_fun=np.std,
-                 relative_fit_type="fit",
-                 random_state=None,
-                 excluded_var_indices=None,
-                 n_jobs=1):
+    def __init__(
+        self,
+        p: float = 1.0,
+        param=None,
+        use_relative_fit=False,
+        relative_fit_stat_fun=np.std,
+        relative_fit_type="fit",
+        random_state=None,
+        excluded_var_indices=None,
+        n_jobs=1,
+    ):
         # input parameters
         self.p = p
         self._param = param
@@ -127,14 +131,14 @@ class _BasePanelAugmenter(BaseTransformer):
         # number of vars/channels as defined by data passed to _fit() function.
         self._n_vars = None
         # determine whether the augmenter can be fitted, if not done by subclass
-        if not hasattr(self, '_is_fittable'):
+        if not hasattr(self, "_is_fittable"):
             self._is_fittable = True
         # add default param description, if not done by subclass
-        if not hasattr(self, '_param_desc'):
+        if not hasattr(self, "_param_desc"):
             self._param_desc = None
         # check augmentation parameters
-        self._check_general_aug_params()
-        self._check_specific_aug_params()
+        self._check_general_aug_parameter()
+        self._check_specific_aug_parameter()
         # initialize super class
         super().__init__()
 
@@ -165,10 +169,11 @@ class _BasePanelAugmenter(BaseTransformer):
             self._stats = []
             for col in range(self._n_vars):  # loop over demanded variables
                 if col not in self.excluded_var_indices:
-                    long_series = pd.Series(dtype='float64')
+                    long_series = pd.Series(dtype="float64")
                     for row in range(X.shape[0]):  # loop over instances
                         long_series = long_series.append(
-                            X.iloc[row, col], ignore_index=True)
+                            X.iloc[row, col], ignore_index=True
+                        )
                     self._stats.append(self.relative_fit_stat_fun(long_series))
                 else:
                     self._stats.append(None)
@@ -196,69 +201,74 @@ class _BasePanelAugmenter(BaseTransformer):
         # create copied DataFrame for transformed data
         Xt = X.copy()
         # Xt = pd.DataFrame(dtype=object).reindex_like(X).astype(object)
-        self._last_aug_random_variate =\
+        self._last_aug_random_variate = (
             pd.DataFrame(dtype=object).reindex_like(X).astype(object)
+        )
         # check number of vars
         if Xt.shape[1] != self._n_vars and self._n_vars is not None:
             raise ValueError(
                 "The number of variables differs between input "
                 "data (" + str(Xt.shape[1]) + ") and the data "
-                "used for fitting (" + str(self._n_vars) + ").")
+                "used for fitting (" + str(self._n_vars) + ")."
+            )
 
         # fit-transform
-        if self.use_relative_fit and self.relative_fit_type == "fit-transform" \
-                and not self._is_fittable:
+        if (
+            self.use_relative_fit
+            and self.relative_fit_type == "fit-transform"
+            and not self._is_fittable
+        ):
             # calculate demanded statistical param over (a concatenation of)
             # all instances for each variable (like in case of "fit" but
             # directly on the data to be transformed).
             self._stats = []
             for col in range(X.shape[1]):  # loop over demanded variables
                 if col not in self.excluded_var_indices:
-                    long_series = pd.Series(dtype='float64')
+                    long_series = pd.Series(dtype="float64")
                     for row in range(Xt.shape[0]):  # loop over instances
                         long_series = long_series.append(
-                            X.iloc[row, col], ignore_index=True)
-                    self._stats.append(
-                        self.relative_fit_stat_fun(long_series))
+                            X.iloc[row, col], ignore_index=True
+                        )
+                    self._stats.append(self.relative_fit_stat_fun(long_series))
                 else:
                     self._stats.append(None)
 
         # create dummy statistics list for instance-wise and use_relative_fit ==
         # False
-        if (self.use_relative_fit and
-            self.relative_fit_type == "instance-wise") \
-                or not self.use_relative_fit or not self._is_fittable:
+        if (
+            (self.use_relative_fit and self.relative_fit_type == "instance-wise")
+            or not self.use_relative_fit
+            or not self._is_fittable
+        ):
             self._stats = [None] * X.shape[1]
         # loop over variables
         for col in range(X.shape[1]):
             # loop over instances (slow but consistent)
             for row in range(Xt.shape[0]):
                 # throw the dice if transformation is performed or not
-                if np.random.rand() <= self.p \
-                        and col not in self.excluded_var_indices:
-                    if self.relative_fit_type == "instance-wise"\
-                            and self._is_fittable:
+                if np.random.rand() <= self.p and col not in self.excluded_var_indices:
+                    if self.relative_fit_type == "instance-wise" and self._is_fittable:
                         # (overwrite) statistics for certain instance
-                        self._stats[col] = self.relative_fit_stat_fun(
-                            X.iloc[row, col])
+                        self._stats[col] = self.relative_fit_stat_fun(X.iloc[row, col])
                     if isinstance(self._param, random_Variable):
                         # if parameter is a distribution and not a constant
                         rand_param_variate = self._param.rv()
-                        self._last_aug_random_variate.iloc[row, col] = \
-                            rand_param_variate
+                        self._last_aug_random_variate.iloc[
+                            row, col
+                        ] = rand_param_variate
                     elif self._param is not None:  # if param is constant,
                         # not None and not random
                         rand_param_variate = self._param
-                        self._last_aug_random_variate.iloc[row, col] = \
-                            rand_param_variate
+                        self._last_aug_random_variate.iloc[
+                            row, col
+                        ] = rand_param_variate
                     else:  # if param is None, but augmentation takes place
                         rand_param_variate = self._param
                         self._last_aug_random_variate.iloc[row, col] = None
                     # perform augmentation
                     Xt.iat[row, col] = self._univariate_ser_aug_fun(
-                        X.iloc[row, col],
-                        rand_param_variate,
-                        self._stats[col])
+                        X.iloc[row, col], rand_param_variate, self._stats[col]
+                    )
                 else:
                     # if no augmentation takes place -> keep original TS
                     # instance
@@ -266,56 +276,66 @@ class _BasePanelAugmenter(BaseTransformer):
         return Xt
 
     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
-        """Abstract function to be overwritten by inheriting subclass"""
+        """Abstract function to be overwritten by inheriting subclass."""
         raise NotImplementedError
 
-    def _check_general_aug_params(self):
-        """Checking input augmentation parameters"""
+    def _check_general_aug_parameter(self):
+        """Check input augmentation parameters."""
         if not 0.0 <= self.p <= 1.0:
             raise ValueError("Input value for p is not a valid probability.")
         if not isinstance(self.use_relative_fit, bool):
-            raise TypeError("Type of input value use_relative_fit must be"
-                            " bool.")
-        if not callable(self.relative_fit_stat_fun)\
-                and self.relative_fit_stat_fun is not None:
-            raise TypeError("Type of input value relative_fit_stat_fun must be"
-                            " function or None.")
-        if self.relative_fit_type not in ("fit", "fit-transform",
-                                          "instance-wise", None):
+            raise TypeError("Type of input value use_relative_fit must be" " bool.")
+        if (
+            not callable(self.relative_fit_stat_fun)
+            and self.relative_fit_stat_fun is not None
+        ):
+            raise TypeError(
+                "Type of input value relative_fit_stat_fun must be" " function or None."
+            )
+        if self.relative_fit_type not in (
+            "fit",
+            "fit-transform",
+            "instance-wise",
+            None,
+        ):
             raise ValueError("Input value for relative_fit_type is invalid.")
         if not isinstance(self.excluded_var_indices, list):
-            raise TypeError("Input value excluded_var_indices must be a list "
-                            "of non-negative integers.")
+            raise TypeError(
+                "Input value excluded_var_indices must be a list "
+                "of non-negative integers."
+            )
         if not isinstance(self.n_jobs, int):
             raise TypeError("Type of input value n_jobs must be int.")
 
-    def _check_specific_aug_params(self):
-        """Default methode for subclass-specific parameter checking"""
+    def _check_specific_aug_parameter(self):
+        """Check subclass-specific parameter (default method)."""
         if self._param_desc is not None:
             if self._param is None:
                 self._param = self._param_desc["default"]
             elif isinstance(self._param, random_Variable):
                 pass
-            elif not self._param_desc["min"] <= self._param <= \
-                    self._param_desc["max"]:
-                raise ValueError(
-                    "Input value for param is out of boundaries.")
-        elif not isinstance(self._param, (int, float, random_Variable)) \
-                and self._param is not None:
-            raise TypeError(f"Type of input value param must be int, float or "
-                            f"a distribution of these, not {type(self._param)}.")
+            elif not self._param_desc["min"] <= self._param <= self._param_desc["max"]:
+                raise ValueError("Input value for param is out of boundaries.")
+        elif (
+            not isinstance(self._param, (int, float, random_Variable))
+            and self._param is not None
+        ):
+            raise TypeError(
+                f"Type of input value param must be int, float or "
+                f"a distribution of these, not {type(self._param)}."
+            )
 
-    def _plot_augmentation_examples(self, X, y):
-        """Plots original and augmented instance examples for each variable.
+    def _plot_augmentation_example(self, X, y):
+        """Plot original and augmented instance examples for each variable.
 
         This is a wrapper function calling the static function
-        plot_augmentation_examples() for compatibility reasons.
+        plot_augmentation_example() for compatibility reasons.
         """
-        plot_augmentation_examples(self, X, y)
+        plot_augmentation_example(self, X, y)
 
 
 class SeqAugPipeline(Pipeline):
-    """ Subclass of `sklearn.pipeline.Pipeline`, adding functionality. [1]_
+    """Subclass of `sklearn.pipeline.Pipeline`, adding functionality [1].
 
     References
     ----------
@@ -336,6 +356,7 @@ class SeqAugPipeline(Pipeline):
     >>> # get information about the augmentations' random decisions
     >>> print(pipe.get_last_aug_random_variates())
     """
+
     def __init__(self, steps, memory=None, verbose=False):
         super().__init__(steps, memory=memory, verbose=verbose)
 
@@ -358,12 +379,14 @@ class SeqAugPipeline(Pipeline):
         return list_of_aug_info
 
     @staticmethod
-    def draw_random_samples(X,
-                            y=None,
-                            n=1.0,
-                            shuffle_and_stratify=True,
-                            without_replacement=True,
-                            random_state=None):
+    def draw_random_samples(
+        X,
+        y=None,
+        n=1.0,
+        shuffle_and_stratify=True,
+        without_replacement=True,
+        random_state=None,
+    ):
         """Draw random instances form panel data.
 
         Parameters
@@ -403,30 +426,34 @@ class SeqAugPipeline(Pipeline):
             if n < 1 or not np.isfinite(n):
                 raise ValueError("n must be a finite number >= 1.")
         else:
-            raise ValueError("n must be int or float, not " + str(type(n))) \
-                  + "."
+            raise ValueError("n must be int or float, not " + str(type(n))) + "."
         # calculate indices
         if shuffle_and_stratify and without_replacement and y is not None:
             idx_list = []
-            sss = StratifiedShuffleSplit(n_splits=int(np.floor(n /
-                                                               n_instances)),
-                                         test_size=0.5,
-                                         random_state=random_state)
+            sss = StratifiedShuffleSplit(
+                n_splits=int(np.floor(n / n_instances)),
+                test_size=0.5,
+                random_state=random_state,
+            )
             for idx_a, idx_b in sss.split(X, y):
                 idx_list = idx_a.tolist() + idx_b.tolist()
-            sss = StratifiedShuffleSplit(n_splits=1,
-                                         test_size=np.mod(n, n_instances),
-                                         random_state=random_state)
-            for idx_a, idx_b in sss.split(y, y):
+            sss = StratifiedShuffleSplit(
+                n_splits=1, test_size=np.mod(n, n_instances), random_state=random_state
+            )
+            for _, idx_b in sss.split(y, y):
                 idx_list += idx_b.tolist()
         else:
             raise NotImplementedError("Not implemented yet.")
         # check number of indices
         if n != len(idx_list):
-            raise ValueError("The index list must contain n = " + str(n) +
-                             "indices, but contains " + str(len(idx_list)) +
-                             " indices.")
-        
+            raise ValueError(
+                "The index list must contain n = "
+                + str(n)
+                + "indices, but contains "
+                + str(len(idx_list))
+                + " indices."
+            )
+
         X_aug = X.iloc[idx_list]
         # Need to reset_index to pass index.is_monotonic of
         # check_pdDataFrame_Series() in datatypes/_series/_check.py
@@ -438,21 +465,23 @@ class SeqAugPipeline(Pipeline):
         else:
             return X_aug, idx_list
 
-    def _plot_augmentation_examples(self, X, y):
-        """Plots original and augmented instance examples for each variable.
+    def _plot_augmentation_example(self, X, y):
+        """Plot original and augmented instance examples for each variable.
 
         This is a wrapper function calling the static function
-        plot_augmentation_examples() for compatibility reasons.
+        plot_augmentation_example() for compatibility reasons.
         """
-        plot_augmentation_examples(self, X, y)
+        plot_augmentation_example(self, X, y)
 
 
 # static functions
-def plot_augmentation_examples(fitted_transformer,
-                               X,
-                               y=None,
-                               n_instances_per_variable=5,):
-    """Plots original and augmented instance examples for each variable.
+def plot_augmentation_example(
+    fitted_transformer,
+    X,
+    y=None,
+    n_instances_per_variable=5,
+):
+    """Plot original and augmented instance examples for each variable.
 
     Parameters
     ----------
@@ -478,7 +507,8 @@ def plot_augmentation_examples(fitted_transformer,
         y,
         n=n_instances_per_variable,
         shuffle_and_stratify=True,
-        without_replacement=True)
+        without_replacement=True,
+    )
     # make sure, that the given transformer is fitted
     if not fitted_transformer._is_fitted:
         fitted_transformer.fit(X, y)
@@ -489,24 +519,25 @@ def plot_augmentation_examples(fitted_transformer,
     try:
         ft = fitted_transformer
         if isinstance(ft._param, (float, int)):
-            help_param = f'{ft._param:.4f}'
+            help_param = f"{ft._param:.4f}"
         else:
             help_param = str(ft._param)
-        nl = '\n'
-        param_str = \
-            f"{ft.__class__.__name__} with parameters{nl}" \
-            f"p={ft.p:.2f}, " \
-            f"param={help_param}, " \
-            f"use_relative_fit={ft.use_relative_fit},{nl}" \
-            f"relative_fit_stat_fun={ft.relative_fit_stat_fun.__name__}, " \
-            f"relative_fit_type='{ft.relative_fit_type}', " \
-            f"random_state={ft.random_state},{nl}" \
-            f"excluded_var_indices={ft.excluded_var_indices}, " \
-            f"n_jobs={ft.n_jobs}.{nl}" \
+        nl = "\n"
+        param_str = (
+            f"{ft.__class__.__name__} with parameters{nl}"
+            f"p={ft.p:.2f}, "
+            f"param={help_param}, "
+            f"use_relative_fit={ft.use_relative_fit},{nl}"
+            f"relative_fit_stat_fun={ft.relative_fit_stat_fun.__name__}, "
+            f"relative_fit_type='{ft.relative_fit_type}', "
+            f"random_state={ft.random_state},{nl}"
+            f"excluded_var_indices={ft.excluded_var_indices}, "
+            f"n_jobs={ft.n_jobs}.{nl}"
             f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
     except Exception as e:
-        print(e)
-        param_str = "Unknown augmenter and parameterization"
+        # param_str = "Unknown augmenter and parameterization"
+        raise ModuleNotFoundError(e)
 
     # plot and return figure
     fig, axs = plt.subplots(n_vars, 2, figsize=(12, 1.8 + 2.2 * n_vars))
@@ -520,8 +551,8 @@ def plot_augmentation_examples(fitted_transformer,
         bot_lim = min(*axs[i, 0].get_ylim(), *axs[i, 1].get_ylim())
         axs[i, 0].set_ylim(top_lim, bot_lim)
         axs[i, 1].set_ylim(top_lim, bot_lim)
-        axs[i, 0].set_title('Original time series from variable ' + str(i))
-        axs[i, 1].set_title('Augmented time series from variable ' + str(i))
+        axs[i, 0].set_title("Original time series from variable " + str(i))
+        axs[i, 1].set_title("Augmented time series from variable " + str(i))
         axs[i, 0].grid()
         axs[i, 1].grid()
     plt.suptitle(param_str, y=0.96, fontsize=12)
@@ -545,18 +576,19 @@ def get_rand_input_params(n_vars):
         "relative_fit_type": types[np.random.randint(0, 3)],
         "random_state": None,
         "excluded_var_indices": excluded_var_indices,
-        "n_jobs": 1}
+        "n_jobs": 1,
+    }
     return rtn_dict
 
 
-def progress_bar(count, total, status=''):
-    """Print progress bar to console. Utility for long lasting processing"""
+def progress_bar(count, total, status=""):
+    """Print progress bar to console. Utility for long lasting processing."""
     bar_len = 40
     filled_len = int(round(bar_len * count / float(total)))
     percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+    bar = "=" * filled_len + "-" * (bar_len - filled_len)
     percents = f"{percents:.1f}"
-    sys.stdout.write('[%s] %s%s | %s     \r' % (bar, percents, '%', status))
+    sys.stdout.write("[%s] %s%s | %s     \r" % (bar, percents, "%", status))
     sys.stdout.flush()
 
 
@@ -576,17 +608,20 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         fitted statistical parameter and this value. If set to None, std will
         be zero (i.e. no Noise will be added).
     """
+
     def __init__(self, *args, **kwargs):
-        self._param_desc = {"name_absolute": "std",
-                            "name_relative": "scale_of_std",
-                            "min": 0.0,
-                            "max": np.nan_to_num(np.inf),
-                            "default": 0.0,
-                            "abs_inc_strength": True}
+        self._param_desc = {
+            "name_absolute": "std",
+            "name_relative": "scale_of_std",
+            "min": 0.0,
+            "max": np.nan_to_num(np.inf),
+            "default": 0.0,
+            "abs_inc_strength": True,
+        }
         super().__init__(*args, **kwargs)
 
     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
-        n = X.shape[0]  # length of the time series
+        n = X.shape[0]  # length of the time series.
         if self.use_relative_fit:
             return X + norm.rvs(0, rand_param_variate * stat_param, size=n)
         else:
@@ -604,6 +639,7 @@ class ReverseAugmenter(_BasePanelAugmenter):
     param: any, optional (default = None)
         Ignored, as well as use_use_relative_fit.
     """
+
     def __init__(self, *args, **kwargs):
         self._is_fittable = False
         super().__init__(*args, **kwargs)
@@ -623,6 +659,7 @@ class InvertAugmenter(_BasePanelAugmenter):
     param: any, optional (default = None)
         Ignored, as well as use_use_relative_fit.
     """
+
     def __init__(self, *args, **kwargs):
         self._is_fittable = False
         super().__init__(*args, **kwargs)
@@ -645,13 +682,16 @@ class ScaleAugmenter(_BasePanelAugmenter):
         the actual scale factor will be the product of the fitted statistical
         parameter and this value.
     """
+
     def __init__(self, *args, **kwargs):
-        self._param_desc = {"name_absolute": "scale",
-                            "name_relative": "relative_scale",
-                            "min": np.nan_to_num(-np.inf),
-                            "max": np.nan_to_num(np.inf),
-                            "default": 1.0,
-                            "abs_inc_strength": True}
+        self._param_desc = {
+            "name_absolute": "scale",
+            "name_relative": "relative_scale",
+            "min": np.nan_to_num(-np.inf),
+            "max": np.nan_to_num(np.inf),
+            "default": 1.0,
+            "abs_inc_strength": True,
+        }
         super().__init__(*args, **kwargs)
 
     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
@@ -675,13 +715,16 @@ class OffsetAugmenter(_BasePanelAugmenter):
         the actual offset value will be the product of the fitted statistical
         parameter and this value.
     """
+
     def __init__(self, *args, **kwargs):
-        self._param_desc = {"name_absolute": "offset",
-                            "name_relative": "relative_offset",
-                            "min": np.nan_to_num(-np.inf),
-                            "max": np.nan_to_num(np.inf),
-                            "default": 0.0,
-                            "abs_inc_strength": True}
+        self._param_desc = {
+            "name_absolute": "offset",
+            "name_relative": "relative_offset",
+            "min": np.nan_to_num(-np.inf),
+            "max": np.nan_to_num(np.inf),
+            "default": 0.0,
+            "abs_inc_strength": True,
+        }
         super().__init__(*args, **kwargs)
 
     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
@@ -705,13 +748,16 @@ class DriftAugmenter(_BasePanelAugmenter):
         use_relative_fit is True, the actual std will be the product of the
         fitted statistical parameter and this value.
     """
+
     def __init__(self, *args, **kwargs):
-        self._param_desc = {"name_absolute": "std_of_drift",
-                            "name_relative": "relative_std_of_drift",
-                            "min": 0.0,
-                            "max": np.nan_to_num(np.inf),
-                            "default": 0.0,
-                            "abs_inc_strength": True}
+        self._param_desc = {
+            "name_absolute": "std_of_drift",
+            "name_relative": "relative_std_of_drift",
+            "min": 0.0,
+            "max": np.nan_to_num(np.inf),
+            "default": 0.0,
+            "abs_inc_strength": True,
+        }
         super().__init__(*args, **kwargs)
 
     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
@@ -720,8 +766,9 @@ class DriftAugmenter(_BasePanelAugmenter):
             help = rand_param_variate * stat_param
         else:
             help = rand_param_variate
-        return X.add(np.concatenate(
-            ([0.0], np.cumsum(np.random.normal(0.0, help, n-1)))))
+        return X.add(
+            np.concatenate(([0.0], np.cumsum(np.random.normal(0.0, help, n - 1))))
+        )
 
 
 # implemented but not necessary for first PR:

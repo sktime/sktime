@@ -1,10 +1,14 @@
-import pytest
-import pandas as pd
-import numpy as np
-from sklearn import preprocessing
-from sktime.transformations.panel import augmenter as aug
-from sktime.datasets import load_basic_motions
+# -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for panel transformers of time series augmentation."""
 
+import numpy as np
+import pandas as pd
+import pytest
+from sklearn import preprocessing
+
+from sktime.datasets import load_basic_motions
+from sktime.transformations.panel import augmenter as aug
 
 expected_shapes_seq_aug_pipeline = [(20, 2)]
 expected_checksums_seq_aug_pipeline = [0.0]
@@ -34,8 +38,7 @@ def test_seq_aug_pipeline():
     # create naive panel with 20 instances and two variables and binary target
     n_vars = 2
     n_instances = 20
-    X = pd.DataFrame([[pd.Series(np.linspace(-1, 1, 5))] * n_vars] *
-                     n_instances)
+    X = pd.DataFrame([[pd.Series(np.linspace(-1, 1, 5))] * n_vars] * n_instances)
     y = pd.Series(np.random.rand(n_instances) > 0.5)
     pipe.fit(X, y)
     Xt = pipe.transform(X)
@@ -74,11 +77,12 @@ def _calc_checksum(X):
     return checksum
 
 
-## Test Data
+# Test Data
 expected_checksums_data = [646.1844410000003, -278.36259900000056, 60, 60]
 
 
 def test_loaded_data():
+    """Test of the loaded motion data."""
     data = _load_test_data()
     checksums = []
     for d in data:
@@ -86,7 +90,7 @@ def test_loaded_data():
     assert checksums == expected_checksums_data
 
 
-## Test WhiteNoiseAugmenter
+# Test WhiteNoiseAugmenter
 expected_shapes_white_noise = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_white_noise = [
     -353.4417418033514,
@@ -155,6 +159,7 @@ expected_checksums_white_noise = [
     ],
 )
 def test_white_noise(parameter):
+    """Test of the White Noise Augmenter."""
     np.random.seed(42)
     data = _load_test_data()
     shapes = []
@@ -169,7 +174,7 @@ def test_white_noise(parameter):
     assert checksums == expected_checksums_white_noise
 
 
-## Test InvertAugmenter
+# Test InvertAugmenter
 expected_shapes_invert = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_invert = [
     -321.1576750000005,
@@ -238,6 +243,7 @@ expected_checksums_invert = [
     ],
 )
 def test_invert(parameter):
+    """Test of the Invert Augmenter."""
     np.random.seed(42)
     data = _load_test_data()
     shapes = []
@@ -252,6 +258,7 @@ def test_invert(parameter):
     assert checksums == expected_checksums_invert
 
 
+# Test ReverseAugmenter
 expected_shapes_reverse = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_reverse = [
     -278.36259900000056,
@@ -320,6 +327,7 @@ expected_checksums_reverse = [
     ],
 )
 def test_reverse(parameter):
+    """Test of the Reverse Augmenter."""
     np.random.seed(42)
     data = _load_test_data()
     shapes = []
@@ -334,6 +342,7 @@ def test_reverse(parameter):
     assert checksums == expected_checksums_reverse
 
 
+# Test ScaleAugmenter
 expected_shapes_scale = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_scale = [
     -388.9508193002375,
@@ -402,6 +411,7 @@ expected_checksums_scale = [
     ],
 )
 def test_scale(parameter):
+    """Test of the Scale Augmenter."""
     np.random.seed(42)
     data = _load_test_data()
     shapes = []
@@ -416,13 +426,14 @@ def test_scale(parameter):
     assert checksums == expected_checksums_scale
 
 
+# Test OffsetAugmenter
 expected_shapes_offset = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_offset = [
-    144.47129312699505,
-    -2561.0251794484857,
-    -1973.8812135594308,
-    -561922.8378891243,
-    36253.333408710154,
+    -18201.91688318999,
+    7238.693795544632,
+    7669.8614458559205,
+    -335331.9467949644,
+    -32685.349670806663,
 ]
 
 
@@ -484,12 +495,13 @@ expected_checksums_offset = [
     ],
 )
 def test_offset(parameter):
+    """Test of the Offset Augmenter."""
     np.random.seed(42)
     data = _load_test_data()
     shapes = []
     checksums = []
     for para in parameter:
-        augmentator = aug.ScaleAugmenter(**para)
+        augmentator = aug.OffsetAugmenter(**para)
         Xt = _train_test(data, augmentator)
         Xt = _train_test(data, augmentator)
         checksum = _calc_checksum(Xt)
@@ -499,13 +511,14 @@ def test_offset(parameter):
     assert checksums == expected_checksums_offset
 
 
+# Test DriftAugmenter
 expected_shapes_drift = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_drift = [
-    -388.9508193002375,
-    -4837.6827805519515,
-    -1166.3225152032387,
-    -360655.26179077814,
-    47750.129927408474,
+    3050.00379820752,
+    -13181.787867767554,
+    1489.572937646976,
+    50027.573433620084,
+    -1089.8973404995957,
 ]
 
 
@@ -515,7 +528,7 @@ expected_checksums_drift = [
         (
             {
                 "p": 0.596850157946487,
-                "param": -4.168268438183718,
+                "param": 4.168268438183718,
                 "use_relative_fit": False,
                 "relative_fit_stat_fun": np.std,
                 "relative_fit_type": "fit",
@@ -545,7 +558,7 @@ expected_checksums_drift = [
             },
             {
                 "p": 0.5435528611139886,
-                "param": -11.601174205563332,
+                "param": 11.601174205563332,
                 "use_relative_fit": True,
                 "relative_fit_stat_fun": np.std,
                 "relative_fit_type": "instance-wise",
@@ -555,7 +568,7 @@ expected_checksums_drift = [
             },
             {
                 "p": 0.5902306668690871,
-                "param": -2.2713717582486854,
+                "param": 2.2713717582486854,
                 "use_relative_fit": True,
                 "relative_fit_stat_fun": np.std,
                 "relative_fit_type": "fit",
@@ -567,24 +580,26 @@ expected_checksums_drift = [
     ],
 )
 def test_drift(parameter):
+    """Test of the Drift Augmenter."""
     np.random.seed(42)
     data = _load_test_data()
     shapes = []
     checksums = []
     for para in parameter:
-        augmentator = aug.ScaleAugmenter(**para)
+        augmentator = aug.DriftAugmenter(**para)
         Xt = _train_test(data, augmentator)
         checksum = _calc_checksum(Xt)
         checksums.append(checksum)
         shapes.append(data[0].shape)
+    print(checksums)
     assert shapes == expected_shapes_drift
     assert checksums == expected_checksums_drift
 
 
-def test_mtype_compatibility():
-    pass
+# def test_mtype_compatibility():
+#    pass
 
 
-def test_variable_inconsistency():
-    """ValueError if the number of variables differ from fit to transform."""
-    pass
+# def test_variable_inconsistency():
+#    """ValueError if the number of variables differ from fit to transform."""
+#    pass
