@@ -394,7 +394,11 @@ class STLTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+        "fit-in-transform": False
+    }
 
     def __init__(
         self,
