@@ -451,9 +451,13 @@ def test_methods_do_not_change_state(estimator_instance):
                 # so predict will actually change the state of these annotators.
                 continue
 
-            assert (
-                estimator.__dict__ == dict_before
-            ), f"Estimator: {estimator} changes __dict__ during {method}"
+            assert estimator.__dict__ == dict_before, (
+                f"Estimator: {estimator} changes __dict__ during {method} \n before ="
+                f"\n********************************************\n "
+                f"{dict_before}  \n after "
+                f"=\n*****************************************\n "
+                f" {estimator.__dict__}"
+            )
 
 
 def test_methods_have_no_side_effects(estimator_instance):

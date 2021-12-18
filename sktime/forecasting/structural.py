@@ -6,10 +6,11 @@
 __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from statsmodels.tsa.statespace.structural import (
     UnobservedComponents as _UnobservedComponents,
 )
+
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class UnobservedComponents(_StatsModelsAdapter):
@@ -98,6 +99,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         - 'robust_approx' is the same as 'robust' except that the
             intermediate calculations use the 'approx' method.
         - 'none' for no covariance matrix calculation.
+
         Default is 'opg' unless memory conservation is used to avoid
         computing the loglikelihood values for each observation, in which
         case the default is 'approx'.
