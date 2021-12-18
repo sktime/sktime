@@ -48,19 +48,21 @@ VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIn
 VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
 
 
+def _ret(valid, msg, metadata, return_metadata):
+    if return_metadata:
+        return valid, msg, metadata
+    else:
+        return valid
+
+
 check_dict = dict()
 
 
 def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
 
     if not isinstance(obj, list):
         msg = f"{var_name} must be list of pd.DataFrame, found {type(obj)}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     n = len(obj)
 
@@ -68,14 +70,14 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
 
     if len(bad_inds) > 0:
         msg = f"{var_name}[i] must pd.DataFrame, but found other types at i={bad_inds}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     check_res = [check_pdDataFrame_Series(s, return_metadata=True) for s in obj]
     bad_inds = [i for i in range(n) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
         msg = f"{var_name}[i] must be Series of mtype pd.DataFrame, not at i={bad_inds}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
     metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
@@ -94,19 +96,14 @@ check_dict[("df-list", "Panel")] = check_dflist_Panel
 
 
 def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
 
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     if not len(obj.shape) == 3:
         msg = f"{var_name} must be a 3D numpy.ndarray, but found {len(obj.shape)}D"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     # we now know obj is a 3D np.ndarray
     metadata = dict()
@@ -128,24 +125,19 @@ check_dict[("numpy3D", "Panel")] = check_numpy3D_Panel
 
 
 def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
 
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     if not isinstance(obj.index, pd.MultiIndex):
         msg = f"{var_name} have a MultiIndex, found {type(obj.index)}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     nlevels = obj.index.nlevels
     if not nlevels == 2:
         msg = f"{var_name} have a MultiIndex with 2 levels, found {nlevels}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     correct_names = ["instances", "timepoints"]
     objnames = obj.index.names
@@ -154,13 +146,13 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
             f"{var_name}  must have a MultiIndex with names"
             f" {correct_names}, found {objnames}"
         )
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     # check instance index being integer or range index
     instind = obj.index.droplevel(1)
     if not isinstance(instind, VALID_MULTIINDEX_TYPES):
         msg = f"instance index must be {VALID_MULTIINDEX_TYPES}, found {type(instind)}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     inst_inds = np.unique(obj.index.get_level_values(0))
 
@@ -174,7 +166,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
             f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
             " not at i={bad_inds}"
         )
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
     metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
@@ -186,7 +178,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
 
-    return ret(True, None, metadata, return_metadata)
+    return _ret(True, None, metadata, return_metadata)
 
 
 check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_Panel
@@ -282,22 +274,16 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     bool: Whether the input is a nested DataFrame
     """
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     # If not a DataFrame we know is_nested_dataframe is False
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     # Otherwise we'll see if any column has a nested structure in first row
     else:
         if not are_columns_nested(obj).any():
             msg = f"{var_name} entries must be pd.Series"
-            return ret(False, msg, None, return_metadata)
+            return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
     metadata["is_univariate"] = obj.shape[1] < 2
@@ -309,7 +295,36 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
         metadata["is_equally_spaced"] = not _nested_dataframe_has_unequal(obj)
 
-    return ret(True, None, metadata, return_metadata)
+    return _ret(True, None, metadata, return_metadata)
 
 
 check_dict[("nested_univ", "Panel")] = is_nested_dataframe
+
+
+def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
+
+    if not isinstance(obj, np.ndarray):
+        msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
+        return _ret(False, msg, None, return_metadata)
+
+    if not len(obj.shape) == 2:
+        msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
+        return _ret(False, msg, None, return_metadata)
+
+    # we now know obj is a 3D np.ndarray
+    metadata = dict()
+    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+    metadata["is_univariate"] = True
+    # np.arrays are considered equally spaced by assumption
+    metadata["is_equally_spaced"] = True
+    metadata["n_instances"] = obj.shape[0]
+    metadata["is_one_series"] = obj.shape[0] == 1
+
+    # check whether there any nans; only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
+
+    return _ret(True, None, metadata, return_metadata)
+
+
+check_dict[("numpyflat", "Panel")] = check_numpyflat_Panel
