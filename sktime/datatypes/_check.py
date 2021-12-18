@@ -98,15 +98,34 @@ def check_is(
             returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
+        Keys populated depend on (assumed, otherwise identified) scitype of obj.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+            "scitype": str, scitype of obj (assumed or inferred)
+        For scitype "Series":
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
-            "mtype": str, mtype of obj if inferred
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+        For scitype "Alignment":
+            currently none
 
     Raises
     ------
     TypeError if no checks defined for mtype/scitype combination
-    ValueError if mtype input argument is not of expected type
+    TypeError if mtype input argument is not of expected type
     """
     return check_is_mtype(
         obj=obj,
@@ -159,8 +178,10 @@ def check_is_mtype(
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
+        valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
+        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
@@ -174,10 +195,29 @@ def check_is_mtype(
             returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
+        Keys populated depend on (assumed, otherwise identified) scitype of obj.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+            "scitype": str, scitype of obj (assumed or inferred)
+        For scitype "Series":
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
-            "mtype": str, mtype of obj if inferred
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+        For scitype "Alignment":
+            currently none
 
     Raises
     ------
@@ -246,8 +286,10 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
+        valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
+        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
     var_name: str, optional, default="input" - name of input in error messages
 
     Returns
@@ -288,11 +330,13 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
         name of scitype(s) the object "obj" is considered as, finds mtype for that
         if None (default), does not assume a specific as_scitype and tests all mtypes
             generally, as_scitype should be provided for maximum efficiency
+        valid scitype type strings are in datatypes.SCITYPE_REGISTER (1st column)
 
     Returns
     -------
     str - the inferred mtype of "obj", a valid mtype string
-        or None, if obj is None
+            or None, if obj is None
+        mtype strings with explanation are in datatypes.MTYPE_REGISTER
 
     Raises
     ------
@@ -342,6 +386,7 @@ def check_is_scitype(
     ----------
     obj - object to check
     scitype: str or list of str, scitype to check obj as
+        valid mtype strings are in datatypes.SCITYPE_REGISTER
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
@@ -355,10 +400,31 @@ def check_is_scitype(
             returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
-            "mtype": str, mtype of obj if inferred
-            "scitype": str, scitype of obj if inferred
-
+        Fields depend on scitpe.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+                mtype strings with explanation are in datatypes.MTYPE_REGISTER
+            "scitype": str, scitype of obj (assumed or inferred)
+                scitype strings with explanation are in datatypes.SCITYPE_REGISTER
+        For scitype "Series":
+            "is_univariate": bool, True iff series has one variable
+            "is_equally_spaced": bool, True iff series index is equally spaced
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+        For scitype "Alignment":
+            currently none
     Raises
     ------
     TypeError if scitype input argument is not of expected type
