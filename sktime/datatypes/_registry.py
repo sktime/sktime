@@ -64,6 +64,8 @@ SCITYPE_REGISTER = [
     ("Table", "data table with primitive column types"),
 ]
 
+SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
+
 
 def mtype_to_scitype(mtype: str):
     """Infer scitype belonging to mtype.

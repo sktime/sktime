@@ -31,7 +31,7 @@ from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._panel import check_dict_Panel
-from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes._registry import mtype_to_scitype, SCITYPE_LIST
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
@@ -41,6 +41,10 @@ check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
+
+
+# mtypes to exclude
+AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
 
 
 def _check_scitype_valid(scitype: str = None):
@@ -319,18 +323,23 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         raise TypeError(msg)
 
 
-def mtype(obj, as_scitype: Union[str, List[str]] = None):
+def mtype(obj,
+          as_scitype: Union[str, List[str]] = None,
+          exclude_mtypes=AMBIGUOUS_MTYPES,
+          ):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
     ----------
-    obj : object to infer type of - any type, should comply with and mtype spec
+    obj : object to infer type of - any type, should comply with some mtype spec
         if as_scitype is provided, this needs to be mtype belonging to scitype
     as_scitype : str, list of str, or None, optional, default=None
         name of scitype(s) the object "obj" is considered as, finds mtype for that
         if None (default), does not assume a specific as_scitype and tests all mtypes
             generally, as_scitype should be provided for maximum efficiency
         valid scitype type strings are in datatypes.SCITYPE_REGISTER (1st column)
+    exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
+        which mtypes to ignore in inferring mtype, default = ambiguous ones
 
     Returns
     -------
@@ -350,11 +359,13 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
         for scitype in as_scitype:
             _check_scitype_valid(scitype)
 
-    if as_scitype is None:
-        m_plus_scitypes = [(x[0], x[1]) for x in check_dict.keys()]
-    else:
+    m_plus_scitypes = [
+        (x[0], x[1]) for x in check_dict.keys() if x[0] not in exclude_mtypes
+    ]
+
+    if as_scitype is not None:
         m_plus_scitypes = [
-            (x[0], x[1]) for x in check_dict.keys() if x[1] in as_scitype
+            (x[0], x[1]) for x in m_plus_scitypes if x[1] in as_scitype
         ]
 
     res = [
@@ -379,8 +390,9 @@ def check_is_scitype(
     scitype: Union[str, List[str]],
     return_metadata=False,
     var_name="obj",
+    exclude_mtypes=AMBIGUOUS_MTYPES,
 ):
-    """Check object for compliance with mtype specification, return metadata.
+    """Check object for compliance with scitype specification, return metadata.
 
     Parameters
     ----------
@@ -391,6 +403,8 @@ def check_is_scitype(
         if False, returns only "valid" return
         if True, returns all three return objects
     var_name: str, optional, default="obj" - name of input in error messages
+    exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
+        which mtypes to ignore in inferring mtype, default = ambiguous ones
 
     Returns
     -------
@@ -437,7 +451,7 @@ def check_is_scitype(
     valid_keys = check_dict.keys()
 
     # find all the mtype keys corresponding to the scitypes
-    keys = [x for x in valid_keys if x[1] in scitype]
+    keys = [x for x in valid_keys if x[1] in scitype and x[0] not in exclude_mtypes]
 
     # storing the msg retursn
     msg = []
@@ -454,7 +468,7 @@ def check_is_scitype(
 
         if check_passed:
             final_result = res
-            found_mtype.append([0])
+            found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
             msg.append(res[1])
@@ -482,3 +496,38 @@ def check_is_scitype(
             msg = msg[0]
 
         return _ret(False, msg, None, return_metadata)
+
+
+def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPES):
+    """Infer the scitype of an object.
+
+    Parameters
+    ----------
+    obj : object to infer type of - any type, should comply with some mtype spec
+        if as_scitype is provided, this needs to be mtype belonging to scitype
+    candidate_scitypes: str or list of str, scitypes to pick from
+        valid scitype strings are in datatypes.SCITYPE_REGISTER
+    exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
+        which mtypes to ignore in inferring mtype, default = ambiguous ones
+        valid mtype strings are in datatypes.MTYPE_REGISTER
+
+    Returns
+    -------
+    str - the inferred sciype of "obj", a valid scitype string
+            or None, if obj is None
+        scitype strings with explanation are in datatypes.SCITYPE_REGISTER
+
+    Raises
+    ------
+    TypeError if no type can be identified, or more than one type is identified
+    """
+    _, _, metadata = check_is_scitype(
+        obj,
+        scitype=candidate_scitypes,
+        return_metadata=True,
+        exclude_mtypes=exclude_mtypes,
+    )
+    print(metadata)
+    scitype = metadata["scitype"]
+
+    return scitype
