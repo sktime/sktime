@@ -59,8 +59,7 @@ class _DummyConvertPandas(BaseClassifier):
     """Dummy classifier for testing base class fit/predict/predict_proba."""
 
     _tags = {
-        "convert_X_to_numpy": False,
-        "convert_X_to_dataframe": True,
+        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
     }
 
     def _fit(self, X, y):

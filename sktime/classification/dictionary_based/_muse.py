@@ -106,8 +106,7 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "convert_X_to_numpy": False,
-        "convert_X_to_dataframe": True,
+        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
     }
 
     def __init__(

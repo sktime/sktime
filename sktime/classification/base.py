@@ -57,8 +57,7 @@ class BaseClassifier(BaseEstimator):
     """
 
     _tags = {
-        "convert_X_to_numpy": True,
-        "convert_X_to_dataframe": False,
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         "convert_y_to_numpy": True,
         "convert_y_to_series": False,
         "capability:multivariate": False,
@@ -331,13 +330,7 @@ class BaseClassifier(BaseEstimator):
         X : pd.DataFrame or np.array
             Checked and possibly converted input data
         """
-        convert_to_numpy = self.get_tag("convert_X_to_numpy")
-        convert_to_pandas = self.get_tag("convert_X_to_dataframe")
-        if convert_to_numpy and convert_to_pandas:
-            raise ValueError(
-                "Tag error: cannot set both convert_X_to_numpy and "
-                "convert_X_to_dataframe to be true."
-            )
+        inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
         if isinstance(X, np.ndarray):
             # Temporary fix to insist on 3D numpy. For univariate problems,
@@ -346,12 +339,14 @@ class BaseClassifier(BaseEstimator):
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
 
-        if convert_to_numpy:
+        if inner_type == "numpy3D":
             if isinstance(X, pd.DataFrame):
                 X = from_nested_to_3d_numpy(X)
-        elif convert_to_pandas:
+        elif inner_type == "nested_univ":
             if isinstance(X, np.ndarray):
                 X = from_3d_numpy_to_nested(X)
+        else:
+            raise TypeError(f"Inner type{inner_type} no allowed in Classifier")
         return X
 
     def _convert_y(self, y):
