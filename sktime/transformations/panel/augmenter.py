@@ -25,8 +25,8 @@ from scipy.stats._distn_infrastructure import rv_frozen as random_Variable
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class _BasePanelAugmenter(_PanelToPanelTransformer):
@@ -352,10 +352,15 @@ class SeqAugPipeline(Pipeline):
     >>> # create simple panel dataset with 2 variables and 3 instances
     >>> X = pd.DataFrame([[pd.Series([0,1,2,3])] * 2] * 3)
     >>> # set up Pipeline
-    >>> pipe = SeqAugPipeline([("invert", InvertAugmenter(p=0.5)),("reverse", ReverseAugmenter(p=0.5))])
+    >>> pipe = SeqAugPipeline(
+    ...     [
+    ...         ("invert", InvertAugmenter(p=0.5)),
+    ...         ("reverse", ReverseAugmenter(p=0.5)),
+    ...     ]
+    ... )
     >>> Xt = pipe.fit_transform(X)
     >>> # get information about the augmentations' random decisions
-    >>> # pipe.get_last_aug_random_variates()
+    >>> # print(pipe.get_last_aug_random_variates())
     """
 
     def __init__(self, steps, memory=None, verbose=False):
