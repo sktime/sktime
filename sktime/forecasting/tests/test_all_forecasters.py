@@ -259,7 +259,9 @@ def test_predict_time_index_in_sample_full(
             pass
 
 
-def _check_pred_ints(pred_ints: list, y_train: pd.Series, y_pred: pd.Series, fh):
+def _check_pred_ints(
+    pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh
+):
     # make iterable
     if isinstance(pred_ints, pd.DataFrame):
         pred_ints = [pred_ints]
