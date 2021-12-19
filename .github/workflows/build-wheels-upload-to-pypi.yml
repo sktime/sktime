@@ -35,7 +35,8 @@ jobs:
       - name: Build wheels
         env:
           CIBW_BUILD_VERBOSITY: 1
-          CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
+          # CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64 TOOD: uncomment
+          CIBW_SKIP: cp36-* cp37*- pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
           # Windows causes install problems due to fbprophet so it's tested separately
           CIBW_TEST_EXTRAS_LINUX: "all_extras,dev"
           CIBW_TEST_COMMAND_LINUX: pytest --showlocals --durations=20 -n 2 --pyargs sktime
@@ -74,32 +75,35 @@ jobs:
             platform_id: win_amd64
 
           # Window 32 bit
-          # - os: windows-latest
-          #   python: 37
-          #   python-version: 3.7
-          #   bitness: 32
-          #   platform_id: win32
-          # - os: windows-latest
-          #   python: 38
-          #   python-version: 3.8
-          #   bitness: 32
-          #   platform_id: win32
-          # - os: windows-latest
-          #   python: 39
-          #   python-version: 3.9
-          #   bitness: 32
-          #   platform_id: win32
+            # - os: windows-latest
+            #   python: 37
+            #   python-version: 3.7
+            #   bitness: 32
+            #   platform_id: win32
+            # - os: windows-latest
+            #   python: 38
+            #   python-version: 3.8
+            #   bitness: 32
+            #   platform_id: win32
+            # - os: windows-latest
+            #   python: 39
+            #   python-version: 3.9
+            #   bitness: 32
+            #   platform_id: win32
 
 
     steps:
       - name: Set the value
         id: step_one
         run: |
-          echo "action_state=yellow" >> $GITHUB_ENV
+          echo "action_state=yellow" >> $env:GITHUB_ENV
       - name: Use the value
         id: step_two
         run: |
-          echo "${{ env.action_state }}" # This will output 'yellow'
+          echo "$env:action_state" # This will output 'yellow'
+      - name: Use the value 2
+        run: |
+          echo $env:action_state # This will output 'yellow'
 
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -134,7 +138,7 @@ jobs:
         run: |
           conda install -c anaconda libpython
           conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
-          python -m pip install ${{ env.WHEELNAME}}
+          python -m pip install ${{ env:WHEELNAME }}
 
       - name: Show dependecies
         run: python -m pip list
