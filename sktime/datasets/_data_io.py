@@ -1167,7 +1167,7 @@ def load_from_tsfile_to_dataframe(
                                     if line[char_num] != "(" and class_labels:
                                         class_val = line[char_num:].strip()
                                         if class_val not in class_label_list:
-                                            raise (
+                                            raise IOError(
                                                 "the class value '"
                                                 + class_val
                                                 + "' on line "
