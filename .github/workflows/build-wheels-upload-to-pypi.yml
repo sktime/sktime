@@ -138,7 +138,7 @@ jobs:
         run: |
           conda install -c anaconda libpython
           conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
-          python -m pip install ${{ env:WHEELNAME }}
+          python -m pip install $env:WHEELNAME
 
       - name: Show dependecies
         run: python -m pip list
