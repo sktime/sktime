@@ -19,7 +19,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+        # os: [ubuntu-20.04, windows-2019, macOS-10.15]  TODO: uncomment before merging
+        os: [windows-2019]
 
     steps:
       - uses: actions/checkout@v2
@@ -40,7 +41,6 @@ jobs:
           CIBW_TEST_COMMAND_LINUX: pytest --showlocals --durations=20 -n 2 --pyargs sktime
           CIBW_TEST_EXTRAS_MACOS: "all_extras,dev"
           CIBW_TEST_COMMAND_MACOS: pytest --showlocals --durations=20 -n 2 --pyargs sktime
-        # run: python -m cibuildwheel --output-dir wheelhouse
         run: bash build_tools/github/build_wheels.sh
 
       - name: Store wheels
@@ -51,11 +51,44 @@ jobs:
   test-windows-wheels:
     needs: build_wheels
     name: Test windows wheels
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: [windows-2019]
-        python-version: [3.7, 3.8, 3.9]
+        include:
+          # Window 64 bit
+          - os: windows-latest
+            python: 37
+            python-version: 3.7
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 38
+            python-version: 3.8
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 39
+            python-version: 3.9
+            bitness: 64
+            platform_id: win_amd64
+
+          # Window 32 bit
+          - os: windows-latest
+            python: 37
+            python-version: 3.7
+            bitness: 32
+            platform_id: win32
+          - os: windows-latest
+            python: 38
+            python-version: 3.8
+            bitness: 32
+            platform_id: win32
+          - os: windows-latest
+            python: 39
+            python-version: 3.9
+            bitness: 32
+            platform_id: win32
+
 
     steps:
       - uses: actions/checkout@v2
@@ -84,19 +117,17 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
 
-      # - name: Install sktime and dependencies (windows)
-      #   run: |
-      #     conda install -c anaconda libpython
-      #     conda install -c conda-forge "pystan>=2.14,<3.0"
-      #     conda install -c conda-forge "fbprophet>=0.7.1"
-      #     conda install -c conda-forge scipy cython
-      #     python -m pip install wheelhouse/*-cp${{matrix.python-version}}*-win_amd64.whl
+      - name: Install sktime and dependencies (windows)
+        run: |
+          conda install -c anaconda libpython
+          conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
+          python -m pip install ./wheelhouse/*-cp${{ matrix.python }}-${{ matrix.platform_id }}*.whl
 
-      # - name: Show dependecies
-      #   run: python -m pip list
+      - name: Show dependecies
+        run: python -m pip list
 
-      # - name: Run tests
-      #   run: pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+      - name: Run tests
+        run: pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
 
 
   # Build the source distribution under Linux
