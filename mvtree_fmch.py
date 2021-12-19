@@ -48,10 +48,6 @@ for i in encode_cols:
 
 # %%
 
-# %%
-
-# %%
-
 model_params1 = {
     "max_bin": 127,
     "bin_construct_sample_cnt": 20000000,
@@ -93,45 +89,6 @@ def mvts_cv(X, y):
 
 
 # %%
-
-
-# %%
-
-############################################################
-# y = data[["y","ts_id","Period"]]
-# X = data.copy()
-# %%
-# from helpers import MVTimeSeriesSplit
-
-# tscv = MVTimeSeriesSplit(n_splits=3, test_size=5)
-# out = tscv.split(X,y,groups=X["ts_id"])
-# # %%
-
-# y = y[y["ts_id"]==1]
-# X = X[X["ts_id"]==1]
-
-# y.drop("ts_id",inplace=True,axis=1)
-# X.drop(["ts_id","lagged_travel"],inplace=True,axis=1)
-
-# X.set_index(["Period"],inplace=True)
-# y.set_index(["Period"],inplace=True)
-# X_train,X_test,y_train,y_test = temporal_train_test_split(X,y)
-# # %%
-
-
-# regressor = make_pipeline(
-#     RandomForestRegressor(),
-# )
-
-# forecaster = make_reduction(
-#     regressor, scitype="tabular-regressor",window_length=5
-# )
-
-# forecaster.fit(X=X_train,y=y_train,fh=1)
-# # %%
-# forecaster.predict(X=X_test,fh=1)
-############################################################
-# %%
 data = data[data["ts_id"].isin(data["ts_id"].unique()[:5])]
 data.sort_values(["ts_id", "Period"], inplace=True)
 data = data.groupby("ts_id").tail(40)
@@ -154,17 +111,13 @@ X = pd.DataFrame(
     columns=data.drop(["y", "ts_id", "Period"], axis=1).columns,
 )
 
-
-# X.xs(X.index.get_level_values("ts_id")[0],level="ts_id").index
-
 # %%
-
 
 tscv = MVTimeSeriesSplit(n_splits=3, test_size=5)
-# out = tscv.split(X,y,groups=X["ts_id"])
-# %%
 
 X_train, X_test, y_train, y_test = mvts_cv(X, y)
+
+# %%
 
 model_kwargs = {
     "lags": [1, 5, 7],
@@ -175,16 +128,13 @@ model_kwargs = {
     },
 }
 
-# kurtosis does not work
-# no_of_features= count_vars(model_kwargs)
-no_of_features = 11
 window_length = find_maxlag(model_kwargs) + 1
+
 # %%
+
 regressor = make_pipeline(
     RandomForestRegressor(),
 )
-
-# from sklearn.base import clone
 
 forecaster = make_reduction(
     regressor,
@@ -195,42 +145,14 @@ forecaster = make_reduction(
 
 forecaster.fit(X=X_train, y=y_train, fh=2)
 
-
-# planning options
-# modification of make reduction
-# separate new make_panel_reduction
-# create an issue
-# work items
-# panel cross validation
-
-
 y_pred = forecaster.predict(X=X_test, fh=2)
 
 # %%
-# https://github.com/pandas-dev/pandas/issues/35563
-# import pandas as pd
-# import numpy as np
-# idx = pd.Index(range(2), name="A")
-# dti = pd.date_range("2020-01-01", periods=7, freq="D", name="B")
-# mi = pd.MultiIndex.from_product([idx, dti])
+#Window length is actually not relevant here
+# Need to figure out how to change dictionary
 
-# df = pd.DataFrame(np.random.randn(14, 2), index=mi)
-
-# df.loc[0].index
-# %%
-
-# y_index =pd.DataFrame(data["y"],index=mi)
-
-# y = data[["y","ts_id","Period"]]
-# X = data.copy()
-
-
-# tuning the 'n_estimator' hyperparameter of RandomForestRegressor from scikit-learn
-# regressor_param_grid = {"n_neighbors": np.arange(1, 10)}
 forecaster_param_grid = {"window_length": [8, 8]}
-# %%
 
-# putt# %%ing it all together in a grid search
 y_length = len(
     y_train.xs(y_train.index.get_level_values("ts_id")[0], level="ts_id").index
 )
@@ -240,13 +162,10 @@ cv = SlidingWindowSplitter(
 gscv = ForecastingGridSearchCV(forecaster, cv=cv, param_grid=forecaster_param_grid)
 
 # %%
+
 gscv.fit(X=X_train, y=y_train, fh=2)
 y_pred_cv = gscv.predict(X=X_test, fh=2)
 
 # mean_absolute_percentage_error(y_pred, y_test)
 
 gscv.best_params_
-
-
-# %%
-# %%
