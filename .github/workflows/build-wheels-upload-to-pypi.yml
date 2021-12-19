@@ -115,14 +115,14 @@ jobs:
           name: wheels
           path: wheelhouse
 
-      - name: Display structure of downloaded files
-        run: ls -R
+      - name: Display downloaded artifacts
+        run: ls -l wheelhouse
 
       - name: Install sktime and dependencies (windows)
         run: |
           conda install -c anaconda libpython
           conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
-          python -m pip install ./wheelhouse/*-cp${{ matrix.python }}-${{ matrix.platform_id }}*.whl
+          python -m pip install ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl
 
       - name: Show dependecies
         run: python -m pip list
