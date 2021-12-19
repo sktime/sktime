@@ -93,18 +93,6 @@ jobs:
 
 
     steps:
-      - name: Set the value
-        id: step_one
-        run: |
-          echo "action_state=yellow" >> $env:GITHUB_ENV
-      - name: Use the value
-        id: step_two
-        run: |
-          echo "$env:action_state" # This will output 'yellow'
-      - name: Use the value 2
-        run: |
-          echo $env:action_state # This will output 'yellow'
-
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -139,6 +127,10 @@ jobs:
           conda install -c anaconda libpython
           conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
           python -m pip install $env:WHEELNAME
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install .[all_extras,dev]
 
       - name: Show dependecies
         run: python -m pip list
