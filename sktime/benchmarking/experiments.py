@@ -21,8 +21,8 @@ from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 
-from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-from sktime.utils.data_io import write_results_to_uea_format
+from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
+from sktime.datasets import write_results_to_uea_format
 from sktime.utils.sampling import stratified_resample
 
 
