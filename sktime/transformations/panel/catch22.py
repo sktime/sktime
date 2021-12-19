@@ -769,8 +769,7 @@ def _outlier_include(X):
         r = np.zeros(len(X))
         for n in range(len(X)):
             if X[n] >= d:
-                r[count] = n + 1
-                count += 1
+                r.append(n + 1)
 
         if count == 0:
             continue

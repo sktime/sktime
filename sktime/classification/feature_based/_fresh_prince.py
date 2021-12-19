@@ -18,7 +18,7 @@ from sktime.utils.validation.panel import check_X_y
 class FreshPRINCE(BaseClassifier):
     """Fresh Pipeline with RotatIoN forest Classifier.
 
-    This classifier simply transforms the input data using the TSFresh [1]
+    This classifier simply transforms the input data using the TSFresh [1]_
     transformer with comprehensive features and builds a RotationForest estimator using
     the transformed data.
 
