@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 """Utilities for loading datasets."""
-import itertools
-import os
-import shutil
-import tempfile
-import textwrap
-import zipfile
-from urllib.request import urlretrieve
 
-import numpy as np
-import pandas as pd
-import statsmodels.api as sm
-
-from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
-from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.panel import check_X, check_X_y
+__author__ = [
+    "mloning",
+    "sajaysurya",
+    "big-o",
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "yairbeer",
+    "patrickZIB",
+    "aiwalter",
+    "jasonlines",
+]
 
 __all__ = [
     "load_airline",
@@ -36,17 +34,21 @@ __all__ = [
     "load_macroeconomic",
 ]
 
-__author__ = [
-    "mloning",
-    "sajaysurya",
-    "big-o",
-    "SebasKoel",
-    "Emiliathewolf",
-    "TonyBagnall",
-    "yairbeer",
-    "patrickZIB",
-    "aiwalter",
-]
+import itertools
+import os
+import shutil
+import tempfile
+import textwrap
+import zipfile
+from urllib.request import urlretrieve
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+
+from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
+from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation.panel import check_X, check_X_y
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)

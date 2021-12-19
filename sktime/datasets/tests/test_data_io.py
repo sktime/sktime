@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Test functions for data io."""
+"""Test functions for data input and output."""
 
-__author__ = ["jasonlines"]
+__author__ = [
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "jasonlines",
+]
 
+__all__ = []
 
 import os
 import tempfile
@@ -11,13 +17,65 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.utils.data_io import (
-    LongFormatDataParseException,
-    TsFileParseException,
+from sktime.datasets import (
     generate_example_long_table,
     load_from_long_to_dataframe,
     load_from_tsfile_to_dataframe,
+    load_uschange,
 )
+
+_CHECKS = {
+    "uschange": {
+        "columns": ["Income", "Production", "Savings", "Unemployment"],
+        "len_y": 187,
+        "len_X": 187,
+        "data_types_X": {
+            "Income": "float64",
+            "Production": "float64",
+            "Savings": "float64",
+            "Unemployment": "float64",
+        },
+        "data_type_y": "float64",
+        "data": load_uschange(),
+    },
+}
+
+
+@pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
+def test_data_loaders(dataset):
+    """
+    Assert if datasets are loaded correctly.
+
+    dataset: dictionary with values to assert against should contain:
+        'columns' : list with column names in correct order,
+        'len_y'   : lenght of the y series (int),
+        'len_X'   : lenght of the X series/dataframe (int),
+        'data_types_X' : dictionary with column name keys and dtype as value,
+        'data_type_y'  : dtype if y column (string)
+        'data'    : tuple with y series and X series/dataframe if one is not
+                    applicable fill with None value,
+    """
+    checks = _CHECKS[dataset]
+    y = checks["data"][0]
+    X = checks["data"][1]
+
+    if y is not None:
+        assert isinstance(y, pd.Series)
+        assert len(y) == checks["len_y"]
+        assert y.dtype == checks["data_type_y"]
+
+    if X is not None:
+        if len(checks["data_types_X"]) > 1:
+            assert isinstance(X, pd.DataFrame)
+        else:
+            assert isinstance(X, pd.Series)
+
+        assert X.columns.values.tolist() == checks["columns"]
+
+        for col, dt in checks["data_types_X"].items():
+            assert X[col].dtype == dt
+
+        assert len(X) == checks["len_X"]
 
 
 def test_load_from_tsfile_to_dataframe():
@@ -31,9 +89,7 @@ def test_load_from_tsfile_to_dataframe():
             tmp_file.write(file_contents)
             tmp_file.flush()
             # Parse the file and assert that it is invalid
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
     # Test that a file with an incomplete set of metadata is invalid
@@ -47,9 +103,7 @@ def test_load_from_tsfile_to_dataframe():
             tmp_file.write(file_contents)
             tmp_file.flush()
             # Parse the file and assert that it is invalid
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
     # Test that a file with a complete set of metadata but no data is invalid
@@ -64,9 +118,7 @@ def test_load_from_tsfile_to_dataframe():
             tmp_file.write(file_contents)
             tmp_file.flush()
             # Parse the file and assert that it is invalid
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
     # Test that a file with a complete set of metadata and no data but
@@ -82,9 +134,7 @@ def test_load_from_tsfile_to_dataframe():
             tmp_file.write(file_contents)
             tmp_file.flush()
             # Parse the file and assert that it is invalid
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
     # Test that a file with a complete set of metadata and a single
@@ -261,9 +311,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -289,9 +337,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -512,9 +558,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -541,9 +585,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -572,9 +614,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -923,7 +963,7 @@ def test_load_from_tsfile_to_dataframe():
 
 
 def test_load_from_long_to_dataframe(tmpdir):
-    """Test loading from long to dataframe."""
+    """Test for loading from long to dataframe."""
     # create and save a example long-format file to csv
     test_dataframe = generate_example_long_table()
     dataframe_path = tmpdir.join("data.csv")
@@ -934,8 +974,8 @@ def test_load_from_long_to_dataframe(tmpdir):
 
 
 def test_load_from_long_incorrect_format(tmpdir):
-    """Test loading from long in wrong format to dataframe."""
-    with pytest.raises(LongFormatDataParseException):
+    """Test for loading from long with incorrect format."""
+    with pytest.raises(ValueError):
         dataframe = generate_example_long_table()
         dataframe.drop(dataframe.columns[[3]], axis=1, inplace=True)
         dataframe_path = tmpdir.join("data.csv")
