@@ -119,7 +119,7 @@ jobs:
         run: ls -l wheelhouse
 
       - name: Get wheel filename
-        run: echo "WHEELNAME=$(ls ./wheelhouse/$(sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $GITHUB_ENV
+        run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $GITHUB_ENV
 
       - name: Install sktime and dependencies (windows)
         run: |
