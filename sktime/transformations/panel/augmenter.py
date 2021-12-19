@@ -352,9 +352,12 @@ class SeqAugPipeline(Pipeline):
     >>> # create simple panel dataset with 2 variables and 3 instances
     >>> X = pd.DataFrame([[pd.Series([0,1,2,3])] * 2] * 3)
     >>> # set up Pipeline
-    >>> pipe = SeqAugPipeline([
-    >>>    ('invert', aug.InvertAugmenter(p=0.5)),
-    >>>    ('reverse', aug.ReverseAugmenter(p=0.5))])
+    >>> pipe = SeqAugPipeline(
+    >>>     [
+    >>>         ("invert", aug.InvertAugmenter(p=0.5)),
+    >>>         ("reverse", aug.ReverseAugmenter(p=0.5)),
+    >>>     ]
+    >>> )
     >>> Xt = pipe.fit_transform(X)
     >>> print(Xt.iloc[0, 0])
     >>> # get information about the augmentations' random decisions
