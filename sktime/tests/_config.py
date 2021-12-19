@@ -32,8 +32,11 @@ from sktime.classification.early_classification import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
+    FreshPRINCE,
     MatrixProfileClassifier,
+    RandomIntervalClassifier,
     SignatureClassifier,
+    SummaryClassifier,
     TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
@@ -97,6 +100,7 @@ from sktime.transformations.panel.compose import (
 )
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
+from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.shapelets import (
@@ -127,6 +131,8 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
+from sktime.transformations.series.summarize import SummaryTransformer
+
 EXCLUDE_ESTIMATORS = [
     "ElasticEnsemble",
     "ProximityForest",
@@ -298,6 +304,24 @@ ESTIMATOR_TEST_PARAMS = {
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
+    },
+    FreshPRINCE: {
+        "n_estimators": 3,
+        "default_fc_parameters": "minimal",
+    },
+    RandomIntervals: {
+        "n_intervals": 3,
+    },
+    RandomIntervalClassifier: {
+        "n_intervals": 3,
+        "estimator": RandomForestClassifier(n_estimators=3),
+        "interval_transformers": SummaryTransformer(
+            summary_function=("mean", "min", "max"),
+        ),
+    },
+    SummaryClassifier: {
+        "estimator": RandomForestClassifier(n_estimators=3),
+        "summary_functions": ("mean", "min", "max"),
     },
     RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
