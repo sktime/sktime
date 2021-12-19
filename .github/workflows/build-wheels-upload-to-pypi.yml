@@ -46,6 +46,7 @@ jobs:
       - name: Store wheels
         uses: actions/upload-artifact@v2
         with:
+          name: wheels
           path: wheelhouse/*.whl
 
   test-windows-wheels:
@@ -111,7 +112,7 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: my-artifact
+          name: wheels
           path: wheelhouse
 
       - name: Display structure of downloaded files
@@ -152,6 +153,7 @@ jobs:
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
+          name: wheels
           path: wheelhouse/*.tar.gz
 
       # - name: Publish package to PyPI
